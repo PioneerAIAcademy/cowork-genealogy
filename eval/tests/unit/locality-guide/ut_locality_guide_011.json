@@ -26,6 +26,7 @@
   },
   "mcp_fixtures": [
     "place-search-boston",
+    "place-search-massachusetts",
     "collections-search-massachusetts",
     "wikipedia-search-boston",
     "wiki-search-boston-immigration",

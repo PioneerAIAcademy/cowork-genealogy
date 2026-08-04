@@ -474,6 +474,30 @@ converter/tool changes (expected; `eval/CLAUDE.md` snapshot model tracks
 `standardPlaceToRepId` / `standardPlaceToPlaceId` are inherently
 **ambiguous** searches. v1 policy:
 
+0. **Derived-context narrowing (added 2026-07-31):** before selection, when the
+   caller passes no explicit `contextName`, derive one from a comma-qualified
+   input — the leaf's immediate parent locality (segment index 1), e.g.
+   `"Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania"`
+   → `"Shenandoah"`. Keep only candidates whose `fullName` contains it
+   (case-insensitive substring), **falling back to the unfiltered set when
+   nothing matches**. This closes the silent same-name corruption where a plain
+   name search's top-scored hit is a place literally named after the leaf in the
+   wrong county (e.g. "Church, Clarion, Pennsylvania"), and #609 (Bristol →
+   Virginia). All five write paths that persist `standard_place`
+   (research_append, extraction_append → research_append, tree_edit, tree_correct
+   → tree_edit, the converter pass) inherit it through `getSearchEntries`.
+
+   The fallback prevents an *empty* result, but this is only strictly
+   never-worse on the `standardPlace`-input reads (standardPlaceToRepId /
+   -ToPlaceId / -ToCoords), which select via an exact-`fullName` match that
+   contains the derived token by construction. The free-text `resolveStandardPlace`
+   used by the five write paths selects with bare `pickBest`, so filtering is
+   expected-better but not guaranteed: a correct top hit lacking the derived
+   token can be demoted below a wrong hit that contains it (e.g. "Georgetown,
+   Washington, District of Columbia" → context "Washington" elevates Washington
+   State over DC). The trade is inherent — a filter that demotes a wrong top hit
+   can demote a correct one — and unguarded by `countryConsistency` when the
+   input's trailing token is a state/DC rather than a country.
 1. Exact case-insensitive `fullName` match among `searchPlace` candidates;
    if multiple, take the highest `score`.
 2. **Date hint** (facts/events carry dates): when provided, prefer the rep

@@ -44,6 +44,12 @@ nsis:
   artifactName: research-viewer-${version}-setup.${ext}
 
 linux:
+  # Required, not cosmetic. Without it electron-builder derives the executable
+  # name from package.json's `name` — "@genealogy/electron" — and refuses to
+  # build: `executableName contains characters that cannot be safely used in
+  # file paths: @genealogyelectron`. `win` already sets this; `mac` is unaffected
+  # because a .app bundle is named from productName instead.
+  executableName: research-viewer
   target:
     - target: AppImage
       arch: [x64]

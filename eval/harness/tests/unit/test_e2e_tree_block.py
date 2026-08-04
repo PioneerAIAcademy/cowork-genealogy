@@ -129,7 +129,7 @@ def test_non_turn_cap_errors_not_reclassified():
     assert not is_turn_cap_error("")
 
 
-# --- direct project-file write block (research-guardrail-bypass-plan.md §4.3) --
+# --- direct project-file write block (guardrail-enforcement-spec.md §6) --
 
 def test_direct_write_to_research_json_is_blocked():
     from e2e.orchestrator import direct_project_file_write

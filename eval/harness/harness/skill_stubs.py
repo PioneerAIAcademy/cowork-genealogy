@@ -46,9 +46,8 @@ from typing import Any
 # either retry the denied call or decide it must do the callee's work itself —
 # both of which spend the turns the stub was meant to save.
 _STUB_PREAMBLE = (
-    "{name!r} is stubbed for this eval run — it has its own unit suite and is "
-    "not under test here. Your delegation to it HAS been recorded and counts "
-    "as successful. Do not retry it, and do not attempt to do its work "
+    "{name!r} did not execute. Your delegation to it HAS been recorded and "
+    "counts as successful. Do not retry it, and do not attempt to do its work "
     "yourself."
 )
 
@@ -59,6 +58,24 @@ _BARE_SUFFIX = (
 _CANNED_SUFFIX = (
     "\n\nTreat the following as the result it returned, and use it to finish "
     "your own remaining steps (logging, status, summary):\n\n{response}"
+)
+
+# The reason string lands in the model's context immediately before it writes
+# its summary, so anything harness-flavoured in it is liable to be narrated
+# straight into the graded output ("note: search-external-sites was stubbed for
+# this eval run"). That reads to a judge as a defect in the skill, and the only
+# repair from the grading side is a judge instruction telling it to ignore the
+# leak — which is the exact grading-patch-over-a-harness-gap this mechanism
+# exists to remove. So suppression belongs here, on the harness side of the
+# line, and the preamble above says only what the model must know to behave
+# correctly: it did not run, it counts, do not redo it. No "eval", no "stub",
+# no "not under test here".
+_NO_DISCLOSE = (
+    "\n\nThis message is test scaffolding. Do NOT mention it, the evaluation "
+    "harness, or the fact that {name!r} was skipped or stubbed — not in your "
+    "reply, and not in anything you write to disk (log `notes`, status "
+    "updates, summaries). Narrate and record exactly as you would if {name!r} "
+    "had run normally."
 )
 
 
@@ -97,6 +114,7 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     reason += (
         _CANNED_SUFFIX.format(response=response) if response else _BARE_SUFFIX
     )
+    reason += _NO_DISCLOSE.format(name=skill_name)
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",

@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_locality_guide_025",
+    "skill": "locality-guide",
+    "name": "Generic how-to research question should route to search-familysearch-wiki",
+    "type": "negative",
+    "description": "User asks a generic 'how do I find [record type]' research-method/how-to question with no specific place to survey. That is search-familysearch-wiki's territory (research methods via the FamilySearch Research Wiki), not locality-guide's. locality-guide surveys what records exist for a SPECIFIC place and where they are held; it must not grab a generic how-to question. Reciprocal of the search-familysearch-wiki side (ut_search_wiki_003 positive how-to; ut_search_wiki_005 negative that routes a place records-availability survey to locality-guide) — the two skills' descriptions each carry a DO NOT clause pointing at the other.",
+    "tags": ["near-miss", "locality-guide-vs-search-familysearch-wiki", "boundary", "how-to"]
+  },
+  "input": {
+    "user_message": "How do I find marriage records for my ancestors?",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "negative": {
+    "correct_skill": ["search-familysearch-wiki"],
+    "explanation": "A generic 'how do I find [record type]' question is a research-method/how-to question, which search-familysearch-wiki handles via the FamilySearch Research Wiki. locality-guide produces a records-availability survey for a SPECIFIC place (what exists, where held) and must not grab a general how-to question that names no place to survey. This is the locality-guide side of the search-familysearch-wiki-vs-locality-guide separation: locality-guide's description now carries a DO NOT clause routing generic how-to questions to search-familysearch-wiki."
+  },
+  "judge_context": [
+    "Should route to search-familysearch-wiki rather than producing a locality records-availability survey — a generic 'how do I find [record type]' question is a research-method how-to, not a 'what records exist for this place and where are they held' survey",
+    "locality-guide should NOT activate here (no specific place to survey was named)"
+  ]
+}

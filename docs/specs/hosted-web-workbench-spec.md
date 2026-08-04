@@ -1,9 +1,72 @@
 # Hosted Genealogy Workbench — Developer Spec
 
-**Status:** draft spec for implementation. **Date:** 2026-06-05.
+**Status:** **Substantially implemented**, audited section by section against the
+code on **2026-08-02**. `apps/{server,web,electron}` and
+`packages/{schema,viewer-ui}` are all on `main`, and the path this spec
+describes — login → session list → per-user E2B sandbox → chat beside a live
+viewer — is wired end to end (`docs/realtime-rearch-status.md` C4 records a
+verified live run on a real microVM).
+
+**Three things did not ship as written, and are design changes rather than
+late work:** §5.1's **Google login** (replaced wholesale by unified FamilySearch
+OAuth — there is no Google client anywhere in the code), §6.4's **object store**
+(never built; project files live only on the sandbox filesystem), and §3's
+**sandbox-independent viewer read path** (which existed only to be served by that
+object store). §3's browser↔sandbox topology also changed: the browser opens one
+WSS **directly** to the sandbox rather than a WS proxied by the control plane.
+
+**Still genuinely open:** §12 (sidecar productionization — both endpoints are
+still on the personal `*.ts.net` host), §11's `schema_version` stamping, and
+most of §13 (residency/retention, token encryption at rest, cost budgets).
+
+Per-section verdicts are in the audit table below; every section that is now
+historical rather than current carries an inline `**As built…**` note. **Original
+draft date:** 2026-06-05.
+
 **Companion docs:** sandbox layer = `docs/specs/sandbox-provider-spec.md`
-(the per-user E2B sandbox abstraction); architecture/decision record = project
-memory `client-server-workbench-direction.md`.
+(the per-user E2B sandbox abstraction); the realtime path that superseded §3 and
+§6.2 = `docs/realtime-architecture.md` + `docs/realtime-rearch-status.md`;
+architecture/decision record = project memory
+`client-server-workbench-direction.md`.
+
+---
+
+## Audit table (2026-08-02)
+
+Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
+`packages/schema/`, `packages/engine/`, the `Makefile`, and `deploy/`.
+
+| § | Subject | Verdict |
+|---|---|---|
+| 0 | TL;DR decisions | **shipped as specced** — re-host not rewrite, operator-pays, three artifacts, shared viewer all hold |
+| 0.5 | POC overrides | **mixed** — session model, combined client, token option (a), conversational onboarding shipped; deployment target and viewer data path changed; the wiki-corpus item is obsolete |
+| 1 | Goals / non-goals | **shipped**, except the goal's "logs in (Google)" clause (see §5.1) |
+| 2 | Three products & sharing | **shipped as specced** |
+| 3 | Architecture & topology | **shipped differently** — direct browser↔sandbox WSS; no object store; the read path is not sandbox-independent |
+| 4 | Monorepo layout | **shipped differently** — engine split in two, counts moved, `/apps/cowork-plugin` + `/apps/mcpb` never created |
+| 4.1 | `ResearchTransport` seam | **shipped as specced**, plus three optional methods |
+| 5.1 | Google OAuth + allowlist | **not built** — superseded by unified FamilySearch login (the allowlist survives) |
+| 5.2 | Per-user FamilySearch OAuth | **shipped as specced** (option (a)); tokens are stored **unencrypted** |
+| 6.1 | Control-plane responsibilities | **mixed** — see the inline note |
+| 6.2 | WebSocket protocol | **shipped differently** — same message vocabulary, different endpoint and host; `auth_required` never built |
+| 6.3 | Database tables | **shipped differently** — 4 of 6 tables, with different columns |
+| 6.4 | Durable project storage | **not built** |
+| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills, not 28); the object-store sync half is not built |
+| 7.1 | Sandbox image | **shipped as specced** |
+| 8 | Web client | **shipped as specced** |
+| 9 | Electron app | **shipped as specced** |
+| 10 | Cowork plugin + `.mcpb` | **shipped as specced** (build scripts are `.mjs`) |
+| 11 | Data model / feedback / migration | **mixed** — feedback shipped; `schema_version` **not built** |
+| 12 | Sidecar productionization | **not built** |
+| 13 | Security, PII, cost | **partial** — isolation and rotating secrets shipped; encryption, retention and budgets did not |
+| 14 | Observability, testing | **partial** — PII-free logging and the transport-contract test shipped; no error tracking, no live suspend/resume e2e |
+| 15 | Phasing | phases 1–3 **done**; 4 **partial**; 5 **not started** |
+| 16 | POC decisions | **held**, except the deployment target |
+| 17 | Original gap list | index into the rows above |
+
+**Not audited** (out of scope for a code-vs-spec read): whether the alpha is
+actually meeting its cost or latency targets, and whether the FamilySearch
+dev-key terms permit the current external-user count (§16's "still to confirm").
 
 ---
 
@@ -26,6 +89,36 @@ memory `client-server-workbench-direction.md`.
 This section records the **alpha/POC** decisions and **overrides** the
 correspondingly-numbered general sections below. The general spec remains the
 "eventual" design; build the POC per this section.
+
+> **As built, verified 2026-08-02.** Most of this section is what shipped — the
+> 1:1 session/project/sandbox model, the session-list landing screen, the
+> combined viewer-with-chat-sidebar, token option (a), per-session model choice,
+> and conversational `init-project` onboarding are all in the code. Four bullets
+> below are no longer accurate:
+>
+> - **Deployment.** Not "everything on Dallan's local server" behind Tailscale
+>   Funnel. The control plane deploys to **Fly.io** as one always-on container
+>   serving the API *and* the built web client from one origin
+>   (`deploy/fly.toml`, `deploy/Dockerfile`, `make deploy`). Tailscale Funnel is
+>   not used and `PUBLIC_URL` is the Fly hostname.
+> - **Database.** SQLite is the **local-dev** default only; the hosted deploy runs
+>   **Neon Postgres** via `DATABASE_URL` (`config.sqlalchemy_url` pins psycopg3).
+>   The logical tables are as §6.3 describes with the deltas noted there.
+> - **Viewer data path.** The "trick" described here — control plane watching the
+>   sandbox FS with E2B `files.watch_dir` and pushing over its own WS — was
+>   replaced by the realtime re-architecture: the **sandbox runs its own WS
+>   server** (`apps/server/app/sandbox_server.py`), polls `/project` itself, and
+>   the browser connects to it directly. The control plane keeps only a snapshot
+>   read (`GET /api/sessions/{id}/state`) for hydration. See
+>   `docs/realtime-architecture.md`.
+> - **Wiki corpus.** Obsolete, not pending. `wiki_read`/`wiki_place_page` no
+>   longer read a local `wikiMarkdownDir`; all three wiki tools are HTTP clients
+>   of the hosted `wiki-query-api`, so there is nothing to bake into the image
+>   (`apps/server/sandbox/e2b.Dockerfile` says so explicitly). The `.ts.net`
+>   *hosting* question in §12 is still open — the *baking* question is closed.
+>
+> The "local backup dir per session" mirror was never built; nothing mirrors the
+> project files off the sandbox (see §6.4).
 
 - **Why a POC:** let alpha users who *can't install Claude Cowork* help test the
   system. Handful of users. **PII deferred** — users are instructed to enter **no
@@ -106,6 +199,12 @@ correspondingly-numbered general sections below. The general spec remains the
 - Replacing Cowork for existing users (it continues unchanged).
 - Public signup (access is gated to a Gmail allowlist).
 
+> **As built, verified 2026-08-02 — met, with one wording correction.** The user
+> does not "log in (Google), connect their FamilySearch account": there is one
+> FamilySearch login that does both (§5.1). The allowlist is an **email**
+> allowlist checked against the FamilySearch account address, not a Gmail one.
+> Every non-goal held; nothing here was walked back.
+
 ---
 
 ## 2. The three products and what they share
@@ -161,6 +260,30 @@ and web (WebSocket transport).
   resumes/creates the user's sandbox, injects secrets, launches `agent_runner`,
   and proxies the browser↔sandbox WebSocket.
 
+> **As built, verified 2026-08-02 — this is the section that changed most.** The
+> correction in the blockquote above still holds: E2B hosts only the per-user
+> sandboxes, and the always-on control plane runs on conventional infra (Fly.io).
+> Three things in the diagram and the two-paths rule did not ship:
+>
+> 1. **No object store.** Nothing was ever wired to S3/GCS or any equivalent
+>    (`apps/server` has no storage client and no `objstore_prefix`). Project
+>    files live only on the sandbox filesystem, which E2B's pause snapshot
+>    preserves indefinitely.
+> 2. **The read path is therefore not decoupled.** `GET /api/sessions/{id}/state`
+>    calls `provider.resume(sandbox_id)` and reads `/project` off the sandbox, so
+>    **viewing does wake a sandbox**. The design rule as written is aspirational,
+>    not implemented. E2B resume is ~1s, which is why nobody has felt the cost.
+> 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
+>    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
+>    exposes port 8080, mints a per-sandbox HMAC token, and returns
+>    `{wssUrl, token, familysearch}`; the control plane is then out of the
+>    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
+>    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
+>    `docs/realtime-architecture.md`.
+>
+> Everything else here is accurate: secrets injection on connect, per-user
+> sandbox creation, and the sidecar/MCP topology inside the microVM.
+
 ---
 
 ## 4. Monorepo & code-sharing
@@ -183,6 +306,29 @@ and electron share code" requires).
   /web            React app: chat UI + viewer-ui with a **WebSocket** ResearchTransport
   /server         FastAPI control plane (Python) + agent_runner.py (ships into the sandbox image)
 ```
+
+> **As built, verified 2026-08-02.** The tree above is the 2026-06-05 target and
+> its counts are that date's snapshot. Four differences:
+>
+> - **`/packages/engine` split in two** — `packages/engine/mcp-server` (the TS MCP
+>   server) and `packages/engine/plugin` (the Cowork skills + agents). `engine`
+>   itself is a bare container with no `package.json`, deliberately excluded from
+>   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) so the
+>   `.mcpb` release pipeline stays npm-managed.
+> - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
+>   `allToolSchemas`/`manifest.json` (not 30).
+> - **`viewer-ui` holds 13 section components**, not 11 — see the note under
+>   §4.1, which explains why 11 is still the right number *there*.
+> - **`/apps/cowork-plugin` and `/apps/mcpb` were never created.** Both artifacts
+>   are still built by top-level `scripts/` (`build-mcpb.mjs`, `package-plugin.mjs`,
+>   driven by `make mcpb` / `make plugin`). `/apps` holds exactly `electron`,
+>   `web`, `server` — and `agent_runner.py` lives at `apps/server/app/agent/runner.py`
+>   as the tree predicted.
+>
+> pnpm + turborepo is otherwise as specced (`pnpm-workspace.yaml`, `turbo.json`).
+>
+> For the as-built map of the shipped system, see
+> [`docs/architecture.md`](../architecture.md) §7.
 
 ### 4.1 The shared seam: `ResearchTransport`
 
@@ -214,7 +360,25 @@ interface ResearchTransport {
   feedback/session-capture model (§11).
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
-`progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged.
+`progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
+the count that actually moved** (PR #293, 2026-06-07); two sections were added
+later, so the package holds **13** today.
+
+> **As built, verified 2026-08-02.** The interface shipped essentially verbatim
+> (`packages/viewer-ui/src/transport.ts`), with an Electron IPC adapter
+> (`apps/electron/src/renderer/src/transport/IpcResearchTransport.ts`) and a web
+> WebSocket adapter (`apps/web/src/transport/WsResearchTransport.ts`), exactly as
+> described. Three additions since: `getProjectState` also returns a `label`
+> (folder path in Electron, session title on the web), and three **optional**
+> methods were added rather than dropped — `selectFolder?`, `getFeedbackContext?`,
+> `getSourceImage?` — each optional precisely because one host cannot serve it.
+>
+> **The "11 sections" above is correct and must not be changed to 13.** Exactly
+> 11 section components existed when this was written, and exactly those 11 moved
+> in the extraction (PR #293, `371e5db5`). `KnownInformationSection` (2026-06-14)
+> and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
+> directly — they were never part of the migration this sentence describes. The
+> package holds 13 today; the migration moved 11.
 
 ---
 
@@ -231,6 +395,34 @@ interface ResearchTransport {
 - Issue a signed session (HTTP-only secure cookie or short-lived JWT + refresh).
 - This is the only thing the user's *Google* identity does. It is **not** used by
   any genealogy tool.
+
+> **NOT BUILT — superseded, verified 2026-08-02.** There is **no Google OAuth
+> anywhere in the code**: no client id, no OIDC dependency, no `google_sub`
+> column. The two-flow design this section opens with was collapsed into one.
+>
+> **FamilySearch is the single front door** (`apps/server/app/auth.py`,
+> `fs_oauth.py`). One OAuth round-trip both gates app access *and* mints the data
+> token, so the "Gap the original list misses" framing above no longer applies —
+> §5.2 is now also §5.1. The user's FamilySearch account email is what the
+> allowlist is checked against, which is a real behavioral difference: it may
+> differ from the person's Google or contact address, and an account that returns
+> no email is refused with a 403 explaining why.
+>
+> **What did survive, as specced:** the `allowed_emails` DB table seeded from an
+> env var (`ALLOWED_EMAILS`), the 403 on a non-allowlisted address, and a signed
+> HTTP-only session cookie (`itsdangerous`, 30 days, `secure` derived from the
+> `PUBLIC_URL` scheme). A non-allowlisted account leaves no user row and no
+> persisted token.
+>
+> **Two login paths exist that this section does not describe:**
+> - **dev-login** — enter any email, no round-trip. Guarded twice: only when FS
+>   OAuth is unconfigured *and* `PUBLIC_URL` is not https, so it can never be
+>   exposed by a deploy that forgot to configure FamilySearch.
+> - **`/v1` bearer keys** — a public REST chat API for an external chatbot team
+>   (`apps/server/app/v1.py`), authenticated by operator-granted keys in the
+>   `API_KEYS` env. Deliberately **not** subject to the allowlist: presence in the
+>   key map *is* the grant. This surface postdates the spec entirely and has no
+>   section of its own.
 
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
 The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
@@ -258,6 +450,31 @@ multi-tenant web this must change:
 4. **Onboarding gate** — a user who hasn't connected FamilySearch is prompted to
    before any research tool runs.
 
+> **As built, verified 2026-08-02 — shipped as specced.** Steps 1–3 are in the
+> code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in the
+> `familysearch_tokens` table with server-side refresh (`auth.fresh_fs_token`),
+> and **option (a)** injection — the control plane writes
+> `~/.familysearch-mcp/tokens.json` into the sandbox, zero MCP change
+> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken()` still
+> reads the file. Two implementation details worth knowing:
+>
+> - **The redirect reuses the desktop OAuth registration**, so the callback lives
+>   at a top-level `/callback` rather than `/familysearch/callback`, and the web
+>   flow must present the same client id from the bundled
+>   `packages/engine/mcp-server/config/familysearch.json`.
+> - **Re-injection happens on every connect**, not just at create. FamilySearch
+>   caps a grant at 8h idle / 24h absolute, so a token baked in at sandbox-create
+>   is dead by the next day; `sessions.sync_fs_token` refreshes and rewrites it,
+>   returning `ok` / `expired` / `none` for the client's reconnect banner.
+>
+> **Step 4 (the onboarding gate) took a different shape.** Because FamilySearch
+> *is* the login, a browser user always arrives with a grant — there is nobody to
+> gate. What replaced it is the expiry banner driven by that `familysearch` state.
+>
+> **Deviation from §13:** tokens are stored **plaintext**, not "encrypted at
+> rest". `models.py` carries an explicit `TODO encrypt at rest before any real
+> PII`. Acceptable only while the no-living-person-data rule in §0.5 holds.
+
 ---
 
 ## 6. The server (FastAPI control plane)
@@ -276,6 +493,29 @@ multi-tenant web this must change:
   browser can't fetch FS directly (CSP/no token). Proxy through the server.
 - Feedback intake (§11); cost controls (§13); observability (§14).
 
+> **As built, verified 2026-08-02 — mixed.**
+> - **Auth + token store** — shipped, but as one FamilySearch flow (§5.1).
+> - **Session/sandbox orchestration** via `SandboxProvider` — shipped, with both
+>   `LocalProvider` (dev) and `E2BProvider` (hosted) behind it.
+> - **WebSocket endpoint** — **relocated into the sandbox**, see §6.2.
+> - **Viewer read API** — shipped as `GET /api/sessions/{id}/state` and
+>   `/sidecar/{log_id}`, but it reads the **sandbox**, not durable storage, so
+>   the parenthetical "(so the viewer works while the sandbox is suspended)" is
+>   not true as built — the read resumes the sandbox. See §3 and §6.4.
+> - **Sidecar image proxy** — shipped in a different shape. Rather than
+>   proxying live FamilySearch bytes, the engine *persists* fetched page scans
+>   into the project folder (`images/<key>.jpg`, `utils/image-store.ts`) and the
+>   control plane serves those from the sandbox at `GET /api/sessions/{id}/image`
+>   with a strict filename pattern. Same user-visible outcome, simpler trust
+>   boundary, and it survives into a feedback bundle.
+> - **Feedback intake** — shipped (§11). **Cost controls** — not shipped (§13).
+>   **Observability** — partial (§14).
+>
+> Two endpoints have no section here at all: **file upload**
+> (`POST /api/sessions/{id}/files` → `<project>/uploads/`, the only way
+> researcher-supplied bytes enter a session) and **`GET /api/sessions/{id}/logs`**
+> (tails the in-sandbox `/tmp/ws.log` + `/tmp/agent.log` for debugging).
+
 ### 6.2 WebSocket protocol (browser ↔ control plane)
 JSON messages. The control plane multiplexes chat (proxied to the sandbox) and
 viewer deltas (from sync) over one socket:
@@ -289,6 +529,31 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
                   {type:"auth_required", provider:"familysearch"}
 ```
 
+> **As built, verified 2026-08-02 — shipped differently.** The heading is the
+> part that changed: this is **not** a browser↔control-plane socket. There is one
+> WS server per sandbox (`apps/server/app/sandbox_server.py`), the browser
+> connects to it directly at `wss://…/?token=<exp>.<hmac>`, and the control plane
+> never sees a frame. `/ws/{project_id}` does not exist.
+>
+> The **message vocabulary survived almost intact** — `user_msg`, `interrupt`,
+> `agent_event`, `research_updated`, `gedcomx_updated`, `sidecar_updated` and
+> `status` are all sent with these exact names and shapes. Differences:
+>
+> - **`auth_required` was never implemented.** FamilySearch state is returned by
+>   the `POST /api/sessions/{id}/connect` HTTP response instead
+>   (`{familysearch: "ok"|"expired"|"none"}`), which is what drives the reconnect
+>   banner. There is no in-band auth message.
+> - **`status` states differ:** the live set is `ready`, `chat_ready`,
+>   `chat_error`, `turn_active` — driven by agent-process and turn lifecycle
+>   rather than the sandbox states listed here (`starting`/`suspended` never
+>   appear on the wire; the sandbox is already resumed before the socket opens).
+> - **Additions:** a `{type:"ping"}` heartbeat every 15s (an application frame —
+>   protocol pings are not reliably counted as activity by the edge proxy, and a
+>   silent long turn was getting the socket dropped), and a capped replay buffer
+>   so a reconnect or a second tab rebuilds the chat history.
+> - `research_updated`/`gedcomx_updated` always carry the **full** document; the
+>   "or patch" option was never taken.
+
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)
 - `allowed_emails` (email) — the allowlist
@@ -298,12 +563,44 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 - `sessions` (app login sessions) — or stateless JWT
 - (optional) `usage` (user_id, tokens, sandbox_seconds) for cost controls
 
+> **As built, verified 2026-08-02 (`apps/server/app/models.py`).** Four tables,
+> not six. SQLite locally, Neon Postgres hosted — same models either way.
+>
+> - **`users`** — shipped, but `google_sub` → **`familysearch_id`** (the FS account
+>   id, stored for traceability; the allowlist still gates on email).
+> - **`allowed_emails`** — shipped verbatim.
+> - **`familysearch_tokens`** — shipped, columns `access_token` / `refresh_token`
+>   / `expires_at` / `updated`. **Not encrypted** (see §5.2).
+> - **`projects`** — shipped, minus **`objstore_prefix`** (no object store, §6.4)
+>   and plus four columns this spec didn't foresee: `model` (the per-session model
+>   knob from §0.5), `status` (`active`/`archived`), and `turn_locked_at` — a
+>   guarded-UPDATE turn lock that makes the `/v1` API's one-turn-at-a-time rule
+>   correct across control-plane instances without any in-memory state.
+> - **`sessions`** — **not built**; the signed cookie is self-contained, which is
+>   the "or stateless JWT" branch this bullet allowed for.
+> - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
+>   alpha-gated meter in the web client and are never persisted, so there is no
+>   basis for the budgets §13 calls for.
+
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,
   `tree.gedcomx.json`, `results/<logId>.json`.
 - `agent_runner` syncs the sandbox `/project` → object store on every change
   (decision #5 in the sandbox doc). The control plane reads from here for the
   viewer and can re-hydrate a fresh sandbox from it.
+
+> **NOT BUILT, verified 2026-08-02.** There is no object store and no sync. No
+> storage client, no bucket config, no `objstore_prefix`. **The sandbox
+> filesystem is the only copy of a project**, kept by E2B's pause snapshot
+> (retained indefinitely, no TTL — see `docs/realtime-architecture.md` §1).
+>
+> This is a real, accepted risk, not an oversight: a deleted or corrupted sandbox
+> loses that project outright, and there is no re-hydration path for a fresh
+> sandbox. §0.5 flagged exactly this and recommended a cheap local mirror as
+> insurance; that mirror was not built either. The long-term intent recorded in
+> `docs/realtime-architecture.md` §6 is that **FamilySearch becomes the durable
+> system of record** as research is uploaded to the user's tree — which is why
+> the object store keeps not getting built rather than being scheduled.
 
 ---
 
@@ -327,6 +624,30 @@ A template/image bundling: Node + Python + `claude-agent-sdk`, the genealogy MCP
 (`e2b.Dockerfile`). The engine package supplies the skills + MCP build at image
 build time.
 
+> **As built, verified 2026-08-02 — shipped as specced.** §7's bullets hold:
+> `agent_runner` drives the Agent SDK over the plugin skills + stdio MCP server,
+> and it restores context with `resume=<session_id>` persisted to
+> `/project/.agent_session` rather than relying on microVM memory. **27** skills,
+> not 28. Three corrections to the mechanics:
+>
+> - **Do *not* set `skills="all"`.** The SDK turns it into `--allowedTools Skill`,
+>   which restricts the session to only the Skill tool. Skills load via the
+>   plugin (`plugins=[{"type":"local", …}]`) instead, and the plugin's **agents**
+>   are additionally staged into `<project>/.claude/agents/` because plugin
+>   loading registers them only under the namespaced `genealogy-research:<agent>`
+>   spelling that no SKILL.md asks for (issue #939).
+> - **The FamilySearch token does not arrive by env var.** Option (a) won: the
+>   control plane writes `~/.familysearch-mcp/tokens.json` into the sandbox, and
+>   the operator Anthropic key comes from a per-connect secrets file at
+>   `/run/secrets/session.json` — deliberately not create-time env, because a
+>   sandbox's env can never be updated and would hold a rotated key until death.
+> - **The `/project` sync half of the last bullet was never built** (§6.4). File
+>   deltas are pushed over WS; nothing is synced anywhere.
+>
+> §7.1 is accurate — `apps/server/sandbox/e2b.Dockerfile` bakes Python 3.12 +
+> `claude-agent-sdk`, Node 22, the engine prod tree, and the plugin, built by
+> `apps/server/sandbox/build-image.sh` (`make sandbox-image`).
+
 ---
 
 ## 8. The web client
@@ -344,6 +665,20 @@ build time.
   + "new project" flow.
 - **Images:** display via the server's image proxy.
 
+> **As built, verified 2026-08-02 — shipped as specced.** `apps/web/src` is the
+> two-pane shell: `ChatPane` left, `viewer-ui`'s `App` right, inside a
+> `SessionView`; `SessionList` is the landing screen; `LoginScreen` fronts it.
+> Chat streaming, tool/skill progress rendering, and interrupt are all present.
+> The `#/s/:id` hash route means a refresh or a shared link reopens the session.
+>
+> Two notes: the "researcher-profile onboarding" is conversational, not UI — a
+> new session auto-sends an opening turn that triggers `init-project` (§0.5) —
+> and the §7.4 this section twice points at **does not exist**; the spec has no
+> §7.4. It means §0.5's onboarding bullet.
+>
+> `docs/plan/3-pane-workbench-ui.md` proposes replacing this two-pane layout; as
+> of this audit none of that plan has landed.
+
 ---
 
 ## 9. The Electron app (adapted)
@@ -355,6 +690,11 @@ build time.
   comes from the shared package, so any viewer improvement lands in both. No chat
   in Electron (it remains the Cowork companion viewer).
 
+> **As built, verified 2026-08-02 — shipped as specced.** `apps/electron` is now
+> an app package whose entire renderer is `main.tsx` + an
+> `IpcResearchTransport`; `main/` and `preload/` are unchanged, and there is no
+> chat. `make electron` runs it.
+
 ---
 
 ## 10. Continued Cowork plugin + MCP `.mcpb`
@@ -364,6 +704,14 @@ build time.
   (→ `genealogy-plugin.zip`). The packaging drift tests
   (`tests/packaging/*.test.ts`) continue to guard manifest/skill sync.
 - The web product reuses this same engine; do **not** fork the skills or tools.
+
+> **As built, verified 2026-08-02 — shipped as specced, and this is the load-bearing
+> one.** Both artifacts still build from the one engine, the packaging drift tests
+> still guard manifest/skill sync, and nothing is forked: the hosted sandbox image
+> copies `packages/engine/{mcp-server/build,plugin}` straight in. The build scripts
+> are `scripts/build-mcpb.mjs` and `scripts/package-plugin.mjs` (Node, not the
+> `.sh` names above — the `.sh` wrappers still exist), driven by `make mcpb` /
+> `make plugin`.
 
 ---
 
@@ -382,6 +730,26 @@ build time.
   transcript held server-side / in the sandbox. Spec a web feedback endpoint that
   captures the server-side transcript + project files instead.
 
+> **As built, verified 2026-08-02 — mixed.**
+>
+> - **The section list is a 2026-06-05 snapshot.** `research.json` now has 15
+>   top-level sections; **`known_holdings` and `localities`** were added after
+>   this was written (they are the two sections behind the two extra viewer
+>   components in §4.1). `tree.gedcomx.json` is unchanged.
+> - **The `schema` package** shipped exactly as described and is the single
+>   TS-types + JSON-Schema source for viewer-ui, web, and server.
+> - **Schema versioning: NOT BUILT.** No `schema_version` is stamped on
+>   `research.json` or the tree, and `packages/schema` ships no migration
+>   helpers — the only `schema_version` in the repo belongs to the eval run-log
+>   format. Version skew across web/electron/cowork is currently unhandled; the
+>   mitigating fact is that all three read the same package from one repo.
+> - **Web feedback: shipped** (`apps/server/app/feedback.py`). It bundles the
+>   in-sandbox `/project` files plus the Agent SDK transcript JSONL from
+>   `~/.claude/projects/-project/` and POSTs the zip to the **same** Google Apps
+>   Script → Drive endpoint the Electron viewer uses, in the same zip shape — so
+>   the existing triage workflow (`docs/alpha-feedback-guide.md`) consumes web and
+>   desktop cases identically. No local-disk write, so it scales past one instance.
+
 ---
 
 ## 12. Sidecar services — productionize (currently broken for hosting)
@@ -394,6 +762,25 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 `wikiApiUrl` / `popStatsUrl` at them (per-deployment config, not per-user).
 `wiki_read`/`wiki_place_page` also read **pre-crawled markdown from disk**
 (`wikiMarkdownDir`) — that corpus must be baked into the sandbox image or served.
+
+> **STILL OPEN, verified 2026-08-02 — with one half now closed.**
+>
+> **Open:** both endpoints are *still* on the personal Tailscale host.
+> `DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki"`
+> (`packages/engine/mcp-server/src/auth/config.ts`) and
+> `DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats"`
+> (`tools/place-population.ts`). Nothing was relocated to production infra. This
+> is the single largest unfinished item in the spec and it is a live dependency
+> on one person's machine.
+>
+> **Closed:** the `wikiMarkdownDir` sentence is obsolete, not pending. There is
+> no `wikiMarkdownDir` anywhere in the engine — `wiki_read` and `wiki_place_page`
+> were moved onto the same networked `wiki-query-api` as `wiki_search`, so the
+> corpus lives on that server and there is nothing to bake or serve.
+> `apps/server/sandbox/e2b.Dockerfile` carries an explicit block recording this.
+> Anything still describing those two tools as needing a baked corpus (e.g. §0.5,
+> and the "Deferred / known gaps" list in `docs/realtime-rearch-status.md`) is
+> out of date.
 
 ---
 
@@ -417,6 +804,35 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   budgets; aggressive **idle suspension** (E2B pause) and auto-archive; rate
   limits; the allowlist already caps the blast radius for v1.
 
+> **PARTIAL, verified 2026-08-02.**
+>
+> - **Isolation — shipped.** One E2B microVM per session (stricter than the
+>   per-user rule stated here, since session == sandbox 1:1); never shared.
+> - **Secrets — shipped, and better than specced.** Written on **every connect**,
+>   not just at create, to `/run/secrets/session.json` — on tmpfs deliberately, so
+>   it never enters a pause snapshot — because a sandbox's create-time env can
+>   never be updated and would pin a rotated key for the sandbox's whole life.
+>   Never surfaced to the browser.
+> - **Token encryption at rest — NOT built.** `familysearch_tokens` is plaintext
+>   with a `TODO` in `models.py`.
+> - **`validate_research_schema` path-traversal — not addressed in the tool**,
+>   which still takes `projectPath` and reads from it unconstrained. The
+>   mitigation is architectural rather than the one described: the tool runs
+>   inside the tenant's own microVM, where there is nothing to traverse *to*. The
+>   control plane does validate every path it accepts (`_LOG_ID_RE`,
+>   `_IMAGE_REF_RE`, `_UPLOAD_NAME_RE` in `sessions.py`, which cite this bullet).
+>   Revisit before anything multi-tenant shares a filesystem.
+> - **Residency / retention — NOT built.** No privacy policy, no retention
+>   window, no purge routine. `DELETE /api/sessions/{id}` kills the sandbox and
+>   drops the row, which is project deletion; token revoke is not part of it.
+>   §0.5's no-living-person-data instruction is still the whole control.
+> - **Cost controls — idle suspension shipped, budgets did not.** `SandboxSpec`
+>   defaults to `auto_suspend_seconds: 900` and `E2BProvider` creates with
+>   `lifecycle={"on_timeout":"pause","auto_resume":True}`. There are **no** token
+>   or sandbox-second budgets, no rate limits, and no auto-archive — there is no
+>   `usage` table to enforce them against (§6.3). Per-turn cost is displayed to
+>   the user and discarded. The allowlist remains the only real cap.
+
 ---
 
 ## 14. Observability, testing
@@ -427,6 +843,23 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   drift tests. Add: control-plane unit/integration tests, a transport-contract
   test shared by both ResearchTransport adapters, and an end-to-end
   "create→chat→file-delta→suspend→resume" test against a real E2B sandbox.
+
+> **PARTIAL, verified 2026-08-02.**
+>
+> - **PII-free structured logging — shipped**, though minimally:
+>   `apps/server/app/obs.py` is a stdout logger carrying exactly the stated rule.
+>   **Error tracking (Sentry-style) with PII scrubbing was not built.**
+> - **Engine eval harness + packaging drift tests — retained**, unchanged.
+> - **Control-plane tests — shipped:** 14 pytest modules under
+>   `apps/server/tests/` (`make server-test`).
+> - **Transport-contract test — shipped, and as specced:** `assertTransportContract`
+>   in `packages/viewer-ui/src/contract.ts` is deliberately vitest-free plain
+>   throws so either adapter's suite can import it against a live instance.
+> - **The live E2B end-to-end test was not built as an automated test.** The
+>   equivalent coverage is a one-off manual verification recorded as C4 in
+>   `docs/realtime-rearch-status.md` plus `make agent-smoke`, which checks only
+>   that the hosted path resolves the plugin agents. Nothing in CI exercises
+>   create→chat→delta→suspend→resume against a real sandbox.
 
 ---
 
@@ -443,6 +876,25 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 5. **Harden / endgame:** E2B compliance verification; later, self-hosted E2B for
    FamilySearch.
 
+> **Progress as of 2026-08-02.**
+>
+> 1. **Done.** Monorepo + `viewer-ui` extraction landed in PR #293
+>    (`371e5db5`, 2026-06-07); Electron works through the IPC adapter.
+> 2. **Done**, with two substitutions: the login is FamilySearch, not Google, and
+>    the read API reads the sandbox rather than durable storage. The "read-only
+>    web viewer, no chat yet" intermediate step was skipped.
+> 3. **Done.** `agent_runner` + sandbox image + FamilySearch web OAuth + token
+>    injection + chat UI all shipped and ran end to end on a real microVM.
+> 4. **Partial.** Image proxy and feedback shipped; **sidecar services, cost
+>    controls, privacy/retention did not**, and observability is thin. This is
+>    where the remaining work is.
+> 5. **Not started.** E2B's compliance posture is still unverified and
+>    self-hosted E2B has not been attempted.
+>
+> One phase not in this list happened anyway: the **realtime re-architecture**
+> (§3, §6.2), which moved the streaming path into the sandbox to make the control
+> plane affinity-free.
+
 ---
 
 ## 16. Decisions — RESOLVED for the POC (see §0.5)
@@ -455,6 +907,20 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 - **Still to confirm (not blocking):** FamilySearch dev-key supports the web
   redirect flow + a handful of external alpha users; Funnel is enabled for the two
   sidecar endpoints.
+
+> **As built, verified 2026-08-02.** Every decision here held except the
+> deployment one: the control plane is **deployed to Fly.io** as a single
+> always-on container with Neon Postgres, not run on Dallan's local server behind
+> Tailscale Funnel (`deploy/fly.toml`, `make deploy`). The many-projects-per-user
+> 1:1 session model, deferred PII, token option (a), and conversational
+> onboarding are all in the code as decided.
+>
+> Of the two "still to confirm" items: the FS web redirect flow **does** work
+> (it reuses the desktop registration, which is why the callback is top-level
+> `/callback`) — whether the dev key's terms permit the current external-user
+> count is a business question this audit cannot answer. The Funnel question is
+> moot for the wiki corpus (§12) but **still open for the two sidecar endpoints**,
+> which remain on `*.ts.net`.
 
 ---
 
@@ -481,3 +947,14 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
     (no local `~/.claude` session log).
 13. **Project/onboarding model** (project creation, researcher profile, FS-person
     seeding) — `init-project` is a Cowork skill that needs a web equivalent.
+
+> **Scorecard as of 2026-08-02.** This list was right about what mattered, which
+> is why most of it is now code. **Closed:** 1 (as one FamilySearch flow, not two
+> — §5.1), 2, 5, 6 (via option (a)), 11 (in a different shape — §6.1), 13 (no web
+> equivalent was needed; `init-project` runs conversationally in the sandbox).
+> **Still open:** 7 (both sidecars still on `*.ts.net` — §12), 8 (no budgets —
+> §13), 10 (nothing built — §13), and the versioning half of 12 (the web-feedback
+> half shipped — §11). **Overtaken by a design change:** 3 and 4 — there is no
+> object store and the viewer read is not decoupled from the sandbox, on the bet
+> that FamilySearch becomes the durable system of record (§6.4). 9 is split:
+> secrets handling and rotation shipped; the path-traversal fix did not.

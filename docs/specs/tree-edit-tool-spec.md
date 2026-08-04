@@ -87,6 +87,17 @@ denies every rename/rewrite/delete at the tool boundary — enforcement is
 allowlist-level everywhere (Cowork `allowed-tools`, agent `tools:`
 frontmatter, the eval harness), not per-run validator prose.
 
+**Granularity ceiling — splitting the tool is the only lever.** Authorization
+here is whole-tool. There is no `allowedOperations` caller contract, so a
+context can be granted `tree_edit` or denied it, but cannot be granted a
+*subset* of its ops. A finer split — say `add_name` but not `add_person` — has
+no mechanism today except splitting the tool a second time, the way
+`tree_correct` was split out of `tree_edit`. That ceiling is deliberate rather
+than an oversight: the guarantee holds precisely because it is enforced at
+allowlist level on all three binding surfaces named above, and a per-op contract
+would have to be re-implemented and re-verified in each of them. Reach for
+another tool split before reaching for per-op authorization.
+
 Both tools keep identical batched `ops`, id rules, validate-on-write, and
 `.bak` semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool

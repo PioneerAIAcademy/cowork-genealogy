@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Not recovered, and the most over-claiming of the six runs. Zero 'Sampson' in the final tree. It linked M M Wood (I1) as Martha's father and built out thirteen Wood persons around him — Nancy, Henry, Margaret, Manly, David, Rosannah, Jonah, Jasper, Elizabeth, Mariah — constructing a whole Wood family from a surname that is a married name. Stopped on cost_cap. Graded late, 2026-07-31, so it could ship with the tool PR.",
+    "f2": "Not recovered: a second Martha Wood (I2) linked as mother. Scored 1 rather than 2 on proof quality because the failure is not a thin conclusion but an elaborate one — thirteen persons minted off an unverified premise is worse than a cautious wrong answer, and it is the clearest single illustration of why this fixture exists. Same independence caveat as the sibling run: annotated after the verdict was known to me from harness stdout. The tree evidence is unambiguous — no Sampson person exists in it."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

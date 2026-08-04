@@ -243,6 +243,140 @@ Strict surname + birth-place match:
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
+| `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+
+### `jurisdictionHints` — where else to look when a marriage search does not find the subject
+
+A marriage is filed where the wedding happened, not where the couple later
+lived, and a couple usually married **before** they migrated. So a nil marriage
+search in one jurisdiction is a prompt to try the couple's *earlier* places, not
+a finding that no record exists.
+
+The tool computes those places itself rather than relying on the caller to
+remember the rule. This is the same reasoning as host-side ranking: a documented
+step decays under compaction, a tool contract does not. Measured basis: across
+four scored `jimmie-jewel-neal` benchmark runs, every marriage search stayed in
+the family's later residence — the jurisdiction the tree's own marriage fact
+named — while the answering record sat in the husband's birth state, a fact
+already present in the same tree.
+
+Fires when **all** of: the search was marriage-scoped (`recordType: "marriage"`,
+or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`); the search did
+not find the subject — either `totalMatches` is 0 **or** ranking reported
+`subjectResolvable: false`; the search was scoped to a place **narrower than a
+country**; and both `projectPath` and `subjectId` were supplied.
+
+The sub-country condition matters more than it sounds. A country-wide nil means
+the record is not in that country's indexed collections, so naming counties inside
+it is noise — and an unscoped search never missed anywhere at all, which makes the
+note's "did not find the subject in the place searched" simply untrue. Both are the
+same situation and both are suppressed. Across the six committed `jimmie-jewel-neal`
+runlogs, **9 of 26** marriage-scoped searches carried no place scope whatsoever, so
+this is the common shape, not an edge case.
+
+`subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
+and the hint deliberately fires on both. One is a scoreable subject against a pool
+that holds no match (a real negative). The other is a subject too thin to
+discriminate — no dated or placed fact — where the scores are noise. Those two
+need opposite responses from the caller *about the ranking*, but they want the same
+response here, and the thin-subject case may be the more valuable of the two: in
+genealogy you often cannot enrich the subject, because not knowing the missing
+information is precisely why you are stuck. A spouse's places are exactly the
+borrowed context that unsticks it. Distinguishing them later wants an explicit
+field on `RankSearchMatchesResult`, not sniffing the `diagnostic` string.
+
+A nil-**only** trigger was tried first and is too narrow: in one verification run
+it fired once, at 121 of 180 minutes. Note that both triggers need `subjectId`, so
+a caller that omits it gets neither the hint nor host-side ranking — measured
+`subjectId` coverage across four graded runs was 0% / 100% / 55% / 39%, which
+bounds how often either can fire at all. That gap is tracked separately; do not
+read a run with low coverage as evidence about the trigger width.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
+| `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). **Capped at 8** — the tail of a distance-ordered list is its least useful part, and this lands in a response whose assembly elsewhere strips `gedcomx` and hoists `collectionTitle` for context economy. The jurisdiction already searched is excluded, including differently-spelled and **narrower** forms of it; a **broader** place is kept, since a wider search reaches the other localities inside it. |
+| `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
+
+Each `JurisdictionCandidate`: `place` (as written, `standard_place` preferred),
+`earliestYear` (number \| null), `whose` (the `persons[].id` that contributed the
+fact), `fromFact` (e.g. `Birth`, `Residence`, `Marriage`).
+
+Both spouses contribute, which is the point: the decisive place is frequently
+the *other* spouse's birthplace, which the subject's own facts never mention.
+
+#### Ordering: distance from the marriage's date window, not earliest-first
+
+With a `marriageYearFrom`/`marriageYearTo` window the candidates sort:
+
+1. places dated at or before the window, **most recent first** — the last known
+   location before a wedding is the best guess for where it happened
+2. undated places
+3. places dated **after** the window, last — they say nothing about the wedding
+
+With no window in the arguments there is no proximity signal, and the ordering
+falls back to earliest-first across the whole set.
+
+**Earliest-first over the whole set was the original design and is wrong.** It
+ranks by absolute age, so a place tied to a much later marriage can top the list
+on nothing but a small birth year.
+
+Verified harmful in `jimmie-jewel-neal` run `run-2026-07-30_23-05-46`. Under
+earliest-first the order was South Carolina (1847, the subject's *third*
+husband's birthplace), **Georgia (1855, the subject's own birthplace)**, Yell,
+Arkansas (1857, the birthplace of the husband who mattered). The caller pivoted
+to candidate #2: searches carrying a Georgia place argument went from **0 before
+the hint fired to 12 after**, and the two wrong parents it then minted were found
+in those Georgia records. A run of the same fixture *without* the hint
+(`run-2026-07-30_14-32-18`) had correctly declined to name parents at all, so the
+ordering did not merely fail to help — it converted a cautious run into an
+over-claiming one.
+
+Re-derive from the run rather than trusting a summary: count place arguments on
+`record_search` **tool_use** entries only. An earlier reading of this same run
+reported nine South Carolina searches; there were **zero**. That figure came from
+matching the string anywhere in a transcript line, which also catches
+`extraction_append`, `research_log_append` and subagent prompts describing census
+people who merely *happened to be born* in South Carolina.
+
+The current ordering demotes Georgia to #4, below the Yell, Arkansas entry that
+holds the answer — i.e. it fixes the real failure path, not the one first
+reported. Ranking is the load-bearing part of this feature: treat a change to it
+as a behavioural change and re-verify against a live run, not unit tests alone.
+
+#### Place matching
+
+`searchedPlace` is the caller's `marriagePlace` when given, otherwise
+`recordSubdivision` + `recordCountry` joined — the caller usually scopes a marriage
+search with the latter pair, and reading only `marriagePlace` left the exclusion
+inert on most real searches.
+
+A country term alone does not count as a scoped place: `isSubCountryPlace()` gates
+the hint, and it is exported from `marriage-jurisdictions.ts` rather than duplicated
+here because `placeTokens` deliberately collapses the distinction it tests (its
+empty-fallback makes a country-only place look like any other single-token place).
+
+It is compared to each candidate on comma-separated tokens, lowercased, with
+`County`/`Co.` dropped and the country term dropped unless it is all that remains.
+The match is **one-directional**: a candidate is excluded only when it is equal to
+or **narrower** than what was searched. So `"Hill County, Texas"` excludes
+`"Hill, Texas, United States"`, and searching `"Texas, United States"` excludes
+every Texas place in the tree — but searching `"Yell County, Arkansas"` **keeps**
+`"Arkansas, United States"`, because a statewide search is a different search that
+reaches the other counties. Dropping a locality level when the narrow one comes back
+empty is the highest-value broadening move available, so the bidirectional version
+of this test deleted exactly the lead the feature exists to surface.
+
+Exact string comparison was the original behaviour and let the jurisdiction just
+searched reappear as its own alternative, because callers spell places the way
+FamilySearch's search expects while the tree stores standardized forms.
+
+**Advisory and best-effort.** A missing or malformed `tree.gedcomx.json`, an
+unknown `subjectId`, or a spouse absent from `persons` all leave the field off
+entirely — never an error. Ranking degrading must not take the search down with
+it, and neither must this.
+
+Implementation: `packages/engine/mcp-server/src/utils/marriage-jurisdictions.ts`.
 
 Each `RecordSearchResult`:
 

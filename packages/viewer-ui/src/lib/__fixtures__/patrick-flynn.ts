@@ -518,8 +518,7 @@ export const patrickFlynnResearch: ResearchData = {
           notes:
             'Probate, naturalization, and city directories should fill some of this 58-year window.'
         }
-      ],
-      impossibilities: []
+      ]
     }
   ],
   proof_summaries: [

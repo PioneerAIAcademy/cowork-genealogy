@@ -2,6 +2,58 @@
 
 Grading dimensions for search-records unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+> **Note — not a dimension.** Everything until the first `##` below is grading
+> guidance, not a scored axis. Keep it out of `##` headings: the harness parses
+> every `##` in this file as a rubric dimension and rejects one without
+> **pass** / **partial** / **fail** bullets, which aborts every test in the
+> skill as `not_runnable`.
+
+### Tool Arguments — this rubric owns the name-variant case
+
+**A `fixture_not_found` on a *name-variant* `record_search` is a gap in this
+test's fixtures, not a Tool Arguments defect. When the searches that DID match a
+fixture — above all the primary query — carry correct arguments, score Tool
+Arguments exactly 3. Not 2. A `fixture_not_found` of this kind contributes
+nothing to the score, so it cannot be the reason for a deduction of any size.**
+
+**Do not split the difference.** On 2026-07-31 a judge quoted this override,
+agreed the variant misses "are not Tool Arguments defects", confirmed "the
+primary search arguments were correct", and then scored **2** — reading "do not
+score below 3" as "do not score *fail*" and settling one band down. Partial is a
+deduction; if the only blemish is a name-variant fixture miss, there is nothing
+to deduct for. The score is 3.
+
+This overrides the global "Critical: Tool Usage Errors" rule for this one case,
+under that prompt's own provision for a skill's rubric to claim an axis and be
+deferred to.
+
+It exists because the two rules otherwise contradict each other. **Search
+strategy** below awards a pass only when, "for names with known variant patterns
+(Irish, German, Eastern European origins), at least one relevant variant or
+phonetic alternative is included" — and marks it *partial* when an obvious
+variant is missed. So the rubric pays the skill to invent spellings. But a unit
+test can only stock the spellings its author happened to think of, and the
+global rule fails any call that matches no fixture. The skill therefore gets
+credited on Search strategy and penalised on Tool Arguments for the *same*
+query. Observed twice in one suite sweep on different tests — `Flinn`/`Pat`
+(ut_search_records_014) and `Wilkens` (ut_search_records_024) — each of which
+passed in isolation, because whether the model reaches for a variant on a given
+run is a coin flip. That is a corpus limit surfacing as skill flakiness.
+
+**Scope this narrowly.** It covers a plausible spelling or given-name variant of
+a name already in the query — `Flynn`→`Flinn`, `Wilkins`→`Wilkens`,
+`Patrick`→`Pat`. It does **not** excuse: a malformed or anchorless call, a wrong
+parameter name, a tool that does not exist, a call to a tool this skill is not
+allowed, or a `record_read`/`record_search` aimed at a record no search returned.
+Those are real defects and the global rule stands.
+
+**Do not "fix" this by stocking a catch-all nil fixture.** It was tried on
+ut_search_records_014 and made things worse: an error stops the skill, whereas a
+nil is an *invitation to try the next variant* (Step 8's protocol), and the run
+hit its turn cap. A catch-all is defensible only on a test whose subject is nil
+exhaustion **and** whose turn budget has room for it — ut_search_records_018 has
+both.
+
 ## Search strategy
 
 Did the skill construct appropriate search parameters from the plan item? Name variants, date ranges, and jurisdictions should match the research context, and the broad-to-narrow default should be followed unless the plan item justifies a narrow start.

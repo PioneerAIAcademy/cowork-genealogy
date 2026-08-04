@@ -23,6 +23,7 @@ import {
   withRetry,
   mapWithConcurrency,
   countryConsistency,
+  deriveContextName,
   __clearPlaceResolverCachesForTests,
 } from "../../src/utils/place-resolver.js";
 
@@ -76,6 +77,63 @@ describe("resolveStandardPlace", () => {
     expect(mockSearchPlace).toHaveBeenCalledTimes(1);
   });
 
+  // ── Same-name disambiguation via a context derived from the input text ──
+  // Regression guard for the silent same-name corruption bug: an 1870 marriage
+  // at "Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania"
+  // was persisted as "Church, Clarion, Pennsylvania" — a place literally named
+  // "Church" in the wrong county, because it was the top-scored name-search hit.
+  it("narrows a same-name top hit using the parent locality derived from the input", async () => {
+    mockSearchPlace.mockResolvedValue([
+      // The wrong top-scored hit: a place NAMED "Church" in a different county.
+      entry({ placeRepId: "wrong", placeId: "pc", fullName: "Church, Clarion, Pennsylvania, United States", score: 0.95 }),
+      // The right locality — lower-scored, but the only one under Shenandoah.
+      entry({ placeRepId: "right", placeId: "ps", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 0.4 }),
+    ]);
+    expect(
+      await resolveStandardPlace(
+        "Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania",
+      ),
+    ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+  });
+
+  it("falls back to the unfiltered top hit when nothing matches the derived context (never worse than today)", async () => {
+    // No candidate contains the derived parent locality — the fallback must
+    // keep the full set so resolution is no worse than the pre-fix behavior.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "a", fullName: "Springfield, Illinois, United States", score: 0.2 }),
+      entry({ placeRepId: "b", fullName: "Springfield, Missouri, United States", score: 0.8 }),
+    ]);
+    expect(
+      await resolveStandardPlace("Nowheresville, Nonexistent County, Missouri"),
+    ).toBe("Springfield, Missouri, United States");
+  });
+
+  // ── KNOWN LIMITATION (documented, not desired) ──────────────────────────────
+  // The derived-context filter is NOT strictly "never worse" on this free-text
+  // path: resolveStandardPlace selects with bare pickBest (no exact retention),
+  // so when the correct top-scored hit lacks the derived token while a wrong hit
+  // contains it, filtering demotes the correct one. The trade is inherent — a
+  // filter that demotes a wrong top hit can demote a correct one — and it is
+  // unguarded by countryConsistency here (trailing token "District of Columbia"
+  // is not a recognized country). This test PINS that current behavior so a
+  // future change to the guarantee is a deliberate, visible edit, not a silent
+  // one. See deriveContextName's doc comment. (contrast: the standardPlace-input
+  // fns retain the exact match and ARE strictly safe.)
+  it("KNOWN LIMITATION: derived context can demote a correct top hit (Georgetown, Washington, DC)", async () => {
+    mockSearchPlace.mockResolvedValue([
+      // Correct: Georgetown in DC, higher score. fullName lacks "Washington".
+      entry({ placeRepId: "dc", placeId: "pdc", fullName: "Georgetown, District of Columbia, United States", score: 0.9 }),
+      // Wrong: Georgetown in Washington State, lower score, contains "Washington".
+      entry({ placeRepId: "wa", placeId: "pwa", fullName: "Georgetown, King, Washington, United States", score: 0.5 }),
+    ]);
+    // Derived context is segment index 1 = "Washington", which the DC place does
+    // not contain — so it is filtered out and the lower-scored WA place wins.
+    // A bare name search (pre-fix) would have returned the DC place.
+    expect(
+      await resolveStandardPlace("Georgetown, Washington, District of Columbia"),
+    ).toBe("Georgetown, King, Washington, United States");
+  });
+
   it("does NOT cache a transient failure (retries on the next call)", async () => {
     vi.useFakeTimers();
     mockSearchPlace.mockRejectedValue(new Error("network"));
@@ -91,6 +149,22 @@ describe("resolveStandardPlace", () => {
     const second = resolveStandardPlace("Paris");
     await vi.runAllTimersAsync();
     expect(await second).toBe("Paris, France");
+  });
+});
+
+describe("deriveContextName", () => {
+  it.each([
+    ["Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania", "Shenandoah"],
+    ["Bristol, England", "England"],
+    ["Paris, Bear Lake, Idaho, United States", "Bear Lake"],
+  ])("%s -> %s", (text, expected) => {
+    expect(deriveContextName(text as string)).toBe(expected);
+  });
+
+  it("returns undefined for a single-token input (nothing to disambiguate by)", () => {
+    expect(deriveContextName("Springfield")).toBeUndefined();
+    expect(deriveContextName("  Ky  ")).toBeUndefined();
+    expect(deriveContextName("")).toBeUndefined();
   });
 });
 

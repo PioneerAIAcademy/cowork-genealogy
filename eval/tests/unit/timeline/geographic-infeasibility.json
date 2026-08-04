@@ -4,7 +4,7 @@
     "skill": "timeline",
     "name": "Timeline flags a geographic infeasibility via place_distance",
     "type": "positive",
-    "description": "Build a timeline for Patrick Flynn from the flynn-distant-events scenario. A County Mayo, Ireland baptism (a_014) is dated 25 May 1850; the 1850 U.S. Census residence (a_003) is dated 1 June 1850 in Schuylkill County, PA — 7 days apart. The skill should resolve both places, call place_distance (Ireland <-> Pennsylvania, ~5,400 km), and flag the pair as geographically infeasible in its reply (no Atlantic crossing in 7 days in 1850). Geographic/travel feasibility is timeline's own check (person_warnings does not do geography), so the finding is reported in the reply as a coherence signal, not written to impossibilities[]. This is the only test that exercises place_distance.",
+    "description": "Build a timeline for Patrick Flynn from the flynn-distant-events scenario. A County Mayo, Ireland baptism (a_014) is dated 25 May 1850; the 1850 U.S. Census residence (a_003) is dated 1 June 1850 in Schuylkill County, PA — 7 days apart. The skill should resolve both places, call place_distance (Ireland <-> Pennsylvania, ~5,400 km), and flag the pair as geographically infeasible in its reply (no Atlantic crossing in 7 days in 1850). Geographic/travel feasibility is timeline's own check (person_warnings does not do geography), so the finding is reported in the reply as a coherence signal and is not persisted (the timeline has no field for it). This is the only test that exercises place_distance.",
     "tags": [
       "timeline",
       "geographic-feasibility",
@@ -34,7 +34,7 @@
   "judge_context": [
     "Should resolve the baptism place (County Mayo, Ireland) and the 1850 census place (Schuylkill County, Pennsylvania) and call `place_distance` between them, obtaining a transatlantic distance (~5,400 km)",
     "Should flag the pair as geographically infeasible in its reply: a baptism in Ireland on 25 May 1850 and a Pennsylvania census enumeration on 1 June 1850 are only 7 days apart — too little time for an 1850 Atlantic crossing (~3 weeks by steamship), so the two records cannot describe the same person traveling",
-    "Geographic feasibility is this skill's own check and is reported in the reply as a coherence signal; `impossibilities[]` should stay empty (single-person logical-impossibility detection belongs to check-warnings, not timeline)",
+    "Geographic feasibility is this skill's own check and is reported in the reply as a coherence signal; it is not persisted anywhere (the timeline has no field for it), and single-person logical-impossibility detection belongs to check-warnings, not timeline",
     "The scenario has TWO distinct Ireland place strings on different events ('Ireland' and 'County Mayo, Ireland'). The skill resolves each UNIQUE place string exactly once, so a separate place_search for each is CORRECT tool usage — do NOT score Tool Arguments down as 'redundant' just because both standardize to the same Ireland place. Genuine redundancy would be calling place_search twice for the identical string; resolving two different strings is the intended behavior."
   ],
   "execution": {

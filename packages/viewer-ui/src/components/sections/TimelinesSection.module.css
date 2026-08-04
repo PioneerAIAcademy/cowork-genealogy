@@ -202,31 +202,6 @@
   font-style: italic;
 }
 
-/* Impossibility alert */
-.impossibility {
-  display: grid;
-  grid-template-columns: 100px 20px 1fr;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) 0;
-}
-
-.impossibilityDesc {
-  grid-column: 3;
-  font-size: 12px;
-  color: var(--badge-red-text);
-  background: var(--badge-red-bg);
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
-  border-left: 3px solid var(--badge-red-text);
-}
-
-.impossibilityLinks {
-  grid-column: 3;
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-xs);
-}
-
 .footer {
   display: flex;
   align-items: center;

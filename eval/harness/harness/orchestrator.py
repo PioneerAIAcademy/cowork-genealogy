@@ -44,6 +44,7 @@ from harness.skill_stubs import parse_stub_skills
 from harness.skill_runner import (
     DEFAULT_MODEL,
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+    SKILL_TOOL_NAME_KEYS,
     SkillRunResult,
     run_skill,
 )
@@ -429,6 +430,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
+        skills_invoked=result.skills_invoked,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -556,6 +558,7 @@ async def _execute_single_run(
                     rubric=rubric,
                     skill_frontmatter=skill_frontmatter,
                     attempted_mcp_calls=result.attempted_mcp_calls,
+                    unread_skill_calls=result.unread_skill_calls,
                 ))
                 else {}
             ),
@@ -708,6 +711,7 @@ def _build_warnings(
     rubric=None,
     skill_frontmatter: dict[str, Any] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
+    unread_skill_calls: list[list[str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -722,8 +726,29 @@ def _build_warnings(
       args to existing tool) continues to judge. This warning carries
       the call detail so the reviewer can see which fixtures need to be
       added or corrected.
+    - unread skill call when a Skill tool call carried the invoked skill's
+      name under a key the harness doesn't read, meaning the SDK's Skill
+      contract moved and `skills_invoked` is undercounting.
     """
     warnings: list[dict[str, Any]] = []
+
+    # Skill-tool contract drift. Without this the failure is invisible:
+    # skills_invoked stays empty, every routing verdict reads "never
+    # activated", and the suite fails as if the skills regressed.
+    if unread_skill_calls:
+        observed = sorted({key for keys in unread_skill_calls for key in keys})
+        warnings.append({
+            "kind": "unread_skill_call",
+            "advisory": (
+                f"{len(unread_skill_calls)} Skill tool call(s) carried no "
+                f"{' or '.join(repr(k) for k in SKILL_TOOL_NAME_KEYS)} input "
+                f"key; keys seen: {observed or '(none)'}. The SDK's Skill-tool "
+                "contract has changed — skills_invoked is undercounting and "
+                "activation/routing grades are unreliable until "
+                "SKILL_TOOL_NAME_KEYS in skill_runner.py is updated."
+            ),
+            "observed_keys": observed,
+        })
 
     # Tool-usage rubric advisory: the skill actually called an MCP tool,
     # but no rubric dimension name suggests it's being graded.

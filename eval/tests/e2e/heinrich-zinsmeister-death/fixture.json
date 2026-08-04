@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 5, flags adds_birth/adds_death/adds_burial, confidence 3). Draft transcribed from a German death/burial record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 5, flags adds_birth/adds_death/adds_burial, confidence 3). Resolved 2026-07-30: false match, no findable substitute — the hint's ARK (ark:/61903/1:1:JWBL-QXJ) was directly verified to be an unrelated person (Elisabetha Meininger), not Heinrich Zinsmeister. Supersedes an incorrect 2026-07-29 'true match' resolution based on a fabricated AI research narrative. See README 'Notes for reviewers'."
 }

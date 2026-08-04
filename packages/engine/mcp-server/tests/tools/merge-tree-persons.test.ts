@@ -30,7 +30,6 @@ function baseResearch() {
         generated: "2026-01-01T00:00:00Z",
         events: [],
         gaps: [],
-        impossibilities: [],
       },
     ],
     proof_summaries: [],

@@ -242,14 +242,19 @@ scenario), it is **not** cosmetic: re-run the harness.
 The `Check runlog discipline` check re-runs automatically when the label is
 added and turns green, with a warning noting the bypass so reviewers see it.
 
-### Safety: the label auto-expires on every new push
+### Safety: the waiver expires on every new push
 
-The label is **removed automatically whenever a new commit is pushed** to the
-PR. So a waiver can never silently cover a *later* substantive change — if more
-commits land, the check goes red again and the senior must re-apply the label
-(after confirming the new commits are still cosmetic). This is the same
-"voids on any further edit" guarantee a re-run would give, with none of the
-work.
+The waiver **stops applying the moment a new commit is pushed** to the PR. So it
+can never silently cover a *later* substantive change — if more commits land,
+the check goes red again and the senior must re-apply the label (after
+confirming the new commits are still cosmetic). This is the same "voids on any
+further edit" guarantee a re-run would give, with none of the work.
+
+The label is removed from the PR on that push too, so what you see matches what
+is in force. If it ever lingers — the strip is a separate workflow and can fail
+— the waiver is still void; the stale label has no effect. To clear a stuck red
+check in that case, remove the label and re-apply it (re-applying alone does
+nothing, since GitHub fires no event for a label that is already there).
 
 ### One-time repo setup
 

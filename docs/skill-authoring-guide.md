@@ -9,8 +9,9 @@ the doc index at the end.
 
 Two other things write toward this guide, so keep it current:
 
-- The `cowork-skill-builder` agent (`.claude/agents/`) scaffolds a new
-  skill — point it here for body style and frontmatter limits.
+- Anyone scaffolding a new skill from
+  `packages/engine/plugin/skills/search-wikipedia/` needs this guide for body
+  style and frontmatter limits.
 - The skill-improver loop (see [`docs/skill-lifecycle.md`](skill-lifecycle.md))
   proposes edits to existing skills and is told to write toward this
   standard.
@@ -187,10 +188,11 @@ fix the divergence before shipping.
 
 - [`docs/skill-lifecycle.md`](skill-lifecycle.md) — the full create → test
   → improve flow this guide is step 1 of.
-- [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md)
-  — the architecture rationale behind the skill kinds and the file-handoff
-  model. You don't need it to write a skill; read it only if you're curious
-  or changing the architecture itself.
+- [`docs/architecture.md`](architecture.md) — the system map: how a skill
+  binds to tools and agents, where state lives, and what nothing checks.
+  You don't need it to write a skill; read it if you're changing the
+  architecture itself, or its §3 "If you're asked to… Add a skill" block
+  for the sites a new skill touches.
 - [`docs/specs/research-schema-spec.md`](specs/research-schema-spec.md) —
   only if you're adding a new `research.json` / GedcomX field: that's a
   three-place change (the schema JSON + the prose table + the

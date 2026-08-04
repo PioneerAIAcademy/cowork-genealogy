@@ -224,12 +224,12 @@ this skill's. check-warnings runs that check deterministically via
 record that merely mentions the deceased (a posthumous probate/obituary).
 Do **not** detect or record those contradictions here.
 
-- **Leave `impossibilities[]` empty (`[]`).** This skill no longer
-  populates it. When the sorted timeline surfaces a possible vital-limit
-  contradiction — e.g. a record dated after the person's recorded death —
-  do **not** flag it as an impossibility yourself and do **not** silently
-  fold it in as a normal late-life event. State it plainly in your reply
-  ("the 1912 deed postdates the recorded 1908 death") and recommend a
+- **The timeline has no impossibilities field — do not record logical
+  contradictions here.** When the sorted timeline surfaces a possible
+  vital-limit contradiction — e.g. a record dated after the person's recorded
+  death — do **not** flag it as an impossibility yourself and do **not**
+  silently fold it in as a normal late-life event. State it plainly in your
+  reply ("the 1912 deed postdates the recorded 1908 death") and recommend a
   data-integrity check (check-warnings' `person_warnings`), which will
   classify it — misattribution vs. wrong death date vs. posthumous mention.
 
@@ -240,8 +240,7 @@ Do **not** detect or record those contradictions here.
   (`references/timeline-analysis-guide.md`) to judge whether one person could
   have been at both — including the same person enumerated in two different
   states in one census year. Report an infeasible pair **in your reply** as a
-  coherence signal (this identity-coherence finding has no persisted field);
-  do not write it to `impossibilities[]`.
+  coherence signal (this identity-coherence finding has no persisted field).
 
 Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
 ("informant said X, another said Y"), and any other non-chronological dispute
@@ -310,12 +309,11 @@ said about it."
 Persist the timeline to `research.json` `timelines[]` through
 `research_append`. Pass **only the timeline object** — never read and
 re-serialize the whole `research.json`. The persisted timeline's fields
-and shape are as before (`label`, optional `hypothesis_id`,
-`person_ids`, `generated`, `events[]`, `gaps[]`, and `impossibilities[]` —
-which this skill now always writes as an empty array `[]`, since
-impossibility detection has moved to check-warnings). On `{ ok: false, errors }` it writes
-nothing — surface those errors and fix the input rather than retrying
-blindly.
+are `label`, optional `hypothesis_id`, `person_ids`, `generated`,
+`events[]`, and `gaps[]`. There is no `impossibilities` field —
+impossibility detection has moved to check-warnings. On
+`{ ok: false, errors }` it writes nothing — surface those errors and fix
+the input rather than retrying blindly.
 
 **New timeline** — `op: "append"`. The tool assigns the `t_` id and
 stamps `generated`, so omit both from the entry:
@@ -329,8 +327,7 @@ research_append({
     "hypothesis_id": "h_001",
     "person_ids": ["KWCJ-RN4"],
     "events": [ ... ],
-    "gaps": [ ... ],
-    "impossibilities": []
+    "gaps": [ ... ]
   }
 })
 ```
@@ -339,7 +336,7 @@ research_append({
 person/hypothesis)** — read that timeline's `t_` id from
 `research.json` `timelines[]` and update it in place with
 `op: "update"`. The `fields` you pass are shallow-merged and array
-fields (`events`, `gaps`, `impossibilities`) are replaced **wholesale**,
+fields (`events`, `gaps`) are replaced **wholesale**,
 so pass the full recomputed arrays. `update` does **not** re-stamp
 `generated`, so include it yourself with the current timestamp so
 downstream skills know how fresh the analysis is:
@@ -352,8 +349,7 @@ research_append({
   "fields": {
     "generated": "2026-05-04T16:00:00Z",
     "events": [ ... ],
-    "gaps": [ ... ],
-    "impossibilities": []
+    "gaps": [ ... ]
   }
 })
 ```

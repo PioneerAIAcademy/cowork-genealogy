@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Core death recovered: 9 Sep 1942 at Standerton, Transvaal, sourced to the Transvaal Civil Death record (ark 1:1:7453-9H2M), with both 1906 and 1902 birth years preserved. Graded true despite the finer 'Hospital' place qualifier and the residence/occupation/cause-of-death details not being carried into the tree. Proof scored 2 (thin): rests on a single source and the ~4-year 1902-vs-1906 birth-year conflict was tolerated under the +/-5-year death-record rule but not independently resolved (no birth/baptism record); tier is correctly Probable, not over-stated."
+  },
+  "annotator": "mercyokum"
+}

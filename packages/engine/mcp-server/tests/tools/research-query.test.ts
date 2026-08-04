@@ -194,11 +194,216 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/not found/);
   });
 
-  it("evaluations takes no filters — combining any filter with it is an error", async () => {
+  it("evaluations takes only targetId/focus — another filter is an error naming them", async () => {
     await writeResearch({ evaluations: [{ id: "ev_001" }] });
     const result = await researchQuery({ projectPath: dir, section: "evaluations", status: "open" } as any);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/this section takes no filters/);
+    expect(result.errors.join(" ")).toMatch(
+      /'status' is not a supported filter for section 'evaluations' \(supported: targetId, focus\)/,
+    );
+  });
+
+  it("filters evaluations by targetId + focus", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001", superseded_by: "ev_003" },
+        { id: "ev_002", focus: "on-demand", target_id: "ps_001", superseded_by: null },
+        { id: "ev_003", focus: "proof-critique", target_id: "ps_001", superseded_by: null },
+        { id: "ev_004", focus: "proof-critique", target_id: "ps_002", superseded_by: null },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "evaluations",
+      targetId: "ps_001",
+      focus: "proof-critique",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
+    expect(result.items.map((e: any) => e.id)).toEqual(["ev_001", "ev_003"]);
+  });
+
+  // The filter layer deliberately cannot express `superseded_by: null` —
+  // `matches()` compares against a string, and the field is `string | null`.
+  // Both the superseded and the live verdict come back; picking the live one
+  // is the caller's step (gps-mentor.md's existing-verdict skip says so). This
+  // test pins that boundary so a future reader doesn't assume it filters.
+  it("does not filter evaluations by superseded_by — both entries are returned", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001", superseded_by: "ev_002" },
+        { id: "ev_002", focus: "proof-critique", target_id: "ps_001", superseded_by: null },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "evaluations",
+      targetId: "ps_001",
+      focus: "proof-critique",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
+    expect(result.items.filter((e: any) => e.superseded_by === null)).toHaveLength(1);
+  });
+
+  it("returns the whole evaluations section when no filter is supplied", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001" },
+        { id: "ev_002", focus: "on-demand", target_id: "project" },
+      ],
+    });
+    const result = await researchQuery({ projectPath: dir, section: "evaluations" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
+  });
+
+  // ── offset pagination (#1031) ────────────────────────────────────────────
+
+  it("pages the tail with offset: the 51st+ items are reachable", async () => {
+    // 57 matches — the exact shape of the proof-conclusion gate that saw 50 of 57.
+    const assertions = Array.from({ length: 57 }, (_, i) => ({ id: `a_${i}`, record_id: "REC1" }));
+    await writeResearch({ assertions });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 50 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(57); // count stays the true total, unaffected by offset
+    expect(result.items).toHaveLength(7); // items 51..57
+    expect(result.items.map((i) => i.id)).toEqual([
+      "a_50", "a_51", "a_52", "a_53", "a_54", "a_55", "a_56",
+    ]);
+    expect(result.truncated).toBe(false); // nothing beyond this page
+  });
+
+  it("still reports truncated:true when matches remain beyond the offset page", async () => {
+    const assertions = Array.from({ length: 120 }, (_, i) => ({ id: `a_${i}`, record_id: "REC1" }));
+    await writeResearch({ assertions });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 50 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(120);
+    expect(result.items).toHaveLength(50); // items 51..100
+    expect(result.truncated).toBe(true); // 101..120 still remain
+  });
+
+  it("truncated is false when the page ends exactly at count (offset + 50 == count)", async () => {
+    // The > vs >= boundary: 100 total, offset 50 returns 51..100 and nothing is left.
+    const assertions = Array.from({ length: 100 }, (_, i) => ({ id: `a_${i}`, record_id: "REC1" }));
+    await writeResearch({ assertions });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 50 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.items).toHaveLength(50);
+    expect(result.truncated).toBe(false);
+  });
+
+  it("offset: 0 is identical to omitting offset (backward compatible)", async () => {
+    const assertions = Array.from({ length: 60 }, (_, i) => ({ id: `a_${i}`, record_id: "REC1" }));
+    await writeResearch({ assertions });
+    const withZero = await researchQuery({ projectPath: dir, section: "assertions", offset: 0 });
+    const without = await researchQuery({ projectPath: dir, section: "assertions" });
+    expect(withZero).toEqual(without);
+    if (!withZero.ok) return;
+    expect(withZero.items).toHaveLength(50);
+    expect(withZero.truncated).toBe(true);
+  });
+
+  it("an offset past the end returns an empty page, not an error", async () => {
+    await writeResearch({
+      assertions: [{ id: "a_0" }, { id: "a_1" }, { id: "a_2" }],
+    });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 10 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(3); // the true total is still reported
+    expect(result.items).toEqual([]);
+    expect(result.truncated).toBe(false);
+  });
+
+  it("offset pages the FILTERED set, not the raw array", async () => {
+    const assertions = [
+      ...Array.from({ length: 55 }, (_, i) => ({ id: `a_${i}`, record_id: "REC1" })),
+      { id: "b_0", record_id: "REC2" },
+      { id: "b_1", record_id: "REC2" },
+    ];
+    await writeResearch({ assertions });
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      recordId: "REC1",
+      offset: 50,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(55); // only the REC1 matches
+    expect(result.items.map((i) => i.id)).toEqual(["a_50", "a_51", "a_52", "a_53", "a_54"]);
+    expect(result.truncated).toBe(false);
+  });
+
+  // Reproduces the exact call from hannah-earnest-children idx 79
+  // (offset: "50"), which was silently ignored before #1031. It is now a loud
+  // rejection, not a wrong page. Reject rather than coerce — mirrors
+  // person_search.offset's Number.isInteger validation.
+  it("rejects a string offset ('50') instead of silently ignoring it", async () => {
+    await writeResearch({ assertions: [{ id: "a_0", record_id: "REC1" }] });
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      offset: "50" as any,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/offset must be a non-negative whole number/);
+  });
+
+  it("rejects a negative offset", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: -1 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/offset must be a non-negative whole number/);
+  });
+
+  it("rejects a non-integer offset", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    const result = await researchQuery({ projectPath: dir, section: "assertions", offset: 1.5 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/offset must be a non-negative whole number/);
+  });
+
+  // The error names what was actually sent. JSON.stringify renders NaN and
+  // Infinity as `null`, which would report a value no caller ever sent — the
+  // dev script's `Number(value)` coercion makes `offset=abc` land here as NaN.
+  it("names NaN and Infinity in the rejection instead of reporting 'null'", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    for (const [bad, shown] of [
+      [NaN, "NaN"],
+      [Infinity, "Infinity"],
+    ] as const) {
+      const result = await researchQuery({ projectPath: dir, section: "assertions", offset: bad });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toContain(`(got ${shown})`);
+      expect(result.errors.join(" ")).not.toContain("got null");
+    }
+  });
+
+  it("still quotes a string offset so the type mismatch is visible", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      offset: "50" as any,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toContain('(got "50")');
   });
 });

@@ -1,0 +1,153 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Sarah A. Mullen (Sarah A. Mullen in household of William Mullen), United States Census, 1860. Mirrors the gedcomx already embedded in record-search-1860-census-mullen-sarah — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~WICN-1860-M01"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Sarah A.",
+            "surname": "Mullen",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "1852",
+            "place": "Wisconsin"
+          },
+          {
+            "id": "F2",
+            "type": "Residence",
+            "date": "1860",
+            "place": "Dodge County, Wisconsin"
+          }
+        ],
+        "ark": "ark:/61903/1:1:WICN-1860-M01",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1860"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "William",
+            "surname": "Mullen",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Birth",
+            "date": "1825",
+            "place": "Ireland"
+          },
+          {
+            "id": "F4",
+            "type": "Residence",
+            "date": "1860",
+            "place": "Dodge County, Wisconsin"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1860"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Margaret",
+            "surname": "Mullen",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F5",
+            "type": "Birth",
+            "date": "1830",
+            "place": "Ireland"
+          },
+          {
+            "id": "F6",
+            "type": "Residence",
+            "date": "1860",
+            "place": "Dodge County, Wisconsin"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1860"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "id": "R2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      },
+      {
+        "id": "R3",
+        "type": "Couple",
+        "person1": "P2",
+        "person2": "P3"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1860",
+        "collectionId": "1473181",
+        "ark": "ark:/61903/1:1:WICN-1860-M01"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Dodge County, Wisconsin"
+      },
+      {
+        "id": "PL2",
+        "name": "Ireland"
+      },
+      {
+        "id": "PL3",
+        "name": "Wisconsin"
+      }
+    ]
+  }
+}

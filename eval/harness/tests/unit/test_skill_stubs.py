@@ -128,3 +128,35 @@ def test_bare_deny_does_not_claim_a_result_exists():
 
 def test_skill_name_appears_in_the_reason():
     assert "search-external-sites" in _reason(stub_denial("search-external-sites", None))
+
+
+# --- non-disclosure: keep harness scaffolding out of the graded output ---
+
+
+def test_every_form_forbids_disclosing_the_stub():
+    """The reason lands in context right before the model writes its summary.
+
+    If it narrates "search-external-sites was stubbed for this eval run", a
+    judge reads that as a defect in the skill, and the only fix from the
+    grading side is a judge instruction to ignore it — the grading patch this
+    mechanism exists to remove. Suppress on the harness side instead.
+    """
+    for response in (None, "Ancestry: https://x"):
+        reason = _reason(stub_denial("search-external-sites", response))
+        assert "Do NOT mention it" in reason
+        assert "as you would if 'search-external-sites' had run normally" in reason
+
+
+def test_non_disclosure_covers_written_files_not_just_the_reply():
+    """A leak into a log entry's `notes` outlives the run and is worse than one
+    in the chat reply — validators and later readers both see it."""
+    reason = _reason(stub_denial("s", "r"))
+    assert "not in anything you write to disk" in reason
+
+
+def test_preamble_carries_no_harness_vocabulary():
+    """The model only needs to know: it didn't run, it counts, don't redo it."""
+    reason = _reason(stub_denial("s", None))
+    head = reason.split("This message is test scaffolding")[0]
+    for leaky in ("eval run", "unit suite", "not under test"):
+        assert leaky not in head, f"{leaky!r} is harness vocabulary the model may echo"

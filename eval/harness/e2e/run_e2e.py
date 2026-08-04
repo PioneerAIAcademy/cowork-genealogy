@@ -43,47 +43,49 @@ from e2e.result import E2eResult, is_committable_run
 _ENV_FILE = ENV_FILE  # back-compat alias
 
 
-def _print_proof_quality(result: E2eResult) -> None:
-    """Surface the judge's advisory proof-quality grade directly under the
-    verdict. The verdict is recall-only (did the final tree recover the
-    answer), so a ``pass`` can hide a missing or weak proof conclusion — this
-    line makes that visible. ``score`` is 1|2|3, or null (printed ``n/a``)
-    when no proof_summary was written, e.g. proof-conclusion never completed.
-    Advisory only: it never changes the verdict (judge_prompt.md Task 2)."""
-    pq = (result.judge_output or {}).get("proof_quality")
-    if not isinstance(pq, dict):
-        return  # judge skipped or emitted no proof-quality block
-    score = pq.get("score")
-    if score is None:
-        reason = (pq.get("rationale") or "no proof summary written").strip()
-        if len(reason) > 100:
-            reason = reason[:97] + "..."
-        print(f"  proof_quality: n/a    ({reason})")
-    else:
-        print(
-            f"  proof_quality: {score}/3    "
-            f"exhaustiveness={pq.get('exhaustiveness')} "
-            f"conflicts={pq.get('conflicts_addressed')} "
-            f"corroboration={pq.get('corroboration')} "
-            f"tier={pq.get('tier_appropriate')}"
-        )
+def _print_compliance(result: E2eResult) -> None:
+    """Surface the guardrail axis — a harness fact, not a judge grade.
+
+    This is the one axis it is safe to print here (see `_run_one` on why the
+    judge's own output is not): it says whether the GPS guardrail skills
+    actually ran, which is orthogonal to how well the research went and is not
+    something the grader scores.
+    """
+    if result.compliance == "pass":
+        print("  compliance: pass    (all GPS guardrail skills invoked)")
+        return
+    n = len(result.guardrail_bypass_violations)
+    print(f"  compliance: FAIL    ({n} guardrail bypass{'' if n == 1 else 'es'})")
+    for violation in result.guardrail_bypass_violations:
+        text = violation if len(violation) <= 150 else violation[:147] + "..."
+        print(f"    - {text}")
 
 
 async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"\n=== Running {fixture_dir.name} ===")
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
-    print(f"  verdict: {result.verdict}    stop_reason: {result.stop_reason}")
-    _print_proof_quality(result)
+
+    # DELIBERATELY NOT PRINTED: the judge's `verdict`, its `proof_quality`
+    # score, or the combined `outcome` (which reveals the verdict whenever
+    # compliance is clean). The person who runs a fixture is usually the same
+    # person who then grades it with /grade-e2e-run, and spec §7.4 wants that
+    # grade drawn blind — printing the grade here anchors it before they
+    # start. `stop_reason` and `compliance` are harness facts and are safe;
+    # everything else is what /interpret-e2e-result exists to walk them
+    # through, from the final tree rather than from the judge (issue #972).
+    print(f"  stop_reason: {result.stop_reason}")
+    _print_compliance(result)
     print(f"  result: {paths['result']}")
     if not is_committable_run(result.verdict):
         print(
             "  (scratch run — gitignored; the judge didn't run, so there's "
             "nothing to grade or commit)"
         )
-    elif result.verdict != "pass":
+    else:
         print(
-            f"  (written as a committable {result.verdict} run — retained signal; "
-            "grade it with /grade-e2e-run, then commit it + the .ann.json before landing)"
+            "  Next: /interpret-e2e-result to see what it recovered, then "
+            "/grade-e2e-run to grade it.\n"
+            "  Commit the run log + its .ann.json together before landing."
         )
     return result
 
@@ -215,8 +217,12 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print_rollup(results)
-    # Exit nonzero if the test failed or aborted.
-    failed = sum(1 for r in results if r.verdict in {"fail", "skipped"})
+    # Exit nonzero if the test failed or aborted. Keyed on the combined gate,
+    # which preserves the pre-#972 behavior exactly: a guardrail bypass used to
+    # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
+    # Verified against all 122 committed runs — the gate distribution is
+    # byte-identical to the old fused verdict's.
+    failed = sum(1 for r in results if r.outcome in {"fail", "skipped"})
     return 1 if failed else 0
 
 

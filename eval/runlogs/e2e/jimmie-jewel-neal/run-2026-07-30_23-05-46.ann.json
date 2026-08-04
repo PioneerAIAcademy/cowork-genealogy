@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Not recovered. 'Sampson' appears zero times anywhere in the final tree, and no parent is linked to Martha (LKYG-VKB) by any relationship. The run did mint two candidate parents at 177m — Robert C. Wood (I11, b.~1824 South Carolina) and Martha M. McCleskey (I12, b.~1820 South Carolina) — but timed out three minutes later before attaching either to Martha, so no grandparent claim was actually asserted in the tree. Graded false on recall; the near-miss is that the intended claim was the wrong couple in the wrong state.",
+    "f2": "Not recovered, same basis as f1. Recording the material fact for calibration: this run received a correct, well-ordered jurisdiction hint from record_search at 121m naming Yell, Arkansas third with its date and source person, and did not pursue it — one Arkansas-scoped search argument after the hint, against nine South Carolina ones. The tool surfaced the right lead and the agent went elsewhere. The proof summary that was written covers q_001 (identifying the mother) at 'probable' tier and rests substantially on the 1900 Hamby census; q_002, the actual grandparents question, was still open at timeout."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

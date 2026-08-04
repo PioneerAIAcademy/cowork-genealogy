@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Clemence correctly recovered as Pierre Henri's wife (I1 Clemence Lancelle, Couple R6); the surname variants (Lancelle/Sauselle/Sanselle) are the same woman and are acceptable. The top-level harness fail is not attributable to this finding.",
+    "f2": "Julien correctly recovered as the couple's son with appropriate parentage and birth (I4 Julien Joseph Desbry, ~1808, ParentChild R11 to Pierre Henri), but the required infant DEATH (7 September 1809, Pecquencourt) was NOT recovered into the final tree - the tree records only 'after 4 Sep 1808' at very low confidence and the agent's own proof admits no death registration was found. Recovery is incomplete on the defining death detail, hence partial (the AI judge also scored f2 partial for the same reason, dropping recall to 0.75). Separately, the top-level harness fail also reflects the #914 guardrail-bypass gate (same_person was never called for the new persons I1-I4; a conflict-resolution artifact was written without invoking the conflict-resolution skill) - a provenance/process issue independent of recall, same class as #963. Proof reasoning itself is sound (score 3); the shortfall is completeness, not genealogical reasoning."
+  }
+}

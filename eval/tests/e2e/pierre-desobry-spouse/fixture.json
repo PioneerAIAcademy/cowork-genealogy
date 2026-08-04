@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 17, flags adds_spouse/adds_son, confidence 3). Draft transcribed from a French parish register; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 17, flags adds_spouse/adds_son, confidence 3). RESOLVED (issue #867): TRUE MATCH - the 8 Sep 1809 Pecquencourt death registration of the infant Julien Désobri names parents Pierre Henri Désobri + Clémence (surname variantly Lancelle/Sauselle/Sanselle - same woman, confirmed across five records), establishing Clémence as Pierre Henri's wife and Julien as their son who died in infancy 1809 (fits between Philibert b.1800 and Jean Baptiste Aimé b.1813, same parish). Identity holds despite the tree's pre-existing 1753/1774 two-baptism conflation for Pierre Henri. expected-findings.json keeps both original recover findings. See README 'Notes for reviewers'."
 }

@@ -1,0 +1,1180 @@
+{
+  "project": {
+    "id": "rp_bagley_father_1884",
+    "objective": "Who was the father of William A. Bagley, born about 1815 and died 31 May 1884 in Topsham, Orange County, Vermont?",
+    "subject_person_ids": [
+      "MJDL-Q8B"
+    ],
+    "status": "completed",
+    "created": "2026-07-27",
+    "updated": "2026-07-31"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?",
+      "rationale": "William's 1884 death record is the most direct primary source likely to name his parents. Vermont maintained vital records from 1857 onward; FamilySearch indexes and original town-clerk volumes cover this period. Answering this question first establishes whether a direct, contemporaneous statement of parentage exists before pursuing indirect evidence through census and probate records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-31",
+      "resolution_assertion_ids": [
+        "a_006",
+        "a_010"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "q_001 is scoped to the content of the 1884 Vermont death record for William A. Bagley. That record (ark:/61903/1:1:XF8X-MVK, Vermont Vital Records 1760-1954, collection 1784223) was located via an indexed search (log_001), extracted into 15 assertions, and its parentage statements fully captured: Father = David Bagley; Mother = Sarah A. All assertions carry GPS three-layer classifications. Person-evidence links were created for all three personas (MJDL-Q8B, I1/David Bagley, LVDV-6MK). The remaining plan items (pli_002\u2013pli_010) address broader corroboration beyond q_001's specific scope and were appropriately skipped. The question as stated is fully answered by this single-source search.",
+        "log_entry_ids": [
+          "log_001"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the 1884 Vermont death record explicitly names David Bagley as father and Sarah A. as mother of William A. Bagley. The question asked what the death record says; the record has been found and its content fully extracted.",
+          "repository_breadth": "FamilySearch collection 1784223 (Vermont Vital Records 1760-1954) is the primary digitized repository for Vermont vital records of this period and jurisdiction. The target record was found at rank 1, matchScore 0.895, attachedToSubject:true. For a question scoped to one specific record, this repository search is sufficient.",
+          "original_substitution": "The indexed/simplified GedcomX entry was used via record_read; the original register image (ark:/61903/3:1:S3HT-DYK4-VTM) was not consulted. This is a noted limitation: the index is a derivative, and the original image could in principle reveal additional detail or catch index transcription errors. The index typo 'Willaim' for 'William' is the only known transcription artifact; no parentage-field errors were identified.",
+          "independent_verification": "Only one record was searched, which is definitionally sufficient for q_001 as stated (a question about a single record's content). A broader parentage proof question would require at least two independent sources; that is beyond q_001's scope.",
+          "evidence_class": "Vermont Vital Records 1760-1954 is an original civil register series (post-1857 statewide registration era). The death entry provides primary information for death facts and secondary/direct information for parentage (informant unidentified, reporting post-mortem). The parentage assertion meets the 'direct evidence of what the record states' standard for q_001.",
+          "conflict_resolution": "No conflicts identified within this record. The record unambiguously names one father (David Bagley) and one mother (Sarah A.) with no competing assertions from the same source.",
+          "overturn_risk": "Near-zero for q_001 as scoped \u2014 no unsearched source could change what the 1884 death record itself states. Risk is moderate if the question is reframed as a parentage proof (secondary information, single source, original image not read, mother's maiden name only partially recorded as 'A.'). A follow-up question corroborating David Bagley's paternity via census, church, or probate records is recommended."
+        }
+      },
+      "created": "2026-07-31"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-31",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1884",
+          "repository": "FamilySearch",
+          "rationale": "William A. Bagley died 31 May 1884 in Topsham. Vermont statewide vital registration began 1857, so a death record should exist. Search collections 1784223 (Vermont Vital Records 1760-1954, indexed+images) and 1675549 (Vermont Deaths and Burials 1871-1965, index only). Note per the locality guide: Vermont death records before 1919 rarely name parents (that requirement came with the 1919 law), so this record may not answer the parentage question directly \u2014 but must be checked. Searching first to confirm identity and extract whatever data the record contains.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1884",
+          "repository": "FamilySearch",
+          "rationale": "Vermont Town Clerk, Vital and Town Records 1732-2005 (collection 1987653, indexed+images) holds Topsham town-clerk copies which may carry more detail than the statewide compiled index. Also search the Topsham-specific death index volume IGN 005487650 (death record indexes 1857-1897, 100% indexed, full-text searchable). Fallback if collection 1784223/1675549 yield no result or minimal detail.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 US census (June 1880) is the closest census to William's 31 May 1884 death. It lists all household members with relationships to head, birthplaces of self and parents, and occupation. Finding William in Topsham confirms his presence and may name a wife or children who could be interviewed sources. His reported birthplace for his parents (state) is indirect evidence of the father's origin. Age at census (~65) corroborates the ~1815 birth year.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1850-1870",
+          "repository": "FamilySearch",
+          "rationale": "The 1850, 1860, and 1870 federal censuses list all household members by name. William (~35 in 1850, ~45 in 1860, ~55 in 1870) may appear in Topsham or a nearby Orange County town. These records corroborate age and birthplace, and may show siblings still in the household who share a parent. If William's father was still living in 1850, he may appear as an older household member.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Orange County, Vermont",
+          "date_range": "1820-1840",
+          "repository": "FamilySearch",
+          "rationale": "Key parentage evidence: the 1820 census (William ~5) and 1830 census (William ~15) would show William as an unnamed age-bracket child within his father's household. The 1820 and 1830 censuses listed only the head of household by name; searching all Bagley households in Orange County (or Topsham specifically) in those years could identify the father. The 1840 census (William ~25) may show him in his own household or still in his father's. This is the primary indirect path to identifying the father's name when direct records are silent.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1810-1820",
+          "repository": "FamilySearch",
+          "rationale": "A birth or baptism record for William A. Bagley (~born 1815) would directly name his parents. Search Vermont Births and Christenings 1765-1908 (collection 1675544, index only). Vermont statewide registration began 1857; William was born ~1815, so any birth entry would come from town records kept before state registration. Also search the pre-1857 Topsham town records volume IGN 005464260 (town records 1771-1860, 265 images, 0% name-indexed but full-text searchable) via fulltext_search for 'Bagley'.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Orange County, Vermont (Bradford District)",
+          "date_range": "1820-1860",
+          "repository": "FamilySearch",
+          "rationale": "If William's father died in Topsham, his probate estate would name heirs including William. Topsham falls in the Bradford Probate District. Search Vermont Probate Files 1800-1921 (collection 1435692, indexed+images) for 'Bagley' in Orange County first, as it is indexed and searchable. A will or administration record naming William as a son/heir would be direct evidence of parentage.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "probate",
+          "jurisdiction": "Orange County, Vermont (Bradford District)",
+          "date_range": "1780-1870",
+          "repository": "FamilySearch",
+          "rationale": "Vermont Orange County, Bradford District Estate Files 1780-1915 (collection 1807377, 75,694 images, browse-only \u2014 no name index). Per the locality guide, Topsham falls in the Bradford District. If an indexed search in collection 1435692 (pli_007) fails to find a Bagley probate, browse this volume for Bagley entries. This is the original probate estate file collection for Topsham and is not name-indexed, so it requires image-by-image browsing or fulltext_search.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "land",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1815-1860",
+          "repository": "FamilySearch",
+          "rationale": "Topsham deed volumes on FamilySearch are full-text searchable (0% name-indexed): IGN 007812519 (1841-1946/1849-1853), IGN 007812520 (1853-1859), IGN 007814131 (1859-1864). A fulltext_search for 'Bagley' across these volumes could surface grantor/grantee entries naming William or his father. Land conveyances where the father deeded land to William would be direct evidence of the father-son relationship. Also Vermont Land Records, Early to 1900 (collection 1409123, images only).",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "other",
+          "jurisdiction": "Orange County, Vermont",
+          "date_range": "1762-1888",
+          "repository": "FamilySearch",
+          "rationale": "Hamilton Child's Gazetteer of Orange County, Vt., 1762-1888 (FamilySearch Digital Library, catalog 3417524) contains biographical sketches of prominent Orange County residents and town histories. A Bagley entry could name family members including parents. This is a compiled derivative source but may provide leads and corroborating information not found in vital or census records. Low cost to check; search via FamilySearch catalog and digital library.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T17:36:55.211Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bagley",
+        "givenName": "William",
+        "deathYearFrom": 1884,
+        "deathYearTo": 1884,
+        "deathPlace": "Vermont",
+        "recordType": "death",
+        "collectionId": "1784223"
+      },
+      "outcome": "positive",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 15,
+      "notes": "Top match (matchScore 0.895, already attached to subject MJDL-Q8B): \"Willaim A. Bagley\" (index typo), born 1815 Topsham VT, died 31 May 1884 Vermont \u2014 record ark:/61903/1:1:XF8X-MVK in collection 1784223. Record reads the full record and names BOTH parents: father David Bagley, mother Sarah A. (no maiden name). This directly answers q_001 and the research objective. 14 other Bagley results are lower-scoring relatives or non-matches."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-07-31T18:00:40.155Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-DYK4-VTM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original register image for William A. Bagley death record (indexed as ark:/61903/1:1:XF8X-MVK, src_001). Image saved to images/ark_61903_3_1_S3HT-DYK4-VTM.jpg. Consulted to verify parentage fields per GPS mentor recommendation. Register page confirmed to include explicit printed columns for Father's Name and Mother's Maiden Name \u2014 the record genuinely contains these fields (not a FamilySearch Family Tree merge artifact). Image reads: Father's Name = David Bagley; Mother's Maiden Name = Sarah A. (no surname recorded). Additional facts from image not in indexed entry: Age at death = 69 years 11 months 6 days (calculates birth ~25 May 1814, slightly earlier than indexed 'Abt 1815'); Occupation = Mechanic; Cause of death = Old age; Town clerk = J.R. McLane. Parentage data confirmed consistent with indexed entry.\""
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Vermont, Vital Records, 1760-1954,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XF8X-MVK : accessed 31 July 2026), Entry for Willaim A. Bagley and David Bagley, 1884; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HT-DYK4-VTM).",
+      "citation_detail": {
+        "who": "William A. Bagley (deceased) and David Bagley (father)",
+        "what": "Death register entry, Vermont, Vital Records, 1760-1954 (FamilySearch collection 1784223)",
+        "when_created": "1884",
+        "when_accessed": "2026-07-31",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Entry for Willaim A. Bagley and David Bagley, 1884; image ARK ark:/61903/3:1:S3HT-DYK4-VTM"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XF8X-MVK",
+      "notes": "Index entry read from FamilySearch sidecar; underlying register image at ark:/61903/3:1:S3HT-DYK4-VTM not separately examined. Index title contains typo 'Willaim' for 'William'. Vermont vital registration began 1857; this 1884 entry falls within the statewide registration period.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HT-DYK4-VTM : accessed 2026-07-31), Topsham death register, 1884, entry no. 91, William A. Bagley, died 31 May 1884; original register image.",
+      "citation_detail": {
+        "who": "William A. Bagley",
+        "what": "Death register entry no. 91, original register page image",
+        "when_created": "1884",
+        "when_accessed": "2026-07-31",
+        "where": "FamilySearch, Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "where_within": "Topsham death register, 1884, entry no. 91"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYK4-VTM",
+      "access_date": "2026-07-31",
+      "log_entry_id": "log_002",
+      "notes": "Original town clerk death register page, signed by J.R. McLane, Town Clerk. No medical attendant listed; cause of death ('Old age') provided by unknown informant. Mother recorded only as 'Sarah A.' \u2014 no surname given. Father's and mother's birthplaces left blank.",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "William A. Bagley",
+      "structured_value": {
+        "given": "William A.",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Index renders given name as 'Willaim' \u2014 apparent transcription typo; correct reading is 'William A. Bagley'. Death register informant is unidentified; information quality is secondary because the name was reported post-mortem by an unverified informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "1884, Vermont, United States",
+      "date": "1884",
+      "date_certainty": "approximate",
+      "place": "Vermont, United States",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Year only recorded in the index; exact date (31 May 1884) known from other sources but not recorded in this indexed entry. Place recorded at state level only in this index entry.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Vermont, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1815",
+      "date": "1815",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year reported post-mortem by an unidentified informant who was not present at the birth. Indirect because the informant could not have witnessed the birth event.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born Topsham, Orange, Vermont, United States",
+      "place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace reported post-mortem by an unidentified informant who was not present at the birth. Indirect because informant relayed secondhand knowledge of birth location.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Topsham, Orange, Vermont, United States"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of David Bagley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name reported post-mortem by an unidentified informant; secondary because the informant was not present at William's birth. The record explicitly names David Bagley as father, making this direct evidence of parentage.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Sarah A. (maiden name not recorded)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name reported post-mortem by an unidentified informant; secondary because not present at William's birth. Only the given name initial 'Sarah A.' and no maiden surname is recorded. Direct evidence of the mother's identity as far as the record goes.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788560",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name supplied post-mortem by an unidentified informant; classified secondary because informant was not present at William's birth and is relaying biographical information from memory.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788560",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788560",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of William A. Bagley",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parentage reported post-mortem by an unidentified informant relaying secondhand knowledge of William's birth parentage.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788560",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Sarah A. (inferred from co-parentage)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The record identifies David Bagley as father and Sarah A. as mother of the same individual. A spousal relationship between them is inferred from co-parentage; the record does not explicitly state they were married to each other.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788561",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sarah A.",
+      "structured_value": {
+        "given": "Sarah A.",
+        "surname": ""
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name supplied post-mortem by an unidentified informant. Only given name 'Sarah A.' recorded; no maiden surname appears. Classified secondary because informant was not present at William's birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788561",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788561",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of William A. Bagley",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or neighbor reporting the death",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parentage reported post-mortem by an unidentified informant relaying secondhand knowledge of William's birth parentage.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XF8X-MVK",
+      "record_persona_id": "p_10579788559",
+      "record_role": "absent",
+      "fact_type": "name",
+      "value": "Mother's maiden surname absent \u2014 record lists mother only as 'Sarah A.' with no maiden surname recorded for William A. Bagley's mother",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "The 1884 Vermont death register entry for William A. Bagley names the mother only as 'Sarah A.' without any surname. Vermont death records of this era frequently omitted maternal maiden surnames. This absence is analytically significant because q_001 asks specifically about parentage, and the mother's maiden name cannot be recovered from this record alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Bagley, William A.",
+      "structured_value": {
+        "given": "William A.",
+        "surname": "Bagley"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Town clerk J.R. McLane recorded the entry; the person who reported the death to the clerk is not identified in the register. Likely a household member or neighbor.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex noted in record header ('DEATH \u2014 MALE'); reporter not identified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "69 Yrs. 11 Mos. 6 Days",
+      "structured_value": {
+        "year": "69"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Age was reported by an unidentified informant to the town clerk; that person was not present at William's birth in ~1814. Age precision (years, months, days) is high but the informant's firsthand knowledge of the birth date cannot be assumed.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "calculated birth date approximately 25 May 1814 (from age 69y 11m 6d at death 31 May 1884)",
+      "date": "~1814-05-25",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birth date derived arithmetically from stated age (69y 11m 6d) and death date (31 May 1884). The underlying age was reported by an unidentified informant not present at the birth. Calculation is straightforward but rests on the accuracy of the reported age.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Topsham",
+      "place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birthplace stated by unidentified informant to the town clerk; the informant was not present at William's birth.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Topsham, Orange, Vermont, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Mechanic",
+      "structured_value": {
+        "occupation": "Mechanic"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Occupation reported by an unidentified informant to the clerk. A close family member would plausibly know the deceased's occupation.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 31 May 1884, Topsham, Orange, Vermont",
+      "date": "1884-05-31",
+      "date_certainty": "exact",
+      "place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "primary",
+      "informant": "J.R. McLane, Town Clerk",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Town clerk attested the death registration; death date and place recorded in his official capacity.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Topsham, Orange, Vermont, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "Old age",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "No medical attendant is listed in the register. Cause 'Old age' was recorded by the clerk but the source of the diagnosis is unknown \u2014 likely reported by whoever notified the clerk of the death. 'Old age' was a common non-specific cause in 19th-century registers.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Topsham",
+      "place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "primary",
+      "informant": "J.R. McLane, Town Clerk",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Town of Topsham recorded by the town clerk in his official capacity as the place of death registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Topsham, Orange, Vermont, United States"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's name reported by an unidentified informant to the town clerk \u2014 this person was not present at William's birth and is relaying secondhand knowledge of his parentage. Corroborates the name David Bagley already in the tree (I1) but the original image should be verified against the indexed entry (src_001).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/3:1:S3HT-DYK4-VTM",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sarah A.",
+      "structured_value": {
+        "given": "Sarah A.",
+        "surname": ""
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Mother recorded only by given name and middle initial 'Sarah A.' \u2014 no maiden surname supplied. The register's 'Mother's Maiden Name' field is partially filled. Possible match to Sarah Sally Andrews (LVDV-6MK) in the tree, but the surname is absent from this record; that identification requires corroboration. Informant was not present at William's birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Record persona p_10579788559 (deceased) matched MJDL-Q8B at rank_search_matches score 0.895, attachedToSubject:true. Name 'William A. Bagley' matches exactly (index typo 'Willaim' noted as transcription error). merge_warnings coherence dry-run was skipped \u2014 source document not available in required candidate form; limitation noted here. Identity confident on name, birth year ~1815 Topsham, death 31 May 1884 Vermont, and prior attachment.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Sex assertion for same deceased persona. Record persona p_10579788559 matches MJDL-Q8B at score 0.895; male sex consistent with tree.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Death 1884 Vermont from same persona (score 0.895). Primary information recorded by the civil registrar at time of event. Consistent with known death date 31 May 1884 Topsham VT in tree.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Birth year ~1815 for deceased persona; consistent with tree fact 'Abt 1815'. Same persona match (score 0.895). Secondary information reported post-mortem.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Birthplace Topsham, Orange, Vermont for deceased persona. Consistent with existing tree birth fact. Same persona match (score 0.895).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of David Bagley' applies to William A. Bagley (MJDL-Q8B) as the child. Same deceased persona match (score 0.895). Direct evidence of parentage from a Vermont death record; secondary information (informant not present at birth).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'child of David Bagley' also bears on David Bagley as the named father. I1 is a new stub person minted from persona p_10579788560 (father_of_deceased) via materialize_facts. No prior tree person for David Bagley existed; this record is the single source. Direct evidence (record explicitly names 'David Bagley' as father); secondary information quality (informant unidentified, post-mortem). Probable pending corroborating records. No same_person score available (persona not from an indexed record_search candidate pool).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Sarah A.' applies to William A. Bagley (MJDL-Q8B) as the child. Same deceased persona (score 0.895). Direct evidence of maternity from the death record; secondary information.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'child of Sarah A.' bears on the mother. LVDV-6MK (Sarah Sally Andrews, b.1777 Gloucester MA, d.19 Mar 1847 Topsham VT) is already linked as parent of MJDL-Q8B via tree relationship R4. Name 'Sarah A.' matches: 'Sarah' matches, 'A.' is consistent with 'Andrews' as a maiden-name initial. Biologically plausible: b.1777 \u2192 mother of child b.1815, age ~38 at birth. Died 1847 Topsham \u2014 deceased prior to this 1884 death record, which explains why the informant may have had imprecise knowledge of her full name. Probable; 'A.' as Andrews initial is inference not confirmed by this record. No same_person score available.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name 'David Bagley' from father_of_deceased persona p_10579788560. I1 minted from this persona. Single record source; probable pending corroboration. No same_person score available.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex Male for father_of_deceased persona. I1 (David Bagley stub) is male per this assertion. Consistent with expected sex for named father.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'parent of William A. Bagley' applies to I1 (David Bagley) as the parent. This is the primary parentage assertion for the research objective (q_001). Direct evidence; secondary information quality. Probable pending corroborating sources.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'parent of William A. Bagley' also bears on MJDL-Q8B as the named child. Deceased persona (score 0.895) matches MJDL-Q8B with confidence; this is the child side of the parentage fact.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Inferred spousal relationship between David Bagley (I1) and Sarah A. (LVDV-6MK), derived from co-parentage in the same record. Indirect evidence; researcher inference. Probable; the couple's marriage has not yet been confirmed by a primary source.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Same inferred spousal relationship bears on LVDV-6MK (Sarah Sally Andrews) as the other party. Indirect evidence derived from co-parentage. Probable pending a marriage record or other direct evidence of the David Bagley / Sarah Andrews union.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Name 'Sarah A.' from mother_of_deceased persona. LVDV-6MK is 'Sarah Sally Andrews'; 'Sarah' is identical, 'A.' plausibly abbreviates 'Andrews' (maiden name). Existing R4 ParentChild edge already links LVDV-6MK as parent of MJDL-Q8B. Probable; maiden-name initial interpretation is inferential.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Sex Female for mother_of_deceased persona. Consistent with LVDV-6MK's known sex in tree.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'parent of William A. Bagley' applies to LVDV-6MK as the named mother. Direct evidence from death record; secondary information quality. Corroborates the existing R4 ParentChild edge in tree. Probable (mother identified only as 'Sarah A.' \u2014 full name match to LVDV-6MK inferred).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_014",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Relationship 'parent of William A. Bagley' also bears on MJDL-Q8B as the child. Deceased persona (score 0.895); identity confident. Child side of mother-child assertion.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Negative evidence assertion: the 1884 Vermont death record for William A. Bagley lists the mother only as 'Sarah A.' with no maiden surname. This observation is analytically significant for q_001 (parentage question) because the mother's maiden name cannot be recovered from this record alone. Bears on MJDL-Q8B as the subject of the record. Deceased persona (score 0.895); confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Original register image (src_002) for the same record as src_001. Name 'William A. Bagley' (entry no. 91) on the original register page confirms identity. MJDL-Q8B already identified at confident (score 0.895) from the indexed entry; the original image corroborates every identifier.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Sex Male from original register (DEATH \u2014 MALE header). Consistent with MJDL-Q8B identity.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Age 69y 11m 6d at death from original register, entry no. 91. Bears on MJDL-Q8B as the reported age of the deceased. Secondary information (informant not present at birth); useful for calculating approximate birth date.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Calculated birth date ~25 May 1814 derived from reported age 69y 11m 6d and death date 31 May 1884. Bears on MJDL-Q8B. Indirect/secondary evidence (calculation from a secondhand-reported age); slightly earlier than the indexed 'Abt 1815'. Both are secondary; the calculated date is more precise but depends on the informant's accuracy.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Birthplace Topsham, Orange, Vermont from original register. Corroborates indexed assertion a_005. Bears on MJDL-Q8B.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Occupation 'Mechanic' from original register \u2014 new fact not in indexed entry. Bears on MJDL-Q8B as supplementary biographical information.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Death date 31 May 1884, Topsham, Orange, Vermont from original register. Primary information (town clerk J.R. McLane, official duty). Confirms indexed a_003 with greater precision (exact date vs. year-only in index). Bears on MJDL-Q8B.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Cause of death 'Old age' from original register. New fact not in indexed entry. Bears on MJDL-Q8B. Informant source for diagnosis is unknown (no medical attendant listed).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "rationale": "Residence Topsham from original register (town clerk's official jurisdiction field). Bears on MJDL-Q8B. Primary information.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name 'David Bagley' in the Father's Name field of the original register page. Corroborates indexed assertion a_008, which already grounds I1. Original image confirms the indexed data was accurately transcribed. Probable pending independent corroboration. No same_person score available.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "rationale": "Name 'Sarah A.' in the Mother's Maiden Name field of the original register page. Corroborates indexed assertion a_012. LVDV-6MK (Sarah Sally Andrews) is the probable match (see pe_009, pe_016, h_001). The original image confirms no maiden surname is recorded in the field, consistent with the indexed entry. Probable pending independent corroboration of Sarah Andrews = Sarah A.",
+      "created": "2026-07-31"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The mother listed as 'Sarah A.' in William A. Bagley's 1884 Vermont death record (ark:/61903/1:1:XF8X-MVK) is the same person as Sarah Sally Andrews (LVDV-6MK, born 1777 Gloucester MA, died 19 Mar 1847 Topsham VT) already linked in the research tree as a parent of MJDL-Q8B via R4. Reasoning: given name 'Sarah' matches; initial 'A.' is consistent with maiden surname Andrews; b.1777 makes biological parenthood of a b.~1815 child plausible; she died in Topsham VT, the same locality. Confidence is probable pending a source that directly names Sarah Andrews with David Bagley or with William.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_007",
+        "a_012",
+        "a_014"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Person-evidence links pe_009, pe_016, pe_018 document the identity-resolution rationale. The 'A.' interpretation as Andrews maiden initial is inferential; the original image at ark:/61903/3:1:S3HT-DYK4-VTM has not been consulted to verify spelling of the mother's name field."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_014",
+        "a_015"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch collection 1784223 (Vermont, Vital Records, 1760\u20131954) via record_search (log_001). The target death record (ark:/61903/1:1:XF8X-MVK) was recovered at rank 1 (matchScore 0.895, attachedToSubject:true) and extracted into 15 assertions (a_001\u2013a_015). The original register image (ark:/61903/3:1:S3HT-DYK4-VTM) was subsequently consulted and read (log_002, src_002, 11 additional assertions a_016\u2013a_026): it confirmed that the 1884 Vermont town-clerk register has explicit printed columns for Father's Name (David Bagley) and Mother's Maiden Name (Sarah A.), and that the indexed data matches the original. New facts from the image: age at death 69y 11m 6d (calculated birth ~25 May 1814), occupation Mechanic, cause of death Old Age, town clerk J.R. McLane. Remaining plan items (pli_002\u2013pli_010) \u2014 census, parents' marriage, church baptism, FAN cluster, probate, land, tax, cemetery, and Ancestry fallback \u2014 address broader parentage corroboration beyond q_001's record-specific scope and were skipped. Research declared exhaustive for q_001 as stated.",
+      "narrative_markdown": "## What William A. Bagley\u2019s 1884 Vermont Death Record States About His Parentage\n\n**Conclusion (probable):** The 1884 Vermont death register entry for William A. Bagley names **David Bagley** as his father and **Sarah A.** (maiden surname not recorded) as his mother. This finding is graded *probable* \u2014 not proved \u2014 because the parentage information rests on secondary information from a single source with an unidentified informant, and the original register image was not separately examined.\n\n### The Source\n\n\u201cVermont, Vital Records, 1760-1954,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XF8X-MVK : accessed 31 July 2026), Entry for Willaim A. Bagley and David Bagley, 1884; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HT-DYK4-VTM).\n\nVermont\u2019s statewide civil vital registration began in 1857. This 1884 death entry falls within the registration period and is drawn from FamilySearch collection 1784223. The indexed entry was recovered at rank 1 (matchScore 0.895) and was already attached to William A. Bagley\u2019s FamilySearch profile, confirming identity independently of the matching algorithm. The index title contains a transcription error (\u201cWillaim\u201d for \u201cWilliam\u201d) that does not affect the parentage data.\n\n### GPS Three-Layer Analysis\n\n**Source classification \u2014 original.** The Vermont vital registers are original civil records created at the time of registration under statewide mandate. The FamilySearch entry is drawn from this original register series. The underlying register image at ark:/61903/3:1:S3HT-DYK4-VTM is available but was not separately consulted; the indexed data was used.\n\n**Information quality \u2014 mixed.** Death date and place (31 May 1884, Vermont) carry **primary information** quality: recorded at or near the time of the event by the town registrar under official duty. Parentage data \u2014 father\u2019s name David Bagley; mother\u2019s name Sarah A. \u2014 carries **secondary information** quality: these biographical facts about events occurring approximately sixty-nine years before the death were reported post-mortem by an unidentified informant whose proximity to the birth event cannot be assessed. Secondary information is inherently less reliable than primary for facts the informant could not personally have witnessed.\n\n**Evidence type \u2014 direct.** The record explicitly names \u201cDavid Bagley\u201d as father and \u201cSarah A.\u201d as mother. No inference is required to extract the stated parentage claim; this is direct evidence of what the record asserts.\n\n### Limitations\n\n1. **Single source.** The parentage conclusion rests on one record. GPS Component 1 (reasonably exhaustive research) for a parentage *proof* requires corroboration from independent sources \u2014 census household listings showing William in David Bagley\u2019s household, a baptism record, or the parents\u2019 marriage record confirming the David Bagley / Sarah Andrews union. Those searches exceed the specific scope of q_001 and are recommended as the next research step.\n\n2. **Secondary information for parentage.** Because the informant is unidentified and was reporting post-mortem about events that occurred decades earlier, the parentage data carries the inherent reliability limitations of secondary information. The father\u2019s name, surname spelling, or identity could be misremembered or incorrectly recorded.\n\n3. **Mother\u2019s maiden name not recorded.** The record lists the mother only as \u201cSarah A.\u201d \u2014 no maiden surname appears. An existing tree link (R4) already identifies Sarah Sally Andrews (LVDV-6MK, born 1777 Gloucester, Massachusetts; died 19 March 1847 Topsham, Vermont) as a parent of William A. Bagley (MJDL-Q8B). The \u201cA.\u201d in the death record is consistent with \u201cAndrews\u201d as a maiden-name initial, and the birth year of 1777 makes biological parenthood of a child born about 1815 plausible. However, this equivalence is inferential and is not confirmed by the death record alone. The mother\u2019s full maiden name remains unresolved pending independent corroborating evidence.\n\n4. **Original image not consulted.** The indexed/simplified GedcomX entry was used; the original register image (ark:/61903/3:1:S3HT-DYK4-VTM) was not separately examined. Index transcription errors beyond the known \u201cWillaim/William\u201d typo are possible. Consulting the original image is recommended to verify the parentage field spellings.\n\n### Tree Encoding\n\nAt the *probable* tier, the concluded parent-child relationship is encoded in the research tree:\n- **R7**: ParentChild (I1 / David Bagley \u2192 MJDL-Q8B / William A. Bagley), sourced to S1 (Vermont, Vital Records, 1760\u20131954)\n- **R8**: Couple (I1 / David Bagley \u2194 LVDV-6MK / Sarah Sally Andrews), sourced to S1 at quality 2 (inferred from co-parentage; the couple\u2019s marriage record has not been located)\n\n### Conclusion\n\nBased on a single original vital register entry that provides secondary/direct evidence of parentage, it is **probable** that William A. Bagley\u2019s 1884 Vermont death record names **David Bagley** as his father. The mother is named as **Sarah A.**, provisionally identified with *probable* confidence as Sarah Sally Andrews (LVDV-6MK) already in the research tree. This conclusion answers q_001 as stated. It does not constitute a GPS-proved parentage determination; corroboration from at least one independent source providing primary information \u2014 such as a census record showing William in David Bagley\u2019s household, or a church baptism record naming David Bagley as father \u2014 is required to advance the conclusion to *proved*."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-31T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-31T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Orange, Vermont, United States",
+      "for_place": "Topsham, Orange, Vermont, United States",
+      "time_period": "1815-1884",
+      "jurisdictions": [
+        {
+          "name": "Topsham, Orange, Republic of Vermont",
+          "date_range": "/1791"
+        },
+        {
+          "name": "Topsham, Orange, Vermont, United States",
+          "date_range": "1791/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1784223",
+          "title": "Vermont, Vital Records, 1760-1954",
+          "date_range": "1760-1954"
+        },
+        {
+          "id": "2075288",
+          "title": "Vermont, Vital Records, 1760-2008",
+          "date_range": "1760-2008"
+        },
+        {
+          "id": "1987653",
+          "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+          "date_range": "1699-2005"
+        },
+        {
+          "id": "1627819",
+          "title": "Vermont, Town Records, 1850-2005",
+          "date_range": "1850-2005"
+        },
+        {
+          "id": "1675544",
+          "title": "Vermont, Births and Christenings, 1765-1908",
+          "date_range": "1765-1908"
+        },
+        {
+          "id": "1675549",
+          "title": "Vermont, Deaths and Burials, 1871-1965",
+          "date_range": "1871-1965"
+        },
+        {
+          "id": "1675550",
+          "title": "Vermont, Marriages, 1791-1974",
+          "date_range": "1791-1974"
+        },
+        {
+          "id": "1807377",
+          "title": "Vermont, Orange County, Bradford District Estate Files, 1780-1915",
+          "date_range": "1780-1915"
+        },
+        {
+          "id": "1453983",
+          "title": "Vermont, Orange County, Randolph District Probate Records, 1790-1935",
+          "date_range": "1790-1935"
+        },
+        {
+          "id": "1435692",
+          "title": "Vermont, Probate Files, 1800-1921",
+          "date_range": "1800-1921"
+        },
+        {
+          "id": "1409123",
+          "title": "Vermont, Land Records, Early to 1900",
+          "date_range": "1600-1900"
+        },
+        {
+          "id": "1483040",
+          "title": "Vermont, Enrolled Militia Records, 1861-1867",
+          "date_range": "1861-1867"
+        }
+      ],
+      "quirks": [
+        "Vermont statewide vital registration began 1857; Topsham town clerk kept records from about 1771, but pre-1857 completeness varies \u2014 search town records volume IGN 005464260 (1771-1860, full-text searchable, 0% name-indexed) for pre-registration births.",
+        "Death records before 1919 are very unlikely to name parents \u2014 Vermont's 1919 law first required birth and parent information on death certificates. William A. Bagley's 1884 death record will probably not name his father; indirect evidence chains through census and probate are essential.",
+        "Topsham falls in the Bradford Probate District (not Randolph). Search Bradford District Estate Files 1780-1915 (collection 1807377, 75,694 images, browse-only \u2014 no name index). The Bradford District merged with Randolph in 1994 to form the Orange District; pre-1994 probate records are filed under 'Bradford District.'",
+        "FamilySearch has multiple Topsham vital records volumes indexed at 100%: IGN 007728020 (births/marriages/deaths 1857-1869, 44 images), IGN 005464890 (vital statistic indexes 1857-1896, 200 images), and IGN 005487650 (index of births 1857-1897, marriage indexes 1857-1894, death indexes 1857-1897, 2,180 images). Use record_search or fulltext_search on these.",
+        "Several large Topsham vital statistic index volumes (IGNs 007747453-007747456, 334-2,747 images each, covering 1775-1998) are 0% name-indexed but full-text searchable \u2014 use fulltext_search rather than record_search for these.",
+        "The 1820 and 1830 federal censuses listed heads of household only. To find William A. Bagley (~b. 1815) as a child in his father's household, search for male household heads in Topsham with a boy in the correct age bracket.",
+        "Orange County land records (deeds) on FamilySearch (collection 1409123, images only) and local Topsham deed volumes (IGNs 007812519-007814131, 1841-1927, full-text searchable) can reveal a father's name via grantor-grantee index or land conveyances to/from a 'Bagley.'"
+      ],
+      "guide_markdown": "# Locality Guide: Topsham, Orange County, Vermont (1815\u20131884)\n\n## Jurisdictional Context\n\nTopsham is a town in Orange County, Vermont. Orange County was organized 18 October 1785 from Cumberland County. Prior to Vermont statehood (4 March 1791), Topsham was part of the Republic of Vermont. No boundary changes affect Topsham itself during the 1815\u20131884 research window.\n\n**Probate jurisdiction:** Topsham falls in the **Bradford Probate District** (Bradford, Corinth, Fairlee, Newbury, Strafford, Thetford, Topsham, Vershire, West Fairlee). In 1994, the Bradford and Randolph Districts merged into the Orange District.\n\n## Vital Records\n\n- **Statewide registration** began 1857; town clerks had kept records since ~1760 but compliance and completeness varied.\n- **FamilySearch indexed collections** (index + images): Vermont Vital Records 1760-1954 (coll. 1784223); Vermont Town Clerk, Vital and Town Records 1732-2005 (coll. 1987653); Vermont Town Records 1850-2005 (coll. 1627819).\n- **Topsham-specific indexed volumes on FamilySearch**: IGN 007728020 (births/marriages/deaths 1857-1869, 44 images, 100% indexed); IGN 005464890 (vital statistic indexes 1857-1896, 200 images, 100% indexed); IGN 005487650 (birth/marriage/death indexes 1857-1897, 2,180 images, 100% indexed).\n- **Pre-1857 Topsham town records**: IGN 005464260 (town records 1771-1860, 265 images, 0% name-indexed, full-text searchable).\n- **Key caveat on death records for finding parents**: Vermont death records before 1919 rarely name parents. William A. Bagley's 1884 death record very likely will NOT name his father \u2014 use it to confirm death date/place but do not rely on it for parentage.\n\n## Census Records\n\n- Federal census years applicable: 1820, 1830 (head of household only \u2014 look for a Bagley household with a boy aged 0-10 in 1820, or 10-15 in 1830); 1840, 1850, 1860, 1870, 1880 (all household members listed from 1850).\n- US federal censuses are fully indexed on FamilySearch and Ancestry.\n- Vermont state censuses are limited; American Ancestors has some substitutes (1778-1822, 1840).\n\n## Probate Records\n\n- **Bradford District Estate Files 1780-1915** (coll. 1807377, 75,694 images, **browse-only \u2014 no name index**). This is the primary probate repository for Topsham. Must be browsed image-by-image.\n- **Vermont Probate Files 1800-1921** (coll. 1435692, 10,225 records, indexed + images) \u2014 broader statewide index; check for Bagley entries.\n- **Ancestry**: Vermont Wills and Probate Records 1749-1999 (paid subscription).\n\n## Land Records\n\n- **Vermont Land Records, Early to 1900** (coll. 1409123, images only, no index).\n- **Topsham deed volumes on FamilySearch** (all full-text searchable, 0% name-indexed): IGN 007812519 (1841-1946/1849-1853), IGN 007812520 (1853-1859), IGN 007814131 (1859-1869), IGN 007814130 (1866-1878), IGN 004151751 (1882-1893), IGN 007814129 (1878-1883).\n- Land records can identify the father's name if William bought or inherited land from him, or if father's estate sold land.\n\n## Church Records\n\n- FamilySearch Wiki notes church records as a key substitute when vital records are sparse. Topsham churches (Congregational, Methodist) may hold baptism/membership records; check FamilySearch catalog and Vermont Historical Society.\n\n## Military Records\n\n- Vermont Enrolled Militia Records 1861-1867 (coll. 1483040, indexed). William (~b. 1815) would be ~46-52 years old during the Civil War \u2014 too old for active service but may appear in enrollment.\n- Revolutionary War pensioner census 1840 and War of 1812 pension records may be relevant if the father served.\n\n## Newspapers and Obituaries\n\n- Vermont newspapers 1800s-current on GenealogyBank and Newspapers.com (Ancestry, paid). An 1884 obituary for William A. Bagley may name his parents or surviving relatives.\n- Chronicling America (Library of Congress) has some Vermont newspapers free.\n\n## Gazetteers and Compiled Genealogies\n\n- *Gazetteer of Orange County, Vt., 1762-1888* by Hamilton Child (FamilySearch Digital Library, catalog 3417524) \u2014 may contain biographical sketches naming parents.\n- Vermont GenWeb (vtgenweb.org) and Genealogical Society of Vermont (genealogyvermont.org) for compiled resources.\n\n## Key Access Notes\n\n- Most Topsham vital index volumes are **full-text searchable** on FamilySearch even when not name-indexed \u2014 use `fulltext_search` with the image group number.\n- Bradford District probate files are **browse-only** \u2014 plan to page through volumes if a Bagley probate entry is suspected.\n- Ancestry and American Ancestors hold complementary collections requiring subscriptions (available free at FamilySearch centers).\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-31"
+    }
+  ]
+}

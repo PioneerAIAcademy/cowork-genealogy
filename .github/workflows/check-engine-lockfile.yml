@@ -48,11 +48,11 @@ jobs:
           fi
 
       - if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Node
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 

@@ -55,17 +55,23 @@ export interface ResearchQueryInput {
   assertionId?: string;
   planItemId?: string;
   status?: string;
+  targetId?: string;
+  focus?: string;
+  /** Pagination, not a filter: skip the first `offset` matches, then return up
+   *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
+  offset?: number;
 }
 
 export type ResearchQueryResult =
   | {
       ok: true;
       section: ResearchQuerySection;
-      /** Total matches (before the MAX_ITEMS cap). */
+      /** Total matches (before the MAX_ITEMS cap and any `offset`). */
       count: number;
       items: any[];
-      /** true when `count` exceeds MAX_ITEMS and `items` was capped — narrow
-       *  the filter rather than relying on this being everything. */
+      /** true when matches remain *beyond this page* (`count > offset +
+       *  items.length`) — page with `offset` (or narrow the filter) rather than
+       *  relying on this being everything. */
       truncated: boolean;
     }
   | { ok: false; errors: string[] };
@@ -80,7 +86,9 @@ type FilterKey =
   | "personId"
   | "assertionId"
   | "planItemId"
-  | "status";
+  | "status"
+  | "targetId"
+  | "focus";
 
 /** One filter's match rule: `field` (or the first-matching of `fields`) on
  *  each item, compared by `mode` — `exact` equality, or `contains` /
@@ -142,7 +150,17 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     questionId: { field: "question_id", mode: "exact" },
     assertionId: { field: "supporting_assertion_ids", mode: "contains" },
   },
-  evaluations: {},
+  // `targetId` + `focus` serve the gps-mentor agent's existing-verdict skip:
+  // "is there already a verdict for this focus + target?". Note what these two
+  // filters deliberately do NOT cover — the agent also needs `superseded_by:
+  // null`, and `superseded_by` is `string | null`, which `matches()` cannot
+  // express (it compares against a `string` value). Narrowing to focus+target
+  // is what the tool can honestly do; picking the un-superseded entry out of
+  // the (small) result stays the caller's step, and gps-mentor.md says so.
+  evaluations: {
+    targetId: { field: "target_id", mode: "exact" },
+    focus: { field: "focus", mode: "exact" },
+  },
 };
 
 const FILTER_KEYS: FilterKey[] = [
@@ -154,6 +172,8 @@ const FILTER_KEYS: FilterKey[] = [
   "assertionId",
   "planItemId",
   "status",
+  "targetId",
+  "focus",
 ];
 
 function matches(item: any, rule: FilterRule, value: string): boolean {
@@ -179,6 +199,25 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     if (!RESEARCH_QUERY_SECTIONS.includes(section)) {
       throw new ResearchQueryError(
         `section '${section}' is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}`,
+      );
+    }
+
+    // offset is pagination, not a filter — validated here (not via FILTER_KEYS).
+    // Reject rather than coerce: a stringified "50" (which the model has sent)
+    // fails Number.isInteger and is a loud error, not a silent wrong page. Thrown
+    // as a ResearchQueryError so the catch returns the tool's { ok:false } shape
+    // (a plain Error would escape to index.ts as a different { error } shape).
+    if (input.offset !== undefined && (!Number.isInteger(input.offset) || input.offset < 0)) {
+      // JSON.stringify renders NaN and Infinity as `null`, which would make the
+      // message name a value the caller never sent; Number.isFinite picks those
+      // off. Everything else keeps JSON.stringify so a string "50" stays quoted.
+      const got =
+        typeof input.offset === "number" && !Number.isFinite(input.offset)
+          ? String(input.offset)
+          : JSON.stringify(input.offset);
+      throw new ResearchQueryError(
+        `offset must be a non-negative whole number (got ${got}). ` +
+          `Send it as a number, not a string.`,
       );
     }
 
@@ -220,12 +259,13 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       (item) => activeFilters.every(({ rule, value }) => matches(item, rule, value)),
     );
 
+    const start = input.offset ?? 0;
     return {
       ok: true,
       section,
       count: filtered.length,
-      items: filtered.slice(0, MAX_ITEMS),
-      truncated: filtered.length > MAX_ITEMS,
+      items: filtered.slice(start, start + MAX_ITEMS),
+      truncated: filtered.length > start + MAX_ITEMS,
     };
   } catch (e) {
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
@@ -245,8 +285,9 @@ export const researchQuerySchema = {
     "\n" +
     "Pick `section` and, optionally, the well-known filter fields that section " +
     "supports (below) — passing a filter a section doesn't support is an error, not " +
-    "a silent no-op. Omit all filters to get the whole section (capped at 50 items; " +
-    "check `truncated` and narrow the filter if you need more).\n" +
+    "a silent no-op. Omit all filters to get the whole section (50 items per call; " +
+    "check `truncated`, then either narrow the filter or page with `offset` to fetch " +
+    "items 51+).\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
     "(questionId, status), `log` (planItemId), `sources` (sourceId), `assertions` " +
@@ -257,12 +298,16 @@ export const researchQuerySchema = {
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(no filters — always returns everything, capped).\n" +
+    "(targetId, focus). Note for `evaluations`: there is no filter for " +
+    "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
+    "`superseded_by` is null yourself.\n" +
     "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
-    "count before the 50-item cap; `items` is camelCase-untouched (the section's " +
-    "native snake_case fields, verbatim) since this is a read projection, not a " +
-    "persisted document.",
+    "count before the 50-item page cap and any `offset`; `truncated` is true when " +
+    "matches remain beyond the returned page, so advance `offset` by items.length " +
+    "and call again until it is false. `items` is camelCase-untouched (the " +
+    "section's native snake_case fields, verbatim) since this is a read " +
+    "projection, not a persisted document.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -304,6 +349,22 @@ export const researchQuerySchema = {
       status: {
         type: "string",
         description: "questions/plans/conflicts/hypotheses: matches status.",
+      },
+      targetId: {
+        type: "string",
+        description: "evaluations: matches target_id (the q_/ps_ id the verdict is about).",
+      },
+      focus: {
+        type: "string",
+        description: "evaluations: matches focus (e.g. 'proof-critique', 'on-demand').",
+      },
+      offset: {
+        type: "number",
+        description:
+          "Pagination (not a filter): 0-based index of the first match to return — " +
+          "skips that many, then returns up to 50. Default 0. When `truncated` is " +
+          "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
+          "Must be a non-negative whole number.",
       },
     },
     required: ["projectPath", "section"],

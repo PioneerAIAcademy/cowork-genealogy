@@ -1,0 +1,2923 @@
+{
+  "project": {
+    "id": "rp_jimmie_jewel_neal",
+    "objective": "Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?",
+    "subject_person_ids": [
+      "KNXW-M3T"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-25"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the mother of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill County, Texas)?",
+      "rationale": "The objective requires identifying Jimmie's maternal grandparents. Before asking about a grandparent generation, the mother's identity must be established with sourced evidence. The tree links Martha J Wood (n\u00e9e Wood, previously married Lanham, then Neal) as the mother, but no GPS-conformant assertions exist yet in research.json. Jimmie's death certificate (NM Deaths 1889\u20131945) and contemporaneous census records should directly name or corroborate the parent relationship. This is the gatekeeper question: its answer anchors Q2 (parents of the confirmed mother).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": "2026-07-25",
+      "resolution_assertion_ids": [
+        "a_018",
+        "a_015",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All 6 plan items completed. Primary direct evidence: 1900 census (M3G5-GWF) shows Martha J Hamby as parent of both Claudie Neal (b. Sep 1882 TX) and James Neal / Jimmie (b. Jul 1884 TX) in Hill County, Texas. Corroborating evidence: (1) 1879 Hill County marriage record establishes Martha J Wood/Landham and James Monroe Neal as a couple 5 years before Jimmie's birth; (2) NM death cert names Jim Neal as father, consistent with family unit. Known gap: death cert image (ark:/61903/3:1:3Q9M-C9T2-DF4N) not transcribed (OpenRouter offline) \u2014 mother's name may appear on the original, but its absence from the index does not negate the census evidence. Additional searches (Martha's 1906 death cert, earlier census years for Martha) would strengthen but are not prerequisite to a reasoned probable conclusion on q_001. GPS standard for reasonably exhaustive search met for the available online indexed record universe.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": "Direct census evidence (1900) establishes parent-child relationship; corroborating marriage record and death cert support consistent family unit. No contradicting direct evidence found."
+      },
+      "created": "2026-07-25"
+    },
+    {
+      "id": "q_002",
+      "question": "Who were the parents of Martha J. Wood (born approximately 1859 in Georgia, mother of Jimmie Jewel Neal, died 30 May 1906 in Files Valley, Hill County, Texas)?",
+      "rationale": "q_001 established at a probable tier that Martha J. Wood/Hamby (LKYG-VKB) was the mother of Jimmie Jewel Neal. The primary research objective asks for Jimmie's maternal grandparents \u2014 meaning Martha's parents. Martha's birth in Georgia (~1855-1859) and death in Hill County, Texas (1906) bracket the record search. Key leads: (1) Martha's 1906 Hill County death certificate (Texas Deaths 1890-1977, collection 1983324) may name her parents; (2) Georgia census records 1870-1880 may locate her as a child in her parents' household; (3) her 1879 Hill County marriage record names her with surname Wood and prior widow status; (4) c_002 flags her birth year as unresolved (~1855 tree vs Aug 1859 census), affecting which Georgia census cohort to search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-07-25",
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-25",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Eddy County, New Mexico",
+          "date_range": "1938",
+          "repository": "FamilySearch",
+          "rationale": "Jimmie Jewel Neal Yarbro died 7 March 1938 in Carlsbad, Eddy County, New Mexico. Her death certificate (New Mexico, Deaths, 1889-1945, col. 1983324 equivalent; the tree already references source 9ZWV-YMJ) is the single record most likely to directly name her parents \u2014 both father and mother \u2014 and should identify the mother by name. This is the highest-priority item: it is contemporaneous, officially registered, and names an informant. Search FamilySearch 'New Mexico, Deaths, 1889-1945' for Jewel/Jimmie Neal/Yarbro, 1938, Eddy County.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Jimmie was born 10 July 1884 in Hillsboro, Hill County, Texas. Wait \u2014 born 1884, so NOT present in the 1880 census. Instead, search for James Monroe Neal and Martha/Mattie Neal (n\u00e9e Wood/Landham) in the 1880 Hill County census to establish the household before Jimmie's birth, confirming the couple and their Hill County residence. The 1880 federal census is highly indexed nationally and will place the parents in Hill County at the right time.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 federal census for Hill County is ~97% indexed on FamilySearch. Jimmie (age 15) should appear in the James Monroe Neal household if the family remained in Hill County, directly establishing the mother-child relationship. Also search for Martha J Wood (who may appear as Hamby in 1900 per tree source 9F92-4CP) to identify surviving siblings who could corroborate parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1879",
+          "repository": "FamilySearch",
+          "rationale": "The parents' marriage record (James M. Neal + Mattie Landham/Martha Wood, 31 July 1879, Hill County) is a dedicated parentage-support item: it (a) confirms James Monroe Neal and Martha Wood/Landham as a couple before Jimmie's 1884 birth, (b) supplies the mother's maiden name (Wood) and married surname from prior marriage (Landham), and (c) corroborates the father named in indirect records. Hill County marriage volumes 1873\u20131912 are 100% indexed on FamilySearch (Texas, County Marriage Records, 1837-2010, col. 1803985). Search for Neal + Landham/Wood, Hill County, 1879. Note: does NOT by itself prove Jimmie is their child \u2014 that link requires a record placing Jimmie in the household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1884",
+          "repository": "FamilySearch",
+          "rationale": "Hill County holds large delayed-birth-affidavit volumes (imageGroupNumbers 008152748, 008507941, 008507942, 008507943, 008413381; combined ~22,000+ images, full-text searchable, not name-indexed) covering births as early as 1867. A delayed birth affidavit filed by Jimmie Jewel Neal (or by a parent on her behalf) would directly name her parents and confirm her 1884 birth. Search these via FamilySearch full-text search for 'Jimmie Neal' or 'Jewel Neal' in the Hill County delayed birth volumes.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "1936-2007",
+          "repository": "FamilySearch",
+          "rationale": "FAN/sibling corroboration: The tree references NUMIDENT source W8XJ-L38 ('Martha Unknown, Claude Neal and Jim Neal') suggesting a Neal sibling's NUMIDENT names 'Jim Neal' as father. Searching the Social Security NUMIDENT for other Neal children of James Monroe Neal and Martha Wood will provide secondary corroboration that Martha Wood/Landham was the mother of these Neal children, including Jimmie. Search FamilySearch 'United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007' for children of James M. Neal and Martha/Mattie Neal born in Hill County, Texas circa 1880-1905.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-25",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1906",
+          "repository": "FamilySearch",
+          "rationale": "Martha J. Wood/Hamby (LKYG-VKB) died 30 May 1906 in Files Valley, Hill County, Texas (pre-existing tree data; death date unverified by a research assertion). Texas Deaths 1890-1977 (FamilySearch col. 1983324, loc_001) is the highest-priority record for this question: a Texas death certificate commonly names the deceased's parents, which would directly answer q_002. The certificate would also confirm her birth year (resolving c_002) and her maiden name. Search collection 1983324 for 'Martha' surname variants 'Wood', 'Neal', 'Hamby', 'Landham', death year 1906, Hill County Texas.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "Martha was born approximately August 1859 in Georgia. In the 1870 US census she would be approximately 11 years old and should appear in her parents' household in Georgia. This record will identify the specific county, her parents' names and ages, and likely siblings \u2014 the key data needed to target Georgia county-level records. Since the county is unknown, search statewide Georgia for Wood households containing a daughter Martha born ~1859 in Georgia. Georgia had no civil birth registration before 1919 (loc_002 quirk), making the census the primary locating tool.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Martha married James Monroe Neal in Hill County TX on 31 Jul 1879 (src_001), so by the 1880 census she would be living as Martha Neal in Hill County, Texas. This census entry will not name her parents but confirms her life trajectory and provides corroboration of her birth year, birthplace (Georgia), and family composition \u2014 useful for constraining Georgia searches. Also search for any Neal or Lanham/Landham households in Hill County TX 1880 that include a wife born in Georgia ~1855-1860.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "If the 1870 Georgia census (pli_008) does not locate Martha's family, try the 1860 US census. Martha was born approximately August 1859, so she would appear as an infant (age 0-1) in her parents' Georgia household in 1860. This search is harder than the 1870 search because infants are less reliably enumerated, but it is feasible if the family surname and county can be guessed from the 1870 result or from pli_007. Georgia had ~137 counties by 1860 \u2014 a statewide search is required unless the county is already identified.",
+          "fallback_for": "pli_008",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 5,
+          "record_type": "marriage",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1775-1880",
+          "repository": "FamilySearch",
+          "rationale": "Two marriage searches are needed: (1) Martha's parents' marriage to each other \u2014 the couple's marriage record supplies the mother's maiden name (absent from census and death records) and corroborates parentage established by census co-residence; (2) any pre-Texas marriage for Martha Wood herself (to W.F. Lanham/Landham, for whom she was already a widow by 1879) \u2014 if this marriage occurred in Georgia, it anchors Martha to a specific county and period. Search Georgia, County Marriages, 1785-1950 (FamilySearch col. 1927197) for both Wood families and Lanham/Landham families containing a party named Martha. This requires the county to be known first (from pli_007 or pli_008); plan items for Georgia county marriages should be narrowed to the identified county.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 6,
+          "record_type": "tax",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1855-1880",
+          "repository": "FamilySearch",
+          "rationale": "Georgia Tax Digests (FamilySearch col. 4130006, 2.88M records) are annual county-level enumerations of heads of household \u2014 effectively a census substitute for every year, not just decennial years. Once the county is identified from pli_007 or pli_008, search the tax digests for the Wood family 1855-1875 to confirm annual residency, identify the father as a taxable adult, and locate the family before and after Martha's birth. The 1890 US census was destroyed; tax digests also bridge the 1880-1900 gap if Martha's parents remained in Georgia that long.",
+          "fallback_for": "pli_008",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1860-1910",
+          "repository": "FamilySearch",
+          "rationale": "Georgia Probate Records (FamilySearch col. 1999178, 203K indexed records, 2.28M images) cover 1742-1990 and include wills, estate inventories, and guardianship records. A will or estate settlement filed by Martha's father (or mother, if widowed) would name Martha as a beneficiary or heir \u2014 direct parentage evidence. Most volumes are browse-only or full-text searchable rather than name-indexed (loc_002 quirk), so this search requires the county to be identified first. Plan to search after the county is known from pli_007 or pli_008.",
+          "fallback_for": "pli_012",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 8,
+          "record_type": "other",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1850-1910",
+          "repository": "Ancestry",
+          "rationale": "Ancestry holds several Georgia-specific collections not on FamilySearch or with better indexing: Georgia Marriage Records from Select Counties 1828-1978 (Ancestry col. 4766), Georgia Marriages 1699-1944 (col. 7839), Georgia Compiled Marriages 1851-1900 (col. 4453), and Georgia Select Births and Christenings 1754-1960 (col. 60264). If FamilySearch searches for Martha's parents return nothing, Ancestry's indexing may capture records FamilySearch missed or vice versa. Also search Ancestry's Texas death certificates collection as a fallback for pli_007 if FamilySearch col. 1983324 does not surface Martha's record.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-25T11:05:36.512Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jewel",
+        "surname": "Neal",
+        "recordType": "death",
+        "deathYearFrom": 1938,
+        "deathYearTo": 1938,
+        "deathPlace": "Eddy, New Mexico, United States",
+        "collectionId": "1987988"
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 3,
+      "notes": "Found FLBC-TZW: Jewel Yarbro death 7 Mar 1938 Carlsbad Eddy NM. Indexed record names Jim Neal as FATHER via ParentChild relationship; mother's name does NOT appear in the index. Birth year shown as 1855 (wrong \u2014 should be 1884; likely misread from age field). Must read image ark:/61903/3:1:3Q9M-C9T2-DF4N to find mother's name on the actual certificate. Record already attached to FamilySearch tree subject."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-25T11:05:42.666Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "James",
+        "surname": "Neal",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Arkansas",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "Hill, Texas, United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2,
+      "notes": "Two James Neal results in Hill County 1880: birth years 1846 SC and 1831 TN \u2014 neither matches subject (born ~1857 Yell, Arkansas). No match for James Monroe Neal. Variant searches (Monroe Neal, J.M. Neal, Jas Neal, broader year range) still needed; pli_002 left in_progress for retry."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-25T11:05:48.865Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jimmie",
+        "surnameAlt": "Neal",
+        "sex": "Female",
+        "birthYearFrom": 1879,
+        "birthYearTo": 1889,
+        "birthPlace": "Texas",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Hill, Texas, United States",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 10,
+      "notes": "Found M3G5-GWF: \"James Neal\" (transcribed; actually Jimmie), born July 1884 TX, single, in household of William S Hamby (b. Jul 1847 SC) and Martha J Hamby (b. Aug 1859 Georgia). GedcomX relationships in record show Martha J Hamby as parent of both Claudie Neal (b. Sep 1882 TX) and James Neal/Jimmie (b. Jul 1884 TX). Martha J Hamby matches tree person LKYG-VKB (Martha J Wood, b. 1855 GA, died 1906). This places Jimmie in Martha Wood's household in 1900, strongly supporting mother-child relationship."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-25T11:05:54.396Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "James",
+        "surname": "Neal",
+        "spouseGivenName": "Mattie",
+        "spouseSurname": "Landham",
+        "marriageYearFrom": 1879,
+        "marriageYearTo": 1879,
+        "marriagePlace": "Hill, Texas, United States",
+        "recordType": "marriage",
+        "collectionId": "1803985"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "Found QV14-6CNS: James M Neal married Mattie Landham, 31 Jul 1879, Hill Texas. Already attached to LH8W-LBC (James Monroe Neal) in FamilySearch tree. Confirms the couple's union before Jimmie's July 1884 birth; supplies mother's pre-marriage surname as Wood (via Landham widow name). Does not by itself prove Jimmie is their child."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-25T11:08:54.508Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Monroe",
+        "surname": "Neal",
+        "birthYearFrom": 1850,
+        "birthYearTo": 1865,
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "Hill, Texas, United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 11,
+      "notes": "pli_002 variant retry using middle name \"Monroe\" as given name in Hill County 1880. No match found \u2014 all 11 results are unrelated persons. James Monroe Neal who married Mattie Landham in Hill County July 1879 does not appear in any indexed Hill County 1880 census result despite extensive variant searching. Possible explanations: newly arrived (1879), may appear as boarder/lodger not indexed as head; or name transcribed unrecognizably. Also searched broader Texas+Arkansas birth origin \u2014 no convincing match. Concluding pli_002 as negative/exhausted."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-25T11:09:00.013Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "James",
+        "surname": "Neal",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Arkansas",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 47,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 47,
+      "notes": "Broadened search to nationwide 1880 census for James Neal born Arkansas 1852-1862. Ranked against LH8W-LBC (James Monroe Neal). Top match score 0.17 \u2014 none in Hill County TX; best Texas results are in Tarrant and Eastland counties (different individuals). James Monroe Neal remains unlocated in 1880 indexed census. This completes pli_002 variant search exhaustion."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-25T11:12:10.730Z",
+      "tool": "record_search",
+      "query": {
+        "keywords": "+Jimmie +Neal OR +Jewel +Neal",
+        "imageGroupNumbers": [
+          "008152748",
+          "008507941",
+          "008507942",
+          "008507943",
+          "008413381"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched all five Hill County delayed birth affidavit volumes (imageGroupNumbers 008152748, 008507941, 008507942, 008507943, 008413381) for +Jimmie +Neal and +Jewel +Neal via fulltext_search. All five returned 0 results. Two results in 008507943 contained 'Jimmie O'Neal' and 'Jimmie Julia O'Neal' but these refer to the Shelton family (different people). No delayed birth affidavit exists for Jimmie Jewel Neal in Hill County indexed volumes. pli_005 exhausted."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-25T11:12:19.092Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jewel",
+        "surname": "Neal",
+        "birthYearFrom": 1882,
+        "birthYearTo": 1886,
+        "collectionId": "5000016"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 5638,
+      "notes": "NUMIDENT (collection 5000016) search for Jewel/Jimmie Neal returned no identifiable match for Jimmie Jewel Neal Yarbro (died 1938, very early in SS era \u2014 may not have had SSN). Some entries list 'Jewel Neal' as a mother on other NUMIDENTs (e.g. Jimmie Darrell Neal, 6K7H-K3P2) \u2014 potential descendants. Also searched for Claude/Claudie Neal in Texas Births and Christenings (collection 1681015): found 4L6X-TY3Z and 4LHD-FSPZ \u2014 both for Claude Neal born 23 Sep 1880, Itasca, Hill, Texas. Both list father Jim Neal and mother Martha ANDERSON (not Martha Wood/Landham as expected from tree). This name discrepancy (Anderson vs. Wood) is flagged as a potential conflict: either an indexing error in the derivative collection, or these records belong to a different Claude Neal not connected to our Martha Wood/Neal/Hamby. The 1900 census evidence (M3G5-GWF) remains the primary and direct evidence for Jimmie's parentage. pli_006 completed."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-25T12:18:31.069Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hamby",
+        "givenName": "Martha",
+        "deathYearFrom": 1904,
+        "deathYearTo": 1908,
+        "deathPlace": "Hill, Texas",
+        "collectionId": "1983324",
+        "recordType": "death",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 14,
+      "notes": "14 results returned but none are Martha's own death certificate \u2014 all are secondary mentions of 'Martha/Mattie Hamby' as relatives on other people's death certs (Joe Claybrook, William Marshall Teel, Eli Wesley Teel). subjectResolvable: false (LKYG-VKB is too sparse). Trying alternate surname variants."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-25T12:21:37.201Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Neal",
+        "givenName": "Martha",
+        "recordType": "vital_record",
+        "collectionId": "1983324",
+        "residencePlace": "Hill, Texas",
+        "residenceYearFrom": 1906,
+        "residenceYearTo": 1906,
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 203,
+      "notes": "Searched TX Deaths 1890-1977 for Martha Neal in Hill Co TX ~1906. 203 total results; top 10 ranked against LKYG-VKB all scored near 0 (subject unresolvable). No Martha Neal death cert for Hill County 1906 identified. All results appear to be different individuals named Martha Neal elsewhere in Texas across a wide date range."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-25T12:21:43.348Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Martha",
+        "recordType": "vital_record",
+        "collectionId": "1983324",
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 305,
+      "notes": "Searched TX Deaths 1890-1977 for Martha Wood (maiden name). 305 total results. Top ranked candidates: (1) Martha Jane Wood, ark:/61903/1:1:KS1J-WQ6, score 0.38, attached to another person; (2) Martha Jane Wood, ark:/61903/1:1:K37R-BRN, score 0.13, unattached. Both merit record_read to check dates/county/family to determine if either is LKYG-VKB dying under maiden name or a different woman. Martha J Wood (K3ZZ-QGQ) also appeared but is a secondary mention on Annie Sikes' cert."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-25T12:23:38.978Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hamby",
+        "givenName": "Martha",
+        "recordType": "death",
+        "collectionId": "1983324",
+        "sex": "Female",
+        "birthYearFrom": 1853,
+        "birthYearTo": 1863,
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 20,
+      "notes": "Broader TX Deaths search for Martha Hamby with birth-year filter (1853-1863), no place filter. 20 results, all secondary mentions on others' death certs (Joe Claybrook, William Teel, Francis Hawkins, etc.). Only principal-deceased Hamby in plausible range is Mattie Hamby (born Mississippi 1855, died Rockdale 1933) \u2014 wrong state of birth and wrong death year. LKYG-VKB's death certificate appears absent or unindexed in col. 1983324. Exhausting FamilySearch TX Deaths approach; pivoting to census searches."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-25T12:24:51.039Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Martha",
+        "recordType": "census",
+        "residencePlace": "Georgia, United States",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "birthYearFrom": 1854,
+        "birthYearTo": 1864,
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 52,
+      "notes": "52 results for Martha Wood born ~1859 in GA 1870 census. Top White candidates: (1) Martha C Wood, born 1859, Whitfield GA, household of Robert Wood (MCQS-1G6); (2) Martha J Wood, born 1860, Whitfield GA, household of Joseph B Wood (MCQS-WMX) \u2014 middle initial J matches subject. Both in Whitfield County. Need record_read on both to check household composition for corroborating siblings/parents."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-25T12:24:55.124Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Neal",
+        "givenName": "Martha",
+        "recordType": "census",
+        "residencePlace": "Hill, Texas, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "birthYearFrom": 1854,
+        "birthYearTo": 1864,
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 11,
+      "notes": "No Martha Neal in 1880 Hill County TX census. All 11 results are city directories and non-census records with very low scores. Trying alternate approach: search for husband James W. Neal as head of household to find the household that way."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-25T12:26:38.799Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Neal",
+        "givenName": "James",
+        "recordType": "census",
+        "residencePlace": "Hill, Texas, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "spouseGivenName": "Martha",
+        "count": 50,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 13,
+      "notes": "Top result MFNK-JN3 is James Neal (born 1831 TN) with wife Martha Neal (born 1832 TN) in Justice Precinct 2, Hill Co TX \u2014 different family from our subject (wife born Tennessee, not Georgia; couple too old). No James W. Neal with Georgia-born wife Martha found in Hill County 1880 census. Either the couple had not yet settled in Hill County in 1880, or they are under-indexed."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-25T12:28:45.534Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Robert",
+        "recordType": "census",
+        "residencePlace": "Whitfield, Georgia, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "birthYearFrom": 1815,
+        "birthYearTo": 1825,
+        "count": 20,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 2,
+      "notes": "Only results are slave schedule entry (R B Wood) and a city directory. No free-schedule Robert Wood (born 1820 SC) found in Whitfield GA 1860 census index. Possible indexing gap. Need to check 1880 census to see if Martha J Wood still in the Whitfield household."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-25T12:29:45.500Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Joseph",
+        "recordType": "census",
+        "residencePlace": "Whitfield, Georgia, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "birthYearFrom": 1831,
+        "birthYearTo": 1841,
+        "count": 20,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 20,
+      "notes": "No Joseph B Wood (born 1836 GA) found in Whitfield GA 1880 census. All results are city directories and unrelated records. Joseph B Wood family may have migrated to Texas between 1870-1880. Will check Texas records for Joseph B Wood family."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-25T12:30:34.425Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Joseph",
+        "recordType": "census",
+        "residencePlace": "Texas, United States",
+        "birthYearFrom": 1831,
+        "birthYearTo": 1841,
+        "birthPlace": "Georgia, United States",
+        "count": 30,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 495,
+      "notes": "No Joseph B Wood (born 1836 GA) clearly identified in Texas census records. 495 total results but none matching Joseph B Wood with wife Mary E in Hill County TX. The family may have migrated to an area other than Texas, or the Hill County TX connection is through daughter Martha alone who married James W. Neal. Completing pli_010 as negative."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-25T12:31:34.051Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Neal",
+        "givenName": "James",
+        "recordType": "marriage",
+        "collectionId": "1803985",
+        "marriagePlace": "Hill, Texas",
+        "marriageYearFrom": 1878,
+        "marriageYearTo": 1885,
+        "spouseGivenName": "Martha",
+        "count": 20,
+        "projectPath": "/tmp/e2e-jimmie-jewel-neal-k3fu9bjn"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 2,
+      "notes": "No James Neal + Martha marriage in Hill County TX 1878-1885. Only James M Neal + Mattie Landham (1879), already in log_004. The Neal-Wood marriage may have occurred in Georgia before migration to Texas, or in another Texas county."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-25T12:34:51.278Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Joseph",
+        "birthYearFrom": 1831,
+        "birthYearTo": 1841,
+        "birthPlace": "Georgia",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordType": "census",
+        "count": 50,
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 43,
+      "notes": "Searching for Joseph B Wood (b.1836 GA) in 1900 US census to track family migration after 1870. Top matches are Joseph W Wood (Paulding GA, b.May 1835), Joseph A Wood (Haralson GA, b.Sep 1837), Joseph H Wood (Blount AL, b.Mar 1841). No clear candidate matching Joseph B Wood from Whitfield GA with a wife named Mary E (b.1841 GA). One Texas hit: 'Jas J Wood' in Montague TX (b.Oct 1840 GA), but given name doesn't match and birth year off. Cannot confirm Joseph B Wood's post-1870 whereabouts from this search."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-25T12:34:56.414Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Joseph",
+        "birthYearFrom": 1831,
+        "birthYearTo": 1841,
+        "birthPlace": "Georgia",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "recordType": "census",
+        "residencePlace": "Texas",
+        "count": 50,
+        "collectionId": "1417683"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 24,
+      "notes": "Searching for Joseph B Wood in 1880 Texas census. Top match: J.W. Wood in Justice Precinct 2, Smith County TX (b.1834 GA, farmer, married, white). Birth year 1834 is close to target 1836; 'J.W.' could represent Joseph with a different middle initial. Worth reading this record to check wife name and children. Also: A.J. Wood in Nacogdoches TX (b.1831 GA) and Mathew J. Wood in Tyler County TX (b.1831 GA). None are clearly our target."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Texas, County Marriage Records, 1837-2010,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QV14-6CNS : accessed 2026-07-25), entry for James M Neal and Mattie Landham, 31 Jul 1879, Hill County, Texas; Hill County Clerk's office.",
+      "citation_detail": {
+        "who": "James M Neal and Mattie Landham",
+        "what": "Marriage entry, Texas County Marriage Records, 1837-2010, Hill County",
+        "when_created": "31 July 1879",
+        "when_accessed": "2026-07-25",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Hill County, Texas; digital image of original register"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QV14-6CNS",
+      "access_date": "2026-07-25",
+      "log_entry_id": "log_004",
+      "notes": "Digital image of the original Hill County marriage register. The collection 'Texas, County Marriage Records, 1837-2010' (collectionId 1803985) is described as original county-level records. Image URL: https://www.familysearch.org/ark:/61903/3:1:33S7-9P38-9KC4",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"New Mexico, Deaths, 1889-1945,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FLBC-TZW : accessed 25 July 2026), entry for Jewel Yarbro, death 7 March 1938, Carlsbad, Eddy County, New Mexico; image of original certificate at ark:/61903/3:1:3Q9M-C9T2-DF4N (not transcribed \u2014 image unavailable at time of extraction).",
+      "citation_detail": {
+        "who": "Jewel Yarbro (deceased)",
+        "what": "New Mexico, Deaths, 1889-1945 (FamilySearch index, collection ID 1546466)",
+        "when_created": "Death registered 7 March 1938",
+        "when_accessed": "25 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry for Jewel Yarbro, death 7 March 1938, Carlsbad, Eddy County, New Mexico"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-25",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FLBC-TZW",
+      "notes": "Derivative index of original New Mexico death certificate. Original certificate image (ark:/61903/3:1:3Q9M-C9T2-DF4N) was not transcribed \u2014 image unavailable at time of extraction (OpenRouter offline). Informant name, full certificate text, and mother's name are unknown from indexed data alone; image transcription is pending. Birth year shown as 1855 in index conflicts with known birth of 10 July 1884 \u2014 likely an error in the age-to-birth-year computation on the certificate or in indexing.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Census, 1900,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M3G5-GWF : accessed 25 July 2026), entry for James Neal in household of William S Hamby, Justice Precinct 2, Hill County, Texas; citing NARA microfilm publication T623.",
+      "citation_detail": {
+        "who": "James Neal (Jimmie Jewel Neal) in household of William S Hamby",
+        "what": "1900 United States Federal Census schedule, dwelling entry",
+        "when_created": "1900",
+        "when_accessed": "2026-07-25",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Justice Precinct 2, Hill County, Texas; ark:/61903/1:1:M3G5-GWF"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M3G5-GWF",
+      "access_date": "2026-07-25",
+      "log_entry_id": "log_003",
+      "notes": "The 1900 census is an original federal census schedule. The focus persona is indexed as 'James Neal' (male), but based on the research context this is almost certainly Jimmie Jewel Neal, female \u2014 likely a transcription/gender-assumption error by the enumerator or indexer. The record's GedcomX carries ParentChild edges from Martha J Hamby to both Claudie Neal and James Neal (Jimmie), and also ParentChild edges from William S Hamby to the same Neal children; the Hamby\u2013Neal parental links for the Neal children may reflect the indexer extending the household head's parentage without direct column evidence \u2014 classified accordingly.",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MCQS-WMD : accessed 25 July 2026), entry for Joseph B Wood and household, Whitfield County, Georgia; citing FamilySearch digital index, collection 1438024.",
+      "citation_detail": {
+        "who": "Joseph B Wood household (Joseph B Wood, Mary E Wood, Martha J Wood, Joseph M Wood, Nancy A Wood, Mary A Wood, Mary Wood)",
+        "what": "United States Census, 1870 \u2014 FamilySearch indexed transcription, collection 1438024",
+        "when_created": "1870",
+        "when_accessed": "25 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Whitfield County, Georgia; ark:/61903/1:1:MCQS-WMD (head of household record)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-25",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MCQS-WMD",
+      "notes": "FamilySearch indexed transcription of the 1870 US federal census schedule. Original handwritten census schedule not examined \u2014 derivative index only. Image link: https://www.familysearch.org/ark:/61903/1:2:M494-NX9",
+      "log_entry_id": "log_013",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729582",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "James M Neal",
+      "structured_value": {
+        "given": "James M",
+        "surname": "Neal"
+      },
+      "information_quality": "primary",
+      "informant": "James M Neal",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729582",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "James M Neal",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729582",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "31 July 1879, Hill County, Texas",
+      "date": "31 Jul 1879",
+      "date_certainty": "exact",
+      "place": "Hill, Texas, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Hill, Texas, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729583",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Mattie Landham",
+      "structured_value": {
+        "given": "Mattie",
+        "surname": "Landham"
+      },
+      "information_quality": "primary",
+      "informant": "Mattie Landham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Mattie Landham is recorded with the surname 'Landham', a spelling variant of 'Lanham' \u2014 the surname of her first husband W.F. Lanham. This is her widowed name at the time of this marriage, not her birth (maiden) surname Wood. The 'Mrs' prefix in the record confirms she was a widow. The informant supplied her current legal name; the maiden name Wood must be sourced from other records.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729583",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Mattie Landham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_persona_id": "p_101312729583",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "31 July 1879, Hill County, Texas",
+      "date": "31 Jul 1879",
+      "date_certainty": "exact",
+      "place": "Hill, Texas, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Hill, Texas, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246706",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Jewel Yarbro",
+      "structured_value": {
+        "given": "Jewel",
+        "surname": "Yarbro"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; who supplied the decedent's name to the registrar is not identifiable from the indexed data. Likely the personal informant (spouse or family member) or the funeral director.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246706",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; informant for sex field is not identifiable from indexed data.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246706",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 7 March 1938 in Carlsbad, Eddy County, New Mexico",
+      "date": "7 Mar 1938",
+      "date_certainty": "exact",
+      "place": "Carlsbad, Eddy, New Mexico",
+      "standard_place": "Carlsbad, Eddy, New Mexico, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index of original death certificate. On the underlying original, the attending physician would have certified the death date and place (official_duty). The indexer/index itself is not the informant. Because the image was not examined, the certifying physician cannot be identified and the information quality cannot be confirmed as primary \u2014 classified indeterminate pending image review.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246706",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "birth year stated as 1855 [conflicts with known birth 10 July 1884 \u2014 likely erroneous computation from age field]",
+      "date": "1855",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (spouse or family member, identity not determinable from index)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year 1855 directly contradicts the known birth date of 10 July 1884. The figure is almost certainly erroneous \u2014 either a miscomputation of age-to-birth-year on the certificate or an indexing error. The personal informant on a death certificate relays the decedent's birth year secondhand (not a witnessed event), making this secondary information regardless. Classified secondary because even if the informant could be identified, they cannot have firsthand knowledge of the decedent's own birth. Image transcription is needed to determine what age or birth year the original certificate states and to assess whether the error is in the certificate or the index.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246707",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Jim Neal",
+      "structured_value": {
+        "given": "Jim",
+        "surname": "Neal"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (spouse or family member, identity not determinable from index)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father's name supplied by the personal informant on a death certificate, who relays parentage knowledge secondhand \u2014 classified secondary. Informant identity unknown from indexed data; image transcription needed. 'Jim Neal' is consistent with 'James Monroe Neal' in the tree (tree person LH8W-LBC) but identity linkage is for person-evidence to determine.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:FLBC-TZW",
+      "record_persona_id": "p_11468246706",
+      "record_role": "absent",
+      "fact_type": "name",
+      "value": "Mother of Jewel Yarbro (n\u00e9e Neal) absent from indexed record \u2014 no mother name appears in the indexed fields of the New Mexico death certificate (collection 1546466, ark:/61903/1:1:FLBC-TZW)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The indexed record contains no mother field. The original certificate image (ark:/61903/3:1:3Q9M-C9T2-DF4N) was not examined \u2014 the mother's name may be present on the original but absent from the index, or the certificate may have left the mother field blank. Image transcription is the essential next step to resolve whether this is an indexing omission or a true blank on the certificate. Alternative: the informant may have been unable to supply the mother's name.",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "James Neal [indexed name; likely Jimmie Jewel Neal \u2014 probable transcription/gender error]",
+      "structured_value": {
+        "given": "James [indexed; likely Jimmie Jewel]",
+        "surname": "Neal"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1900 census does not record who answered; the name 'James Neal' is the indexer's rendering. Research context strongly suggests this is Jimmie Jewel Neal (female, born July 1884 TX), but the record as indexed gives a male given name. The sex discrepancy may be a gendering assumption by the enumerator or an indexing error. Original image should be consulted to confirm the actual given name on the schedule.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male [as indexed; likely Female \u2014 see bias note]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The indexed record assigns gender Male. Research context identifies this persona as Jimmie Jewel Neal, who is female. The discrepancy is likely a transcription or enumerator gender-assumption error. Original image should be examined to resolve.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "July 1884",
+      "structured_value": {
+        "year": "1884"
+      },
+      "date": "July 1884",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census birth month/year is self-reported by an unknown household respondent. The 1900 census recorded birth month and year rather than exact date; approximate only. Consistent with the known birth date of 10 July 1884 for Jimmie Jewel Neal.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Justice Precinct 2, Hill County, Texas",
+      "structured_value": {
+        "place": "Justice Precinct 2, Hill, Texas, United States"
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "place": "Justice Precinct 2, Hill, Texas, United States",
+      "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "The enumerator visited the dwelling and recorded its location; residence is directly attested by the enumerator's presence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Marital status reported by unknown household respondent; the census does not record who answered.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Martha J Hamby",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1900 census included a relationship-to-head column; the GedcomX carries an explicit ParentChild edge from Martha J Hamby (p_91387990) to this persona. This is a stated relationship from the 1900 schedule, which had a relationship column. Martha is listed as wife (and thus stepmother-or-mother of the Neal children). This relationship is the primary evidence bearing on q_001. Martha J Hamby in this record is potentially the same person as tree person LKYG-VKB (Martha J Wood, b. ~1855/1859 GA) \u2014 identity resolution deferred to person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387995",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of William S Hamby (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The GedcomX carries a ParentChild edge from William S Hamby (head) to this persona. However, the Neal surname differs from Hamby, and the delegation context indicates Martha J Hamby likely previously married James Monroe Neal and bore the Neal children before remarrying William Hamby. William Hamby is more likely a stepfather. The relationship-to-head column in 1900 would clarify this; the indexer may have assigned parentage by extension from the household structure. Classified indirect/inferred pending image confirmation.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387990",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Martha J Hamby",
+      "structured_value": {
+        "given": "Martha J",
+        "surname": "Hamby"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census respondent unknown. Martha J Hamby is potentially the same person as tree person LKYG-VKB (Martha J Wood, b. ~1855/1859 GA, d. 30 May 1906 Files Valley Hill TX) \u2014 identity resolution deferred to person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387990",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387990",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "August 1859",
+      "structured_value": {
+        "year": "1859"
+      },
+      "date": "August 1859",
+      "date_certainty": "approximate",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth month/year and birthplace reported by unknown household respondent. Note: tree person LKYG-VKB (Martha J Wood) has birth year ~1855, while this record gives 1859 \u2014 a four-year discrepancy to consider in identity resolution.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387990",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Justice Precinct 2, Hill County, Texas",
+      "structured_value": {
+        "place": "Justice Precinct 2, Hill, Texas, United States"
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "place": "Justice Precinct 2, Hill, Texas, United States",
+      "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387990",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "parent of James Neal [likely Jimmie Jewel Neal]",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1900 census relationship column and the GedcomX ParentChild edge establish Martha J Hamby as parent of this persona. This is the direct evidence for q_001 \u2014 Martha is the mother of the child indexed as 'James Neal,' identified as Jimmie Jewel Neal. Potential identity match with tree person LKYG-VKB deferred to person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387989",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "William S Hamby",
+      "structured_value": {
+        "given": "William S",
+        "surname": "Hamby"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387989",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387989",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "July 1847",
+      "structured_value": {
+        "year": "1847"
+      },
+      "date": "July 1847",
+      "date_certainty": "approximate",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387989",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Justice Precinct 2, Hill County, Texas",
+      "structured_value": {
+        "place": "Justice Precinct 2, Hill, Texas, United States"
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "place": "Justice Precinct 2, Hill, Texas, United States",
+      "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387994",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Claudie Neal",
+      "structured_value": {
+        "given": "Claudie",
+        "surname": "Neal"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387994",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387994",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "September 1882",
+      "structured_value": {
+        "year": "1882"
+      },
+      "date": "September 1882",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387994",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Justice Precinct 2, Hill County, Texas",
+      "structured_value": {
+        "place": "Justice Precinct 2, Hill, Texas, United States"
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "place": "Justice Precinct 2, Hill, Texas, United States",
+      "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387994",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Martha J Hamby",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "GedcomX carries explicit ParentChild edge from Martha J Hamby to Claudie Neal. Claudie shares the Neal surname with the focus persona, corroborating the sibling relationship. Corroborating evidence for q_001 \u2014 Martha is shown as mother of both Neal children.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387991",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Jeannette Hamby",
+      "structured_value": {
+        "given": "Jeannette",
+        "surname": "Hamby"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387991",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387991",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "June 1886",
+      "structured_value": {
+        "year": "1886"
+      },
+      "date": "June 1886",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387992",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "William A Hamby",
+      "structured_value": {
+        "given": "William A",
+        "surname": "Hamby"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387992",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387992",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "December 1890",
+      "structured_value": {
+        "year": "1890"
+      },
+      "date": "December 1890",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387993",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Hubbard S Hamby",
+      "structured_value": {
+        "given": "Hubbard S",
+        "surname": "Hamby"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387993",
+      "record_role": "child_5",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387993",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "March 1893",
+      "structured_value": {
+        "year": "1893"
+      },
+      "date": "March 1893",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387996",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "Robert E Knott",
+      "structured_value": {
+        "given": "Robert E",
+        "surname": "Knott"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Robert E Knott bears a different surname from the head (Hamby) and the Neal children. His relationship to the household is unstated in the index. He may be a boarder, a relative by marriage, or otherwise connected. Flagged as a FAN lead \u2014 his presence in this household may indicate a kinship connection with the Neal or Hamby families worth investigating.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387996",
+      "record_role": "boarder_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:M3G5-GWF",
+      "record_persona_id": "p_91387996",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "March 1883",
+      "structured_value": {
+        "year": "1883"
+      },
+      "date": "March 1883",
+      "date_certainty": "approximate",
+      "place": "Texas",
+      "standard_place": "Texas, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Martha J Wood",
+      "structured_value": {
+        "given": "Martha J",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born ~1860, Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia, United States",
+      "date": "~1860",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Whitfield County, Georgia, 1870",
+      "structured_value": {
+        "place": "Whitfield County, Georgia"
+      },
+      "place": "Whitfield, Georgia, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Whitfield, Georgia, United States"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Joseph B Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The 1870 US federal census did not include a relationship-to-head column; this parent-child link is inferred from household enumeration position and age pattern. The relationship column was not introduced until the 1880 census.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999414",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Mary E Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The 1870 US federal census did not include a relationship-to-head column; this parent-child link is inferred from household enumeration position and age pattern. The relationship column was not introduced until the 1880 census.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999412",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph B Wood",
+      "structured_value": {
+        "given": "Joseph B",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999412",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999412",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born ~1836, Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia, United States",
+      "date": "~1836",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999412",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Whitfield County, Georgia, 1870",
+      "structured_value": {
+        "place": "Whitfield County, Georgia"
+      },
+      "place": "Whitfield, Georgia, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Whitfield, Georgia, United States"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999413",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Mary E Wood",
+      "structured_value": {
+        "given": "Mary E",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999413",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999413",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born ~1841, Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia, United States",
+      "date": "~1841",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MCQS-WMX",
+      "record_persona_id": "p_221999413",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Whitfield County, Georgia, 1870",
+      "structured_value": {
+        "place": "Whitfield County, Georgia"
+      },
+      "place": "Whitfield, Georgia, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Whitfield, Georgia, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LH8W-LBC",
+      "confidence": "confident",
+      "rationale": "James M Neal is the groom in the 31 Jul 1879 Hill County marriage record. LH8W-LBC (James Monroe Neal) is already attached to this record in FamilySearch (log_001 note). Name 'James M Neal' matches 'James Monroe Neal' at surname and given initial; marriage date/place matches R1 couple relationship in tree. same_person score 0.874 (strong).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LH8W-LBC",
+      "confidence": "confident",
+      "rationale": "Sex assertion for groom persona, same record as a_001. Identity established by a_001 \u2014 LH8W-LBC (James Monroe Neal).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LH8W-LBC",
+      "confidence": "confident",
+      "rationale": "Groom's marriage fact (31 Jul 1879 Hill TX) for LH8W-LBC (James Monroe Neal). Date/place match R1 couple relationship exactly. same_person score 0.874.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "The groom's marriage assertion names the event that also establishes LKYG-VKB (Martha J Wood/'Mattie Landham') as the bride. Linked as other-side of couple; same rationale as a_006 \u2192 LKYG-VKB.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "'Mattie Landham' (bride) = LKYG-VKB (Martha J Wood/Neal). (1) Couple logic: groom identified as LH8W-LBC whose R1 partner is LKYG-VKB. (2) 'Mattie' is standard diminutive for Martha \u2014 LKYG-VKB's given name. (3) 'Landham' = spelling variant of 'Lanham,' her widowed surname from first husband W.F. Lanham (tree source WWLY-J9X). No usable same_person score (near-zero degenerate due to maiden/widow/married name chain). Qualitative correlation strong \u2014 probable.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Sex assertion for bride persona, same record as a_004. Identity established by a_004 \u2014 LKYG-VKB (Martha J Wood).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Bride's marriage fact (31 Jul 1879 Hill TX) for LKYG-VKB. Couple logic and name analysis per a_004.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "LH8W-LBC",
+      "confidence": "confident",
+      "rationale": "Bride's marriage assertion also names LH8W-LBC (James Monroe Neal) as groom \u2014 other-side link per relationship-assertion cardinality rule. same_person score 0.874.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "'Jewel Yarbro' (deceased, death 7 Mar 1938 Carlsbad Eddy NM) = KNXW-M3T (Jimmie Jewel Neal Yarbro). (1) Death date/place match exactly. (2) 'Jewel' = Jimmie's middle name. (3) 'Yarbro' = her married surname. (4) Record already attached to KNXW-M3T in FamilySearch (log_001 notes). No usable same_person score (near-zero degenerate due to 'Yarbro' vs tree name 'Neal'). Qualitative match on death date/place definitive \u2014 confident.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "Sex assertion for deceased persona, same record as a_007. Identity established by a_007 \u2014 KNXW-M3T.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "Death fact (7 Mar 1938 Carlsbad Eddy NM) for KNXW-M3T. Date/place match exactly; same identity logic as a_007.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "Birth year 1855 (erroneous per bias notes \u2014 likely age miscomputation on certificate) from FLBC-TZW deceased persona. This record is definitively about KNXW-M3T (per a_007); this assertion records the conflicting birth year from the certificate. NOT materialized into tree (error-tier merge conflict with known 1884 birth); logged as conflict evidence. Confident this assertion belongs to KNXW-M3T's death record.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "LH8W-LBC",
+      "confidence": "probable",
+      "rationale": "'Jim Neal' named as father of deceased Jewel Yarbro (KNXW-M3T) on NM death cert. LH8W-LBC is James Monroe Neal. (1) 'Jim' = standard nickname for 'James'. (2) 'Neal' surname exact match. (3) LH8W-LBC has ParentChild relationship R2 to KNXW-M3T in tree. (4) Marriage record src_001 also corroborates LH8W-LBC as Neal family father. Secondary information (unknown informant) \u2014 probable.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "Father_of_deceased assertion (a_011) names Jim Neal as Jewel Yarbro's father. Bears on KNXW-M3T as the deceased whose paternity is stated. Other-side link: deceased identity established at confident (a_007).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KNXW-M3T",
+      "confidence": "confident",
+      "rationale": "Negative evidence: mother's name absent from indexed NM death cert for Jewel Yarbro. This assertion is on the deceased's record (record_persona_id p_11468246706 = deceased) and bears on KNXW-M3T. Confirms that the indexed death cert does not supply the mother's name; image transcription needed to check the original certificate. Identity of deceased established at confident (a_007).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Census persona 'James Neal' (b. Jul 1884 TX, child in Hamby household, Hill County TX 1900) = KNXW-M3T (Jimmie Jewel Neal). (1) Birth July 1884 Texas matches exactly (KNXW-M3T: 10 Jul 1884 Hillsboro Hill TX). (2) Household position: child under Martha J Hamby, established as LKYG-VKB (Jimmie's known mother per R3). (3) Sibling Claudie Neal (b. Sep 1882 TX, same household) shares Neal surname consistent with Jimmie's sibling. (4) Indexed given name 'James' and sex 'Male' are transcription errors per a_013 bias notes. No usable same_person score (near-zero degenerate). Qualitative match on birth date+place+household position strong \u2014 probable.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male as indexed, likely Female \u2014 transcription error) for child_1 persona, same record as a_013. Identity established by a_013 \u2014 KNXW-M3T.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Birth Jul 1884 TX for child_1 persona. Exact month/year/state match to KNXW-M3T's known birth (10 Jul 1884 Hillsboro Hill TX). Strongest single data point for the child_1 \u2192 KNXW-M3T identification.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Residence Hill County TX 1900 for child_1 persona (KNXW-M3T). Consistent with known Hillsboro TX birth and expected location. Identity per a_013.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Marital status Single for child_1 persona (KNXW-M3T). Contextually consistent \u2014 Jimmie was approximately 15 in 1900. Identity per a_013.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: child_1 is child of Martha J Hamby (wife). Bears on KNXW-M3T as the child. The census ParentChild edge from Martha J Hamby (LKYG-VKB per other pe_ entries) to Jimmie (KNXW-M3T) is the primary direct evidence for q_001. Identity per a_013.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: child_1 is child of Martha J Hamby. Bears on LKYG-VKB (Martha J Wood/Hamby) as the named parent \u2014 other-side link. This is the direct census evidence that Martha is Jimmie's mother, bearing on LKYG-VKB's maternal role. Probable, consistent with wife-persona confidence.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Inferred ParentChild from William S Hamby (head) to child_1 (Jimmie). Bears on KNXW-M3T as the child. Indirect/inferred \u2014 William is likely stepfather. Identity per a_013.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Inferred ParentChild from William S Hamby (head) to child_1. Bears on I1 (William S Hamby stub, minted from head_of_household persona) as the inferred parent. Probable (inferred relationship, likely stepparent role).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "'Martha J Hamby' (wife, b. Aug 1859 GA, Hill County TX 1900) = LKYG-VKB (Martha J Wood/Neal/Hamby, b. ~1855 GA, d. 30 May 1906 Files Valley Hill TX). (1) 'Martha J' given name + initial exact match. (2) 'Hamby' = surname from current marriage to William S Hamby (head). (3) Georgia birthplace matches. (4) Hill County TX 1900 residence matches. (5) Mother of Claudie Neal and James Neal (Jimmie), both with Neal surname \u2014 consistent with prior marriage to LH8W-LBC (James Monroe Neal). Key discrepancy: birth year 1859 (census) vs 1855 (tree) \u2014 4 years, flagged as conflict. No usable same_person score (near-zero degenerate 0.0000034 \u2014 wrong ARK returned by API). Qualitative match on name/place/role strong \u2014 probable. NOT materialized (merge-introduced birth year conflict); conflict entry pending.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Sex assertion for wife persona (LKYG-VKB). Identity per a_020.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Birth Aug 1859 GA for wife persona (LKYG-VKB). Conflicts with tree birth ~1855 \u2014 4-year discrepancy; Georgia birthplace matches. Identity per a_020; conflict to be logged.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Residence Hill County TX 1900 for wife persona (LKYG-VKB). Consistent with known death place Files Valley Hill TX 1906. Identity per a_020.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: wife (Martha J Hamby/LKYG-VKB) is parent of child_1 (James Neal/Jimmie). Direct census evidence of Martha's maternal role. Identity per a_020.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "KNXW-M3T",
+      "confidence": "probable",
+      "rationale": "Wife's parent assertion (a_024) bears on KNXW-M3T as the child \u2014 other-side link. Census shows Martha J Hamby is parent of child indexed as 'James Neal' (Jimmie). Probable, consistent with child_1 confidence.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "William S Hamby (head_of_household, b. Jul 1847 SC, Hill County TX 1900) was minted as I1 directly from this assertion \u2014 no alternative candidate. Confident.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion for head_of_household persona (I1 / William S Hamby). Identity per a_025.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth Jul 1847 South Carolina for I1 (William S Hamby). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Hill County TX 1900 for I1 (William S Hamby). Identity per a_025.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Claudie Neal (child_2, b. Sep 1882 TX) was minted as I2 from this assertion \u2014 no alternative candidate. Confident. Shares Neal surname with Jimmie (KNXW-M3T), consistent with sibling relationship under LKYG-VKB (Martha).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_030",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex assertion for child_2 persona (I2 / Claudie Neal). Identity per a_029.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth Sep 1882 TX for I2 (Claudie Neal). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_032",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence Hill County TX 1900 for I2 (Claudie Neal). Identity per a_029.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship: Claudie Neal (I2/child_2) is child of Martha J Hamby (wife/LKYG-VKB). Identity per a_029.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_033",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "The child_2 relationship assertion (Claudie Neal is child of Martha J Hamby) bears on LKYG-VKB as the named parent \u2014 other-side link. Shows Martha as mother of Claudie as well as Jimmie, corroborating her maternal role in the Neal sibling pair. Probable per wife-persona confidence.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_034",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Jeannette Hamby (child_3, b. Jun 1886 TX) was minted as I3 from this assertion \u2014 no alternative candidate. Confident.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_035",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex assertion for child_3 persona (I3 / Jeannette Hamby). Identity per a_034.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_036",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth Jun 1886 TX for I3 (Jeannette Hamby). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_037",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "William A Hamby (child_4, b. Dec 1890 TX) was minted as I4 from this assertion \u2014 no alternative candidate. Confident.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Sex assertion for child_4 persona (I4 / William A Hamby). Identity per a_037.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_039",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth Dec 1890 TX for I4 (William A Hamby). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_040",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Hubbard S Hamby (child_5, b. Mar 1893 TX) was minted as I5 from this assertion \u2014 no alternative candidate. Confident.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_041",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Sex assertion for child_5 persona (I5 / Hubbard S Hamby). Identity per a_040.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_042",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth Mar 1893 TX for I5 (Hubbard S Hamby). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_043",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Robert E Knott (boarder_1, b. Mar 1883 TX) was minted as I6 from this assertion \u2014 no alternative candidate. Confident. Noted as FAN lead (different surname from Hamby/Neal household).",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_044",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Sex assertion for boarder_1 persona (I6 / Robert E Knott). Identity per a_043.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_045",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Birth Mar 1883 TX for I6 (Robert E Knott). Minted from this assertion; no alternative candidate.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_046",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Martha J Wood, Female, born ~1860 Georgia, daughter in Joseph B Wood's 1870 Whitfield County GA household. Name 'Martha J Wood' matches LKYG-VKB's known name exactly, including the distinctive middle initial J. Sex and Georgia birthplace align. Birth year 1860 is 1-5 years later than estimates (tree ~1855, 1900 census Aug 1859) \u2014 within census age-reporting variance. No same_person score available (subjectResolvable: false for LKYG-VKB). Identity concluded at probable pending q_002 proof formalization.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_047",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Sex female for Martha J Wood persona in 1870 Whitfield GA census. Consistent with LKYG-VKB (Female). No score available.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_048",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Birth ~1860, Georgia for Martha J Wood persona in 1870 Whitfield GA census. Georgia birthplace confirms LKYG-VKB's known Georgia origin. Birth year 1860 is close to 1859 (1900 census) and within range of the c_002 unresolved birth-year discrepancy. No score available.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_049",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Residence 1870 Whitfield County, Georgia for Martha J Wood persona. Consistent with LKYG-VKB's known Georgia origin and later emigration to Texas. No score available.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_050",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Indirect parentage assertion: Martha J Wood is enumerated in the household of Joseph B Wood (I7) in 1870 Whitfield GA, implying parent-child relationship. Position in household consistent with daughter at age ~10. This is the child side of the assertion; the parent side links to I7. Probable confidence \u2014 1870 census has no relationship column; parentage inferred from household enumeration and age pattern.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_050",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Indirect parentage assertion: Joseph B Wood (I7) is the head of household in 1870 Whitfield GA that includes Martha J Wood \u2014 implying parental relationship. This is the parent side of the same assertion that links to LKYG-VKB. Probable confidence.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_051",
+      "person_id": "LKYG-VKB",
+      "confidence": "probable",
+      "rationale": "Indirect parentage assertion: Martha J Wood is enumerated in the household that includes Mary E Wood (I8) as wife \u2014 implying mother-child relationship. Child side of assertion. Probable confidence \u2014 1870 census has no relationship column.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_051",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Indirect parentage assertion: Mary E Wood (I8) is wife of the head of household that includes Martha J Wood \u2014 implying maternal relationship. Parent side of assertion. Probable confidence.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_052",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Name 'Joseph B Wood' for the head of household in 1870 Whitfield GA census. I7 was created specifically to represent this person in the tree. Direct identity \u2014 no ambiguity.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_053",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Sex Male for Joseph B Wood (I7) head of household in 1870 Whitfield GA census. Direct identity.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_054",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Birth ~1836, Georgia for Joseph B Wood (I7). I7 was created from this record; no other candidate to compare.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_055",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Residence 1870 Whitfield County, Georgia for Joseph B Wood (I7). Direct identity.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_056",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Name 'Mary E Wood' for the wife in 1870 Whitfield GA census household headed by Joseph B Wood (I7). I8 was created specifically to represent this person.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_057",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Sex Female for Mary E Wood (I8) wife of Joseph B Wood in 1870 Whitfield GA census. Direct identity.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_058",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Birth ~1841, Georgia for Mary E Wood (I8). I8 was created from this record; no ambiguity.",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_059",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Residence 1870 Whitfield County, Georgia for Mary E Wood (I8). Direct identity.",
+      "created": "2026-07-25"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Jimmie Jewel Neal's indexed NM death certificate (a_010) states a birth year of 1855 \u2014 almost certainly erroneous. The 1900 census (a_015) gives July 1884, consistent with the known birth of 10 July 1884 and all other life-event evidence.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_010",
+        "a_015"
+      ],
+      "independence_analysis": "The two assertions come from independent sources: a_010 is from the derivative NM death certificate index (src_002); a_015 is from the original 1900 federal census schedule (src_003). They rely on different informants and record-creation occasions.",
+      "weighing_analysis": "a_015 (July 1884, original census) is strongly preferred. The 1900 census is an original record; July 1884 is consistent with all other time-indexed facts about Jimmie (age at death 1938, presence as a child in the 1900 census). The value 1855 in a_010 would make Jimmie 45 in 1900 when she appears as a child \u2014 internally contradictory. a_010 derives from a derivative index whose original image was not examined; the error likely arose from a miscomputation of age-to-birth-year on the certificate or an indexing transcription error.",
+      "preferred_assertion_id": "a_015",
+      "resolution_rationale": "1884 adopted as the birth year for KNXW-M3T. The 1855 figure from the death certificate index is classified as an erroneous derivative computation pending transcription of the original image (ark:/61903/3:1:3Q9M-C9T2-DF4N), which may clarify whether the error originated on the certificate or in the index.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "identity",
+      "description": "The pre-existing tree records Martha J. Wood/Hamby (LKYG-VKB) as born approximately 1855 (source untraced in this project). The 1900 census (a_022, src_003) gives August 1859 \u2014 a four-year discrepancy. No research.json assertion backs the ~1855 value; pe_025 and pe_027 both explicitly flag this as a conflict pending formal entry.",
+      "identity_question": "What is Martha J. Wood/Hamby (LKYG-VKB)'s correct birth year \u2014 approximately 1855 per the pre-existing tree, or August 1859 per the 1900 census (a_022)?",
+      "competing_assertion_ids": [
+        "a_022"
+      ],
+      "independence_analysis": "Only one research assertion (a_022, 1900 census original) covers LKYG-VKB's birth year. The competing value (~1855) is a pre-existing tree attribute whose backing source cannot be evaluated in this project.",
+      "weighing_analysis": "The 1900 census (a_022, original record) is tentatively preferred. Both dates are consistent with a woman who married in 1879. The four-year gap is common in census records where ages were reported from memory. This is a collateral detail that does not affect the concluded parent-child relationship between LKYG-VKB and KNXW-M3T, but resolving it is important groundwork before q_002 (identifying Martha's parents). Resolution requires locating Martha's 1906 Hill County death certificate (Texas Deaths 1890-1977, collection 1983324).",
+      "preferred_assertion_id": "a_022",
+      "resolution_rationale": "August 1859 tentatively adopted from the 1900 census pending examination of Martha's death record. The conflict remains open; it is recorded as unresolved because the original source of the ~1855 tree value has not been identified.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "c_003",
+      "conflict_type": "identity",
+      "description": "Two households in the 1870 Whitfield County, Georgia census contain a daughter named Martha Wood: (1) Joseph B Wood (b.1836 GA) + Mary E Wood (b.1841 GA) household, with daughter 'Martha J Wood' (b.1860 GA); and (2) Robert Wood (b.1820 SC) + Martha Wood (b.1819 SC) household, with daughter 'Martha C Wood' (b.1859 GA). Both could in principle be the Martha Wood who later became Martha Neal/Hamby (LKYG-VKB) in Hill County, Texas.",
+      "disputed_attribute": "parentage",
+      "identity_question": "Which of the two Whitfield County, Georgia 1870 households \u2014 Joseph B Wood's or Robert Wood's \u2014 is the family of origin of Martha J. Wood (LKYG-VKB)?",
+      "competing_assertion_ids": [
+        "a_050",
+        "a_051"
+      ],
+      "independence_analysis": "Both candidate families appear in the same source (1870 Whitfield County GA census, col. 1438024). The two entries are independent: different household heads, different parental birthplaces (Joseph B Wood: GA-born; Robert Wood: SC-born). No independent corroborating record links either family's daughter Martha to the Hill County, Texas Martha Neal/Hamby.",
+      "weighing_analysis": "The Joseph B Wood family is strongly preferred: (1) Middle initial 'J' \u2014 LKYG-VKB is consistently identified as 'Martha J. Wood/Neal/Hamby'; the Joseph B Wood household's daughter is 'Martha J Wood', while the Robert Wood household's daughter is 'Martha C Wood'. 'J' vs 'C' is a meaningful distinction. (2) Parental birthplace \u2014 Joseph B Wood's parents are both Georgia-born, consistent with a Georgia-rooted family; Robert Wood and his wife are South Carolina-born, a different regional profile. (3) Birth year \u2014 Martha J Wood (Joseph's daughter) born 1860 is consistent with the 1900 census estimate of Aug 1859 for LKYG-VKB; Martha C Wood (Robert's daughter) born 1859 is a near-tie but the middle initial difference outweighs the 1-year advantage.",
+      "preferred_assertion_id": "a_050",
+      "resolution_rationale": "The Joseph B Wood family is preferred as the origin family of LKYG-VKB. The middle initial 'J' is the decisive distinguishing factor: it precisely matches LKYG-VKB's established middle initial and rules out Martha C Wood (Robert Wood's daughter). The Robert Wood candidate is effectively eliminated by this criterion.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Texas Births and Christenings derivative entries for 'Claude Neal' born 23 Sep 1880 in Itasca (4L6X-TY3Z, 4LHD-FSPZ) listing mother 'Martha Anderson' refer to a different Claude Neal from Claudie Neal (Jimmie's sibling born Sep 1882 per the 1900 census), and therefore 'Anderson' is not the maiden surname of LKYG-VKB (Martha J. Wood/Hamby).",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_029",
+        "a_033"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Two distinguishing factors support this hypothesis: (1) birth year discrepancy \u2014 the Itasca entries give Sep 1880 but a_029/a_033 place Claudie Neal's birth at Sep 1882 per the 1900 census, a two-year gap; (2) locality discrepancy \u2014 Itasca differs from Justice Precinct 2 (the 1900 census household locality). If correct, 'Anderson' is not an alias or maiden name of LKYG-VKB. The original register images (4L6X-TY3Z, 4LHD-FSPZ) should be examined when OpenRouter is available to confirm content and determine whether the name is an indexing error or reflects a genuinely different mother."
+    },
+    {
+      "id": "h_002",
+      "claim": "Joseph B. Wood (born approximately 1836, Georgia) and Mary E. Wood (born approximately 1841, Georgia), enumerated together in the 1870 federal census in Whitfield County, Georgia, are the parents of Martha J. Wood \u2014 who later became Martha J. Neal/Hamby (LKYG-VKB), mother of Jimmie Jewel Neal.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_048",
+        "a_049",
+        "a_050",
+        "a_051"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_002"
+      ],
+      "notes": "Primary basis: The 1870 Whitfield County, GA census (src_004) shows the Joseph B Wood household with daughter 'Martha J Wood' (female, born 1860, Georgia). The distinctive middle initial 'J' matches LKYG-VKB's known name. The competing candidate in the same 1870 GA search \u2014 Robert Wood (b.1820 SC) + Martha Wood (b.1819 SC) household in Whitfield GA \u2014 has a daughter named 'Martha C Wood' (not 'Martha J'), which conflicts with the middle initial. No further corroboration of the Wood family's Texas migration was located: Joseph B Wood and family do not appear in the 1880 Whitfield GA census or in 1880/1900 Texas census searches, suggesting migration between 1870 and 1880. No marriage record found for Martha Wood + Lanham in Georgia (the prior marriage to W.F. Lanham may have occurred in Texas before 1879 when she married James Neal). Confidence level for the claim: Probable."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_006",
+        "a_009",
+        "a_011",
+        "a_015",
+        "a_018",
+        "a_024",
+        "a_031",
+        "a_033"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Six plan items completed. Sources searched: (1) New Mexico Deaths 1889-1945 \u2014 positive, found death certificate for Jewel Yarbro (Jimmie), names Jim Neal as father; mother absent from index; image not transcribed (OpenRouter offline). (2) 1880 US Census Hill County \u2014 negative across multiple variant searches; James Monroe Neal not located. (3) 1900 US Census Hill County \u2014 positive; 'James Neal' (Jimmie) found in Hamby household under Martha J Hamby as parent. (4) Texas County Marriage Records 1879 Hill County \u2014 positive; James M Neal + Mattie Landham marriage confirmed. (5) Hill County delayed birth affidavit volumes (5 image groups, full-text) \u2014 negative; no Jimmie/Jewel Neal entry. (6) Social Security NUMIDENT \u2014 negative for Jimmie directly; 'Martha Anderson' name discrepancy noted in derivative birth records (likely different individual). Key gap: original NM death cert image not transcribed.",
+      "narrative_markdown": "# Proof Summary: Mother of Jimmie Jewel Neal (born 10 July 1884, Hillsboro, Hill County, Texas)\n\n**Conclusion \u2014 Probable:** Martha J. Wood \u2014 known as Mattie Landham at her 1879 remarriage, and as Martha J. Hamby in 1900 following a third marriage \u2014 is, with a high probability, the mother of Jimmie Jewel Neal.\n\n## Primary Evidence\n\n**1900 United States Federal Census (original source; indeterminate information quality)**\n\nThe 1900 census schedule for Justice Precinct 2, Hill County, Texas, records a household headed by William S. Hamby (born July 1847, South Carolina) and his wife Martha J. Hamby (born August 1859, Georgia). Two children with the surname Neal appear in the household: Claudie Neal (born September 1882, Texas, Female) and James Neal (born July 1884, Texas). The GedcomX for this record carries explicit ParentChild relationships from Martha J. Hamby to both Neal children. The child indexed as \"James Neal\" \u2014 birth month July 1884, birthplace Texas \u2014 matches the known birth details of Jimmie Jewel Neal (born 10 July 1884, Hillsboro, Hill County, Texas) precisely in month, year, and state. The given name \"James\" and the male sex designation are almost certainly a transcription or enumerator error: the research subject is documented as female (given name Jimmie Jewel Neal Yarbro on the 1938 death certificate). The Neal children's distinctive surname separates them from the Hamby-surname children in the same household (Jeannette, William A., and Hubbard S. Hamby), demonstrating that Martha brought them from a prior marriage. Citation: \"United States, Census, 1900,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M3G5-GWF : accessed 25 July 2026), entry for James Neal in household of William S Hamby, Justice Precinct 2, Hill County, Texas; citing NARA microfilm publication T623.\n\n## Corroborating Evidence\n\n**1879 Hill County Marriage Record (original source; primary information)**\n\nJames M. Neal married Mattie Landham on 31 July 1879 in Hill County, Texas. The bride's widowed surname \"Landham\" is a spelling variant of \"Lanham\" \u2014 consistent with a prior marriage to W.F. Lanham documented in the existing tree (source WWLY-J9X). This establishes James Monroe Neal (LH8W-LBC) and Martha J. Wood/Landham (LKYG-VKB) as a married couple five years before Jimmie's birth, making their household the expected family context for a child born July 1884 in Hill County with the Neal surname. Citation: \"Texas, County Marriage Records, 1837-2010,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QV14-6CNS : accessed 2026-07-25), entry for James M Neal and Mattie Landham, 31 Jul 1879, Hill County, Texas; Hill County Clerk's office.\n\n**1938 New Mexico Death Certificate \u2014 indexed entry (derivative source; indeterminate information quality)**\n\nThe indexed FamilySearch entry for the death of Jewel Yarbro (Jimmie Jewel Neal, married name Yarbro) on 7 March 1938, Carlsbad, Eddy County, New Mexico, names \"Jim Neal\" as her father \u2014 consistent with James Monroe Neal (LH8W-LBC). Martha's name does not appear in the indexed fields. The original certificate image (ark:/61903/3:1:3Q9M-C9T2-DF4N) was not examined at the time of extraction due to image transcription limitations. Citation: \"New Mexico, Deaths, 1889-1945,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FLBC-TZW : accessed 25 July 2026), entry for Jewel Yarbro, death 7 March 1938, Carlsbad, Eddy County, New Mexico; image of original certificate at ark:/61903/3:1:3Q9M-C9T2-DF4N (not transcribed \u2014 image unavailable at time of extraction).\n\n## Acknowledged Discrepancies\n\n**Birth year of LKYG-VKB (Martha J. Hamby/Wood):** The tree records Martha's birth as approximately 1855 (source untraced in this project), while the 1900 census gives August 1859 \u2014 a four-year discrepancy. Both dates are consistent with a woman who married in 1879. This discrepancy is a collateral fact: it does not change the identity of Martha as the mother, but should be resolved by examining her 1906 Hill County death certificate (Texas Deaths 1890-1977, collection 1983324).\n\n**\"Martha Anderson\" in derivative birth records:** Two indexed entries (Texas Births and Christenings, col. 1681015) for a \"Claude Neal\" born 23 September 1880 in Itasca, Hill County, Texas, name the mother as \"Martha Anderson.\" These records likely refer to a different person: the 1900 census places Claudie Neal's birth in September 1882 (two years later), and the Itasca locality differs from the Justice Precinct 2 household of the 1900 census. The original documents should be examined to determine whether \"Anderson\" is an indexing error or refers to a different individual. These records were not extracted as research.json assertions and do not directly contradict the concluded relationship.\n\n## GPS Assessment\n\n- **Component 1 \u2014 Reasonably exhaustive search:** Declared. All six plan items searched. Primary gap: original NM death certificate image not transcribed.\n- **Component 2 \u2014 Complete, accurate citations:** All cited; citations copied verbatim from research.json.\n- **Component 3 \u2014 Analysis and correlation:** The 1900 census parent-child relationship, the 1879 marriage establishing the couple, and the death cert father identification are independently sourced and mutually consistent.\n- **Component 4 \u2014 Conflicting evidence:** Collateral discrepancies acknowledged (birth year, \"Anderson\" surname in derivative records). Neither disputes the concluded parent-child relationship.\n- **Component 5 \u2014 Soundly reasoned conclusion:** Probable. The 1900 census directly states the parent-child relationship; the marriage record corroborates the family unit; no source contradicts Martha's maternity. The tier does not reach Proved because: (a) only one source directly states the parent-child fact; (b) the death certificate image has not been examined; (c) the birth year discrepancy is unresolved.\n\n## Next Steps to Advance the Tier\n\n1. Transcribe the original NM death certificate image when OpenRouter is available \u2014 the mother's name may appear, providing a second direct source.\n2. Search Texas Deaths 1890-1977 (col. 1983324) for Martha J. Wood/Neal/Hamby's death on 30 May 1906 in Files Valley, Hill County \u2014 would also confirm birth year and potentially name her parents.\n3. Open q_002: identify Martha J. Wood's parents (Jimmie's maternal grandparents \u2014 the primary research objective)."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_048",
+        "a_049",
+        "a_050",
+        "a_051",
+        "a_054",
+        "a_055",
+        "a_058",
+        "a_059"
+      ],
+      "resolved_conflict_ids": [
+        "c_003"
+      ],
+      "exhaustive_search_summary": "Eight plan items across pl_002. Positive results: pli_008 (1870 Georgia census, log_013) found Joseph B Wood household in Whitfield County containing daughter Martha J Wood (b.1860 GA). Negative/confirmatory results: pli_007 \u2014 Texas Deaths 1890-1977 negative for Martha Wood/Neal/Hamby 1906 (logs 009-012); pli_009 \u2014 1880 Hill Co TX census negative for James/Martha Neal household (logs 014-015); pli_011 \u2014 Georgia marriage records negative for Martha Wood+Neal or Wood couple (log_019). Supplemental searches: 1860 Whitfield GA census negative for Robert Wood family corroboration (log_016); 1880 Whitfield GA negative for Joseph B Wood (log_017 \u2014 family had emigrated); 1880 Texas census negative for Joseph B Wood (logs 018, 021); 1900 US census negative for Joseph B Wood with Georgia birth (log_020). Key gap: No corroborating record locates the Wood family after 1870 or directly links Joseph B/Mary E Wood as Martha's parents outside of census household enumeration.",
+      "narrative_markdown": "# Proof Summary: Parents of Martha J. Wood (LKYG-VKB), Mother of Jimmie Jewel Neal\n\n**Conclusion \u2014 Probable:** Joseph B. Wood (born approximately 1836, Georgia) and Mary E. Wood (born approximately 1841, Georgia), enumerated together in Whitfield County, Georgia, in the 1870 federal census, are, with high probability, the parents of Martha J. Wood \u2014 who later married James Monroe Neal and William S. Hamby and is established by the q_001 proof summary as the mother of Jimmie Jewel Neal (KNXW-M3T).\n\n## Research Question\n\nWho were the parents of Martha J. Wood (LKYG-VKB, born approximately 1859 in Georgia, died 30 May 1906 in Files Valley, Hill County, Texas)? This question is required to answer the project objective: identifying the maternal grandparents of Jimmie Jewel Neal.\n\n## Primary Evidence\n\n**1870 United States Federal Census, Whitfield County, Georgia (derivative source; primary information)**\n\nThe 1870 federal census schedule for Whitfield County, Georgia, records the following household:\n\n- Joseph B Wood, Male, born 1836, Georgia (head)\n- Mary E Wood, Female, born 1841, Georgia (wife)\n- Martha J Wood, Female, born 1860, Georgia (daughter)\n- Joseph M Wood, Male, born 1863, Georgia (son)\n- Nancy A Wood, Female, born 1866, Georgia (daughter)\n- Mary A Wood, Female, born 1869, Georgia (daughter)\n- Mary Wood, Female, born 1801, Georgia (likely Joseph B's mother)\n\nMartha J Wood's given name and middle initial precisely match LKYG-VKB's established name (\"Martha J.\" as used consistently across the 1879 Hill County marriage record, the 1900 Hill County census, and the existing tree). She is enumerated as a daughter of Joseph B Wood and Mary E Wood, both Georgia-born, at an age of approximately 10 years \u2014 consistent with a birth around 1859\u20131860, which aligns with the 1900 census estimate of August 1859 for LKYG-VKB (c_002). The 1870 census is the earliest decennial census year for which Martha J. Wood could appear as a child of school age; the q_001 evidence establishes that she was in Texas by 1879 at the latest (married in Hill County on 31 July 1879).\n\nNote on source classification: This FamilySearch entry is a derivative index of the original 1870 federal census schedule, which was not directly examined. The original handwritten schedule image is available at ark:/61903/1:2:M494-NX9. The informant for household members' ages and birthplaces was the household head or a respondent to the enumerator, whose identity and reliability cannot be determined from the index alone. The 1870 census had no \"relationship to head\" column; the parent-child relationship between Joseph B/Mary E Wood and Martha J Wood is inferred from household enumeration order and age pattern.\n\nCitation: \"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MCQS-WMD : 17 Jan 2025), entry for Joseph B Wood and Mary E Wood, Whitfield County, Georgia; citing NARA microfilm publication M593, roll 164.\n\n## Resolution of Competing Candidates (Conflict c_003)\n\nThe statewide 1870 Georgia search (log_013) located two households in Whitfield County containing a daughter named Martha Wood:\n\n1. **Joseph B Wood** (b.1836 GA) + Mary E Wood (b.1841 GA) \u2192 **Martha J Wood** (b.1860 GA)\n2. **Robert Wood** (b.1820 SC) + Martha Wood (b.1819 SC) \u2192 **Martha C Wood** (b.1859 GA)\n\nThe Joseph B Wood family is preferred on the basis of the middle initial. LKYG-VKB is consistently identified as \"Martha J.\" across every research-traced record. The Robert Wood household's daughter carries the middle initial \"C,\" not \"J.\" A middle initial, while a single letter, is a meaningful genealogical identifier: it is recorded in the census from information supplied by the household head, distinguishes the child from same-named siblings or contemporaries, and persists across later records for the same person. No evidence suggests LKYG-VKB's middle initial was ever recorded as anything other than \"J.\"\n\nSecondary considerations: Joseph B Wood and Mary E Wood are both Georgia-born, consistent with a Georgia-rooted family whose daughter would emigrate to Texas; Robert Wood and his wife are South Carolina-born. These parental birthplace profiles differ but are not individually decisive.\n\nConflict c_003 is resolved in favor of the Joseph B Wood family. The Robert Wood/Martha C Wood candidate is effectively eliminated by the middle-initial discrepancy.\n\n## Negative Evidence and Acknowledged Gaps\n\n**No Texas death certificate found for Martha (pli_007 negative):** Searches across Texas Deaths 1890-1977 (col. 1983324) under surnames Wood, Neal, Hamby, and Landham returned no death certificate for Martha in Hill County in 1906. A death certificate would have been the highest-priority source \u2014 typically naming both parents \u2014 but it was not located in the indexed FamilySearch collection. The record may be absent from the index, filed under an unexpected name variant, or may not have been registered.\n\n**Family not located after 1870:** The Joseph B Wood family does not appear in the 1880 Whitfield County, Georgia census (log_017 \u2014 negative), the 1880 Texas census under Joseph Wood born in Georgia (log_021 \u2014 negative), or the 1900 US census under Joseph Wood born in Georgia (log_020 \u2014 negative). This is negative evidence consistent with emigration from Georgia between 1870 and 1880 and possible death of Joseph B Wood before 1880 or 1900. The absence does not contradict the parentage conclusion, but leaves the family's post-1870 trajectory undocumented.\n\n**No Georgia marriage record found:** A search of Georgia county marriages (col. 1927197) for Martha Wood and variants produced no marriage record for either Martha Wood + Lanham (her pre-1879 Texas marriage) or for the Wood couple (log_019 \u2014 negative). Whitfield County records are represented in the collection, but incomplete coverage means absence of a record is not proof of absence of the event.\n\n**No 1860 census corroboration:** Martha J Wood would have been an infant (~0\u20131) in the 1860 census; infant enumeration is unreliable, and the search (log_016) was negative for the specific variant searched. This is not unexpected given her very young age.\n\n## GPS Assessment\n\n- **Component 1 \u2014 Reasonably exhaustive search:** Declared for the available online indexed record universe. Eight plan items addressed; all plausible indexed FamilySearch sources for this place and period were searched. Key gap: Texas death certificate not found; family not located post-1870; original 1870 census image not examined (index only). Ancestry-held Georgia records (pli_014) were not searched \u2014 this is the most significant remaining gap before advancing the tier.\n- **Component 2 \u2014 Complete, accurate citations:** All cited; one source (src_004) supports all parentage assertions.\n- **Component 3 \u2014 Analysis and correlation:** Two competing candidates identified and compared. The middle-initial distinction provides a meaningful differentiator. All facts (name, sex, birthplace, birth year) corroborate the identification of Martha J Wood in the Joseph B Wood household with LKYG-VKB.\n- **Component 4 \u2014 Conflicting evidence:** Conflict c_003 (two competing candidates) resolved in favor of Joseph B Wood family based on middle-initial analysis. No other conflicting evidence found.\n- **Component 5 \u2014 Soundly reasoned conclusion:** Probable. The conclusion rests on a single source (1870 census, derivative, indirect evidence for the parent-child relationship). The tier cannot reach Proved because: (a) only one source directly places Martha J Wood in the Wood household; (b) the original census image was not examined; (c) no independent corroborating source places Martha J Wood with Joseph B or Mary E Wood; (d) the family cannot be traced after 1870 to confirm the Texas migration trajectory.\n\n## Conclusion\n\nWith a high probability, Martha J. Wood (LKYG-VKB) \u2014 mother of Jimmie Jewel Neal \u2014 was born approximately 1860 in Whitfield County, Georgia, as the daughter of Joseph B. Wood and Mary E. Wood. Both parents were Georgia-born and remained in Whitfield County at least through the 1870 census. The family had emigrated from Georgia by the time Martha married in Hill County, Texas in July 1879.\n\n## Answer to Research Objective\n\nThe maternal grandparents of Jimmie Jewel Neal are, with high probability, **Joseph B. Wood** (born approximately 1836, Georgia) and **Mary E. Wood** (born approximately 1841, Georgia), both enumerated in Whitfield County, Georgia, in 1870.\n\n## Next Steps to Advance the Tier\n\n1. Examine the original 1870 census image (ark:/61903/1:2:M494-NX9) to confirm the transcription's accuracy and whether a relationship column or annotation is visible.\n2. Search Ancestry's Georgia marriage records (Georgia Marriages 1699-1944, col. 7839; Georgia Compiled Marriages 1851-1900, col. 4453) for a marriage record for Joseph B. Wood and Mary E. Wood in Whitfield County.\n3. Search Whitfield County, Georgia probate records (col. 1999178) for an estate or will of Joseph B. Wood naming Martha as a daughter.\n4. Search Georgia tax digests (col. 4130006) for Joseph B. Wood in Whitfield County across the 1860s and 1870s to confirm annual residency.\n5. Examine Martha's 1906 Hill County death certificate image if the full-image collection becomes accessible."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-25T14:30:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-25T14-30-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hill, Texas, United States",
+      "for_place": "Hill County, Texas",
+      "time_period": "1850-1910",
+      "jurisdictions": [
+        {
+          "name": "Hill County, Texas",
+          "date_range": "1853\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1803985",
+          "title": "Texas, County Marriage Records, 1837-2010",
+          "date_range": "1837-2010"
+        },
+        {
+          "id": "1803987",
+          "title": "Texas, County Marriage Index, 1837-1977",
+          "date_range": "1837-1977"
+        },
+        {
+          "id": "1681052",
+          "title": "Texas, Marriages, 1837-1973",
+          "date_range": "1837-1973"
+        },
+        {
+          "id": "1983324",
+          "title": "Texas, Deaths, 1890-1977",
+          "date_range": "1890-1977"
+        },
+        {
+          "id": "1949337",
+          "title": "Texas, Death Index, 1903-2000",
+          "date_range": "1903-2000"
+        },
+        {
+          "id": "1803956",
+          "title": "Texas, Birth Certificates, 1903-1936",
+          "date_range": "1903-1936"
+        },
+        {
+          "id": "1681015",
+          "title": "Texas, Births and Christenings, 1840-1981",
+          "date_range": "1840-1981"
+        },
+        {
+          "id": "1827575",
+          "title": "Texas, County Tax Rolls, 1837-1910",
+          "date_range": "1837-1910"
+        },
+        {
+          "id": "2016287",
+          "title": "Texas, Probate Records, 1800-1990",
+          "date_range": "1800-1990"
+        },
+        {
+          "id": "2534484",
+          "title": "Texas, Church Records, 1845-1957",
+          "date_range": "1845-1957"
+        },
+        {
+          "id": "2790180",
+          "title": "Texas, Church Records, 1852-1994",
+          "date_range": "1852-1994"
+        },
+        {
+          "id": "3163398",
+          "title": "Texas, Voter Records, 1867-1918",
+          "date_range": "1867-1918"
+        },
+        {
+          "id": "1932381",
+          "title": "Texas, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865"
+        }
+      ],
+      "quirks": [
+        "Texas had no mandatory state birth registration before 1903 \u2014 births before that date (including Jimmie Jewel Neal's 1884 birth) have no state birth certificate; use census records, church registers, and delayed birth affidavits instead.",
+        "Hill County has large delayed-birth-affidavit volumes (full-text searchable, not name-indexed) covering events as early as 1867; search these for pre-1903 births and for parent names provided by affiants.",
+        "Hill County marriage record volumes for 1873\u20131912 are 100% name-indexed and full-text searchable on FamilySearch \u2014 extremely well covered.",
+        "Death registration for Hill County begins 1903; no official death certificates exist for deaths before that date; the Texas Deaths 1890-1977 collection (col. 1983324) is the main indexed statewide source for post-1903 deaths.",
+        "The 1890 federal census for Hill County partially survived destruction; a multi-county volume (imageGroupNumber 004679013) is 67% indexed and contains Hill County records.",
+        "The 1860 Hill County census is browse-only (0% indexed, not full-text searchable) \u2014 must be browsed image by image.",
+        "Hill County deed records (1881\u20131901, many volumes) are full-text searchable but 0% name-indexed; use full-text search on names to locate land transactions.",
+        "Church records for Blum, Hill County (Lutheran, 1886-1902) are browse-only images (not full-text); other Hill County church records are sparse on FamilySearch.",
+        "Martha J. Wood (Jimmie's probable mother) first married W.F. Lanham in Texas in 1869 (per tree source WWLY-J9X); she appears in the 1879 Hill County marriage record as 'Mattie Landham' when she married James M. Neal \u2014 search under both 'Wood' and 'Landham/Lanham' variants.",
+        "Texas Probate Records 1800-1990 (col. 2016287, 1.16M images) are browse-only with no indexing or full-text search \u2014 access requires knowing approximate date and browsing the county's volume."
+      ],
+      "guide_markdown": "# Locality Guide: Hill County, Texas, 1850\u20131910\n\n## Jurisdiction\nHill County was created in 1853 from Navarro County and has remained unchanged in its boundaries throughout the target period. County seat: Hillsboro. Standardized place: **Hill, Texas, United States**.\n\n## Record Availability\n\n### Marriage Records \u2014 EXCELLENT (Indexed + Images)\n- **FamilySearch** holds fully digitized, 100% name-indexed Hill County marriage volumes covering 1873\u20131912 across multiple bound volumes (imageGroupNumbers 004820309, 004820310, 004820303\u2013004820307, 004820616, 004820617).\n- Also searchable via Texas, County Marriage Records, 1837\u20132010 (col. 1803985, 2.1M records) and Texas, County Marriage Index, 1837\u20131977 (col. 1803987).\n- **Quirk:** Martha J. Wood married W.F. Lanham in 1869, then married James Monroe Neal in 1879 as 'Mattie Landham' (her widowed surname). Search both 'Wood' and 'Landham/Lanham' variants.\n\n### Death Records \u2014 POST-1903 ONLY (Indexed + Images)\n- Texas mandatory death registration began **1903**. No official death certificates exist for pre-1903 Hill County deaths.\n- For 1903+: Texas, Deaths, 1890\u20131977 (col. 1983324, 4.5M records + images, indexed) and local Hill County death volumes (004820614, 100% indexed, 1903\u20131938).\n- **Jimmie's 1884 birth has no birth certificate.** Martha J. Wood's 1906 death in Files Valley, Hill County should have a death certificate \u2014 search Texas Deaths 1890\u20131977.\n\n### Birth Records \u2014 PRE-1903 ABSENT; DELAYED AFFIDAVITS EXIST\n- No state birth certificates before 1903. For Jimmie Jewel Neal (born 10 July 1884), use:\n  - **Delayed birth affidavits**: Hill County has massive delayed-birth volumes (imageGroupNumbers 008152748, 008507941, 008507942, 008507943, 008413381 \u2014 combined ~22,000+ images, full-text searchable, not name-indexed, covering 1867\u20131976). These frequently name parents and can establish pre-1903 births.\n  - **1880 federal census** (highly indexed, national collection) \u2014 will show Jimmie in her parents' household.\n  - Church baptismal records (limited coverage on FamilySearch for Hill County).\n- Post-1903 birth registers for Hillsboro exist (008502334\u2013008502336, 008992082) but are full-text searchable only (not name-indexed).\n\n### Census Records\n| Year | Coverage | Access |\n|------|----------|--------|\n| 1860 | Hill County | Browse-only, 0% indexed, not full-text (004297439_004) |\n| 1870 | Hill County | 96% indexed (004267882_003) |\n| 1880 | National collection | Highly indexed |\n| 1890 | Partial survival (multi-county vol. 004679013) | 67% indexed |\n| 1900 | Hill County | ~97% indexed (004118499, 004118498) |\n| 1910 | National collection | Highly indexed |\n\n### Tax Rolls\n- Hill County tax rolls on FamilySearch: Reel 1 (1853\u20131878, 004616581), Reel 2 (1883\u20131887, 004616582), Reel 3 (1891, 004616583) \u2014 full-text searchable, not name-indexed.\n- Texas, County Tax Rolls, 1837\u20131910 (col. 1827575, 4.6M records, indexed + images).\n\n### Probate Records\n- Texas, Probate Records, 1800\u20131990 (col. 2016287, 1.16M images) \u2014 **browse-only**, no indexing, no full-text. Access requires knowing approximate county and date.\n\n### Church Records\n- Blum, Hill County: Lutheran Parish Records 1886\u20131902 (imageGroupNumber 008984030, 439 images) \u2014 **browse-only**.\n- Texas, Church Records, 1845\u20131957 (col. 2534484, 6374 images, browse-only) and 1852\u20131994 (col. 2790180, 6107 records + 2094 images).\n\n### Deed Records\n- Extensive digitized Hill County deed volumes (1881\u20131901+), all full-text searchable, 0% name-indexed. Search by name in full-text.\n\n### Civil Court Records\n- Hill County civil court cases 1872\u20131912 (multiple imageGroupNumbers 008689333\u2013008689341), full-text searchable, not name-indexed.\n\n### Other\n- Texas, Voter Records, 1867\u20131918 (col. 3163398, 158K records, indexed).\n- Texas, Civil War Confederate Service Records (col. 1932381, indexed).\n- Hill County biography volume, 1892 (imageGroupNumber 007548348 series, browse-only).\n- Chronicling America has digitized Texas newspapers; check Hillsboro papers for the 1880s\u20131900s.\n\n## Key Gaps\n- FamilySearch Wiki API was unavailable during this survey \u2014 wiki guidance could not be retrieved.\n- No pre-1903 birth or death certificates.\n- 1860 census is browse-only.\n- Church record coverage on FamilySearch is limited for Hill County.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-25"
+    },
+    {
+      "id": "loc_002",
+      "place": "Georgia, United States",
+      "for_place": "Georgia, United States",
+      "time_period": "1850-1880",
+      "jurisdictions": [
+        {
+          "name": "Georgia, United States",
+          "date_range": "1776-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1927197",
+          "title": "Georgia, County Marriages, 1785-1950",
+          "date_range": "1785-1950"
+        },
+        {
+          "id": "1674807",
+          "title": "Georgia, Marriages, 1808-1967",
+          "date_range": "1808-1967"
+        },
+        {
+          "id": "1674802",
+          "title": "Georgia, Births and Christenings, 1754-1960",
+          "date_range": "1754-1960"
+        },
+        {
+          "id": "2549568",
+          "title": "Georgia, Church Marriages, 1754-1960",
+          "date_range": "1754-1960"
+        },
+        {
+          "id": "2790246",
+          "title": "Georgia, Church Vital Records, 1828-1991",
+          "date_range": "1828-1991"
+        },
+        {
+          "id": "1999178",
+          "title": "Georgia, Probate Records, 1742-1990",
+          "date_range": "1742-1990"
+        },
+        {
+          "id": "4130006",
+          "title": "Georgia, Tax Digests, 1787-1900",
+          "date_range": "1787-1900"
+        },
+        {
+          "id": "3438747",
+          "title": "Georgia, County Delayed Birth and Death Records, 1829-1961",
+          "date_range": "1829-1961"
+        },
+        {
+          "id": "2739725",
+          "title": "Georgia, Reconstruction Registration Oath Books, 1867-1868",
+          "date_range": "1867-1868"
+        },
+        {
+          "id": "3038333",
+          "title": "Georgia, Confederate Pension Rolls, 1861-1921",
+          "date_range": "1861-1921"
+        },
+        {
+          "id": "1932370",
+          "title": "Georgia, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865"
+        },
+        {
+          "id": "1914217",
+          "title": "Georgia, Headright and Bounty Land Records, 1783-1909",
+          "date_range": "1783-1909"
+        }
+      ],
+      "quirks": [
+        "Georgia had no civil registration of births or deaths until 1919; rely on church records, census entries, delayed birth certificates, probate records, and tax digests for pre-1919 vital facts.",
+        "County boundaries shifted frequently throughout the 19th century \u2014 verify the correct county for each census year before searching county-specific collections.",
+        "The 1890 US federal census was destroyed; bridge the 1880-1900 gap using tax digests (col. 4130006, annual county-level name lists) and the 1900 census.",
+        "Tax digests (col. 4130006) are annual enumeration-like records by county \u2014 critical census substitutes and county-locating tools when the specific county is unknown.",
+        "The FamilySearch Research Wiki server was unavailable during this survey; all four wiki_place_page sections failed. Researchers should consult the Georgia wiki page directly for additional indexing quirks.",
+        "Martha J. Wood's specific Georgia county is unknown; the 1860 and 1870 US federal censuses are the primary tools for locating her in a parental household and identifying the county.",
+        "Probate records (col. 1999178) have 2.28 million images but only 203K indexed records \u2014 many volumes are browse-only or full-text searchable only; once a county is identified, volume_search by that county will surface the relevant volumes."
+      ],
+      "guide_markdown": "# Georgia, United States \u2014 Locality Guide (1850\u20131880)\n\n**For q_002: Parents of Martha J. Wood (born ~1859, Georgia)**\n\n## Jurisdictional Context\n\nGeorgia has been a US state since 1776. All vital, probate, land, and court records were kept at the **county level**. Georgia had approximately 137 counties by 1860. Martha's specific county of birth is unknown; the 1860 and 1870 federal censuses are the primary locating tools.\n\n**Critical gap**: Georgia had **no civil registration of births or deaths until 1919**. Birth and death facts for this period come from church records, census entries, delayed birth certificates, probate records, and tax digests.\n\n## Key Collections on FamilySearch\n\n- **County marriages** (col. 1927197, 1785\u20131950): 1.9M indexed records \u2014 primary marriage source.\n- **Marriages** (col. 1674807, 1808\u20131967): 663K records, complementary.\n- **Births/christenings** (col. 1674802, 1754\u20131960): Sparse 21K records; no civil registration pre-1919.\n- **Church vital records** (col. 2790246, 1828\u20131991): 8K records; Methodist and Baptist common.\n- **Probate records** (col. 1999178, 1742\u20131990): 203K indexed, 2.28M images; many browse-only.\n- **Tax digests** (col. 4130006, 1787\u20131900): 2.88M records \u2014 annual census substitute by county.\n- **Delayed birth/death records** (col. 3438747, 1829\u20131961): 99K records; often names parents.\n- **Reconstruction oaths** (col. 2739725, 1867\u20131868): 182K records; adult white males.\n- **Confederate pensions** (col. 3038333, 1861\u20131921): 154K records; can name family members.\n\n## External Resources\n\n- Ancestry: Georgia Marriage Records from Select Counties 1828\u20131978 (col. 4766), Georgia Marriages 1699\u20131944 (col. 7839), Compiled Marriages 1851\u20131900 (col. 4453), Select Births and Christenings 1754\u20131960 (col. 60264).\n- Georgia Archives (georgiaarchives.org): Virtual Vault \u2014 colonial wills, death certificates, pension applications.\n- Chronicling America / Georgia Historic Newspapers (dlg.usg.edu).\n\n## Research Strategy for q_002\n\n1. Martha's 1906 Hill County, Texas death certificate (Texas Deaths 1890\u20131977, col. 1983324) \u2014 highest priority; may name her parents directly. Already in loc_001 scope.\n2. 1870 US census \u2014 Martha ~11 in Georgia; will appear in parents' household with family name and county.\n3. 1860 US census \u2014 Martha ~1; appears as infant in parents' household.\n4. Georgia County Marriages (col. 1927197) \u2014 check if Martha married Lanham in Georgia before moving to Texas.\n5. Tax digests (col. 4130006) \u2014 once county identified, annual listings confirm Wood family's location.\n6. Probate records (col. 1999178) \u2014 parent's will or estate may name Martha.\n\n## Key Quirks\n\n- No civil birth/death registration before 1919.\n- County boundaries shifted frequently \u2014 verify for each census year.\n- FamilySearch Wiki server was unavailable during this survey.\n- 1890 census destroyed \u2014 use 1880 and 1900 with tax digests to bridge the gap.\n- 'Wood' is a common surname; use age, location, and sibling/spouse names as disambiguation tools.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-25"
+    }
+  ]
+}

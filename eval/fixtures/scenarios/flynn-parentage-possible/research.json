@@ -325,8 +325,7 @@
           "expected_events": ["1860_census", "marriage", "1870_census", "1880_census", "1900_census", "death"],
           "severity": "high"
         }
-      ],
-      "impossibilities": []
+      ]
     }
   ],
 

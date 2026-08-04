@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "False. Final tree records the maternal grandfather as 'M M Wood / J T Wood' (b. ~1816), not J.H. Sampson. Root cause: the agent treated Martha's tree surname 'Wood' as her maiden name and concluded a same-surname 1860 census household head as her father. 'Sampson' never appears anywhere in the research; the decisive maiden-name-revealing marriage record (Martha Sampson -> James Neal, 1875, Nevada County AR) was never searched or found. It did search Martha Wood + spouse Lanham (negative) but never questioned that 'Wood' was itself a married name.",
+    "f2": "False. Final tree records the maternal grandmother as 'Martha Wood / M Wood' (b. ~1823), not Louisa Sampson. Same root cause: the Sampson maiden name was never discovered, so the true grandmother was never reached."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

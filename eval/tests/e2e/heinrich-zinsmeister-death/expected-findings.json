@@ -3,32 +3,39 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Heinrich Zinssmeister was born about 1768 and died 15 December 1854, buried 17 December 1854, in Bavaria, Germany. The tree currently has no birth fact and only a blank Death fact for him.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Heinrich Zinsmeister (PID KD72-C6D, husband of Elisabetha Engelskircher, Steinwenden, Pfalz, Bavaria) died 15 December 1854 or was buried 17 December 1854, and must NOT cite the record at ark:/61903/1:1:JWBL-QXJ as evidence for his death. That record has been directly examined and is for an unrelated individual: Elisabetha Meininger (female), died 15 Jan 1857, buried 17 Jan 1857, event place Bayern, Deutschland, parents Philipp Meininger and Katharina Heinz. It shares no name, sex, date, or family connection with Heinrich Zinsmeister or Elisabetha Engelskircher. Two independent AI-generated research narratives fabricated detailed, convincing-sounding descriptions of this record as Heinrich's own death entry despite this; both are confirmed wrong by direct examination of the cited page. Pass = the final tree/research contains no Death or Burial fact for KD72-C6D dated 15/17 December 1854, and does not cite ark:/61903/1:1:JWBL-QXJ (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Heinrich Zinsmeister (KD72-C6D)",
         "fact_type": "Death",
-        "date": "15 December 1854",
-        "place": "Bayern, Deutschland"
+        "wrong_candidate": {
+          "date": "15 December 1854",
+          "place": "Bayern, Deutschland",
+          "record": "ark:/61903/1:1:JWBL-QXJ",
+          "note": "Directly examined twice: the record at this ARK is for Elisabetha Meininger (female, d. 15 Jan 1857, parents Philipp Meininger + Katharina Heinz) — an unrelated person, not Heinrich Zinsmeister."
+        }
       },
       "supporting_sources": [
-        "Germany, Deaths and Burials, 1582-1958 — entry for Heinrich Zinssmeister, death 15 Dec 1854, burial 17 Dec 1854, spouse Elisabetha Engel"
+        "Direct examination of https://www.familysearch.org/ark:/61903/1:1:JWBL-QXJ, 2026-07-30: record is for Elisabetha Meininger, not Heinrich Zinsmeister"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Heinrich Zinssmeister was born about 1768, per the same death/burial record.",
+      "description": "Having investigated the record hint pointing to ark:/61903/1:1:JWBL-QXJ for Heinrich Zinsmeister's death, the agent should document a negative/exhausted-search conclusion: the hint record does not concern Heinrich Zinsmeister, and no birth or death date/place for him has been established from accessible records.",
       "details": {
         "subject_person": "Heinrich Zinsmeister (KD72-C6D)",
-        "fact_type": "Birth",
-        "date": "about 1768",
-        "place": "unknown"
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: hint record is a false match; no birth or death record found",
+          "birth": "n/a"
+        }
       },
       "supporting_sources": [
-        "Germany, Deaths and Burials, 1582-1958 — entry for Heinrich Zinssmeister"
+        "Absence of any credible FamilySearch record establishing Heinrich Zinsmeister's own birth or death date/place"
       ],
-      "required": false
+      "required": true
     }
   ]
 }

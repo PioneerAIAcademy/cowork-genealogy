@@ -1,0 +1,55 @@
+{
+  "skill_name": "triage-standup",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Here are everyone's updates for today (in standup.txt in this directory). Triage them for me.",
+      "expected_output": "Roll call naming francis/adeyinka/edmund as missing; ~3 cross-cutting standup topics with no individual PR named; Backlog table with owner tiers; problematic-PR list with evidence; per-person replies. No work started.",
+      "files": [
+        "standup.txt"
+      ],
+      "assertions": [
+        "Roll call names exactly francis, adeyinka and edmund as the people who did not report",
+        "Roll call is present and appears before the four lists",
+        "Standup topic list contains at most 4 items",
+        "No standup topic names an individual PR by number",
+        "Every proposed Backlog task carries an owner tag (lead / junior genealogist / junior developer)",
+        "Every problematic PR carries an explicit verdict (merge, split, hold, or update-branch)",
+        "Per-person replies are included",
+        "At least one claim from the updates is checked against the repo and corrected or labelled unverified",
+        "Report does not claim to have created any issue, PR, branch, or code change"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Here are today's updates (in standup.txt in this directory). Triage them for me.",
+      "expected_output": "Flags Mercy's fabricated-citation finding as tracked nowhere; checks Precious's '12 tests' claim against the repo rather than repeating it; does NOT mark Adeyinka present merely for being thanked.",
+      "files": [
+        "standup.txt"
+      ],
+      "assertions": [
+        "Adeyinka is reported as NOT having reported, despite being thanked by name in Israel's update",
+        "Roll call reports 16 people missing (21 roster minus 5 posters)",
+        "Mercy's fabricated-citation finding is identified as tracked nowhere and proposed as a task",
+        "Precious's claim that record-extraction is down to 12 tests is checked against the repo rather than repeated",
+        "The report states or implies the 12-tests claim is wrong (the suite has 27 test files on origin/main, 19 even on a stale checkout)",
+        "Report does not claim to have created any issue, PR, branch, or code change"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here are today's updates (in standup.txt in this directory). Triage them for me.",
+      "expected_output": "Correct roll call (18 missing); short or empty standup-topic and Backlog lists; resists inventing work.",
+      "files": [
+        "standup.txt"
+      ],
+      "assertions": [
+        "Roll call reports 18 people missing (21 roster minus 3 posters)",
+        "Standup topic list has at most 2 items",
+        "At most 2 Backlog tasks are proposed",
+        "No PR is described as problematic (none were mentioned in the updates)",
+        "Report does not claim to have created any issue, PR, branch, or code change"
+      ]
+    }
+  ]
+}

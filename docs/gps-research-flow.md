@@ -344,11 +344,12 @@ them, and what is digitized, indexed, or only browsable. It reports what the
 catalogs actually show — including the gaps — and does not fill silence with
 plausible-sounding holdings.
 
-**A timeline.** Every known event for a person in order, with gaps and
-chronological impossibilities marked: events before birth or after death, a
-person in two places too far apart for the era's travel, one person
-enumerated twice in a census year. Gap boundaries are the dates of the
-bounding events, never rounded out to January 1st. A timeline can span two
+**A timeline.** Every known event for a person in order, with gaps marked
+and geographic feasibility checked: a person in two places too far apart for
+the era's travel, or one person enumerated twice in a census year.
+Single-person logical impossibilities — an event before birth or after
+death — are check-warnings' job, not the timeline's. Gap boundaries are the
+dates of the bounding events, never rounded out to January 1st. A timeline can span two
 tree entries that may be the same person — which is often how you find out
 whether they are.
 

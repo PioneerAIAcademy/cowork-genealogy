@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all nil for ANY Flynn-family surname spelling, whatever the other parameters. The nil-exhaustion tests reward the skill for inventing name variants and for widening jurisdiction/date/collection, but the specific fixtures only name three spellings (Flynn/Flinn/Flyn) and mostly pin givenName too. A fourth spelling, or a re-anchored query that drops givenName, matched nothing and came back as a fixture_not_found ERROR — which the judge grades as a Correctness=1 tool-usage failure. So the test punished the skill for exactly the thoroughness its own rubric asks for. This absorbs any remaining Fl* query and returns the honest nil instead. Keep it LAST in a test's mcp_fixtures list: matching is first-match-wins in list order, so an earlier catch-all would shadow the specific spellings and erase the expected_args signal Tool Arguments is graded on. Same pattern as volume-search-any (ut_locality_guide_022).",
+  "args": {
+    "surname": "~fl"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

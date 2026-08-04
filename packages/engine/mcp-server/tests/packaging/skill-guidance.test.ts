@@ -73,7 +73,7 @@ describe("places-guidance drift lint", () => {
 
   // The specialized copies get the weaker check the byte-identical one can't
   // give them: the file is still there and still says something. Drift within a
-  // specialized copy is not caught — see docs/TODOs.md.
+  // specialized copy is not caught — see issue #1112.
   for (const { skill, why } of SKILLS_WITH_SPECIALIZED_COPY) {
     it(`${skill} carries a specialized copy of places-guidance.md (${why})`, () => {
       const copyPath = join(

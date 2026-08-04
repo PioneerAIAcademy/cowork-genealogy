@@ -20,13 +20,15 @@
   },
   "mcp_fixtures": [
     "record-search-1850-census-flynn",
-    "rank-search-matches-flynn-census"
+    "rank-search-matches-flynn-census",
+    "record-read-patrick-flynn-mxhy-tp4"
   ],
   "judge_context": [
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",
     "The triage output should surface attachment status from the returned matches: distinguish records already attached to the subject (attachedToSubject) — deprioritized as already in the tree — from unattached records prioritized as new evidence for extraction.",
     "The skill should present the top matches with match score and attachment status to the user, and record_read / hand off the promising record(s) for extraction.",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
-    "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything."
+    "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }

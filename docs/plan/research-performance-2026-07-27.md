@@ -756,8 +756,8 @@ Consequences for the plan:
   which the scope doc measured as worthless (top 21 hits at *identical* score) —
   but building a second unvalidated ranker before knowing how often the starved
   case survives C2a is the wrong order, and narrowing the query is the cheaper
-  move already prescribed at `search-records/SKILL.md:250-252`. **TODOs entry, not
-  a change in this plan.**
+  move already prescribed at `search-records/SKILL.md:250-252`. **A separate
+  issue, not a change in this plan.**
 - **C1 + C6's ceiling is ~60% of window pressure** (§1.1); the model's own
   output is the other ~40% and only C0 touches it.
 - **C2a is weaker than this plan assumed — see §5.1.** The live probe changed
@@ -807,8 +807,9 @@ Consequences for the plan:
   research quality in this session was good; do not perturb the workflow in a
   performance PR.
 
-Anything deferred out of an implementing PR gets a `docs/TODOs.md` entry in that
-same PR.
+Anything deferred out of an implementing PR gets a GitHub issue filed in that
+same PR (`gh issue create --label developer|genealogist` — see `CLAUDE.md`
+§ "Deferring work creates an issue").
 
 ## 7. Refuted in review — do not re-derive
 

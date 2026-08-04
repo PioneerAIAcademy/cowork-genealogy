@@ -4,8 +4,8 @@
     "skill": "search-familysearch-wiki",
     "name": "How-to question without naming the wiki",
     "type": "positive",
-    "description": "The user asks a genealogy how-to question without explicitly naming the FamilySearch wiki. search-familysearch-wiki should still activate — its description triggers on how-to research questions about finding a record type, not only on the literal phrase 'FamilySearch wiki'. The FamilySearch Research Wiki is the correct source for research methods.",
-    "tags": ["fs-wiki", "how-to", "implicit-trigger"]
+    "description": "The user asks a generic 'how do I find [record type]' genealogy how-to question without explicitly naming the FamilySearch wiki. search-familysearch-wiki should activate — the FamilySearch Research Wiki is the source for research methods/how-to. This is the search-fs-wiki side of the search-fs-wiki-vs-locality-guide separation: a how-to/method question routes here, while a 'what records exist for [place]' records-availability survey routes to locality-guide (see the reciprocal negative test in each skill).",
+    "tags": ["fs-wiki", "how-to", "implicit-trigger", "vs-locality-guide"]
   },
   "input": {
     "user_message": "How do I find German church records for my ancestors?",
@@ -13,6 +13,7 @@
   },
   "mcp_fixtures": ["wiki-search-german-church-records"],
   "judge_context": [
-    "Should activate search-familysearch-wiki and call wiki_search — a 'how do I find [record type]' question is search-familysearch-wiki's territory even though the user did not say 'FamilySearch wiki'"
+    "Should activate search-familysearch-wiki and call wiki_search — a generic 'how do I find [record type]' question is a research-method/how-to question, which is search-familysearch-wiki's territory even though the user did not name the FamilySearch wiki",
+    "This is a how-to/method question, NOT a 'what records exist for this place and where are they held' records-availability survey (that would be locality-guide)"
   ]
 }

@@ -163,6 +163,8 @@ description: >-
 model: claude-sonnet-5
 tools:
   - Read
+  - mcp__genealogy__research_query
+  - mcp__genealogy__project_context
   - mcp__genealogy__research_append
   - mcp__genealogy__validate_research_schema
   - mcp__genealogy__place_search
@@ -171,6 +173,8 @@ tools:
   - mcp__genealogy__external_links_search
   - mcp__genealogy__wiki_place_page
   - mcp__genealogy__wiki_search
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__remote-devices__Genealogy_Research__validate_research_schema
   - mcp__remote-devices__Genealogy_Research__place_search
@@ -213,7 +217,49 @@ model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
-does not gather new evidence itself.
+does not gather new evidence itself. `research_query` and `project_context` are not an
+exception — they are read-only projections of what the researcher already recorded.
+
+**Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
+them the agent's only way to see project state was `Read`, and its body told it to
+read `research.json` directly. Measured across 24 e2e runs (2026-07-25 → 07-30), that
+made the mentor the **largest single reader of `research.json` in the system — 112 of
+178 reads (63%), 92 of them hand-paginated**, in a linear front-to-back scan issued
+once per proof, at the point in a run where the file is largest. One captured
+delegation (`wilkins-marriage`) spent 15 reads before its single write. In 10 of 10
+captured delegations the agent's first tool call was a bare `Read(research.json)`. The
+grant plus the **Reading project state** section of the agent body replaces that scan;
+`Read` stays for the rare body no projection carries (a verdict file under
+`evaluations/`, an entry already located by id).
+
+**What the scan was silently providing, and how it is preserved.** A whole-file read
+also showed the agent *project-wide absences* — the `wilkins-marriage` verdict's
+`must_address` turned on "both `conflicts[]` and `hypotheses[]` are empty
+project-wide." A question-scoped recipe list would not surface that. The agent body
+therefore requires **unfiltered** `conflicts` and `hypotheses` count checks, and
+requires checking `count` against `research_query`'s 50-item cap. Do not remove those
+two habits when editing the recipes.
+
+**Measured after the change (`bagley-father-1884`, 2026-07-31).** Same fixture,
+before → after:
+
+| | before (07-27) | after (07-31) |
+|---|---|---|
+| mentor `research.json` reads | 15 | **0** |
+| `project_context` / `research_query` in the mentor's window | 0 / 0 | **1 / 7** |
+| unfiltered `conflicts` + `hypotheses` checks | — | **both present** |
+| project-wide absence finding raised | yes | **yes** |
+| run wall clock / cost | 57.3 min / $8.89 | **35.8 min / $5.29** |
+
+The quality check is the load-bearing row: the mentor still reports the structural
+absence without the scan. The existing-verdict skip used the new filters exactly as
+intended — one `research_query({section:"evaluations", targetId:"ps_001",
+focus:"proof-critique"})`. Zero projection-tool errors across both runs of that day.
+
+*(The companion `wilkins-marriage` re-run produced no data on this: it hit the
+harness's 7200s wall-clock cap during an image-browsing detour and never reached
+`proof-conclusion`, so the mentor never ran. Unrelated to this change — the mentor is
+downstream of where it stopped.)*
 
 ---
 
@@ -268,7 +314,9 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
 
 **Rubric checks (in order):**
 
-1. **Topical breadth (Standard 14).** Read the log entries for this question. Call
+1. **Topical breadth (Standard 14).** Get the log entries for this question —
+   `research_query({ section: "plans", questionId })` for its plan items, then
+   `research_query({ section: "log", planItemId })` per item. Call
    `wiki_place_page` (`section: "online_records"`) and `collections_search` for the primary jurisdiction to
    identify record types that exist for the place+period but were not searched. Flag missing
    high-value types (probate, land, church, newspaper) as `must_address` with the specific
@@ -339,7 +387,8 @@ everything a reviewer *might* flag; it names what matters most and stops.
 
 **Rubric checks (in order):**
 
-1. **Tier defensibility (Standards 64–67).** Read the assertions referenced in the proof.
+1. **Tier defensibility (Standards 64–67).** Get the assertions referenced in the proof
+   via `research_query({ section: "assertions", questionId })`.
    Does the evidence actually support the chosen tier? Both inflation (`proved` on hedged
    language) AND deflation (`possible` when the evidence is strong) are `must_address`.
    Standard 43: follow the evidence, not the hope.
@@ -348,7 +397,9 @@ everything a reviewer *might* flag; it names what matters most and stops.
    "likely" signal tier `probable` or below. If they appear in a `proved` narrative, that
    is `must_address`.
 
-3. **Narrative self-containment.** Read the `narrative_markdown` as if you have never seen
+3. **Narrative self-containment.** Get the proof summary via
+   `research_query({ section: "proof_summaries", questionId })` and read its
+   `narrative_markdown` as if you have never seen
    the JSON. Can you follow the argument? Are citations inline? Could you locate every source
    referenced? A narrative that requires the JSON to make sense is `must_address`.
 
@@ -669,8 +720,28 @@ in `research.json` so the refusal is part of the audit trail.
 ## 10. Existing-Verdict Skip Logic
 
 Before evaluating, the agent must check whether a verdict already exists for the same
-focus + target_id combination by scanning for files matching
-`evaluations/<focus>-<target_id>-*.json` in the project folder.
+focus + target_id combination:
+
+```
+research_query({ projectPath, section: "evaluations", targetId, focus })
+```
+
+It then selects the entry whose `superseded_by` is `null` and `Read`s that entry's
+`file_path` for the prior verdict body.
+
+**The null check is the agent's step, not the tool's** — deliberately.
+`research_query`'s filter layer compares a string against a field, and
+`superseded_by` is `string | null`, so "is null" is not expressible without a
+sentinel value (ambiguous against a real `ev_` id) or a second filter kind. Neither
+is warranted for a result set that is a handful of entries by construction. See
+`research-query-tool-spec.md` §3. The agent body states the step explicitly, and
+`tests/tools/research-query.test.ts` pins the boundary.
+
+**Match on the `evaluations[]` array, not by listing the `evaluations/` directory.**
+The array is the authoritative index and is what the agent can actually read. (Earlier
+revisions of this spec described a directory scan for
+`evaluations/<focus>-<target_id>-*.json`; the shipped agent has matched on the array
+since before this spec was last revised. The array is correct.)
 
 **Narrative-craft runs are exempt.** A craft request (§6.4) always evaluates fresh and
 never surfaces a prior verdict in place of doing the work. Focus + target_id cannot
@@ -900,6 +971,9 @@ specific, not as a box-checking ritual.
 
 | Tool | When to use |
 |------|-------------|
+| `project_context` | The opening call of every invocation — project status, open questions, tree persons with the sources they cite, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
+| `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
+| `Read` | Exception only — a body no projection carries (a verdict file under `evaluations/`, an entry already located by id). **Never** `research.json` front-to-back. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
 | `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
@@ -956,55 +1030,44 @@ These items are acknowledged but not specified here. They belong in future issue
 |------|-------|
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
-| Reducing per-gate mentor cost | Do not defer gates ad hoc to chase speed. Follow the staged sequence in §17.1. |
-| `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2, and the queue entry under `docs/TODOs.md` § "Skills / tools". |
+| Reducing per-gate mentor cost | Largely shipped — see §17.1. Do not defer or sample the surviving `proof-critique` gate to chase speed. |
+| `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2; queued as #1252. |
 
-### 17.1 Reducing per-gate mentor cost (defer until measurable)
+### 17.1 Per-gate mentor cost — what shipped, and what is not a lever
 
-An earlier e2e research-runtime speedup proposal (idea 2b) considered
-collapsing the three mentor gates (pre-exhaustiveness, conclusion-readiness,
-proof-critique) to a single conclusion gate to cut the cost of an autonomous
-`/research` run; the surviving version of that lever is tracked in
-`docs/TODOs.md` § "Research latency (e2e `/research` runs)".
+**Done.** The three auto-gates were collapsed to the single `proof-critique`
+gate. §3.4 is the current contract, and it records why the two early focuses
+were dropped from auto-gating: they duplicated `research-exhaustiveness`'s own
+7-point check and `proof-conclusion`'s tier analysis, the read-only mentor
+cannot verify exhaustiveness without search tools, and their forced rework
+starved the proof step. `pre-exhaustiveness` and `conclusion-readiness` remain
+supported for **on-demand** use.
 
-**That collapse has since happened, on its own evidence:** per §3.4, `/research`
-auto-invokes exactly one advisory `proof-critique` gate, and
-`pre-exhaustiveness`/`conclusion-readiness` survive only as on-demand focuses.
-Read the `docs/TODOs.md` entry's "3–4 gates per answering question" with that in
-mind — it predates the §3.4 change.
+An earlier revision of this section declared that change "explicitly NOT
+adopted" and prescribed a three-step sequence before it could even be
+considered. Both prerequisites in that sequence had in fact already landed —
+the agent is conformant (§2), and `build_workspace`
+(`eval/harness/e2e/orchestrator.py`) stages `packages/engine/plugin/agents/*.md`
+into the workspace's `.claude/agents/`, so e2e exercises the gate — and the
+decision step was subsequently taken. That text is removed rather than struck
+through, because a spec section forbidding work that has already shipped reads
+as live policy and will be obeyed as such.
 
-What remains **explicitly NOT adopted** is the *next* cut: deferring or dropping
-the one surviving gate to save its cost. Two reasons:
+**Also done, and load-bearing for cost:** the gate is invoked at most once per
+proof summary. `/research` first checks `evaluations/` for a
+`proof-critique-<ps_id>-*.json` newer than the last edit to that summary and
+acts on the existing verdict rather than re-invoking. Before that cache, real
+runs showed **3–4 mentor invocations per answering question at ~40–84 s each
+(≈3.5–4 min per question)** on the critical path, because the parent blocks on
+every gate. The model half of the same lever is banked too: the agent was
+repinned `claude-opus-4-8` → `claude-sonnet-5`.
 
-1. **The gate is now observable, but not yet measured.** Both harnesses stage
-   `packages/engine/plugin/agents/*.md` into the workspace's `.claude/agents/`
-   (`eval/harness/harness/workspace.py`, `eval/harness/e2e/orchestrator.py::build_workspace`),
-   so the real mentor runs under `/research` and its cost is visible per gate in
-   the run log's `subagents[].turns`. A recorded example: the
-   `friedrich-weber-daughter` run of 2026-07-29 spent 5 turns and ~7.4k output
-   tokens on its one `proof-critique` gate and wrote `ev_001` with
-   `verdict: "address_first"`. What is still missing is the *decision-grade*
-   evidence — whether any gate ever changes a verdict or a proof tier across the
-   fixture corpus. One run showing the gate fires is not that.
-2. **The final gate is the only production backstop.** There is no eval judge
-   in production Cowork, so the `proof-critique` gate is the only fresh-context
-   adversarial proof-quality check a real user receives. Trimming gates trades
-   the GPS workflow's one quality net for speed.
-
-If reducing mentor cost later becomes warranted (driven by **production**
-latency/cost evidence, not the e2e benchmark), do it in this sequence — **not**
-by deferring gates first:
-
-- **(a) Land the mentor conformance PR** (§2) so the agent behaves to spec. **Done.**
-- **(b) Measure the gates across the corpus.** The staging half of this step is
-  **done** (see reason 1 above); what remains is an `evaluations/` verdict fixture
-  and a read across runs of both the gate's cost (turns/tokens per gate) and
-  whether any gate ever changes a verdict or proof tier.
-- **(c) Then decide gating** with the GPS/spec owner, driven by that data plus
-  production cost. If measurement shows the surviving `proof-critique` gate never
-  changes a verdict or a proof tier, that is the evidence for deferring it (per
-  the negative-result short-circuit in `docs/TODOs.md`) — earned, not assumed.
-  Reason 2 above is the standing argument against dropping it outright.
+**Not a lever: the surviving ~138 s `proof-critique` call itself.** It is
+doctrine-required — a real second model call, in fresh context, reviewing the
+written conclusion — and there is no eval judge in production Cowork, so it is
+the only adversarial proof-quality check a real user ever receives. Carry it as
+a known fixed cost in any latency re-measurement rather than mistaking it for
+waste. Do not defer or sample it to chase wall-clock.
 
 ### 17.2 `narrative-craft` as its own focus mode (deferred, not dropped)
 
@@ -1037,7 +1100,6 @@ Promote to a real focus value only if usage shows it should be a standing gate
 rather than something the user asks for — or if the carve-outs above start
 accumulating. Two exist today (§10's skip exemption and §12.3's supersession rule,
 both leaning on the `craft` flag of §7.1); **a third is the trigger**, because at that
-point the enum change is cheaper than the workarounds. Queued in `docs/TODOs.md`
-§ "Skills / tools". That is a new spec delta on top of this one, not a reopening of it —
-keep the audit trail the way `evaluations[].superseded_by` already does for
-re-evaluations.
+point the enum change is cheaper than the workarounds. Queued as #1252. That is a
+new spec delta on top of this one, not a reopening of it — keep the audit trail the way
+`evaluations[].superseded_by` already does for re-evaluations.

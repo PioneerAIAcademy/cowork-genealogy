@@ -339,18 +339,25 @@ session in this checkout:
 /interpret-e2e-result
 ```
 
-It reads the run-log files and explains in plain language: the verdict (and
-flags a `pass` with low proof quality — "found it but didn't prove it"), the
-proof-quality score and what drove it, any blocked tree-reads (did it try to
-shortcut?), whether a finding came from a bundled PDF rather than live
-research, the stop reason translated into something actionable, and — for a
-`partial`/`fail` — the most likely cause.
+It reads the run-log files and explains in plain language: which expected
+findings the tree actually contains and which it doesn't, what proof
+conclusion the agent wrote (described, not scored), any blocked tree-reads
+(did it try to shortcut?), whether a finding came from a bundled PDF rather
+than live research, the stop reason translated into something actionable,
+any GPS guardrail skills the run bypassed, and — when findings are missing —
+the most likely cause.
+
+It deliberately does **not** report the judge's grade: not the verdict, not
+the `proof_quality` score, not the `outcome` gate. You grade the run blind
+right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
+would corrupt the calibration number. For the same reason `make e2e-run`
+prints only the stop reason and the compliance result when a run finishes.
 
 If you'd rather read the files yourself, each run writes four:
 
 | File | What's in it |
 |---|---|
-| `run-<ts>.json` | The structured result: verdict, stop reason, judge output, usage, tool calls, blocked tree-reads |
+| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, blocked tree-reads. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |

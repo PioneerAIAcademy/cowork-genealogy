@@ -99,8 +99,9 @@ Look for:
   not the free-text `value`.
 
 **Identity conflicts:**
-- Timeline impossibilities (from the timeline skill) — two events
-  that can't belong to the same person
+- Logical impossibilities flagged by check-warnings (e.g. an event
+  dated after death), or a geographic infeasibility surfaced by the
+  timeline skill — two events that can't belong to the same person
 - Same name appearing in multiple records with ambiguous ages or
   locations
 - person_evidence entries with `speculative` confidence — these

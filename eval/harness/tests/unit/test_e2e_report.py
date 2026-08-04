@@ -50,7 +50,7 @@ def test_print_rollup_all_passes():
         _make_result("b", "pass"),
     ]
     out = _capture(results)
-    assert "2/2 passed" in out
+    assert "2/2 recall pass" in out
 
 
 def test_print_rollup_mixed():
@@ -61,7 +61,7 @@ def test_print_rollup_mixed():
         _make_result("d", "skipped"),
     ]
     out = _capture(results)
-    assert "1/4 passed" in out
+    assert "1/4 recall pass" in out
     assert "1 partial" in out
     assert "1 fail" in out
     assert "1 skipped" in out
@@ -108,3 +108,40 @@ def test_print_rollup_handles_missing_usage_fields():
     # No cost/duration lines printed when nothing to average
     assert "avg cost" not in out
     assert "avg wall-clock" not in out
+
+
+# --- The compliance axis is visible in the roll-up (issue #972) -------------
+
+
+def _noncompliant(test_id: str, verdict: str) -> E2eResult:
+    return E2eResult(
+        test_id=test_id,
+        captured_at="2026-05-26_14-30-45",
+        verdict=verdict,
+        stop_reason="completed",
+        guardrail_bypass_violations=["'same_person' was never called for 'I1'"],
+    )
+
+
+def test_a_correct_but_noncompliant_run_reads_differently_from_a_wrong_one():
+    """The literal ask of issue #972: these two runs used to render
+    identically, because a guardrail bypass rewrote the verdict to `fail`."""
+    correct_but_bypassing = _capture([_noncompliant("isabel-carvajal-daughter", "pass")])
+    genealogically_wrong = _capture([_make_result("other-fixture", "fail")])
+    assert correct_but_bypassing != genealogically_wrong
+
+    # The correct-but-bypassing run is reported as recall pass, gate fail.
+    assert "1/1 recall pass" in correct_but_bypassing
+    assert "isabel-carvajal-daughter" in correct_but_bypassing
+    assert "overall gate: 0/1 pass" in correct_but_bypassing
+
+    # The wrong one fails on recall and is clean on compliance.
+    assert "1/1 clean" in genealogically_wrong
+    assert "0/1 recall pass" in genealogically_wrong
+
+
+def test_rollup_always_states_compliance_even_when_clean():
+    """A silent compliance line puts us back to one number meaning two things."""
+    out = _capture([_make_result("a", "pass")])
+    assert "compliance: 1/1 clean" in out
+    assert "overall gate: 1/1 pass" in out

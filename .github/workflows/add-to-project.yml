@@ -102,13 +102,13 @@ jobs:
         # token carry the installation's ORGANIZATION permissions, which is
         # where `Projects: Read and write` lives. Without it the token is
         # repo-scoped and every project mutation 403s.
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.PROJECT_APP_ID }}
           private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
         with:

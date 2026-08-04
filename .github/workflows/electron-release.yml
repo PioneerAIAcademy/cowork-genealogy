@@ -42,13 +42,13 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # pnpm BEFORE setup-node so the npm-cache step can find it. Version is read
       # from the root package.json `packageManager` field.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
@@ -88,7 +88,7 @@ jobs:
       # to the Release instead).
       - name: Upload dry-run artifacts
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.target }}-dist
           path: apps/electron/dist/**

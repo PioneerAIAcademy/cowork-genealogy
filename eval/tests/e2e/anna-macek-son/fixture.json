@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 12, flag adds_son, confidence 3). Draft transcribed from a Czech church baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 12, flag adds_son, confidence 3). Resolved false match: the 1867 baptism predates Anna Macek's 1871 marriage and would require her to have given birth at 16 — a different Anna/Václav Jičinský couple, not this person."
 }

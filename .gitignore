@@ -13,6 +13,10 @@ packages/engine/mcp-server/.mcp.json
 # anchors this to the repo root so it does NOT match packages/engine/mcp-server.
 /mcp-server/
 
+# Per-task plan (docs/task-lifecycle.md step 2) — a scratch artifact that ends
+# up in the PR description. Root-anchored so a nested PLAN.md stays tracked.
+/PLAN.md
+
 releases/*
 !releases/.gitkeep
 *.log

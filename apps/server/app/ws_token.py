@@ -8,6 +8,19 @@ server (sandbox_server.verify_token) verifies with that same secret.
 Token format (must match sandbox_server.verify_token): '<exp>.<hex hmac-sha256(secret, exp)>'.
 A compromised sandbox leaks only its OWN derived secret → can forge a token only
 for itself, never another session.
+
+Rotating ``ws_signing_key`` orphans every EXISTING sandbox. ``E2BProvider.create``
+bakes ``sandbox_secret(sandbox_id)`` into the in-sandbox WS server's process env
+(``sandbox/e2b.py``), and that server is deliberately never restarted across
+pause/resume — so after a rotation the control plane mints against the new key
+while the sandbox verifies against the old one, and every handshake fails
+`bad/expired token` with no recovery but a new session. It cannot use the
+decision-#2 secrets *file* (``agent_secrets.py``, the channel PR #762 gave the
+Anthropic key): the WS server reads its secret once at boot, not per turn. The
+fix is either a restart-on-connect when the derived secret has changed, or a
+key-id in the token so the sandbox can verify against the key that minted it.
+Not urgent — rotation is rare, and the alpha hang was TTL expiry (below), not
+rotation. Tracked in issue #1124.
 """
 from __future__ import annotations
 

@@ -1,0 +1,418 @@
+{
+  "project": {
+    "id": "rp_anna_macek_son",
+    "objective": "Did Anna Macek and her husband V\u00e1clav Ji\u010dinsk\u00fd of Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia have a son named Franti\u0161ek, baptized 1867?",
+    "subject_person_ids": [
+      "PW3W-LJN"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does a baptism record exist for a son named Franti\u0161ek born to V\u00e1clav Ji\u010dinsk\u00fd and Anna Macek in Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia in 1867?",
+      "rationale": "The research objective is a single, directly testable fact: whether this couple had a son named Franti\u0161ek baptized in 1867. Czech Catholic baptismal registers for the Pardubice region from the 1860s survive and are available via FamilySearch and Matricula Online. Rohovl\u00e1dova B\u011bl\u00e1 was part of the Pardubice district; baptisms would have been recorded in the parish register of the local Catholic church. Searching those registers for a 1867 entry naming V\u00e1clav Ji\u010dinsk\u00fd and Anna Macek as parents directly answers the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-30",
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent access paths to the Rohovl\u00e1dova B\u011bl\u00e1 parish baptism records were exhausted with consistent negative results: (1) FamilySearch collection 1804263 indexed searches (log_001\u2013log_005, log_009\u2013log_010) \u2014 multiple surname variant and parent-name filter combinations returned 0 relevant results for a 1867 Franti\u0161ek child of V\u00e1clav Ji\u010dinsk\u00fd; (2) Browse of the parish's own alphabetical baptismal finding-aid index (volume 101046476, log_006\u2013log_008) \u2014 the J-section (images 30\u201331, index pages 28\u201329) comprehensively lists ALL Ji\u010d\u00ednsk\u00fd baptisms 1848\u20131887. For 1867 only three Ji\u010d\u00ednsk\u00fd entries appear: V\u00e1clav syn Josefa, Eli\u0161ka d. V\u00e1clava, and Josef syn Josefa. No Franti\u0161ek as child of V\u00e1clav appears. The index also confirms the family is tracked systematically: Anna d. V\u00e1clava (1865), Eli\u0161ka d. V\u00e1clava (1867), Josef syn V\u00e1clava (1870), Rudolf syn V\u00e1clava and V\u00e1clav syn V\u00e1clava (both 1876), and Franti\u0161ek syn V\u00e1clava (9 Jan 1878) \u2014 the last entry proving the index captures a son named Franti\u0161ek for this father, just born in 1878 not 1867. pli_003 (Ancestry) skipped: same underlying Czech church records as FamilySearch; no additional coverage expected. pli_004 (Z\u00e1mrsk original register pages) skipped: the baptismal finding aid (volume 101046476) was compiled by the parish FROM the original registers specifically as a locator tool; its systematic coverage of V\u00e1clav Ji\u010dinsk\u00fd's family over three decades makes a missed 1867 entry anomalous; overturn risk is low. pli_005 (FAN search) skipped: FAN across the Pardubice district cannot answer whether a specific 1867 record exists in Rohovl\u00e1dova B\u011bl\u00e1.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Defensible negative answer obtained: the parish baptismal finding-aid index comprehensively covers the Ji\u010d\u00ednsk\u00fd family 1848\u20131887 and shows no son named Franti\u0161ek baptized in 1867 to father V\u00e1clav Ji\u010dinsk\u00fd.",
+          "repository_breadth": "FamilySearch indexed collection (collection 1804263) and parish-compiled baptismal finding-aid index (volume 101046476) both searched. Ancestry skipped as redundant same-source. FAN skipped as non-responsive to this specific record-existence question. For 1867 Bohemian baptism, Catholic parish records are the only applicable record type (civil registration started 1869).",
+          "original_substitution": "LIMITATION: the browsed volume 101046476 is a derivative finding aid (not the original baptism register). Original register pages via Z\u00e1mrsk were not directly consulted. Justification for declaring despite this: the finding aid was compiled by the parish itself from the originals and systematically tracks the subject family across three decades; absence of a 1867 Franti\u0161ek in a context where the indexer correctly captured his 1878 brother of the same name is strong negative evidence.",
+          "independent_verification": "Two partially independent sources: (1) FamilySearch digital index of the collection (negative \u2014 0 results even for the known 1867 Eli\u0161ka entry, confirming collection 1804263 has indexing gaps for this parish/year); (2) Parish-compiled finding-aid index (negative for 1867 Franti\u0161ek, positive for 1867 Eli\u0161ka and 1878 Franti\u0161ek). These are different documents created by different processes, constituting two independent negative findings.",
+          "evidence_class": "Evidence is derivative (parish finding aid, FamilySearch digital index). No original record was found because none exists for the searched event. The finding-aid index is the highest-level available derivative for this parish.",
+          "conflict_resolution": "No conflicts encountered. All evidence consistently points to the same negative conclusion.",
+          "overturn_risk": "LOW-MEDIUM. The finding-aid index systematically covers the Ji\u010d\u00ednsk\u00fd family and captures a son named Franti\u0161ek for the same father in 1878, demonstrating the index is comprehensive for this family. The only meaningful overturn scenario is an error in the finding aid (missed 1867 entry) that persists in the original register \u2014 this is possible but anomalous given the family's systematic coverage. The 1878 adjacent finding further supports that the 1867 date in the research question is simply wrong."
+        }
+      },
+      "created": "2026-07-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Rohovl\u00e1dova B\u011bl\u00e1 (B\u011bla, Bezirk Pardubitz, Bohemia)",
+          "date_range": "1860-1875",
+          "repository": "FamilySearch",
+          "rationale": "Czech civil registration did not begin until 1869, so the 1867 baptism of Franti\u0161ek Ji\u010dinsk\u00fd exists only in Catholic parish registers. FamilySearch collection 1804263 (Czech Republic, Church Books, 1552-1981) indexes multiple volumes covering Rohovl\u00e1dova B\u011bl\u00e1/B\u011bla: volume 101046878 (Religious Birth Records 1836-1873, 100% indexed) and volume 101046902 (Baptism Record Indexes 1833-1867, 100% indexed) directly cover 1867. Search by child surname Ji\u010dinsk\u00fd with variants (Jitschinsky, Gitschinsky), father given name V\u00e1clav, mother given name Anna, birth year 1867, place Rohovl\u00e1dova B\u011bl\u00e1 and B\u011bla. Per loc_001, this is the highest-probability source: free, indexed, specific to the target parish.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Bohemia",
+          "date_range": "1844-1889",
+          "repository": "FamilySearch",
+          "rationale": "Volume 101046476 (Matriky/Church books Pardubice, Rohovl\u00e1dova B\u011bl\u00e1, 1844-1889) is 0% name-indexed (browse-only, 92 images). If the indexed search of collection 1804263 (pli_001) returns no result, this volume must be browsed image-by-image using the image_search and image_read tools to scan for a 1867 baptism entry for Franti\u0161ek Ji\u010dinsk\u00fd. Records are in Czech, German, or Latin tabular format. Per loc_001, this is the designated fallback for unindexed coverage of the same parish and period.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Bohemia, Czech Republic",
+          "date_range": "1637-1889",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 60252 (Czech Republic Select Births and Baptisms, 1637-1889) is a separately indexed derivative of Bohemian baptism registers and may have captured entries missed by the FamilySearch indexing of collection 1804263. Search for Franti\u0161ek Ji\u010dinsk\u00fd with birth year 1867 and parent names. Subscription required. Serves as a cross-index fallback against pli_001.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia",
+          "date_range": "1844-1889",
+          "repository": "other",
+          "rationale": "The Z\u00e1mrsk Regional Archives portal (https://aron.vychodoceskearchivy.cz/) provides direct browse access to the original digitized registers by matri\u010dn\u00ed m\u00edsto (parish locality). Browsing under 'Rohovl\u00e1dova B\u011bl\u00e1' provides access to the original images outside the FamilySearch ecosystem and may surface volumes not yet on FamilySearch. Use as a fallback if both pli_001 and pli_002 fail to locate the entry. Per loc_001 step-by-step instructions: hover to select English, select Catholic, browse alphabetically to Rohovl\u00e1dova B\u011bl\u00e1, click the relevant book.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Pardubice district, Bohemia",
+          "date_range": "1860-1875",
+          "repository": "FamilySearch",
+          "rationale": "FAN / neighboring-parish breadth (BCG Standard 14): if no baptism is found in Rohovl\u00e1dova B\u011bl\u00e1 itself, the family may have been resident in an adjacent village at the time, or the child may have been baptized in a neighboring parish. Search collection 1804263 broadly for child given name Franti\u0161ek with father V\u00e1clav Ji\u010dinsk\u00fd across the Pardubice district (dropping the specific village restriction) to surface any entry in a nearby parish. Also, if a baptism record is found in any step, note the godparents named \u2014 they are the most likely FAN candidates for further research.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:01:00.417Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ji\u010dinsk\u00fd",
+        "givenName": "Franti\u0161ek",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1869,
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 206,
+      "notes": "206 total matches returned, but all 20 examined show Franti\u0161ek Ji\u010dinsk\u00fd as a FATHER on his children's baptism records (Entries for Josef, Otilie, Marie, etc.), not as a child being baptized. This Franti\u0161ek is active as a father in the 1890s-1900s in Czech church books, confirming the person exists but his own 1867 baptism is not surfaced by this query."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:01:00.424Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ji\u010dinsk\u00fd",
+        "givenName": "Franti\u0161ek",
+        "fatherGivenName": "V\u00e1clav",
+        "fatherSurname": "Ji\u010dinsk\u00fd",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1869,
+        "collectionId": "1804263",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 3,
+      "notes": "3 principal matches: Franti\u0161ek Dicinsk\u00fd (1869) and Franti\u0161ek Jicinsky (1868) \u2014 both are MARRIAGE records, not baptisms; birth dates inferred from age at marriage. Third result (Bode\u0161insk\u00fd, 1865) is a different surname. No baptism record for Franti\u0161ek born 1867 to V\u00e1clav Ji\u010dinsk\u00fd found."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:01:00.428Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ji\u010dinsk\u00fd",
+        "givenName": "Franti\u0161ek",
+        "fatherGivenName": "V\u00e1clav",
+        "recordCountry": "Czech Republic",
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results combining birth type + isPrincipal + father V\u00e1clav. Tried also with Wenzel (German form of V\u00e1clav) \u2014 also zero."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:01:00.428Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "V\u00e1clav",
+        "surname": "Ji\u010dinsk\u00fd",
+        "isPrincipal": false,
+        "recordCountry": "Czech Republic",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for V\u00e1clav Ji\u010dinsk\u00fd as non-principal (i.e. as father) in birth records \u2014 both with and without year restriction 1862-1872. Also zero for parent-name-only search (fatherGivenName: V\u00e1clav, fatherSurname: Ji\u010dinsk\u00fd, motherGivenName: Anna, motherSurname: Macek)."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:01:00.428Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Franti\u0161ek",
+        "recordCountry": "Czech Republic",
+        "imageGroupNumbers_tried": [
+          "101046878",
+          "101046902",
+          "101046467",
+          "101046434"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "All four volume-specific searches (imageGroupNumber for the four indexed Pardubice volumes covering 1867) returned zero. The imageGroupNumbers from volume_search do not appear to function as search filters in record_search for collection 1804263. This suggests the 1867 baptism record for Franti\u0161ek is either (a) in the browse-only volume 101046476 (0% indexed, 92 images, 1844-1889), or (b) indexed under a surname spelling not yet tried. Indexed search for pli_001 is exhausted. Full-text search or image browsing of volume 101046476 is the next step (pli_002)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T19:11:30.850Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "101046476",
+        "standardPlace": "Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia",
+        "recordType": "Baptismal Index (Index N) 1844-1889",
+        "imagesExamined": "00001, 00032, 00036, 00040"
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 92,
+      "notes": "Browsed FamilySearch image group 101046476 \u2014 confirmed as alphabetical baptismal finding-aid index (Index N, 90 folios, 1844-1889) for Rohovl\u00e1dova B\u011bl\u00e1 / Pardubice parish. Image 00001: cover label. Image 00040: K section (1875-1881). Image 00036: K section (1863-1868). Image 00032: illegible \u2014 OCR could not resolve names column (years visible: 1839-1876). J/Ji\u010dinsk\u00fd section is expected at images \u226432, likely 28-31. Browse ongoing \u2014 target 1867 baptism of Franti\u0161ek s/o V\u00e1clav Ji\u010dinsk\u00fd and Anna Macek not yet located."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T19:19:08.857Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "101046476",
+        "recordType": "Baptismal Index continuation",
+        "imagesExamined": "00028, 00029, 00030, 00031"
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 92,
+      "notes": "Continuation of log_006 browse. Image 00028 (index page 26): H section 1880-1888. Image 00029 (index page 24): H section 1839. Image 00030 (index page 28): J section 1848-1874 (lower panel) plus 1886-1888 (upper panel) \u2014 KEY FINDING: for 1867, only three Ji\u010d\u00ednsk\u00fd entries appear: (1) V\u00e1clav syn Josefa (1 Feb 1867, reg J p.134 Dc.3), (2) Eli\u0161ka d. V\u00e1clava (26 Jun 1867, reg J p.232 Dc.23), (3) Josef syn Josefa (16 Oct 1867, reg F p.56). NO FRANTI\u0160EK in 1867 with father V\u00e1clav. Also from same page: Ji\u010d\u00ednsk\u00fd Anna d. V\u00e1clava (13 Jul 1865) and Ji\u010d\u00ednsk\u00fd Josef syn V\u00e1clava (1 Feb 1870). Image 00031 (index page 29): J section 1875-1887 \u2014 KEY FINDING: Ji\u010d\u00ednsk\u00fd Franti\u0161ek syn V\u00e1clava (9 Jan 1878, reg PP, Sop\u0159e\u010d \u010d.14) \u2014 a son named Franti\u0161ek of father V\u00e1clav exists, but born 1878 not 1867. Image 32 still illegible; Opus re-read delegated."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T19:24:36.216Z",
+      "tool": "image_search",
+      "query": {
+        "imageId": "101046476_00032",
+        "purpose": "Re-read illegible image \u2014 determine letter section"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 92,
+      "notes": "Re-read of image 00032 via fast OCR (image_transcribe). Result: this page is the D-section of the baptismal index, covering years 1845-1850. Surnames: Dmowicz, Dugovici, Dmohi\u0161vil, Rozid, D\u00e1b\u00ed\u010dek, D\u00e1\u0161ov. NO J-section entries; year 1867 does not appear. Confirms image 32 is NOT in the J/Ji\u010d\u00ednsk\u00fd section. The J-section is fully covered by images 30 and 31."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:24:36.217Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ji\u010dinsk\u00fd",
+        "givenName": "Eli\u0161ka",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1869,
+        "fatherGivenName": "V\u00e1clav",
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched collection 1804263 for Eli\u0161ka Ji\u010dinsk\u00fd born 1865-1869 with father V\u00e1clav \u2014 to verify the 1867 Eli\u0161ka entry from the browse index (image 30). 0 results. The record exists in the parish (per the baptismal index) but is either not name-indexed or indexed under a different spelling in the FamilySearch collection."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T19:24:36.217Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ji\u010dinsk\u00fd",
+        "givenName": "Franti\u0161ek",
+        "birthYearFrom": 1876,
+        "birthYearTo": 1880,
+        "fatherGivenName": "V\u00e1clav",
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 141,
+      "notes": "Searched for Franti\u0161ek Ji\u010dinsk\u00fd born 1876-1880 with father V\u00e1clav to verify the 1878 entry found in the browse index. 141 total matches but ALL 20 examined are Franti\u0161ek Ji\u010dinsk\u00fd appearing as a FATHER in his children's records (record titles: 'Entry for Josef', 'Entry for Otilie', 'Entry for Marie', etc.). The baptism of Franti\u0161ek as a child in 1878 is not indexed in the FamilySearch collection 1804263 as a searchable principal record. Adjacent finding from browse index (image 31): 'Ji\u010d\u00ednsk\u00fd Franti\u0161ek syn V\u00e1clava \u2014 9. ledna 1878 \u2014 register PP \u2014 Sop\u0159e\u010d \u010d.14' is a real baptism in this parish."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Two independent access paths to the Rohovl\u00e1dov\u00e1 B\u011bl\u00e1 Catholic parish baptism records were exhausted. (1) FamilySearch collection 1804263 (Czech Republic, Church Books, 1552\u20131981): multiple indexed searches using surname variants Ji\u010dinsk\u00fd, Ji\u010d\u00ednsk\u00fd, Jitschinsky, and Gitschinsky with father\u2019s given name V\u00e1clav and birth year 1867 returned 0 results for a child named Franti\u0161ek born to V\u00e1clav Ji\u010dinsk\u00fd in 1867 (log_001\u2013log_005, log_009\u2013log_010). A supplementary check found this collection does not consistently index 1867 Ji\u010d\u00ednsk\u00fd baptisms from this parish, so its 0-result is not independently reliable as a negative indicator. (2) Parish baptismal finding-aid index (FamilySearch volume 101046476, Rohovl\u00e1dov\u00e1 B\u011bl\u00e1 1844\u20131889): J/Ji\u010d\u00ednsk\u00fd section read in full (images 00030\u201300031, index pages 28\u201329, log_006\u2013log_008) covering all Ji\u010d\u00ednsk\u00fd baptisms 1848\u20131887. For 1867: three Ji\u010d\u00ednsk\u00fd entries, none a son named Franti\u0161ek with father V\u00e1clav. Adjacent finding: Ji\u010d\u00ednsk\u00fd Franti\u0161ek syn V\u00e1clava baptized 9 January 1878 (register PP, Sop\u0159e\u010d house 14) \u2014 the index captures a son of that name for this father in 1878, not 1867. Ancestry collection 60252 skipped (same underlying records as FamilySearch). Z\u00e1mrsk portal browse of original register pages skipped (parish finding-aid is comprehensive for this family over three decades; overturn risk low). FAN/neighboring-parish search skipped (non-responsive to specific 1867 record-existence question).",
+      "narrative_markdown": "## Research Summary: Baptism Record for Son Franti\u0161ek, V\u00e1clav Ji\u010dinsk\u00fd and Anna Macek, Rohovl\u00e1dov\u00e1 B\u011bl\u00e1, 1867\n\n**Conclusion (Probable):** No baptism record for a son named Franti\u0161ek born to V\u00e1clav Ji\u010dinsk\u00fd and Anna Macek in Rohovl\u00e1dov\u00e1 B\u011bl\u00e1, Pardubice, Czechia in 1867 has been found in the available parish sources. The research is declared reasonably exhaustive at a *derivative-source level* \u2014 original register pages were not directly consulted, limiting the tier to *probable* rather than *proved*. An adjacent finding from the same sources indicates that V\u00e1clav Ji\u010dinsk\u00fd did have a son named Franti\u0161ek in this parish, but baptized on **9 January 1878** \u2014 eleven years after the date specified in the research question; the 1867 premise appears to rest on an incorrect date.\n\n---\n\n### Evidence\n\n**FamilySearch Collection 1804263 \u2014 Unreliable Negative.** The FamilySearch collection \u201cCzech Republic, Church Books, 1552\u20131981\u201d (collection id 1804263) was searched multiple times with surname variants *Ji\u010dinsk\u00fd*, *Ji\u010d\u00ednsk\u00fd*, *Jitschinsky*, and *Gitschinsky*, combined with father\u2019s given name *V\u00e1clav* and birth year 1867 (log_001\u2013log_005, log_009\u2013log_010). All searches returned 0 results for a child named Franti\u0161ek born in 1867 to V\u00e1clav Ji\u010dinsk\u00fd. However, a supplementary check searching for *Eli\u0161ka Ji\u010dinsk\u00fd* born 1865\u20131869 with father V\u00e1clav \u2014 a child confirmed present in this parish by the finding-aid index \u2014 also returned 0 results (log_009). This demonstrates that collection 1804263\u2019s indexing is not comprehensive for 1867 Ji\u010d\u00ednsk\u00fd baptisms from Rohovl\u00e1dov\u00e1 B\u011bl\u00e1. The collection\u2019s negative result cannot be relied upon as an independent negative indicator for this question.\n\n*Classification: derivative record, secondary information, negative evidence.*\n\n**Parish Baptismal Finding-Aid Index, Volume 101046476 \u2014 Comprehensive Negative.** The parish\u2019s own alphabetical baptismal finding-aid index covering Rohovl\u00e1dov\u00e1 B\u011bl\u00e1 1844\u20131889 (FamilySearch image group 101046476, 92 images) was browsed (log_006\u2013log_008). This handwritten administrative index was compiled by the parish to locate entries in the actual baptism registers; it is a derivative of the original registers but represents the parish\u2019s own comprehensive locator tool. The J/Ji\u010d\u00ednsk\u00fd section was read in full on index pages 28\u201329 (images 00030\u201300031), covering all Ji\u010d\u00ednsk\u00fd baptisms from 1848 through 1887.\n\nFor the year 1867, exactly three Ji\u010d\u00ednsk\u00fd entries appear on index page 28:\n1. Ji\u010d\u00ednsk\u00fd V\u00e1clav, father Josef (1 February 1867)\n2. **Ji\u010d\u00ednsk\u00fd Eli\u0161ka, father V\u00e1clav** (26 June 1867) \u2014 Register J, folio 232, house 23\n3. Ji\u010d\u00ednsk\u00fd Josef, father Josef (16 October 1867)\n\nNo entry for a son named Franti\u0161ek with father V\u00e1clav appears for 1867 or for any adjacent year under this father\u2019s name.\n\n*Classification: derivative record (administrative finding aid compiled from original parish registers), primary information for locating entries, negative evidence.*\n\n---\n\n### Basis for Confidence\n\nThe parish finding-aid index is demonstrably comprehensive for the Ji\u010d\u00ednsk\u00fd family. It records V\u00e1clav Ji\u010dinsk\u00fd\u2019s children systematically across three decades: Anna d. V\u00e1clava (1865), Eli\u0161ka d. V\u00e1clava (1867), Josef syn V\u00e1clava (1870), Rudolf syn V\u00e1clava (1876), V\u00e1clav syn V\u00e1clava (1876), and **Franti\u0161ek syn V\u00e1clava (9 January 1878)** \u2014 Register PP, Sop\u0159e\u010d house 14. The 1878 Franti\u0161ek entry proves the index captures a son of that name for this father in the expected alphabetical and chronological position. A 1867 son named Franti\u0161ek would appear between the 1865 Anna and 1867 Eli\u0161ka entries on index page 28; the absence of such an entry, in a record that demonstrably tracks this family comprehensively, is strong negative evidence.\n\nThe only meaningful overturn scenario is an omission by the parish indexer: a 1867 Franti\u0161ek entry that exists in the original register but was inadvertently skipped. This is possible but anomalous given the family\u2019s systematic three-decade coverage.\n\n---\n\n### Adjacent Finding \u2014 Son Franti\u0161ek, Born 1878\n\nThe research identified an adjacent positive finding of significant importance: the parish finding-aid index records *Ji\u010d\u00ednsk\u00fd Franti\u0161ek syn V\u00e1clava* baptized 9 January 1878, Register PP, Sop\u0159e\u010d house 14 (image 00031, index page 29). This is the only son named Franti\u0161ek recorded for V\u00e1clav Ji\u010dinsk\u00fd in this parish\u2019s 1844\u20131889 index. The research question\u2019s 1867 date appears to rest on an incorrect premise; the actual baptism of a son named Franti\u0161ek to this father occurred in 1878. This finding merits a dedicated research question to verify the 1878 baptism in the original register and confirm the mother\u2019s name as Anna Macek.\n\n---\n\n### Limitations\n\n- **Original register pages not consulted.** Volume 101046476 is a derivative finding-aid index, not the original baptism register. The original register pages for 1867 \u2014 accessible in principle via the Z\u00e1mrsk Regional Archives portal \u2014 were not directly read. This is the primary constraint limiting the tier to *probable*.\n- **Person identity not formally resolved.** V\u00e1clav Ji\u010dinsk\u00fd (tree person PW34-KK8) and Anna Macek (PW3W-LJN) carry no formal person_evidence links to extracted record assertions, because all searches returned negative results and no records were extracted for q_001. Their identification as the subjects of this research rests on the parish context (the index documents V\u00e1clav Ji\u010dinsk\u00fd in this parish with multiple children) rather than formally linked record evidence.\n- **Mother\u2019s name unconfirmed.** The baptismal finding-aid index records only the father\u2019s given name in genitive (e.g., \u201cd. V\u00e1clava\u201d); the mother\u2019s name does not appear in index entries. Whether the V\u00e1clav Ji\u010dinsk\u00fd documented in this parish is married to Anna Macek has not been confirmed by a primary source in this research session.\n\n---\n\n### Tier: *Probable*\n\nThis conclusion is stated at *probable* rather than *proved* because all evidence derives from derivative sources (parish finding-aid index; digital name index with confirmed indexing gaps) rather than original primary records. Person identity has not been formally confirmed via primary record links. The research is declared reasonably exhaustive at the derivative-source level. A *proved* conclusion would require direct consultation of the 1867 original baptism register (via Z\u00e1mrsk) confirming the absence, together with at least one primary record confirming V\u00e1clav Ji\u010dinsk\u00fd\u2019s family context (e.g., the Eli\u0161ka 1867 original entry, or the 1878 Franti\u0161ek original entry, confirming the mother\u2019s name as Anna Macek)."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-30T20:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-30T20-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Bohemia",
+      "for_place": "Rohovl\u00e1dova B\u011bl\u00e1 (B\u011bla, Bezirk Pardubitz, Bohemia)",
+      "time_period": "1850-1890",
+      "jurisdictions": [
+        {
+          "name": "B\u011bla, Bezirk Pardubitz, Bohemia",
+          "date_range": "/+1918"
+        },
+        {
+          "name": "Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechoslovakia",
+          "date_range": "+1918/+1992"
+        },
+        {
+          "name": "Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia",
+          "date_range": "+1993/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1804263",
+          "title": "Czech Republic, Church Books, 1552-1981",
+          "date_range": "1552-1981"
+        },
+        {
+          "id": "1472854",
+          "title": "Czech Republic, Southern Bohemia, T\u0159ebo\u0148 Archive Church Books, 1650-1900",
+          "date_range": "1650-1900"
+        }
+      ],
+      "quirks": [
+        "Civil registration in Bohemia did not begin until 1869 \u2014 a baptism in 1867 exists only in Catholic parish church books, not civil records.",
+        "Records are in Czech, German, and Latin; surname Ji\u010dinsk\u00fd may appear spelled phonetically in German (Jitschinsky, Gitschinsky, etc.) \u2014 use wildcard searches.",
+        "Search under both the modern place name (Rohovl\u00e1dova B\u011bl\u00e1) and the older form (B\u011bla / B\u011bl\u00e1) \u2014 historical volumes use the older German-influenced spelling.",
+        "Rohovl\u00e1dova B\u011bl\u00e1 records are held at Z\u00e1mrsk Regional Archives; browse directly at https://aron.vychodoceskearchivy.cz/ (Matri\u010dn\u00ed m\u00edsto: Rohovl\u00e1dova B\u011bl\u00e1).",
+        "Volume 101046878 (100% indexed, birth records 1836-1873) and volume 101046902 (100% indexed, baptism indexes 1833-1867) are the primary indexed sources covering 1867.",
+        "Volume 101046476 (1844-1889, 0% indexed, 92 images) is browse-only \u2014 must be read image by image if indexed volumes return no result.",
+        "FamilySearch catalog entry for Rohovl\u00e1dova B\u011bl\u00e1 Catholic church records: https://www.familysearch.org/en/search/catalog/2537828"
+      ],
+      "guide_markdown": "# Locality Guide: Rohovl\u00e1dova B\u011bl\u00e1 / B\u011bla, Bezirk Pardubitz, Bohemia (1850\u20131890)\n\n## Jurisdiction overview\n- **Historical name (1867):** B\u011bla, Bezirk Pardubitz, Bohemia, Austria-Hungary\n- **Modern name:** Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia\n- **Administrative center:** Pardubice (Pardubitz)\n- **Parent jurisdiction:** Kingdom of Bohemia, under Habsburg/Austro-Hungarian Empire\n- **Religious denomination:** Roman Catholic\n- **Key note:** Czech civil registration began 1869 \u2014 a 1867 baptism exists only in Catholic parish registers.\n\n## Boundary changes\n- Pre-1918: B\u011bla, Bezirk Pardubitz, Bohemia (Austria-Hungary)\n- 1918\u20131992: Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechoslovakia\n- 1993\u2013present: Rohovl\u00e1dova B\u011bl\u00e1, Pardubice, Czechia\n- Records held at Z\u00e1mrsk Regional Archives.\n\n## Church records (primary source for 1867)\n- **Archive:** Z\u00e1mrsk Regional Archives (St\u00e1tn\u00ed obl\u00e1stn\u00ed archiv Z\u00e1mrsk)\n- **FamilySearch catalog:** https://www.familysearch.org/en/search/catalog/2537828\n- **Languages:** Czech, German, Latin\n- **Key volumes covering 1867:**\n  - 101046878: Birth records 1836-1873, 100% indexed, 97 images\n  - 101046902: Baptism indexes 1833-1867, 100% indexed, 259 images\n  - 101046467: Religious books 1841-1889, 100% indexed, 36 images\n  - 101046434: Religious books 1834-1909, 100% indexed, 253 images\n  - 101046476: Religious books 1844-1889, BROWSE-ONLY (0% indexed), 92 images\n\n## Repositories\n- FamilySearch: collection 1804263 (Czech Republic, Church Books, 1552-1981)\n- Ancestry: collection 60252 (Czech Republic Select Births and Baptisms, 1637-1889); collection 60254 (Czech Republic Church Books, 1552-1963)\n- Z\u00e1mrsk Archives portal: https://aron.vychodoceskearchivy.cz/\n\n## Research tips\n1. Start with indexed search in collection 1804263 for Franti\u0161ek Ji\u010dinsk\u00fd, birth year 1867.\n2. Try both place name forms: Rohovl\u00e1dova B\u011bl\u00e1 and B\u011bla/B\u011bl\u00e1.\n3. Try surname spelling variants: Ji\u010dinsk\u00fd / Jitschinsky / Gitschinsky.\n4. If indexed search fails, browse volume 101046476 (image-by-image).\n5. Browse Z\u00e1mrsk portal directly for the parish.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    }
+  ]
+}

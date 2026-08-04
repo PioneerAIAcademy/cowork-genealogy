@@ -835,3 +835,215 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.results[0].gedcomx).toBeDefined();
   });
 });
+
+describe("recordSearchTool — jurisdiction hints on a nil marriage search", () => {
+  let dir: string;
+
+  // A couple who married in one place and later lived in another. The decisive
+  // detail is that the EARLIER jurisdiction belongs to the husband, so a hint
+  // that only consulted the subject would never surface it.
+  const TREE = {
+    persons: [
+      {
+        id: "I1",
+        names: [{ given: "James", surname: "Neal" }],
+        facts: [
+          {
+            type: "Birth",
+            date: "1857",
+            place: "Yell, Arkansas, United States",
+            standard_place: "Yell, Arkansas, United States",
+          },
+        ],
+      },
+      {
+        id: "I2",
+        names: [{ given: "Martha", surname: "Wood" }],
+        facts: [
+          {
+            type: "Residence",
+            date: "1900",
+            place: "Hill, Texas, United States",
+            standard_place: "Hill, Texas, United States",
+          },
+        ],
+      },
+    ],
+    relationships: [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [] },
+    ],
+  };
+
+  const nilResult = (): FSSearchResponse => ({
+    results: 0,
+    index: 0,
+    entries: [],
+  });
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-juris-"));
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify(TREE),
+      "utf-8",
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("points at the other spouse's earlier jurisdiction when the marriage search comes back nil", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeDefined();
+    expect(out.jurisdictionHints?.searchedPlace).toBe(
+      "Hill, Texas, United States",
+    );
+    const places = out.jurisdictionHints?.candidates.map((c) => c.place) ?? [];
+    expect(places).toContain("Yell, Arkansas, United States");
+    // The place already searched is not offered back.
+    expect(places).not.toContain("Hill, Texas, United States");
+  });
+
+  // Widened deliberately after the verification run: a nil-only trigger fired
+  // once, at 121 of 180 minutes, far too late to act on. A search that returns
+  // rows but matches nobody is the same situation as a nil search — the subject
+  // is not in this jurisdiction — so it gets the same hint.
+  it("fires when the search returned rows but ranking matched nobody", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+    );
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.totalMatches).toBe(1);
+    expect(out.ranked?.subjectResolvable).toBe(false);
+    expect(out.jurisdictionHints).toBeDefined();
+  });
+
+  // Review defect: the exclusion only read `marriagePlace`, but the caller scopes
+  // marriage searches with recordCountry + recordSubdivision instead — 6 of 7
+  // marriage searches in run 6, 4 of 5 in run 5. On that shape `searchedPlace` was
+  // undefined, so nothing was excluded and the state that had just come back empty
+  // was offered back as the top alternative.
+  it("excludes the searched place when scoped by recordCountry + recordSubdivision", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      recordCountry: "United States",
+      recordSubdivision: "Texas",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeDefined();
+    expect(out.jurisdictionHints?.searchedPlace).toBe("Texas, United States");
+    const places = out.jurisdictionHints?.candidates.map((c) => c.place) ?? [];
+    expect(places.filter((p) => /Texas/.test(p))).toEqual([]);
+  });
+
+  // Review: `isMarriageSearch` is true on recordType alone, so nothing used to
+  // require that a place had actually been scoped. Unscoped and country-wide are
+  // the same situation — every candidate the tree can offer was already inside the
+  // search — so the note's "in the place searched" would be false. 9 of 26
+  // marriage-scoped searches across the six runlogs carried no place scope at all.
+  it("stays silent when the marriage search scoped no place at all", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("stays silent when the marriage search was scoped only to a country", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      recordCountry: "United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("caps the candidate list so it cannot dominate the response", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Nowhere At All",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints?.candidates.length).toBeLessThanOrEqual(8);
+  });
+
+  it("stays silent on a nil search that was not about a marriage", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "census",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("stays silent without a subjectId, since there is no one to reason about", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("does not fail the search when the project has no readable tree", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+    await rm(join(dir, "tree.gedcomx.json"), { force: true });
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    // Advisory only: an unreadable tree must never turn a good search into an error.
+    expect(out.jurisdictionHints).toBeUndefined();
+    expect(out.totalMatches).toBe(0);
+  });
+});

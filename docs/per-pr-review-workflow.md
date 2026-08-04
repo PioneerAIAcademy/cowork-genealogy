@@ -1,10 +1,29 @@
 # Per-PR Review Workflow — Design Change Plan
 
-**Status:** Draft for senior-engineer review (v3 — simplified).
+**Status: SHIPPED, PARTLY SUPERSEDED (2026-08-02). Do not read this as pending
+work, and do not implement from it.** The per-PR model it proposes is how the
+team works today; the mechanics have moved on. Read it only for the *decisions
+and their reasoning*, and check any mechanic against the live source first:
+
+| For | Read instead |
+|---|---|
+| Run-log naming, release/candidate/active, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now four blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
+| The skill-improvement loop | [`docs/skill-lifecycle.md`](skill-lifecycle.md) |
+
+**§2.4 is superseded and was never built.** The per-test `test_content_hash`
+does not exist in the harness or either schema tree; the whole-snapshot model
+replaced it. Three specs described it as live until 2026-08-02. §2.8 and §2.10
+carry their own supersession notes inline.
+
+Still live and recorded nowhere else: §2.5 (onboarding as a selection task),
+§2.6 (monthly judge-prompt review), §2.9 (1-business-day senior SLA + volunteer
+pool), §7 (revisit clauses).
+
 **Date:** 2026-05-15
 **Scope:** Eval pipeline workflow redesign — touches `unit-test-spec.md`, `eval-crud-ui-spec.md`, `skill-mcp-testing-plan.md`, `eval/CLAUDE.md`, the harness, the CRUD UI, plus one new GitHub Action.
 
-This plan captures a deliberate shift in how skill evaluation is reviewed. Nothing is implemented yet — this document is the artifact for review and approval before doc rewrites and code begin.
+This plan captures a deliberate shift in how skill evaluation is reviewed.
 
 ---
 

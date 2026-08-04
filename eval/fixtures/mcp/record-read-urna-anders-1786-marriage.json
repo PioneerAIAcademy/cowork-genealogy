@@ -1,0 +1,88 @@
+{
+  "tool": "record_read",
+  "description": "Full record for the 25 Jun 1786 Hamre marriage of Anders Monsen and Urna Halsteinsdr (ark:/61903/1:1:NW44-PM2). Mirrors the gedcomx already embedded in record-search-urna-halsteinsdr-marriage-match — same two persons, same Couple relationship, same date and place, no new genealogical claims. Exists for the same reason as record-read-gallo-1893-baptism: record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found, but ut_search_records_023 stocked only record_search fixtures, so record_read was never registered in the mock and calling it aborted the whole run as an unregistered tool (Type 1) — validators had already passed and the search work was correct. Coverage for record_read originally lived in ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~NW44-PM2"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_groom_11820171332",
+        "ark": "ark:/61903/1:1:NW44-PM2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Anders",
+            "surname": "Monsen",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Norway, Marriages, 1660-1926"
+          }
+        ]
+      },
+      {
+        "id": "p_bride_11820171331",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Urna",
+            "surname": "Halsteinsdr",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F2",
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Norway, Marriages, 1660-1926"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "p_groom_11820171332",
+        "person2": "p_bride_11820171331"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Norway, Marriages, 1660-1926",
+        "collectionId": "1468080",
+        "ark": "ark:/61903/1:1:NW44-PM2"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Hamre, Hordaland, Norway"
+      }
+    ]
+  }
+}

@@ -349,6 +349,15 @@ async def familysearch_callback(
             "can't check it against the allowlist. Please contact the administrator.",
             status_code=403,
         )
+    # The allowlist matches an UNVERIFIABLE email: /platform/users/current returns
+    # no email_verified flag (measured 2026-06-07 —
+    # packages/engine/mcp-server/dev/probe-users-current.ts, "Caveats (1)"), unlike
+    # the Google OIDC it replaced. Acceptable for a hand-curated alpha list. Before
+    # open signup, pin users[0].id on first login (trust-on-first-use) and 403 on
+    # mismatch, so an allowlisted address can't be claimed on a throwaway FS
+    # account — issue #1143. Note _upsert_user only sets familysearch_id when it is
+    # absent and never compares it, so today a second account presenting the same
+    # allowlisted email signs in as the existing user.
     if not _is_allowed(session, email):
         safe_email = html.escape(email)
         return HTMLResponse(

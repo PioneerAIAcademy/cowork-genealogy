@@ -278,8 +278,8 @@ confuse:
 
 ## Wiring
 
-Standard MCP-tool scaffold (see CLAUDE.md / the `mcp-tool-scaffolder` agent),
-plus two specifics:
+Standard MCP-tool scaffold (see `CLAUDE.md` and `docs/architecture.md` §3 for
+the site list; copy `src/tools/wikipedia.ts`), plus two specifics:
 - An extra `src/tools/person-quality-templates.ts` — the static
   `(issueType, conclusionType) → sentence` map (not part of the standard scaffold).
 - Tests mock `fetch` and use `personal/person-quality/sample-response-KD96-TV2.json`

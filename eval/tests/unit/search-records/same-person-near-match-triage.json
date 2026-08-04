@@ -21,7 +21,8 @@
   },
   "mcp_fixtures": [
     "record-search-near-match-age-off-flynn",
-    "rank-search-matches-flynn-near-match"
+    "rank-search-matches-flynn-near-match",
+    "record-read-patrick-flyn-vrnt-7m3"
   ],
   "judge_context": [
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",
@@ -31,6 +32,7 @@
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "Log quality: do NOT require the skill to print the raw log entry JSON in its text response. Grade the authored fields (`query` faithfulness, `results_examined` accuracy, `notes` usefulness) from its account of what it wrote.",
     "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
-    "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches."
+    "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }

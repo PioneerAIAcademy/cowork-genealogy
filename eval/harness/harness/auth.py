@@ -130,12 +130,22 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     OAuth session). Without this a key in the operator's shell would silently
     win over the subscription.
 
-    `ENABLE_TOOL_SEARCH=true` eager-loads the genealogy MCP tool schemas at
-    agent start (matches the e2e orchestrator + hosted-web agent). Without
-    this flag the unit-test harness occasionally hits the deferred-tool
-    registry path, where the agent doesn't find `research_append` / `tree_edit`
-    via ToolSearch and falls back to "write JSON directly" — failing the test
-    on Completeness/Tool-Arguments rather than the skill's actual logic.
+    `ENABLE_TOOL_SEARCH` turns tool search ON, not off — the polarity is the
+    opposite of what this comment claimed until issue #1110. Read off the
+    installed CLI (v2.1.220): a truthy value (`true|1|yes|on`) selects
+    deferred/tool-search mode, `auto`/`auto:N` is the adaptive variant, and
+    only a FALSY value (`false|0|no|off`) selects "standard" mode, where every
+    schema is loaded up front. Leaving it unset also lands on tool-search mode,
+    so deleting the variable eager-loads nothing. (It is additionally forced
+    off on a non-first-party `ANTHROPIC_BASE_URL`, on Vertex, and under
+    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.)
+
+    So the `"true"` below means the harness runs WITH tool search — schemas
+    deferred, discovered via ToolSearch. That matches the e2e orchestrator and
+    the hosted-web agent, and matches the measured tool mix (~11% of all tool
+    calls are ToolSearch). Whether to flip it to `"false"` is a separate,
+    tracked decision that requires re-measuring the mix; the value is left as
+    it has been running.
     """
     env = {"ENABLE_TOOL_SEARCH": "true"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:

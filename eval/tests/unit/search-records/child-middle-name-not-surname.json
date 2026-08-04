@@ -5,7 +5,15 @@
     "name": "Family surname as middle given name must not be treated as a search surname",
     "type": "positive",
     "description": "The tree lists the child as given='Sarah Ann Mullen', surname='Price' (BirthName). 'Mullen' is a family surname used as a middle given name honoring the mother's maiden name. Plan item pli_001 targets the 1880 census. The skill must search with surname 'Price' and givenName containing 'Sarah', keeping 'Mullen' as part of the given name or dropping it — but it must NOT put 'Mullen' in the surname or surnameAlt fields. Tests whether the skill correctly interprets the tree's name structure without confusing a given-name token that looks like a surname.",
-    "tags": ["search", "census", "1880", "name-variation", "middle-name", "family-surname-as-given", "plan-execution"]
+    "tags": [
+      "search",
+      "census",
+      "1880",
+      "name-variation",
+      "middle-name",
+      "family-surname-as-given",
+      "plan-execution"
+    ]
   },
   "input": {
     "user_message": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.",
@@ -15,7 +23,10 @@
     "record-search-1880-census-price-sarah",
     "record-search-1860-census-mullen-sarah",
     "rank-search-matches-price-child-middle-name",
-    "validate-research-schema"
+    "validate-research-schema",
+    "record-read-sarah-a-mullen-wicn-1860-m01",
+    "record-read-sarah-m-price-wicn-1880-p01",
+    "record-read-sarah-price-wicn-1880-p02"
   ],
   "judge_context": [
     "NEW FLOW: record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in). It re-ranks the staged Price candidates by match score against the subject and returns compact stubs for the review surface.",
@@ -24,6 +35,7 @@
     "The givenName parameter should be 'Sarah', 'Sarah Ann', or 'Sarah Ann Mullen'. All are acceptable — the FamilySearch API handles multi-token given names. Do NOT penalize for including or omitting 'Ann' or 'Mullen' from the given name.",
     "the inline `ranked` block returns 2 ranked stubs: matchRank 1 = Sarah M. Price (matchScore ~0.91, matchConfidence 5, b. 1875 Wisconsin, Dodge County — the strong match; the 'M.' initial is the middle name Mullen) and matchRank 2 = Sarah Price (matchScore ~0.24, b. 1870 New York, Milwaukee County, attachedToOther — the same-surname distractor / wrong person). The skill should surface the top match with its match score and attachment status, and triage the second as not relevant based on birth year, birthplace, and county.",
     "IMPORTANT: It is acceptable for the skill to note that 'Mullen' as a middle name may offer a clue to maternal relatives (FAN club) and suggest a future plan item to search Mullen families in Dodge County. This is good genealogical reasoning and should NOT reduce any score.",
-    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. Only score 2 if those arguments are clearly wrong, or subjectId was omitted when the research subject is known. Do NOT expect a separate rank_search_matches call. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool had clearly wrong arguments (e.g., surname 'Mullen') or rank_search_matches was skipped in favor of per-result same_person / a separate source_attachments call."
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. Only score 2 if those arguments are clearly wrong, or subjectId was omitted when the research subject is known. Do NOT expect a separate rank_search_matches call. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool had clearly wrong arguments (e.g., surname 'Mullen') or rank_search_matches was skipped in favor of per-result same_person / a separate source_attachments call.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }

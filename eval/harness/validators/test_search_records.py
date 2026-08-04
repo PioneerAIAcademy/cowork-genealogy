@@ -202,3 +202,28 @@ def test_no_search_or_writes_on_planning_request(
     assert not sidecars, (
         f"planning request must not write a results/ sidecar; got: {sorted(sidecars)}"
     )
+
+
+def test_escalates_to_external_sites_after_fs_exhaustion(skills_invoked, test):
+    """After FamilySearch is exhausted across name variants, the skill must
+    hand off to `search-external-sites` — not merely offer to.
+
+    Graded here rather than by the LLM judge because `skills_invoked` is
+    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
+    response that only *narrates* the escalation ("Shall I generate Ancestry
+    URLs?") cannot satisfy it, and a response that genuinely delegates cannot
+    be marked down for it. The judge has gotten this wrong in both directions
+    — scoring Correctness=1 for "failed to call search-external-sites" on a
+    run where the hook recorded the call.
+
+    Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
+    search tests must NOT escalate, and negative routing tests are graded on
+    routing instead.
+    """
+    if "familysearch-exhausted" not in test.get("tags", []):
+        pytest.skip("only the FamilySearch-exhaustion escalation test")
+    assert "search-external-sites" in skills_invoked, (
+        "FamilySearch was exhausted across name variants, so the skill had to "
+        "invoke Skill('search-external-sites'). Offering it in prose is not "
+        f"escalating. skills_invoked={skills_invoked}"
+    )

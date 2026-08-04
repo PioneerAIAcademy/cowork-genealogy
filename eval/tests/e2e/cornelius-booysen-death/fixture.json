@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 30, flag adds_death, confidence 3). Draft transcribed from a South African probate record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 30, flag adds_death, confidence 3). Resolved: the hint (Transvaal Probate, Master of the Supreme Court) is a false match — that document is Barend Christiaan Viljoen's death notice. Correct answer found independently in South Africa, Transvaal, Civil Death, 1869-1954: Cornelius died 9 Sep 1942 at the hospital in Standerton, Transvaal (Form of Information of a Death, B.M.D. 2)."
 }

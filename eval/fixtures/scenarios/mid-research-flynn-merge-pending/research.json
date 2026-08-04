@@ -982,8 +982,7 @@
           ],
           "severity": "high"
         }
-      ],
-      "impossibilities": []
+      ]
     },
     {
       "id": "t_002",
@@ -1009,8 +1008,7 @@
           "conflict_note": null
         }
       ],
-      "gaps": [],
-      "impossibilities": []
+      "gaps": []
     }
   ],
   "proof_summaries": [

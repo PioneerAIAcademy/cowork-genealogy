@@ -14,12 +14,25 @@ Hard rules (fail the build, exit 1):
     both limits on the folded value, and these are exactly the two failures
     that used to escape to install time: an over-length multi-line
     description, and a `<placeholder>` sitting on a continuation line. The
-    1024 cap is a self-imposed standard, not a Cowork limit: every
-    description is always resident in the orchestrator's context and the
-    descriptions compete for its attention on every turn, so a tight
-    description triggers more precisely. Angle brackets can collide with
+    1024 cap is an Agent SDK limit, not a house style — over it the entry
+    fails to load, silently. (A tight description also triggers more
+    precisely, since every description is resident in the orchestrator's
+    context and they compete for attention on every turn, but that is a
+    reason to stay well under the cap, not the reason the cap exists.)
+    Angle brackets can collide with
     prompt scaffolding — write "before 1850" in the description, not
     "<1850" (the body may use `<`). See docs/skill-authoring-guide.md §3.
+
+Scope: `packages/engine/plugin/` only, and deliberately not `.claude/`.
+The repo's own `.claude/skills/` and `.claude/agents/` are *developer*
+tooling read by a Claude Code session in this repo; nothing stages them
+into an Agent SDK run. The `.claude/skills/` tree the SDK does see is a
+temp-dir mirror of `packages/engine/plugin/skills/` built per test by
+`eval/harness/harness/workspace.py`, and the hosted path loads the plugin
+via `plugins=[{"type": "local", ...}]`. So the SDK limits above do not
+reach `.claude/` and two of those descriptions have long exceeded 1024
+while loading fine. Do not "fix" that by widening this check; the reason
+they are exempt is the load path, not an oversight.
 
 Soft rules (warning annotation only, never block) — skills only:
   - Unrecognized top-level frontmatter key (catches typos like

@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Anna Macek and Václav Jičinský had a son, František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. The tree currently records no children for Anna Macek.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Anna Macek (PID PW3W-LJN, b. 1851) and Václav Jičinský had a son named František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. Anna Macek's recorded birth year (1851) would make her only 16 at that baptism, and her recorded marriage to Václav Jičinský (7 February 1871) postdates the baptism by nearly four years — the child cannot belong to a marriage that had not yet occurred. Pass = the final tree/research contains no František Jičinský child for Anna Macek, and no marriage-predating-birth inconsistency (or the candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Anna Macek (PW3W-LJN)",
         "relation": "child",
-        "target_person": {
-          "name": "František Jičinský",
-          "birth": "26 June 1867, Rohovládova Bělá, Pardubice, Czechia"
+        "wrong_candidate": {
+          "name": "František Jičinský, baptized 26 June 1867, Rohovládova Bělá, Pardubice, Czechia",
+          "note": "the baptismal entry names only a bare forename mother (\"Anna\") and a common Czech husband-surname (\"Jičinský\") — consistent with a different Anna/Václav Jičinský couple in the same parish rather than this Anna Macek, whose own tree-recorded birth (1851) and marriage (7 Feb 1871) make her both too young and not yet married at the time of this baptism"
         }
       },
       "supporting_sources": [
-        "Czech Republic, Church Books, 1552-1981 — baptismal entry, 26 Jun 1867, Rohovládova Bělá, Pardubice, naming parents Váčlav Jičinsky and Anna"
+        "Anna Macek's own tree-recorded birth year, 1851, making her 16 at the time of the 1867 baptism",
+        "Anna Macek's tree-recorded marriage to Václav Jičinský, 7 February 1871, nearly four years after the 1867 baptism",
+        "Czech Republic, Church Books, 1552-1981 — baptismal entry, 26 Jun 1867, Rohovládova Bělá, Pardubice, naming parents Václav Jičinsky and Anna (the contradicted hint record itself)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having weighed the 1867 František baptismal hint against Anna Macek's own recorded birth (1851) and marriage (7 Feb 1871), the agent should document a negative conclusion: the baptism cannot belong to this Anna Macek and Václav Jičinský, since it predates their marriage by nearly four years and would require Anna to have given birth at 16. No credible substitute child is found for this couple, and the tree currently records no children for Anna Macek.",
+      "details": {
+        "subject_person": "Anna Macek (PW3W-LJN)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1867 František baptism does not belong to this couple",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Internal inconsistency between the hint baptism (26 Jun 1867) and Anna Macek's own recorded birth (1851) and marriage (7 Feb 1871)"
       ],
       "required": true
     }

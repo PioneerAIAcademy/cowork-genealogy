@@ -59,8 +59,22 @@ for rel in $SHARED_PATHS; do
     continue
   fi
   if [ -e "$dst" ] && [ ! -L "$dst" ]; then   # real file/dir already here → keep
-    echo "link-worktree: keeping existing $rel (not a symlink)"
-    continue
+    # …unless it is a directory holding nothing but vite/vitest cache dirs.
+    # A bare `npx vitest` run before this script ever linked node_modules
+    # creates node_modules/.vite (and .vite-temp) in an otherwise-unpopulated
+    # directory — and treating that as "a real install this worktree owns"
+    # blocks the symlink on every future run, silently (broke two worktrees
+    # on 2026-08-02: their tests then resolved deps from the primary's hoisted
+    # ROOT node_modules, which lacks the engine's deps). `ls -A` deliberately,
+    # unlike the source-side guard above: here the dotfile entries are exactly
+    # what we need to see.
+    if [ -d "$dst" ] && ! ls -A "$dst" 2>/dev/null | grep -qv -e '^\.vite$' -e '^\.vite-temp$'; then
+      echo "link-worktree: replacing $rel — contains only .vite/.vite-temp caches"
+      rm -rf "$dst"
+    else
+      echo "link-worktree: keeping existing $rel (not a symlink)"
+      continue
+    fi
   fi
   mkdir -p "$(dirname "$dst")"
   ln -sfn "$src" "$dst"

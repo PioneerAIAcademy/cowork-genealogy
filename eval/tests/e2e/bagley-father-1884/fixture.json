@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "easy",
-  "notes": "Father named directly on William's own 1884 death-record town-clerk entry; single-record answer, no cross-record reasoning required. Authored to exercise the research-guardrail-bypass-plan changes end to end, not as a benchmark stress case."
+  "notes": "Father named directly on William's own 1884 death-record town-clerk entry; single-record answer, no cross-record reasoning required. Authored to exercise the GPS guardrail-enforcement changes end to end, not as a benchmark stress case."
 }

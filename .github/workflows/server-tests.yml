@@ -1,0 +1,92 @@
+name: Server tests
+
+# Runs apps/server's pytest suite (the FastAPI control plane) on PRs that touch
+# it. Until this existed, apps/server was the one substantial code tree in the
+# repo with tests (134 of them, `make server-test`) and no CI job at all — no
+# workflow referenced apps/server. Dependency PRs against it therefore arrived
+# fully green off unrelated scoped-out jobs, which is no signal whatsoever:
+# PR #1035 proposed moving the production image to Python 3.14 and nothing in
+# CI was in a position to notice.
+#
+# The suite needs no secrets and no network. tests/conftest.py points the app at
+# a throwaway DATA_DIR and explicitly *overrides* (not setdefault) every value a
+# developer's apps/server/.env might supply, then forces AGENT_MODE=mock and
+# SANDBOX_PROVIDER=local. So there is no E2B/Anthropic/OAuth dependency and
+# nothing here can bill an API. Whole suite runs in ~12s.
+#
+# Python 3.12, matching apps/server/.python-version and the python:3.12-slim
+# base in deploy/Dockerfile. requires-python is only ">=3.12", so this job is
+# also what would catch a silent drift onto a newer interpreter — see the
+# base-image ignore rules and their rationale in .github/dependabot.yml.
+#
+# `uv sync --frozen` / `uv run --frozen`: apps/server/uv.lock is installed
+# exactly as committed, never re-resolved. That is what makes this job a real
+# check on a Dependabot lockfile PR — it tests the lock in the diff rather than
+# whatever a fresh resolve happens to pick up that morning.
+#
+# What this job deliberately does NOT cover: tests/test_plugin_agents.py::
+# test_bare_agent_names_are_registered — the only check that reads what the
+# RUNTIME resolved the hosted agent options to — skips here, because holding an
+# Anthropic key would break the "no secrets" property above. The offline tests in
+# that file do run, but they only prove the staging happened, not what the runtime
+# made of it. Run `make agent-smoke` by hand after touching
+# real_agent.build_options (root CLAUDE.md § Cowork plugin agents). Note the path
+# filter below also means a PR touching only packages/engine/plugin/agents/ runs
+# none of this. Wiring agent-smoke into CI is issue #1142.
+
+#
+# Runs on EVERY pull request — no `paths:` filter — so this check always reports
+# a conclusion and can be required by branch protection. A workflow skipped by
+# `paths:` reports nothing at all, and a required check that never reports
+# leaves its PR stuck on "Expected — waiting for status to be reported". The
+# path scope lives in the first job step instead; an unrelated PR pays one ~5s
+# step rather than the full suite.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  server-pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Does this PR touch the control plane?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^apps/server/|^\.github/workflows/server-tests\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No apps/server path changed; reporting success without running pytest."
+          fi
+
+      - name: Check out PR
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v7
+
+      - name: Install uv (+ pinned Python)
+        if: steps.scope.outputs.relevant == 'true'
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+          enable-cache: true
+          cache-dependency-glob: 'apps/server/uv.lock'
+
+      - name: Sync dependencies
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: apps/server
+        run: uv sync --frozen
+
+      - name: Run control-plane tests
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: apps/server
+        run: uv run --frozen pytest -q

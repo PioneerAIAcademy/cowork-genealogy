@@ -992,8 +992,7 @@
           "expected_events": ["immigration"],
           "severity": "medium"
         }
-      ],
-      "impossibilities": []
+      ]
     }
   ],
 

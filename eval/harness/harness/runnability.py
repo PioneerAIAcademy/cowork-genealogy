@@ -10,6 +10,7 @@ Block a test from executing when:
   against broken-on-purpose scenarios)
 - the skill directory doesn't exist
 - the skill's rubric.md is missing or malformed
+- an `execution.stub_skills` entry names a skill that doesn't exist
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
+from harness.skill_stubs import parse_stub_skills
 
 
 # eval/harness/harness/runnability.py -> eval/harness/validators/
@@ -160,6 +162,28 @@ def check_runnable(
     skill_path = Path(skills_dir) / spec.skill
     if not skill_path.is_dir():
         return RunnabilityResult(False, f"skill not found: {skill_path}")
+
+    # Validate execution.stub_skills entries. A stub is matched by exact
+    # name in the PreToolUse hook (`skill_name in _stub_skills`), so a typo
+    # is a silent no-op: the callee executes for real, the test just gets
+    # slower and costlier, and nothing in the run log says the stub never
+    # fired. Same silent-unsatisfiability class as the correct_skill typo
+    # below, and no xfail exemption — unlike correct_skill, there is no
+    # scenario where stubbing a not-yet-built skill is intentional (the
+    # stub could never fire).
+    #
+    # Gate on the *parsed* set rather than the raw declaration so gate-time
+    # and run-time agree on which names are live: parse_stub_skills applies
+    # the same normalization the hook matches against (both entry forms,
+    # malformed entries dropped — the JSON Schema is the gate for shape).
+    for name in parse_stub_skills(spec.execution):
+        if not (Path(skills_dir) / name).is_dir():
+            return RunnabilityResult(
+                False,
+                f"execution.stub_skills entry '{name}' is not an existing "
+                f"skill (no directory at {skills_dir}/{name}) — the stub "
+                f"would silently never fire",
+            )
 
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test

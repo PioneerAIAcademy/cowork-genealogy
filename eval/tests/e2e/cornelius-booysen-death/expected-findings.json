@@ -3,15 +3,20 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Cornelius Hermanus Zacharias Booysen died in the Transvaal, South Africa, per a probate record from the Master of the Supreme Court. The record's extracted data carries no specific date — the underlying probate file would need to be consulted for an exact death date.",
+      "description": "Probable (not Proved): Cornelius Hermanus Zacharias Booysen most likely died on 9 September 1942 at the hospital in Standerton, Transvaal, South Africa — usual residence Charl Cilliers, District Standerton; general farmer; cause of death coronary thrombosis. This rests on a single death information record, a Form of Information of a Death (B.M.D. 2), naming him exactly in the deceased field; it was the only tangible evidence of his death found. The conclusion is Probable rather than Proved because it is a single source with no independent corroboration of the death, and the record's implied birth year (~1902) is about four years off the tree's 1906 — an age estimate likely supplied by a non-family informant, explained but not independently resolved. The exact full-name match (all given names plus surname) anchors the identity but is not on its own enough to reach certainty. Note: the original FamilySearch hint record (a probate/death notice from the Master of the Supreme Court) is NOT his — that document is the death notice of Barend Christiaan Viljoen.",
       "details": {
         "subject_person": "Cornelius Hermanus Zacharias Booysen (GWDS-CKP)",
         "fact_type": "Death",
-        "date": "unknown (probate record gives no date in the indexed extract)",
-        "place": "Transvaal, South Africa"
+        "date": "9 September 1942",
+        "place": "Hospital, Standerton, Transvaal, South Africa",
+        "residence": "Charl Cilliers, District Standerton",
+        "occupation": "General farmer",
+        "cause_of_death": "Coronary thrombosis",
+        "proof_tier": "Probable",
+        "identity_note": "Exact full-name match (all given names + surname). The record implies a birth year of ~1902 vs. 1906 in the tree — a ~4-year age estimate consistent with a non-family informant on a death registration, not a disqualifying discrepancy. Single source; it was the only tangible evidence of the death found, which is why the conclusion stays Probable rather than Proved."
       },
       "supporting_sources": [
-        "South Africa, Transvaal, Probate Records from the Master of the Supreme Court, 1869-1961 — entry for Cornelis Hermanus Zacharias Booysen"
+        "South Africa, Transvaal, Civil Death, 1869-1954 — Form of Information of a Death (B.M.D. 2), a death information record naming Cornelius Hermanus Zacharias Booysen as the deceased"
       ],
       "required": true
     }
