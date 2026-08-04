@@ -8,6 +8,40 @@ of this skill's grading dimensions can be trusted, and which are noise** — and
 routes each finding to its owner. Nothing here edits `rubric.md` or
 `eval/harness/judge/prompt.md`; both are owned outside this loop.
 
+## Provenance — read this before trying to reproduce a number
+
+Every figure below was computed from **39 run logs and 26 `.ann.json` files** as
+they existed at commit **`a2d5a4cf`** (this branch's first commit).
+
+Since then, main's run-log retention policy (**#1238**, "prune what nothing
+reads") has been merged in, and it pruned most of them. In the current working
+tree only **5 run logs and 4 annotation files** survive for record-extraction.
+
+**No evidence is lost — it is all in git history.** To reproduce any figure:
+
+```sh
+git show a2d5a4cf:eval/runlogs/unit/record-extraction/<file>   # one file
+git checkout a2d5a4cf                                          # the whole set
+```
+
+Which receipts can still be checked straight from the working tree:
+
+| finding | checkable in tree? |
+|---|---|
+| Receipt 1 — ut_022 false pass (`v1_2026-07-30_18-56-55` + sibling `18-18-19`) | **yes** |
+| Receipt 3 — ut_020 fabricated sex-assertion (`v1_2026-07-25_01-28-31`) | **yes** |
+| Finding 0 — noise-floor pair `v1_2026-07-24_17-33-35` → `17-48-31` | **yes** |
+| Receipt 2 — ut_009, the 07-25 and both 07-30 runs | **yes** |
+| Receipt 2 — ut_009, the 07-13 / 07-21 / 07-24_15-52-42 quotes | needs history |
+| Receipt 4 — all 5 invented dimensions | needs history |
+| Finding 0 — noise-floor pair `07-19_22-34-49` → `07-21_15-04-23` | needs history |
+| Finding 1 — the 26-pass annotation split | needs history |
+
+That the prune landed mid-audit is itself worth noting: **this report is now the
+only surviving summary of what those 34 pruned runs showed.** #1238 is a sound
+policy — nothing read those files — but "nothing reads them" stopped being true
+for the duration of this audit.
+
 ## What was read, and what limits the read
 
 - **39 run logs**, `v1_2026-07-07_07-34-47` → `v1_2026-07-30_18-56-55`, all on
