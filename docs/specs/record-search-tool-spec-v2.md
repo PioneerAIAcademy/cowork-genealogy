@@ -324,12 +324,10 @@ section asserted zero content loss and was wrong.
 in the six committed runs. `run-<ts>.json` is committed to git, so that is the
 price of the change, stated rather than discovered later.
 
-`_summarize_tool_response` has a second caller — the tool-call `args` rendered into
-`run-<ts>.transcript.md` — which grows too. That figure is deliberately not pinned
-here: **open PR #1238 removes both the transcript and that call site**, so any
-number quoted for it is either stale or about to be. Whoever lands second should
-re-measure rather than trust a figure from the other side of that merge. #1073's
-own collision list predates #1238 and does not mention it.
+That 2.16x is the whole cost. `_summarize_tool_response` has exactly one caller —
+`tool_calls[].response_summary`. It had a second until #1238, which rendered the
+tool-call `args` into `run-<ts>.transcript.md`; #1238 removed both the transcript
+and that call site, so no other artifact grows.
 
 **`response_summary` now has two shapes.** Under the verbatim threshold it keeps
 the raw MCP envelope, in which the tool's document is an escaped string; over it,
