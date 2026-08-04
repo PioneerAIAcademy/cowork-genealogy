@@ -1,0 +1,22 @@
+# This repo's working copy lives in a OneDrive-synced folder (deliberately —
+# the user syncs across devices). uv's default install mode hardlinks packages
+# from its cache into .venv, and OneDrive rejects that:
+#
+#   failed to hardlink file ... The cloud operation cannot be performed on a
+#   file with incompatible hardlinks. (os error 396)
+#
+# The subtler symptom is worse, because it looks like a transient glitch: a
+# partially-completed sync leaves two versions of a dist-info coexisting, and
+# the next `uv run` fails with
+#
+#   failed to remove directory ...<pkg>-<ver>.dist-info\<subdir>:
+#   Access is denied. (os error 5)
+#
+# Retrying sometimes "works" (it can dodge the momentary lock) which makes this
+# easy to misdiagnose as a stray file lock and move on. It is not — it recurs.
+#
+# link-mode = "copy" makes uv copy instead of hardlink, which OneDrive accepts.
+# Keep this file committed; it must not be re-lost. Observed and fixed
+# 2026-07-30, silently lost before landing, recurred 2026-08-03 on the
+# `anthropic` 0.112.0 -> 0.120.2 upgrade.
+link-mode = "copy"
