@@ -9,6 +9,10 @@ docs/plan/eval-runlog-versioning.md §C6:
              skill-side files" (snapshot matches working tree).
     Rule 2b  (warn-only) the same run log's judge_prompt_hash matches
              eval/harness/judge/prompt.md.
+    Rule 2f  (warn-only fixture arm) a changed shared fixture under
+             eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
+             reference it, and warns when that skill's run log is now stale
+             (#1094 — see rule2_fixture_touched for why it only warns).
     Rule 3   the same run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple.
     Rule 4   no two unit-test files share a `test.id`.
@@ -30,7 +34,12 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
-from harness.snapshot import agent_refs_in_text, diff_snapshot_vs_disk, hash_file  # noqa: E402
+from harness.snapshot import (  # noqa: E402
+    _collect_refs,
+    agent_refs_in_text,
+    diff_snapshot_vs_disk,
+    hash_file,
+)
 from harness.versioning import classify  # noqa: E402
 
 
@@ -49,6 +58,16 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 # (the agent body is embedded in those skills' run-log snapshots), exactly
 # like an edit inside the skill dir itself.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
+
+# Match a shared fixture the run-log snapshot embeds:
+#   eval/fixtures/scenarios/<name>/<file>  ->  ("scenarios", "<name>")
+#   eval/fixtures/mcp/<name>.json          ->  ("mcp", "<name>")
+# A fixture edit gates every skill whose tests reference it — see
+# skills_referencing_fixtures. The `<name>` here is the reference KEY the
+# resolver produces: for scenarios it is the directory name (matching a test's
+# `input.scenario`), for mcp it is the bare name with `.json` stripped
+# (matching a bare entry in a test's `mcp_fixtures[]`).
+FIXTURE_PATH_RE = re.compile(r"^eval/fixtures/(scenarios|mcp)/([^/]+?)(?:/.*|\.json)$")
 
 
 # Skills exempt from the per-skill runlog rules (2 + 3) — skills that by design
@@ -164,6 +183,35 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
     return mapping
 
 
+def skills_referencing_fixtures(tests_root: Path) -> dict[tuple[str, str], set[str]]:
+    """Map each shared-fixture reference key -> the skills whose unit tests
+    reference it, so a changed fixture can mark those skills touched (rule 2).
+
+    The key is ``(kind, name)`` where ``kind`` is ``"scenarios"`` or ``"mcp"`` —
+    matching FIXTURE_PATH_RE's first group — so a scenario and an mcp fixture
+    that happen to share a bare name never collide.
+
+    Resolution is delegated to ``snapshot._collect_refs``, the single place the
+    reference contract lives (``input.scenario`` for scenarios, bare entries in
+    ``mcp_fixtures[]`` for mcp fixtures). Keeping one implementation is what
+    guarantees the gate resolves fixtures exactly the way the snapshot embedded
+    them — the two traps (bare mcp name, scenario-by-directory) can only drift
+    if this ever grows a second copy.
+    """
+    mapping: dict[tuple[str, str], set[str]] = {}
+    if not tests_root.is_dir():
+        return mapping
+    for skill_dir in sorted(tests_root.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        refs = _collect_refs(skill_dir, None)
+        for name in refs["scenarios"]:
+            mapping.setdefault(("scenarios", name), set()).add(skill_dir.name)
+        for name in refs["fixtures"]:
+            mapping.setdefault(("mcp", name), set()).add(skill_dir.name)
+    return mapping
+
+
 def rule1_max_one_released(touched_releases: dict[str, list[str]]) -> int:
     """Rule 1: ≤1 added/renamed-into-place v{N}.json per skill."""
     fails = 0
@@ -205,6 +253,26 @@ def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
     return filename, json.loads((skill_dir / filename).read_text(encoding="utf-8"))
 
 
+def resolve_latest_runlog(
+    skill_dir: Path,
+) -> tuple[str, tuple[str, dict] | None]:
+    """Locate a skill's latest full-skill run log, distinguishing the two
+    no-target cases the callers report differently.
+
+    Returns ``("ok", (filename, log))``, ``("no_dir", None)`` when the runlog
+    directory is absent, or ``("no_runlog", None)`` when the directory holds no
+    full-skill run log. Shared by the blocking per-skill loop and the warn-only
+    fixture loop so both resolve the run log identically; each caller maps the
+    reason to its own error-vs-warning message.
+    """
+    if not skill_dir.is_dir():
+        return "no_dir", None
+    latest = latest_full_skill_runlog(skill_dir)
+    if latest is None:
+        return "no_runlog", None
+    return "ok", latest
+
+
 def rule2_active(skill: str, log: dict, filename: str) -> int:
     """Rule 2 (blocking): latest run log's snapshot matches disk.
 
@@ -244,6 +312,49 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
         f"`eval-cosmetic-skip` label to this PR.\n" + diff_lines,
     )
     return 1
+
+
+def rule2_fixture_touched(
+    skill: str, log: dict, filename: str, changed_fixture_paths: set[str]
+) -> None:
+    """Warn-only fixture arm of rule 2 (#1094): a shared fixture this PR
+    changed is embedded in `skill`'s latest run-log snapshot, so that run log
+    is now stale — but we warn rather than block.
+
+    Warn-only, not blocking, is the lead's settled decision (#1094): ~20 of ~25
+    skills' latest run logs are already stale on `main` from prior fixture
+    drift, and `mid-research-flynn` alone is referenced by 20 skills, so a
+    blocking gate would fire a ~$160-240 / 20-annotation re-run wave on the
+    first fixture-only PR and train `eval-cosmetic-skip` misuse on edits that
+    are *not* behavior-neutral. Blocking only on *new* staleness (leaving the
+    pre-existing baseline as warnings) is the named target end-state; it needs
+    a frozen-baseline anchor not yet designed and is deferred to #1242.
+    See eval/CLAUDE.md § "GitHub Action rules".
+
+    Attribution is scoped to the fixtures THIS PR changed: only snapshot keys in
+    `changed_fixture_paths` are considered, so the warning names the files the
+    fixture edit actually invalidated — not the skill's other pre-existing
+    snapshot drift (SKILL.md, unrelated fixtures), which is the #1217 baseline
+    problem this edit did not cause. Scoping this way also means a skill whose
+    snapshot never embedded the changed fixture (e.g. it was added to the tests
+    after the run log) produces no diff and no warning — no false positive.
+    """
+    snapshot = log.get("snapshot") or {}
+    diffs = diff_snapshot_vs_disk(snapshot, REPO_ROOT)
+    fixture_diffs = {p: kind for p, kind in diffs.items() if p in changed_fixture_paths}
+    if not fixture_diffs:
+        return
+    diff_lines = "\n".join(
+        f"  - {p}: {kind}" for p, kind in sorted(fixture_diffs.items())
+    )
+    gh_warning(
+        f"skill `{skill}`: a shared fixture this PR changed is embedded in the "
+        f"latest run log `{filename}`, which no longer matches it in "
+        f"{len(fixture_diffs)} file(s). Re-run the harness (`uv run python "
+        f"eval/harness/run_tests.py --skill {skill}`) and commit the result. "
+        f"Warn-only for now — see eval/CLAUDE.md § \"GitHub Action rules\".\n"
+        + diff_lines,
+    )
 
 
 def rule2b_judge_prompt(skill: str, log: dict, filename: str) -> None:
@@ -388,6 +499,8 @@ def main() -> int:
     touched_paths = git_diff_touched_paths()
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
+    touched_fixtures: set[tuple[str, str]] = set()
+    touched_fixture_paths: set[str] = set()
     for path in touched_paths:
         m = RUNLOG_PATH_RE.match(path)
         if m:
@@ -402,6 +515,11 @@ def main() -> int:
         m = AGENT_PATH_RE.match(path)
         if m:
             touched_agents.add(m.group(1))
+            continue
+        m = FIXTURE_PATH_RE.match(path)
+        if m:
+            touched_fixtures.add((m.group(1), m.group(2)))
+            touched_fixture_paths.add(path)
 
     # A touched plugin agent gates every skill whose SKILL.md references
     # `@plugin:<name>` — the agent body is part of those skills' run-log
@@ -410,6 +528,20 @@ def main() -> int:
         referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
         for agent in sorted(touched_agents):
             touched_skills |= referencing.get(agent, set())
+
+    # A touched shared fixture gates every skill whose tests reference it — the
+    # fixture is embedded in those skills' run-log snapshots, so editing it
+    # leaves them stale. This arm is WARN-ONLY (#1094, see rule2_fixture_touched):
+    # kept in a set separate from `touched_skills` so it never feeds the
+    # blocking rules. A skill already directly touched is gated at full strength,
+    # so drop it from here to avoid a duplicate (weaker) annotation.
+    fixture_touched_skills: set[str] = set()
+    if touched_fixtures:
+        fixture_referencing = skills_referencing_fixtures(TESTS_UNIT_DIR)
+        for key in sorted(touched_fixtures):
+            fixture_touched_skills |= fixture_referencing.get(key, set())
+    fixture_touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
+    fixture_touched_skills -= touched_skills
 
     # Drop orchestrator skills with no unit suite by design (see
     # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
@@ -425,6 +557,11 @@ def main() -> int:
     touched_skills = {
         s
         for s in touched_skills
+        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
+    }
+    fixture_touched_skills = {
+        s
+        for s in fixture_touched_skills
         if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
     }
 
@@ -445,7 +582,8 @@ def main() -> int:
 
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill
-        if not skill_dir.is_dir():
+        status, latest = resolve_latest_runlog(skill_dir)
+        if status == "no_dir":
             gh_error(
                 f"skill `{skill}` was touched but has no run logs at "
                 f"`eval/runlogs/unit/{skill}/`. Re-run the harness with "
@@ -453,8 +591,7 @@ def main() -> int:
             )
             fails += 1
             continue
-        latest = latest_full_skill_runlog(skill_dir)
-        if latest is None:
+        if status == "no_runlog":
             gh_error(
                 f"skill `{skill}` was touched but has no full-skill run log. "
                 f"Re-run the harness with `--skill {skill}` to produce one.",
@@ -465,6 +602,29 @@ def main() -> int:
         fails += rule2_active(skill, log, filename)
         rule2b_judge_prompt(skill, log, filename)
         fails += rule3_completeness(skill, log, filename, skill_dir)
+
+    # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
+    # referencing skills' run logs stale, but only warns — never fails. See
+    # rule2_fixture_touched for why blocking is deferred.
+    for skill in sorted(fixture_touched_skills):
+        skill_dir = RUNLOGS_DIR / skill
+        status, latest = resolve_latest_runlog(skill_dir)
+        if status == "no_dir":
+            gh_warning(
+                f"skill `{skill}`: a shared fixture this PR changed is referenced "
+                f"by its tests, but it has no run logs at "
+                f"`eval/runlogs/unit/{skill}/` to check. Re-run `--skill {skill}`.",
+            )
+            continue
+        if status == "no_runlog":
+            gh_warning(
+                f"skill `{skill}`: a shared fixture this PR changed is referenced "
+                f"by its tests, but it has no full-skill run log to check. "
+                f"Re-run `--skill {skill}`.",
+            )
+            continue
+        filename, log = latest
+        rule2_fixture_touched(skill, log, filename, touched_fixture_paths)
 
     if fails:
         print(f"\n{fails} rule violation(s). See annotations above.")

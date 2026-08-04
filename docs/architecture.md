@@ -1131,7 +1131,9 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and two **warn-only** lints
+§3 — plus a **warn-only** arm that maps a changed shared fixture
+(`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
+and warns when their run logs go stale, #1094), and two **warn-only** lints
 worth knowing because they fire right after the two most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool) and `check_rubric_tool_drift.py` (a tool named
@@ -1175,6 +1177,7 @@ tools — what happens after you grant one). And
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. | #1207 |
+| **A shared-fixture edit that leaves a skill's run log stale still exits 0 green.** `check_runlogs.py`'s fixture arm now maps the fixture to its referencing skills, but only **warns** (#1094) — no blocking check catches it. | The exact symptom in #1094's title is mitigated to a warning, not closed. | #1242 |
 
 ### If you're asked to…
 
