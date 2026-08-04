@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Tree carries R6 Couple LDK6-6SH <-> I2 (Joannes Janeczky), sourced to S3 = 1:1:KHQN-MSB, the hint record. I2 has a BirthName and no facts of his own, which is all the record supports.",
+    "f2": "Recovered beyond what the finding asks. I3 Susanna Janeczky with F2 Christening 27 April 1884 (standard_date 1884-04-27, Liskova) and F3 Death 5 January 1887, both sourced to the original register image S4 = 3:1:33SQ-GRQ4-94MT; R7/R8 link her to both parents. The finding only required 'about 1884'; the agent went to the manuscript and got day precision plus a death fact the fixture did not have.",
+    "f3": "The qualification is unambiguously present: q_002 is tier 'probable' and states the conclusion 'falls short of GPS proved because an unresolved 5-year age discrepancy (conflict c_001) prevents a confident identity link'. Josephus Karlik (I1) is left in the tree with no relationship, so nothing was over-claimed. Marked partial rather than true on two counts. (1) The finding asks the report to name what is missing - a marriage record, or an entry giving the mother's age or parentage. The agent instead grounds its hedge on the Karlik age discrepancy, which the fixture README now records as a likely-false conflict between two different women: the Ludovica Janetzky baptism of 4 October 1891 refutes the widow-remarriage reading it built. (2) The finding's pass condition also expects the couple and daughter to be stated as well corroborated; the agent never located the four independent Janeczky baptisms (1875, 1882, 1889, 1891), so its identity argument rests on name plus place alone. Right answer, right posture, wrong evidentiary basis. Genealogist review 2026-08-04 endorsed partial and sharpened the reason: the hedge is warranted because the uncertainty arises from the absence of evidence tying the Janeczky wife to the 1850-born Susanna - no record gives her parentage, age, or other uniquely identifying detail, and several contemporaneous Susanna Szliacsans were in the parish - and NOT from the Karlik record, which is a false trail. An agent that reaches 'probable' via the Karlik age gap has the right tier for the wrong reason. Proof-quality note: scored 2 (thin) on the 'single source plus an unresolved conflict' criterion - q_002 rests on one baptism and its image with c_001 unresolved; a case for 1 exists given the refuted widow-remarriage narrative, but the tier claimed does not overstate what the narrative supports."
+  },
+  "annotator": "genealogy-team (labels reviewed and endorsed by a genealogist, 2026-08-04)"
+}
