@@ -259,9 +259,21 @@ Design points that were paid for and should not be re-derived:
   `eval/tests/unit/person-evidence/` cases as of that PR, against a real
   false-positive class. (That suite has since grown past 15 — the count is the
   scope of the measurement, not of the directory.)
-- **Success-gated, via `PostToolUse`.** An errored `Skill` call must not open
-  the window, or "invoke the skill, let it fail, finish the write inline"
-  evades this check and §8 at once — a `Skill` call really is in the log.
+- **Success-gated, off the joined `tool_calls[].is_error`.** An errored `Skill`
+  call must not open the window, or "invoke the skill, let it fail, finish the
+  write inline" evades this check and §8 at once — a `Skill` call really is in
+  the log. The instrument is **not** a `PostToolUse` hook (this bullet specified
+  one until 2026-08-04; none was ever built, and there is no `PostToolUse` hook
+  anywhere in `eval/harness/`). It is the SDK's `ToolResultBlock.is_error`,
+  joined onto each entry by the message loop in `e2e/orchestrator.py` and read by
+  the `entry.get("is_error") is True` gates in `harness/skill_invocation.py` —
+  `recently_succeeded`, `find_unguarded_protected_writes`,
+  `find_effects_without_invocation`, `find_person_evidence_missing_same_person`,
+  and `find_protected_writes_by_unnamed_delegate`. Those gates were written
+  against a key nothing set, so success-gating was inert in every one of them
+  until the join landed at `harness_schema_version` 3; violation counts and the
+  §8 `compliance`/`outcome` verdict are not comparable across that boundary
+  (`docs/specs/e2e-test-spec.md` §7.5).
 - **Keyed by `(skill, question_id)` where a question id is derivable**, not by
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no

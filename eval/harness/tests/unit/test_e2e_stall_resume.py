@@ -12,11 +12,20 @@ import asyncio
 import json
 from pathlib import Path
 
-from claude_agent_sdk import AssistantMessage, ResultMessage, SystemMessage, TextBlock
+from claude_agent_sdk import (
+    AssistantMessage,
+    ResultMessage,
+    SystemMessage,
+    TextBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+    UserMessage,
+)
 
 from e2e import orchestrator
 from e2e.orchestrator import _run_agent, load_fixture
 from e2e.stop_checker import derive_stop_reason
+from harness.skill_invocation import find_person_evidence_missing_same_person
 
 
 def _fixture(tmp_path: Path, **caps):
@@ -216,3 +225,81 @@ def test_parent_model_defaults_to_fixture_when_no_override(tmp_path, monkeypatch
     monkeypatch.setattr(orchestrator, "query", fake_query)
     _run(_fixture(tmp_path), tmp_path)  # _fixture uses the default agent_model
     assert captured["model"]  # a concrete model id, not None
+
+
+# --- ToolResultBlock.is_error join (issue: five detectors gate on a dead key) --
+
+_SAME_PERSON = "mcp__genealogy__same_person"
+
+
+def _tool_turn(tool_use_id, name, args):
+    return AssistantMessage(
+        content=[ToolUseBlock(id=tool_use_id, name=name, input=args)], model="claude"
+    )
+
+
+def _tool_result(tool_use_id, text, *, is_error):
+    return UserMessage(
+        content=[
+            ToolResultBlock(tool_use_id=tool_use_id, content=text, is_error=is_error)
+        ]
+    )
+
+
+def _errored_same_person_run(tmp_path, monkeypatch, person_id="I1"):
+    """Drive _run_agent through one same_person call whose result is an ERROR,
+    and hand back the tool_calls the run recorded."""
+    steps = [
+        (0.0, _sys()),
+        (0.0, _tool_turn("tu_1", _SAME_PERSON, {"primaryId1": "p_9", "primaryId2": person_id})),
+        (0.0, _tool_result("tu_1", "upstream 503", is_error=True)),
+        (0.0, _result()),
+    ]
+    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
+    return tool_calls
+
+
+def test_run_agent_records_is_error_from_the_tool_result(tmp_path, monkeypatch):
+    """The join must carry ToolResultBlock.is_error onto the tool_calls entry.
+
+    Without it the five `entry.get("is_error") is True` gates in
+    skill_invocation.py are dead: an errored call reads as a successful one.
+    """
+    tool_calls = _errored_same_person_run(tmp_path, monkeypatch)
+    assert len(tool_calls) == 1
+    assert tool_calls[0]["is_error"] is True
+
+
+def test_successful_tool_result_records_is_error_false_not_none(tmp_path, monkeypatch):
+    """`ToolResultBlock.is_error` is `bool | None`; a successful call must record
+    False, not null — the runlog carries this key for every entry now."""
+    steps = [
+        (0.0, _sys()),
+        (0.0, _tool_turn("tu_1", _SAME_PERSON, {"primaryId1": "p_9", "primaryId2": "I1"})),
+        (0.0, _tool_result("tu_1", '{"score":0.9}', is_error=None)),
+        (0.0, _result()),
+    ]
+    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
+    assert tool_calls[0]["is_error"] is False
+
+
+def test_errored_same_person_does_not_score_the_identity(tmp_path, monkeypatch):
+    """The composition: an errored `same_person` must NOT count as having scored
+    the identity, so the person_evidence link for that new person is a violation.
+
+    Three project docs, mirroring check_guardrail_compliance's real call: the
+    person must be in `tree` and absent from `starting_tree` for the detector to
+    consider it new, and `research` supplies the person_evidence link.
+    """
+    tool_calls = _errored_same_person_run(tmp_path, monkeypatch, person_id="I1")
+    violations = find_person_evidence_missing_same_person(
+        tool_calls,
+        {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]},
+        {"persons": [{"id": "I1"}]},
+        starting_tree={"persons": []},
+    )
+    assert len(violations) == 1
+    assert "I1" in violations[0]
+    assert "never scored" in violations[0]

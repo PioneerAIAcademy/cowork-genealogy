@@ -43,6 +43,31 @@ from typing import Any
 #       See `docs/specs/e2e-test-spec.md` §15 step 4. This is the field to read —
 #       a timestamp cannot answer it, because the change was authored days before
 #       it merged, so v1 logs exist with timestamps later than the authoring date.
+#   3 — `tool_calls[]` carries `is_error`, joined from `ToolResultBlock.is_error`
+#       by the message loop in `e2e/orchestrator.py`. Before this, nothing set the
+#       key and the five `entry.get("is_error") is True` gates in
+#       `harness/skill_invocation.py` were dead, so an ERRORED call counted as a
+#       successful invocation everywhere. Two reader consequences, and the second
+#       is why this is a bump rather than a payload-detectable change:
+#         - MEASUREMENT. `e2e/guardrail_shadow_report.py` replays
+#           `find_unguarded_protected_writes` over the whole corpus to calibrate
+#           the §7 window (GitHub issue #911, and #1176 which decides the
+#           canonical window; #1231 reads the resulting number). Identical agent
+#           behavior yields a different violation count either side of this
+#           boundary, so a blended v2+v3 corpus biases that calibration. The v3
+#           corpus starts at this commit; no historical number moves.
+#         - PASS/FAIL. Both hard-fail arms of `check_guardrail_compliance` get
+#           strictly stricter: `find_effects_without_invocation`'s gate sits over
+#           `skill_name_if_skill_call`, so a failed `Skill` call stops populating
+#           `invoked`; and `find_person_evidence_missing_same_person` shrinks
+#           `scored_ids`. Both feed `guardrail_bypass_violations`, which sets
+#           `compliance: fail` -> `outcome: fail`. A run that passed compliance on
+#           v2 can hard-fail on v3 from an identical trace. That is correct — an
+#           errored call was never a successful invocation — but `compliance` and
+#           `outcome` are NOT comparable across this boundary.
+#       `"is_error" in entry` is not a usable substitute tell: an entry whose
+#       `ToolResultBlock` never arrived (any aborted or wall-clock-capped run)
+#       carries no key at all, in v3 exactly as in v2.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -52,7 +77,7 @@ from typing import Any
 # and type while its MEANING changes — that is the case with no structural tell,
 # and entry 2 above is exactly it: `response_summary` stays a string, and only
 # what that string means changes.
-HARNESS_SCHEMA_VERSION = 2
+HARNESS_SCHEMA_VERSION = 3
 
 
 @dataclass

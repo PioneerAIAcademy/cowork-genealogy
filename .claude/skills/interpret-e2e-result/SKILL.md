@@ -261,9 +261,14 @@ These are the regression causes:
   FS may have reindexed or a contributor may have edited the live
   tree. Pointer: `tool_calls[].response_summary` differs from the prior
   run. The agent isn't at fault. First compare `harness_schema_version`
-  on both runs: `1` vs `2` means the capture format changed, not the
-  data — roughly half of all captures differ across that boundary. Only
-  compare runs with the same version.
+  on both runs. Across the `1` → `2` boundary the capture format
+  changed, not the data — roughly half of all captures differ there, so
+  do not read a `response_summary` diff across it. The `2` → `3`
+  boundary added `tool_calls[].is_error` and does **not** affect
+  `response_summary`, so a drift comparison still holds across it; what
+  it does move is `compliance` / `outcome` and the guardrail violation
+  counts, which get stricter at `3` (an errored call no longer counts as
+  a successful invocation).
 - **Single-run jitter** — Anthropic models are non-deterministic and
   this harness can't pin `temperature=0`. A single finding flipping
   recovered / not-recovered may just be variance. Recommend a re-run

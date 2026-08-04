@@ -1158,6 +1158,19 @@ async def _run_agent(
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
                                     entry["response_summary"] = summary
+                                    # The five `entry.get("is_error") is True`
+                                    # gates in skill_invocation.py read this key;
+                                    # nothing set it until now, so an errored
+                                    # call counted as a successful invocation in
+                                    # every one of them. bool(), not the raw
+                                    # value: ToolResultBlock.is_error is
+                                    # `bool | None`, and a null here would put
+                                    # `"is_error": null` on every successful
+                                    # entry in the run log. An entry whose result
+                                    # never arrived (aborted / wall-clock-capped
+                                    # run) still carries no key at all — see
+                                    # HARNESS_SCHEMA_VERSION 3 in e2e/result.py.
+                                    entry["is_error"] = bool(block.is_error)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
