@@ -100,6 +100,17 @@ describe("Project Validator", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("accepts a null intended_audience", async () => {
+      const research = {
+        ...minimalResearch,
+        researcher_profile: { intended_audience: null },
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
     it("rejects a non-string intended_audience", async () => {
       const research = {
         ...minimalResearch,

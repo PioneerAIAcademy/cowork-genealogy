@@ -37,7 +37,8 @@ things when the evidence demands it.
 | File | Action | Notes |
 |------|--------|-------|
 | `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
-| `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. |
+| `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. Also carries `researcher_profile.intended_audience` (§5.1.1), which §6.4's audience check reads. |
+| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its interview stays two questions. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
 
@@ -94,6 +95,13 @@ selects the target as follows (in priority order):
 3. Most recently written proof summary
 4. `"project"` (whole-project review)
 
+**Craft requests invert this.** A presentation-framed request (§3.1, §6.4) reads finished
+prose, so it targets the **most recently written proof summary** first and refuses if
+none exists (§9) — it does not fall through to a question or to `"project"`. Priority 1
+would otherwise hand "is this a good read?" a question with no prose in it, while §9's
+refusal condition read literally false because a proof summary existed elsewhere in the
+project.
+
 The agent states the defaulted focus and target at the top of its narrative so the user
 knows what was evaluated.
 
@@ -122,7 +130,22 @@ The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this
 ```yaml
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?", "is this a good read", "polish this for my family". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+description: >-
+  BCG-style senior genealogist who reviews research work and tells the
+  user what to address to improve it. Returns a structured verdict plus a
+  mentoring narrative. Invoked by /research once per proof — a mandatory
+  `proof-critique` after `proof-conclusion` writes a summary (must be
+  invoked and recorded; its recommendation stays advisory, never forcing
+  rework) — and on-demand when the user says "review my work", "is this
+  defensible?", "mentor", "second opinion", "is this a good read",
+  "polish this for my family". Never modifies research.json
+  (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
+  schema validation (use validate-schema), to execute new searches (use
+  search-records or search-external-sites), or to write proof conclusions
+  (use proof-conclusion). A user-driven GPS review of an existing proof
+  summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
+  components") goes through the proof-conclusion skill, which invokes this
+  mentor.
 model: claude-sonnet-5
 tools:
   - Read
@@ -144,6 +167,16 @@ tools:
   - mcp__remote-devices__Genealogy_Research__wiki_search
 ---
 ```
+
+The `description` above is the shipped text, verbatim — this block and
+`agents/gps-mentor.md` must agree, and they drifted once already (the spec
+prescribed four trigger phrases and an "advisory only" framing the agent never
+carried, while the agent gained a proof-conclusion routing sentence the spec
+lacked). Two constraints on editing it: it is capped at **1024 characters** by
+`tests/packaging/skill-description-length.test.ts`, and it is the only text the
+Cowork router matches on — so a new capability earns its trigger phrases here or
+becomes unreachable. At 979 characters there is room for roughly one more short
+phrase, not a new sentence.
 
 Every MCP tool **must** appear under **both** server spellings. Bare names
 leave the subagent toolless in the unit-harness SDK path, but a single
@@ -350,15 +383,22 @@ If the user's request is vague, default to the focus that matches the target's c
 When the request is about how a finished write-up **reads** rather than whether it
 holds up — "is this a good read", "polish this for my family", "prepare this to
 share", "is it ready to publish" — apply the checks below **instead of** the GPS
-rubric above, not in addition to it. The ~five-check cap is unchanged: this is a
-craft read, and stacking it on top of a `proof-critique` pass would blow both the
-cap and the mentor voice.
+rubric above, with the single carry-over named at the end of this section. Stacking
+a full `proof-critique` pass underneath a craft read would blow both the effort cap
+and the mentor voice.
 
-**What is being read.** The target is a proof summary's `narrative_markdown` — prose
-only. Nothing here evaluates images, tables, or layout, because the artifact has
-none. If no proof summary exists, refuse (§9) rather than critique the prose of a
-bare question; that is the same rule §9 already applies to `proof-critique` on a
-missing `ps_` ID, not a new one.
+**What is being read.** The target is a proof summary's `narrative_markdown`. That is
+markdown prose, which in practice carries the occasional simple table — a
+GPS-components summary, a candidate comparison. Typography and layout are out of
+scope: the rendering surface varies and the agent never sees it. A table is in scope
+only where it is doing work the prose should be doing — an argument the reader has to
+assemble out of cells — and that finding belongs under check 3 (engagement), not a
+check of its own.
+
+If no proof summary exists, refuse (§9) rather than critique the prose of a bare
+question; that is the same rule §9 already applies to `proof-critique` on a missing
+`ps_` ID, not a new one. When the request names no target, resolve it per §3.3's
+craft-request rule (most recent proof summary first).
 
 **Required preamble.** A craft-only run **must** open `narrative_for_user` with a
 sentence stating that the write-up was read for how it reads and **not** checked for
@@ -367,20 +407,18 @@ the latter. This is required text in the sense §7.5's sections are required, no
 guidance the agent may drop: the failure it prevents — a researcher taking a style
 pass for an evidence audit — is the whole risk of running craft checks standalone.
 
-**Severity: advisory, with one exception.** Findings from checks 1–5 are **advisory
-always**. They never produce a `must_address` item and never yield `address_first`:
-reasonable genealogists disagree about style, and blocking on taste reads as the
-tool being opinionated about writing. They go in `consider_addressing`, or
-`non_blocking_notes` when nit-level. Because they have no GPS standard behind them,
-the `standard` field (§7.4) carries `Craft — <axis>`, e.g. `Craft — audience
-calibration`.
+**Severity: the craft checks are advisory, always.** None of checks 1–5 ever produces
+a `must_address` item or yields `address_first`: reasonable genealogists disagree
+about style, and blocking on taste reads as the tool being opinionated about writing.
+They go in `consider_addressing`, or `non_blocking_notes` when nit-level. Because they
+have no GPS standard behind them, the `standard` field (§7.4) carries
+`Craft — <axis>`, e.g. `Craft — audience calibration`.
 
-The exception is the **source-locatability** check below, which is a functional
-defect rather than a matter of taste — the same failure §6.3's check 3 already
-treats as `must_address`. It keeps that severity when it surfaces through a craft
-request; arriving by a different entry point does not downgrade it. A GPS problem
-noticed incidentally during a craft read is likewise reported under its real
-standard and may still be `must_address`.
+So the verdict for a craft-only run is `consider_addressing` when any craft finding
+was raised, or `looks_solid` when the write-up reads well and only nits remain.
+`address_first` is reachable on a craft request **only** through the carried-over
+check below, or through a GPS problem noticed incidentally — which is reported under
+its own real standard, not a craft label.
 
 **Vocabulary stays internal.** The axis names below are this team's shorthand. They
 must not appear in `narrative_for_user` — the agent never tells a researcher it is
@@ -417,21 +455,34 @@ site actually follow this?"
    decision made elsewhere, and this check never argues for omitting a documented
    fact. It asks whether the sentence a descendant reads was written with care.
 
+   Scope boundary: this reviews prose that already exists. The *writing*-side
+   doctrine — what `proof-conclusion` and `person-evidence` should do at the point
+   of disclosure, and the CARE / Indigenous-data-sovereignty dimension — is a
+   separate, unstarted piece of work in `docs/plan/content-advisory-doctrine-plan.md`.
+   Until it lands the mentor can flag a defect the pipeline gives no guidance to
+   avoid, so keep this check's findings advisory and specific rather than doctrinal.
+
 5. **Research leads.** Does the write-up tell the reader where to go next? An
    honest one names its own remaining gaps and the records still worth trying. It
    should end with a door, not a wall.
 
-**Source-locatability (always runs; the one `must_address`-eligible check).** Could
-a reader holding only this document go and look these sources up themselves —
-citations sitting beside the claims they support, with enough detail to find the
-record? This asks a different question than §6.3's check 3: that one asks whether a
-peer reviewer can trace the *argument* back through the assertions, this one whether
-a lay reader can independently reach the *source*. A write-up whose claims cannot be
-followed to a findable record is `must_address` here exactly as it is there.
-Citation *formatting* — inconsistent style, mixed abbreviations, uneven punctuation
-— is not part of this check; it is nit-level and belongs in `non_blocking_notes`. It
-was deliberately not made its own axis, since a professional-looking document is a
-lower-value read than a locatable one.
+**The one carry-over: §6.3's check 3 also runs.** Craft mode replaces the GPS rubric
+with exactly one exception — §6.3 check 3 (narrative self-containment) runs too, under
+its own standard and at its own `must_address` severity.
+
+It is **not** restated as a craft axis, because it is not a separate question. Check 3
+already asks "are citations inline? could you locate every source referenced?" — a
+craft-labelled twin would file the identical finding under two standards with two
+severities, and the reader would have no way to tell which one governs. A write-up
+whose claims cannot be followed to a findable record is therefore `must_address` on a
+craft request exactly as it is on a `proof-critique` one, reported under check 3, not
+as `Craft — …`. This is also the reason the craft path is the deliberate exception to
+the ~five-check cap: five craft checks plus this one carried-over GPS check. Nothing
+else from §6.3 carries over.
+
+Citation *formatting* — inconsistent style, mixed abbreviations, uneven punctuation —
+is nit-level and belongs in `non_blocking_notes`. It was deliberately not made its own
+axis: a professional-looking document is a lower-value read than a locatable one.
 
 ---
 
@@ -511,9 +562,10 @@ in `YYYY-MM-DDTHH-MM-SS` format (colons replaced with hyphens for filesystem saf
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `standard` | string | yes | Standard number and short name |
+| `standard` | string | yes | Standard number and short name. Narrative-craft findings use `Craft — <axis>` (§6.4). |
 | `issue` | string | yes | Description of the concern |
 | `specific_action` | string | yes | Suggested improvement |
+| `suggested_skill` | string | no | Skill that would address it, when one obviously would — e.g. `historical-context` for a §6.4 context gap. Advisory routing only: unlike the `must_address` field of the same name (§7.3), the orchestrator never acts on it. |
 
 ### 7.5 `narrative_for_user` format
 
@@ -591,6 +643,13 @@ in `research.json` so the refusal is part of the audit trail.
 Before evaluating, the agent must check whether a verdict already exists for the same
 focus + target_id combination by scanning for files matching
 `evaluations/<focus>-<target_id>-*.json` in the project folder.
+
+**Narrative-craft runs are exempt.** A craft request (§6.4) always evaluates fresh and
+never surfaces a prior verdict in place of doing the work. Focus + target_id cannot
+tell a craft read apart from an evidentiary `on-demand` read — both are
+`on-demand` — so honouring the skip here would answer "is this a good read?" with a
+verdict that never looked at the prose. The user asked for a craft read by name; give
+them one.
 
 ### 10.1 Interactive mode behavior
 
@@ -707,6 +766,13 @@ When a re-evaluation is written for the same focus + target_id (per §10), the a
 3. Write the new entry with `superseded_by: null`.
 
 This preserves the full audit trail without deleting history.
+
+**Craft runs neither supersede nor are superseded.** A narrative-craft verdict (§6.4)
+is written with `superseded_by: null` and leaves every prior entry's `superseded_by`
+untouched; a later evidentiary `on-demand` verdict likewise does not supersede a craft
+one. They share the `on-demand` focus but review different things, and marking an
+evidence review superseded by a style review — or the reverse — would misreport the
+audit trail. A craft run supersedes only an earlier craft run on the same target.
 
 ### 12.4 research-schema-spec.md changes
 
@@ -901,11 +967,12 @@ by deferring gates first:
   the negative-result short-circuit in `docs/TODOs.md`) — earned, not assumed.
   Reason 2 above is the standing argument against dropping it outright.
 
-### 17.2 `narrative-craft` as a fourth focus mode (deferred, not dropped)
+### 17.2 `narrative-craft` as its own focus mode (deferred, not dropped)
 
-The narrative-craft checks of §6.4 could instead have been a fourth `focus`
-value (`"narrative-craft"` or `"publication-readiness"`), invocable by the
-orchestrator alongside the existing three. **Not adopted**, for two reasons:
+The narrative-craft checks of §6.4 could instead have been a fifth `focus`
+value (`"narrative-craft"` or `"publication-readiness"`) alongside the four that
+exist, and — unlike three of those four — one the orchestrator actually invokes
+(§3.4 auto-invokes `proof-critique` only). **Not adopted**, for two reasons:
 
 1. **`focus` is a closed enum in three places** — `$defs/evaluation_entry.focus`
    in *both* schema trees (§12.5), the `evaluation_focus` set in `validator.ts`
@@ -916,7 +983,19 @@ orchestrator alongside the existing three. **Not adopted**, for two reasons:
    §6.4 the answer is settled and cheap — advisory, always. Deciding "mandatory
    gate or not" before the check has been used once would be assumed, not earned.
 
+**What Option A costs, knowingly.** A craft run and an evidentiary `on-demand` run
+share `focus: "on-demand"`, so they are indistinguishable to the two mechanisms keyed
+on focus + target: the existing-verdict skip (§10) and `superseded_by` (§12.3). Left
+alone, "is this a good read?" after an earlier "review my work" on the same proof
+summary would surface the stale evidentiary verdict as if it answered the craft
+question, and would then mark it superseded by a review that never looked at the
+evidence. §10 and §12.3 therefore carve craft runs out explicitly. The verdict
+filename is the residual: both land at `evaluations/on-demand-<target>-<iso>.json`,
+distinguishable only by opening the file. That is tolerable for a read the user asks
+for by name, and it is the concrete thing a real focus value would buy.
+
 Promote to a real focus value only if usage shows it should be a standing gate
-rather than something the user asks for. That is a new spec delta on top of this
-one, not a reopening of it — keep the audit trail the way
-`evaluations[].superseded_by` already does for re-evaluations.
+rather than something the user asks for — or if the carve-outs above start
+accumulating. That is a new spec delta on top of this one, not a reopening of it —
+keep the audit trail the way `evaluations[].superseded_by` already does for
+re-evaluations.

@@ -415,10 +415,12 @@ audit trail.
 
 ### Verify the narrative-craft path (spec §6.4)
 
-No automated test can cover this — `gps-mentor` is an agent, not a
-skill, so the eval harness has no suite for it. A genealogist reading
-real output is the verification. Run **both** halves; the positive test
-alone does not exercise the refusal.
+No automated suite covers this today: the unit harness keys every test
+to a skill directory, and `gps-mentor` is an agent. The agent itself is
+staged and observable in e2e runs (spec §17.1), so this is a missing
+suite rather than an impossible one — but until it exists, a genealogist
+reading real output is the verification. Run **both** halves; the
+positive test alone does not exercise the refusal.
 
 **Positive.** With a real proof summary in the project, ask:
 

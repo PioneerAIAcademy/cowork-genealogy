@@ -206,8 +206,9 @@ Single object (not an array).
 ### 5.1.1 `researcher_profile`
 
 Optional single object. Captures per-project context about the
-researcher. Written once by `init-project` from a short two-question
-interview; read by every skill. Skills adapt their narration density to
+researcher. Mostly written once by `init-project` from a short
+two-question interview (`intended_audience` is the exception — it is set
+by hand, see below); read by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
 back to default narration. To update mid-project, edit this section

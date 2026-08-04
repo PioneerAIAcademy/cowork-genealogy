@@ -1,8 +1,15 @@
 # Content-advisory / CARE doctrine for sensitive findings — plan
 
-> **Status:** Proposed — not started. Authored 2026-07-24 from a review of
-> `DigitalArchivst/Open-Genealogy` (external repo, cloned and read directly).
-> No implementation branch yet.
+> **Status:** Proposed — not started, for the writing side this plan is about.
+> Authored 2026-07-24 from a review of `DigitalArchivst/Open-Genealogy` (external
+> repo, cloned and read directly). No implementation branch yet.
+> **Partly pre-empted on the review side (#848):** `gps-mentor`'s narrative-craft
+> checks (`gps-mentor-agent-spec.md` §6.4, check 4) now review a finished write-up
+> for whether sensitive findings are *handled* with tact. That is review-only and
+> deliberately not doctrine — it flags a defect this plan's work would prevent.
+> Everything below (content-warning-first and gradual disclosure at the point of
+> disclosure, the CARE / Indigenous-data-sovereignty dimension, `proof-conclusion`
+> and `person-evidence`) remains unstarted and is still the substance of the plan.
 > **Goal:** give `proof-conclusion` (the actual disclosure point) and
 > `person-evidence` (the skill most likely to first surface a sensitive
 > discovery) explicit doctrine for handling findings like unknown

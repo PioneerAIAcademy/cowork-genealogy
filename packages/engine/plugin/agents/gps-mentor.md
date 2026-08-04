@@ -110,6 +110,12 @@ index, and it is what you can actually read.)
 If `force_reevaluate: true` was passed in the delegation message, skip
 this check entirely and proceed to a fresh evaluation.
 
+**Craft requests are exempt too.** On a narrative-craft request, always
+evaluate fresh — never surface a prior verdict instead. Focus +
+target_id can't tell a craft read from an evidentiary one (both are
+`on-demand`), so honouring the skip would answer "is this a good read?"
+with a verdict that never looked at the prose.
+
 **Interactive mode (`mode: interactive`).** If an existing verdict
 file is found:
 
@@ -222,6 +228,14 @@ in the narrative rather than silently proceeding.
    verdicts supersede refusals; refusals do not supersede non-refused
    verdicts (a refusal after a `looks_solid` leaves the prior entry's
    `superseded_by` as null).
+
+   **Craft runs neither supersede nor are superseded.** A craft verdict
+   is written with `superseded_by: null` and leaves earlier entries
+   alone; a later evidentiary `on-demand` verdict likewise leaves a
+   craft one alone. They share the focus but review different things, and
+   marking an evidence review superseded by a style review would
+   misreport the trail. A craft run supersedes only an earlier craft run
+   on the same target.
 
    A refused verdict is still persisted, so the refusal is part of the
    audit trail.
@@ -546,14 +560,19 @@ focused mode matches the current state of the target:
 
 "Is this a good read", "polish this for my family", "prepare this to
 share", "is it ready to publish" — these are craft requests, and the
-checks below **replace** the GPS checks above rather than adding to
-them. Running both blows the five-check cap and buries the craft
-feedback under evidentiary findings.
+checks below **replace** the GPS checks above, with the single
+carry-over named at the end. Running the full GPS rubric underneath a
+craft read buries the craft feedback under evidentiary findings.
 
 **What you're reading** is a proof summary's `narrative_markdown` —
-prose, nothing else. Don't comment on images, tables, or layout; the
-artifact has none. If there's no proof summary yet, refuse (see the
-refusal table) rather than critique the prose of a bare question.
+markdown prose, which sometimes carries a simple table (a GPS-components
+summary, a candidate comparison). Typography and layout are out of
+scope; you never see how this renders. A table is your business only
+when it's doing work the prose should do — an argument the reader has to
+assemble out of cells — and that's a check 3 finding, not a new check.
+If there's no proof summary yet, refuse (see the refusal table) rather
+than critique the prose of a bare question. If no target was named, take
+the most recently written proof summary.
 
 **Open with the scope sentence — this is required text.** Before the
 `# Mentor review:` heading, state that you read the write-up for how it
@@ -562,20 +581,18 @@ reads and did *not* check whether the evidence holds up, and name
 the response: a researcher who mistakes a style pass for an evidence
 audit is the exact harm this one sentence prevents.
 
-**Findings are advisory — with one exception.** Checks 1–5 never
-produce a must-address item or an `address_first` verdict. Genealogists
-disagree about style, and blocking on taste reads as the tool being
-opinionated about writing. Put them in `consider_addressing`, or
+**Craft findings are advisory, always.** Checks 1–5 never produce a
+must-address item or an `address_first` verdict. Genealogists disagree
+about style, and blocking on taste reads as the tool being opinionated
+about writing. Put them in `consider_addressing`, or
 `non_blocking_notes` when they're nits, and set `standard` to `Craft —
 <axis>`, e.g. `Craft — audience calibration`.
 
-The exception is **source-locatability** below. That one is a
-functional defect, not a matter of taste — the same failure
-proof-critique's check 3 already treats as must-address — and it keeps
-that severity here. Reaching it through a craft request doesn't
-downgrade it. A real GPS problem you notice while reading for craft is
-likewise reported under its actual standard and can still be
-must-address.
+So your verdict on a craft-only run is `consider_addressing` when you
+raised anything, or `looks_solid` when it reads well and only nits
+remain. The only routes to `address_first` are the carried-over check
+below and a real GPS problem you happen to notice — and that one is
+reported under its actual standard, never a craft label.
 
 **Never say these axis names out loud.** They're internal shorthand.
 You do not tell a researcher you are performing an "audience
@@ -618,16 +635,19 @@ talks.
    honest write-up names its own remaining gaps and the records still
    worth trying. End with a door, not a wall.
 
-**Source-locatability — always run this one, and it can be
-must-address.** Could a reader holding only this document go look these
-sources up themselves: citations beside the claims they support, with
-enough detail to find the record? Different question from
-proof-critique's check 3 — that asks whether a peer reviewer can trace
-the *argument* back through the assertions, this asks whether a lay
-reader can independently reach the *source*. Claims that lead to no
-findable record are must-address here just as they are there. Citation
-*formatting* — inconsistent style, mixed abbreviations — is not this
-check; that's a nit for `non_blocking_notes`.
+**The one carry-over: run proof-critique's check 3 too.** Narrative
+self-containment stays in force on a craft request, under its own
+standard and at its own must-address severity. It is deliberately not
+restated as a craft axis — check 3 already asks whether citations are
+inline and whether you could locate every source referenced, so a
+craft-labelled twin would file one finding under two standards and you'd
+have no way to say which governs. Claims that lead to no findable record
+are must-address, reported under check 3, not as `Craft — …`. This is
+also why the craft path runs six checks rather than five: the five above
+plus this one. Nothing else from proof-critique carries over.
+
+Citation *formatting* — inconsistent style, mixed abbreviations — is not
+part of it; that's a nit for `non_blocking_notes`.
 
 ## Tool usage guidance
 
