@@ -15,7 +15,11 @@ into ``os.environ`` (issue #1201).
 Surgical by design: only the ``orchestrator`` module's binding is patched, so
 ``test_auth.py`` (which exercises the real ``harness.auth.resolve_auth``) is
 unaffected, and every unit test mocks ``query`` regardless, so the canned key is
-never used to make a real call.
+never used to make a real call. This also does *not* make ``test_cli.py``'s ten
+per-test stubs redundant: those patch ``run_tests.resolve_auth`` — a separate
+module binding of the same function — while this patches
+``orchestrator.resolve_auth``. ``monkeypatch.setattr`` rebinds one importing
+module's reference, not the other's, so each test file still needs its own.
 """
 
 from __future__ import annotations

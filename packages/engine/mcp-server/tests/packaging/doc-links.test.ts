@@ -112,6 +112,9 @@ const BUILT_INS: Record<string, string> = {
  * naming fails the suite below, so this cannot quietly widen into a regex
  * escape hatch that would also swallow the repo's own rotting commands.
  */
+// Empty today — no linted doc yet cites a slash-shaped non-command. Populate
+// when one does (e.g. `"tmp": "absolute path in a fenced example"`); the
+// staleness guard below deletes any entry the prose stops naming.
 const KNOWN_NON_COMMANDS: Record<string, string> = {};
 
 /**
