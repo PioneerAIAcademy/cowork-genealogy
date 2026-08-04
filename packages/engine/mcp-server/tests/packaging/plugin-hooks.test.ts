@@ -3,6 +3,9 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+// @ts-expect-error -- plain .mjs build helper, no type declarations (tsconfig
+// only compiles src/**, so this import is never typechecked).
+import { resolvePython, describePythonCandidates } from "../../../../../scripts/python-interpreter.mjs";
 
 // The plugin's PreToolUse hook is the ONLY guardrail that reaches Cowork.
 //
@@ -30,13 +33,27 @@ function loadHooks(): Record<string, Matcher[]> {
   return JSON.parse(readFileSync(HOOKS_JSON, "utf-8")).hooks;
 }
 
+// Resolved once, not per call: probing costs a process launch each time.
+// Hardcoding "python3" here made all 11 tests below fail on Windows, where the
+// name is a Microsoft Store alias rather than an interpreter -- see
+// scripts/python-interpreter.mjs.
+const PYTHON: string[] | null = resolvePython();
+
+/** Feed the guard script on stdin the way the runtime does; return raw stdout. */
+function execGuard(input: string): string {
+  if (!PYTHON) {
+    throw new Error(
+      `No Python 3 found (tried: ${describePythonCandidates()}). The plugin's ` +
+        `PreToolUse hook is a Python script, so these tests cannot run without one.`,
+    );
+  }
+  const [cmd, ...pre] = PYTHON;
+  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8" });
+}
+
 /** Run the guard script the way the runtime does: payload on stdin, JSON out. */
 function runGuard(payload: unknown): any {
-  const out = execFileSync("python3", [GUARD], {
-    input: JSON.stringify(payload),
-    encoding: "utf-8",
-  });
-  return JSON.parse(out);
+  return JSON.parse(execGuard(JSON.stringify(payload)));
 }
 
 describe("plugin hooks are packaged and wired", () => {
@@ -102,8 +119,6 @@ describe("the guard script's decisions", () => {
   it("allows the call rather than erroring on a malformed payload", () => {
     // A hook that throws would fail a tool call the user was entitled to make.
     expect(runGuard(null)).toEqual({});
-    expect(
-      JSON.parse(execFileSync("python3", [GUARD], { input: "not json", encoding: "utf-8" })),
-    ).toEqual({});
+    expect(JSON.parse(execGuard("not json"))).toEqual({});
   });
 });

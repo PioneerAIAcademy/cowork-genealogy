@@ -172,6 +172,31 @@ export function citedMakeTargets(text: string): string[] {
   return [...found];
 }
 
+/**
+ * Slash-command citations: `/critique-plan`, `/code-review`. Read from code
+ * only — inline spans and fenced blocks, the same rule as `citedMakeTargets`
+ * — because prose is full of tokens that parse as one otherwise
+ * (`annotations: complete/partial/absent`, `and/or`, a bare URL path).
+ *
+ * A command may carry arguments in the citation (`/critique-plan PLAN.md`,
+ * `/review <N>`), so only the leading token is taken.
+ */
+export function citedSlashCommands(text: string): string[] {
+  const found = new Set<string>();
+  const add = (token: string) => {
+    const m = token.match(/^\/([a-z][a-z0-9-]+)$/);
+    if (m) found.add(m[1]);
+  };
+  for (const m of text.matchAll(/`([^`\n]+)`/g)) add(m[1].trim().split(/\s+/)[0]);
+  for (const block of fencedBlocks(text)) {
+    for (const line of block.split("\n")) {
+      const first = line.trim().split(/\s+/)[0];
+      if (first) add(first);
+    }
+  }
+  return [...found];
+}
+
 /** Every target name the root Makefile defines, including `.PHONY` lists. */
 export function makefileTargets(projectRoot: string): Set<string> {
   const text = readFileSync(join(projectRoot, "Makefile"), "utf8");
