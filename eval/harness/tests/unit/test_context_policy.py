@@ -97,15 +97,31 @@ def test_no_violation_for_unguarded_tool_on_main():
     assert subagent_only_violation(_main("Read")) is None
 
 
-# --- the declared-tools exemption (the search-images case) ---
+def test_malformed_tool_name_does_not_raise():
+    """A raising PreToolUse hook fails a call the agent was entitled to make.
+
+    `{"tool_name": None}` is the case a `.get("tool_name", "")` default does
+    NOT cover — the key is present, so the default never applies and
+    `bare_tool_name(None)` would raise TypeError. Mirrors the e2e twin's
+    `test_malformed_tool_name_does_not_raise`; must fail closed to "no
+    violation", never crash.
+    """
+    for malformed in ({}, {"tool_name": None}, {"tool_name": ""}):
+        assert subagent_only_violation(malformed) is None
+
+
+# --- the declared-tools exemption (synthetic; no skill exercises it today) ---
 
 
 def test_declaring_the_tool_exempts_the_skill():
-    """search-images declares image_read and browses volumes page-by-page.
+    """A skill that declares a guarded tool may call it directly (synthetic set).
 
-    Regression guard: an unscoped policy would deny every one of those calls
-    and break the skill outright. The declaration is what separates a
-    legitimate direct call from a boundary violation.
+    Regression guard for the declared-tools exemption: an unscoped policy would
+    deny every such call and break the skill outright. The declaration is what
+    separates a legitimate direct call from a boundary violation. No shipping
+    skill exercises this today — `search-images` moved to delegating via
+    `@plugin:image-reader` on 2026-07-17, so the exemption is currently
+    unreachable — hence the declared set here is synthetic.
     """
     assert (
         subagent_only_violation(

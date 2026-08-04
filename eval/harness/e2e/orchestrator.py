@@ -792,8 +792,9 @@ async def _run_agent(
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
     # Every denied main-thread `extraction_append` — the router doing the
-    # record-extractor's job because the subagent failed to spawn (#942). A
-    # denied call never reaches `tool_calls`, so this list is its only trace.
+    # record-extractor's job because the subagent failed to spawn (#942). The
+    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
+    # the PreToolUse deny); this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then

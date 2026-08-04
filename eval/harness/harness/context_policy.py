@@ -119,16 +119,23 @@ def subagent_only_violation(
        we want the router to take.
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
-       that claimed the tool for itself may call it: `search-images` browses
-       volumes page-by-page via `image_read` and must keep working. A skill
-       that holds it only through the agent-union may not.
+       that claimed the tool for itself may call it directly; a skill that
+       holds it only through the agent-union may not. No skill declares either
+       guarded tool today — `search-images` moved to delegating via
+       `@plugin:image-reader` on 2026-07-17 — so this exemption is currently
+       unreachable, and `agent_id` presence alone decides (see
+       `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
     nothing** — i.e. the guard applies. Callers that cannot attribute a call to
     one skill should not use this function at all rather than pass None; see
     the e2e note in the module docstring.
     """
-    bare = bare_tool_name(input_data.get("tool_name", ""))
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # make `bare_tool_name(None)` raise TypeError, and a raising PreToolUse hook
+    # fails a call the agent was entitled to make (CLAUDE.md, "Plugin hooks").
+    # Mirrors the fail-closed guard in e2e's `is_main_thread_extraction_append`.
+    bare = bare_tool_name(input_data.get("tool_name") or "")
     if bare not in SUBAGENT_ONLY_TOOLS:
         return None
     if is_subagent_call(input_data):
