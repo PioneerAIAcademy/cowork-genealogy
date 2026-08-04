@@ -72,10 +72,12 @@ specs and the code. Don't go read it all yourself; have Claude do it:
 
 > Read GitHub issue #N and the code it touches. Also read: the spec in
 > `docs/specs/` if one covers what I'm changing, the "If you're asked to…"
-> blocks in `docs/architecture.md`, and `CLAUDE.md`. Summarize what you found in
-> a few sentences. Then ask me the questions where a different answer would
-> change what you build — skip anything with an obvious default, make the call
-> and tell me what you chose.
+> blocks in `docs/architecture.md`, and `CLAUDE.md`. Also check whether any open
+> PR already touches the files I'll change (`gh search prs`, or `gh pr list`) —
+> a collision on a shared file means a rebase later, so flag it now. Summarize
+> what you found in a few sentences. Then ask me the questions where a different
+> answer would change what you build — skip anything with an obvious default,
+> make the call and tell me what you chose.
 
 Read the issue yourself too, and read Claude's summary. You should be able to
 say what the task is in a sentence before you plan it.
@@ -100,7 +102,9 @@ review, or by your reviewer.
 ```
 
 Two rounds maximum. **If round two still returns a BLOCKING finding, stop and
-go to the lead** — the task is underspecified, not the plan.
+go to the lead** — the task is underspecified, or a sub-scope should be split
+into its own issue. Either way it's a task decision, not something a third
+round of planning will fix.
 
 **Check each finding before acting on it.** Some will be wrong. Open the file,
 run the command, confirm the claim. This covers what the critic *proposes* as
@@ -229,9 +233,9 @@ so their time goes to whether the approach is right.
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
-`.github/workflows/claude-code-review.yml` posts an automated pass on every PR. Treat it as a peer
-whose findings you verify, not a gate — it can be wrong, and a senior's review
-still has to happen.
+**Automatic Claude review is off** (`.github/workflows/claude-code-review.yml`,
+disabled 2026-08-03). Nothing reviews your PR before a human opens it, so step 6
+is the only pass it gets — arrive with it done.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -263,14 +267,12 @@ returns as an input to your review, never as your review.
    file and check.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
    give the replacement text. Never paste a Claude review verbatim.
-3. **Review against the plan, not just the diff.** `/review` can't see the plan.
-   Give Claude the PR description (which has it), the diff, and the relevant
-   spec, then ask directly: does this implementation match what was agreed?
-
-`.github/workflows/claude-code-review.yml` has already posted an automated pass on the PR. Read it
-before you start — but verify anything you repeat, the same as your own
-findings, and don't treat it as having covered the ground you're responsible
-for.
+3. **Review against what was agreed, not just the diff.** `/review` reads the
+   diff; it can't tell you whether that was the right change to make. The PR's
+   Summary, "Start here", and Plan sections are where the author says what they
+   set out to do. Give Claude those, the issue, and the relevant spec, then ask
+   directly: does this implementation match what was agreed, and what does it do
+   that nobody asked for?
 
 ---
 

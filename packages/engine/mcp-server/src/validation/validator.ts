@@ -866,6 +866,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
     }
+    // identity_question is the question's text — schema type string|null. Reject
+    // any other type (notably the boolean form that slipped past this validator
+    // and into the corpus before the completed-gate was fixed; issue #1001).
+    if (
+      c.identity_question != null &&
+      typeof c.identity_question !== "string"
+    ) {
+      addError(report, cp, "identity_question must be a string or null");
+    }
   }
 
   // Hypotheses
