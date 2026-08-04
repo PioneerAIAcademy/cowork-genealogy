@@ -187,7 +187,7 @@ class MockAgent:
             }],
             "plans": [], "log": [], "sources": [], "assertions": [],
             "person_evidence": [], "conflicts": [], "hypotheses": [],
-            "timelines": [], "proof_summaries": [],
+            "timelines": [], "proof_summaries": [], "evaluations": [],
         }
         self._write_research(research)
         # A minimal tree with the subject person.
@@ -262,7 +262,7 @@ class MockAgent:
 
         # Append a log entry + source + assertion to research.json.
         research.setdefault("log", []).append({
-            "id": log_id, "plan_item_id": None, "performed": "2026-06-06",
+            "id": log_id, "plan_item_id": None, "performed": "2026-06-06T12:00:00Z",
             "tool": "record_search",
             "query": {"surname": "Flynn", "birthPlace": "Pennsylvania"},
             "outcome": "positive", "results_examined": 1,
