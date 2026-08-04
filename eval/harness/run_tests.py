@@ -538,8 +538,8 @@ def main(argv: list[str] | None = None) -> int:
     #
     # Negative tests are graded on routing and survive a dead judge, so a
     # negative-only selection still gets the old warning rather than an abort.
+    needs_judge = [s for s in specs if s.type == "positive"]
     if not auth.api_key:
-        needs_judge = [s for s in specs if s.type == "positive"]
         if needs_judge and not args.allow_missing_judge:
             print(
                 f"Judge preflight failed: no ANTHROPIC_API_KEY is set, but "
@@ -564,6 +564,44 @@ def main(argv: list[str] | None = None) -> int:
             "  and routing only.",
             file=sys.stderr,
         )
+    # Key present but invalid (e.g. duplicated or revoked). A truthy key passes
+    # the presence check above, the entire suite runs, and every positive test
+    # fails at grade time — the operator reads "everything failed" as a skill
+    # regression rather than an auth error. Catch it with a cheap 1-token
+    # liveness call before spending anything.
+    if auth.api_key and needs_judge and not args.allow_missing_judge:
+        # Lazy import — only needed when key validation fires.
+        import anthropic
+        from harness.judge import DEFAULT_JUDGE_MODEL
+
+        try:
+            client = anthropic.Anthropic(api_key=auth.api_key)
+            client.messages.create(
+                model=DEFAULT_JUDGE_MODEL,
+                max_tokens=1,
+                messages=[{"role": "user", "content": "ping"}],
+            )
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
+            # 401/403 — bad credential. Abort before spending anything.
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({e.status_code}).\n"
+                f"A duplicated or revoked key passes the presence check but fails "
+                f"every judge call, wasting the entire suite.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"  In a git worktree: make worktree-link\n"
+                f"\n"
+                f"Re-run with --allow-missing-judge to proceed anyway "
+                f"(validators and routing only).",
+                file=sys.stderr,
+            )
+            return 2
+        except (anthropic.OverloadedError, anthropic.RateLimitError,
+                anthropic.APIConnectionError):
+            # 429/529/connection — transient Anthropic outage. Let the suite run;
+            # the judge has its own retry loop for these.
+            pass
     # Large-suite variance warning: the judge is temperature-pinned, but the
     # *skill run* is not — claude-agent-sdk exposes no temperature field, so
     # model nondeterminism still leaks into single-run outcomes. Mostly fine

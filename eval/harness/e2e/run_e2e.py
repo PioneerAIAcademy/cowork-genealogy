@@ -194,6 +194,41 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
+    # Key-validity preflight. A duplicated or revoked key is truthy, so the
+    # agent run proceeds (it uses the SDK's own auth), but the judge silently
+    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
+    # spending anything. Does NOT abort on a missing key: --skip-judge already
+    # handles that (produces verdict="skipped"), and the e2e path has never
+    # blocked on absence.
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key and not args.skip_judge:
+        try:
+            import anthropic
+            from e2e.judge import DEFAULT_JUDGE_MODEL
+
+            client = anthropic.Anthropic(api_key=api_key)
+            client.messages.create(
+                model=DEFAULT_JUDGE_MODEL,
+                max_tokens=1,
+                messages=[{"role": "user", "content": "ping"}],
+            )
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({e.status_code}).\n"
+                f"A $7+ e2e run would complete and then silently discard the "
+                f"result because the judge can't grade it.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"\n"
+                f"Re-run with --skip-judge to proceed without grading.",
+                file=sys.stderr,
+            )
+            return 2
+        except (anthropic.OverloadedError, anthropic.RateLimitError,
+                anthropic.APIConnectionError):
+            pass  # transient — let the run proceed
+
     kwargs = {
         "runlog_root": args.runlog_root,
         "mcp_server_entry": args.mcp_server_entry,
