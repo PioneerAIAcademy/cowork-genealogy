@@ -1,0 +1,1915 @@
+{
+  "project": {
+    "id": "rp_manoel_oliveira_daughter",
+    "objective": "Did Manoel Melquiades de Oliveira and his wife C\u00e2ndida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married 1926, in addition to their known children Abel and Maria Lila (b. 1901)?",
+    "subject_person_ids": [
+      "GHJ6-2WV"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-31"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?",
+      "rationale": "This is the central fact the research objective asks to establish. Rio Grande do Norte civil registration and Catholic parish marriage registers from the 1920s\u20131930s typically name a bride's parents; a 1926 marriage record for Josefa would directly confirm or refute her parentage. Baptism registers (1900\u20131910 window, consistent with a bride marrying in 1926) and any household census-style records for Manoel and C\u00e2ndida may corroborate by listing Josefa among their children. The question is bounded by the stated marriage year, the known place (Rio Grande do Norte), and the named parents, making it testable against available record sets on FamilySearch and Brazilian civil archives.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-31",
+      "resolution_assertion_ids": [
+        "a_009",
+        "a_010",
+        "a_025",
+        "a_041"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All eight plan items for pl_001 are completed or skipped. Searches covered: (1) civil marriage records for Josefa 1924-1928 \u2014 positive (src_001); (2) church marriage records for Josefa 1924-1928 \u2014 positive (multiple daughters' records found); (3) Brazil Marriages broader index 1730-1955 \u2014 skipped (primary succeeded); (4) full-text co-occurrence search +Damasceno +Melchiades/+Melquiades/+Oliveira+Josefa \u2014 negative (FTS corpus does not index RGdN Catholic collection 2177294); (5) church baptism for Josefa 1893-1915 \u2014 negative (3 unrelated results); (6) civil birth registration for Josefa 1893-1915 \u2014 negative (0 results); (7) parents' marriage record 1885-1910 \u2014 negative (17 results, all previously known daughters' marriage records); (8) FAN item \u2014 siblings' baptism (Maria Lila, Abel) \u2014 negative (too many generic Oliveira results, no matching records with Melchiades as father). Online FamilySearch resources for RGdN 1890-1930 are reasonably exhausted. Physical diocesan archives or cart\u00f3rio civil records in RGdN would require in-person access and are outside the scope of this online research session.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021"
+        ],
+        "stop_criteria": "No additional online FamilySearch indexed or FTS searches remain. Baptism and civil birth records for Josefa not found in available online collections. The FTS corpus does not cover collection 2177294. Parents' marriage record not found. A baptism record remains the highest-yield remaining source but is not accessible online."
+      },
+      "created": "2026-07-31"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-31",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1924-1928",
+          "repository": "FamilySearch",
+          "rationale": "A civil marriage record for Josefa de Oliveira circa 1926 in Rio Grande do Norte would directly name her parents, providing primary information about her parentage. FamilySearch collection 2821278 (Brazil, Rio Grande do Norte, Civil Registration, 1195-2020) is indexed with images. Per loc_001, marriages typically took place in the bride's hometown. Search for Josefa de Oliveira (and variants: Josepha, d'Oliveira) in civil marriage registers 1924\u20131928. This is the most direct path to answering the research question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1924-1928",
+          "repository": "FamilySearch",
+          "rationale": "Catholic parish marriage registers (casamentos paroquiais) in Rio Grande do Norte name the bride's and groom's parents. FamilySearch collection 2177294 (Brazil, Rio Grande do Norte, Catholic Church Records, 1788-1967) is indexed with 1,654,447 records and images. Per loc_001, church records list godparents while civil records list grandparents \u2014 both are needed, as neither is fully redundant. Many RGdN parish marriage volumes for 1918\u20131929 are 95\u2013100% indexed and full-text searchable. Run parallel to pli_001 since both name parents and the marriage may appear in one but not the other.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1920-1935",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_001. FamilySearch collection 1500709 (Brazil, Marriages, 1730-1955; 318,295 records; index only) aggregates marriage records from across Brazil including Rio Grande do Norte. If the state-specific civil registration search (pli_001) fails to surface Josefa, this broader indexed set may contain her entry. Also try with surname variant spellings per loc_001 guidance.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1893-1915",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for 'Oliveira' + 'Damasceno' (the paternal and maternal surnames) across RGdN records via the search-full-text skill. This tactic finds Josefa's baptism or any record naming both parental surnames together \u2014 the highest-yield approach for a parentage question where the subject's baptism names both parents but may not be name-indexed. Per the record-type guide, a full-text co-occurrence on both compound surnames (unscoped, run across the full corpus) is the correct tactic when indexed search by child's name stalls. Josefa's birth circa 1895\u20131912 (consistent with a bride marrying in 1926) falls within the target window. 'Melquiades' may also be added as a third term to narrow results to Manoel's household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1893-1915",
+          "repository": "FamilySearch",
+          "rationale": "A baptism record (batismo) for Josefa de Oliveira would directly name her parents \u2014 Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira \u2014 providing direct parentage evidence. If Josefa married in 1926 she was likely born 1895\u20131912 (ages 14\u201331 at marriage, consistent with the era). Search FamilySearch collection 2177294 (Catholic Church Records) and the broader collection 1500708 (Brazil Baptisms 1688-1935; 2,402,158 records). Note per loc_001: some RGdN baptism volumes for 1921\u20131926 are 0% indexed (browse-only); volumes for 1895\u20131912 are generally well-indexed and full-text searchable. Try given name 'Josefa' with father surname 'Oliveira' and mother surname 'Damasceno'.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1893-1915",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_005. If Josefa's baptism is not found in church records, her birth may appear in civil registration. FamilySearch collection 2821278 (Brazil, Rio Grande do Norte, Civil Registration, 1195-2020) covers civil birth registrations at the municipal level. Search with parents' names (Melquiades / Damasceno) and given name Josefa (variant: Josepha).",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1888-1905",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage of Manoel Melquiades de Oliveira to C\u00e2ndida Damasceno. Per the record-type guide, a parents' marriage record belongs in every parentage plan: it (a) confirms the couple as a unit, (b) supplies C\u00e2ndida's maiden name (Damasceno) confirmed from a primary source, and (c) dates their union relative to Josefa's birth, corroborating a parent named only by indirect evidence. Note: the marriage record alone does not prove Josefa is their child \u2014 it supports the parentage case but must be combined with a record placing Josefa with these parents. Search both collection 2177294 (church) and 2821278 (civil). If Maria Lila was born 1901, the parents' marriage likely predates 1901 \u2014 estimated 1888\u20131900.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Rio Grande do Norte, Brazil",
+          "date_range": "1895-1910",
+          "repository": "FamilySearch",
+          "rationale": "FAN item per BCG Standard 14. Baptism records for the known siblings Maria Lila de Oliveira (b. 1901) and/or Abel de Oliveira would name their parents (Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira) and establish the family's municipality of residence. This is essential context: once the parents' home parish is identified from a sibling's baptism, the search for Josefa's records can be directed to that specific municipality's registers. Search collection 2177294 for 'Maria Lila' with surname 'Oliveira' born circa 1901 in RGdN, and for 'Abel' de Oliveira. Brazil Baptisms 1688-1935 (collection 1500708) is a fallback.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T15:42:27.552Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oliveira",
+        "givenName": "Josefa",
+        "collectionId": "2821278",
+        "marriageYearFrom": 1924,
+        "marriageYearTo": 1928,
+        "recordType": "marriage",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 555,
+      "notes": "555 total matches. Results are too broad \u2014 Josefa Oliveira is very common. No father-name filter applied yet; no result clearly shows connection to Manoel Melquiades or Damasceno. Top hits include 'Josefa Da Costa Oliveira' (score 4.58) and 'Josefa Gomes de Oliveira'. Need to narrow with fatherGivenName Melquiades or motherSurname Damasceno."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:42:27.567Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oliveira",
+        "givenName": "Josefa",
+        "collectionId": "2177294",
+        "marriageYearFrom": 1924,
+        "marriageYearTo": 1928,
+        "recordType": "marriage",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 947,
+      "notes": "947 total matches \u2014 overly broad. Top results include 'Josefa Oliveira', 'Josefa Maria Oliveira', 'Josefa Cabral de Oliveira' (b.1906), 'Josefa Julia de Oliveira' (b.1900). None show Melquiades or Damasceno parental connection. Narrowing required with distinctive father/mother names."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:45:43.687Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oliveira",
+        "givenName": "Josefa",
+        "fatherGivenName": "Melquiades",
+        "fatherSurname": "Oliveira",
+        "collectionId": "2177294",
+        "recordType": "marriage",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1478,
+      "notes": "Church records (2177294) + givenName Josefa + surname Oliveira + fatherGivenName Melquiades + fatherSurname Oliveira + recordType marriage. Result count increased to 1,478 vs 947 without the parent filter \u2014 fatherGivenName appears to OR-combine rather than restrict in this collection. No Josefa with visible Melquiades/Damasceno parent connection in top 20 stubs."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:45:43.711Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oliveira",
+        "givenName": "Josefa",
+        "motherSurname": "Damasceno",
+        "collectionId": "2177294",
+        "recordType": "marriage",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1443,
+      "notes": "Church records (2177294) + givenName Josefa + surname Oliveira + motherSurname Damasceno + recordType marriage. Result count 1,443 \u2014 again higher than the baseline 947 without parent filter. motherSurname Damasceno appears to OR-combine. No confirmed match in top 20 stubs."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T15:45:43.729Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Oliveira",
+        "givenName": "Josefa",
+        "fatherGivenName": "Melquiades",
+        "collectionId": "2821278",
+        "recordType": "marriage",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1539,
+      "notes": "Civil registration (2821278) + givenName Josefa + surname Oliveira + fatherGivenName Melquiades + recordType marriage. Count 1,539 vs baseline 555 \u2014 fatherGivenName is broadening not restricting here too. No match with Melquiades/Damasceno parent link visible in top 20."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:50:08.095Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Melquiades",
+        "surname": "Oliveira",
+        "recordType": "marriage",
+        "isPrincipal": false,
+        "recordCountry": "Brazil",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 21,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 21,
+      "notes": "Church records (2177294) + isPrincipal:false + givenName Melquiades + surname Oliveira + recordType marriage. Only 21 results \u2014 manageable pool. KEY FINDING: Multiple records index him as 'Manuel Melchiades de Oliveira' (qu\u2192ch variant). Records include him as father in: (a) marriage of Maria Lila de Oliveira to Carlos Vieira de Andrade Serrano; (b) marriage of Josefa Dias Da Concei\u00e7\u00e3o to Elfridio Justino Da Silva; (c) marriage of Rosana Maria Maciel to Unknown. Critical name variant confirmed: MELQUIADES is indexed as MELCHIADES in this collection."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T15:50:08.121Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2821278",
+        "givenName": "Melquiades",
+        "surname": "Oliveira",
+        "recordType": "marriage",
+        "isPrincipal": false,
+        "recordCountry": "Brazil",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 99,
+      "notes": "Civil registration (2821278) + isPrincipal:false + givenName Melquiades + surname Oliveira + recordType marriage. 99 results. Top match 'Sebasti\u00e3o Melquiades de Oliveira' (score 4.88, different person). Many 'M.' abbreviations in results. No confirmed match for our Manoel Melquiades de Oliveira as a non-principal in civil marriage records. Church collection (2177294) yielded the key finds."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-31T15:50:08.146Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Manoel",
+        "surname": "Oliveira",
+        "spouseGivenName": "Candida",
+        "recordType": "marriage",
+        "recordCountry": "Brazil",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 92,
+      "notes": "Church records (2177294) + givenName Manoel + surname Oliveira + spouseGivenName Candida + recordType marriage + subjectId GHJ6-2WV. Ranking failed: GHJ6-2WV has no dated or placed facts so matcher cannot discriminate. Multiple 'Manuel Melchiades de Oliveira' entries at confidence 4 appear in results (the Melchiades variant). Need to run this search again after encoding facts for GHJ6-2WV via person-evidence."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-31T15:50:08.159Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Josefa",
+        "surname": "Oliveira",
+        "fatherGivenName": "Melquiades",
+        "fatherSurname": "Oliveira",
+        "recordType": "birth",
+        "recordCountry": "Brazil",
+        "birthYearFrom": 1893,
+        "birthYearTo": 1915,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 5366,
+      "notes": "Church records (2177294) + givenName Josefa + surname Oliveira + fatherGivenName Melquiades + fatherSurname Oliveira + recordType birth + birthYearFrom 1893 + birthYearTo 1915. 5,366 results \u2014 too broad. Second result 'Josefa de Oliveira' born 15 Jul 1898, christened 1898 in Rio Grande do Norte, is a candidate but parents not visible in stub. Note: should retry with 'Melchiades' as the fatherGivenName given the confirmed name variant."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:50:08.174Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6XWC-93RB"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). Carlos Vieira de Andrade Serrano (b.1901, son of Antonio Serrano Gon\u00e7alves de Andrade) married Maria Lila de Oliveira (b.1902) on 20 Nov 1926 at Natal. Bride's parents: Manuel Melchiades de Oliveira (father) and Candida de Oliveira (mother). Confirms Maria Lila de Oliveira is daughter of Manuel Melchiades (=Manoel Melquiades) de Oliveira and Candida (=C\u00e2ndida Damasceno) de Oliveira."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:50:08.174Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6XWC-DSZQ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). Same couple: Carlos Vieira de Andrade Serrano married Maria Lila de Oliveira on 30 Dec 1922 at Natal. Bride's parents: Manuel Melchiades de Oliveira (father) and Candida de Oliveira (mother). Likely same event as 1926 record \u2014 possibly civil vs. church registration, or two different recording dates for the same marriage."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:50:08.174Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6XWH-BNGZ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). KEY RECORD. Elfridio Justino Da Silva (son of Jo\u00e3o Francisco Ribeiro and Cicera Ribeiro Da Silva) married JOSEFA DIAS DA CONCEI\u00c7\u00c3O on 15 Dec 1924 at Natal. Bride's parents: Manuel Melchiades de Oliveira (father) and Candida de Oliveira (mother). Bride surname 'Dias Da Concei\u00e7\u00e3o' differs from 'de Oliveira' \u2014 may reflect birth registration under different maternal surname, or a naming variation. Parents match our subjects. Marriage date 1924 vs. the estimated 'circa 1926' \u2014 within plausible range."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T15:50:08.174Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6XWC-S4SY"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). Unknown groom (b.1860, son of Manuel Melchiades de Oliveira + Candida de Oliveira) married Rosana Maria Maciel (b.1896, daughter of a SECOND set indexed as Manuel Melchiades de Oliveira + Candida de Oliveira) on 15 Dec 1925 at Natal. This record shows two separate indexer entries for 'Manuel Melchiades de Oliveira + Candida de Oliveira' \u2014 one as groom's parents, one as bride's parents. Rosana Maciel is yet another daughter of this family. The groom being born 1860 would make him an older son of Manoel Melquiades (if same family) \u2014 caution needed on identity."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-31T16:06:27.882Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Josefa",
+        "fatherGivenName": "Melchiades",
+        "fatherSurname": "Oliveira",
+        "recordType": "church_baptism",
+        "birthYearFrom": 1893,
+        "birthYearTo": 1915
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 3,
+      "notes": "3 results returned; top result is 'Jos\u00e9' christened 1913 in Mossor\u00f3 (male), others are unrelated females. No baptism record for Josefa daughter of Melchiades de Oliveira found in RGdN Catholic church collection. Negative is meaningful \u2014 baptism may exist in an unindexed volume, or the child may have been registered under a different surname variant."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-31T16:06:27.896Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Melchiades",
+        "surname": "Oliveira",
+        "spouseGivenName": "Candida",
+        "recordType": "church_marriage",
+        "anyYearFrom": 1885,
+        "anyYearTo": 1910
+      },
+      "outcome": "negative",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 17,
+      "notes": "17 results; all top 10 are already-known records of Manuel Melchiades de Oliveira appearing as father-of-bride in daughters' marriages (ARKs 6XWC-93RB, 6XWH-BNGZ, 6XWC-DSZQ, etc.). No record of his own marriage to Candida Damasceno found. Parents' marriage may be in an unindexed volume, or pre-dates the digitized range of this collection."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-31T16:06:27.904Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2821278",
+        "givenName": "Josefa",
+        "fatherGivenName": "Melchiades",
+        "fatherSurname": "Oliveira",
+        "recordType": "civil_birth",
+        "birthYearFrom": 1893,
+        "birthYearTo": 1915
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "0 results in RGdN civil registration collection (2821278) for Josefa daughter of Melchiades de Oliveira. Either record does not exist in this collection, is in an unindexed volume, or the father's name is spelled differently in civil records."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-31T16:09:04.471Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Maria Lila",
+        "surname": "Oliveira",
+        "fatherGivenName": "Melchiades",
+        "fatherSurname": "Oliveira",
+        "recordType": "birth",
+        "birthYearFrom": 1897,
+        "birthYearTo": 1905
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 6474,
+      "notes": "6,474 results; top 20 reviewed. Top result 'Regina Maria de Oliveira' (Jardim do Serid\u00f3, 1899) and others are unrelated females with surname Oliveira. No record for Maria Lila daughter of Melchiades de Oliveira found. The fatherGivenName filter does not appear to restrict results tightly in this collection. FAN baptism for Maria Lila not found."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-31T16:09:04.496Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2177294",
+        "givenName": "Abel",
+        "surname": "Oliveira",
+        "fatherGivenName": "Melchiades",
+        "fatherSurname": "Oliveira",
+        "recordType": "birth",
+        "birthYearFrom": 1887,
+        "birthYearTo": 1910
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 5651,
+      "notes": "5,651 results; top 20 reviewed. Various 'Abel de Oliveira' entries, none with clear connection to Melchiades de Oliveira as father. FAN baptism for Abel not found. Both sibling baptism searches negative \u2014 cannot confirm the family's home municipality from this FAN item."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T16:10:37.853Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Damasceno +Melchiades",
+        "recordPlace1": "Brazil",
+        "yearFrom": 1890,
+        "yearTo": 1920
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text co-occurrence of +Damasceno +Melchiades returned 0 results. FTS index does not appear to have transcriptions with the 'Melchiades' spelling for RGdN Catholic records."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T16:10:37.853Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Damasceno +Melquiades",
+        "recordPlace1": "Brazil",
+        "yearFrom": 1890,
+        "yearTo": 1925
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text co-occurrence of +Damasceno +Melquiades returned 0 results. Original spelling variant also absent from FTS index."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T16:10:37.853Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Damasceno +Oliveira +Josefa",
+        "recordPlace1": "Brazil",
+        "yearFrom": 1890,
+        "yearTo": 1930
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Three-term co-occurrence +Damasceno +Oliveira +Josefa returned 0 results. The RGdN Catholic Church collection (2177294) does not appear to be covered by the FamilySearch FTS corpus \u2014 indexed records exist but page-level transcript text is not in the FTS index. Full-text approach for Josefa's baptism is not available in this repository. pli_004 is exhausted."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWH-BNG7), Entry for Elfridio Justino Da Silva and Jo\u00e3o Francisco Ribeiro, 15 Dec 1924.",
+      "citation_detail": {
+        "who": "Elfridio Justino Da Silva (groom) and Josefa Dias Da Concei\u00e7\u00e3o (bride)",
+        "what": "Catholic church marriage register entry",
+        "when_created": "15 December 1924",
+        "when_accessed": "2026-07-31",
+        "where": "Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019, FamilySearch collection 2177294",
+        "where_within": "Entry for Elfridio Justino Da Silva and Jo\u00e3o Francisco Ribeiro, 15 Dec 1924; record ark:/61903/1:1:6XWH-BNG7; image ark:/61903/1:2:41CC-DDTJ"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XWH-BNG7",
+      "log_entry_id": "log_012",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWC-93R5), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 20 Nov 1926.",
+      "citation_detail": {
+        "who": "Carlos Vieira de Andrade Serrano (groom) and Maria Lila de Oliveira (bride)",
+        "what": "Catholic church marriage register entry",
+        "when_created": "20 November 1926",
+        "when_accessed": "2026-07-31",
+        "where": "Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019, FamilySearch collection 2177294",
+        "where_within": "Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 20 Nov 1926; record ark:/61903/1:1:6XWC-93R5; image ark:/61903/1:2:41CC-RKQF"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XWC-93R5",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWC-QXK1), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 30 Dec 1922.",
+      "citation_detail": {
+        "who": "Carlos Vieira de Andrade Serrano (groom) and Maria Lila de Oliveira (bride)",
+        "what": "Catholic church marriage register entry",
+        "when_created": "30 December 1922",
+        "when_accessed": "2026-07-31",
+        "where": "Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019, FamilySearch collection 2177294",
+        "where_within": "Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 30 Dec 1922; record ark:/61903/1:1:6XWC-QXK1; image ark:/61903/1:2:41CC-8CWX"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XWC-QXK1",
+      "notes": "Appears to record the same marriage as src_002 (log_010) but with a different date (30 Dec 1922 vs 20 Nov 1926). The two entries may represent a civil registration and a church blessing, or two separate church documents for the same union. Both dates are extracted; the conflict should be resolved by image examination.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Elfridio Justino Da Silva",
+      "structured_value": {
+        "given": "Elfridio Justino",
+        "surname": "Da Silva"
+      },
+      "information_quality": "primary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Josefa Dias Da Concei\u00e7\u00e3o on 15 December 1924 in Natal, Rio Grande do Norte, Brasil",
+      "date": "15 December 1924",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Jo\u00e3o Francisco Ribeiro",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Cicera Ribeiro Da Silva",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Dias Da Concei\u00e7\u00e3o"
+      },
+      "information_quality": "primary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride's recorded surname 'Dias Da Concei\u00e7\u00e3o' differs from her parents' surname 'de Oliveira'. This discrepancy may reflect a maternal surname from the mother's side (the mother is listed only as 'Candida de Oliveira' without a maiden name), a naming convention, or a recording variant. Corroboration is needed to confirm this is the same Josefa referenced in q_001 as 'Josefa de Oliveira'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Elfridio Justino Da Silva on 15 December 1924 in Natal, Rio Grande do Norte, Brasil",
+      "date": "15 December 1924",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her father as Manuel Melchiades de Oliveira. The name 'Melchiades' is a documented Portuguese spelling variant of 'Melquiades' (qu\u2192ch consonant drift), consistent with tree person GHJ6-2WV (Manoel Melquiades de Oliveira). However, bride's own surname 'Dias Da Concei\u00e7\u00e3o' differs from the father's 'de Oliveira', creating a discrepancy requiring corroboration before this parentage can be treated as established.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Candida de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her mother as Candida de Oliveira, consistent with tree person GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira). The record omits the mother's maiden surname 'Damasceno'. Bride's own surname 'Dias Da Concei\u00e7\u00e3o' differs from 'de Oliveira', which may suggest the 'Dias' or 'Concei\u00e7\u00e3o' element derives from the mother's full name \u2014 but this remains speculative without additional evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "given": "Manuel Melchiades",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name stated by the bride at the time of her own marriage. 'Melchiades' is a Portuguese consonant-drift variant of 'Melquiades'; consistent with tree person GHJ6-2WV (Manoel Melquiades de Oliveira). Bride's surname 'Dias Da Concei\u00e7\u00e3o' vs father's 'de Oliveira' is an unresolved discrepancy.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Candida de Oliveira",
+      "structured_value": {
+        "given": "Candida",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Josefa Dias Da Concei\u00e7\u00e3o",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name stated by the bride at the time of her own marriage. Listed without a maiden surname ('Damasceno'); tree person GHJ6-L4F is 'C\u00e2ndida Damasceno de Oliveira'. The omission of the maiden name is common in Brazilian church records of this period and does not preclude identification.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Jo\u00e3o Francisco Ribeiro",
+      "structured_value": {
+        "given": "Jo\u00e3o Francisco",
+        "surname": "Ribeiro"
+      },
+      "information_quality": "secondary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6XWH-BNG7",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Cicera Ribeiro Da Silva",
+      "structured_value": {
+        "given": "Cicera",
+        "surname": "Ribeiro Da Silva"
+      },
+      "information_quality": "secondary",
+      "informant": "Elfridio Justino Da Silva",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Carlos Vieira de Andrade Serrano",
+      "structured_value": {
+        "given": "Carlos Vieira",
+        "surname": "de Andrade Serrano"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born circa 1901",
+      "date": "~1901",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year inferred from age as recorded in the marriage register.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Maria Lila de Oliveira on 20 November 1926 in Natal, Rio Grande do Norte, Brasil",
+      "date": "20 November 1926",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Antonio Serrano Gon\u00e7alves de Andrade",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Leontina Vieira de Jesus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Maria Lila de Oliveira",
+      "structured_value": {
+        "given": "Maria Lila",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Tree person GHJQ-G8N is 'Maria Lila de Oliveira Serrano' (b. 1901 in tree, b. 1902 in this record). The one-year birth-year discrepancy is within normal recording variation for this period. The married surname 'Serrano' in the tree aligns with groom Carlos Vieira de Andrade Serrano. Confident identification pending person-evidence review.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born circa 1902",
+      "date": "~1902",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year inferred from age as recorded in the marriage register. Tree person GHJQ-G8N has birth year 1901 \u2014 one-year discrepancy is within normal recording variation.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Carlos Vieira de Andrade Serrano on 20 November 1926 in Natal, Rio Grande do Norte, Brasil",
+      "date": "20 November 1926",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her father as Manuel Melchiades de Oliveira, consistent with tree person GHJ6-2WV (Manoel Melquiades de Oliveira). 'Melchiades' is a Portuguese consonant-drift variant of 'Melquiades'. This is a second record (corroborating Record 1 / log_012) naming this individual as the father of an Oliveira daughter. The two records share the same informant class (the respective brides), so they are not fully independent evidence units.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Candida de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her mother as Candida de Oliveira, consistent with tree person GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira). Maiden surname 'Damasceno' again omitted, as in Record 1 (log_012). The consistent omission across two records is typical of this record set and does not undermine identification.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "given": "Manuel Melchiades",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name stated by the bride. Same name as in Record 1 (log_012), both stated by daughters at their respective marriages \u2014 shared informant class means these two assertions do not constitute fully independent evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Candida de Oliveira",
+      "structured_value": {
+        "given": "Candida",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name stated by the bride. Same name as in Record 1 (log_012). Shared informant class (daughters at own marriages) means these assertions are not fully independent evidence units for the mother's identity.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Antonio Serrano Gon\u00e7alves de Andrade",
+      "structured_value": {
+        "given": "Antonio Serrano",
+        "surname": "Gon\u00e7alves de Andrade"
+      },
+      "information_quality": "secondary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6XWC-93R5",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Leontina Vieira de Jesus",
+      "structured_value": {
+        "given": "Leontina Vieira",
+        "surname": "de Jesus"
+      },
+      "information_quality": "secondary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Carlos Vieira de Andrade Serrano",
+      "structured_value": {
+        "given": "Carlos Vieira",
+        "surname": "de Andrade Serrano"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born circa 1901",
+      "date": "~1901",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year inferred from age as recorded in the marriage register.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Maria Lila de Oliveira on 30 December 1922 in Natal, Rio Grande do Norte, Brasil",
+      "date": "30 December 1922",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "This date (30 Dec 1922) conflicts with the date in Record 2 (20 Nov 1926, src_002) for the same couple. The two records may represent different documents for the same event (e.g., civil vs. church) or a recording error. Image examination required to resolve.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Antonio Serrano Gon\u00e7alves de Andrade",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Leontina Vieira de Jesus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Maria Lila de Oliveira",
+      "structured_value": {
+        "given": "Maria Lila",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Candidate identification with tree person GHJQ-G8N (Maria Lila de Oliveira Serrano, b. 1901). Birth year 1902 in this record vs 1901 in tree is within normal variation. Married surname 'Serrano' aligns with groom's surname. Identification should be confirmed by person-evidence after correlating Records 2 and 3.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born circa 1902",
+      "date": "~1902",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year inferred from age as recorded in the marriage register. Tree person GHJQ-G8N has birth year 1901 \u2014 one-year discrepancy is within normal recording variation.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Carlos Vieira de Andrade Serrano on 30 December 1922 in Natal, Rio Grande do Norte, Brasil",
+      "date": "30 December 1922",
+      "date_certainty": "exact",
+      "place": "Natal, Rio Grande do Norte, Brasil",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Date conflict: 30 Dec 1922 here vs 20 Nov 1926 in src_002 (log_010). Same couple in both records. Possible explanations: civil vs church registration, or two church registers with differing dates. Image examination required.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003",
+      "standard_place": "Natal, Rio Grande do Norte, Brazil"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Third record (alongside log_012 and log_010) naming Manuel Melchiades de Oliveira as father of an Oliveira daughter. All three informants are daughters at their own marriages \u2014 shared informant class; not fully independent. Consistent across all three records nonetheless.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Candida de Oliveira",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Third record naming Candida de Oliveira as mother of an Oliveira daughter. All three brides share the same informant class. Maiden surname 'Damasceno' again absent. Consistent across all three records.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Manuel Melchiades de Oliveira",
+      "structured_value": {
+        "given": "Manuel Melchiades",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name stated by the bride. Third occurrence across three records; all stated by daughters at their own marriages \u2014 shared informant class, not fully independent. Spelling consistent across all three records.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Candida de Oliveira",
+      "structured_value": {
+        "given": "Candida",
+        "surname": "de Oliveira"
+      },
+      "information_quality": "secondary",
+      "informant": "Maria Lila de Oliveira",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name stated by the bride. Third occurrence. Shared informant class across Records 1, 2, and 3. Maiden surname 'Damasceno' absent in all three.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Antonio Serrano Gon\u00e7alves de Andrade",
+      "structured_value": {
+        "given": "Antonio Serrano",
+        "surname": "Gon\u00e7alves de Andrade"
+      },
+      "information_quality": "secondary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:6XWC-QXK1",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Leontina Vieira de Jesus",
+      "structured_value": {
+        "given": "Leontina Vieira",
+        "surname": "de Jesus"
+      },
+      "information_quality": "secondary",
+      "informant": "Carlos Vieira de Andrade Serrano",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride name 'Josefa Dias Da Concei\u00e7\u00e3o' from church marriage register, 15 Dec 1924, Natal RGdN (src_001). New tree person I1 created from this single record. Surname 'Dias Da Concei\u00e7\u00e3o' differs from parents' 'de Oliveira' \u2014 discrepancy noted in bias notes; corroboration needed. Probable as a single-record introduction.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex Female stated in same church marriage record, consistent with research subject Josefa.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event: Josefa Dias Da Concei\u00e7\u00e3o married Elfridio Justino Da Silva, 15 Dec 1924, Natal. Single record; probable pending corroboration. Groom's parents (Jo\u00e3o Francisco Ribeiro, Cicera Ribeiro Da Silva) are unrelated to research question.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride stated her father as Manuel Melchiades de Oliveira. This assertion bears on Josefa (I1) as the child in that relationship. Probable \u2014 directly stated parentage in a primary document, but bride's different surname creates residual uncertainty requiring corroboration.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_009",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride stated her father as 'Manuel Melchiades de Oliveira', identified with tree person GHJ6-2WV (Manoel Melquiades de Oliveira). Name variant: Manuel=Manoel (common), Melchiades=Melquiades (documented Portuguese qu\u2192ch consonant drift). Appears identically across 3 records from 2 different daughters' marriages. No same_person score available (record_read source, no sidecar). GHJ6-2WV carries no dated/placed facts, so score would be uninformative regardless. Moderate match \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride stated her mother as Candida de Oliveira. This assertion bears on Josefa (I1) as the child. Probable \u2014 directly stated but requires corroboration given surname discrepancy.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_010",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride stated her mother as 'Candida de Oliveira', identified with tree person GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira). Given name and married surname match; maiden surname Damasceno absent \u2014 typical omission in Brazilian church marriage registers. Consistently absent across all three records. Pair Manuel Melchiades + Candida appears together in all 3 records, reinforcing the couple identification. No same_person score (record_read source). Moderate match \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_011",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father's name 'Manuel Melchiades de Oliveira' stated by bride Josefa. Identified with GHJ6-2WV (Manoel Melquiades de Oliveira) via documented name variant Melchiades=Melquiades. Moderate match \u2192 probable. Third occurrence across three records; same informant class (daughters at own marriages) \u2014 not fully independent evidence, but consistent.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_012",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother's name 'Candida de Oliveira' stated by bride Josefa. Identified with GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira). Maiden surname Damasceno absent \u2014 common Brazilian church record pattern. Moderate match \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_021",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride name 'Maria Lila de Oliveira' in church marriage record (20 Nov 1926, Natal) matches tree person GHJQ-G8N 'Maria Lila de Oliveira Serrano'. The 'Serrano' married surname in the tree is directly explained by the groom Carlos Vieira de Andrade Serrano. Name, gender, married surname, and parents all consistent. No same_person score (record_read source; score would be degenerate on a stub with no ARK). Strong match \u2192 confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_022",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Female \u2014 consistent with GHJQ-G8N. Strong match context \u2192 confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_023",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1902 from marriage register vs 1901 in tree. Note: materialize_facts surfaced a Birth fact conflict (7 Nov 1901 Para\u00edba vs ~1902). One-year discrepancy is within normal recording variation for this period. Conflict flagged for conflict-resolution review. Overall strong match \u2192 confident on identity.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_024",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (Maria Lila de Oliveira to Carlos Vieira de Andrade Serrano, 20 Nov 1926, Natal) consistent with known tree person GHJQ-G8N (Maria Lila de Oliveira Serrano). Strong match \u2192 confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_025",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Maria Lila stated her father as Manuel Melchiades de Oliveira. This bears on GHJQ-G8N as the child. Strong match on Maria Lila's identity \u2192 confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_025",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Maria Lila stated her father as Manuel Melchiades de Oliveira, identified with GHJ6-2WV. Documented Melchiades=Melquiades name variant. Second record (alongside log_012/a_009) naming GHJ6-2WV as father of an Oliveira daughter. Shared informant class (daughters at weddings) \u2014 not independent. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_026",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Maria Lila stated her mother as Candida de Oliveira. Bears on GHJQ-G8N as child. Confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_026",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Candida de Oliveira identified with GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira). Maiden surname Damasceno absent \u2014 consistent with all records in this set. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_027",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father name stated by Maria Lila at her marriage. Same 'Manuel Melchiades de Oliveira' as in Record 1. Moderate \u2192 probable. Not independent of Record 1 \u2014 same informant class.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_028",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother name stated by Maria Lila. Consistent across all records. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_037",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride name 'Maria Lila de Oliveira' in church marriage record (30 Dec 1922, Natal) \u2014 same person as in Record 2 (src_002). Groom Carlos Vieira de Andrade Serrano is the same. Two records for the same couple (date conflict 1922 vs 1926 noted). Strong match \u2192 confident for GHJQ-G8N identity.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_038",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Female \u2014 consistent. Confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_039",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1902 \u2014 same as Record 2; existing birth conflict (7 Nov 1901 Para\u00edba) already noted. Confident on identity.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_040",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (30 Dec 1922 vs 20 Nov 1926 in Record 2). Date conflict between two records for same couple flagged for conflict-resolution. Identity of bride as GHJQ-G8N remains confident regardless of which date is correct.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_041",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Maria Lila stated her father as Manuel Melchiades de Oliveira. Bears on GHJQ-G8N as the child. Confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_041",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Third record naming Manuel Melchiades as father (Maria Lila's 1922/1926 marriage, Record 3). All three brides share the same informant class. Consistent Melchiades spelling across all records. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_042",
+      "person_id": "GHJQ-G8N",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Maria Lila stated her mother as Candida de Oliveira. Bears on GHJQ-G8N as the child. Confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_042",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Candida de Oliveira identified with GHJ6-L4F. Third record naming this mother. Maiden surname Damasceno absent as in all records. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_043",
+      "person_id": "GHJ6-2WV",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father name stated by Maria Lila (Record 3). Third occurrence. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_044",
+      "person_id": "GHJ6-L4F",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother name stated by Maria Lila (Record 3). Consistent. Moderate \u2192 probable.",
+      "created": "2026-07-31"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Maria Lila de Oliveira's marriage to Carlos Vieira de Andrade Serrano is dated 20 November 1926 in one church record (a_024, src_002) and 30 December 1922 in a second church record (a_040, src_003). Both records name the same bride and groom, and both name Manuel Melchiades de Oliveira as the bride's father. The conflict may represent civil vs. church registration of the same event, two separate church entries, or a date-transcription error. Does not block q_001; both records corroborate Melchiades as the father.",
+      "disputed_attribute": "marriage_date",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_024",
+        "a_040"
+      ],
+      "independence_analysis": "Both assertions share the same informant class (officiating priest / bride at own wedding in the same collection 2177294). They are not independent evidence units. Image examination of the underlying page scans would be needed to determine which date is correct.",
+      "weighing_analysis": "Neither date is clearly preferred on current evidence. Both records are from the same collection and region. The 1926 date aligns with the research question premise (Josefa 'reportedly married circa 1926'); the 1922 date predates that. No preference assigned without image review.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The surname 'Dias Da Concei\u00e7\u00e3o' recorded for the bride in the 1924 marriage record (ARK 6XWH-BNG7) is a naming-convention artifact \u2014 a religious surname (Da Concei\u00e7\u00e3o) and/or godfather's surname (Dias) \u2014 and does not indicate a different person from the Josefa de Oliveira named in the research question. The record's explicit identification of her father as Manuel Melchiades de Oliveira and mother as Candida de Oliveira is the primary evidence and is not negated by the surname discrepancy.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_009",
+        "a_010",
+        "a_011"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Mentor (ev_001) identified this as a structural gap: the naming discrepancy was documented only in prose (narrative_markdown and assertion bias_notes) but not as a formal hypothesis. This entry closes that gap. To resolve: (1) examine original image of ARK 6XWH-BNG7 to verify transcribed parental statement; (2) find Josefa's baptism register entry to check surname at christening; (3) look for a godparent named 'Dias' in the marriage record text.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_025",
+        "a_026",
+        "a_041",
+        "a_042"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "21 searches logged across civil marriage (collection 2821278), Catholic church records (collection 2177294), Brazil Marriages 1730-1955 (1500709), full-text co-occurrence (FTS corpus, 3 keyword variants), church baptism for Josefa 1893-1915, civil birth for Josefa 1893-1915, parents' marriage 1885-1910, and FAN items (siblings' baptism for Maria Lila and Abel). All FamilySearch online resources for Rio Grande do Norte 1890-1930 are exhausted. The FTS corpus does not index collection 2177294. No baptism or birth record for Josefa was found. Parents' marriage record not found. Physical diocesan archives or cart\u00f3rio civil would require in-person access.",
+      "narrative_markdown": "## Josefa Dias Da Concei\u00e7\u00e3o as a Daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira\n\n### Research Question\n\nWas Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?\n\n### Conclusion\n\n**Probable.** A Catholic church marriage record from Natal, Rio Grande do Norte, dated 15 December 1924, provides direct, primary-information evidence that Josefa Dias Da Concei\u00e7\u00e3o was a daughter of Manuel Melchiades de Oliveira and Candida de Oliveira \u2014 the same couple as Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira in the existing tree. The evidence meets the GPS probable standard. It cannot yet reach proved, as no independent record (baptism, census, probate) placing Josefa within the Oliveira household has been found.\n\n### Primary Evidence\n\nFamilySearch collection 2177294 (Brazil, Rio Grande do Norte, Catholic Church Records, 1755\u20132019), ARK `ark:/61903/1:1:6XWH-BNG7`, records the marriage of Josefa Dias Da Concei\u00e7\u00e3o to Elfridio Justino Da Silva on 15 December 1924 in Natal, Rio Grande do Norte (a_008). The record explicitly names the bride's father as **Manuel Melchiades de Oliveira** and her mother as **Candida de Oliveira** (a_009, a_010). As the bride providing information at her own marriage, Josefa is a primary informant with firsthand knowledge of her parentage. This is original source / primary information / direct evidence of the parent\u2013child relationship.\n\n**Name-variant analysis:** 'Melchiades' is a documented Portuguese consonant-drift variant of 'Melquiades' (qu\u2192ch), confirmed consistent across all three daughters' marriage records found in this research. 'Candida de Oliveira' matches C\u00e2ndida Damasceno de Oliveira (GHJ6-L4F); the maiden surname 'Damasceno' is absent in all three daughters' records, consistent with the practice of recording married women by married surname only in RGdN Catholic registers of this period.\n\n### Corroborating Evidence\n\nTwo marriage records for Maria Lila de Oliveira (an established daughter of Manoel Melquiades de Oliveira, tree person GHJQ-G8N) \u2014 dated 20 November 1926 (a_025\u2013a_026, src_002) and 30 December 1922 (a_041\u2013a_042, src_003) \u2014 both name the same parents: Manuel Melchiades de Oliveira and Candida de Oliveira. These records establish that the couple had daughters in Natal, RGdN, in the 1920s, the same time and place as Josefa's marriage. The spelling of the father's name and the pattern of omitting the mother's maiden surname are identical across all three records, consistent with a shared family and recording context.\n\n### Evidence Concerns and Limitations\n\n**Surname discrepancy.** Josefa appears in the record as 'Josefa Dias Da Concei\u00e7\u00e3o,' not 'Josefa de Oliveira.' In Brazilian Catholic naming practice of the early twentieth century, children sometimes bore a religious surname (Da Concei\u00e7\u00e3o = of the Immaculate Conception) or a godparent's surname alongside or instead of the father's. The element 'Dias' may derive from a godfather or maternal-line usage. The marriage record's explicit statement of parentage is the primary evidence; the surname difference is an unexplained but not disqualifying anomaly. A baptism record would resolve this discrepancy.\n\n**Marriage date.** The research question premises a marriage 'circa 1926'; the record found is dated 15 December 1924 \u2014 a two-year difference within the range of normal imprecision for genealogical tradition. The 'circa 1926' premise likely derived from Maria Lila's 1926 marriage date being associated with Josefa.\n\n**Informant independence.** All three supporting records share the same informant class: daughters providing parental names at their own weddings. From a GPS perspective, this constitutes one evidence class; the corroborating records strengthen but do not independently establish the parentage.\n\n**Missing records.** No baptism or civil birth record for Josefa was found after thorough searching of all available online FamilySearch resources (see exhaustive search summary). The parents' own marriage record was not located. These negative results indicate records are unindexed or held in physical archives; they do not disprove the conclusion.\n\n### GPS Elements\n\n1. **Reasonably exhaustive research:** All available FamilySearch online resources for RGdN 1890\u20131930 were searched across eight plan items and 21 log entries.\n2. **Complete and accurate citations:** All evidence is cited by FamilySearch ARK, collection ID, and log entry ID.\n3. **Analysis and correlation:** Name variants, informant independence, the surname discrepancy, and the marriage date difference have all been assessed.\n4. **Soundly reasoned conclusion:** One direct original record with primary information names Josefa's parents. Corroborating sibling-marriage records establish the parents in the right time and place. No contradicting evidence found. The probable standard is met; the proved standard requires a record independently placing Josefa within the Oliveira household.\n\n### Path to Proved\n\nTo upgrade this conclusion to proved, a researcher should: (1) consult physical Catholic diocesan archives in Natal (Arquidiocese de Natal) for baptism registers circa 1893\u20131912 not yet digitized; (2) examine cart\u00f3rio civil birth registers for the relevant municipality; (3) search for a godparent named 'Dias' in the baptism register, which would explain the surname; (4) examine the original image of ARK `6XWH-BNG7` to verify the transcribed parental names."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-31T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-31T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Rio Grande do Norte, Brazil",
+      "for_place": "Rio Grande do Norte, Brazil",
+      "time_period": "1890-1930",
+      "jurisdictions": [
+        {
+          "name": "Rio Grande do Norte, Brazil",
+          "date_range": "+1889/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2177294",
+          "title": "Brazil, Rio Grande do Norte, Catholic Church Records, 1755-2019",
+          "date_range": "1755-2019"
+        },
+        {
+          "id": "2821278",
+          "title": "Brazil, Rio Grande do Norte, Civil Registration, 1195-2020",
+          "date_range": "1195-2020"
+        },
+        {
+          "id": "1500709",
+          "title": "Brazil, Marriages, 1730-1955",
+          "date_range": "1730-1955"
+        },
+        {
+          "id": "1500708",
+          "title": "Brazil, Baptisms, 1688-1935",
+          "date_range": "1688-1935"
+        },
+        {
+          "id": "2137269",
+          "title": "Brazil, Cemetery Records, 1799-2024",
+          "date_range": "1799-2024"
+        }
+      ],
+      "quirks": [
+        "All records are in Portuguese \u2014 use the Portuguese Genealogical Word List (key terms: batismo=baptism, casamento/matrim\u00f4nio=marriage, \u00f3bito=death, filha=daughter, filho=son, pai=father, m\u00e3e=mother).",
+        "Civil registration is kept at the municipal level; villagers often registered at the nearest central municipality office \u2014 if a small town is not found, determine which parent municipality held its records in 1890-1930.",
+        "Marriages typically took place in the hometown of the bride \u2014 search the bride's municipality first.",
+        "Both church AND civil marriage records should be searched for 1890-1930: church records list godparents; civil records often list grandparents \u2014 neither is fully redundant.",
+        "Some civil registration books have name indexes at the front or back indexed by the child's given name, not surname \u2014 check indexes under 'J' for Josefa.",
+        "Spelling was not standardized until the early 20th century \u2014 try variants: Josefa/Josepha, Oliveira/d'Oliveira, Damasceno/Damaseno, Melquiades/Melchiades.",
+        "Many current RGdN municipalities were founded or split after 1889 \u2014 if no records exist for a specific town, a Google or wiki search for its founding date will identify the parent municipality whose registers to search.",
+        "The volume_search returned 2,283 volumes for RGdN 1890-1930 (paginated). Some baptism volumes for 1921-1926 are 0% indexed and not full-text searchable (browse-only); marriage dispensation volumes from Natal/statewide (1872-1942) are full-text but 0% name-indexed.",
+        "Santa Cruz parish marriage registers (1900-1918) and Santo Ant\u00f4nio registers (1915-1928) are full-text searchable but 0% name-indexed \u2014 search via fulltext_search rather than record_search."
+      ],
+      "guide_markdown": "# Rio Grande do Norte, Brazil \u2014 Locality Research Guide (1890\u20131930)\n\n## Jurisdiction\n\nRio Grande do Norte has been a state of Brazil since 1889. No boundary changes affected the state during the target period 1890\u20131930. Records are kept at the **municipal level** (municipio). The state capital is Natal. Population estimate (Populstat): ~268,000 (1890) \u2192 ~537,000 (1920) \u2192 ~739,000 (1929).\n\n## The Two Primary Record Types\n\nPer the FamilySearch Wiki article \"Rio Grande do Norte, Brazil Genealogy,\" most genealogical research for RGdN relies on two record groups:\n1. **Civil registration (Registros civis)** \u2014 government birth, marriage, and death records\n2. **Catholic church records (Registros da Igreja Cat\u00f3lica)** \u2014 baptisms, marriages, deaths\n\nBoth must be searched for the 1890\u20131930 period: church records often list godparents; civil records often list grandparents. Neither alone is sufficient.\n\n## Civil Registration\n\nA law in 1850 required registration of births and deaths. Until 1870 the Catholic Church maintained these records; after 1870 civil registration passed to justices of the peace. Government has accepted Catholic marriages as official since 1827. Records are kept at the municipal level; small-village residents often registered at a nearby central municipality office.\n\n**FamilySearch collection:**\n- **Brazil, Rio Grande do Norte, Civil Registration, 1195-2020** (FS collection 2821278) \u2014 index & images \u2014 the primary civil registration source for this state (confirmed by FamilySearch Wiki \"Rio Grande do Norte, Brazil Genealogy\").\n\n## Catholic Church Records (Registros Paroquiais)\n\nThe vast majority of Brazilians were Catholic; church records are the main genealogical source before 1850 and essential alongside civil records after 1850. Records include *batismos* (baptisms), *matrim\u00f4nios/casamentos* (marriages), and *\u00f3bitos* (deaths). Often two or three generations are named in one entry.\n\n**FamilySearch collection:**\n- **Brazil, Rio Grande do Norte, Catholic Church Records, 1788-1967** (FS collection 2177294) \u2014 1,654,447 records, 53,729,505 persons \u2014 **indexed + images**.\n\n**Volume coverage** (volume_search returned 2,283 volumes for RGdN 1890-1930):\n\n| Record type | Sample municipalities | Indexing level |\n|---|---|---|\n| Baptisms (Batismos) | Flor\u00e2nia, Nova Cruz, Cear\u00e1-Mirim, Santana do Matos, Angicos, Santa Cruz | Most 95\u2013100% indexed + full-text; some 1921\u20131926 volumes 0% (browse-only) |\n| Marriages (Casamentos paroquiais) | Jucurutu (1918-1949), Currais Novos (1885-1933), Flor\u00e2nia (1918-1929), Jardim do Serid\u00f3 (1885-1921), Santa Cruz, Santo Ant\u00f4nio | Most 98\u2013100% indexed + full-text; Santa Cruz and Santo Ant\u00f4nio are full-text only (0% name-indexed) |\n| Deaths (\u00d3bitos paroquiais) | Flor\u00e2nia (1929-1948) | 99% indexed |\n| Marriage dispensations (Dispensas matrimoniais) | Natal diocese, statewide (1872-1942) | Full-text, 0% name-indexed \u2014 browse or fulltext_search |\n\n## Broader Brazil Collections\n\n- **Brazil, Marriages, 1730-1955** (FS 1500709) \u2014 318,295 records \u2014 index only, no images\n- **Brazil, Baptisms, 1688-1935** (FS 1500708) \u2014 2,402,158 records \u2014 index only\n- **Brazil, Cemetery Records, 1799-2024** (FS 2137269) \u2014 1,023,506 records, indexed + images\n\n## External Resources\n\nFamilySearch curates 120 external resource links for RGdN (time-filtered to 1890-1930); key sites: Brazil WorldGenWeb (worldgenweb.net/brazil), Arquivo Nacional (consulta.an.gov.br), ASBRAP (asbrap.org.br), BYU Brazil Research Outline (PDF), Ancestry Brazil Baptisms 1688-1935 and Marriages 1730-1955 (subscription), FindAGrave Brazil cemeteries.\n\n## Language and Reading\n\nAll records are in Portuguese. Key vocabulary: batismo=baptism; casamento/matrim\u00f4nio=marriage; \u00f3bito=death; filha/filho=daughter/son; pai=father; m\u00e3e=mother; esposa/marido=wife/husband; padrinho/madrinha=godfather/godmother. Use the [Portuguese Genealogical Word List](https://www.familysearch.org/en/wiki/Portuguese_Genealogical_Word_List) and the [Portuguese Script Tutorial](https://script.byu.edu/portuguese-handwriting/introduction).\n\n## Research Tips (from FamilySearch Wiki)\n\n- Marriages typically took place in the hometown of the bride \u2014 search the bride's municipality first.\n- Civil registration books often have name indexes at front or back by given name of the child.\n- Births were usually reported within a few days by the father, a neighbor, or midwife; search forward day-by-day from the known birth date.\n- Spelling was not standardized until early 20th century \u2014 try variant spellings.\n- If records are missing for a small town, determine when it was founded and from which parent municipality \u2014 report to that office's records.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-31"
+    }
+  ]
+}

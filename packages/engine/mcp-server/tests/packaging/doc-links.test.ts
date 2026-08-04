@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   citedMakeTargets,
   citedPaths,
+  citedSlashCommands,
   headingAnchors,
   makefileTargets,
   markdownLinkTargets,
@@ -85,6 +86,37 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
   },
 ];
+
+/**
+ * Slash commands that ship with Claude Code, so no file in this repo defines
+ * them. Listed by name with a reason, the same shape as `KNOWN_ABSENT` — a
+ * regex escape hatch here would exempt the repo's own commands too, which are
+ * the ones that rot.
+ */
+const BUILT_INS: Record<string, string> = {
+  "code-review": "ships with Claude Code; step 6 of docs/task-lifecycle.md",
+  review: "ships with Claude Code; used when reviewing someone else's PR",
+  "security-review": "ships with Claude Code; step 5 of docs/task-lifecycle.md",
+  rewind: "ships with Claude Code; named in step 6's warning about --fix",
+};
+
+/**
+ * Where a repo-defined slash command's body lives. A command resolves if any
+ * root has it: `.claude/commands/` and `.claude/skills/` are this repo's own
+ * Claude Code tooling, and `packages/engine/plugin/skills/` is the shipped
+ * Cowork plugin, whose skills the `.claude/` tooling legitimately names
+ * (`/research` in author-e2e-fixture).
+ */
+const COMMAND_ROOTS = [
+  (name: string) => `.claude/commands/${name}.md`,
+  (name: string) => `.claude/skills/${name}/SKILL.md`,
+  (name: string) => `packages/engine/plugin/skills/${name}/SKILL.md`,
+];
+
+function slashCommandResolves(name: string): boolean {
+  if (name in BUILT_INS) return true;
+  return COMMAND_ROOTS.some((root) => existsSync(join(projectRoot, root(name))));
+}
 
 function walkMarkdown(dir: string, out: string[]): void {
   for (const entry of readdirSync(join(projectRoot, dir)).sort()) {
@@ -177,6 +209,34 @@ describe("doc and .claude/ tooling links", () => {
       missing,
       `${file} tells the reader to run make targets the Makefile does not define: ` +
         `${missing.join(", ")}\nRename the citation or restore the target.`,
+    ).toEqual([]);
+  });
+
+  it.each(files)("%s names only slash commands that still exist", (file) => {
+    const body = readFileSync(join(projectRoot, file), "utf8");
+    const missing = citedSlashCommands(body).filter((c) => !slashCommandResolves(c));
+
+    expect(
+      missing,
+      `${file} tells the reader to run slash commands that resolve to nothing: ` +
+        `${missing.map((c) => `/${c}`).join(", ")}\n` +
+        `A repo command is .claude/commands/<name>.md, .claude/skills/<name>/SKILL.md, ` +
+        `or packages/engine/plugin/skills/<name>/SKILL.md. If it ships with Claude Code, ` +
+        `add it to BUILT_INS in this test with the reason.`,
+    ).toEqual([]);
+  });
+
+  it("keeps no BUILT_INS entry the prose has stopped naming", () => {
+    const cited = new Set(
+      files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
+    );
+    const stale = Object.keys(BUILT_INS).filter((name) => !cited.has(name));
+
+    expect(
+      stale.map((c) => `/${c}`),
+      `these BUILT_INS entries are no longer cited anywhere, so they are exemptions ` +
+        `nobody can see: ${stale.map((c) => `/${c}`).join(", ")}\n` +
+        `Delete them from ${relative(projectRoot, fileURLToPath(import.meta.url))}.`,
     ).toEqual([]);
   });
 
