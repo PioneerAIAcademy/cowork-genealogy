@@ -80,7 +80,10 @@ const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.sli
  * literal leaked the nested `name` up as a top-level field of `Locality`.
  * Every one of those fails loudly, but three of the four fail with the wrong
  * diagnosis, and the last is a false positive — which is how a lint gets
- * disabled. The compiler reads all four correctly.
+ * disabled. The compiler reads all four, with one limit it does not remove:
+ * `node.members` is directly-declared members only, so an `extends` still
+ * reports its inherited fields as missing. That is what the inheritance guard
+ * below asserts against, rather than something this parser handles.
  */
 function interfaceFields(path: string): {
   fields: Map<string, Set<string>>
