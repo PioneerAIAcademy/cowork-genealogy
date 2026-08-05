@@ -182,6 +182,37 @@ describe("rank_search_matches", () => {
     expect(JSON.stringify(facts)).not.toContain("1799");
   });
 
+  // `fact_type` is an OPEN enum, so an assertion carrying "constructor" is
+  // schema-valid. `ASSERTION_FACT_TYPE_TO_TREE[fact_type]` then indexed out the
+  // `Object` function, which is truthy — so the `!treeType` drop-the-unmapped
+  // guard could not fire, and the fact it pushed lost its `type` on the JSON
+  // round-trip into the scorer.
+  it("drops an assertion whose fact_type is an inherited Object.prototype key", async () => {
+    await writeTree(starvedTree);
+    const protoKeys = Object.getOwnPropertyNames(Object.prototype);
+    await writeResearch({
+      person_evidence: protoKeys.map((k, i) => ({
+        id: `pe_${i}`,
+        person_id: "I1",
+        assertion_id: `a_${i}`,
+      })),
+      assertions: protoKeys.map((k, i) => ({
+        id: `a_${i}`,
+        fact_type: k,
+        structured_value: { year: "1858", place: "Memphis, Tennessee" },
+      })),
+    });
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+
+    const sentSubject = scorePairMock.mock.calls[0][2] as any;
+    const facts = sentSubject.persons[0].facts ?? [];
+    expect(facts.filter((f: any) => typeof f.type !== "string")).toEqual([]);
+    expect(facts).toEqual([]);
+  });
+
   it("withholds the ranking when the subject has no dated or placed fact", async () => {
     await writeTree(starvedTree);
     scorePairMock.mockResolvedValue(scoreResult(0.001));
