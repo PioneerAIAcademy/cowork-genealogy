@@ -960,7 +960,7 @@ workbench locally"); this section is the shape.
 | Package | What |
 |---|---|
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
-| `packages/viewer-ui` | the extracted renderer — App, **13 sections**, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
+| `packages/viewer-ui` | the extracted renderer — App, **14 sections**, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
