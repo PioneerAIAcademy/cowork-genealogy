@@ -101,7 +101,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^\.github/workflows/check-runlogs\.yml$'
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
