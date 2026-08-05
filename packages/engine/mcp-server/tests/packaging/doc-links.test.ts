@@ -450,8 +450,14 @@ describe("docs/ cite symbols, not line numbers", () => {
  *    the reader's ability to check the claim.
  *  - **`docs/adrs/`**. An ADR is a dated decision record; "three subagents were
  *    deleted, issue #1161" stays true forever. History, not status.
- *  - **`docs/architecture.md` §9.4**. The one surface whose *job* is tracking
- *    what is unbuilt. It should stay the only one.
+ *
+ * `docs/architecture.md` was exempt on the story that §9.4's job IS tracking.
+ * That did not survive contact: its compliance row was edited twice in 24 hours
+ * purely because a ticket closed, while the gap it describes never moved, and
+ * not one of §9.4's six consumers (`task-reviewer`, `review-ready`,
+ * `fill-ready`, `CLAUDE.md`, and two in-file pointers) reads a ticket number —
+ * they all ask for the gap and its consequence. The `Tracking` column is gone
+ * and the file is in scope like any other.
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
@@ -462,6 +468,7 @@ describe("docs/ cite symbols, not line numbers", () => {
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
+  "docs/architecture.md": 28,
   "docs/specs/e2e-test-spec.md": 17,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
@@ -497,6 +504,7 @@ describe("specs state the fact, not the ticket", () => {
   it("holds the issue-reference ratchet on contract docs", () => {
     const scanned = [
       ...docsMarkdown(projectRoot).filter((f) => f.startsWith("docs/specs/")),
+      "docs/architecture.md",
       "README.md",
       "CLAUDE.md",
     ];
