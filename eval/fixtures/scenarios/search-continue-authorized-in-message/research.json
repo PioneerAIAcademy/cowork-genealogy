@@ -1,0 +1,72 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine why Michael Sheahan relocated to Schuylkill County, Pennsylvania around 1882",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Michael Sheahan's residence and occupation in Schuylkill County corroborate the coal-mining-relocation hypothesis?",
+      "rationale": "A plan is already active for this question with two planned items targeting record types that could directly corroborate residence and occupation in the coal region during the relocation window.",
+      "selection_basis": "hypothesis_test",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-06-01"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census is the closest federal enumeration to the 1882 directory listing already in hand -- it can independently confirm occupation ('miner') and residence in Schuylkill County during the relocation window.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1880-1885",
+          "repository": "FamilySearch",
+          "rationale": "A parish membership or sacramental record independently corroborates residence in the coal region during the relocation window, from a source unrelated to the census.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

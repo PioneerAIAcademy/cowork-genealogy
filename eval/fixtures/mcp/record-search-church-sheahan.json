@@ -1,0 +1,54 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning a Schuylkill County, Pennsylvania church membership record for Michael Sheahan, ~1881. Small bounded fixture authored for ut_search_records_t9p (issue #1319 companion test) -- not carved from a real case.",
+  "args": {
+    "surname": "Sheahan",
+    "givenName": "~Michael",
+    "recordType": "church"
+  },
+  "response": {
+    "query": {
+      "surname": "Sheahan",
+      "givenName": "Michael",
+      "recordType": "church"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "QK7T-CH1",
+        "recordId": "QK7T-CH1",
+        "personName": "Michael Sheahan",
+        "score": 0.78,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QK7T-CH1",
+        "collectionId": "1401638",
+        "collectionTitle": "Pennsylvania, Church and Town Records, 1708-1985",
+        "recordTitle": "Michael Sheahan, parish membership record, Schuylkill County, Pennsylvania, 1881",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Michael", "surname": "Sheahan", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Residence", "date": "1881", "place": "Schuylkill County, Pennsylvania, United States" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

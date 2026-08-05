@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_search_records_t9p",
+    "skill": "search-records",
+    "name": "Don't stop after one search when the plan has more planned items and the message already authorized continuing",
+    "type": "positive",
+    "description": "An active plan has two `planned` items. The user's message asks to execute the plan and explicitly says not to stop between searches. search-records must execute both planned items in the same turn, not stop after the first to ask 'Shall I continue with the next search?' -- the structural companion to research-plan's Step 7 fix for issue #1319. Hand-authored (not mined from a real case) because neither reproduced feedback case showed search-records itself stalling mid-plan; this test guards the documented Step 9 mechanism directly.",
+    "tags": ["execution", "control-flow", "continuation", "search-continue-authorized-in-message"]
+  },
+  "input": {
+    "user_message": "Execute the plan for q_001, and continue with exhaustive research -- don't stop to check in with me between searches.",
+    "scenario": "search-continue-authorized-in-message"
+  },
+  "mcp_fixtures": [
+    "record-search-1880-census-sheahan",
+    "record-search-church-sheahan"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: when an active plan has more than one `planned` item and the invoking message already authorizes continuing through the whole plan, search-records must execute successive planned items in the same turn rather than stopping after one to ask whether to continue.",
+    "pli_002 (church record) is not a self-initiated or ad-hoc idea -- it is already an item in the SAME active plan the user asked to execute. Treating it identically to an ad-hoc idea the skill thought of itself (which correctly does pause) would be a category error.",
+    "Compliant behavior: both pli_001 (census) and pli_002 (church) are executed, logged, and have their plan-item status updated in this turn -- regardless of what each search actually found.",
+    "Non-compliant behavior: only pli_001 is executed, and the turn ends with something like 'Shall I continue with the next search?' or 'More plan items remain -- would you like me to proceed?' despite the user's message already saying to continue without checking in.",
+    "This judges CONTROL FLOW, not search quality -- do not fail this dimension because of imperfect query construction on either search (that is Search strategy's and Tool Arguments' job); judge only whether the skill continued to the second planned item versus stopping to ask despite already having authorization.",
+    "If the skill stops between the two searches for a reason OTHER than re-asking permission already granted -- e.g. an authentication error, or a genuine ambiguity the plan does not resolve -- that is not a violation of this dimension."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 400
+  }
+}

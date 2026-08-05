@@ -1,0 +1,56 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning the 1880 US Census household of Michael Sheahan in Schuylkill County, Pennsylvania, occupation miner. Small bounded fixture authored for ut_search_records_t9p (issue #1319 companion test) -- not carved from a real case.",
+  "args": {
+    "surname": "Sheahan",
+    "givenName": "~Michael",
+    "residenceYearFrom": 1880
+  },
+  "response": {
+    "query": {
+      "surname": "Sheahan",
+      "givenName": "Michael",
+      "residenceYearFrom": 1880,
+      "residenceYearTo": 1880
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "QK7T-S8M",
+        "recordId": "QK7T-S8M",
+        "personName": "Michael Sheahan",
+        "score": 0.91,
+        "sex": "Male",
+        "birthDate": "~1850",
+        "birthPlace": "Ireland",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QK7T-S8M",
+        "collectionId": "1401666",
+        "collectionTitle": "United States Census, 1880",
+        "recordTitle": "Michael Sheahan, Schuylkill County, Pennsylvania",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Michael", "surname": "Sheahan", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Residence", "date": "1880", "place": "Schuylkill County, Pennsylvania, United States" },
+                { "id": "F2", "type": "Occupation", "value": "Miner", "date": "1880" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

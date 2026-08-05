@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_research_plan_q7m",
+    "skill": "research-plan",
+    "name": "Don't stop to ask 'start executing?' when the message already authorized it",
+    "type": "positive",
+    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and then proceed toward execution in the same turn, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing.",
+    "tags": ["planning", "control-flow", "continuation", "from-cowork", "plan-continue-authorized-in-message"]
+  },
+  "input": {
+    "user_message": "Create the research plan for q_001 -- who were Bridget's other children with John Doyle -- and go ahead and start executing it as soon as it's ready. I want this to be exhaustive, so don't stop to check in with me first.",
+    "scenario": "plan-continue-authorized-in-message"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-marriage-records",
+    "wiki-search-pennsylvania-records",
+    "wiki-search-pennsylvania-probate",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
+    "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
+    "After writing a plan for q_001, the skill must NOT end its turn on an open question like 'Would you like me to start executing this plan?' when the invoking message already answered that question. Ending on that question despite the prior authorization is the specific failure this test guards against -- score Correctness low if this happens.",
+    "Correct behavior is to proceed toward execution in the same turn: either invoke Skill('search-records') directly, or clearly state the plan is now being executed / handed off, rather than posing the decision back to the user as something still open.",
+    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
+    "If the skill asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) that is not a re-ask of the already-answered 'should I start executing' question, that is acceptable and should not be penalized under this dimension."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
