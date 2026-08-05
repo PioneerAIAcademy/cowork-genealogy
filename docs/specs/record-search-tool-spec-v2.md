@@ -898,8 +898,9 @@ alongside a `surnameAlt` reverts to the fully fuzzy count (measured
 
 **What `.exact=on` actually does — measured, not inferred:**
 
-Live measurements against `/service/search/hr/v2/personas`, 2026-08-04
-(issue #1093). These are the figures the tool's schema descriptions in
+Live measurements against `/service/search/hr/v2/personas`, 2026-08-04,
+reproducible via `packages/engine/mcp-server/dev/probe-search-qualifiers.ts`.
+These are the figures the tool's schema descriptions in
 `src/tools/record-search.ts` summarize, and they contradict the
 intuition the qualifier family invites.
 
