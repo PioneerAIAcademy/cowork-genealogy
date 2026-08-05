@@ -159,6 +159,52 @@ class _Unprovable(Exception):
     """
 
 
+def _run_bounded(work: Callable[[], Any], budget: float) -> Any:
+    """Run `work()` on a thread we can walk away from after `budget` seconds.
+
+    A HARD wall, and it has to live outside the event loop. `asyncio.wait_for`
+    bounds only the coroutine it wraps; `asyncio.run` then performs its own loop
+    shutdown — cancel-all-tasks, `shutdown_asyncgens`,
+    `shutdown_default_executor` — entirely OUTSIDE that budget. Measured
+    2026-08-05 against a deliberately hanging stdio MCP server (accepts the
+    connection, never speaks): the check returned the right FAIL but took 132.7s
+    against a 90s ceiling, +42.7s of it after the coroutine had already settled.
+    A ceiling a run can overshoot by half again is the "preflight that hangs"
+    `_MCP_CHECK_TIMEOUT_S` exists to prevent, and no timeout *inside* the loop
+    can fix it, because the overrun IS the loop's teardown. Wrapping
+    `asyncio.timeout` around the coroutine would miss it for the same reason.
+
+    A pathologically hung `node` child can therefore outlive the join. That is
+    the deliberate trade: the SDK's own shutdown escalates to SIGKILL
+    (`claude_agent_sdk/_internal/transport/subprocess_cli.py`), this process is
+    about to exit anyway, and a leaked child is strictly better than a preflight
+    that never returns — an operator can act on a FAIL.
+
+    Exceptions are re-raised on the caller's thread so the arms in
+    `_check_mcp_connection` still see the real type (`_Unprovable`,
+    `TimeoutError`, anything else).
+    """
+    result: list[Any] = []
+    failure: list[BaseException] = []
+
+    def _run() -> None:
+        try:
+            result.append(work())
+        except BaseException as e:  # noqa: BLE001 — re-raised on the caller's thread
+            failure.append(e)
+
+    worker = threading.Thread(target=_run, name="e2e-preflight-mcp", daemon=True)
+    worker.start()
+    worker.join(timeout=budget)
+    if worker.is_alive():
+        raise TimeoutError(
+            f"the MCP status check did not return within {budget:.0f}s"
+        )
+    if failure:
+        raise failure[0]
+    return result[0]
+
+
 def _live_mcp_status() -> Any:
     """Ask the running CLI for live MCP status. One spawn, zero model tokens.
 
@@ -232,41 +278,14 @@ def _live_mcp_status() -> Any:
                     return servers
                 await asyncio.sleep(_MCP_POLL_INTERVAL_S)
 
-    # A HARD wall, on a thread we can walk away from. `asyncio.wait_for` bounds
-    # only the coroutine; `asyncio.run` then performs its own loop shutdown —
-    # cancel-all-tasks, `shutdown_asyncgens`, `shutdown_default_executor` —
-    # entirely OUTSIDE that budget. Measured 2026-08-05 against a deliberately
-    # hanging stdio server (accepts the connection, never speaks): the check
-    # returned the right FAIL but took 132.7s against this 90s ceiling, +42.7s
-    # of it after the coroutine had already settled. A ceiling a run can
-    # overshoot by half again is the "preflight that hangs" this constant exists
-    # to prevent, and no timeout *inside* the loop can fix it, because the
-    # overrun is the loop's own teardown. Wrapping `asyncio.timeout` around
-    # `_ask` would not have caught this for the same reason.
-    #
-    # A pathologically hung `node` child can therefore outlive the join. That is
-    # the deliberate trade: the SDK's escalation reaches SIGKILL on its own, this
-    # process is about to exit anyway, and a leaked child is strictly better than
-    # a preflight that never returns — an operator can act on a FAIL.
-    result: list[Any] = []
-    failure: list[BaseException] = []
-
-    def _run() -> None:
-        try:
-            result.append(
-                asyncio.run(asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S))
-            )
-        except BaseException as e:  # noqa: BLE001 — re-raised on the caller's thread
-            failure.append(e)
-
-    worker = threading.Thread(target=_run, name="e2e-preflight-mcp", daemon=True)
-    worker.start()
-    worker.join(timeout=_MCP_CHECK_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S)
-    if worker.is_alive():
-        raise TimeoutError("the MCP status check did not return within its budget")
-    if failure:
-        raise failure[0]
-    return result[0]
+    # Two nested budgets, and both are needed: `wait_for` is what turns a server
+    # stuck on `pending` into the FAIL an operator can act on, while the wall
+    # around it is what keeps the loop's own teardown from overrunning that
+    # ceiling. See _run_bounded for the measurement behind the outer one.
+    return _run_bounded(
+        lambda: asyncio.run(asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S)),
+        _MCP_CHECK_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S,
+    )
 
 
 def _check_mcp_connection(

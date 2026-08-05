@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
 import os
+import threading
 import time
 
 import pytest
@@ -252,57 +254,67 @@ def test_mcp_check_reports_an_unexpected_error_without_crashing(monkeypatch, tmp
     assert "transport closed" in detail
 
 
-def test_the_live_check_is_bounded_by_a_wall_it_can_walk_away_from():
-    """The ceiling must bound the whole operation, teardown included.
+# --- the hard wall around the live check (#941) -----------------------
+#
+# Measured 2026-08-05 against a stdio server that accepts the connection and
+# never speaks: with the budget wrapped around the coroutine alone, the check
+# returned the right FAIL but took 132.7s against a 90s ceiling. The +42.7s was
+# `asyncio.run`'s own loop shutdown, which no in-loop timeout can bound — so the
+# wall has to sit outside the loop, and these prove it does.
+#
+# `_run_bounded` is tested directly rather than through `_live_mcp_status`,
+# because that resolves an Anthropic credential before it ever reaches the wall:
+# a test that called it would pass or fail on whether the machine happens to
+# have one. The first version of this test did exactly that — green here, red in
+# CI, which is the shape of bug #941 itself.
 
-    Measured 2026-08-05 against a stdio server that accepts the connection and
-    never speaks: with the budget wrapped around the coroutine alone, the check
-    returned the right FAIL but took 132.7s against a 90s ceiling — the +42.7s
-    was `asyncio.run`'s own loop shutdown, which no in-loop timeout can bound.
-    So the join, not `wait_for`, is what has to be the last word; assert the
-    thread is a daemon so a hung child cannot keep the process alive either.
-    """
-    import threading
 
-    started: list[threading.Thread] = []
-    joins: list[float | None] = []
-    real_start = threading.Thread.start
-    real_join = threading.Thread.join
+def test_the_wall_gives_up_on_work_that_never_returns():
+    entered = threading.Event()
 
-    def _record(self):
-        started.append(self)
-        return real_start(self)
+    def _hang():
+        entered.set()
+        time.sleep(5)  # long enough to outlive the wall, short enough to reap
 
-    def _record_join(self, timeout=None):
-        joins.append(timeout)
-        return real_join(self, timeout)
+    start = time.monotonic()
+    with pytest.raises(TimeoutError):
+        pf._run_bounded(_hang, 0.2)
+    assert entered.wait(2), "the work must actually have been started"
+    assert time.monotonic() - start < 5, "the wall, not the work, ended this"
 
-    original = threading.Thread.start
-    original_join = threading.Thread.join
-    threading.Thread.start = _record  # type: ignore[method-assign]
-    threading.Thread.join = _record_join  # type: ignore[method-assign]
-    try:
-        # A getter that never returns: only a wall outside the loop ends this.
-        pf._MCP_CHECK_TIMEOUT_S_backup = pf._MCP_CHECK_TIMEOUT_S
-        pf._MCP_CHECK_TIMEOUT_S = 0.05
-        pf._MCP_TEARDOWN_GRACE_S = 0.05
-        try:
-            pf._live_mcp_status()
-        except Exception:  # noqa: BLE001 — the point is that it RETURNS
-            pass
-    finally:
-        threading.Thread.start = original  # type: ignore[method-assign]
-        threading.Thread.join = original_join  # type: ignore[method-assign]
-        pf._MCP_CHECK_TIMEOUT_S = pf._MCP_CHECK_TIMEOUT_S_backup
-        pf._MCP_TEARDOWN_GRACE_S = 15.0
 
-    worker = next((t for t in started if t.name == "e2e-preflight-mcp"), None)
-    assert worker is not None, "the live check must run behind a joinable wall"
-    assert worker.daemon, "a hung CLI child must not outlive the preflight process"
-    # A join with no timeout is the bug: it would wait out the same unbounded
-    # teardown the ceiling is supposed to cap.
-    assert joins and joins[0] is not None, "the wall must carry a deadline"
-    assert joins[0] == pytest.approx(0.10), "budget = ceiling + teardown grace"
+def test_the_wall_passes_a_result_back():
+    assert pf._run_bounded(lambda: {"mcpServers": []}, 5) == {"mcpServers": []}
+
+
+def test_the_wall_reraises_on_the_callers_thread():
+    """`_check_mcp_connection` discriminates on exception TYPE, so the wall must
+    not flatten `_Unprovable` (WARN) into a generic failure (FAIL)."""
+
+    def _unprovable():
+        raise pf._Unprovable("no usable Anthropic credential: none found")
+
+    with pytest.raises(pf._Unprovable):
+        pf._run_bounded(_unprovable, 5)
+
+
+def test_the_walls_worker_is_a_daemon():
+    """A hung CLI child must not keep the preflight process alive."""
+    seen = pf._run_bounded(lambda: threading.current_thread().daemon, 5)
+    assert seen is True
+
+
+def test_the_live_check_uses_the_wall_with_teardown_grace_included():
+    """Bind the call site: the tests above prove the wall works, this proves the
+    live check uses it — and that the inner coroutine budget survived too."""
+    src = inspect.getsource(pf._live_mcp_status)
+    assert "_run_bounded(" in src
+    assert "_MCP_CHECK_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S" in src, (
+        "the wall must allow for teardown on top of the ceiling"
+    )
+    assert "asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S)" in src, (
+        "the inner budget is what turns a stuck 'pending' into an actionable FAIL"
+    )
 
 
 def test_mcp_connection_check_is_last_in_checks():
