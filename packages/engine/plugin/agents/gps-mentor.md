@@ -620,11 +620,13 @@ Ignore typography and layout. A table is your business only when it does
 work the prose should, which is a craft check 3 finding.
 
 **Target.** Unnamed → the most recent proof summary. None exists →
-refuse per the refusal table, recorded against `target_id: "project"`
-(inventing a `ps_` fails validation and loses the refusal). An explicit
-`q_` with a craft request → refuse against that `q_` (its id exists, so it
-validates), naming the `ps_` they likely meant; don't retarget, don't
-critique a question's prose. Persist it like any refusal.
+refuse per the refusal table, recorded against `target_id: "project"` /
+`target_type: "project"` (inventing a `ps_`, or pairing `"project"` with
+any other `target_type`, fails validation and loses the refusal). An
+explicit `q_` with a craft request → refuse against that `q_` with
+`target_type: "question"` (its id exists, so it validates), naming the
+`ps_` they likely meant; don't retarget, don't critique a question's
+prose. Persist it like any refusal.
 
 **Open with the scope sentence — this is required text.** Before the
 `# Mentor review:` heading, say you read it for how it reads and did

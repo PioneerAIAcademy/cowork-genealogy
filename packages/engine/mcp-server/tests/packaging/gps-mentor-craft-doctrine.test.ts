@@ -110,10 +110,14 @@ describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
     // An earlier form scanned for a *violating* instruction and so passed on any
     // text without one — including a body with the whole craft section deleted.
     // Assert the prohibition is PRESENT: that is what silently disappears.
-    const prohibition = CRAFT.split("\n\n").find(
-      (p) => /axis names/i.test(p) && /\bnever\b|\bdo not\b|\bdon't\b/i.test(p),
-    );
-    expect(prohibition, "no paragraph forbids speaking the axis names").toBeDefined();
+    const prohibition = CRAFT.split("\n\n").find((p) => /axis names/i.test(p));
+    expect(prohibition, "no paragraph mentions the axis names").toBeDefined();
+    // The negation has to bind to the axis names themselves. Looking for a
+    // negation anywhere in the paragraph is not enough — the worked example
+    // ("their cousin who has never used a genealogy site") supplies a stray
+    // "never", so an inverted rule kept every predicate satisfied and passed.
+    expect(prohibition).toMatch(/\b(never|do not|don't|must not)\b[^.]{0,30}axis names/i);
+    expect(prohibition).not.toMatch(/\b(always|feel free to|you may|you can)\b[^.]{0,30}axis names/i);
     // And it must name the register to use instead, or it is unactionable.
     expect(prohibition).toMatch(/cousin|out loud|colleague/i);
   });
