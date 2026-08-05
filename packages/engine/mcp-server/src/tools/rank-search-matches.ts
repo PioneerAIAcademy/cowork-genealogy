@@ -330,7 +330,13 @@ export async function buildSubjectDoc(
         continue;
       }
 
-      const treeType = ASSERTION_FACT_TYPE_TO_TREE[a?.fact_type];
+      // hasOwn, not a bare index: `fact_type` is an OPEN enum, so a schema-valid
+      // assertion can carry any string — including `constructor`, which indexes
+      // out `Object` and sails past `!treeType` (a function is truthy), pushing a
+      // fact whose `type` disappears on serialization.
+      const treeType = Object.hasOwn(ASSERTION_FACT_TYPE_TO_TREE, a?.fact_type)
+        ? ASSERTION_FACT_TYPE_TO_TREE[a.fact_type]
+        : undefined;
       if (!treeType) continue;
 
       const date = sv.date ?? sv.year ?? yearFromText(a?.value);

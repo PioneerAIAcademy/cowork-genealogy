@@ -36,8 +36,9 @@ ls releases/
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
 double-click **`eval\InstallHooks.bat`**. Both install the same two hooks:
-`post-checkout` auto-links shared files into new worktrees, and `commit-msg`
-warns (never blocks) when a commit lacks a **human** `Co-authored-by:` trailer.
+`post-checkout` sets up new worktrees — links the shared files, installs the
+pnpm workspace — and `commit-msg` warns (never blocks) when a commit lacks a
+**human** `Co-authored-by:` trailer.
 
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
