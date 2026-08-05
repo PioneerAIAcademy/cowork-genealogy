@@ -14,6 +14,8 @@ ut_validate_schema_008. These tests pin the fix: the full id list must survive
 regardless of how many sources exist.
 """
 
+import json
+
 from harness.judge import _RESPONSE_ARRAY_SAMPLE
 from harness.orchestrator import (
     _summarize_before_state,
@@ -130,8 +132,42 @@ def test_none_before_state_returns_none_sentinel():
 def test_ids_render_before_detail():
     before = {"research_json": {"sources": _sources("src_", 4)}}
     rendered = _summarize_before_state(before)
-    # The complete id list must come before the (clippable) heavy detail sample.
-    assert rendered.index("all_ids") < rendered.index("sample detail")
+    # The complete id list must come before the (clippable) heavy detail.
+    assert rendered.index("all_ids") < rendered.index("per-source detail")
+
+
+def test_over_budget_drops_whole_sources_and_names_them(monkeypatch):
+    """Over budget, cut whole sources off the tail — never mid-object.
+
+    A raw `detail_section[:budget]` slice leaves the last source half-rendered
+    and the rest gone without trace, while their ids stay listed above complete.
+    That is the fabrication misgrade all over again, just relocated to large
+    projects. So the dropped ids must be named, and the note must tell the judge
+    the absence is a size limit rather than evidence of absence.
+    """
+    from harness import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_BEFORE_STATE_MAX_CHARS", 900)
+    rendered = orchestrator._summarize_before_state(
+        {"research_json": {"sources": _sources("src_", 12)}}
+    )
+
+    # Every id still present and complete — the non-negotiable part.
+    for i in range(1, 13):
+        assert f"src_{i:03d}" in rendered
+
+    assert "per-source detail omitted for prompt size" in rendered
+    assert "not evidence that they are missing or fabricated" in rendered
+
+    # The detail that survived is parseable JSON, i.e. no mid-object slice.
+    body = rendered.split("per-source detail (heavy fields truncated):\n", 1)[1]
+    body = body.split("\n\n[per-source detail omitted", 1)[0]
+    kept = json.loads(body)
+    assert isinstance(kept, list)
+    assert len(kept) < 12, "nothing was dropped; the budget did not bite"
+    assert all(set(e) == {"id", "citation", "notes"} for e in kept), (
+        "a surviving source is truncated mid-object"
+    )
 
 
 def test_all_ids_survive_when_detail_blows_the_prompt_budget(monkeypatch):
@@ -149,5 +185,5 @@ def test_all_ids_survive_when_detail_blows_the_prompt_budget(monkeypatch):
     for i in range(1, 11):
         assert f"src_{i:03d}" in rendered
         assert f"S{i:03d}" in rendered
-    assert "detail truncated by harness" in rendered
-    assert "ids above are complete" in rendered
+    assert "per-source detail omitted for prompt size" in rendered
+    assert "not evidence that they are missing or fabricated" in rendered

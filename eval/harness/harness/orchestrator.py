@@ -1153,6 +1153,21 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     }
 
 
+def _detail_ids(summary: dict[str, Any]) -> list[str]:
+    """Ids positionally aligned with `summary["detail"]`, for naming drops.
+
+    `all_ids` skips entries with no `id`, so it cannot be zipped against
+    `detail` (which keeps every entry). Rebuild from the detail itself and
+    label an id-less entry by position, so the omission note can still point at
+    something a reader can find.
+    """
+    out: list[str] = []
+    for i, entry in enumerate(summary.get("detail") or []):
+        sid = entry.get("id") if isinstance(entry, dict) else None
+        out.append(sid or f"<entry #{i + 1}, no id>")
+    return out
+
+
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     """Render the source entries that existed BEFORE the skill ran, so the
     judge can mechanically check "not on file" / "fabricated" claims.
@@ -1210,19 +1225,42 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source sample after — this is what the prompt-size cap trims.
-    detail_blocks = [
-        f"{label} — sample detail (heavy fields truncated):\n"
-        + json.dumps(summary["detail"], ensure_ascii=False, indent=2)
-        for label, summary in labelled
-    ]
-    detail_section = "\n\n".join(detail_blocks)
+    # heavy per-source detail after — this is what the prompt-size cap trims.
+    #
+    # Drop WHOLE sources off the tail rather than slicing the rendered string.
+    # A raw `[:budget]` cut lands mid-object, so the last source renders
+    # half-written and the ones after it vanish with no trace — while their ids
+    # are still listed above, complete. That is exactly the state that makes the
+    # judge call a correctly-cited source fabricated (the bug this block exists
+    # to prevent, relocated to large projects). Naming the dropped ids turns a
+    # silent gap into a stated one the judge can reason about.
     budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
-    if len(detail_section) > budget:
-        detail_section = (
-            detail_section[: max(budget, 0)]
-            + f"\n[detail truncated by harness for prompt size; "
-            f"full detail length {len(detail_section)} chars — ids above are complete]"
+    detail_blocks: list[str] = []
+    dropped: list[str] = []
+    remaining = budget
+    for label, summary in labelled:
+        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        kept: list[Any] = []
+        for entry, sid in zip(summary["detail"], _detail_ids(summary)):
+            candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
+            if len(header) + len(candidate) > remaining and kept:
+                dropped.append(sid)
+                continue
+            if len(header) + len(candidate) > remaining and not kept:
+                dropped.append(sid)
+                continue
+            kept.append(entry)
+        block = header + json.dumps(kept, ensure_ascii=False, indent=2)
+        detail_blocks.append(block)
+        remaining -= len(block) + 2  # the "\n\n" join
+
+    detail_section = "\n\n".join(detail_blocks)
+    if dropped:
+        detail_section += (
+            f"\n\n[per-source detail omitted for prompt size: "
+            f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
+            f"file — the absence of their detail here is a harness size limit, "
+            f"not evidence that they are missing or fabricated.]"
         )
     return id_section + "\n\n" + detail_section
 

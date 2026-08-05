@@ -115,20 +115,39 @@ def test_no_plan_writes_when_resolved(before_state, after_state, test):
             # A whole new plan is test_research_plan_no_new_plan's finding;
             # reporting it here too would double-count the same defect.
             continue
+        if plan == prior:
+            continue
+
+        # Compare the WHOLE prior plan object, not just the items present in
+        # the after-state. Walking only `after`'s items cannot see a deletion —
+        # a removed item simply isn't there to check — and misses plan-level
+        # fields entirely. With `grade_on_invariant` on ut_003, that gap scored
+        # "wiped every item from pl_002" and "flipped pl_002 back to active" as
+        # a PASS, which is the opposite of what this validator exists for.
         before_items = {
             i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
         }
-        for item in plan.get("items") or []:
-            was = before_items.get(item.get("id"))
-            if was is None:
+        after_items = {
+            i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
+        }
+        pid = plan.get("id")
+        for gone in before_items.keys() - after_items.keys():
+            errors.append(f"{pid}: item {gone} DELETED from an existing plan")
+        for added in after_items.keys() - before_items.keys():
+            errors.append(f"{pid}: item {added} added to an existing plan")
+        for both in before_items.keys() & after_items.keys():
+            if before_items[both] != after_items[both]:
+                errors.append(f"{pid}: item {both} modified in place")
+        for field in set(prior) | set(plan):
+            if field == "items":
+                continue
+            if prior.get(field) != plan.get(field):
                 errors.append(
-                    f"{plan.get('id')}: item {item.get('id')} added to an "
-                    f"existing plan"
+                    f"{pid}: plan field '{field}' changed "
+                    f"{prior.get(field)!r} -> {plan.get(field)!r}"
                 )
-            elif was != item:
-                errors.append(
-                    f"{plan.get('id')}: item {item.get('id')} modified in place"
-                )
+        if not errors:  # differs, but no rule above named it — never silent
+            errors.append(f"{pid}: plan object changed in a way this check did not classify")
     assert not errors, (
         "research-plan wrote to a question whose search is already declared "
         "exhaustive:\n  - " + "\n  - ".join(errors)
