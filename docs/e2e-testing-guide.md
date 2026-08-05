@@ -16,8 +16,9 @@ Which steps are yours depends on how you got here:
 
 - **Assigned a fixture** — a GitHub issue titled "test `<slug>`". This is the
   normal case. Do steps **0, 1a, then 4–9**.
-- **Authoring a new fixture** — no issue, just a person you want to turn into a
-  test. Do **every** step.
+- **Authoring a new fixture** — a person you want to turn into a test, whether
+  you picked them yourself or a `feedback`-labelled issue sent you here. Do
+  **every** step.
 
 | Step | What you do | Where |
 |---|---|---|
@@ -112,8 +113,15 @@ grade — lands on this one branch.
 - **Assigned a fixture?** A GitHub issue titled "test `<slug>`" means the
   fixture already exists, drafted from an unverified FamilySearch record
   hint. Go to **Step 1a**.
-- **Authoring a brand-new fixture?** No issue — just a person (or research
-  document) you want to turn into a test. Go to **Step 1b**.
+- **Authoring a brand-new fixture?** A person (or research document) you want
+  to turn into a test. Go to **Step 1b**.
+- **Sent here by a `feedback` issue?** Also **Step 1b**, with one rule: author
+  from the tester's **FamilySearch PID** and use the report only to choose the
+  question — the bundle itself never becomes the fixture. Check first that the
+  failure is whole-trajectory (searched in the wrong order, gave up early,
+  never considered a record class); anything narrower is a unit test. Both
+  calls belong to
+  [`alpha-feedback-guide.md`](alpha-feedback-guide.md#when-feedback-should-become-an-e2e-fixture-instead).
 
 ## Step 1a — Resolve an assigned fixture 🤖 Claude Code
 
@@ -393,6 +401,12 @@ Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
 from them. Each narration entry carries `tool_calls_before` — the number of
 tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
 Viewer) and re-run, rather than guessing blind.
+
+**Rule out a tool failure before you blame the skill.** A search that returned
+little because it *failed* reads exactly like one the agent never pushed on,
+and "gave up early" is a common verdict. Scan `tool_calls[]` for failed,
+timed-out or empty searches covering ground the agent then treated as
+exhausted. (Live instance: `record_search` timeouts, #1316.)
 
 One trap worth naming: if the agent found the right answer but recorded it
 *only* in `research.json` and not in the tree, that is an **agent failure, not
