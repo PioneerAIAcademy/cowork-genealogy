@@ -85,25 +85,17 @@ export function parseLsTree(stdout: string): Map<string, number> {
   return sizes;
 }
 
+/** GITHUB_BASE_REF is set by GitHub Actions for pull_request events. */
+const REQUESTED_BASE_REF = process.env.GITHUB_BASE_REF || "main";
+
 /** Return the resolved base-branch name, or null if the ref is not available. */
 function baseRefAvailable(): string | null {
-  // GITHUB_BASE_REF is set by GitHub Actions for pull_request events.
-  const ref = process.env.GITHUB_BASE_REF || "main";
   try {
-    execFileSync("git", ["rev-parse", "--verify", `origin/${ref}`], {
+    execFileSync("git", ["rev-parse", "--verify", `origin/${REQUESTED_BASE_REF}`], {
       stdio: "pipe",
     });
-    return ref;
+    return REQUESTED_BASE_REF;
   } catch {
-    // In CI this means the fetch step failed or was skipped — surface it so a
-    // silent degradation to absolute-only doesn't hide a broken fetch.
-    if (process.env.CI) {
-      console.log(
-        `::warning::prompt-budget: origin/${ref} is not available; ` +
-          "reporting absolute sizes only (no deltas). " +
-          "Check the 'Fetch base branch' step in engine-tests.yml.",
-      );
-    }
     return null;
   }
 }
@@ -189,6 +181,40 @@ const baseTree = baseRef === null ? null : lsTree(`origin/${baseRef}`);
 const baseSizes = baseTree === null ? null : parseLsTree(baseTree);
 
 const deltas = baseSizes === null ? [] : computeDeltas(baseSizes, headSizes);
+
+/**
+ * Write the report on raw stdout, because neither of the two obvious channels
+ * reaches a CI log.
+ *
+ * Test names do not: `npm test` runs vitest's default reporter, which collapses
+ * a passing file to `✓ …/prompt-budget.test.ts (10 tests)` and prints no names.
+ * `console.log` does not either: vitest 4 defaults to `silent: "passed-only"`,
+ * so console output from a file whose tests all pass is discarded. This lint
+ * always passes, so both of those are its normal case. `process.stdout.write`
+ * is not intercepted.
+ */
+function emitReport(): void {
+  const out: string[] = [];
+  if (baseSizes === null) {
+    // A silent degradation to absolute-only would hide a broken fetch step.
+    // Workflow commands are parsed only at the start of a line.
+    if (process.env.CI) {
+      out.push(
+        `::warning::prompt-budget: origin/${REQUESTED_BASE_REF} is not readable; ` +
+          "reporting absolute sizes only (no deltas). " +
+          "Check the 'Fetch base branch' step in engine-tests.yml.",
+      );
+    }
+    for (const [path, size] of headSizes) out.push(`  ${short(path)}: ${formatKB(size)}`);
+  } else if (deltas.length === 0) {
+    out.push("  no prompt-size changes in this changeset");
+  } else {
+    for (const d of deltas) out.push(`  ${label(d)}`);
+  }
+  process.stdout.write(`\nprompt-budget (warn-only)\n${out.join("\n")}\n\n`);
+}
+
+emitReport();
 
 // ---------------------------------------------------------------------------
 // Report — every test here always passes (warn-only)
