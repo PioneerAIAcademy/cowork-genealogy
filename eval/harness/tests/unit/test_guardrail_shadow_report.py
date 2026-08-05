@@ -11,13 +11,16 @@ loading, and aggregating across a corpus of files.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from e2e.guardrail_shadow_report import (
     _is_result_json,
     all_result_jsons,
     format_detail,
     format_summary,
+    format_provenance,
     scan_corpus,
+    scan_provenance,
     scan_one,
 )
 
@@ -138,3 +141,79 @@ def test_format_detail_lists_every_violation():
 
 def test_format_detail_empty_list():
     assert "none" in format_detail([])
+
+
+# --- scan_provenance / format_provenance (issue #963 stored shadow entries) ---
+# These are READ from each run's stored `guardrail_shadow_violations`, not
+# replayed from tool_calls: the #963 check depends on the seed tree and on what
+# the live hook could see, neither of which a committed log lets you recompute.
+
+
+def _write_result(dir_, name, violations):
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_text(
+        json.dumps({"tool_calls": [], "guardrail_shadow_violations": violations}),
+        encoding="utf-8",
+    )
+    return dir_ / name
+
+
+def _provenance_entry(pid="I1", index=3):
+    return {
+        "index": index,
+        "tool": "research_append",
+        "required_skill": "person-evidence",
+        "question_id": None,
+        "detail": f"person_evidence link written for new tree person(s) {pid} with no prior same_person",
+    }
+
+
+def test_scan_provenance_picks_up_stored_entries(tmp_path):
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry()])
+    out = scan_provenance([p])
+    assert len(out) == 1
+    assert out[0]["fixture"] == "fx"
+    assert "I1" in out[0]["detail"]
+
+
+def test_scan_provenance_ignores_section_7_entries():
+    """The two sources share one list; only the hook's entries carry `detail`,
+    so a §7 recency violation must not be counted as a #963 provenance gap."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td) / "fx"
+        section7 = {
+            "index": 1,
+            "tool": "mcp__genealogy__research_append",
+            "required_skill": "proof-conclusion",
+            "question_id": "q_001",
+        }
+        p = _write_result(d, "run-1.json", [section7, _provenance_entry()])
+        out = scan_provenance([p])
+    assert len(out) == 1
+    assert out[0]["required_skill"] == "person-evidence"
+
+
+def test_scan_provenance_tolerates_runs_written_before_the_check(tmp_path):
+    """A pre-#963 log has no such entries; it contributes nothing rather than
+    erroring."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [])
+    assert scan_provenance([p]) == []
+
+
+def test_scan_provenance_skips_unreadable_file(tmp_path, capsys):
+    d = tmp_path / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    bad = d / "run-1.json"
+    bad.write_text("{ not json", encoding="utf-8")
+    assert scan_provenance([bad]) == []
+    assert "skip" in capsys.readouterr().err
+
+
+def test_format_provenance_counts_runs_not_just_entries(tmp_path):
+    a = _write_result(tmp_path / "fx1", "run-1.json", [_provenance_entry("I1"), _provenance_entry("I2")])
+    b = _write_result(tmp_path / "fx2", "run-1.json", [_provenance_entry("I3")])
+    text = format_provenance(scan_provenance([a, b]))
+    assert "3 person_evidence link(s)" in text
+    assert "across 2 run(s)" in text
