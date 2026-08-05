@@ -1040,7 +1040,7 @@ checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
-**A fourth check runs in shadow mode only (issue #1133): citation-string
+**A fourth check runs in shadow mode only: citation-string
 nulling.** `find_citation_nulling_in_conclusions` (in
 `harness/skill_invocation.py`) reads the final `research.json` and flags a
 source that **backs a written conclusion** — i.e. one a `proof_summaries`
@@ -1067,7 +1067,7 @@ future hard version from false-positiving on honest partial runs. Its entries
 carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
 their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
-— tracked as issue #1358, not decided here.
+— not decided here.
 
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
