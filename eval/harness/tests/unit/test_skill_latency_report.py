@@ -193,3 +193,53 @@ def test_missing_tests_is_safe():
     assert sl.n_tests == 0
     assert sl.output_tokens == 0
     assert sl.num_turns is None
+
+
+# ---- staleness is MARKED, not filtered (PR #1238 review) -------------------
+
+
+def test_format_skill_marks_a_stale_row():
+    """A one-row-per-skill report must not filter by date — that deletes the
+    skill and hides the one actionable fact, that it needs a re-run. So the row
+    stays and carries the mark. `eval-timings` does the same."""
+    sl = analyze_runlog(_runlog(), "x/v1_2026-06-29_08-41-15.json")
+    sl.stale_days = 36
+    assert "STALE 36d" in format_skill(sl)
+
+
+def test_format_skill_has_no_mark_when_fresh():
+    assert "STALE" not in format_skill(analyze_runlog(_runlog(), "x/v1.json"))
+
+
+def test_markdown_table_carries_staleness():
+    """`MD=1` is the shape pasted into a PR, so the mark has to survive it —
+    the summary line printed above the table does not travel with a paste."""
+    fresh = analyze_runlog(_runlog(skill="citation"))
+    stale = analyze_runlog(_runlog(skill="timeline"))
+    stale.stale_days = 36
+    table = format_markdown_table([fresh, stale])
+    assert "| stale |" in table
+    assert "STALE 36d" in table
+
+
+# ---- mixed v2/v3 snapshots (PR #1238 review) ------------------------------
+
+
+def test_same_inputs_aligns_a_mixed_v2_v3_pair():
+    """schema_version 3 stores digests, pre-3 stored content. Comparing one of
+    each by equality reports every path different, so an unmigrated `--before`
+    would silently downgrade every diff to per-test reading."""
+    from harness.snapshot import hash_snapshot
+
+    content = {"eval/tests/unit/timeline/a.json": "X"}
+    before = _runlog(snapshot=content)
+    after = _runlog(snapshot=hash_snapshot(content))
+    assert same_test_inputs(before, after, "timeline") is True
+
+
+def test_same_inputs_still_sees_a_real_edit_across_shapes():
+    from harness.snapshot import hash_snapshot
+
+    before = _runlog(snapshot={"eval/tests/unit/timeline/a.json": "X"})
+    after = _runlog(snapshot=hash_snapshot({"eval/tests/unit/timeline/a.json": "Y"}))
+    assert same_test_inputs(before, after, "timeline") is False

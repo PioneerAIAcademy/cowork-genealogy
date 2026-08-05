@@ -1,7 +1,7 @@
 /**
  * Tests for lib/fs/runlogs.ts — listing, reading, active-state detection.
  *
- * Schema v2: multi-test envelope at eval/runlogs/unit/<skill>/<filename>.
+ * Schema v3: multi-test envelope at eval/runlogs/unit/<skill>/<filename>.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'node:path';

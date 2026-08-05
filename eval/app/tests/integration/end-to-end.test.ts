@@ -12,7 +12,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { makeFixtureTree, buildRunLog, type FixtureTreeHandle } from '../helpers/fixtureTree';
 import { detectActiveRunLog, listRunLogsForSkillWithActive } from '../../lib/fs/runlogs';
-import { activateRunLog } from '../../lib/activate';
 import { deleteCandidate, releaseRunLog } from '../../lib/release';
 import {
   isAnnotationComplete,
@@ -29,7 +28,7 @@ function makeSkillSnapshot(skill: string, skillBody: string): Record<string, str
   };
 }
 
-describe('end-to-end flow: candidate → review → release → activate', () => {
+describe('end-to-end flow: candidate → review → release', () => {
   let handle: FixtureTreeHandle;
   const SKILL = 'search-familysearch-wiki';
 
@@ -68,7 +67,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     await handle.cleanup();
   });
 
-  it('full lifecycle: review → release → activate v1, then iterate to v2', async () => {
+  it('full lifecycle: review → release v1, then iterate to v2', async () => {
     // Step 1: latest candidate is the active version (snapshot matches disk).
     let active = await detectActiveRunLog(SKILL);
     expect(active?.id).toBe(`${SKILL}/v1_2026-05-18_09-00-00`);
@@ -148,25 +147,7 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     active = await detectActiveRunLog(SKILL);
     expect(active?.id).toBe(`${SKILL}/v2_2026-05-18_12-00-00`);
 
-    // Step 8: activate v1 (rollback). Snapshot files are restored on disk.
-    const v1Log = JSON.parse(
-      await fs.readFile(
-        path.join(handle.root, 'runlogs', 'unit', SKILL, 'v1.json'),
-        'utf8',
-      ),
-    );
-    await activateRunLog(v1Log);
-    const skillOnDisk = await fs.readFile(
-      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', SKILL, 'SKILL.md'),
-      'utf8',
-    );
-    expect(skillOnDisk).toBe('---\nname: search-familysearch-wiki\n---\nbody\n');
-
-    // Step 9: v1 is active again now that disk matches its snapshot.
-    active = await detectActiveRunLog(SKILL);
-    expect(active?.id).toBe(`${SKILL}/v1`);
-
-    // Step 10: delete v2 candidate (rollback also removes the candidate iter).
+    // Step 8: delete the v2 candidate.
     await deleteCandidate(`${SKILL}/v2_2026-05-18_12-00-00`);
     await expect(
       fs.access(path.join(handle.root, 'runlogs', 'unit', SKILL, 'v2_2026-05-18_12-00-00.json')),

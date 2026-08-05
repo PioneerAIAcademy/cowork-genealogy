@@ -18,7 +18,12 @@ handle.
 ## 1. Why this exists
 
 The sidecar payload is the verbatim response of `record_search` / `fulltext_search`
-— produced on the host, where the search ran. Today the LLM has to re-emit that
+— produced on the host, where the search ran. ("Verbatim" is the *transport's*
+contract: `stageSearchResults` persists exactly what it is handed and knows nothing
+about any caller's field names. A caller may withhold a field by handing over a
+copy — `record_search` does this for `rankingSkipped`, which is a model-facing
+instruction about how to call the tool rather than part of the record of what the
+search returned. See `record-search-tool-spec-v2.md` § `rankingSkipped`.) Today the LLM has to re-emit that
 whole payload to persist it (`research-log-protocol.md` tells it to "write in
 ~40-result chunks" because a single `Write` stalls past ~50 results). That
 re-serialization is the exact failure the read/write-tool direction exists to kill,
