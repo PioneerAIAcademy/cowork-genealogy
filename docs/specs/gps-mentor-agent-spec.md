@@ -118,38 +118,28 @@ description: BCG-style senior genealogist who reviews research work and tells th
 model: claude-sonnet-5
 tools:
   - Read
-  - mcp__genealogy__research_query
-  - mcp__genealogy__project_context
-  - mcp__genealogy__research_append
-  - mcp__genealogy__validate_research_schema
-  - mcp__genealogy__place_search
-  - mcp__genealogy__place_distance
-  - mcp__genealogy__collections_search
-  - mcp__genealogy__external_links_search
-  - mcp__genealogy__wiki_place_page
-  - mcp__genealogy__wiki_search
-  - mcp__remote-devices__Genealogy_Research__research_query
-  - mcp__remote-devices__Genealogy_Research__project_context
-  - mcp__remote-devices__Genealogy_Research__research_append
-  - mcp__remote-devices__Genealogy_Research__validate_research_schema
-  - mcp__remote-devices__Genealogy_Research__place_search
-  - mcp__remote-devices__Genealogy_Research__place_distance
-  - mcp__remote-devices__Genealogy_Research__collections_search
-  - mcp__remote-devices__Genealogy_Research__external_links_search
-  - mcp__remote-devices__Genealogy_Research__wiki_place_page
-  - mcp__remote-devices__Genealogy_Research__wiki_search
+  # Then these ten, each under all three server spellings:
+  #   research_query, project_context, research_append, validate_research_schema,
+  #   place_search, place_distance, collections_search, external_links_search,
+  #   wiki_place_page, wiki_search
+  # The full 31-entry list is NOT repeated here. The authoritative copy is the
+  # agent file, packages/engine/plugin/agents/gps-mentor.md — nothing lints
+  # spec-to-agent agreement, so a second literal copy goes stale silently (it
+  # did, through #1341). Spellings and rationale: ADR-0004.
 ---
 ```
 
-Every MCP tool **must** appear under **both** server spellings. Bare names
+Every MCP tool **must** appear under **all three** server spellings. Bare names
 leave the subagent toolless in the unit-harness SDK path, but a single
 qualified name is equally wrong: `mcp__genealogy__*` resolves under
-`.mcp.json`, both harnesses, and hosted web, while Cowork exposes the
+`.mcp.json`, both harnesses, and hosted web; Cowork in the **cloud** reaches the
 host-installed `.mcpb` through a remote-device bridge as
-`mcp__remote-devices__Genealogy_Research__*`. Entries are matched exactly
-with no fallback, and an agent whose entries all miss is refused a spawn
-outright. Unrecognized entries are ignored so long as one resolves, so
-listing both is safe. Enforced by
+`mcp__remote-devices__Genealogy_Research__*`; Cowork **on the user's own
+computer** reaches it directly as `mcp__Genealogy_Research__*`. Entries are
+matched exactly with no fallback, and an agent whose entries all miss is refused a
+spawn outright — which is what happened to `record-extractor` in on-computer mode
+until #1341. Unrecognized entries are ignored so long as one resolves, so
+listing all three is safe. Enforced by
 `tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork
 tool, not an MCP tool, so it stays bare.
 

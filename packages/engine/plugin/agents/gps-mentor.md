@@ -17,9 +17,9 @@ description: >-
   mentor.
 model: claude-sonnet-5
 tools:
-  # Every MCP tool appears under BOTH server spellings — `genealogy` (the
-  # harnesses, .mcp.json, hosted web) and the `remote-devices` bridge
-  # namespace Cowork exposes the installed .mcpb under. `tools:` is matched
+  # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
+  # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
+  # (cloud Cowork), and `Genealogy_Research` (on-computer Cowork). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
   # the host registers. See record-extractor.md for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
@@ -44,6 +44,16 @@ tools:
   - mcp__remote-devices__Genealogy_Research__external_links_search
   - mcp__remote-devices__Genealogy_Research__wiki_place_page
   - mcp__remote-devices__Genealogy_Research__wiki_search
+  - mcp__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__validate_research_schema
+  - mcp__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_distance
+  - mcp__Genealogy_Research__collections_search
+  - mcp__Genealogy_Research__external_links_search
+  - mcp__Genealogy_Research__wiki_place_page
+  - mcp__Genealogy_Research__wiki_search
 ---
 
 # GPS Mentor

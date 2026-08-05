@@ -10,7 +10,7 @@ name: Engine tests
 # Path scope covers every half the suite reads:
 #   - packages/engine/mcp-server/**  — the tools, utils, validators under test.
 #   - packages/engine/plugin/**      — the packaging tests read the shipped
-#     skills, agents, and shared references (manifest drift, dual-spelled agent
+#     skills, agents, and shared references (manifest drift, multi-spelled agent
 #     tool names, skill-description length, the places-guidance drift lint).
 #   - packages/schema/schemas/** and docs/specs/schemas/** — the enum-drift lint
 #     (tests/packaging/enum-drift.test.ts) diffs the plugin's prose enum lists

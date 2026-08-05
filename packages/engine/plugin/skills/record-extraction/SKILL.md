@@ -219,8 +219,7 @@ failure — the summary is a progress marker, not a stopping point.
 **If `record_read`, `volume_search`, or `research_log_append` are not
 immediately available** (e.g., shown as deferred), call ToolSearch first.
 **Search by bare tool name, never by a fully-qualified `select:` list** —
-the MCP server prefix differs per deployment (`mcp__genealogy__…` under
-the harnesses, `mcp__remote-devices__Genealogy_Research__…` under Cowork),
+the MCP server prefix differs per deployment, and there are three of them,
 so a hardcoded qualified name resolves to nothing in some environments.
 Use one keyword search per tool, e.g. `query: "+record_read"`, which
 matches whatever prefix this session actually exposes. **Never fall

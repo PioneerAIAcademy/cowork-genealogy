@@ -15,15 +15,15 @@ description: >-
   citations.
 model: claude-sonnet-4-6
 tools:
-  # Every MCP tool appears under BOTH server spellings: `genealogy` (the key
-  # .mcp.json, both harnesses, and the hosted web control plane register the
-  # server under) and the `remote-devices` bridge namespace Cowork exposes the
-  # host-installed .mcpb under (`Genealogy_Research` is manifest.json's
-  # display_name, spaces → underscores). Entries are matched EXACTLY with no
-  # prefix fallback, and the server name is chosen by whoever registers it —
-  # the VM-side plugin cannot control it — so no single spelling resolves
-  # everywhere. Unrecognized entries are ignored as long as one resolves; when
-  # ALL of them miss, the runtime refuses to spawn the agent at all.
+  # Every MCP tool appears under ALL THREE server spellings, because the name is
+  # chosen by whoever registers the server and the VM-side plugin cannot control
+  # it: `genealogy` (.mcp.json, both harnesses, hosted web);
+  # `remote-devices__Genealogy_Research` (Cowork in the cloud, via the bridge);
+  # `Genealogy_Research` (Cowork on this computer, no bridge). The latter two
+  # derive from manifest.json's display_name, spaces → underscores. Entries are
+  # matched EXACTLY with no prefix fallback. Unrecognized entries are ignored as
+  # long as one resolves; when ALL of them miss, the runtime refuses to spawn the
+  # agent at all (issue #1341).
   # Guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__project_context
   - mcp__genealogy__record_read
@@ -41,12 +41,20 @@ tools:
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__remote-devices__Genealogy_Research__record_person_matches
   - mcp__remote-devices__Genealogy_Research__record_record_matches
+  - mcp__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__record_read
+  - mcp__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_search_all
+  - mcp__Genealogy_Research__extraction_append
+  - mcp__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__record_person_matches
+  - mcp__Genealogy_Research__record_record_matches
 # `extraction_append` writes only `sources` + `assertions`. The broad
 # `research_append` is denied both by omission above and explicitly here:
 # a `disallowedTools` deny is enforced even under `bypassPermissions`,
 # which the hosted path runs (issue #695).
 #
-# The deny MUST carry both spellings for the same reason the allow-list does.
+# The deny MUST carry all three spellings for the same reason the allow-list does.
 # A deny that names only `mcp__genealogy__research_append` silently fails to
 # bind wherever the server is registered under another name — which is exactly
 # the environment where it matters most, since the deny is the only thing
@@ -54,6 +62,7 @@ tools:
 disallowedTools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_append
 ---
 
 # Record Extractor
