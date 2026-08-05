@@ -486,7 +486,10 @@ built web client from a single origin. Full procedure in
 [`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
 
 ```bash
-# Secrets — NOT in fly.toml (they carry credentials):
+# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
+# and DATABASE_URL are REQUIRED: PUBLIC_URL is https, so the app refuses to boot
+# without them (config.assert_production_config). Omitting one is not a silent
+# downgrade: the process exits at startup with a message naming the missing setting.
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \

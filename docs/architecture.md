@@ -1025,7 +1025,10 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
   suspends reconnects while the tab is hidden, precisely so a backgrounded tab
   cannot silently resume a paused sandbox. What retained sandboxes cost while
   paused is a vendor billing question this repo does not answer.
-- `ws_signing_key` defaults to a dev value; production needs a real one.
+- `ws_signing_key` still defaults to a dev value, but a production deploy can no
+  longer run on it: when `PUBLIC_URL` is https and `ws_signing_key`, `session_secret`,
+  or `DATABASE_URL` is missing or still at its default, the app refuses to boot
+  (`config.assert_production_config`, first statement of `main.py`'s lifespan).
 
 > **Both source docs were corrected 2026-08-02.** `docs/realtime-architecture.md`
 > and `docs/realtime-rearch-status.md` used to carry a
@@ -1188,6 +1191,7 @@ taught a reader nothing.
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. |
+| **Nothing proves the production boot refusal is reachable or legible.** `test_prod_preflight.py` asserts `assert_production_config` and its lifespan wiring offline; no check runs against a real `fly deploy`. | A gate that never fires, or fires with an unreadable message, looks identical to a correctly configured deploy. |
 | **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. |
 
 ### If you're asked to…

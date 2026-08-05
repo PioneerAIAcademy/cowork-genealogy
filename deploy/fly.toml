@@ -8,6 +8,12 @@
 # `fly secrets set`. Only non-secret config lives in [env] below. (Login is
 # unified FamilySearch OAuth — there is no Google client.)
 #
+# SESSION_SECRET, WS_SIGNING_KEY and DATABASE_URL are now ENFORCED, not just
+# documented: because PUBLIC_URL below is https, the app refuses to boot if any of
+# them is missing or still at its development default (config.assert_production_config,
+# called first in main.py's lifespan). Forgetting one used to mean forgeable session
+# cookies and WS handshake tokens, or a database on ephemeral rootfs, with no error.
+#
 # DB: with DATABASE_URL set to a Neon Postgres URL (a secret), the control plane
 # uses Postgres and nothing persistent remains on DATA_DIR — so there is no Fly
 # volume (see docs/plan/neon-postgres-plan.md). Unset → SQLite (local dev only).
