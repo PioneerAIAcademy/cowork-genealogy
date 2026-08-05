@@ -494,8 +494,8 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened."
 
-   *Why this retention rule, and not the two obvious alternatives* (settled
-   2026-08-02; issue #941). Every compliance, cost and recall figure in this repo
+   *Why this retention rule, and not the two obvious alternatives* — a settled
+   decision, 2026-08-02. Every compliance, cost and recall figure in this repo
    is computed over `eval/runlogs/`, so what a failed run leaves behind is a
    load-bearing decision:
 
