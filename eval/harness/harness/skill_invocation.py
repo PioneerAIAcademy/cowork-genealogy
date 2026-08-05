@@ -735,3 +735,115 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                 "dedicated agent"
             )
     return violations
+
+
+# Marks a citation-nulling shadow entry in the shared
+# `guardrail_shadow_violations` list. `guardrail_shadow_report.py` keys on it to
+# count this failure class in its own bucket instead of lumping it with the
+# #963 person_evidence-provenance gaps (both carry a `detail`).
+CITATION_NULLING_KIND = "citation_nulling"
+
+
+def find_citation_nulling_in_conclusions(
+    research: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1133): a source that BACKS A WRITTEN
+    CONCLUSION carries a null or empty ESM ``citation`` string — the "provenance
+    nulling" failure class the engine's write-seam guard deliberately does not
+    cover.
+
+    Provenance nulling has two halves. A null *source-ref* on authored tree
+    content (a fact/name/edge pointing at no source) is already unrepresentable
+    at the write seam — the mandatory-ref golden in
+    ``materialize-facts.test.ts`` / ``tree-edit.test.ts`` rejects it, inverting
+    the cruz "0/13 facts carried a ref" leak. This detector covers the OTHER
+    half that golden explicitly disowns
+    (``docs/specs/tree-materialization-spec.md`` — "The ESM citation string is
+    out of scope here"): a source that exists and is cited by a conclusion but
+    whose citation *string* was left empty. That is the cruz "11/14 citation-less
+    tree sources" / birkeland "F1/F2 citation-less conclusion facts" class in
+    ``docs/record-extraction-consolidation-closing-report.md`` §4, which the
+    judge cannot see and the three §7.5 compliance checks do not read.
+
+    GATED ON A WRITTEN CONCLUSION. Fires only when a ``proof_summaries`` entry
+    exists, and only for the sources its ``supporting_assertion_ids`` reference
+    (``assertion.source_id`` → ``sources[].id``). This gate is what keeps the
+    check from false-positiving on honest partial runs: tree S-entry citations
+    are populated by ``proof-conclusion`` at UPLOAD time, so a run that
+    legitimately stops before upload has empty citations by design — but a run
+    that WROTE a conclusion has asserted the evidence is citable, so a concluded
+    source with an empty citation string is a real nulling. Reads
+    ``research.json`` only (upload-independent): the citation string is AUTHORED
+    there before ``proof-conclusion`` copies it to the tree, so this catches the
+    nulling at its origin rather than waiting on upload.
+
+    SHADOW MODE ONLY: returns violation records shaped to share
+    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
+    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
+    never hit a ``None`` format spec; ``kind == CITATION_NULLING_KIND`` so that
+    report counts this class in its own bucket). Never fails a run. Graduating to
+    a hard 4th compliance check is a deliberate follow-up (issue #1358) gated on
+    measuring the fire rate across the corpus — not decided here.
+    """
+    research = research or {}
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # the gate: no written conclusion, so nothing is held to a citation
+
+    sources = research.get("sources") if isinstance(research.get("sources"), list) else []
+    assertions = (
+        research.get("assertions") if isinstance(research.get("assertions"), list) else []
+    )
+    sources_by_id = {s.get("id"): s for s in sources if isinstance(s, dict)}
+    assertions_by_id = {a.get("id"): a for a in assertions if isinstance(a, dict)}
+
+    def _citation_is_empty(src: dict[str, Any]) -> bool:
+        c = src.get("citation")
+        return c is None or (isinstance(c, str) and c.strip() == "")
+
+    violations: list[dict[str, Any]] = []
+    seen: set[tuple[Any, Any]] = set()  # one entry per (conclusion, source)
+    for ps in proof_summaries:
+        if not isinstance(ps, dict):
+            continue
+        ps_id = ps.get("id")
+        qid = ps.get("question_id")
+        aids = (
+            ps.get("supporting_assertion_ids")
+            if isinstance(ps.get("supporting_assertion_ids"), list)
+            else []
+        )
+        for aid in aids:
+            assertion = assertions_by_id.get(aid)
+            if not isinstance(assertion, dict):
+                continue  # dangling assertion ref — a schema concern, not this detector's
+            sid = assertion.get("source_id")
+            if not sid:
+                continue  # assertion not source-backed (e.g. a bare hypothesis) — nothing to cite
+            src = sources_by_id.get(sid)
+            if not isinstance(src, dict):
+                continue  # dangling source ref — a schema concern, not this detector's
+            if not _citation_is_empty(src):
+                continue
+            key = (ps_id, sid)
+            if key in seen:
+                continue
+            seen.add(key)
+            violations.append(
+                {
+                    "index": -1,  # post-hoc final-state read; there is no tool-call index
+                    "tool": "research.json",
+                    "required_skill": "citation",
+                    "question_id": qid,
+                    "kind": CITATION_NULLING_KIND,
+                    "detail": (
+                        f"concluded source {sid} (via assertion {aid}, "
+                        f"proof_summary {ps_id}) has a null/empty citation string"
+                    ),
+                }
+            )
+    return violations

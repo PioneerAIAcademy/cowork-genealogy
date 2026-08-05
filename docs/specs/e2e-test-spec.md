@@ -1040,6 +1040,35 @@ checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
+**A fourth check runs in shadow mode only (issue #1133): citation-string
+nulling.** `find_citation_nulling_in_conclusions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and flags a
+source that **backs a written conclusion** — i.e. one a `proof_summaries`
+entry's `supporting_assertion_ids` reference, via `assertion.source_id →
+sources[].id` — whose ESM `citation` string is null or empty. This is the
+provenance-nulling half the engine's write-seam guard deliberately does **not**
+cover: a null *source-ref* on authored tree content is already unrepresentable
+(the mandatory-ref golden in `materialize-facts.test.ts` / `tree-edit.test.ts`),
+but the citation *string* is explicitly out of scope there
+(`tree-materialization-spec.md`, "The ESM citation string is out of scope
+here"), and none of the three checks above read it. It is the cruz "11/14
+citation-less tree sources" / birkeland "F1/F2 citation-less conclusion facts"
+class from `record-extraction-consolidation-closing-report.md` §4, invisible to
+the judge.
+
+Unlike the three hard checks, this one **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
+repository's shadow → measure → graduate posture (same as §7's recency check
+and the issue-#963 provenance check). The gate on a `proof_summaries` entry is
+deliberate: tree citations are populated by `proof-conclusion` at *upload*
+time, so a run that legitimately stops before upload has empty citations by
+design — scoping to sources of an actual written conclusion is what keeps a
+future hard version from false-positiving on honest partial runs. Its entries
+carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
+their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
+fourth check is gated on reading that shadow fire rate across the corpus first**
+— tracked as issue #1358, not decided here.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
