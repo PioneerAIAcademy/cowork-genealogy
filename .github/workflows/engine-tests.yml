@@ -72,6 +72,19 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v7
 
+      # continue-on-error, because prompt-budget.test.ts is warn-only by design
+      # and a step that can red the job is not. It also makes the test's own
+      # fallback reachable: without it the job dies here and the
+      # "origin/<base> is not available" ::warning:: path can never run.
+      # BASE_REF goes through env rather than into the command text, matching
+      # the scope step above — a ref name is repo-controlled input.
+      - name: Fetch base branch for prompt-budget delta
+        if: steps.scope.outputs.relevant == 'true'
+        continue-on-error: true
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}" --depth=1
+
       - name: Set up Node
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-node@v7
