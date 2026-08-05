@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import ts from 'typescript'
 
 /**
  * @genealogy/schema's hand-written interfaces mirror BOTH persisted schemas —
@@ -37,7 +38,7 @@ const schema = JSON.parse(
 const treeSchema = JSON.parse(
   readFileSync(join(repoRoot, 'docs', 'specs', 'schemas', 'tree-gedcomx.schema.json'), 'utf8'),
 )
-const source = readFileSync(join(repoRoot, 'packages', 'schema', 'src', 'index.ts'), 'utf8')
+const sourcePath = join(repoRoot, 'packages', 'schema', 'src', 'index.ts')
 
 /** `$defs` name → the TS interface name, where PascalCase isn't the answer. */
 const RENAMED: Record<string, string> = {
@@ -68,18 +69,52 @@ const TREE_INTERFACES: Record<string, string> = {
 
 const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.slice(1)).join('')
 
-function interfaceFields(src: string): Map<string, Set<string>> {
-  // Strip block comments first so JSDoc prose can't be read as a field.
-  const clean = src.replace(/\/\*[\s\S]*?\*\//g, '')
+/**
+ * interface name → declared property names, via the TypeScript compiler.
+ *
+ * Not a regex (#1219). The regex this replaced keyed on `export interface X {`
+ * and a 2-space field indent, so it was coupled to formatting rather than to
+ * the language, and measured against four ordinary shapes it got all four
+ * wrong: `extends Base` and a single-line body dropped the interface entirely;
+ * a 4-space indent kept the interface with zero fields; and a nested object
+ * literal leaked the nested `name` up as a top-level field of `Locality`.
+ * Every one of those fails loudly, but three of the four fail with the wrong
+ * diagnosis, and the last is a false positive — which is how a lint gets
+ * disabled. The compiler reads all four, with one limit it does not remove:
+ * `node.members` is directly-declared members only, so an `extends` still
+ * reports its inherited fields as missing. That is what the inheritance guard
+ * below asserts against, rather than something this parser handles.
+ */
+function interfaceFields(path: string): {
+  fields: Map<string, Set<string>>
+  inheriting: string[]
+} {
+  const sourceFile = ts.createSourceFile(
+    path,
+    readFileSync(path, 'utf8'),
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+  )
   const out = new Map<string, Set<string>>()
-  for (const m of clean.matchAll(/export interface (\w+) \{([\s\S]*?)\n\}/g)) {
-    const fields = [...m[2].matchAll(/^ {2}(\w+)\??\s*:/gm)].map((f) => f[1])
-    out.set(m[1], new Set(fields))
-  }
-  return out
+  const inheriting: string[] = []
+  sourceFile.forEachChild((node) => {
+    if (!ts.isInterfaceDeclaration(node)) return
+    if (node.heritageClauses?.length) inheriting.push(node.name.text)
+    const fields = new Set<string>()
+    for (const member of node.members) {
+      // Index signatures and computed names have no plain identifier; no schema
+      // object here uses one, and skipping is right if one ever appears.
+      if (!ts.isPropertySignature(member) || !member.name) continue
+      if (ts.isIdentifier(member.name) || ts.isStringLiteral(member.name)) {
+        fields.add(member.name.text)
+      }
+    }
+    out.set(node.name.text, fields)
+  })
+  return { fields: out, inheriting }
 }
 
-const parsed = interfaceFields(source)
+const { fields: parsed, inheriting } = interfaceFields(sourcePath)
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -99,8 +134,21 @@ function expectMirrors(tsName: string, def: any, help: string) {
 
 describe('@genealogy/schema interfaces mirror research.schema.json', () => {
   it('parsed a plausible number of interfaces', () => {
-    // A regex that silently matches nothing reads exactly like a clean run.
+    // A parser that silently returns nothing reads exactly like a clean run.
     expect(parsed.size, 'interfaces parsed out of packages/schema/src/index.ts').toBeGreaterThan(25)
+  })
+
+  it('no interface inherits its fields', () => {
+    // `node.members` is directly-declared members only, so an `extends` would
+    // make every inherited field read as missing — drift that isn't there, on
+    // an interface that is fine. There is none today; fail here naming the
+    // interface rather than N lines away naming its parent's fields.
+    expect(
+      inheriting,
+      'this lint reads only directly-declared members, so an interface with ' +
+        '`extends` reports its inherited fields as drift — teach interfaceFields ' +
+        'to walk the heritage clause before adding one',
+    ).toEqual([])
   })
 
   const objectDefs = Object.entries<any>(schema.$defs).filter(
