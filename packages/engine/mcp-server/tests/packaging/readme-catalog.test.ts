@@ -31,10 +31,18 @@ const pluginRoot = join(engineRoot, "plugin");
 
 const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
 
-/** Backticked identifiers, which is how the README names every tool/skill. */
-const backticked = new Set(
-  [...readme.matchAll(/`([a-z0-9_-]+)`/g)].map((m) => m[1]),
-);
+/**
+ * Identifiers the README *names*, as opposed to words it merely contains:
+ * backticked (`research_append`) or bolded (`**init-project**`, the skill
+ * tables' form). Substring matching is not good enough — `research`,
+ * `citation`, `timeline` and `translation` are all shipped skill names *and*
+ * ordinary English words that appear throughout the prose, so a
+ * `readme.includes()` check on those can never fail.
+ */
+const named = new Set([
+  ...[...readme.matchAll(/`([a-z0-9_-]+)`/g)].map((m) => m[1]),
+  ...[...readme.matchAll(/\*\*([a-z0-9_-]+)\*\*/g)].map((m) => m[1]),
+]);
 
 function dirNames(path: string): string[] {
   return readdirSync(path, { withFileTypes: true })
@@ -45,13 +53,13 @@ function dirNames(path: string): string[] {
 
 describe("README catalog", () => {
   it("read a README with content (guards the reader itself)", () => {
-    expect(backticked.size).toBeGreaterThan(20);
+    expect(named.size).toBeGreaterThan(20);
   });
 
   it("names every registered MCP tool", () => {
     const missing = allToolSchemas
       .map((s) => s.name)
-      .filter((n) => !backticked.has(n))
+      .filter((n) => !named.has(n))
       .sort();
     expect(
       missing,
@@ -73,7 +81,7 @@ describe("README catalog", () => {
 
   it("names every shipped skill", () => {
     const skills = dirNames(join(pluginRoot, "skills"));
-    const missing = skills.filter((s) => !readme.includes(s));
+    const missing = skills.filter((s) => !named.has(s));
     expect(
       missing,
       `these skills ship in the plugin but appear nowhere in README.md: ` +
@@ -86,7 +94,7 @@ describe("README catalog", () => {
       .filter((f) => f.endsWith(".md"))
       .map((f) => f.replace(/\.md$/, ""))
       .sort();
-    const missing = agents.filter((a) => !readme.includes(a));
+    const missing = agents.filter((a) => !named.has(a));
     expect(
       missing,
       `these plugin agents ship but appear nowhere in README.md: ` +
@@ -98,8 +106,13 @@ describe("README catalog", () => {
     // The two prose counts that drifted said 33 and 31 against 47 live. A
     // count is optional; a *wrong* count is worse than none, because a reader
     // uses it to decide whether the tables below are complete.
-    const claims = [...readme.matchAll(/(\d+)\s+MCP tools?\b/g)].map((m) =>
-      Number(m[1]),
+    //
+    // `MCP` is optional in the pattern: the headline reads "The MCP server
+    // exposes 47 tools", with no `MCP` between the number and `tools`. A
+    // pattern that required it left the headline — the count that had actually
+    // rotted, to 33 — unguarded.
+    const claims = [...readme.matchAll(/(\d+)\s+(?:MCP\s+)?tools?\b/g)].map(
+      (m) => Number(m[1]),
     );
     const wrong = claims.filter((n) => n !== allToolSchemas.length);
     expect(
@@ -107,6 +120,21 @@ describe("README catalog", () => {
       `README.md claims these MCP tool counts, but ${allToolSchemas.length} ` +
         `are registered: ${wrong.join(", ")}. Update the number, or drop it ` +
         `and point at the tables.`,
+    ).toEqual([]);
+  });
+
+  it("states a skill count that matches reality, if it states one at all", () => {
+    // Same failure, one section down: "ships 27 skills" and "26 shipped
+    // skills" disagreed with each other in the same document.
+    const skills = dirNames(join(pluginRoot, "skills"));
+    const claims = [...readme.matchAll(/(\d+)\s+(?:shipped\s+)?skills\b/g)].map(
+      (m) => Number(m[1]),
+    );
+    const wrong = claims.filter((n) => n !== skills.length);
+    expect(
+      wrong,
+      `README.md claims these skill counts, but ${skills.length} ship in ` +
+        `the plugin: ${wrong.join(", ")}.`,
     ).toEqual([]);
   });
 });

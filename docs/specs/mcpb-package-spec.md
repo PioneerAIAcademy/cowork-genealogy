@@ -86,8 +86,8 @@ snapshot of it:
 - `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
   (`src/tool-schemas.ts`), both directions.
 - The same file asserts every registered tool has a dispatch case in
-  `src/index.ts` (issue #1164) — advertised-but-undispatchable is the failure
-  the list-equality check alone cannot see.
+  `src/index.ts` — advertised-but-undispatchable is the failure the
+  list-equality check alone cannot see.
 
 For the current set, read `allToolSchemas`, or `README.md`'s tables for the
 user-facing catalog.
