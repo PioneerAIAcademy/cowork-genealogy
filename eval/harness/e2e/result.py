@@ -344,8 +344,17 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
         outcome = str(data.get("outcome") or overall_outcome(verdict, compliance))
         return verdict, compliance, outcome
 
-    judge_output = data.get("judge_output") or {}
-    if "guardrail_bypass_violations" in judge_output:
+    # `isinstance`, not `or {}` — a non-dict `judge_output` (a string, a number)
+    # makes the membership test raise, and this function is the one every reader
+    # of historical data goes through, so the crash reaches `corpus_report`,
+    # `latency_report` and `calibrate_judge` alike. Guarding here rather than in
+    # each caller is what keeps one malformed log from killing three tools.
+    # NOTE this tests key PRESENCE, not a non-empty list, and that is deliberate:
+    # presence means the detector ran and wrote, which is the signal branch 2
+    # exists to read. Whether an explicit empty list should instead resolve
+    # `pass` is #972 doctrine, not a bug — see the class docstring above.
+    judge_output = data.get("judge_output")
+    if isinstance(judge_output, dict) and "guardrail_bypass_violations" in judge_output:
         verdict = str(judge_output.get("verdict") or "skipped")
         return verdict, "fail", "fail"
 

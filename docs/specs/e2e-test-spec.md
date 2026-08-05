@@ -862,10 +862,11 @@ through `e2e.result.axes_from_runlog`, which resolves all four shapes the
 corpus contains. Pre-detector runs (see §7.5) resolve to
 `compliance: not_checked` — an unknown, which is **never** counted as clean.
 
-`make e2e-corpus` prints the three axes across recent committed runs — the
-last 14 days by default, `SINCE=all` for the whole corpus. It names the window
-and the sample size in its own output, so a windowed number is never mistaken
-for a whole-corpus one.
+`make e2e-corpus` prints the three axes, plus violation counts and
+concentration, across recent committed runs — the last 14 days by default,
+`SINCE=all` for the whole corpus. It names the window and the sample size in
+its own output, so a windowed number is never mistaken for a whole-corpus one.
+See §9.
 
 ### 7.3 Variance and Calibration
 
@@ -1224,20 +1225,69 @@ but each iteration prints its own roll-up — the loop does not aggregate.
 
 For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
-the window through `axes_from_runlog` and reports all three axes, holding `not_checked`
-compliance separate from clean:
+the window through `axes_from_runlog` and reports all three axes, holding
+`not_checked` compliance separate from clean, then the violation detail
+beneath them:
 
 ```
-133 committed run(s)
-  recall (genealogy): 87 pass / 24 partial / 22 fail
-  compliance:         12 fail / 121 not_checked
-  gate (outcome):     81 pass / 22 partial / 30 fail
+$ make e2e-corpus
+Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded. Pass --since all for the whole corpus.
+82 committed run(s)
+  recall (genealogy): 49 pass / 10 partial / 23 fail
+  compliance:         21 fail / 61 not_checked
+  gate (outcome):     38 pass / 8 partial / 36 fail
+  NOTE: 61 run(s) have unknown compliance — written before the guardrail
+        detector existed, or by a version of it that cannot be pinned. They are
+        NOT counted as clean. See e2e.result.axes_from_runlog.
+  violations:         67 across 21 decidable run(s); 61 unknown recorded none
+    same_person (per person)            50
+    exhaustiveness                       6
+    proof-conclusion                     6
+    conflict-resolution                  5
+  concentration:
+    jimmie-jewel-neal                   19  (28% of all violations)
+    elisabetha-sugecz-parents            7  (10% of all violations)
+    cornelius-booysen-death              5  (7% of all violations)
+    … 14 further fixture(s) not shown, 36 violation(s) (54%)
+    NOTE: `jimmie-jewel-neal` alone accounts for 28% of violations (4.8x its even
+          share across 17 contributing fixtures). Any headline is substantially
+          this one fixture's behavior.
+  runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
+                         clean, so this is a floor on incidence, not a rate.
 ```
 
-(A snapshot taken 2026-08-02, not a live figure — run the command for
-current totals. The gap between the recall line and the gate line is the
-whole point: eight of those twelve non-compliant runs recovered the answer —
-six judge-pass, two judge-partial.)
+(A snapshot taken 2026-08-04, not a live figure — run the command for current
+totals. The gap between the recall line and the gate line is the whole point:
+runs that recovered the genealogical answer can still fail the gate on
+compliance.)
+
+**`violations:` and `runs w/ >=1 violation:` count different things** — individual
+violations and the runs carrying at least one. They are labelled apart because
+quoting one against the other's denominator is the error this report exists to
+prevent.
+
+**Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=all|N|YYYY-MM-DD` sets
+the window, defaulting to the last 14 days like every other run-log reader
+(`harness/since_window.py`), so a window is an argument rather than a figure
+hand-edited into prose. A malformed `SINCE` is rejected at parse time (exit 2)
+rather than silently selecting the wrong runs, and a run whose filename carries no
+parseable date is **kept**, so a naming change cannot quietly shrink the sample.
+
+**Every denominator the report prints excludes `not_checked`.** A rate or a
+per-run figure over `pass + fail + not_checked` asserts that the unknowns ran
+clean, which is exactly the inference `axes_from_runlog` refuses. So the violation
+total is stated across *decidable* runs — a `not_checked` run's violations field
+is absent, which is why it is unknown, and it therefore cannot contribute one —
+and where the decidable set is empty or all-one-way the report says so instead of
+printing a percentage. The `concentration:` block is suppressed below two
+contributing fixtures, since with one the leader trivially holds 100%.
+
+**The dominance NOTE fires on either of two triggers**, because neither works
+alone: an outright majority (>50% of violations), or an outsized share relative
+to an even split (≥3× `total / contributing fixtures`). A majority bar alone
+stays silent on a wide corpus — today's outlier is 39% across 11 contributing
+fixtures — and a relative bar alone is unreachable for small ones, where an even
+share is already 50%.
 
 No dashboard, no database — two functions reading committed runlogs. The
 console output is also the artifact stakeholders see.
