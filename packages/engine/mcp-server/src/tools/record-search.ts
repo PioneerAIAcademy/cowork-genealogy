@@ -218,9 +218,13 @@ export function validateInput(input: RecordSearchInput): void {
     );
   }
 
+  // Object.hasOwn, not `in`: `in` walks the prototype chain, so the
+  // LLM-supplied `recordType: "constructor"` would satisfy the guard and then
+  // index out `Object` at the buildSearchUrl call below, sending
+  // `f.recordType=function%20Object()%20{...}` upstream instead of rejecting.
   if (
     input.recordType !== undefined &&
-    !(input.recordType in RECORD_TYPE_TO_INT)
+    !Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)
   ) {
     throw new Error(
       "recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."
@@ -296,7 +300,10 @@ export function buildSearchUrl(input: RecordSearchInput): string {
       `${input.recordCountry},${input.recordSubdivision}`
     );
   }
-  if (input.recordType) {
+  // hasOwn again, not just a truthiness check: buildSearchUrl is exported and
+  // reachable without validateInput, so the emit site keeps the invariant on
+  // its own rather than trusting the caller to have validated first.
+  if (input.recordType && Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)) {
     add("f.recordType", RECORD_TYPE_TO_INT[input.recordType]);
   }
   if (input.maritalStatus) add("f.maritalStatus", input.maritalStatus);

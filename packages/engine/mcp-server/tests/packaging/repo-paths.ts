@@ -60,6 +60,34 @@ export function citedPaths(text: string): string[] {
 }
 
 /**
+ * Backticked source citations that pin a LINE NUMBER — `validator.ts:417`,
+ * `eval/harness/e2e/orchestrator.py:962-980`. Returns the full cited token.
+ *
+ * `citedPaths` above strips the `:NNN` and resolves the file, so a cite whose
+ * line number has drifted still passes that lint while pointing at the wrong
+ * code. That is not hypothetical: of three sampled in
+ * `research-append-tool-spec.md`, three were already wrong — one claimed to be
+ * the `exhaustive_declaration` coupling check and is the `stop_criteria` shape
+ * allow-list. A line number is a copy of state whose owner is the file, and
+ * nothing keeps the copy honest, so the style is banned rather than checked.
+ * Cite the symbol instead; `citedPaths` already verifies the file exists.
+ *
+ * Deliberately narrow, same doctrine as the extractor above: source files only
+ * (`.py`/`.ts`/`.mjs`), inside a backtick span, line number required. A bare
+ * `orchestrator.py` is fine, `docs/foo.md#section` is fine (an anchor moves
+ * with its heading), and `9:30` or `1:1:QL69-GBJC` are not source cites.
+ */
+export function citedLineNumbers(text: string): string[] {
+  const found = new Set<string>();
+  for (const m of text.matchAll(/`([^`\n]+)`/g)) {
+    for (const t of m[1].matchAll(/[\w./-]+\.(?:py|ts|mjs):\d+(?:-\d+)?/g)) {
+      found.add(t[0]);
+    }
+  }
+  return [...found];
+}
+
+/**
  * Placeholder spellings used across this repo's docs and `.claude/` prompts:
  * `<skill>`, `{N}`, `$ARGUMENTS`, `${VAR}`. Each stands for "one path segment
  * I cannot name here", so each becomes a `*`.
