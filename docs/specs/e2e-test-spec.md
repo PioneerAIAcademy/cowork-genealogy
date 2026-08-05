@@ -975,7 +975,12 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Grading is
+edited after grading) is a hard error: re-grade or delete it. A grade whose
+**fixture was retired** is the same hard error with the same
+remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
+split changes the researcher question and the starting tree, so the run was
+never executed against the fixture it would then be graded under — and leave
+the run log itself; the corpus readers still count it. Grading is
 **same-PR**: every committed run is graded in the PR that commits it (all
 gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
 `check-e2e-fixtures`
