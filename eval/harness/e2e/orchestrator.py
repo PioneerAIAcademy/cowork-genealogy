@@ -40,6 +40,8 @@ from claude_agent_sdk import (
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    is_subagent_call,
+    subagent_only_denial,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
@@ -157,6 +159,42 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     if not tool_name.startswith("mcp__"):
         return False
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+
+
+def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
+    """Whether this is `extraction_append` on the main thread — the #942 bug.
+
+    `extraction_append` is the record-extractor subagent's private writer: it is
+    declared by NO skill's `allowed-tools` and lives only on
+    `agents/record-extractor.md`. So the only legitimate caller is the
+    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
+    the main thread (no `agent_id`) is the router substituting for a failed
+    spawn and doing the extraction itself.
+
+    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    sufficient discriminator — which is all e2e can see, since its sub-skills run
+    in the same session via the `Skill` tool with no `agent_id` to attribute them
+    (see `harness.context_policy` docstring). We deny the bare tool directly
+    rather than routing through `subagent_only_violation`, which guards the whole
+    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
+    tool-specific also means a future skill that legitimately declares a guarded
+    tool is not denied here.
+
+    `image_read`, the set's other member, satisfies the same condition today — no
+    skill has declared it since `search-images` moved to `@plugin:image-reader`
+    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
+    equally enforceable here and simply is not yet: that is outside #942's blast
+    radius, tracked as issue #1273.
+    """
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # raise AttributeError here, and a raising hook fails a call the agent was
+    # entitled to make (CLAUDE.md, "Plugin hooks"). Fail closed to "not blocked".
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return False
+    return (
+        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        and not is_subagent_call(input_data)
+    )
 
 
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
@@ -823,19 +861,20 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
 ) -> tuple[
-    list[dict[str, Any]],
-    list[str],
-    dict[str, Any],
-    str | None,
-    str | None,
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[str],
+    list[dict[str, Any]],  # tool_calls
+    list[dict[str, Any]],  # narration
+    dict[str, Any],  # usage
+    str | None,  # aborted_reason
+    str | None,  # error
+    list[dict[str, Any]],  # blocked_tree_reads
+    list[dict[str, Any]],  # blocked_context_calls
+    list[dict[str, Any]],  # guardrail_shadow_violations
+    list[str],  # unnamed_delegate_violations
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
     Returns (tool_calls, narration, usage, aborted_reason, error,
-    blocked_tree_reads, guardrail_shadow_violations,
+    blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
@@ -890,6 +929,11 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Every denied main-thread `extraction_append` — the router doing the
+    # record-extractor's job because the subagent failed to spawn (#942). The
+    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
+    # the PreToolUse deny); this list is the record that it did not run.
+    blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
     # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
@@ -988,14 +1032,40 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is
-        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
-        # §4.1. It is unit-only because the guard needs to know which SKILL is
-        # active, and e2e cannot know: sub-skills run in this same session via
-        # the Skill tool (no `agent_id` to attribute them), so a legitimate
-        # `search-images` browse — which declares `image_read` and pages through
-        # volumes itself — is indistinguishable from a record-extraction router
-        # violation. Denying on the bare tool name would break real browsing.
+        # NOTE: the per-context tool policy (harness/context_policy.py) is only
+        # PARTIALLY enforced here — see that module's docstring.
+        #   - `extraction_append` IS enforced (below). No skill declares it, so
+        #     its only legitimate caller is the Task-spawned record-extractor,
+        #     which carries `agent_id`; a main-thread call is the #942 router
+        #     substitution. `agent_id` presence alone discriminates, which is all
+        #     e2e can see — sub-skills run in this same session via the Skill
+        #     tool with no `agent_id` to attribute them, so the full per-skill
+        #     check (`subagent_only_violation`) has no `declared_tools` to take.
+        #   - `image_read`, the set's other member, is NOT enforced here yet. It
+        #     meets the same condition today (no skill declares it; it lives only
+        #     on agents/image-reader-opus.md) — issue #1273.
+        if is_main_thread_extraction_append(input_data):
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on the main thread — writing extracted "
+                        "assertions is the record-extractor subagent's job. If it "
+                        "failed to spawn, report the failure and stop (#942)."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            return subagent_only_denial(bare)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -1554,6 +1624,7 @@ async def _run_agent(
         aborted_reason,
         error,
         blocked_tree_reads,
+        blocked_context_calls,
         guardrail_shadow_violations,
         unnamed_delegate_violations,
     )
@@ -1689,6 +1760,7 @@ async def run_e2e_test(
             aborted,
             error,
             blocked_tree_reads,
+            blocked_context_calls,
             guardrail_shadow_violations,
             unnamed_delegate_violations,
         ) = await _run_agent(
@@ -1788,6 +1860,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            blocked_context_calls=blocked_context_calls,
             narration=narration,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,

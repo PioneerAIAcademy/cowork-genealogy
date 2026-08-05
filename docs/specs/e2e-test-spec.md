@@ -651,6 +651,58 @@ recoverable *from records alone*. A real validity run (§14) proves
 this — a run can only pass with these tools blocked, so an
 answer reachable only via the tree will fail and the fixture won't validate.
 
+### 6.1.1 Main-thread `extraction_append` block (subagent-only guard)
+
+The same `PreToolUse` hook enforces one per-context rule in e2e:
+`extraction_append` may not be called on the main thread. Writing extracted
+assertions and sources is the Task-spawned `record-extractor` subagent's job; a
+main-thread call is the router substituting for a *failed* spawn and doing the
+extraction itself — a shape observed in production.
+
+The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
+in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
+subagent is its only legitimate caller and every legitimate call carries
+`agent_id`. The unit harness's third clause (the skill declared the tool itself)
+can never fire for it. The block is therefore a tool-specific check
+(`is_main_thread_extraction_append`), not the whole `SUBAGENT_ONLY_TOOLS` policy,
+so that a future skill legitimately declaring a guarded tool is not denied here.
+
+`image_read`, the set's other member, satisfies the same condition today — no
+skill has declared it since `search-images` moved to `@plugin:image-reader`
+(2026-07-17), and it now lives only on `agents/image-reader-opus.md` — so it is
+equally enforceable in e2e and is not enforced there yet. Generalizing the
+check to the whole set is tracked in `context_policy.py`'s own docstring.
+
+Semantics match the tree block — the denied call doesn't run, doesn't count
+toward the cap, and doesn't stop the run — but the denial reason tells the router
+to **report the spawn failure and stop**, not to retry another way (a deny that
+leaves the goal in place just relocates the substitution). Denied attempts are
+recorded in a separate `blocked_context_calls` array
+(`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
+because this is a write denied by a different guard.
+
+This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
+Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
+binds even under `bypassPermissions`), but its matcher is `Write|Edit|NotebookEdit`
+— it never sees an MCP tool call. Porting the per-context policy there is
+pending; the harness comments carry the pointer.
+
+This guard covers only the *main-thread* half of the `extraction_append`
+policy. The complementary *delegate* half — a general-purpose or otherwise
+unnamed subagent (anything but `record-extractor`) making the write — is caught
+post-hoc by `find_protected_writes_by_unnamed_delegate`
+(guardrail-enforcement-spec §11). That detector lists a main-thread
+call among its "legitimate" cases, but only as an attribution class (a
+main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
+actually forbids the router's main-thread call.
+
+The two halves are not enforced alike, and the difference matters when reading a
+run: the main-thread half is **denied**, the delegate half is only **logged**.
+`protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
+`E2eResult.__post_init__`, so it never moves the compliance axis until its
+false-positive rate is calibrated. A non-`record-extractor` delegate's
+`extraction_append` therefore still succeeds today; it is recorded, not blocked.
+
 ### 6.2 Provided documents (bundled external evidence)
 
 Some evidence lives on sites the FamilySearch MCP tools can't reach
@@ -1080,6 +1132,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
+| `blocked_context_calls[]` | Denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is a write denied by a different guard. §6.1.1. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
