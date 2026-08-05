@@ -19,22 +19,15 @@
 
 import { join } from "path";
 import { readFile, unlink } from "fs/promises";
-import { validateParsed } from "../validation/validator.js";
+import { validateParsed, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
-const EXTERNAL_SITE_VALUES = new Set([
-  "ancestry",
-  "myheritage",
-  "findmypast",
-  "findagrave",
-  "newspapers",
-  "familysearch_web",
-]);
-const OUTCOME_VALUES = new Set(["positive", "negative", "partial", "error"]);
+const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
+const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 
 export interface ResearchLogAppendExternalSite {
   site: string;
@@ -476,7 +469,7 @@ export const researchLogAppendSchema = {
       },
       outcome: {
         type: "string",
-        enum: ["positive", "negative", "partial", "error"],
+        enum: [...OUTCOME_VALUES],
         description: "Your analytical judgment of the search outcome.",
       },
       resultsExamined: {
@@ -502,14 +495,7 @@ export const researchLogAppendSchema = {
         properties: {
           site: {
             type: "string",
-            enum: [
-              "ancestry",
-              "myheritage",
-              "findmypast",
-              "findagrave",
-              "newspapers",
-              "familysearch_web",
-            ],
+            enum: [...EXTERNAL_SITE_VALUES],
           },
           urlGenerated: { type: "string" },
           captureReceived: { type: "boolean" },
@@ -534,7 +520,7 @@ export const researchLogAppendSchema = {
           properties: {
             tool: { type: "string" },
             query: { type: "object" },
-            outcome: { type: "string", enum: ["positive", "negative", "partial", "error"] },
+            outcome: { type: "string", enum: [...OUTCOME_VALUES] },
             resultsExamined: { type: "number" },
             planItemId: { type: ["string", "null"] },
             resultsAvailable: { type: ["number", "null"] },

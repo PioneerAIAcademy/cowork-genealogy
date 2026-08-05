@@ -1,0 +1,927 @@
+{
+  "project": {
+    "id": "rp_rafael_reyes_daughter",
+    "objective": "Did Rafael Reyes and his wife Serapia Benavides Cueva of Usulut\u00e1n, El Salvador have a daughter named Rita, born and died in 1913?",
+    "subject_person_ids": [
+      "MTNY-RXQ"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-04"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does a birth registration for a daughter named Rita appear in Usulut\u00e1n, El Salvador civil records for 1913, listing Rafael Reyes and Serapia Benavides Cueva as parents?",
+      "rationale": "The objective asks whether this couple had a daughter Rita born and died in 1913. The birth registration is the gatekeeper fact: El Salvador implemented civil registration in 1879, so 1913 records should exist. Usulut\u00e1n departmental civil registry books are the most direct source. Confirming the birth establishes the child's existence before the death question can be meaningfully pursued.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-04",
+      "resolution_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_017"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Civil Registration collection 1821208 searched via 4 FamilySearch queries; original register image (Parte N\u00b075, Santa Elena, Usulut\u00e1n, 22 July 1932) read and confirmed. Found: Rita Reyes died January 1913 as adult daughter of Manuel Rafael Reyes and Serapia Benavides in Santa Elena, Usulut\u00e1n. The question's premise (birth registration for an infant born and died in 1913) is definitively refuted \u2014 Rita was an adult woman (se\u00f1ora, soltera, oficios dom\u00e9sticos) who died de parto. The FamilySearch index 'birth: January 1913' was a data-entry error duplicating the death date. No 1913 birth registration exists because Rita was not born in 1913. Remaining plan items (pli_002\u2013pli_005) skipped as premised on an infant 1913 birth that the original image disproves.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 civil death registration confirms Rita Reyes died January 1913 as legitimate daughter of Manuel Rafael Reyes and Serapia Benavides in Santa Elena, Usulut\u00e1n. The question asked whether a 1913 birth registration exists for an infant named Rita; the original register conclusively shows she was an adult at death, so no 1913 birth registration exists for this person.",
+          "repository_breadth": "Primary repository (FamilySearch El Salvador Civil Registration 1821208) searched thoroughly with 4 query variants (surname+isPrincipal, givenName+surname+isPrincipal+place, father name variants, broader without isPrincipal). Remaining planned sources (Catholic baptisms, reposici\u00f3n searches, Ancestry) were premised on an infant 1913 birth that the original image disproves; skipped as inapplicable.",
+          "original_substitution": "Yes \u2014 original register image (ark:/61903/3:1:33S7-9TRR-4T4, Parte N\u00b075) read and corrected the FamilySearch index error. Source upgraded from derivative to original with full transcription.",
+          "independent_verification": "Limited \u2014 only one source located. The civil death registration is the sole evidence. Independent corroboration (Catholic baptismal record for Rita naming her parents, or a second civil document) was not found in this search phase. This is noted as a limitation of the conclusion.",
+          "evidence_class": "Yes \u2014 original civil register record. Informant: Judge Marco Antonio Ochoa executing a sentencia ejecutoriada (court judgment), acting in official duty. Primary information for the registration act itself; secondary for the underlying 1913 death facts reported 19 years later.",
+          "conflict_resolution": "Yes \u2014 the only discrepancy (FamilySearch index showing 'birth: January 1913') was explained and superseded by original image evidence. Assertion a_003 marked superseded. No unresolved conflicts remain.",
+          "overturn_risk": "Low-moderate. Rita Reyes is confirmed as adult daughter of Manuel Rafael Reyes and Serapia Benavides in an original civil register via court judgment. The late registration (1932) introduces some informant uncertainty, but institutional weight of the court judgment mitigates this. An unsearched Catholic baptismal record could provide independent verification but would not overturn the death finding. No plausible unsearched source would name a different couple as parents."
+        }
+      },
+      "created": "2026-08-04"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-04",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+          "date_range": "1913",
+          "repository": "FamilySearch",
+          "rationale": "El Salvador, Civil Registration, 1704-2001 (collection 1821208) is the primary source with 3.15M indexed records covering this period. El Salvador mandated civil registration from 1879, so a 1913 birth should be registered. The locality survey (loc_001) notes no discrete 1910\u20131914 Usulut\u00e1n birth volumes appear in the volume index, but the main collection index should cover this year. Search for child name 'Rita' with father 'Rafael Reyes' and mother 'Serapia Benavides' in Usulut\u00e1n, 1913.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+          "date_range": "1913",
+          "repository": "FamilySearch",
+          "rationale": "El Salvador, Catholic Church Records, 1655-1977 (collection 1919582) and El Salvador, Baptisms, 1750-1940 (collection 1584970) provide Catholic baptismal records. The locality survey (loc_001) notes Santa Catarina de Alejandr\u00eda parish (Usulut\u00e1n municipality) has 1894-1913 baptismal volumes at 96-99% name-indexed and full-text searchable \u2014 ideal parallel coverage for exactly 1913. Catholic baptismal registers recorded child name, parents, and godparents. Even if civil registration is found, a baptismal record corroborates and may supply additional details.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+          "date_range": "1916-1919",
+          "repository": "FamilySearch",
+          "rationale": "Reposiciones de nacimientos (late birth registrations/amendments) volumes for Usulut\u00e1n municipality cover 1916-1919, per locality survey (loc_001). If Rita's birth was not registered at the time (1913), a late registration filed in 1916-1919 may document it. Search these volumes via the Civil Registration collection (1821208) filtered to Usulut\u00e1n and reposici\u00f3n record type.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Usulut\u00e1n, El Salvador",
+          "date_range": "1913",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com mirrors El Salvador Civil Registration Index (collection 9838, covering 1704-2001) and El Salvador Select Baptisms (9837). If the FamilySearch search (pli_001) is negative or returns ambiguous results, Ancestry's index may be derived from a different extraction pass and could surface a record FamilySearch's index missed. Free before paid is the default order, so this item is sequenced after the FamilySearch searches.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+          "date_range": "1910-1914",
+          "repository": "FamilySearch",
+          "rationale": "The locality survey (loc_001) notes that no discrete 1910-1914 birth volumes appear in the FamilySearch volume index for Usulut\u00e1n municipality, which may indicate they exist but are not yet separately catalogued or digitized. If the main collection index search (pli_001) returns no result, browse-searching nearby birth volumes (1903-1909 and 1915-1916) for entries that might span or include 1913 is a fallback. This also covers any physical FamilySearch microfilm not yet digitized for this period.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-04T06:07:17.666Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1821208",
+        "givenName": "Rita",
+        "surname": "Reyes",
+        "fatherGivenName": "Rafael",
+        "fatherSurname": "Reyes",
+        "motherGivenName": "Serapia",
+        "motherSurname": "Benavides",
+        "birthYearFrom": 1913,
+        "birthYearTo": 1913,
+        "recordCountry": "El Salvador",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 759,
+      "notes": "759 total matches; all 20 examined show Rita Reyes as a secondary person in other registrations, not as the birth record principal. None from Usulut\u00e1n. Narrowed search needed."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-04T06:07:17.675Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1821208",
+        "givenName": "Rita",
+        "surname": "Reyes",
+        "fatherGivenName": "Rafael",
+        "fatherSurname": "Reyes",
+        "motherGivenName": "Serapia",
+        "motherSurname": "Benavides",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1914,
+        "birthPlace": "Usulut\u00e1n, El Salvador",
+        "recordCountry": "El Salvador",
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results with isPrincipal=true, Usulut\u00e1n birth place, both parent names. Index gap likely for 1910-1914 in Usulut\u00e1n (confirmed by locality survey loc_001)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-04T06:07:17.675Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1821208",
+        "givenName": "Rita",
+        "surname": "Reyes",
+        "fatherGivenName": "Rafael",
+        "fatherSurname": "Reyes",
+        "birthYearFrom": 1910,
+        "birthYearTo": 1916,
+        "recordCountry": "El Salvador",
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 38,
+      "notes": "38 matches El Salvador-wide. No record from Usulut\u00e1n with father Rafael Reyes in the first 20. Refined to Usulut\u00e1n birthPlace in next search."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-04T06:07:17.681Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1821208",
+        "givenName": "Rita",
+        "surname": "Reyes",
+        "birthYearFrom": 1910,
+        "birthYearTo": 1916,
+        "birthPlace": "Usulut\u00e1n, El Salvador",
+        "recordCountry": "El Salvador",
+        "isPrincipal": true
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 4,
+      "notes": "Top match: Rita Reyes, born January 1913, died January 1913, death registration Santa Elena, Usulut\u00e1n, El Salvador. Score 6.82, confidence 4. Record ark:/61903/1:1:6DQ4-1RQC. Record title indicates she is the principal. Matches research question precisely."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-04T06:12:31.613Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33S7-9TRR-4T4"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original civil register image read (Parte N\u00b075). Key correction: Rita Reyes was an adult woman ('se\u00f1ora'), not an infant. Died 'de parto' (in childbirth) in January 1913 in Santa Elena, Usulut\u00e1n. Parents confirmed: Manuel Rafael Reyes (father), Serapia Benavides (mother). Described as 'hija leg\u00edtima' (legitimate daughter), 'soltera' (unmarried), 'oficios dom\u00e9sticos'. Late registration filed 22 July 1932 via court judgment (sentencia ejecutoriada) by Judge Marco Antonio Ochoa \u2014 no individual informant named. Registrar: Miguel Angel Velasques; Secretary: Carlos Aparicio Florencio Herrera. FamilySearch index erroneously showed birth date January 1913 (death date duplicated as birth). Image saved: images/ark_61903_3_1_33S7-9TRR-4T4.jpg. Source upgrades from derivative to original.\""
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": null,
+      "performed": "2026-08-04T06:16:26.515Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33S7-9TRR-4T4",
+        "captureFile": "images/ark_61903_3_1_33S7-9TRR-4T4.jpg"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Full transcription of Parte N\u00b075, Santa Elena municipal death register, 22 July 1932. Reveals: Rita Reyes died \"de parto\" (in childbirth) in January 1913, registered via court judgment (sentencia ejecutoriada) by Judge Marco Antonio Ochoa. She was \"la se\u00f1ora Rita Reyes\", soltera, oficios dom\u00e9sticos, de este domicilio. Hija leg\u00edtima de Manuel Rafael Reyes y Serapia Benavides. Buried in Cemetery of Santa Elena. Key correction: the indexed \"birth: January 1913\" was a data-entry error duplicating the death date \u2014 no birth date appears in the original. Rita was an adult woman, not an infant. Registration signed by Miguel Angel Velasques; Secretary Carlos Aparicio Florencio Herrera."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"El Salvador Registro Civil, 1704-2001,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6DQ4-1RQC : accessed 4 August 2026), entry for Rita Reyes and Manuel Rafael Reyes, 22 July 1932.",
+      "citation_detail": {
+        "who": "Rita Reyes (deceased); Manuel Rafael Reyes (father); Serapia Benavides (mother)",
+        "what": "Civil death registration (reposici\u00f3n de defunci\u00f3n), late-registered 19 years after the event; indexed entry from 'El Salvador Registro Civil, 1704-2001', sub-collection 'El Salvador, Usulut\u00e1n, Deaths, from 1500 to 2024'",
+        "when_created": "22 July 1932 (registration date); death occurred January 1913",
+        "when_accessed": "4 August 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Collection 1821208; image ark:/61903/3:1:33S7-9TRR-4T4"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6DQ4-1RQC",
+      "notes": "Original register page (Parte N\u00b075) now examined via image ark:/61903/3:1:33S7-9TRR-4T4. The FamilySearch index incorrectly duplicated the death month/year (January 1913) into the birth field \u2014 the original register records no birth date for Rita. Rita was an adult woman ('la se\u00f1ora Rita Reyes', soltera, oficios dom\u00e9sticos), not an infant. Registration was entered 19 years post-mortem via court judgment (sentencia ejecutoriada) by Judge Marco Antonio Ochoa, Juzgado Primero de Primera Instancia, Usulut\u00e1n.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1",
+      "image_filename": "images/ark_61903_3_1_33S7-9TRR-4T4.jpg",
+      "transcription": "Por sentencia ejecutoriada, extendida a las once horas treinta minutos del d\u00eda de hoy, la respectiva certificaci\u00f3n, por el se\u00f1or Juez Primero de Primera Instancia de la Ciudad de Urandut\u00e1n [Usulut\u00e1n], docto: Marco Antonio Ochoa, aparece que la se\u00f1ora Rita Reyes, quien fu\u00e9 soltera, de oficios dom\u00e9sticos y de este domicilio, hija leg\u00edtima de Manuel Rafael Reyes y Serapia Benavides, falleci\u00f3 de parto en el mes de Enero de a\u00f1o mil novecientos trece en esta villa y que fu\u00e9 sepultada en el Cementerio de esta misma, seg\u00fan se v\u00e9 de la respectiva certificaci\u00f3n que se ha relacionado, la cual queda archivada en esta oficina para los efectos legales. \u2014 Alcald\u00eda Municipal: Santa Elena, a veintidos de julio de mil novecientos treintidos. Miguel Angel Velasques / Carlos Aparicio Florencio Herrera (Srio)"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Rita Reyes",
+      "structured_value": {
+        "given": "Rita",
+        "surname": "Reyes"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Late registration filed 19 years after the events; the informant who supplied the deceased's name is unknown from the index. Could be a surviving parent, relative, or official.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Late registration; informant unknown from the index.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "[index birth date January 1913 \u2014 superseded: data-entry error duplicating death date; original register (Parte N\u00b075) records no birth date for Rita]",
+      "date": null,
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "FamilySearch indexer (source of erroneous index entry)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The FamilySearch index placed 'January 1913' in the birth field, duplicating the death month/year. The original Parte N\u00b075 register image (ark:/61903/3:1:33S7-9TRR-4T4) records no birth date for Rita. This assertion is superseded by image evidence and should not be used for biographical conclusions. No birth date is derivable from this record.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died de parto (in childbirth) in January 1913 at Santa Elena, Usulut\u00e1n, El Salvador",
+      "date": "January 1913",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Death registered 19 years after the event via sentencia ejecutoriada (court judgment). The registrar acted on the court's certification of the death, not on contemporaneous witness testimony. The cause 'de parto' (in childbirth) is stated in the court's certification. Secondary classification because the registration was based on information collected and adjudicated long after the 1913 death.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+      "structured_value": {
+        "year": "1913",
+        "place": "Santa Elena, Usulut\u00e1n, El Salvador"
+      }
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "death registered 22 July 1932 at Santa Elena, Usulut\u00e1n, El Salvador via court judgment (sentencia ejecutoriada); registrar Miguel Angel Velasques, secretary Carlos Aparicio Florencio Herrera",
+      "date": "22 July 1932",
+      "date_certainty": "exact",
+      "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+      "information_quality": "primary",
+      "informant": "Miguel Angel Velasques (registrar), acting on sentencia ejecutoriada by Judge Marco Antonio Ochoa",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The registration act itself is primary \u2014 the municipal registrar personally executed the court-ordered entry on 22 July 1932. Primary classification is for the registration event; the underlying biographical facts about the 1913 death remain secondary (19-year gap, court-mediated).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Manuel Rafael Reyes",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father-child relationship stated in the death registration filed 19 years after the events; informant unknown. The relationship is taken from the record's parentage fields.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675629",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Serapia Benavides",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother-child relationship stated in the death registration filed 19 years after the events; informant unknown. The relationship is taken from the record's parentage fields. Note: 'Serapia Benavides' in this record corresponds to 'Serapia Benavides Cueva' in the project tree (MTNY-RFX); the maternal surname 'Cueva' was not captured in this registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675630",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Manuel Rafael Reyes",
+      "structured_value": {
+        "given": "Manuel Rafael",
+        "surname": "Reyes"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father's name stated in a late registration filed 19 years after the events; informant unknown. 'Manuel Rafael Reyes' corresponds to 'Rafael Reyes' (MTNY-RXQ) in the project tree \u2014 'Manuel Rafael' is his full baptismal name; identity linkage is left to person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675630",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Late registration; informant unknown from the index.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675631",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Serapia Benavides",
+      "structured_value": {
+        "given": "Serapia",
+        "surname": "Benavides"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother's name stated in a late registration filed 19 years after the events; informant unknown. 'Serapia Benavides' corresponds to 'Serapia Benavides Cueva' (MTNY-RFX) in the project tree \u2014 maternal surname 'Cueva' not captured here; identity linkage is left to person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675631",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Late registration; informant unknown from the index.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "record_persona_id": "p_293161675630",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Serapia Benavides (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The couple relationship is inferred from the record listing both as parents of the deceased child. No marital status or explicit couple statement appears in the indexed content. This is a structural inference by the researcher.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "source_id": "src_001",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried in the Cemetery of Santa Elena ('sepultada en el Cementerio de esta misma')",
+      "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Burial fact conveyed via sentencia ejecutoriada registered 19 years after death. Court certification relayed burial location from records or testimony gathered in the legal proceeding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "source_id": "src_001",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "soltera (unmarried) at time of death",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Marital status stated in court-ordered registration 19 years after death. The court certification relayed this biographical fact from testimony or records gathered in the proceeding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "source_id": "src_001",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "oficios dom\u00e9sticos (domestic work)",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Occupation stated in court-ordered registration 19 years after death. Describes Rita as an adult woman ('la se\u00f1ora Rita Reyes') with a domestic occupation \u2014 confirms she was not an infant at death.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "source_id": "src_001",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "de este domicilio (resident of Santa Elena, Usulut\u00e1n, El Salvador)",
+      "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Residence stated in court-ordered registration 19 years after death. 'De este domicilio' refers to Santa Elena, the municipality issuing the registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6DQ4-1RQC",
+      "source_id": "src_001",
+      "record_role": "deceased",
+      "fact_type": "filiation",
+      "value": "hija leg\u00edtima (legitimate daughter) of Manuel Rafael Reyes and Serapia Benavides",
+      "information_quality": "secondary",
+      "informant": "Judge Marco Antonio Ochoa (Juzgado Primero de Primera Instancia, Usulut\u00e1n) via court judgment",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Filiation stated in court-ordered registration 19 years after death. 'Hija leg\u00edtima' confirms both parents are named and the birth was within a recognized marriage \u2014 bears directly on q_001 (establishing Rita's parentage).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Rita Reyes (new person I1, minted from this record). Name assertion directly from the death registration. Link is probable because I1 is a new stub resting on a single record with no independent corroboration yet. Merge-warnings gate was not possible (pre-extracted assertions path; internal GedcomX ids not available).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex Female \u2014 direct fact about the deceased Rita Reyes (I1). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Erroneous birth date assertion (FamilySearch index error \u2014 death date duplicated into birth field; confirmed by original register image Parte N\u00b075). Linked to I1 for audit-trail completeness; the value is superseded and must not be used for biographical conclusions. Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Death January 1913 at Santa Elena, Usulut\u00e1n. Direct fact about Rita Reyes (I1) from the death registration Parte N\u00b075. Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Death registration act (22 July 1932, Santa Elena). Direct fact about Rita Reyes (I1). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Rita as child of Manuel Rafael Reyes. Bears on I1 (the child). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "MTNY-RXQ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Manuel Rafael Reyes named as father of Rita. Bears on MTNY-RXQ (Rafael Reyes). Moderate match: 'Manuel Rafael Reyes' includes 'Rafael' as second given name (common Spanish pattern where first given name is unused in daily life); same surname Reyes; male gender matches; consistent family context (both placed as father of Rita in Usulutan). No core-identifier conflict. Autonomous mode \u2192 probable. Merge-warnings gate skipped (pre-extracted assertions, internal GedcomX ids unavailable).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Rita as child of Serapia Benavides. Bears on I1 (the child). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "MTNY-RFX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Serapia Benavides named as mother of Rita. Bears on MTNY-RFX (Serapia Benavides Cueva). Strong match: highly distinctive given name 'Serapia' matches exactly; primary surname 'Benavides' matches exactly; maternal surname 'Cueva' commonly omitted in civil registers; female gender matches; consistent family context. No core-identifier conflict. Autonomous mode \u2192 confident. Merge-warnings gate skipped (pre-extracted assertions, internal GedcomX ids unavailable).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "MTNY-RXQ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Manuel Rafael Reyes' for father-of-deceased persona. Linked to MTNY-RXQ (Rafael Reyes). Moderate match: 'Manuel Rafael' contains 'Rafael' as the commonly-used second given name; same surname Reyes; male; Usulutan family context. Probable in autonomous mode.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "MTNY-RXQ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex Male \u2014 consistent with MTNY-RXQ (Rafael Reyes). Probable given the Moderate identity match.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "MTNY-RFX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Serapia Benavides' for mother-of-deceased persona. Linked to MTNY-RFX (Serapia Benavides Cueva). Strong match: highly distinctive given name 'Serapia' matches exactly; primary surname 'Benavides' exact; maternal surname 'Cueva' absent but commonly omitted; female; same family context. Confident.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "MTNY-RFX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Female \u2014 consistent with MTNY-RFX (Serapia Benavides Cueva). Confident given the Strong identity match.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "MTNY-RXQ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inferred couple relationship: Manuel Rafael Reyes and Serapia Benavides are both listed as parents of Rita (hija leg\u00edtima \u2014 legitimate daughter), implying a marriage. Bears on MTNY-RXQ (Rafael Reyes). Probable (Moderate match on father identity).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "MTNY-RFX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Inferred couple relationship: Manuel Rafael Reyes and Serapia Benavides are both listed as parents of Rita (hija leg\u00edtima). Bears on MTNY-RFX (Serapia Benavides Cueva). Confident (Strong match on mother identity).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Burial at Cemetery of Santa Elena \u2014 fact about Rita Reyes (I1). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marital status soltera at death \u2014 fact about Rita Reyes (I1). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation oficios dom\u00e9sticos \u2014 fact about Rita Reyes (I1). Confirms she was an adult woman at death, not an infant. Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence Santa Elena, Usulut\u00e1n \u2014 fact about Rita Reyes (I1). Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Filiation assertion \u2014 Rita is hija leg\u00edtima of Manuel Rafael Reyes and Serapia Benavides. Bears on I1 (the child). Directly answers q_001. Probable: single-record stub.",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "MTNY-RXQ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Filiation assertion \u2014 Manuel Rafael Reyes named as father. Bears on MTNY-RXQ (Rafael Reyes). Probable (Moderate match).",
+      "created": "2026-08-04"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "MTNY-RFX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Filiation assertion \u2014 Serapia Benavides named as mother. Bears on MTNY-RFX (Serapia Benavides Cueva). Confident (Strong match).",
+      "created": "2026-08-04"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch El Salvador Civil Registration collection 1821208 ('El Salvador Registro Civil, 1704-2001') searched via four query variants targeting Rita Reyes in Usulut\u00e1n with varying name forms, parentage filters, and date parameters. The original register image (Parte N\u00b075, ark:/61903/3:1:33S7-9TRR-4T4) was read and transcribed, superseding the FamilySearch derivative index. No birth registration for a 1913-born infant named Rita was found; instead, a civil death registration confirmed Rita as an adult daughter of this couple. Remaining planned searches (Catholic baptisms, broader civil reposici\u00f3n searches, Ancestry) were skipped as premised on an infant 1913 birth that the original image definitively disproves. A Catholic baptismal record for Rita (birth year unknown) and a contemporaneous civil record from Santa Elena were not searched and could provide independent corroboration.",
+      "narrative_markdown": "## Proof Summary: Rita Reyes as Daughter of Manuel Rafael Reyes and Serapia Benavides Cueva\n\n**Research question:** Does a birth registration for a daughter named Rita appear in Usulut\u00e1n, El Salvador civil records for 1913, listing Rafael Reyes and Serapia Benavides Cueva as parents?\n\n**Tier:** Probable | **Form:** Summary\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that Rita Reyes, who died in January 1913 in Santa Elena, Usulut\u00e1n, El Salvador, was the legitimate daughter of Manuel Rafael Reyes (known as Rafael Reyes, MTNY-RXQ) and Serapia Benavides Cueva (MTNY-RFX). No birth registration for a 1913-born infant named Rita exists in the searched records because Rita was an adult woman at the time of her death \u2014 not a newborn. The question's infant-birth premise is refuted by the original register image; however, the underlying objective \u2014 confirming Rita's existence and parentage \u2014 is answered affirmatively at the probable tier.\n\n### Documented Negative: No 1913 Birth Registration\n\nFour searches of the FamilySearch El Salvador Civil Registration collection (collection 1821208, \"El Salvador Registro Civil, 1704-2001\"), using query variants targeting 'Rita Reyes' in Usulut\u00e1n with various name forms, isPrincipal filters, and date parameters, returned no birth registration for a daughter named Rita born to this couple in 1913. The FamilySearch index entry that prompted this question displayed 'birth: January 1913' for a Rita Reyes in this collection \u2014 but examination of the original register page confirmed this was a data-entry error: the indexer duplicated the death month and year (January 1913) into the birth date field. The original Parte N\u00b075 records no birth date for Rita whatsoever.\n\n### The Civil Death Registration (Parte N\u00b075)\n\nThe record found is a civil death registration (reposici\u00f3n de defunci\u00f3n), Parte N\u00b075, entered at the Alcald\u00eda Municipal of Santa Elena, Usulut\u00e1n, on 22 July 1932 \u2014 nineteen years after the underlying events. The registration was executed pursuant to a sentencia ejecutoriada (court judgment) issued by Judge Marco Antonio Ochoa, Juzgado Primero de Primera Instancia, Usulut\u00e1n, with registrar Miguel \u00c1ngel Vel\u00e1sques signing and secretary Carlos Aparicio Florencio Herrera countersigning.\n\nThe original register text (transcribed from image ark:/61903/3:1:33S7-9TRR-4T4) reads in relevant part:\n\n> \"la se\u00f1ora Rita Reyes, quien fu\u00e9 soltera, de oficios dom\u00e9sticos y de este domicilio, hija leg\u00edtima de Manuel Rafael Reyes y Serapia Benavides, falleci\u00f3 de parto en el mes de Enero de a\u00f1o mil novecientos trece en esta villa y que fu\u00e9 sepultada en el Cementerio de esta misma\u2026\"\n\nTranslation: 'the se\u00f1ora Rita Reyes, who was single, of domestic occupations and of this domicile, legitimate daughter of Manuel Rafael Reyes and Serapia Benavides, died in childbirth in the month of January of the year nineteen thirteen in this town and was buried in the Cemetery of this same [municipality]\u2026'\n\nThis register establishes four facts bearing on the research question: (1) **Rita's adult status** \u2014 she is addressed as 'la se\u00f1ora' and carries an occupation (oficios dom\u00e9sticos) and marital status (soltera), attributes that would not appear for an infant, conclusively refuting the infant-birth premise; (2) **cause of death** \u2014 de parto (in childbirth), confirming she died as an adult woman in labor; (3) **parentage** \u2014 she is recorded as 'hija leg\u00edtima' (legitimate daughter) of 'Manuel Rafael Reyes y Serapia Benavides,' directly answering the parentage question; (4) **place and approximate date of death** \u2014 Santa Elena, Usulut\u00e1n, January 1913.\n\n### Source Classification and Reliability\n\n**Source:** \"El Salvador Registro Civil, 1704-2001,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6DQ4-1RQC : accessed 4 August 2026), entry for Rita Reyes and Manuel Rafael Reyes, 22 July 1932.\n\n**Three-layer GPS classification:**\n- *Source type:* **Original** \u2014 the original civil register page (image ark:/61903/3:1:33S7-9TRR-4T4) was examined and transcribed, superseding the derivative FamilySearch index.\n- *Information quality:* **Primary** for the registration act itself (the registrar personally recorded the 22 July 1932 proceedings). **Secondary** for the underlying biographical facts \u2014 Rita's death in January 1913, her parentage, occupation, and marital status \u2014 because this information was supplied through court proceedings nineteen years after the events, by informants whose identity is not specified in the record.\n- *Evidence type:* **Direct** \u2014 the record explicitly names Rita as 'hija leg\u00edtima de Manuel Rafael Reyes y Serapia Benavides,' directly answering the parentage question without requiring inference.\n\nThe nineteen-year gap between the 1913 death and the 1932 registration is a reliability concern: informants' recollections over such a span may be imperfect. The court-judgment mechanism (sentencia ejecutoriada) partially mitigates this risk, as the court was required to weigh evidence before certifying the facts \u2014 providing institutional scrutiny absent from a simple declarant registration. Nevertheless, the secondary classification of the biographical facts is warranted.\n\n### Index Error: Resolved\n\nThe only discrepancy identified \u2014 the FamilySearch index showing 'birth: January 1913' for Rita Reyes \u2014 has been explained and superseded. The original register image contains no birth date for Rita; the indexer duplicated the death date into the birth field. Assertion a_003 capturing this erroneous indexed birth date has been marked superseded and is excluded from this conclusion. No unresolved conflicts remain.\n\n### Identity Links\n\n- **Rita Reyes (I1):** The record uniquely identifies the deceased as 'la se\u00f1ora Rita Reyes,' soltera, oficios dom\u00e9sticos, resident of Santa Elena, Usulut\u00e1n, hija leg\u00edtima of Manuel Rafael Reyes and Serapia Benavides, buried in Santa Elena's municipal cemetery. I1 is a new tree person grounded in this single record.\n- **Manuel Rafael Reyes / Rafael Reyes (MTNY-RXQ):** The father named as 'Manuel Rafael Reyes' is linked at probable confidence to tree person MTNY-RXQ (Rafael Reyes). In Spanish naming practice, 'Manuel Rafael' designates a person whose baptismal first name is Manuel and whose commonly used name is Rafael; the surname Reyes and the Usulut\u00e1n family context align with no identified conflict.\n- **Serapia Benavides Cueva (MTNY-RFX):** The mother named as 'Serapia Benavides' is linked at confident confidence to MTNY-RFX. The given name Serapia is highly distinctive and matches exactly; the primary surname Benavides matches exactly; the maternal surname Cueva is commonly omitted in civil registers and its absence is typical rather than discrepant.\n\n### Limitations\n\nOnly one source was located. GPS Component 1 (reasonably exhaustive research) was declared exhaustive for this question's literal scope, but the absence of independent corroboration caps the conclusion at the probable tier. A Catholic baptismal record for Rita \u2014 whose birth year remains unestablished by this evidence \u2014 or a contemporaneous civil record from Santa Elena naming her parents could independently verify the parentage without being expected to overturn it. Rita's birth year is not established by any evidence gathered; that determination would require a separate research question targeting baptismal or civil birth records across the years before 1913.\n\n### Conclusion Statement\n\nThe evidence strongly suggests that Rita Reyes, an adult woman who died in childbirth in January 1913 in Santa Elena, Usulut\u00e1n, El Salvador, was the legitimate daughter of Manuel Rafael Reyes (Rafael Reyes, MTNY-RXQ) and Serapia Benavides Cueva (MTNY-RFX). The preponderance of direct evidence from an original civil register \u2014 executed through a court judgment nineteen years after the events \u2014 supports this parentage at the probable tier. No birth registration for a 1913-born infant named Rita exists; the research question's infant-birth premise is refuted. The couple did have a daughter named Rita who died in January 1913 as an adult woman."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-04T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-04T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "El Salvador",
+      "for_place": "Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+      "time_period": "1900-1920",
+      "jurisdictions": [
+        {
+          "name": "Usulut\u00e1n, El Salvador (Department)",
+          "date_range": "1865/"
+        },
+        {
+          "name": "Usulut\u00e1n, Usulut\u00e1n, El Salvador (Municipality)",
+          "date_range": "1529/2024"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1821208",
+          "title": "El Salvador, Civil Registration, 1704-2001",
+          "date_range": "1704-2023"
+        },
+        {
+          "id": "1919582",
+          "title": "El Salvador, Catholic Church Records, 1655-1977",
+          "date_range": "1655-1977"
+        },
+        {
+          "id": "1584970",
+          "title": "El Salvador, Baptisms, 1750-1940",
+          "date_range": "1750-1940"
+        },
+        {
+          "id": "1584975",
+          "title": "El Salvador, Marriages, 1810-1930",
+          "date_range": "1810-1930"
+        }
+      ],
+      "quirks": [
+        "El Salvador established civil registration in 1879; records before that date are exclusively church (sacramental) records.",
+        "Volume search returns no discrete Usulut\u00e1n municipality birth (nacimientos) or death (defunciones) volumes for 1910\u20131914 specifically. The main Civil Registration collection (1821208) has 3.15M indexed records and should cover this period; search by name there rather than browsing individual volumes.",
+        "Civil registration volumes for Usulut\u00e1n municipality births are present for 1886\u20131902 and 1903\u20131909 (various volumes, 44\u2013100% name-indexed) and 1915\u20131920; the 1910\u20131914 gap at the volume level may mean records exist in the broader collection index or were not separately digitized.",
+        "Civil registration death volumes for Usulut\u00e1n municipality begin at 1915 in the volume search; 1913 deaths may be accessible only via the main Civil Registration collection index or physical archives.",
+        "Santa Catarina de Alejandr\u00eda parish (adjacent municipality, Usulut\u00e1n department) has baptismal records 1894\u20131913 at 96\u201399% name-indexed and full-text searchable \u2014 a valuable parallel source for 1913.",
+        "All records are in Spanish.",
+        "FamilySearch Wiki pages for El Salvador were unavailable at survey time (server error); consult wiki.familysearch.org/El_Salvador for additional guidance.",
+        "Reposiciones de nacimientos (late birth registrations / amendments) volumes exist for Usulut\u00e1n municipality covering 1916\u20131919 \u2014 these may capture births originally unregistered in 1913."
+      ],
+      "guide_markdown": "# Locality Guide: Usulut\u00e1n, El Salvador (1900\u20131920)\n\n## Jurisdiction\nUsulut\u00e1n is both a **department** (created 1865) and a **municipality** within that department in eastern El Salvador. Civil records for this period were created at the municipal level and are held/digitized by FamilySearch primarily through the *El Salvador, Civil Registration, 1704-2001* collection.\n\n## Civil Registration (Primary Source)\n**Collection:** El Salvador, Civil Registration, 1704-2001 (FS collection 1821208; 3,150,368 records, 1,381,210 images). Also mirrored on Ancestry (collection 9838) and MyHeritage.\n- Covers births (nacimientos), deaths (defunciones), and marriages (matrimonios).\n- El Salvador mandated civil registration from 1879; this is the primary record type for 1913.\n- **Critical gap:** Volume-level browse shows no discrete 1910\u20131914 birth or death volumes for Usulut\u00e1n municipality. However, the main collection index covers the broad date range (1704\u20132023) and should surface 1913 records when searched by name. Search the collection directly before concluding records are absent.\n- Discrete Usulut\u00e1n birth volumes confirmed: 1886\u20131902 (100% indexed), 1903\u20131909 (44\u201397% indexed), 1915\u20131916 (100% indexed), 1917\u20131920 (77\u201397% indexed).\n- Discrete Usulut\u00e1n death volumes confirmed: 1915\u20131917, 1918\u20131920, 1919\u20131980 \u2014 no discrete 1913 death volume found.\n- **Access:** Indexed (name-searchable) via FamilySearch.org at collection 1821208; most volumes also have images.\n\n## Catholic Church / Sacramental Records (Secondary Source)\n**Collection:** El Salvador, Catholic Church Records, 1655\u20131977 (FS collection 1919582; 3,169,964 records). Also: El Salvador, Baptisms, 1750\u20131940 (FS collection 1584970; 145,495 records).\n- **Santa Catarina de Alejandr\u00eda parish** (Usulut\u00e1n municipality, Usulut\u00e1n department) has baptismal volumes:\n  - 1894\u20131913 (volumes 15\u201319): 96\u201399% name-indexed, full-text searchable \u2014 covers exactly through 1913.\n  - 1914\u20131924 (volumes 20\u201321): 89\u201397% name-indexed.\n  - Religious death records: 1875\u20131940 (volumes 1\u20134): 92\u201395% name-indexed.\n- Church baptismal registers recorded godparents and parents' names; very useful if the civil birth registration is absent.\n- All records are in Spanish.\n\n## Late Registration (Reposiciones)\n- Reposiciones de nacimientos volumes for Usulut\u00e1n municipality cover 1916\u20131919 (full-text searchable). These are late or corrected registrations and may document births originally unregistered in 1913.\n\n## External Resources\n- Ancestry.com: El Salvador Civil Registration Index (collection 9838); El Salvador Select Baptisms (9837).\n- FindMyPast: El Salvador Civil Birth Registration 1836\u20131910.\n- MyHeritage: El Salvador Civil Registration 1815\u20131910.\n- FamilySearch Wiki for El Salvador (wiki.familysearch.org/El_Salvador) \u2014 unavailable at survey time, consult directly.\n\n## Research Strategy for 1913 Rita Reyes Birth/Death\n1. **Search Civil Registration (collection 1821208)** by child name 'Rita' with parents Rafael Reyes and Serapia Benavides in Usulut\u00e1n, 1913.\n2. **Search Catholic baptismal records (collection 1919582 / 1584970)** for Santa Catarina de Alejandr\u00eda parish, 1913.\n3. **Search for death record** in Civil Registration (1821208) filtering to Usulut\u00e1n, 1913, for infant Rita Reyes.\n4. If indexed search is negative, check whether a Reposici\u00f3n de nacimiento was filed in 1916\u20131919.\n5. If all digital searches fail, the physical Registro Civil in Usulut\u00e1n or the Archivo General de la Naci\u00f3n in San Salvador may hold undigitized 1913 volumes.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-04"
+    }
+  ]
+}

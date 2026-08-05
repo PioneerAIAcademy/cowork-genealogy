@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 33 tools.
+The MCP server exposes 47 tools.
 
 ### FamilySearch records and places
 
@@ -87,6 +87,30 @@ The MCP server exposes 33 tools.
 | `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
+
+### Project state (structured read/write)
+
+Everything that reads or writes `research.json` and `tree.gedcomx.json` goes
+through these. The writers validate the **whole** project in memory and write
+nothing on failure, and they assign every id — callers never predict one. Raw
+`Write`/`Edit` on either file is denied by a hook, so this table is the only
+way project state changes.
+
+| Tool | Purpose | Auth |
+|------|---------|------|
+| `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
+| `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
+| `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
+| `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
+| `materialize_facts` | Project extracted assertions onto tree persons | None |
+| `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
+| `tree_correct` | Correct an existing tree assertion in place | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
+| `merge_tree_persons` | Merge two local tree persons | None |
+| `merge_warnings` | Pre-merge conflict report for two tree persons | None |
+| `person_quality` | Evidence-quality summary for a tree person | None |
+| `rank_search_matches` | Rank search results against a named subject | None |
+| `convert_calendar` | Convert between Julian, Gregorian, and regnal/quaker dates | None |
 
 ### Reference and context
 
@@ -224,7 +248,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the exact tool call and narration turn. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
 | **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
 
 ## Agents
@@ -461,17 +485,10 @@ then narrows the search.
 
 What's shipped:
 
-- **31 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
-  reference tools (`wikipedia_search`, `place_search`, `place_search_all`,
-  `place_population`, `external_links_search`, `place_distance`); authenticated
-  search/read tools (`collections_search`, `collection_read`, `record_search`,
-  `record_read`, `person_search`, `fulltext_search`, `image_search`, `image_read`,
-  `volume_search`, `same_person`, `person_record_matches`,
-  `record_person_matches`, `person_person_matches`, `record_record_matches`,
-  `person_read`, `person_ancestors`, `source_attachments`); FamilySearch Wiki
-  tools (`wiki_search`, `wiki_read`, and `wiki_place_page`); local
-  tools (`validate_research_schema`, `person_warnings`).
-- **26 shipped skills.** Full GPS research cycle from `init-project`
+- **47 MCP tools.** See the tables above for the full catalog, by category:
+  FamilySearch records and places, FamilySearch Wiki content, reference and
+  context, project state (the writer and projection tools), and auth.
+- **27 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three
