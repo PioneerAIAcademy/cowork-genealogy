@@ -50,8 +50,8 @@ live FamilySearch data (see **Design notes**):
   subject, 20 without). But it compacted only **4 times in 190 turns**, against
   the 23 compactions that motivated the fold. It confirms the contract *fires*;
   it does not demonstrate the contract outlasting prose under real compaction
-  pressure. Treat the durability claim as reasoned, not measured — re-testing it
-  is issue #1155. (Its original blocker, #1073, has since shipped.)
+  pressure. **Treat the durability claim as reasoned, not measured**, until a run
+  that compacts heavily says otherwise.
 
   **Both surviving benefits are preserved.** Graceful degradation: a ranking
   failure inside `record_search` sets `rankingError` and leaves the search

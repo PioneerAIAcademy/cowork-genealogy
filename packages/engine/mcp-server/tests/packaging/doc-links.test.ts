@@ -281,8 +281,8 @@ describe("doc and .claude/ tooling links", () => {
  * These are not benign. Of three sampled in `research-append-tool-spec.md`,
  * three already pointed at the wrong code — `validator.ts:417` is cited as the
  * `exhaustive_declaration` coupling check and is the `stop_criteria` shape
- * allow-list. Converting them to symbol references is issue #1305; until then
- * this list is the honest record of what is known-wrong-shaped.
+ * allow-list. Until each is converted to a symbol reference, this list is the
+ * honest record of what is known-wrong-shaped.
  *
  * `docs/plan/` is excluded from the walk entirely, not listed here: a plan is
  * deleted when its work ships, so a cite inside one cannot outlive its subject.
@@ -426,5 +426,98 @@ describe("docs/ cite symbols, not line numbers", () => {
       "An exemption that stopped firing means the sweep reached it — delete the " +
         "entry so the list keeps shrinking instead of becoming a blanket nobody reads.",
     ).toEqual([]);
+  });
+});
+
+/**
+ * Repo issue references per contract document, as they stood on 2026-08-05.
+ *
+ * **A spec owns the contract; GitHub owns the status.** An `#1234` in a spec is
+ * a copy of state that closes without telling anyone, and keeping the copy
+ * honest is a standing edit tax nobody signed up for — `CLAUDE.md` had five
+ * issue numbers in one sentence purely to explain which ticket carried which
+ * half of a since-split piece of work, and that sentence had already been
+ * rewritten once when one of them closed.
+ *
+ * The durable form is the **fact, not the ticket**: "all three copies stay and
+ * nothing asserts they agree" survives forever; "tracked as #1129" does not.
+ * If the conclusion is worth keeping, write it down — then the number adds
+ * nothing. If it is not, the number does not save you.
+ *
+ * Exempt, deliberately:
+ *  - **`owner/repo#N`** (`anthropics/claude-code#34573`). Evidence for a claim
+ *    about someone else's software, not ours to close, and dropping it removes
+ *    the reader's ability to check the claim.
+ *  - **`docs/adrs/`**. An ADR is a dated decision record; "three subagents were
+ *    deleted, issue #1161" stays true forever. History, not status.
+ *  - **`docs/architecture.md` §9.4**. The one surface whose *job* is tracking
+ *    what is unbuilt. It should stay the only one.
+ *
+ * A RATCHET, not a freeze: the count must match exactly, so removing a
+ * reference fails until the number here comes down with it, and adding one
+ * fails outright. Sweeping a file to zero deletes its entry.
+ */
+const ISSUE_REF_BASELINE: Record<string, number> = {
+  "CLAUDE.md": 14,
+  "docs/specs/e2e-test-spec.md": 17,
+  "docs/specs/feedback-case-spec.md": 1,
+  "docs/specs/gps-mentor-agent-spec.md": 1,
+  "docs/specs/guardrail-enforcement-spec.md": 32,
+  "docs/specs/hosted-web-workbench-spec.md": 4,
+  "docs/specs/image-reader-agent-spec.md": 3,
+  "docs/specs/image-reader-opus-agent-spec.md": 1,
+  "docs/specs/match-merge-workflow-spec.md": 3,
+  "docs/specs/merge-gedcomx-spec.md": 8,
+  "docs/specs/place-search-tool-spec.md": 1,
+  "docs/specs/record-search-tool-spec-v2.md": 3,
+  "docs/specs/research-append-tool-spec.md": 2,
+  "docs/specs/research-query-tool-spec.md": 5,
+  "docs/specs/research-schema-spec.md": 1,
+  "docs/specs/same-person-match-relatives-spec.md": 1,
+  "docs/specs/sandbox-provider-spec.md": 1,
+  "docs/specs/search-result-staging-spec.md": 1,
+  "docs/specs/skill-rewrites-for-persistence-tools-spec.md": 2,
+  "docs/specs/task-review-spec.md": 5,
+  "docs/specs/tree-forget-tool-spec.md": 1,
+  "docs/specs/tree-materialization-spec.md": 7,
+  "docs/specs/unit-test-spec-v2.md": 1,
+  "docs/specs/unit-test-spec.md": 7,
+};
+
+/** `#1234`, but not `owner/repo#1234` and not a `#anchor`. */
+function repoIssueRefs(text: string): string[] {
+  const upstreamStripped = text.replace(/[\w.-]+\/[\w.-]+#\d+/g, "");
+  return [...upstreamStripped.matchAll(/(?<![\w&#/])#(\d{3,5})\b/g)].map((m) => m[0]);
+}
+
+describe("specs state the fact, not the ticket", () => {
+  it("holds the issue-reference ratchet on contract docs", () => {
+    const scanned = [
+      ...docsMarkdown(projectRoot).filter((f) => f.startsWith("docs/specs/")),
+      "README.md",
+      "CLAUDE.md",
+    ];
+    const drift: string[] = [];
+    for (const rel of scanned) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) continue;
+      const actual = repoIssueRefs(readFileSync(full, "utf8")).length;
+      const allowed = ISSUE_REF_BASELINE[rel] ?? 0;
+      if (actual > allowed) {
+        drift.push(
+          `${rel}: ${actual} issue refs, baseline ${allowed} — state the fact, not the ticket`,
+        );
+      } else if (actual < allowed) {
+        drift.push(`${rel}: down to ${actual} refs — lower its ISSUE_REF_BASELINE entry to ${actual}`);
+      }
+    }
+    expect(drift, "docs/adrs/ and upstream `owner/repo#N` refs are exempt.").toEqual([]);
+  });
+
+  it("has no baseline entry for a file that is gone or already clean", () => {
+    const stale = Object.keys(ISSUE_REF_BASELINE).filter(
+      (rel) => !existsSync(join(projectRoot, rel)),
+    );
+    expect(stale, "delete the entry when its file goes").toEqual([]);
   });
 });

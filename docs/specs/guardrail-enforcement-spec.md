@@ -285,7 +285,7 @@ Design points that were paid for and should not be re-derived:
     an unknown-skill-name launch failure and nothing else. **The
     invoke-then-let-it-fail evasion named at the top of this bullet is still
     open** — closing it needs an instrument that observes skill *completion*,
-    which `ToolResultBlock` is not. Tracked as issue #1298.
+    which `ToolResultBlock` is not.
   - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
     from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
     without throwing, so a rejected write still records `is_error: false`
