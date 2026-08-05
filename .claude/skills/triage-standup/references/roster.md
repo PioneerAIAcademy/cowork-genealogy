@@ -11,9 +11,10 @@ people as missing, which is worse than not checking at all.
 
 **Role is load-bearing, not decoration.** `fill-ready` routes work by it — a
 `developer`-labeled issue must not be assigned to a genealogist, and vice versa.
-Roles below were given by the lead on 2026-07-31 (11 developers, 10
-genealogists); before that this table had no role column, and an eval-harness
-Python issue was assigned to a genealogist because nothing here said otherwise.
+Roles below were given by the lead on 2026-07-31 and extended 2026-08-05 (13
+developers, 10 genealogists); before that this table had no role column, and an
+eval-harness Python issue was assigned to a genealogist because nothing here
+said otherwise.
 All developers are **junior**, working with Claude Code; the lead is the only
 senior developer.
 
@@ -40,6 +41,8 @@ senior developer.
 | precious | Precious Onotu | `clack391` | developer | confirmed |
 | edmund | Edmund Asante Oware | `EdmondOware` | genealogist | confirmed |
 | pascal | Pascal Okezie | `Gennecis` | developer | confirmed |
+| marc | Marc Mangum | `MMagnum` | developer | confirmed by the lead 2026-08-05 |
+| richard | Richard | `chesworthrm` | developer | confirmed by the lead 2026-08-05 |
 
 ## How the mappings were derived
 
@@ -78,6 +81,16 @@ what issue #970 becomes.
 - **Ernest** commits as `ernestjacob789@gmail.com` while his GitHub account is
   `aghadiayeamayanvboernest`. Any roll call derived from git activity rather than
   from this roster will count him twice, as two different people.
+- **Richard** (`chesworthrm`) had not posted a standup as of 2026-08-05 while
+  holding PR #1328 and five open `record_search` issues. He is a full roster
+  member, so report him missing on days he does not post.
+- **Christopher** (`chrisedeson`) is not an org member and contributes by fork —
+  a deliberate arrangement, not lapsed access. He is a repo collaborator at
+  `read`, which is **below the bar GitHub requires to be an assignee**, so
+  `gh issue create --assignee chrisedeson` and `gh issue edit --add-assignee`
+  both return success and assign nobody. Verified 2026-08-05 on issue #1341;
+  `GET /repos/:owner/:repo/assignees/chrisedeson` returns 404 where every other
+  handle here returns 204. Assign work to him only after that is resolved.
 
 ## Daily summary
 
