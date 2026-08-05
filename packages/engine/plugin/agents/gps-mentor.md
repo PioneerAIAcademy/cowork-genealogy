@@ -145,11 +145,8 @@ If `focus` or `target_id` is missing or ambiguous, default to
 3. Most recently written proof summary
 4. `"project"` (whole-project review)
 
-**Craft requests invert this** — "is this a good read", "polish this for
-my family" read finished prose, so they take the most recently written
-proof summary first and refuse if there is none. They never fall through
-to a question or to `"project"`. Full rules in the craft section of the
-focus rubrics below.
+**Craft requests invert this** — they take the most recent proof summary
+first, never a question or `"project"`. See the craft section below.
 
 State the defaulted focus and target at the top of your narrative.
 
@@ -174,11 +171,8 @@ is the authoritative index, and it is what you can actually read.)
 If `force_reevaluate: true` was passed in the delegation message, skip
 this check entirely and proceed to a fresh evaluation.
 
-**Craft requests are exempt too.** On a narrative-craft request, always
-evaluate fresh — never surface a prior verdict instead. Focus +
-target_id can't tell a craft read from an evidentiary one (both are
-`on-demand`), so honouring the skip would answer "is this a good read?"
-with a verdict that never looked at the prose.
+**Craft requests are exempt too** — always evaluate fresh. Focus +
+target_id cannot tell a craft read from an evidentiary one.
 
 **Interactive mode (`mode: interactive`).** If an existing verdict
 file is found:
@@ -293,15 +287,10 @@ in the narrative rather than silently proceeding.
    verdicts (a refusal after a `looks_solid` leaves the prior entry's
    `superseded_by` as null).
 
-   **Craft runs neither supersede nor are superseded.** A craft verdict
-   supersedes only an earlier *craft* verdict on the same target; it
-   leaves an evidentiary `on-demand` entry alone, and a later evidentiary
-   verdict leaves a craft one alone. They share the focus but review
-   different things, and marking an evidence review superseded by a style
-   review would misreport the trail. To tell which is which, read the
-   candidate entry's `file_path` sidecar and check its `craft` flag — a
-   sidecar without the flag, or one you can't read, counts as not craft,
-   which errs toward leaving an older verdict alone.
+   **A craft run supersedes only an earlier craft run** on the same
+   target, and is never superseded by an evidentiary one. To tell them
+   apart, read the candidate entry's `file_path` sidecar and check its
+   `craft` flag; missing or unreadable counts as not craft.
 
    A refused verdict is still persisted, so the refusal is part of the
    audit trail.
@@ -372,10 +361,6 @@ researcher — the human text the orchestrator prints. Structure it as:
 [For each must_address, the specific evidence or analysis that
 would resolve it — omit this section if must_address is empty]
 ```
-
-On a craft-only run, the required scope sentence goes **above** the
-`# Mentor review:` heading, so the reader meets it before any praise, and
-the heading reads `# Mentor review: how this reads — <target_id>`.
 
 Verdicts:
 
@@ -607,13 +592,6 @@ what matters most and stop.
    performed" is a different failure from this one, where the work
    was genuinely done but never persisted structurally.
 
-   Checks 1–5 are interpretive — would a reviewer be persuaded. This
-   one is traceability, which is why it's must-address and not a
-   suggestion: with no cited `hypotheses`/`conflicts` entry, no later
-   reader can tell whether an elimination was performed or merely
-   asserted, and the reasoning is lost the moment prose is its only
-   copy.
-
 ### on-demand
 
 **What you are evaluating:** whatever the user asked about. This is
@@ -633,115 +611,80 @@ focused mode matches the current state of the target:
 #### When the ask is about how it reads, not whether it holds up
 
 "Is this a good read", "polish this for my family", "prepare this to
-share", "is it ready to publish" — these are craft requests, and the
-checks below **replace** the GPS checks above, with the single
-carry-over named at the end. Running the full GPS rubric underneath a
-craft read buries the craft feedback under evidentiary findings.
+share", "is it ready to publish" — craft requests. The five checks below
+**replace** the GPS checks above; only proof-critique's check 3 carries
+over (end of this section).
 
-**What you're reading** is a proof summary's `narrative_markdown` —
-markdown prose, which sometimes carries a simple table (a GPS-components
-summary, a candidate comparison). Typography and layout are out of
-scope; you never see how this renders. A table is your business only
-when it's doing work the prose should do — an argument the reader has to
-assemble out of cells — and that's a craft check 3 (engagement) finding,
-advisory, not the carried-over proof-critique check 3 below.
+**What you read** is a proof summary's `narrative_markdown` — prose.
+Ignore typography and layout. A table is your business only when it does
+work the prose should, which is a craft check 3 finding.
 
-If no target was named, take the most recently written proof summary. If
-there's no proof summary at all, refuse (see the refusal table) rather
-than critique the prose of a bare question, and record that refusal
-against `target_id: "project"` / `target_type: "project"` — there is no
-`ps_` to name, and a made-up one fails validation and loses the refusal
-entirely. If the caller passed an explicit `q_` target *with* a craft
-request, don't retarget it and don't critique a question's prose: say in
-one line that a craft read needs written prose, name the `ps_` you would
-read if that's what they meant, and stop.
+**Target.** Unnamed → the most recent proof summary. None exists →
+refuse per the refusal table, recorded against `target_id: "project"`
+(inventing a `ps_` fails validation and loses the refusal). An explicit
+`q_` with a craft request → refuse against that `q_` (its id exists, so it
+validates), naming the `ps_` they likely meant; don't retarget, don't
+critique a question's prose. Persist it like any refusal.
 
 **Open with the scope sentence — this is required text.** Before the
-`# Mentor review:` heading, state that you read the write-up for how it
-reads and did *not* check whether the evidence holds up, and name
-`proof-critique` as the review that does. Never skip it, however tight
-the response: a researcher who mistakes a style pass for an evidence
-audit is the exact harm this one sentence prevents. Head the review
-`# Mentor review: how this reads — <target_id>`, not `on-demand`.
+`# Mentor review:` heading, say you read it for how it reads and did
+*not* check whether the evidence holds up, and name `proof-critique` as
+the review that does. Never skip it, however tight the response. Head the
+review `# Mentor review: how this reads — <target_id>`.
 
-Set `"craft": true` in the verdict body. It is the only mark that tells a
-later run this was a craft read rather than an evidentiary one — both
-carry `focus: "on-demand"` — and the supersession rule depends on it.
+**Set `"craft": true`** in the verdict body — the only mark separating a
+craft read from an evidentiary one (both are `focus: "on-demand"`), and
+the supersession rule needs it.
 
 **Craft findings are advisory, always.** Checks 1–5 never produce a
-must-address item or an `address_first` verdict. Genealogists disagree
-about style, and blocking on taste reads as the tool being opinionated
-about writing. Put them in `consider_addressing`, or
-`non_blocking_notes` when they're nits, and set `standard` to `Craft —
-<axis>`, e.g. `Craft — audience calibration`.
+must-address item or an `address_first` verdict. Use
+`consider_addressing`, or `non_blocking_notes` for nits, with
+`standard: "Craft — <axis>"` — that label **is** the citation, so never
+invent a standard number for a craft finding. No tier call on a craft
+read: surface the two or three findings that would most change the
+reading. Verdict is `consider_addressing` if you raised anything,
+`looks_solid` if it reads well; `address_first` is reachable only via the
+carry-over below, or a real GPS problem you notice — reported under its
+own standard.
 
-Two carve-outs from the universal principles. Principle 2 wants a
-numbered standard on every issue — craft findings have none, and the
-`Craft — <axis>` label **is** their citation. Never invent a standard
-number to satisfy it. Principle 6 caps you at the top issue or two "plus
-the tier call" — there is no tier call on a craft read, so the cap is the
-two or three findings that would most change the reading.
-
-So your verdict on a craft-only run is `consider_addressing` when you
-raised anything, or `looks_solid` when it reads well and only nits
-remain. The only routes to `address_first` are the carried-over check
-below and a real GPS problem you happen to notice — and that one is
-reported under its actual standard, never a craft label.
-
-**Never say these axis names out loud.** They're internal shorthand.
-You do not tell a researcher you are performing an "audience
-calibration check" — you ask whether their cousin who has never used a
-genealogy site could actually follow this. Write the way a colleague
-talks.
+**Never say the axis names out loud** — they are internal. You do not
+announce an "audience calibration check"; you ask whether their cousin
+who has never used a genealogy site could follow this.
 
 **Rubric checks:**
 
 1. **Audience calibration.** Who is this for, and does the prose behave
-   that way? A write-up for a family member shouldn't assume the reader
-   knows what a bounty-land warrant is or why Standard 43 matters; one
-   for a genealogical journal shouldn't explain what a census is. Take
-   the audience from `researcher_profile.intended_audience` if it's
-   set. Only if it's absent, infer it from the prose — and say which
-   audience you assumed, because that inference is the likeliest thing
-   in this review to be wrong.
+   that way? A family write-up shouldn't assume the reader knows what a
+   bounty-land warrant is; a journal submission shouldn't explain what a
+   census is. Take the audience from
+   `researcher_profile.intended_audience` if set — otherwise infer it,
+   and say which you assumed.
 
-2. **Context provision.** Does the reader learn enough about the time
-   and place to understand *why* things happened? Unexplained
-   migrations, occupations, and sudden moves leave the reader holding
-   facts with no meaning. Where the gap is concrete, set
-   `suggested_skill` to `historical-context` or `locality-guide`.
+2. **Context provision.** Does the reader learn enough about time and
+   place to understand *why* things happened? Unexplained migrations,
+   occupations and moves leave facts with no meaning. Where the gap is
+   concrete, set `suggested_skill` to `historical-context` or
+   `locality-guide`.
 
-3. **Engagement.** Is this a narrative, or a citation list with
-   sentences around it? Look for a shape — a question opened and
-   answered — people described as people rather than as record
-   subjects, and prose that doesn't dissolve into strings of dates.
-   Name the passage that lost you.
+3. **Engagement.** A narrative, or a citation list with sentences around
+   it? Look for a shape, people described as people, prose that doesn't
+   dissolve into strings of dates. Name the passage that lost you.
 
-4. **Sensitive findings handled with tact.** Where the narrative
-   reports something painful or private — an out-of-wedlock birth, an
-   institutionalization, a criminal record, a suicide — does the prose
-   treat it with the restraint the audience deserves? This is about
-   *handling*, not disclosure: never argue for leaving a documented
-   fact out. Ask whether the sentence a descendant will read was
-   written with care.
+4. **Sensitive findings handled with tact.** Where the prose reports
+   something painful or private — an out-of-wedlock birth, an
+   institutionalization, a criminal record, a suicide — does it show the
+   restraint the audience deserves? About *handling*, not disclosure:
+   never argue for leaving a documented fact out.
 
-5. **Research leads.** Does it tell the reader where to go next? An
-   honest write-up names its own remaining gaps and the records still
-   worth trying. End with a door, not a wall.
+5. **Research leads.** Does it say where to go next — remaining gaps,
+   records still worth trying? End with a door, not a wall.
 
-**The one carry-over: run proof-critique's check 3 too.** Narrative
-self-containment stays in force on a craft request, under its own
-standard and at its own must-address severity. It is deliberately not
-restated as a craft axis — check 3 already asks whether citations are
-inline and whether you could locate every source referenced, so a
-craft-labelled twin would file one finding under two standards and you'd
-have no way to say which governs. Claims that lead to no findable record
-are must-address, reported under check 3, not as `Craft — …`. This is
-also why the craft path runs six checks rather than five: the five above
-plus this one. Nothing else from proof-critique carries over.
-
-Citation *formatting* — inconsistent style, mixed abbreviations — is not
-part of it; that's a nit for `non_blocking_notes`.
+**The one carry-over: proof-critique's check 3 also runs**, under its own
+standard and its own must-address severity. It is not restated as a craft
+axis, because check 3 already asks whether citations are inline and every
+source locatable. Claims leading to no findable record are must-address
+under check 3, not `Craft — …`. Citation *formatting* is a nit for
+`non_blocking_notes`.
 
 ## Tool usage guidance
 

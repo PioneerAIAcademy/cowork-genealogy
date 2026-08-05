@@ -112,9 +112,11 @@ real `questions`/`proof_summaries` ids, so a made-up `ps_` fails the whole
 
 If a caller passes an explicit `q_` `target_id` **with** a craft-framed request, do not
 retarget it (§15: one target per invocation) and do not critique a question's prose.
-Say in one line that a craft read needs written prose, name the `ps_` you would read if
-the user meant that one, and stop — the same shape as a §9 refusal, recorded the same
-way.
+Refuse: `verdict: "refused"`, a one-line `narrative_for_user` saying a craft read needs
+written prose and naming the `ps_` the user probably meant, persisted like every other
+refusal (§9). Record it against the `q_` the caller named — that id exists, so §12.1
+validates it, and the refusal names the target the caller actually passed rather than
+silently re-pointing at the project.
 
 The agent states the defaulted focus and target at the top of its narrative so the user
 knows what was evaluated.
@@ -1031,7 +1033,7 @@ These items are acknowledged but not specified here. They belong in future issue
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
 | Reducing per-gate mentor cost | Largely shipped — see §17.1. Do not defer or sample the surviving `proof-critique` gate to chase speed. |
-| `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2; queued as #1252. |
+| `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2. |
 
 ### 17.1 Per-gate mentor cost — what shipped, and what is not a lever
 
@@ -1100,6 +1102,6 @@ Promote to a real focus value only if usage shows it should be a standing gate
 rather than something the user asks for — or if the carve-outs above start
 accumulating. Two exist today (§10's skip exemption and §12.3's supersession rule,
 both leaning on the `craft` flag of §7.1); **a third is the trigger**, because at that
-point the enum change is cheaper than the workarounds. Queued as #1252. That is a
-new spec delta on top of this one, not a reopening of it — keep the audit trail the way
+point the enum change is cheaper than the workarounds. That is a new spec delta on
+top of this one, not a reopening of it — keep the audit trail the way
 `evaluations[].superseded_by` already does for re-evaluations.

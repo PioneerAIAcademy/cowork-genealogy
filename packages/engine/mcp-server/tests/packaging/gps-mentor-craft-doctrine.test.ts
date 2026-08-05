@@ -19,17 +19,46 @@ import { fileURLToPath } from "node:url";
 //      check (§6.3 check 3) is the only must-address route. An edit that turns
 //      style opinions into blockers would make the mentor refuse to let a
 //      researcher move on over a matter of taste.
+//   4. The `craft: true` marker, which is the only thing separating a craft
+//      verdict from an evidentiary one in the audit trail (§12.3) — both carry
+//      `focus: "on-demand"`.
+//
+// **Everything is asserted against CRAFT_SECTION, not the whole body.** The
+// first version of this file scanned the whole file, and PR review showed why
+// that is worthless: `"craft": true` and the scope-sentence rule each appeared
+// twice — once as the operative instruction inside the craft rubric, once as an
+// incidental restatement elsewhere — so a global `toMatch` stayed green after
+// the operative instruction was deleted, and a `.split("\n\n").find(...)`
+// returned the incidental paragraph and tested only that one. Slicing the
+// section first means an incidental mention elsewhere cannot satisfy anything
+// here.
 //
 // This does not test agent BEHAVIOR — nothing here can. The eval harness keys
 // every unit test to a skill directory and gps-mentor is an agent, so it has
-// no suite (see docs/testing-guides/gps-mentor-agent-testing-guide.md). This
-// guards the instructions only.
+// no suite (issue #1253). This guards the instructions only.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const AGENT = join(here, "..", "..", "..", "plugin", "agents", "gps-mentor.md");
 
+const body = readFileSync(AGENT, "utf8");
+
+/** The craft rubric only — from its heading to the next top-level section. */
+function craftSection(text: string): string {
+  const start = text.indexOf("#### When the ask is about how it reads");
+  if (start === -1) return "";
+  const end = text.indexOf("\n## ", start);
+  return text.slice(start, end === -1 ? undefined : end);
+}
+
 describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
-  const body = readFileSync(AGENT, "utf8");
+  const CRAFT = craftSection(body);
+
+  it("has a craft section at all (every assertion below scopes to it)", () => {
+    expect(CRAFT, "craft rubric heading not found in the agent body").not.toBe("");
+    // Guards against the slice silently collapsing to a few lines and making
+    // every other assertion here vacuous.
+    expect(CRAFT.length).toBeGreaterThan(1000);
+  });
 
   it("keeps the craft section reachable from the frontmatter description", () => {
     const description = body.slice(0, body.indexOf("\n---", 4));
@@ -38,37 +67,38 @@ describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
     expect(description).toMatch(/is this a good read/i);
   });
 
-  it("mandates the scope sentence as required text, not a suggestion", () => {
-    expect(body).toMatch(/this is required text/i);
-    // And states where it goes. Anchored to the sentence that says it — an
-    // unanchored /above.*# Mentor review:/s matches any "above" anywhere in the
-    // file followed by the heading 200 lines later, which is always true.
-    const positioning = body
-      .split("\n\n")
-      .find((p) => /scope sentence/i.test(p) && /# Mentor review:/.test(p));
-    expect(positioning, "no paragraph positions the scope sentence").toBeDefined();
-    expect(positioning).toMatch(/\babove\b/i);
+  it("mandates the scope sentence as required text, and puts it before the heading", () => {
+    expect(CRAFT).toMatch(/this is required text/i);
+    // "Before the `# Mentor review:` heading" — the position is the point. An
+    // edit to "after the heading" must fail, so assert the ordering word inside
+    // the sentence that carries the rule, not anywhere in the section.
+    const rule = CRAFT.split("\n\n").find((p) => /required text/i.test(p));
+    expect(rule, "no paragraph carries the required-text rule").toBeDefined();
+    expect(rule).toMatch(/\bbefore\b[\s\S]{0,40}# Mentor review:/i);
+    expect(rule).not.toMatch(/\bafter\b[\s\S]{0,40}# Mentor review:/i);
   });
 
   it("keeps craft findings advisory and names the single must-address route", () => {
     // Pin the RULE, not just the bold label: a body rewritten to "checks 1-5 may
     // produce a must-address item" under an unchanged heading must fail.
-    const severity = body
-      .split("\n\n")
-      .find((p) => /craft findings are advisory/i.test(p));
+    const severity = CRAFT.split("\n\n").find((p) =>
+      /craft findings are advisory/i.test(p),
+    );
     expect(severity, "no craft severity paragraph").toBeDefined();
     expect(severity).toMatch(/never produce a\s+must-address item/i);
-    expect(body).toMatch(/the one carry-over/i);
+    expect(CRAFT).toMatch(/the one carry-over/i);
   });
 
   it("marks a craft verdict so supersession can identify it later", () => {
-    // focus is "on-demand" for both craft and evidentiary reads, so the sidecar
-    // flag is the only discriminator §12.3 has.
-    expect(body).toMatch(/"craft":\s*true/);
+    // Must be the operative instruction inside the craft rubric. The Output
+    // protocol also mentions the field; that mention is documentation and does
+    // not tell the agent to set it.
+    expect(CRAFT).toMatch(/"craft":\s*true/);
   });
 
   it("carries a refusal path for a craft request with nothing written yet", () => {
-    // The refusal must name the skill that produces prose, not just decline.
+    // Lives in the refusal table, outside the craft section by design — so this
+    // one assertion scans the whole body on purpose.
     const refusalRow = body
       .split("\n")
       .find((l) => l.includes("craft request") && l.includes("|"));
@@ -77,13 +107,12 @@ describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
   });
 
   it("carries the prohibition on speaking internal axis names to the user", () => {
-    // The earlier form of this test scanned for a *violating* instruction and
-    // so passed on any text that did not contain one — including a body with
-    // the whole craft section deleted. Assert the prohibition is PRESENT
-    // instead: that is the thing whose deletion is invisible at runtime.
-    const prohibition = body
-      .split("\n\n")
-      .find((p) => /axis names/i.test(p) && /\bnever\b|\bdo not\b|\bdon't\b/i.test(p));
+    // An earlier form scanned for a *violating* instruction and so passed on any
+    // text without one — including a body with the whole craft section deleted.
+    // Assert the prohibition is PRESENT: that is what silently disappears.
+    const prohibition = CRAFT.split("\n\n").find(
+      (p) => /axis names/i.test(p) && /\bnever\b|\bdo not\b|\bdon't\b/i.test(p),
+    );
     expect(prohibition, "no paragraph forbids speaking the axis names").toBeDefined();
     // And it must name the register to use instead, or it is unactionable.
     expect(prohibition).toMatch(/cousin|out loud|colleague/i);
