@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 33 tools.
+The MCP server exposes 47 tools.
 
 ### FamilySearch records and places
 
@@ -90,9 +90,11 @@ The MCP server exposes 33 tools.
 
 ### Project state (structured read/write)
 
-The writer surface. Skills persist through these rather than editing
-`research.json` / `tree.gedcomx.json` directly — every call validates before it
-writes, so a malformed payload fails loudly instead of corrupting the project.
+Everything that reads or writes `research.json` and `tree.gedcomx.json` goes
+through these. The writers validate the **whole** project in memory and write
+nothing on failure, and they assign every id — callers never predict one. Raw
+`Write`/`Edit` on either file is denied by a hook, so this table is the only
+way project state changes.
 
 | Tool | Purpose | Auth |
 |------|---------|------|
@@ -483,16 +485,9 @@ then narrows the search.
 
 What's shipped:
 
-- **47 MCP tools.** OAuth (`login`, `logout`, `auth_status`); public
-  reference tools (`wikipedia_search`, `place_search`, `place_search_all`,
-  `place_population`, `external_links_search`, `place_distance`); authenticated
-  search/read tools (`collections_search`, `collection_read`, `record_search`,
-  `record_read`, `person_search`, `fulltext_search`, `image_search`, `image_read`,
-  `volume_search`, `same_person`, `person_record_matches`,
-  `record_person_matches`, `person_person_matches`, `record_record_matches`,
-  `person_read`, `person_ancestors`, `source_attachments`); FamilySearch Wiki
-  tools (`wiki_search`, `wiki_read`, and `wiki_place_page`); local
-  tools (`validate_research_schema`, `person_warnings`).
+- **47 MCP tools.** See the tables above for the full catalog, by category:
+  FamilySearch records and places, FamilySearch Wiki content, reference and
+  context, project state (the writer and projection tools), and auth.
 - **27 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
