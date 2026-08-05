@@ -1209,16 +1209,16 @@ runs that recovered the genealogical answer can still fail the gate on
 compliance.)
 
 **`violations:` and `runs w/ >=1 violation:` count different things** — individual
-violations and the runs carrying at least one. They are labelled apart because a
-reader quoting one against the other's denominator is the error class #1176 was
-filed about.
+violations and the runs carrying at least one. They are labelled apart because
+quoting one against the other's denominator is the error this report exists to
+prevent.
 
-**Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=YYYY-MM-DD_HH-MM-SS`
-restricts to runs at or after a timestamp, so a window is an argument rather than
-a figure hand-edited into prose. A malformed `SINCE` is rejected (exit 2) rather
-than silently selecting the wrong runs — it is a lexicographic comparison against
-the run's filename, so `20:00:00` or an unpadded month would quietly move the
-window.
+**Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=all|N|YYYY-MM-DD` sets
+the window, defaulting to the last 14 days like every other run-log reader
+(`harness/since_window.py`), so a window is an argument rather than a figure
+hand-edited into prose. A malformed `SINCE` is rejected at parse time (exit 2)
+rather than silently selecting the wrong runs, and a run whose filename carries no
+parseable date is **kept**, so a naming change cannot quietly shrink the sample.
 
 **Every denominator the report prints excludes `not_checked`.** A rate or a
 per-run figure over `pass + fail + not_checked` asserts that the unknowns ran
