@@ -426,15 +426,65 @@ describe("recordSearchTool error propagation", () => {
     );
   });
 
-  it("throws on other non-OK statuses", async () => {
-    mockFetch.mockResolvedValueOnce({
+  // #1316: a per-attempt AbortSignal.timeout is passed to fetch so a stalled
+  // FamilySearch connection can't hang the turn.
+  it("passes an AbortSignal timeout to fetch", async () => {
+    mockFetch.mockResolvedValue(makeOkResponse(emptyResponse()));
+    await recordSearchTool({ surname: "Lincoln" });
+    const init = mockFetch.mock.calls[0][1] as RequestInit;
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  // #1316: a transient blip must not be fatal — withRetry retries before failing.
+  it("retries a transient network failure, then succeeds", async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error("fetch failed"))
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await recordSearchTool({ surname: "Lincoln" });
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // #1316 (REPLACES the old single-500 "throws on other non-OK statuses" test):
+  // 5xx is now transient — retried 3× and, when still failing, surfaced as the
+  // explicit terminal error, NEVER as a short/empty result set.
+  it("retries 5xx and throws the terminal transient-failure error when exhausted", async () => {
+    mockFetch.mockResolvedValue({
       ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
+      status: 503,
+      statusText: "Service Unavailable",
     });
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /500 Internal Server Error/
+      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
     );
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  // #1316: a timeout (AbortSignal firing → fetch rejects) is transient too.
+  it("retries a timeout and throws the terminal error when exhausted", async () => {
+    mockFetch.mockRejectedValue(
+      Object.assign(new Error("The operation timed out"), {
+        name: "TimeoutError",
+      })
+    );
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+      /did not complete after 3 attempts.*network timeout or transient error/s
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  // #1316: non-retryable non-OK statuses (e.g. 404) are NOT retried and keep the
+  // existing generic message — only 429/5xx became transient.
+  it("does not retry a 404 and keeps the generic API-error message", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    });
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+      /API error: 404 Not Found/
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 
