@@ -1227,13 +1227,24 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
 
     # heavy per-source detail after — this is what the prompt-size cap trims.
     #
-    # Drop WHOLE sources off the tail rather than slicing the rendered string.
-    # A raw `[:budget]` cut lands mid-object, so the last source renders
-    # half-written and the ones after it vanish with no trace — while their ids
-    # are still listed above, complete. That is exactly the state that makes the
-    # judge call a correctly-cited source fabricated (the bug this block exists
-    # to prevent, relocated to large projects). Naming the dropped ids turns a
+    # Drop whole sources rather than slicing the rendered string. A raw
+    # `[:budget]` cut lands mid-object, so the last source renders half-written
+    # and the ones after it vanish with no trace — while their ids are still
+    # listed above, complete. That is exactly the state that makes the judge
+    # call a correctly-cited source fabricated (the bug this block exists to
+    # prevent, relocated to large projects). Naming the dropped ids turns a
     # silent gap into a stated one the judge can reason about.
+    #
+    # Sources are skipped individually, not truncated at the first overflow, so
+    # a small late source can survive while a larger earlier one is dropped.
+    # That packs more citations into the budget; the omission note names
+    # whatever was left out, so which ones went is never a guess.
+    #
+    # The note itself is appended after the budget is spent, so the block can
+    # exceed `_BEFORE_STATE_MAX_CHARS` by roughly the length of the dropped-id
+    # list. Deliberate: the note is what stops the judge reading an omission as
+    # a fabrication, and dropping it to stay under a soft prompt-size cap would
+    # reintroduce the bug the cap is not there to cause.
     budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
     detail_blocks: list[str] = []
     dropped: list[str] = []
@@ -1243,10 +1254,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
             candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
-            if len(header) + len(candidate) > remaining and kept:
-                dropped.append(sid)
-                continue
-            if len(header) + len(candidate) > remaining and not kept:
+            if len(header) + len(candidate) > remaining:
                 dropped.append(sid)
                 continue
             kept.append(entry)

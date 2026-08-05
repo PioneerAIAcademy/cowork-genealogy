@@ -131,26 +131,114 @@ def test_no_plan_writes_when_resolved(before_state, after_state, test):
             i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
         }
         pid = plan.get("id")
+        # Accumulate PER PLAN. Checking the shared `errors` for emptiness would
+        # let a second damaged plan slip through unnamed once the first has
+        # reported — the assert still fires, but you fix pl_001, re-run, and
+        # only then learn pl_002 was wrong too.
+        plan_errors: list[str] = []
         for gone in before_items.keys() - after_items.keys():
-            errors.append(f"{pid}: item {gone} DELETED from an existing plan")
+            plan_errors.append(f"{pid}: item {gone} DELETED from an existing plan")
         for added in after_items.keys() - before_items.keys():
-            errors.append(f"{pid}: item {added} added to an existing plan")
+            plan_errors.append(f"{pid}: item {added} added to an existing plan")
         for both in before_items.keys() & after_items.keys():
             if before_items[both] != after_items[both]:
-                errors.append(f"{pid}: item {both} modified in place")
+                plan_errors.append(f"{pid}: item {both} modified in place")
         for field in set(prior) | set(plan):
             if field == "items":
                 continue
             if prior.get(field) != plan.get(field):
-                errors.append(
+                plan_errors.append(
                     f"{pid}: plan field '{field}' changed "
                     f"{prior.get(field)!r} -> {plan.get(field)!r}"
                 )
-        if not errors:  # differs, but no rule above named it — never silent
-            errors.append(f"{pid}: plan object changed in a way this check did not classify")
+        if not plan_errors:  # differs, but no rule above named it — never silent
+            plan_errors.append(
+                f"{pid}: plan object changed in a way this check did not classify"
+            )
+        errors.extend(plan_errors)
     assert not errors, (
         "research-plan wrote to a question whose search is already declared "
         "exhaustive:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_resolved_question_not_reopened(before_state, after_state, test):
+    """Tag-gated: the resolved question's own state must survive untouched.
+
+    Companion to `test_no_plan_writes_when_resolved`, and the more important
+    half. That one guards `plans[]`; this guards the fields the ut_003 prompt
+    actually tempts the skill to change.
+
+    Why it has to exist here rather than being covered already: the universal
+    `test_ownership_table` / `test_tree_ownership_table` **skip themselves on
+    negative tests**, and their docstring gives the reason — "a negative test
+    where the skill *does* wrongly activate already fails on the routing
+    check." `grade_on_invariant: true` is precisely the flag that removes that
+    routing check (`orchestrator.py` returns "pass" the moment validators
+    pass), so for this test the premise behind the skip is void and nothing
+    replaces it. Verified against the real fixture: with a writer-tool call
+    present, flipping `q_001` back to open, un-declaring exhaustiveness,
+    reopening `project.status`, or rewriting the question text all scored a
+    clean pass before this check existed.
+
+    That is the harm the prompt invites. "The probate search came up empty —
+    are we done?" tempts reopening the question far more than it tempts adding
+    a plan item, and reopening silently undoes a completed GPS proof: the
+    declaration and the proof summary both cite the negative probate result.
+
+    Deliberately narrow. A blanket "questions[] must not change" would
+    false-fail the legitimate routes — `question-selection` may append a
+    follow-on question, which is one of this test's `correct_skill` answers.
+    So this names the specific deltas that are never legitimate here: the
+    target question's `status` and `exhaustive_declaration`, and
+    `project.status`. Same shape as
+    `test_search_external_sites.py::test_no_external_search_on_planning_request`.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    def _resolved(research: dict) -> dict:
+        return {
+            q.get("id"): q
+            for q in (research.get("questions") or [])
+            if q.get("status") == "resolved"
+            or (q.get("exhaustive_declaration") or {}).get("declared")
+        }
+
+    before_q = _resolved(before)
+    if not before_q:
+        pytest.skip("no resolved/declared question in the before-state")
+
+    errors: list[str] = []
+    after_q = {q.get("id"): q for q in (after.get("questions") or [])}
+    for qid, was in before_q.items():
+        now = after_q.get(qid)
+        if now is None:
+            errors.append(f"{qid}: resolved question DELETED")
+            continue
+        for field in ("status", "exhaustive_declaration", "question",
+                      "resolution_assertion_ids", "resolved"):
+            if was.get(field) != now.get(field):
+                errors.append(
+                    f"{qid}: '{field}' changed {was.get(field)!r} -> "
+                    f"{now.get(field)!r} on a question whose search is "
+                    f"already declared exhaustive"
+                )
+
+    before_status = (before.get("project") or {}).get("status")
+    after_status = (after.get("project") or {}).get("status")
+    if before_status != after_status:
+        errors.append(
+            f"project.status changed {before_status!r} -> {after_status!r}"
+        )
+
+    assert not errors, (
+        "the resolved question's own state was modified:\n  - "
+        + "\n  - ".join(errors)
     )
 
 
