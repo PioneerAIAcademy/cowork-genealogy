@@ -85,10 +85,10 @@ def test_scenario_workspace_copies_results_sidecars(tmp_path):
     scenarios = tmp_path / "scenarios"
     scen = scenarios / "with-sidecars"
     (scen / "results").mkdir(parents=True)
-    (scen / "research.json").write_text(json.dumps({"log": []}))
-    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     (scen / "results" / "log_001.json").write_text(
-        json.dumps({"log_id": "log_001", "payload": {"results": []}}))
+        json.dumps({"log_id": "log_001", "payload": {"results": []}}), encoding="utf-8")
     target = tmp_path / "ws"
     target.mkdir()
     ws = build_workspace(
@@ -113,9 +113,9 @@ def test_missing_scenario_raises(tmp_path):
 
 
 def test_snapshot_captures_json_files(tmp_path):
-    (tmp_path / "research.json").write_text(json.dumps({"x": 1}))
-    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
-    (tmp_path / "other.txt").write_text("hello")
+    (tmp_path / "research.json").write_text(json.dumps({"x": 1}), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
+    (tmp_path / "other.txt").write_text("hello", encoding="utf-8")
 
     snap = snapshot_files(tmp_path)
     assert snap["research_json"] == {"x": 1}
@@ -135,8 +135,8 @@ def test_snapshot_returns_none_for_missing_json(tmp_path):
 def test_snapshot_ignores_dot_claude_directory(tmp_path):
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".claude" / "skills").mkdir()
-    (tmp_path / ".claude" / "skills" / "foo.md").write_text("skill content")
-    (tmp_path / "notes.md").write_text("notes content")
+    (tmp_path / ".claude" / "skills" / "foo.md").write_text("skill content", encoding="utf-8")
+    (tmp_path / "notes.md").write_text("notes content", encoding="utf-8")
 
     snap = snapshot_files(tmp_path)
     # .claude/ is the harness's own scaffolding — must not pollute the diff
@@ -147,7 +147,7 @@ def test_snapshot_ignores_dot_claude_directory(tmp_path):
 def test_snapshot_handles_subdirectories(tmp_path):
     nested = tmp_path / "subdir"
     nested.mkdir()
-    (nested / "file.md").write_text("nested content")
+    (nested / "file.md").write_text("nested content", encoding="utf-8")
     snap = snapshot_files(tmp_path)
     assert snap["files"]["subdir/file.md"] == "nested content"
 
@@ -166,7 +166,7 @@ def test_cleanup_session_store_removes_matching_entry(tmp_path, monkeypatch):
     key = project_key_for_directory(str(workspace))
     target = fake_session_root / key
     target.mkdir()
-    (target / "session.json").write_text("{}")
+    (target / "session.json").write_text("{}", encoding="utf-8")
 
     ws.cleanup_session_store(workspace)
     assert not target.exists()
@@ -191,7 +191,7 @@ def test_workspace_isolated_per_call(tmp_path):
     # Both have skills, neither has the other's state.
     assert (ws1 / ".claude/skills/search-wikipedia").exists()
     assert (ws2 / ".claude/skills/search-wikipedia").exists()
-    (ws1 / "marker.txt").write_text("a")
+    (ws1 / "marker.txt").write_text("a", encoding="utf-8")
     assert not (ws2 / "marker.txt").exists()
 
 

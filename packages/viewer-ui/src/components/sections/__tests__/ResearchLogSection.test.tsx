@@ -99,6 +99,64 @@ describe('ResearchLogSection — linkified notes (Issue 3)', () => {
   })
 })
 
+describe('ResearchLogSection — external_site.url_generated (#1166)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+  })
+
+  const URL = 'https://www.findagrave.com/memorial/search?firstname=Patrick&lastname=Flynn'
+
+  function externalEntry(url_generated: string): LogEntry {
+    return {
+      id: 'log_001',
+      plan_item_id: null,
+      performed: '2026-05-01T10:15:00Z',
+      tool: 'external_links_search',
+      query: { site: 'findagrave' },
+      outcome: 'positive',
+      results_examined: 1,
+      results_ref: null,
+      results_available: null,
+      notes: null,
+      external_site: {
+        site: 'findagrave',
+        url_generated,
+        capture_received: false,
+        capture_filename: null
+      }
+    }
+  }
+
+  it('renders the generated search URL when present', async () => {
+    mockResearch({ log: [externalEntry(URL)] })
+    render(<ResearchLogSection />)
+    await userEvent.click(screen.getByText('external_links_search'))
+    expect(screen.getByRole('button', { name: URL })).toBeInTheDocument()
+  })
+
+  it('omits the URL when url_generated is empty', async () => {
+    mockResearch({ log: [externalEntry('')] })
+    render(<ResearchLogSection />)
+    await userEvent.click(screen.getByText('external_links_search'))
+    // The External Site block still renders its other fields.
+    expect(screen.getByText('External Site')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^https:/ })).toBeNull()
+  })
+
+  it('clicking the URL routes through openExternal, not the browser', async () => {
+    // Electron denies every window-open request, so a raw <a target="_blank">
+    // would be a dead click there. The click must reach openExternal.
+    const opened = vi.fn()
+    setOpenExternal(opened)
+    mockResearch({ log: [externalEntry(URL)] })
+    render(<ResearchLogSection />)
+    await userEvent.click(screen.getByText('external_links_search'))
+    await userEvent.click(screen.getByRole('button', { name: URL }))
+    expect(opened).toHaveBeenCalledWith(URL)
+  })
+})
+
 describe('ResearchLogSection — default sort order', () => {
   beforeEach(() => vi.clearAllMocks())
 

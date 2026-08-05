@@ -1088,6 +1088,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 11 | Throws on `sex` other than Male/Female/Unknown (case-insensitive) | sex enum validation |
 | 12 | Throws on `maritalStatus` other than the four allowed values (case-sensitive) | maritalStatus enum validation |
 | 13 | Throws on `recordType` other than the eight allowed values | recordType enum validation |
+| 13a | Throws on an inherited `Object.prototype` key (`"constructor"`) as `recordType` | recordType enum validation, own-property only |
+| 13b | Never emits a non-numeric `f.recordType`, even when `buildSearchUrl` is called without `validateInput` | Emit-site invariant |
 | 14 | Builds URL with all `q.*` params correctly | Param mapping |
 | 15 | `surnameExact=true` emits both `q.surname.exact=on` and `q.surname.exact.1=on` when `surnameAlt` is set | Modifier + cardinality stack |
 | 16 | `birthYearExact=true` emits `q.birthLikeDate.exact=on` | Year-exact mapping |
