@@ -11,7 +11,10 @@ from pathlib import Path
 
 import pytest
 
+from claude_agent_sdk import ToolResultBlock
+
 from e2e.orchestrator import (
+    apply_tool_result,
     check_guardrail_compliance,
     PROVIDED_DOCS_DIRNAME,
     FixtureCaps,
@@ -24,6 +27,8 @@ from e2e.orchestrator import (
     _timeline_tool_label,
     build_workspace,
     load_fixture,
+    load_seed_person_ids,
+    person_evidence_provenance_gap,
     provided_documents,
 )
 
@@ -51,13 +56,13 @@ def _make_fixture_dir(tmp_path: Path, *, caps: dict | None = None) -> Path:
     }
     if caps is not None:
         fixture_json["caps"] = caps
-    (fixture_dir / "fixture.json").write_text(json.dumps(fixture_json))
+    (fixture_dir / "fixture.json").write_text(json.dumps(fixture_json), encoding="utf-8")
     (fixture_dir / "starting-research.json").write_text(
-        json.dumps({"project": {"objective": "Find John's parents"}})
+        json.dumps({"project": {"objective": "Find John's parents"}}), encoding="utf-8"
     )
-    (fixture_dir / "starting-tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (fixture_dir / "starting-tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     (fixture_dir / "expected-findings.json").write_text(
-        json.dumps({"findings": [{"id": "f1", "description": "...", "required": True}]})
+        json.dumps({"findings": [{"id": "f1", "description": "...", "required": True}]}), encoding="utf-8"
     )
     return fixture_dir
 
@@ -115,7 +120,7 @@ def test_build_workspace_copies_starting_state(tmp_path: Path):
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
     (skills_dir / "fake-skill").mkdir()
-    (skills_dir / "fake-skill" / "SKILL.md").write_text("---\nname: fake\n---\nbody")
+    (skills_dir / "fake-skill" / "SKILL.md").write_text("---\nname: fake\n---\nbody", encoding="utf-8")
 
     workspace = tmp_path / "ws"
     workspace.mkdir()
@@ -684,3 +689,168 @@ def test_check_guardrail_compliance_aggregates_all_three_checks():
     assert any("proof-critique" in v for v in violations)
     # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+
+
+# --- load_seed_person_ids (issue #963 seed read; fail-open) ------------------
+
+
+def test_load_seed_person_ids_reads_person_ids(tmp_path: Path):
+    """A person entry with no usable string `id` is DROPPED, not admitted as
+    None — the ids this set is compared against are always strings, so a None
+    member could never match and would only make the `set[str]` annotation
+    false."""
+    p = tmp_path / "starting-tree.gedcomx.json"
+    p.write_text(
+        json.dumps(
+            {"persons": [{"id": "A1"}, {"id": "B2"}, {"not_a_dict": True}, {"id": 7}]}
+        ),
+        encoding="utf-8",
+    )
+    assert load_seed_person_ids(p) == {"A1", "B2"}
+
+
+def test_load_seed_person_ids_missing_file_fails_open_with_warning(tmp_path: Path, capsys):
+    """A read failure returns None (the check fails open) and prints a
+    diagnosable stderr warning — not an empty set (which would log a shadow
+    entry for every legitimate seed-person link) and not a crash."""
+    missing = tmp_path / "does-not-exist.json"
+    assert load_seed_person_ids(missing) is None
+    err = capsys.readouterr().err
+    assert "could not read seed tree" in err
+    assert "same_person check DISABLED" in err
+
+
+def test_load_seed_person_ids_malformed_json_fails_open(tmp_path: Path, capsys):
+    p = tmp_path / "starting-tree.gedcomx.json"
+    p.write_text("{ not valid json", encoding="utf-8")
+    assert load_seed_person_ids(p) is None
+    assert "could not read seed tree" in capsys.readouterr().err
+
+
+def test_load_fixture_points_seed_read_at_the_immutable_fixture_file(tmp_path: Path):
+    """The path load_fixture wires in is the committed fixture input, so
+    load_seed_person_ids reads the run's true starting state — never the
+    workspace copy the run later mutates."""
+    fixture_dir = _make_fixture_dir(tmp_path)
+    fixture = load_fixture(fixture_dir)
+    assert fixture.starting_tree_path == fixture_dir / "starting-tree.gedcomx.json"
+    assert fixture.starting_tree_path.exists()
+
+
+# --- person_evidence_provenance_gap (issue #963 shadow-mode check) -----------
+
+
+def _pe_append(person_id):
+    return {"section": "person_evidence", "op": "append", "entry": {"person_id": person_id}}
+
+
+def _same_person(pid1, pid2):
+    return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
+
+
+def test_provenance_gap_flags_new_unscored_person():
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert gap is not None
+    assert "I1" in gap
+    assert "same_person" in gap
+
+
+def test_provenance_gap_clean_when_same_person_already_in_tool_calls():
+    """The only state that clears the check: a same_person for this identity is
+    already visible in `tool_calls`. There is deliberately no pending/in-flight
+    escape hatch — the AssistantMessage branch appends one entry object to
+    `tool_calls` AND stores it in `pending_tool_uses`, so the latter is always a
+    subset and consulting it could never add an id."""
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[_same_person("I1", "p_9")],
+        starting_person_ids=set(),
+    )
+    assert gap is None
+
+
+def test_provenance_gap_ignores_errored_same_person():
+    """#1255/#1289 made the orchestrator populate `is_error`, so a FAILED
+    same_person no longer counts as scoring the identity."""
+    errored = _same_person("I1", "p_9") | {"is_error": True}
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[errored],
+        starting_person_ids=set(),
+    )
+    assert gap is not None
+    assert "I1" in gap
+
+
+def test_provenance_gap_clean_for_seed_person_link():
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("KN19-Q19"),
+        tool_calls=[],
+        starting_person_ids={"KN19-Q19"},  # pre-existing seed person
+    )
+    assert gap is None
+
+
+def test_provenance_gap_none_for_non_research_append():
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__materialize_facts",
+        _pe_append("I1"),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert gap is None
+
+
+def test_provenance_gap_caps_id_list_with_plus_more():
+    """A large batch can't produce an enormous recorded detail string."""
+    ops = {"ops": [_pe_append(f"I{i}") for i in range(15)]}
+    reason = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        ops,
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert reason is not None
+    assert "+5 more" in reason  # 15 new ids, first 10 shown
+    assert "I14" not in reason  # the tail is elided, not listed
+
+
+# --- apply_tool_result (the #999 producer fix) -------------------------------
+# Before #999 the orchestrator set only `response_summary` on a `tool_calls`
+# entry and never `is_error`, so skill_invocation.py's
+# `entry.get("is_error") is True` gates were dead. These assert the producer now
+# populates `is_error` — a gap the consumer tests in test_skill_invocation.py
+# can't catch, because they fabricate `is_error` on the entry themselves.
+
+
+def test_apply_tool_result_marks_a_failed_call():
+    entry = {"tool": "Skill", "args": {"skill": "proof-conclusion"}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="boom", is_error=True)
+    apply_tool_result(entry, block, "boom")
+    assert entry["is_error"] is True
+    assert entry["response_summary"] == "boom"
+
+
+def test_apply_tool_result_normalizes_none_success_to_false():
+    # A successful call: the SDK omits is_error, so it defaults to None (not
+    # False). The gates match on `is True` and the field must be a clean bool,
+    # so the producer normalizes None -> False.
+    entry = {"tool": "Skill", "args": {"skill": "proof-conclusion"}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="ok")  # is_error defaults to None
+    apply_tool_result(entry, block, "ok")
+    assert entry["is_error"] is False
+
+
+def test_apply_tool_result_false_stays_false():
+    entry = {"tool": "mcp__genealogy__research_append", "args": {}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="ok", is_error=False)
+    apply_tool_result(entry, block, "ok")
+    assert entry["is_error"] is False

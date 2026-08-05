@@ -528,7 +528,12 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
   const key = labelKey(ft);
-  const canonical = FACT_TYPE_ALIASES[key];
+  // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
+  // index on `constructor` yields `Object`, which is truthy, so the assignment
+  // below would replace a string fact_type with a function.
+  const canonical = Object.hasOwn(FACT_TYPE_ALIASES, key)
+    ? FACT_TYPE_ALIASES[key]
+    : undefined;
   if (canonical) entry.fact_type = canonical;
   // A folded place-of-event variant must keep its place machine-readable: if
   // neither `place` nor `standard_place` is set, lift the human `value` (which
@@ -576,7 +581,11 @@ function applyOne(
   preCallExhaustiveDeclared?: Map<string, boolean>,
 ): AppliedOp {
   const section = op.section;
-  const config = SECTIONS[section];
+  // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
+  // the prototype chain — `constructor` yields the `Object` function, which is
+  // truthy, so `!config` fails to reject and execution runs on past the error
+  // this branch exists to raise.
+  const config = Object.hasOwn(SECTIONS, section) ? SECTIONS[section] : undefined;
   if (!config) {
     throw new ResearchAppendError(
       `section '${section}' is not supported by research_append (supported: ${Object.keys(SECTIONS).join(", ")})`,
