@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Right negative conclusion, but the agent's own proof summary (ps_001) rates the tier 'probable' not 'proved' and names an unresolved open thread (h_001, I8's identity vs GK89-82B's José branch) that it says 'prevents escalation to proved' -- explicitly leaving the possibility of an undiscovered Antonia de Jesus connection open rather than closing it as the expected finding requires. Reached via the 1859 marriage + 1890 baptism grandfather-name route rather than the fixture's disproving 1895 death record or Julia's 1967 record."
+  }
+}
