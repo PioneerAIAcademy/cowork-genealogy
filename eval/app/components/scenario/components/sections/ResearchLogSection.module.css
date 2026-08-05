@@ -140,7 +140,7 @@
 
 /* Kept in step with packages/viewer-ui's copy (#1166). */
 .externalUrl {
-  color: var(--accent, var(--text-primary));
+  color: var(--text-link);
   overflow-wrap: anywhere;
   word-break: break-all;
 }

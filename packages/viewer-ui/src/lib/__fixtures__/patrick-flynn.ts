@@ -482,7 +482,6 @@ export const patrickFlynnResearch: ResearchData = {
           date_certainty: 'estimated',
           event_type: 'birth',
           place: 'Ireland',
-          place_id: 'place_ireland',
           description: 'Born in Ireland, estimated from census ages',
           assertion_ids: ['a_002']
         },
@@ -491,7 +490,6 @@ export const patrickFlynnResearch: ResearchData = {
           date_certainty: 'exact',
           event_type: 'census',
           place: 'Schuylkill County, Pennsylvania',
-          place_id: 'place_schuylkill_co_pa',
           description: 'Enumerated age 5 in Thomas Flynn household, dwelling 84',
           assertion_ids: ['a_004'],
           distance_from_previous_km: 5400,
@@ -503,7 +501,6 @@ export const patrickFlynnResearch: ResearchData = {
           date_certainty: 'exact',
           event_type: 'death',
           place: 'Schuylkill County, Pennsylvania',
-          place_id: 'place_schuylkill_co_pa',
           description: 'Died, death certificate names Thomas Flynn as father',
           assertion_ids: ['a_013'],
           distance_from_previous_km: 0

@@ -934,7 +934,6 @@
           "date_certainty": "estimated",
           "event_type": "birth",
           "place": "Ireland",
-          "place_id": "place_ireland",
           "description": "Born in Ireland, estimated from census ages",
           "assertion_ids": ["a_002", "a_009"]
         },
@@ -943,7 +942,6 @@
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Enumerated age 5 in Thomas Flynn household, dwelling 84",
           "assertion_ids": ["a_003", "a_004"],
           "distance_from_previous_km": 5400
@@ -953,7 +951,6 @@
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"],
           "distance_from_previous_km": 0
@@ -963,7 +960,6 @@
           "date_certainty": "exact",
           "event_type": "marriage",
           "place": "Pottsville, Schuylkill County, Pennsylvania",
-          "place_id": "place_pottsville_pa",
           "description": "Married Mary Sullivan at St. Patrick's Church. Thomas Flynn witness, listed as father.",
           "assertion_ids": ["a_014", "a_015"],
           "distance_from_previous_km": 8
@@ -973,7 +969,6 @@
           "date_certainty": "exact",
           "event_type": "death",
           "place": "Schuylkill County, Pennsylvania",
-          "place_id": "place_schuylkill_co_pa",
           "description": "Died, death certificate names Thomas Flynn as father",
           "assertion_ids": ["a_011", "a_013"],
           "distance_from_previous_km": 8

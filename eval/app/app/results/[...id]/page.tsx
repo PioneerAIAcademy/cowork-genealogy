@@ -32,6 +32,7 @@ import { HSplit } from '@/components/layout/HSplit';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
 import { findScenarioData } from '@/lib/scenarioSnapshot';
+import { findFixtureResponse, findTestJson } from '@/lib/snapshotFiles';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -47,6 +48,12 @@ interface Detail {
   annotation: AnnotationFile | null;
   /** Highest released version on disk for this skill, or null if none. */
   latestReleasedVersion: number | null;
+  /**
+   * Current on-disk content of every path the snapshot names, read fresh by
+   * the API route. The snapshot itself holds sha256 digests from
+   * schema_version 3 on, so these are the bytes the panes render.
+   */
+  snapshotFiles: Record<string, string>;
 }
 
 interface DimensionId {
@@ -462,39 +469,6 @@ const DimensionRow = memo(function DimensionRow({
   );
 });
 
-/** Find the test JSON for `test_id` inside the run log's snapshot. */
-function findTestJson(
-  snapshot: Record<string, string>,
-  skill: string,
-  test_id: string,
-): Record<string, unknown> | null {
-  const prefix = `eval/tests/unit/${skill}/`;
-  for (const [path, content] of Object.entries(snapshot)) {
-    if (!path.startsWith(prefix) || !path.endsWith('.json')) continue;
-    try {
-      const parsed = JSON.parse(content);
-      if (parsed?.test?.id === test_id) return parsed;
-    } catch {
-      // skip malformed entries
-    }
-  }
-  return null;
-}
-
-function findFixtureResponse(
-  snapshot: Record<string, string>,
-  fixtureName: string,
-): unknown {
-  const content = snapshot[`eval/fixtures/mcp/${fixtureName}.json`];
-  if (!content) return null;
-  try {
-    const parsed = JSON.parse(content);
-    return parsed?.response ?? parsed;
-  } catch {
-    return null;
-  }
-}
-
 // ---- Tool-args side-by-side table ------------------------------------------
 
 function ToolArgsTable({
@@ -711,11 +685,11 @@ function GradesPane({
 const TracePane = memo(function TracePane({
   entry,
   skill,
-  snapshot,
+  files,
 }: {
   entry: TestEntry;
   skill: string;
-  snapshot: Record<string, string>;
+  files: Record<string, string>;
 }) {
   const run = entry.runs[0];
   const output = run?.output as Record<string, unknown> | undefined;
@@ -728,19 +702,19 @@ const TracePane = memo(function TracePane({
 
   // Hooks must run unconditionally; we early-return below if !run.
   const testJson = useMemo(
-    () => findTestJson(snapshot, skill, entry.test_id),
-    [snapshot, skill, entry.test_id],
+    () => findTestJson(files, skill, entry.test_id),
+    [files, skill, entry.test_id],
   );
   const fixtureBodies = useMemo(() => {
     const map = new Map<string, unknown>();
     for (const c of toolCalls) {
       const name = c.response_fixture ? String(c.response_fixture) : null;
       if (name && !map.has(name)) {
-        map.set(name, findFixtureResponse(snapshot, name));
+        map.set(name, findFixtureResponse(files, name));
       }
     }
     return map;
-  }, [snapshot, toolCalls]);
+  }, [files, toolCalls]);
 
   if (!run) {
     return (
@@ -831,7 +805,7 @@ const TracePane = memo(function TracePane({
           <Accordion.Control>User message</Accordion.Control>
           <Accordion.Panel>
             <Code block style={{ whiteSpace: 'pre-wrap' }}>
-              {userMessage ?? '(not found in snapshot)'}
+              {userMessage ?? '(not found on disk)'}
             </Code>
             {scenarioNotes ? (
               <Text size="xs" c="dimmed" mt={4}>
@@ -943,15 +917,15 @@ const TracePane = memo(function TracePane({
 function EvidencePane({
   entry,
   skill,
-  snapshot,
+  files,
 }: {
   entry: TestEntry;
   skill: string;
-  snapshot: Record<string, string>;
+  files: Record<string, string>;
 }) {
   const scenarioData = useMemo(
-    () => (entry.scenario ? findScenarioData(snapshot, entry.scenario) : null),
-    [entry.scenario, snapshot],
+    () => (entry.scenario ? findScenarioData(files, entry.scenario) : null),
+    [entry.scenario, files],
   );
 
   return (
@@ -967,7 +941,7 @@ function EvidencePane({
         </Tabs.List>
 
         <Tabs.Panel value="trace" style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-          <TracePane entry={entry} skill={skill} snapshot={snapshot} />
+          <TracePane entry={entry} skill={skill} files={files} />
         </Tabs.Panel>
 
         {scenarioData ? (
@@ -1333,26 +1307,9 @@ export default function RunLogDetailPage({
     log.version != null &&
     !log.released &&
     (query.data.latestReleasedVersion == null || log.version > query.data.latestReleasedVersion);
-  const showActivate = log.releasable;
   const showRelease = log.version != null && !log.released && log.releasable;
   const showDelete = isCurrentCandidate;
 
-  const activate = async () => {
-    if (!confirm(`Activate this run log? This will overwrite ${Object.keys(log.snapshot).length} skill-side files.`)) {
-      return;
-    }
-    const res = await fetch(`/api/runlogs/${runLogId}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'activate' }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      alert(`activate failed: ${body.error ?? res.status}`);
-    } else {
-      alert('Activated — files written. Re-run the harness to produce a fresh run log against this state.');
-    }
-  };
   const release = async () => {
     if (!complete) {
       alert('Cannot release: annotation is incomplete. Review every dimension first.');
@@ -1422,15 +1379,12 @@ export default function RunLogDetailPage({
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
-          {showActivate || showRelease || showDelete ? (
+          {showRelease || showDelete ? (
             <Menu shadow="md" position="bottom-end" width={220}>
               <Menu.Target>
                 <Button size="xs" variant="default">Actions ▾</Button>
               </Menu.Target>
               <Menu.Dropdown>
-                {showActivate ? (
-                  <Menu.Item onClick={activate}>Activate</Menu.Item>
-                ) : null}
                 {showRelease ? (
                   <Menu.Item
                     disabled={!complete}
@@ -1443,7 +1397,7 @@ export default function RunLogDetailPage({
                     ) : null}
                   </Menu.Item>
                 ) : null}
-                {(showActivate || showRelease) && showDelete ? <Menu.Divider /> : null}
+                {showRelease && showDelete ? <Menu.Divider /> : null}
                 {showDelete ? (
                   <Menu.Item color="red" onClick={deleteCandidate}>
                     Delete candidate
@@ -1489,7 +1443,7 @@ export default function RunLogDetailPage({
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}
           {selectedEntry ? (
-            <EvidencePane entry={selectedEntry} skill={log.skill} snapshot={log.snapshot} />
+            <EvidencePane entry={selectedEntry} skill={log.skill} files={query.data.snapshotFiles ?? {}} />
           ) : (
             <Box p="md"><Text c="dimmed">no test selected</Text></Box>
           )}

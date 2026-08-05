@@ -88,11 +88,23 @@
 }
 
 /* The generated search URL. Long and unbreakable, so it must wrap rather than
-   widen the log row — see #1166. */
+   widen the log row — see #1166. A button, not an anchor, because Electron
+   denies every window-open request (apps/electron/src/main/index.ts), so the
+   click has to go through openExternal. */
 .externalUrl {
-  color: var(--accent, var(--text-primary));
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-link);
   overflow-wrap: anywhere;
   word-break: break-all;
+}
+
+.externalUrl:hover {
+  text-decoration: underline;
 }
 
 .queryBlock {

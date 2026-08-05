@@ -29,10 +29,17 @@ import { fileURLToPath } from "node:url";
  * researcher-visible gap is the one with a user consequence, and it is the one
  * with a signal sharp enough to enforce.
  *
- * Detection is a word-boundary scan of the section components. A field reached
- * only by destructuring or a generic map would false-negative; that direction
- * is safe (a miss, not a false alarm), and `renders enough fields to be
- * scanning correctly` below guards against the scan silently matching nothing.
+ * Detection is a word-boundary scan of the section components, with comments
+ * stripped first — a comment naming the field satisfies a raw-text scan exactly
+ * as well as the render does, so a `TODO: render url_generated` left in place of
+ * the work would otherwise turn this suite green while the researcher still saw
+ * nothing.
+ *
+ * A field reached only by destructuring or a generic map still false-negatives.
+ * That direction is safe (a miss, not a false alarm), but it is no longer
+ * silent: an object whose container renders while none of its field names
+ * appear must declare itself in `RENDERED_GENERICALLY`, and `renders enough
+ * fields to be scanning correctly` guards against the scan matching nothing.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -81,7 +88,33 @@ const NOT_RENDERED: Record<string, string> = {
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
 };
 
+/**
+ * Objects the viewer renders generically — a map over `Object.entries(…)` or a
+ * destructure — so no field name appears literally in the source.
+ *
+ * Without this, such an object looks identical to one the viewer does not
+ * display: the container matches, zero fields do. Declaring it keeps the
+ * difference visible, and records that a new field here is invisible to this
+ * lint by construction.
+ */
+const RENDERED_GENERICALLY: Record<string, string> = {
+  stop_criteria:
+    "QuestionsSection maps Object.entries(exhaustive_declaration.stop_criteria), so every criterion renders without its name appearing in the source.",
+};
+
 type SchemaObject = { properties?: Record<string, unknown> };
+
+/**
+ * Strip comments so prose about a field cannot stand in for rendering it.
+ *
+ * `//` is only treated as a line comment when it is not preceded by `:`, so a
+ * `https://…` inside a string literal survives instead of eating its own line.
+ */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
 
 function componentSource(): string {
   if (!existsSync(COMPONENTS)) return "";
@@ -92,7 +125,7 @@ function componentSource(): string {
       if (e.isDirectory()) {
         if (e.name !== "__tests__" && e.name !== "__fixtures__") walk(full);
       } else if (e.name.endsWith(".tsx")) {
-        out.push(readFileSync(full, "utf8"));
+        out.push(stripComments(readFileSync(full, "utf8")));
       }
     }
   };
@@ -168,6 +201,12 @@ describe("research.json fields reach the viewer", () => {
   it("renders enough fields to be scanning correctly", () => {
     // If the sections move or the scan breaks, every object looks
     // "nothing rendered" and the whole lint passes vacuously.
+    //
+    // The floor is set from two measurements, not taste: 169 of 187 match
+    // today, and deleting all of components/sections/ leaves 46. A floor just
+    // above that broken figure is not a guard — a handful of new
+    // generically-named fields would lift the broken case over it. 120 sits
+    // clear of both.
     const rendered = [...objects.values()]
       .flat()
       .filter((f) => renders(f)).length;
@@ -175,7 +214,7 @@ describe("research.json fields reach the viewer", () => {
       rendered,
       `only ${rendered} schema fields found in ${COMPONENTS} — the viewer ` +
         `components probably moved. Fix this test rather than letting it pass.`,
-    ).toBeGreaterThan(50);
+    ).toBeGreaterThan(120);
   });
 
   it("has no stale entries in the exemption list", () => {
@@ -189,6 +228,15 @@ describe("research.json fields reach the viewer", () => {
       stale,
       `these exemptions name fields that are no longer in the schema: ${stale.join(", ")}`,
     ).toEqual([]);
+
+    const staleGeneric = Object.keys(RENDERED_GENERICALLY).filter(
+      (k) => !objects.has(k),
+    );
+    expect(
+      staleGeneric,
+      `these RENDERED_GENERICALLY entries name objects that are no longer in ` +
+        `the schema: ${staleGeneric.join(", ")}`,
+    ).toEqual([]);
   });
 
   for (const [objectName, fields] of objects) {
@@ -200,7 +248,24 @@ describe("research.json fields reach the viewer", () => {
     if (!holders.some(renders)) continue;
 
     const rendered = fields.filter(renders);
-    if (rendered.length === 0) continue;
+    if (rendered.length === 0) {
+      // The container is displayed but not one field name appears. Either the
+      // viewer renders the object generically, or the container name matched
+      // something unrelated and the gate above is lying. Both need saying out
+      // loud: silently skipping is what left `stop_criteria`'s seven fields
+      // outside this lint.
+      it(`${objectName}: renders generically, and says so`, () => {
+        expect(
+          objectName in RENDERED_GENERICALLY,
+          `${objectName} is referenced in ${COMPONENTS} but none of its ` +
+            `${fields.length} field names are. If the viewer renders it through ` +
+            `a generic map, add it to RENDERED_GENERICALLY naming the component — ` +
+            `a new field on it will not be caught here. If the reference is ` +
+            `incidental, the container gate matched the wrong thing.`,
+        ).toBe(true);
+      });
+      continue;
+    }
 
     it(`${objectName}: every sibling of a rendered field is rendered or exempt`, () => {
       const unexplained = fields.filter(
@@ -210,7 +275,7 @@ describe("research.json fields reach the viewer", () => {
         unexplained,
         `${objectName} renders ${rendered.length}/${fields.length} fields, but ` +
           `these are neither rendered nor exempt: ${unexplained.join(", ")}. ` +
-          `Either render them in packages/viewer-ui/src/components/sections/, ` +
+          `Either render them in packages/viewer-ui/src/components/, ` +
           `or add each to NOT_RENDERED with the reason it should stay hidden.`,
       ).toEqual([]);
     });

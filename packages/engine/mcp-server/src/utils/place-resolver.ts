@@ -270,7 +270,10 @@ const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern irela
 
 function canonicalCountry(segment: string): string | null {
   const norm = segment.trim().toLowerCase().replace(/\./g, "");
-  return COUNTRY_ALIASES[norm] ?? null;
+  // hasOwn, not `?? null`: `??` only catches null/undefined, so a bare index on
+  // a prototype key ("constructor") would return a function from a `string |
+  // null` signature.
+  return Object.hasOwn(COUNTRY_ALIASES, norm) ? COUNTRY_ALIASES[norm] : null;
 }
 
 function placeSegments(place: string): string[] {
