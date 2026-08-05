@@ -147,7 +147,10 @@ def test_launch_chdirs_and_execs_claude(tmp_path, monkeypatch):
             "--mcp-server-entry", str(server), "--launch",
         ])
 
-    assert str(calls["chdir"]).endswith("scratch/x-died")
+    # Compare path components, not a substring: on Windows the real path ends
+    # `scratch\x-died`, so an `endswith("scratch/x-died")` check fails there
+    # while passing on CI's ubuntu runner.
+    assert Path(calls["chdir"]).parts[-2:] == ("scratch", "x-died")
     assert calls["exec"] == ("/usr/bin/claude", ["/usr/bin/claude"])
 
 
