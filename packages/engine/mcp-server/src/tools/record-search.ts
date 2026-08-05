@@ -568,9 +568,7 @@ export async function recordSearchTool(
     throw new Error(
       `FamilySearch record search did not complete after 3 attempts ` +
         `(network timeout or transient error): ${detail}. This is a transient ` +
-        `failure, NOT an empty result — coverage is unknown. Retry the search ` +
-        `(optionally narrowing the query) before treating this name or locality ` +
-        `as searched.`
+        `failure, NOT an empty result — coverage is unknown.`
     );
   }
 
