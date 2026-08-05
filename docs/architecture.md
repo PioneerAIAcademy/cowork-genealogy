@@ -1120,7 +1120,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas` — **not** the dispatch |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | dual-spelling; derives the bridge prefix from `display_name`; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
@@ -1170,7 +1170,6 @@ taught a reader nothing.
 | Gap | Consequence |
 |---|---|
 | **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) |
-| **Nothing asserts an MCP tool's dispatch exists.** | A tool ships advertised and throws `Unknown tool` on first call, CI green. |
 | **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
 | **Nothing checks that a new `research.json` field is rendered, taught, or written** (sites 6–8 in §6). | The field validates and is never used by anything. |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. |
