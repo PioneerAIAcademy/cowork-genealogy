@@ -59,7 +59,7 @@
  *        Geach    18,520,641 → 23,185  (799x)  2 fuzzy-only, first at rank 100,
  *                                              max 1 position among the 198 common
  *      Fuzzy matches interleave by relevance rather than strictly appending,
- *      but even at 800x inflation only two fuzzy-only records reach the top 200,
+ *      but even at 799x inflation only two fuzzy-only records reach the top 200,
  *      and neither displaces a real match out of it.
  *
  *   C. Neal/James x Martha, Nevada County AR, marr. 1874-76. All three rows come

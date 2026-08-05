@@ -824,7 +824,7 @@ export const recordSearchToolSchema = {
   // not change which records rank first, so none of them can surface a target a
   // fuzzy search buries. Comparing the full top 200: the fuzzy and exact ID lists
   // were identical for Zsigmondy (108,398 -> 634) and Mingazzini (40,906 -> 1,795),
-  // and for Geach (18,520,641 -> 23,185, an 800x count inflation) held 2 fuzzy-only
+  // and for Geach (18,520,641 -> 23,185, a 799x count inflation) held 2 fuzzy-only
   // records, the first at rank 100, moving the rest by at most 1 position. A
   // county-scoped marriage search measured 35,510 fuzzy vs 2 exact with the same
   // target ranked first either way, and the WRONG county returned 35,473 against
@@ -850,25 +850,25 @@ export const recordSearchToolSchema = {
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
       deathPlace: { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       deathPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       marriageYearFrom: { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
       marriageYearTo: { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
       marriagePlace: { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       marriagePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       residencePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       anyYearFrom: { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
       anyYearTo: { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
       anyPlace: { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       anyPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 

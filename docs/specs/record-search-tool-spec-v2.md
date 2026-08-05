@@ -914,10 +914,10 @@ Comparing the full top-200 persona-ID list of each (two pages of 100,
 |---|---|---|---|
 | `Zsigmondy` | 108,398 → 634 | 171× | **0** — all 200 IDs in common, 0 positions moved |
 | `Mingazzini` | 40,906 → 1,795 | 23× | **0** |
-| `Geach` | 18,520,641 → 23,185 | **800×** | **2 fuzzy-only records**, first at rank 100; max 1 position moved among the 198 in common |
+| `Geach` | 18,520,641 → 23,185 | **799×** | **2 fuzzy-only records**, first at rank 100; max 1 position moved among the 198 in common |
 
 Fuzzy matches interleave by relevance rather than strictly appending,
-but even at 800× inflation only two fuzzy-only records outrank the real
+but even at 799× inflation only two fuzzy-only records outrank the real
 ones within 200. The same holds for places: a county-scoped marriage
 search measured **35,510 fuzzy against 2 exact with the same target
 ranked first in both**.
