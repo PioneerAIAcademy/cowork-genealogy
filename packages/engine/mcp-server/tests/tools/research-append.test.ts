@@ -92,6 +92,25 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  // Same class as record_search's recordType: `SECTIONS[section]` and
+  // `EXAMPLES[section]` walk the prototype chain, so "constructor" indexed out
+  // `Object` — truthy, so `!config` failed to reject — and the rejection path
+  // then threw `TypeError: entry.split is not a function` out of the tool.
+  it("rejects an inherited Object.prototype key as section, with the actionable error", async () => {
+    await writeProject();
+    for (const key of Object.getOwnPropertyNames(Object.prototype)) {
+      const r = await researchAppend({
+        projectPath: dir,
+        section: key as never,
+        op: "append",
+        entry: { value: "x" },
+      });
+      expect(r.ok, `section '${key}' was not rejected`).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/is not supported by research_append/);
+    }
+  });
+
   it("rejects an append entry that carries a real id (the tool assigns ids)", async () => {
     await writeProject();
     const r = await researchAppend({

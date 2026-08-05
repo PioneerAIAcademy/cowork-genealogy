@@ -19,12 +19,12 @@ def test_read_research_json_returns_none_when_missing(tmp_path: Path):
 
 
 def test_read_research_json_returns_none_on_invalid_json(tmp_path: Path):
-    (tmp_path / "research.json").write_text("{not valid")
+    (tmp_path / "research.json").write_text("{not valid", encoding="utf-8")
     assert read_research_json(tmp_path) is None
 
 
 def test_read_research_json_parses_valid(tmp_path: Path):
-    (tmp_path / "research.json").write_text(json.dumps({"project": {"status": "in_progress"}}))
+    (tmp_path / "research.json").write_text(json.dumps({"project": {"status": "in_progress"}}), encoding="utf-8")
     parsed = read_research_json(tmp_path)
     assert parsed == {"project": {"status": "in_progress"}}
 
@@ -34,7 +34,7 @@ def test_read_tree_json_returns_none_when_missing(tmp_path: Path):
 
 
 def test_read_tree_json_parses_valid(tmp_path: Path):
-    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     parsed = read_tree_json(tmp_path)
     assert parsed == {"persons": []}
 

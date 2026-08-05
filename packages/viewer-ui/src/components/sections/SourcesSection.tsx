@@ -135,6 +135,20 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
         </div>
       )}
 
+      {/* The archived snapshot. A live URL rots; for a citation the archived
+          copy is often the only durable one, so a reader needs both (#1166). */}
+      {source.url_archived && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Archived URL</div>
+          <button
+            className={styles.externalLink}
+            onClick={() => handleLinkClick(source.url_archived!)}
+          >
+            {source.url_archived}
+          </button>
+        </div>
+      )}
+
       {source.notes && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Notes</div>

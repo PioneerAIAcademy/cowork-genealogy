@@ -15,7 +15,14 @@ from e2e.run_e2e import load_env_file
 
 
 def test_loads_key_from_env_file(tmp_path, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # setenv-then-delenv, not a bare delenv: `monkeypatch.delenv(raising=False)`
+    # records nothing when the var is already absent, so `load_env_file`'s direct
+    # `os.environ[...] =` below would survive teardown and leak a key into every
+    # later test in the session. That leak is what made the _run_agent tests pass
+    # on keyless CI by collection-order luck (issue #1201). The setenv gives
+    # monkeypatch a value to restore, so the delete is always undone.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "placeholder")
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
     env = tmp_path / ".env"
     env.write_text("ANTHROPIC_API_KEY=sk-from-file\n", encoding="utf-8")
     load_env_file(env)
