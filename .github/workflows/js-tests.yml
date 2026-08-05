@@ -62,7 +62,14 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           # packages/engine/** is excluded on purpose — it is npm-managed and
           # covered by engine-tests.yml, not by turbo.
-          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$'
+          #
+          # docs/specs/schemas/ is here because schema-interface-drift.test.ts
+          # reads research.schema.json and tree-gedcomx.schema.json from it.
+          # Without it, a PR that changes the canonical schema and forgets the
+          # packages/schema/ mirror skips this job and reports success — the
+          # lint dark in exactly the case it exists to catch. engine-tests.yml
+          # lists the same path for the same reason.
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

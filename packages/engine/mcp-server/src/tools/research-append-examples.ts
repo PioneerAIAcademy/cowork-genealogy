@@ -229,7 +229,10 @@ const PROJECT_EXAMPLE = `research_append({
  */
 export function exampleFor(section: string, op: "append" | "update" = "append"): string | null {
   if (section === "project") return PROJECT_EXAMPLE;
-  const entry = EXAMPLES[section];
+  // hasOwn, not a bare index: `section` is LLM-supplied, and `constructor`
+  // indexes out `Object`, which is truthy — so `!entry` lets it through and the
+  // `entry.split` below throws a TypeError out of the rejection path.
+  const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
   const planId = section === "plan_items" ? `\n  planId: "pl_001",` : "";
   // A source append must either reference an S entry that already exists in the

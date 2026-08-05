@@ -20,6 +20,38 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCRIPT = REPO_ROOT / "scripts" / "setup-feedback-case.sh"
 
+def _find_bash() -> str | None:
+    """Locate a bash interpreter, including a PATH-invisible Git for Windows one.
+
+    These tests must name the interpreter rather than relying on the shebang:
+    Windows has no shebang handling, so handing subprocess a bare `.sh` path
+    fails with `OSError: [WinError 193] %1 is not a valid Win32 application`.
+    That is how all 11 tests here failed on the Windows-based genealogist team's
+    machines while staying green on CI's ubuntu runner.
+
+    `shutil.which("bash")` suffices on Linux and macOS, but not on a default
+    Git for Windows install: that puts only `cmd/git.exe` on PATH and leaves
+    bash at `<git-root>/bin/bash.exe`, invisible to `which`. Deriving it from
+    git's own location covers that without hardcoding an install path, and
+    works for both the `cmd/` and `bin/` git layouts.
+    """
+    found = shutil.which("bash")
+    if found:
+        return found
+    git = shutil.which("git")
+    if not git:
+        return None
+    candidate = Path(git).resolve().parent.parent / "bin" / "bash.exe"
+    return str(candidate) if candidate.is_file() else None
+
+
+BASH = _find_bash()
+
+pytestmark = pytest.mark.skipif(
+    BASH is None,
+    reason="setup-feedback-case.sh is bash; no bash interpreter found",
+)
+
 
 def _build_minimal_zip(zip_path: Path, slug: str) -> None:
     """Build a feedback zip matching the shape in
@@ -55,11 +87,16 @@ def _run_script(*args, cwd: Path | None = None, env_overrides: dict | None = Non
     if env_overrides:
         env.update(env_overrides)
     return subprocess.run(
-        [str(SCRIPT), *args],
+        [BASH, str(SCRIPT), *args],
         cwd=cwd,
         env=env,
         capture_output=True,
         text=True,
+        # The script emits UTF-8 (it prints "✓"). Without this, `text=True`
+        # decodes with the platform default — cp1252 on Windows — so the
+        # checkmark arrives as "âœ“" and any non-ASCII in a user_prompt is
+        # mangled. Same rule as every other file read in this repo.
+        encoding="utf-8",
         check=False,
     )
 
@@ -94,7 +131,10 @@ def test_writes_feedback_repo_root_marker(tmp_path, monkeypatch):
     dest = tmp_path / "home" / "feedback" / slug
     marker = dest / ".feedback-repo-root"
     assert marker.is_file()
-    assert marker.read_text(encoding="utf-8").strip() == str(REPO_ROOT)
+    # Compare as paths, not strings: the script runs under bash, so on Windows
+    # it writes the root with forward slashes ("C:/Users/...") while
+    # `str(REPO_ROOT)` uses backslashes. Both name the same directory.
+    assert Path(marker.read_text(encoding="utf-8").strip()) == REPO_ROOT
 
 
 def test_initial_git_commit_titled_imported(tmp_path, monkeypatch):
@@ -166,6 +206,16 @@ def test_gitignore_created_when_absent(tmp_path, monkeypatch):
     assert (dest / ".gitignore").read_text(encoding="utf-8") == ".claude/\n"
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason=(
+        "Git Bash's `ln -s` copies instead of symlinking on Windows unless "
+        "MSYS=winsymlinks:nativestrict AND the user holds SeCreateSymbolicLink "
+        "(admin or Developer Mode). The script's real behavior cannot be "
+        "exercised here, so asserting on it would only encode the platform's "
+        "limitation as a failure."
+    ),
+)
 def test_claude_skills_dir_is_real_with_symlinks(tmp_path, monkeypatch):
     slug = "feedback-symlinks"
     zip_path = tmp_path / f"{slug}.zip"
@@ -219,7 +269,7 @@ def test_force_overwrites_existing(tmp_path, monkeypatch):
 
     # Touch a marker file inside the dest to verify --force wipes it.
     dest = tmp_path / "home" / "feedback" / slug
-    (dest / "stale-marker").write_text("should be gone")
+    (dest / "stale-marker").write_text("should be gone", encoding="utf-8")
 
     second = _run_script(str(zip_path), "--force")
     assert second.returncode == 0, second.stderr

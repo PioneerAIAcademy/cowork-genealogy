@@ -741,14 +741,14 @@ either way, but namespaces it through a remote-device *bridge*
 a task running on the user's own computer reaches it directly as
 `mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
 lists each MCP tool under **all three** — in `tools:` and in `disallowedTools:`
-alike (#1341 added the third; before that, an on-computer task denied nothing). The latter matters most here: a deny naming only the
+alike. The latter matters most here: a deny naming only the
 unresolvable spelling denies nothing, which would have left this section's
 belt-and-braces layer inert in Cowork exactly where `bypassPermissions` makes
 it load-bearing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in every environment. It did **not**
-hold for an on-computer Cowork task before #1341: the deny named no spelling that
-session recognized, so it denied nothing.
+hold for an on-computer Cowork task until the third spelling was added: the deny
+named no spelling that session recognized, so it denied nothing.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
 "behave identically" across them has been corrected accordingly. The one residual
 assumption — that the runtime refuses a spawn only when *every* entry is

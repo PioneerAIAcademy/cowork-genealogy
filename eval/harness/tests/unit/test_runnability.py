@@ -73,7 +73,7 @@ def test_blocks_when_fixture_missing_args(tmp_path):
     fake_fixtures = tmp_path / "fixtures"
     fake_fixtures.mkdir()
     (fake_fixtures / "noargs.json").write_text(
-        '{"tool": "wikipedia_search", "description": "x", "response": {"title": "X"}}'
+        '{"tool": "wikipedia_search", "description": "x", "response": {"title": "X"}}', encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["mcp_fixtures"] = ["noargs"]
@@ -91,7 +91,7 @@ def test_blocks_when_fixture_args_empty(tmp_path):
     fake_fixtures.mkdir()
     (fake_fixtures / "emptyargs.json").write_text(
         '{"tool": "wikipedia_search", "description": "x", "args": {},'
-        ' "response": {"title": "X"}}'
+        ' "response": {"title": "X"}}', encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["mcp_fixtures"] = ["emptyargs"]
@@ -129,7 +129,7 @@ def test_runnable_when_rubric_empty(tmp_path):
     """An empty rubric.md is equivalent to a missing one — base dims only."""
     fake_tests = tmp_path / "tests"
     (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("")
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is True
@@ -138,7 +138,7 @@ def test_runnable_when_rubric_empty(tmp_path):
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
     (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here")
+    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -156,12 +156,12 @@ def test_runnable_when_mcp_skill_has_non_keyword_dimension_name(tmp_path):
     fake_tests = tmp_path / "tests"
     (fake_skills / "search-records-clone").mkdir(parents=True)
     (fake_skills / "search-records-clone" / "SKILL.md").write_text(
-        "---\nname: search-records-clone\nallowed-tools:\n  - record_search\n---\n# Search\n"
+        "---\nname: search-records-clone\nallowed-tools:\n  - record_search\n---\n# Search\n", encoding="utf-8"
     )
     (fake_tests / "search-records-clone").mkdir(parents=True)
     (fake_tests / "search-records-clone" / "rubric.md").write_text(
         "# search-records-clone\n\n## Search quality\n\n"
-        "- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["test"]["skill"] = "search-records-clone"
@@ -383,10 +383,10 @@ def test_blocks_when_scenario_research_json_fails_schema(tmp_path):
         '{"project": {"id": "rp_1"}, "questions": [], "plans": [],'
         ' "log": [], "sources": [], "assertions": [], "person_evidence": [],'
         ' "conflicts": [], "hypotheses": [], "timelines": [],'
-        ' "proof_summaries": []}'
+        ' "proof_summaries": []}', encoding="utf-8"
     )
     (fake_scenarios / "schemabad" / "tree.gedcomx.json").write_text(
-        '{"persons":[],"relationships":[],"sources":[]}'
+        '{"persons":[],"relationships":[],"sources":[]}', encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["input"]["scenario"] = "schemabad"
@@ -412,11 +412,11 @@ def test_blocks_when_scenario_tree_gedcomx_json_fails_schema(tmp_path):
         ' "questions": [], "plans": [], "log": [], "sources": [],'
         ' "assertions": [], "person_evidence": [], "conflicts": [],'
         ' "hypotheses": [], "timelines": [], "proof_summaries": [],'
-        ' "evaluations": []}'
+        ' "evaluations": []}', encoding="utf-8"
     )
     # Parseable JSON but missing the required `persons` array.
     (fake_scenarios / "treebad" / "tree.gedcomx.json").write_text(
-        '{"relationships": [], "sources": []}'
+        '{"relationships": [], "sources": []}', encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["input"]["scenario"] = "treebad"
@@ -434,8 +434,8 @@ def test_blocks_when_scenario_research_json_invalid(tmp_path):
     # Build a fake scenarios dir with an invalid research.json
     fake_scenarios = tmp_path / "scenarios"
     (fake_scenarios / "broken").mkdir(parents=True)
-    (fake_scenarios / "broken" / "research.json").write_text("{ not json")
-    (fake_scenarios / "broken" / "tree.gedcomx.json").write_text('{"persons":[],"relationships":[],"sources":[]}')
+    (fake_scenarios / "broken" / "research.json").write_text("{ not json", encoding="utf-8")
+    (fake_scenarios / "broken" / "tree.gedcomx.json").write_text('{"persons":[],"relationships":[],"sources":[]}', encoding="utf-8")
     d = _runnable_test_dict()
     d["input"]["scenario"] = "broken"
     spec = load_test_from_dict(d)
@@ -456,10 +456,10 @@ def test_intentionally_invalid_flag_bypasses_schema_gate(tmp_path):
         '{"project": {"id": "rp_1"}, "questions": [], "plans": [],'
         ' "log": [], "sources": [], "assertions": [], "person_evidence": [],'
         ' "conflicts": [], "hypotheses": [], "timelines": [],'
-        ' "proof_summaries": []}'
+        ' "proof_summaries": []}', encoding="utf-8"
     )
     (fake_scenarios / "schemabad" / "tree.gedcomx.json").write_text(
-        '{"persons":[],"relationships":[],"sources":[]}'
+        '{"persons":[],"relationships":[],"sources":[]}', encoding="utf-8"
     )
     d = _runnable_test_dict()
     d["input"]["scenario"] = "schemabad"

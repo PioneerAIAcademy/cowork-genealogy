@@ -107,7 +107,7 @@ def test_all_result_jsons_finds_every_fixture(tmp_path, monkeypatch):
     _write_run(tmp_path / "fixture-a", "run-2026-07-02_00-00-00.json", [])
     _write_run(tmp_path / "fixture-b", "run-2026-07-01_00-00-00.json", [])
     # siblings that must be excluded
-    (tmp_path / "fixture-a" / "run-2026-07-01_00-00-00.ann.json").write_text("{}")
+    (tmp_path / "fixture-a" / "run-2026-07-01_00-00-00.ann.json").write_text("{}", encoding="utf-8")
 
     found = all_result_jsons()
     assert len(found) == 3  # not the latest-per-fixture-only; every run

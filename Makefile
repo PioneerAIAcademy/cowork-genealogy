@@ -29,8 +29,14 @@ EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
 # Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
-# manifest or lockfile changes.
-$(JS_DEPS): package.json pnpm-lock.yaml
+# root manifest, the lockfile, the member list, or ANY member's manifest
+# changes. A member's package.json is listed because it carries that member's
+# lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
+# to packages/schema and touched neither, so every existing checkout kept a
+# stamp newer than both prerequisites, never reinstalled, and never ran the
+# generator that postinstall exists to run.
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
+            $(wildcard packages/*/package.json apps/*/package.json)
 	pnpm install
 	@touch $@
 
@@ -120,11 +126,14 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 
 # ── Worktrees ────────────────────────────────────────────────────
 # Git worktrees don't share gitignored files, so a freshly-added worktree lacks
-# the shared secrets (eval/.env) and installed deps (node_modules). These link
-# them to the primary worktree's copies. `install-hooks` makes new worktrees
-# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+# the shared secrets (eval/.env) and installed deps (node_modules). This links
+# the secrets and the npm-managed engine to the primary worktree's copies, and
+# INSTALLS the pnpm workspace locally — linking that one would resolve every
+# `@genealogy/*` import to the primary's source. `install-hooks` makes new
+# worktrees do this on `git worktree add`; `worktree-link` does it for an
+# existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
-worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
 	@scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
@@ -475,13 +484,16 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
 	# moves fast enough that older runs often describe behaviour already
 	# fixed, so a whole-corpus average silently mixes eras. SINCE=all opts
 	# back in for a retroactive integrity scan (issues #913, #1145).
+	#
+	# Also counts violations per arm and per fixture, and refuses to print a
+	# percentage whose denominator would be doing the work (issue #1176).
 	#
 	# The cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
