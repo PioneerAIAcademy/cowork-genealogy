@@ -103,6 +103,11 @@ elif ! command -v pnpm >/dev/null 2>&1; then
   echo "link-worktree: pnpm is not on PATH — skipping the workspace install."
   echo "link-worktree:   Run 'corepack enable' then 'make install' here before using pnpm targets."
 elif (cd "$here" && pnpm install --frozen-lockfile --prefer-offline); then
+  # Claim the Makefile's stamp: every pnpm target depends on
+  # node_modules/.make-installed, so leaving it absent makes the first `make
+  # typecheck` here reinstall — as a bare `pnpm install`, which rewrites
+  # pnpm-lock.yaml on drift, the very thing --frozen-lockfile is here to refuse.
+  touch "$here/node_modules/.make-installed"
   echo "link-worktree: pnpm workspace installed in $here"
 else
   # Never fail the checkout: the hook that calls this runs during
