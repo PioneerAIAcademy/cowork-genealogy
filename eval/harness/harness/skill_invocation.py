@@ -625,6 +625,28 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     is not a case any agent's own `tools:`/`disallowedTools` declaration is
     set up to permit, and is itself worth flagging.
 
+    The "or main thread" clause above is, for `extraction_append`, a
+    classification statement (a main-thread call is not an *unnamed-delegate*
+    bypass) — NOT a claim that the record-extraction router may do the
+    extraction itself. It may not: a main-thread `extraction_append` is
+    hard-denied upstream at PreToolUse by the #942 guard
+    (`e2e/orchestrator.py::is_main_thread_extraction_append` in e2e,
+    `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
+    §6.1.1), so it never executes. The attempt still reaches this function —
+    `tool_calls` is appended before the PreToolUse decision — but from
+    `HARNESS_SCHEMA_VERSION` 3 a denied call carries `is_error: true`, so it
+    exits at the `is_error` guard at the top of the loop and never reaches the
+    `agent_id is None` branch. On a pre-`is_error` log it exits at that branch
+    instead, on the classification above. Either way it is not counted, and the
+    classification stands on its own — do not read the `is_error` skip as the
+    reason a main-thread call is exempt from *this* detector.
+
+    Note what the two layers do and do not compose to. The main-thread half is
+    DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
+    not read by `E2eResult.__post_init__` until its false-positive rate is
+    calibrated (#911). So a `general-purpose` delegate's `extraction_append`
+    still succeeds today; what this detector buys is that it is recorded.
+
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
     committed, judge-`pass` run): `tool_calls[266]`, an `Agent` call with no
     `subagent_type` key at all (description "Link Louise Barrett death cert
