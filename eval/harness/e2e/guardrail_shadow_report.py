@@ -93,6 +93,49 @@ def format_detail(violations: list[dict[str, Any]]) -> str:
     return "\n".join(lines) if lines else "  (none)"
 
 
+def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#963 provenance shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a `person_evidence` link written with no
+    prior `same_person`), enriched with their source file.
+
+    Read rather than replayed, unlike the §7 sweep above: that check is a pure
+    function of `tool_calls` at a given window, so it can be recomputed for any
+    window from a committed log. This one is not — it depends on the seed tree
+    the run started from and on what the live hook could see at the moment of
+    the write, so the run has to record it. Entries are identified by the
+    `detail` key, which only the hook's source sets.
+    """
+    out: list[dict[str, Any]] = []
+    for path in paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  skip {path}: {e}", file=sys.stderr)
+            continue
+        for v in data.get("guardrail_shadow_violations") or []:
+            if not isinstance(v, dict) or "detail" not in v:
+                continue
+            try:
+                display_path = str(path.relative_to(REPO_ROOT))
+            except ValueError:
+                display_path = str(path)
+            out.append({**v, "file": display_path, "fixture": path.parent.name})
+    return out
+
+
+def format_provenance(violations: list[dict[str, Any]]) -> str:
+    """One flat count — no window column, because the #963 check has no window
+    (`same_person` is a required call, so "was it called for this person" is a
+    fact). Runs written before the check shipped simply contribute nothing."""
+    affected = len({v["file"] for v in violations})
+    lines = [
+        "",
+        f"§8 live provenance check (issue #963, shadow): {len(violations)} "
+        f"person_evidence link(s) with no prior same_person, across {affected} run(s).",
+    ]
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Retroactive §7 shadow-window calibration (issue #911).")
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
@@ -117,10 +160,16 @@ def main(argv: list[str] | None = None) -> int:
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_summary(by_window, n_runs=len(paths)))
 
+    provenance = scan_provenance(paths)
+    print(format_provenance(provenance))
+
     if args.detail:
         smallest = min(windows)
         print(f"\nViolations at window={smallest}:")
         print(format_detail(by_window[smallest]))
+        print(f"\nProvenance gaps (issue #963), {len(provenance)}:")
+        for v in provenance:
+            print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
     return 0
 
 

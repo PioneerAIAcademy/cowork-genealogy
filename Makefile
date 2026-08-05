@@ -478,13 +478,16 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
 	# moves fast enough that older runs often describe behaviour already
 	# fixed, so a whole-corpus average silently mixes eras. SINCE=all opts
 	# back in for a retroactive integrity scan (issues #913, #1145).
+	#
+	# Also counts violations per arm and per fixture, and refuses to print a
+	# percentage whose denominator would be doing the work (issue #1176).
 	#
 	# The cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
