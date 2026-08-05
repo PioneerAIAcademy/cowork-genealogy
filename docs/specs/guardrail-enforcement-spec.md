@@ -135,11 +135,24 @@ cannot, and none depends on another shipping first.
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
+| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** |
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. The production port of §8 is
 #1054, which is blocked on nothing being retained to detect against — the
 hosted path persists no tool-call ledger.
+
+The last row is the live, pre-write form of a question §8 already hard-fails
+post-run, so its doctrine needs no shadow period — but its *enforcement* does.
+Replayed over the committed e2e corpus it fires in 65 of 81 fixtures (265 hits
+across 280 runs), because scoring a locally-minted tree person is not current
+agent behavior. Denying on that would intervene in four fifths of a suite
+costing $7-25 a run with no evidence for how the agent recovers, so it records
+into `guardrail_shadow_violations` and lets the write through. Graduating it to
+a deny is **#1231**, gated on these numbers. Note it asks a stricter question
+than its §8 counterpart: that one accepts a `same_person` anywhere in the run,
+including *after* the link, so link-then-score is a shadow hit and a post-run
+pass.
 
 ## 5. Write-boundary invariant
 

@@ -675,6 +675,13 @@ What replaced them is the templates they pointed at, used directly:
 | `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
 | `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
 
+## Reviewing a PR
+
+Use `/review` (`.claude/skills/review/`). It ships with the repo, so cloning is
+the whole install — do not reach for a `/review` from any other toolchain, which
+teammates do not have and which reads neither this repo's suites nor the human
+reviews on the PR.
+
 ## What NOT to do
 
 - Don't try to share code at runtime between the MCP server and the
