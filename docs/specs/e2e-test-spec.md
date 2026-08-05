@@ -1059,7 +1059,7 @@ the judge.
 Unlike the three hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
 repository's shadow → measure → graduate posture (same as §7's recency check
-and the issue-#963 provenance check). The gate on a `proof_summaries` entry is
+and the `same_person` provenance check). The gate on a `proof_summaries` entry is
 deliberate: tree citations are populated by `proof-conclusion` at *upload*
 time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
