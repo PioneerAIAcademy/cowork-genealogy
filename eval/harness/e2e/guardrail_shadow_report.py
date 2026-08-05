@@ -25,43 +25,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from e2e.runlog_paths import (
+    E2E_RUNLOGS,
+    REPO_ROOT,
+    all_result_jsons,
+    is_result_json,
+    result_jsons_for,
+)
 from harness.skill_invocation import find_unguarded_protected_writes
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
-
 DEFAULT_WINDOWS = (10, 20, 40, 80, 150)
-
-
-def _is_result_json(p: Path) -> bool:
-    """A committed structured result, not its tree/research/ann/session siblings."""
-    name = p.name
-    return (
-        name.startswith("run-")
-        and name.endswith(".json")
-        and not name.endswith(".ann.json")
-        and ".final-" not in name
-    )
-
-
-def all_result_jsons() -> list[Path]:
-    """EVERY committed run, not just the latest per fixture — calibration
-    wants maximum sample size, unlike latency_report's "latest only" (which
-    exists to avoid stale per-fixture latency numbers, a different goal)."""
-    if not E2E_RUNLOGS.is_dir():
-        return []
-    out: list[Path] = []
-    for d in sorted(E2E_RUNLOGS.iterdir()):
-        if d.is_dir():
-            out.extend(sorted(p for p in d.iterdir() if _is_result_json(p)))
-    return out
-
-
-def result_jsons_for(test_slug: str) -> list[Path]:
-    d = E2E_RUNLOGS / test_slug
-    if not d.is_dir():
-        return []
-    return sorted(p for p in d.iterdir() if _is_result_json(p))
 
 
 def scan_one(path: Path, *, window: int) -> list[dict[str, Any]]:

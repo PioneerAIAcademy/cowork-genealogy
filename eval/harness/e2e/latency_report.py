@@ -64,10 +64,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from e2e.runlog_paths import E2E_RUNLOGS, REPO_ROOT, is_result_json
 from e2e.result import axes_from_runlog
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
 
 
 def _bare_tool_name(tool: str) -> str:
@@ -381,22 +380,11 @@ def format_skill_phases(bd: LatencyBreakdown) -> str:
 
 # --- Run discovery + CLI ----------------------------------------------------
 
-def _is_result_json(p: Path) -> bool:
-    """A committed structured result, not its tree/research/ann siblings."""
-    name = p.name
-    return (
-        name.startswith("run-")
-        and name.endswith(".json")
-        and not name.endswith(".ann.json")
-        and ".final-" not in name
-    )
-
-
 def latest_run_for(test_slug: str) -> Path | None:
     d = E2E_RUNLOGS / test_slug
     if not d.is_dir():
         return None
-    runs = sorted(p for p in d.iterdir() if _is_result_json(p))
+    runs = sorted(p for p in d.iterdir() if is_result_json(p))
     return runs[-1] if runs else None
 
 

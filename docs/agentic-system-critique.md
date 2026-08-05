@@ -11,7 +11,7 @@ against how comparable production agent systems are built, and a prioritized
 list of what to do next. It is a critique and a work list, not a plan — each
 item that gets picked up should get its own plan or issue.
 
-**Evidence base.** 133 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
+**Evidence base.** 134 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
 run log for the 25 skills with suites, the specs under `docs/specs/`, the
 measured performance work in `docs/plan/research-performance-2026-07-27.md`, the
 plugin bodies, the packaging lints, and ~170 open issues (115 before the retired
@@ -66,23 +66,24 @@ six are the ones that were never failing.
 **0.2 — The dominant failure mode is process compliance, not genealogy — but the
 instrument measuring it has three open defects, two unnamed false-positive
 classes, and one false-negative blind spot (see the P0).** Since the post-run compliance
-detector shipped (#914, 2026-07-27), **12 runs are known to have carried at
-least one guardrail-bypass violation, and not one run is known to be clean.**
-That is not a rate and this document no longer states one — see below. In the five failing runs of 2026-07-30 that
+detector shipped (#914, 2026-07-27), **every run either carried at least one
+guardrail-bypass violation or cannot be checked at all — not one is known to be
+clean.** That is not a rate and this document no longer states one; for the
+current counts run `make e2e-corpus SINCE=2026-07-27_20-00-00`. In the five failing runs of 2026-07-30 that
 completed (the window §7 describes — they are not the five most recent on the
 committed corpus) the LLM judge scored the *genealogy* **pass on three and partial on
 two** — every one was failed by the detector.
 
 > **There is no defensible violation *rate* today, and the earlier "8 of 25" /
 > "12 of 29" figures were both wrong in the same way (#1176, settled
-> 2026-08-03).** Of the 29 runs since the detector shipped, `axes_from_runlog`
-> resolves **12 `fail`, 0 `pass`, 17 `not_checked`** — because before #972 the
-> violations field was written only when non-empty, so "ran clean" and "did not
-> emit" are indistinguishable. Both published rates were computed by treating
-> those 17 as clean, which is the precise inference the repo's own resolver
-> refuses ("laundering unknowns into confident passes"). **Zero committed runs
-> yet carry the post-#972 shape**, so the rate becomes measurable only as new
-> runs accumulate.
+> 2026-08-03).** Of the runs since the detector shipped, `axes_from_runlog`
+> resolves **zero to `pass`** — every one is `fail` or `not_checked` — because
+> before #972 the violations field was written only when non-empty, so "ran
+> clean" and "did not emit" are indistinguishable. Both published rates were
+> computed by treating the unknowns as clean, which is the precise inference the
+> repo's own resolver refuses ("laundering unknowns into confident passes").
+> **Zero committed runs yet carry the post-#972 shape**, so the rate becomes
+> measurable only as new runs accumulate.
 >
 > **Do not hand-compute this again.** `make e2e-corpus [SINCE=…]` reports the
 > axes, the violation total, the per-arm split and the per-fixture
@@ -98,6 +99,11 @@ substantially that one fixture's behavior. **For current figures run
 `make e2e-corpus [SINCE=…]`**, which prints the per-arm split and the
 concentration; deliberately not repeated here, because a number written into
 this paragraph is stale the next time a run lands.
+
+**On the narrow window §3's P0 and §9 are stated against, that arm produced 16
+of the 25 violations.** That figure is frozen to that window on purpose — it is
+the one §9's gate-reach analysis is derived against, and it has not been
+re-derived over the full corpus (do not rescale it by eye).
 **16 is a count of violations, not of what a gate could prevent** — §3's P0 puts
 the reach of any gate consistent with the skill contract at **≤9 of the 25**,
 because 7 of the 16 flagged persons have zero record-sourced links (§9, rev. 3
@@ -430,12 +436,16 @@ next P0) — until then, "true or false positive" has no ground truth. There is
 also a false-*negative* blind spot in the committed corpus: no pre-#1050 run
 records an empty violations list ("ran clean" and "did not emit" are
 indistinguishable per-run; #1050, merged 07-31, emits the field unconditionally
-for runs after it), and the three ferber raw-write runs count as clean in the
-8/25 denominator, because raw writes are shadow-mode only.
+for runs after it), and the three ferber raw-write runs would have been counted
+as clean by any rate computed over that corpus, because raw writes are
+shadow-mode only.
 
-**Until these land, the 8/25 rate cannot be trended and no gate should be
-graduated on it.** `guardrail-enforcement-spec.md:346` is explicit that
-false-deny is the asymmetric risk.
+**Until these land there is no rate to trend, and no gate should be graduated on
+one.** This is the same finding §0.2 records: the published "8 of 25" and "12 of
+29" figures were both computed by treating unknowns as clean, and **no committed
+run resolves `pass`**, so what is countable is violations rather than a rate —
+run `make e2e-corpus [SINCE=…]`. `guardrail-enforcement-spec.md:346` is explicit
+that false-deny is the asymmetric risk.
 
 **Exit:** the five 2026-07-30 runs re-scored under corrected detectors; each
 surviving violation adjudicated true or false positive against the *decided*
@@ -847,13 +857,14 @@ Reproducible from the repo at the date above.
 > committed** — it landed in `d5d26d00`. Every count below has been recomputed
 > over the whole committed corpus, including it.
 
-**E2e corpus (133 committed runs).** Outcomes 81 pass / 22 partial / 30 fail
-(these are fused pre-#1050 verdicts: 8 of the 30 fails are judge-pass/partial
-runs failed by the compliance detector — 6 judge-pass, 2 judge-partial).
-Stop reasons: 96 completed, 19 timeout, 8 error, 8 cost_cap, 1 inactivity, 1
-natural_end. **This is the same 133 §6's economics use** — 111 of them record a
-cost and 22 do not (all 19 timeouts, 2 errors, 1 inactivity). One corpus, one
-denominator.
+**E2e corpus (134 committed runs, 2026-08-04 — `make e2e-corpus`).** Outcomes
+81 pass / 22 partial / 31 fail (these are fused pre-#1050 verdicts: 8 of the 31
+fails are judge-pass/partial runs failed by the compliance detector — 6
+judge-pass, 2 judge-partial). Stop reasons: 97 completed, 19 timeout, 8 error, 8
+cost_cap, 1 inactivity, 1 natural_end. **This is the same 134 §6's economics
+use** — 112 of them record a cost and 22 do not (all 19 timeouts, 2 errors, 1
+inactivity). One corpus, one denominator. Regenerate rather than trusting these:
+they move every time a run lands.
 
 **Guardrail violations since the detector shipped (2026-07-27 20:00).**
 Regenerate rather than trusting the snapshot below — it moves every time a run
@@ -863,14 +874,16 @@ lands, and did so between this paragraph being written and the PR being opened:
 make e2e-corpus SINCE=2026-07-27_20-00-00
 ```
 
-Snapshot, **2026-08-03**: 30 runs in the window; **13 resolve `fail`, 0 resolve
-`pass`, 17 `not_checked`**; 49 violations — 35 × "tree person is new this run
-and has a `person_evidence` link" (with no `same_person`), 5 × exhaustiveness
-declared without `research-exhaustiveness`, 5 × proof/conclusion effect without
-`proof-conclusion`, 4 × conflict analysis without `conflict-resolution`;
-`jimmie-jewel-neal` alone supplies 19 (39%). **Read with §0.2: this is a count,
-not a rate — no run in the corpus is known clean — and #998/#999/#1006 leave
-even the count an unquantified-false-positive floor.**
+Snapshot, **2026-08-04**: 30 runs in the window; **13 resolve `fail`, 0 resolve
+`pass`, 17 `not_checked`**; 49 violations across the 13 decidable runs (the 17
+unknown recorded none — their field is absent, which is *why* they are unknown)
+— 35 × "tree person is new this run and has a `person_evidence` link" (with no
+`same_person`), 5 × exhaustiveness declared without `research-exhaustiveness`,
+5 × proof/conclusion effect without `proof-conclusion`, 4 × conflict analysis
+without `conflict-resolution`; `jimmie-jewel-neal` alone supplies 19 (39%).
+**Read with §0.2: this is a count, not a rate — no run in the corpus is known
+clean — and #998/#999/#1006 leave even the count an unquantified-false-positive
+floor.**
 
 > **The windows are retired (#1176, 2026-08-03).** Earlier revisions carried a
 > narrower window (stopping at `2026-07-30_19-43-58`, dropping timeouts) and a

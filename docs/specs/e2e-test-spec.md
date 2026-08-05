@@ -774,7 +774,8 @@ through `e2e.result.axes_from_runlog`, which resolves all four shapes the
 corpus contains. Pre-detector runs (see §7.5) resolve to
 `compliance: not_checked` — an unknown, which is **never** counted as clean.
 
-`make e2e-corpus` prints the three axes across every committed run.
+`make e2e-corpus` prints the three axes, plus violation counts and concentration,
+across every committed run — see §9.
 
 ### 7.3 Variance and Calibration
 
@@ -1013,20 +1014,66 @@ but each iteration prints its own roll-up — the loop does not aggregate.
 
 For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads every committed run log
-through `axes_from_runlog` and reports all three axes, holding `not_checked`
-compliance separate from clean:
+through `axes_from_runlog` and reports the three axes, holding `not_checked`
+compliance separate from clean, then the violation detail beneath them:
 
 ```
-133 committed run(s)
-  recall (genealogy): 87 pass / 24 partial / 22 fail
-  compliance:         12 fail / 121 not_checked
-  gate (outcome):     81 pass / 22 partial / 30 fail
+$ make e2e-corpus
+134 committed run(s)
+  recall (genealogy): 87 pass / 24 partial / 23 fail
+  compliance:         13 fail / 121 not_checked
+  gate (outcome):     81 pass / 22 partial / 31 fail
+  NOTE: 121 run(s) have unknown compliance — written before the guardrail
+        detector existed, or by a version of it that cannot be pinned. They are
+        NOT counted as clean. See e2e.result.axes_from_runlog.
+  violations:         49 across 13 decidable run(s); 121 unknown recorded none
+    same_person (per person)            35
+    exhaustiveness                       5
+    proof-conclusion                     5
+    conflict-resolution                  4
+  concentration:
+    jimmie-jewel-neal                   19  (39% of all violations)
+    cornelius-booysen-death              5  (10% of all violations)
+    isabel-carvajal-daughter             5  (10% of all violations)
+    NOTE: `jimmie-jewel-neal` alone accounts for 39% of violations (4.3x its even
+          share across 11 contributing fixtures). Any headline is substantially
+          this one fixture's behavior.
+  runs w/ >=1 violation: 13/13 of DECIDABLE runs (100%) — but no run is known
+                         clean, so this is a floor on incidence, not a rate.
 ```
 
-(A snapshot taken 2026-08-02, not a live figure — run the command for
-current totals. The gap between the recall line and the gate line is the
-whole point: eight of those twelve non-compliant runs recovered the answer —
-six judge-pass, two judge-partial.)
+(A snapshot taken 2026-08-04, not a live figure — run the command for current
+totals. The gap between the recall line and the gate line is the whole point:
+runs that recovered the genealogical answer can still fail the gate on
+compliance.)
+
+**`violations:` and `runs w/ >=1 violation:` count different things** — individual
+violations and the runs carrying at least one. They are labelled apart because a
+reader quoting one against the other's denominator is the error class #1176 was
+filed about.
+
+**Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=YYYY-MM-DD_HH-MM-SS`
+restricts to runs at or after a timestamp, so a window is an argument rather than
+a figure hand-edited into prose. A malformed `SINCE` is rejected (exit 2) rather
+than silently selecting the wrong runs — it is a lexicographic comparison against
+the run's filename, so `20:00:00` or an unpadded month would quietly move the
+window.
+
+**Every denominator the report prints excludes `not_checked`.** A rate or a
+per-run figure over `pass + fail + not_checked` asserts that the unknowns ran
+clean, which is exactly the inference `axes_from_runlog` refuses. So the violation
+total is stated across *decidable* runs — a `not_checked` run's violations field
+is absent, which is why it is unknown, and it therefore cannot contribute one —
+and where the decidable set is empty or all-one-way the report says so instead of
+printing a percentage. The `concentration:` block is suppressed below two
+contributing fixtures, since with one the leader trivially holds 100%.
+
+**The dominance NOTE fires on either of two triggers**, because neither works
+alone: an outright majority (>50% of violations), or an outsized share relative
+to an even split (≥3× `total / contributing fixtures`). A majority bar alone
+stays silent on a wide corpus — today's outlier is 39% across 11 contributing
+fixtures — and a relative bar alone is unreachable for small ones, where an even
+share is already 50%.
 
 No dashboard, no database — two functions reading committed runlogs. The
 console output is also the artifact stakeholders see.

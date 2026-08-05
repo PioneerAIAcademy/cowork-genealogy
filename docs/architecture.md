@@ -1169,7 +1169,7 @@ tools — what happens after you grant one). And
 | **Nothing checks `README.md`'s tool/skill catalog** against the code. | Already rotted: **13 of 47 tools appear nowhere in it** — the entire structured-persistence writer surface plus both projection tools. Skills and agents are clean (27/27, 4/4). | #1137 |
 | **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. | critique §2.8 |
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" | #1054 |
-| **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Three open defects, plus a false-negative blind spot: before #972 the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable. Of the 29 post-detector runs the resolver gives 12 `fail`, **0 `pass`**, 17 `not_checked`. | **Do not quote a violation rate.** Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — one fixture supplies roughly two-fifths of all violations, so read the report's `concentration:` block before quoting any total. | #998, #999, #1006, #1176 |
+| **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Three open defects, two unnamed false-positive classes, and a false-negative blind spot: before #972 the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable and **no post-detector run resolves `pass`** — every one is `fail` or `not_checked`. `is_error` is never populated, so a *failed* `Skill` call counts as a success. | **Do not quote a violation rate.** Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — one fixture supplies roughly two-fifths of all violations, so read the report's `concentration:` block before quoting any total. | #998, #999, #1006, #1176 |
 | **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. | #847 |
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
@@ -1188,7 +1188,8 @@ appears in §9.4, say so in the PR** rather than implying CI covered you.
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
-`make e2e-corpus` gives three-axis totals across every committed run, and the
+`make e2e-corpus [SINCE=…]` gives the three axes plus violation counts, the
+per-arm split and per-fixture concentration across every committed run, and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
@@ -1224,8 +1225,9 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
    "true or false positive" has no ground truth at all (critique §3 P0).
    Separately, **#1176 settled that no violation *rate* is measurable yet** —
    `make e2e-corpus` is the only figure to quote, and it deliberately prints
-   counts rather than a percentage. The gate-reach figure (≤9 of 25 / ≤14 of 45)
-   is a count of violations one arm produced, not a rate.
+   counts rather than a percentage. The gate-reach figure (≤9 of 25, stated
+   against critique §9's narrow window) is a count of violations one arm
+   produced, not a rate.
 3. **Why the 1024-character description cap exists** — two lint sites give
    contradictory reasons (§3.2). Treat it as hard either way.
 4. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02

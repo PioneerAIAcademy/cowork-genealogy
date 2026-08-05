@@ -13,14 +13,12 @@ from __future__ import annotations
 import json
 
 from e2e.guardrail_shadow_report import (
-    _is_result_json,
-    all_result_jsons,
     format_detail,
     format_summary,
-    result_jsons_for,
     scan_corpus,
     scan_one,
 )
+from e2e.runlog_paths import all_result_jsons, is_result_json, result_jsons_for
 
 
 def _write_run(dir_, name, tool_calls):
@@ -36,29 +34,29 @@ def _unguarded_write():
     }
 
 
-# --- _is_result_json ----------------------------------------------------
+# --- is_result_json ----------------------------------------------------
 
 
 def test_is_result_json_accepts_a_run_file(tmp_path):
-    assert _is_result_json(tmp_path / "run-2026-07-27_20-01-40.json") is True
+    assert is_result_json(tmp_path / "run-2026-07-27_20-01-40.json") is True
 
 
 def test_is_result_json_rejects_ann_and_final_and_transcript(tmp_path):
-    assert _is_result_json(tmp_path / "run-2026-07-27_20-01-40.ann.json") is False
-    assert _is_result_json(tmp_path / "run-2026-07-27_20-01-40.final-research.json") is False
-    assert _is_result_json(tmp_path / "run-2026-07-27_20-01-40.final-tree.gedcomx.json") is False
-    assert _is_result_json(tmp_path / "run-2026-07-27_20-01-40.transcript.md") is False
+    assert is_result_json(tmp_path / "run-2026-07-27_20-01-40.ann.json") is False
+    assert is_result_json(tmp_path / "run-2026-07-27_20-01-40.final-research.json") is False
+    assert is_result_json(tmp_path / "run-2026-07-27_20-01-40.final-tree.gedcomx.json") is False
+    assert is_result_json(tmp_path / "run-2026-07-27_20-01-40.transcript.md") is False
 
 
 def test_is_result_json_rejects_scratch(tmp_path):
-    assert _is_result_json(tmp_path / "scratch_2026-07-27_20-01-40.json") is False
+    assert is_result_json(tmp_path / "scratch_2026-07-27_20-01-40.json") is False
 
 
 # --- discovery: all_result_jsons / result_jsons_for -----------------------
 
 
 def test_all_result_jsons_finds_every_fixture(tmp_path, monkeypatch):
-    import e2e.guardrail_shadow_report as mod
+    import e2e.runlog_paths as mod
 
     monkeypatch.setattr(mod, "E2E_RUNLOGS", tmp_path)
     _write_run(tmp_path / "fixture-a", "run-2026-07-01_00-00-00.json", [])
@@ -72,7 +70,7 @@ def test_all_result_jsons_finds_every_fixture(tmp_path, monkeypatch):
 
 
 def test_result_jsons_for_scopes_to_one_fixture(tmp_path, monkeypatch):
-    import e2e.guardrail_shadow_report as mod
+    import e2e.runlog_paths as mod
 
     monkeypatch.setattr(mod, "E2E_RUNLOGS", tmp_path)
     _write_run(tmp_path / "fixture-a", "run-2026-07-01_00-00-00.json", [])
@@ -86,7 +84,7 @@ def test_result_jsons_for_scopes_to_one_fixture(tmp_path, monkeypatch):
 
 
 def test_scan_one_finds_a_violation_and_tags_it_with_the_source_file(tmp_path, monkeypatch):
-    import e2e.guardrail_shadow_report as mod
+    import e2e.runlog_paths as mod
 
     monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
     path = _write_run(tmp_path / "eval" / "runlogs" / "e2e" / "fixture-a", "run-x.json", [_unguarded_write()])
