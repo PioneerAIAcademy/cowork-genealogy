@@ -252,12 +252,16 @@ describe("recordSearchTool input validation", () => {
   // prototype chain — so "constructor" passed validation and buildSearchUrl
   // then indexed out `Object`, sending
   // `f.recordType=function%20Object()%20{%20[native%20code]%20}` upstream.
-  // "constructor" is the only Object.prototype key that reaches here: it is the
-  // sole all-lowercase one, and the tool schema's enum is not a runtime guard.
+  // All twelve Object.prototype own names reached here, not just this one —
+  // "constructor" and "__proto__" are the all-lowercase pair a model is likeliest
+  // to emit, and the tool schema's enum is not a runtime guard. hasOwn rejects
+  // every one of the twelve; the loop below asserts that rather than one sample.
   it("13a. throws on an inherited Object.prototype key as recordType", () => {
-    expect(() =>
-      validateInput({ surname: "Lincoln", recordType: "constructor" as never })
-    ).toThrow(/recordType must be one of/);
+    for (const key of Object.getOwnPropertyNames(Object.prototype)) {
+      expect(() =>
+        validateInput({ surname: "Lincoln", recordType: key as never })
+      ).toThrow(/recordType must be one of/);
+    }
   });
 
   it("13b. never emits a non-numeric f.recordType", () => {
