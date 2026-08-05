@@ -657,7 +657,7 @@ The same `PreToolUse` hook enforces one per-context rule in e2e:
 `extraction_append` may not be called on the main thread. Writing extracted
 assertions and sources is the Task-spawned `record-extractor` subagent's job; a
 main-thread call is the router substituting for a *failed* spawn and doing the
-extraction itself — observed in production, issue #942.
+extraction itself — a shape observed in production.
 
 The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
 in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
@@ -670,8 +670,8 @@ so that a future skill legitimately declaring a guarded tool is not denied here.
 `image_read`, the set's other member, satisfies the same condition today — no
 skill has declared it since `search-images` moved to `@plugin:image-reader`
 (2026-07-17), and it now lives only on `agents/image-reader-opus.md` — so it is
-equally enforceable in e2e and currently is not. That is outside #942's blast
-radius; tracked as issue #1273.
+equally enforceable in e2e and is not enforced there yet. Generalizing the
+check to the whole set is tracked in `context_policy.py`'s own docstring.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run — but the denial reason tells the router
@@ -684,14 +684,14 @@ because this is a write denied by a different guard.
 This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
 Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
 binds even under `bypassPermissions`), but its matcher is `Write|Edit|NotebookEdit`
-— it never sees an MCP tool call. Porting the per-context policy there is issue
-#911.
+— it never sees an MCP tool call. Porting the per-context policy there is
+pending; the harness comments carry the pointer.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
 unnamed subagent (anything but `record-extractor`) making the write — is caught
 post-hoc by `find_protected_writes_by_unnamed_delegate`
-(guardrail-enforcement-spec §11, issue #1027). That detector lists a main-thread
+(guardrail-enforcement-spec §11). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
 main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
 actually forbids the router's main-thread call.
@@ -700,7 +700,7 @@ The two halves are not enforced alike, and the difference matters when reading a
 run: the main-thread half is **denied**, the delegate half is only **logged**.
 `protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
-false-positive rate is calibrated (#911). A non-`record-extractor` delegate's
+false-positive rate is calibrated. A non-`record-extractor` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
 
 ### 6.2 Provided documents (bundled external evidence)
@@ -1110,10 +1110,77 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`, where `is_error` is joined from the SDK's `ToolResultBlock.is_error` (present from `harness_schema_version` 3; an entry whose result never arrived, as on any aborted or wall-clock-capped run, carries none of `is_error` / `agent_id` / `agent_type` — `response_summary` is present but `null`, since the entry literal initializes it and only the result overwrites it). A PreToolUse **deny** does reach this list: the denied call appears here with the deny reason as its `response_summary` and, from `3`, `is_error: true`; `blocked_tree_reads` is the parallel record, not the only one — and `blocked_tree_reads` (denied live-tree reads; see §6.1), and `blocked_context_calls` (denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn; see §6.1.1); a `narration` array — each entry `{ tool_calls_before, kind, text }` with `kind` in `assistant` / `blocked` / `harness`, carrying the agent's prose between tool calls plus the two harness-side events that only mean anything in trace order, anchored by `tool_calls_before` — how many tool calls had already happened, so N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]` and 0 means before any tool call (a count, not an index). This replaced the `.transcript.md` artifact, removed 2026-08-03: that file was 87% a re-render of `tool_calls`, and the prose is the part that lived nowhere else. `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
+| `run-<timestamp>.json` | Structured result — **field table below.** |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
+
+### 8.1 `run-<timestamp>.json` fields
+
+One row per field. This was a single 4,136-character table cell until 2026-08-05;
+it led every doc-churn measurement in the repo because adding one field meant
+editing one unreadable line, and it had already accreted a duplicated clause.
+
+| Field | Meaning |
+|---|---|
+| `verdict` | The judge's **genealogical** conclusion. See §7.2.1. |
+| `compliance` | Whether the GPS guardrail skills actually ran. §7.5. |
+| `guardrail_bypass_violations` | The specific bypasses, when `compliance` is `fail`. |
+| `outcome` | **The gate** — `fail` when compliance failed, else `verdict`. |
+| `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
+| `stop_reason` | Why the run ended. §6.5. |
+| `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
+| `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
+| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
+| `blocked_context_calls[]` | Denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is a write denied by a different guard. §6.1.1. |
+| `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
+| `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
+| `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
+| `resumes`, `session_id` | §6 "Stall-detect + resume". |
+| `agent_model` | Effective parent model. |
+| `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
+| `effort_level` | Pinned via a project setting; default `high`. |
+| `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
+| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
+| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+
+Together the five reasoning-config fields (`agent_model` through `cli_version`)
+make an A/B across model × effort × output-budget self-describing from the log
+alone.
+
+#### 8.1.1 `tool_calls[]` — the joined keys
+
+`is_error`, `agent_id` and `agent_type` are joined when the call's
+`ToolResultBlock` arrives, so an entry whose result never arrived — any aborted
+or wall-clock-capped run — carries none of the three. `response_summary` is the
+exception: the entry literal initializes it, so it is present-but-`null` there
+rather than absent.
+
+A PreToolUse **deny** does reach this array: the denied call appears with the
+deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
+is the parallel structured record, not the only one — which is why an
+`is_error: true` entry is not automatically an upstream failure (§15).
+
+#### 8.1.2 `usage` when the `ResultMessage` never arrived
+
+Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts
+the stream before that message, which used to leave `usage` with no turns,
+duration or tokens at all — blinding exactly the runs worth investigating. The
+fallback reconstructs the block from the streamed assistant messages:
+
+- token counts are **exact**, deduplicated by message id (the SDK re-emits one
+  message per content block, each copy repeating that message's *cumulative*
+  usage, so summing on arrival multiplies the totals);
+- `duration_ms` comes from the monotonic clock;
+- the distinct-message count is reported as `assistant_messages`;
+- `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** rather than
+  synthesized — the SDK counts turns differently from distinct assistant
+  messages, only it knows the API/local split, and a run spans several models so
+  one price lookup would be wrong.
+
+**Never compare a `streamed_fallback` cost against a clean run's.**
 
 Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
 under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
