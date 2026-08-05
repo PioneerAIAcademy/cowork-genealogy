@@ -101,16 +101,16 @@ def test_scan_versions_missing_directory(tmp_path: Path):
 
 
 def test_scan_versions_finds_released_and_candidate(tmp_path: Path):
-    (tmp_path / "v1.json").write_text("{}")
-    (tmp_path / "v2.json").write_text("{}")
-    (tmp_path / "v3_2026-05-18_10-30-00.json").write_text("{}")
-    (tmp_path / "scratch_2026-05-18_09-00-00.json").write_text("{}")  # Ignored
+    (tmp_path / "v1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "v2.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "v3_2026-05-18_10-30-00.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "scratch_2026-05-18_09-00-00.json").write_text("{}", encoding="utf-8")  # Ignored
     assert scan_versions(tmp_path) == (2, 3)
 
 
 def test_scan_versions_higher_candidate_wins(tmp_path: Path):
-    (tmp_path / "v3.json").write_text("{}")
-    (tmp_path / "v5_2026-05-18_10-30-00.json").write_text("{}")
+    (tmp_path / "v3.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "v5_2026-05-18_10-30-00.json").write_text("{}", encoding="utf-8")
     assert scan_versions(tmp_path) == (3, 5)
 
 
@@ -129,8 +129,8 @@ def test_next_filename_first_run_starts_at_v1(tmp_path: Path):
 
 def test_next_filename_continues_candidate_line(tmp_path: Path):
     """When candidate v2 exists and released is v1, next iteration stays at v2."""
-    (tmp_path / "v1.json").write_text("{}")
-    (tmp_path / "v2_2026-05-17_12-00-00.json").write_text("{}")
+    (tmp_path / "v1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "v2_2026-05-17_12-00-00.json").write_text("{}", encoding="utf-8")
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,
@@ -143,7 +143,7 @@ def test_next_filename_continues_candidate_line(tmp_path: Path):
 def test_next_filename_bumps_after_release(tmp_path: Path):
     """When highest released == highest candidate (no candidate above release),
     next bumps to a new version line."""
-    (tmp_path / "v3.json").write_text("{}")
+    (tmp_path / "v3.json").write_text("{}", encoding="utf-8")
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,

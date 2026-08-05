@@ -362,7 +362,8 @@ async def run_skill(
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
-        # Per-context tool policy: deny a subagent-only tool (image_read) on
+        # Per-context tool policy: deny a subagent-only tool (see
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
         # the main thread UNLESS this skill declared it itself. Checked BEFORE
         # the max_tool_calls counter — a denied call never executes, so it
         # shouldn't consume the budget (same ordering rationale as the e2e

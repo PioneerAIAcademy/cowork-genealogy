@@ -3,6 +3,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
+import { openExternal } from '../../lib/external'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import styles from './ResearchLogSection.module.css'
@@ -197,6 +198,26 @@ export default function ResearchLogSection(): React.JSX.Element {
                                       <> &middot; {entry.external_site.capture_filename}</>
                                     )}
                                   </div>
+                                  {/* The search URL the researcher was handed. Required by
+                                      schema and written by search-external-sites, but three
+                                      of its four siblings rendered and this one did not —
+                                      the gap the field-render lint now guards (#1166). It
+                                      is the one part of an external-site entry a reader
+                                      needs to reproduce the search. */}
+                                  {entry.external_site.url_generated && (
+                                    <div className={styles.fieldValue}>
+                                      <button
+                                        type="button"
+                                        className={styles.externalUrl}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          openExternal(entry.external_site!.url_generated)
+                                        }}
+                                      >
+                                        {entry.external_site.url_generated}
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 
