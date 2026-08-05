@@ -1235,7 +1235,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 2. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
    "true or false positive" has no ground truth at all (critique §3 P0).
-   Separately, **#1176 settled that no violation *rate* is measurable yet** —
+   Separately, **no violation *rate* is measurable yet** —
    `make e2e-corpus` is the only figure to quote, and it deliberately prints
    counts rather than a percentage. The gate-reach figure (≤9 of 25, stated
    against critique §9's narrow window) is a count of violations one arm
