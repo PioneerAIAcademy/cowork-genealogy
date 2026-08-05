@@ -84,13 +84,19 @@ what issue #970 becomes.
 - **Richard** (`chesworthrm`) had not posted a standup as of 2026-08-05 while
   holding PR #1328 and five open `record_search` issues. He is a full roster
   member, so report him missing on days he does not post.
-- **Christopher** (`chrisedeson`) is not an org member and contributes by fork —
-  a deliberate arrangement, not lapsed access. He is a repo collaborator at
-  `read`, which is **below the bar GitHub requires to be an assignee**, so
-  `gh issue create --assignee chrisedeson` and `gh issue edit --add-assignee`
-  both return success and assign nobody. Verified 2026-08-05 on issue #1341;
-  `GET /repos/:owner/:repo/assignees/chrisedeson` returns 404 where every other
-  handle here returns 204. Assign work to him only after that is resolved.
+- **Christopher** (`chrisedeson`) is not an org member and contributes by fork.
+  That is deliberate, not lapsed access — do not report it as an anomaly.
+- **Assigning below `triage` fails silently.** A collaborator at `read` is under
+  GitHub's assignability bar, and `gh issue create --assignee`, `gh issue edit
+  --add-assignee` and the raw `addAssigneesToAssignable` mutation all return
+  **success while assigning nobody** — the mutation echoes an empty
+  `assignees.nodes` in the same response. Nothing errors, so re-read the issue
+  after assigning. To check a handle, use
+  `GET /repos/:owner/:repo/assignees/:login` (204 assignable, 404 not). Do
+  **not** use `collaborators/:login/permission` — its `permission` field has no
+  value for triage and reports `read` even afterwards, so it reads as still
+  broken; its `role_name` is the accurate one. Hit 2026-08-05 on Christopher,
+  resolved by a `triage` bump, which grants issue management without push.
 
 ## Daily summary
 
