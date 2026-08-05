@@ -82,12 +82,8 @@ const NOT_RENDERED: Record<string, string> = {
     "Long free text. Surfaced in the proof summary rather than inline on the declaration.",
   "exhaustive_declaration.log_entry_ids":
     "FK list backing the declaration; the log entries render in their own section.",
-  "evaluation_entry.target_id":
-    "FK to the evaluated object, which is rendered adjacent to its evaluation.",
-  "evaluation_entry.target_type":
-    "Discriminator for target_id, not researcher-facing.",
   "evaluation_entry.file_path":
-    "Host-side artifact path; meaningless in the viewer.",
+    "Host-side path to the mentor's prose artifact. The viewer cannot read it, and it is the reason this section shows the verdict rather than the critique (#1223).",
   "log_entry.plan_item_id":
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
 };
