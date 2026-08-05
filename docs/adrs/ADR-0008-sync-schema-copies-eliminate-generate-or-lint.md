@@ -8,7 +8,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-05 (#PR)
+- **Last updated:** 2026-08-05 (#1351)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
