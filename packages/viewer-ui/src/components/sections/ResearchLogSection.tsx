@@ -3,6 +3,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
+import { openExternal } from '../../lib/external'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import styles from './ResearchLogSection.module.css'
@@ -205,14 +206,16 @@ export default function ResearchLogSection(): React.JSX.Element {
                                       needs to reproduce the search. */}
                                   {entry.external_site.url_generated && (
                                     <div className={styles.fieldValue}>
-                                      <a
-                                        href={entry.external_site.url_generated}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <button
+                                        type="button"
                                         className={styles.externalUrl}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          openExternal(entry.external_site!.url_generated)
+                                        }}
                                       >
                                         {entry.external_site.url_generated}
-                                      </a>
+                                      </button>
                                     </div>
                                   )}
                                 </div>
