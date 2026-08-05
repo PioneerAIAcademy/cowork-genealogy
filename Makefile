@@ -120,11 +120,14 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 
 # ── Worktrees ────────────────────────────────────────────────────
 # Git worktrees don't share gitignored files, so a freshly-added worktree lacks
-# the shared secrets (eval/.env) and installed deps (node_modules). These link
-# them to the primary worktree's copies. `install-hooks` makes new worktrees
-# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+# the shared secrets (eval/.env) and installed deps (node_modules). This links
+# the secrets and the npm-managed engine to the primary worktree's copies, and
+# INSTALLS the pnpm workspace locally — linking that one would resolve every
+# `@genealogy/*` import to the primary's source. `install-hooks` makes new
+# worktrees do this on `git worktree add`; `worktree-link` does it for an
+# existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
-worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
 	@scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
