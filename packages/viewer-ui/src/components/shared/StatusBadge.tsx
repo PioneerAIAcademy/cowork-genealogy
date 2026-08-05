@@ -12,6 +12,13 @@ const statusColorMap: Record<string, BadgeColor> = {
   active: 'amber',
   completed: 'green',
   superseded: 'gray',
+
+  // gps-mentor verdicts (#1223). Without these every verdict renders gray, so
+  // "this proof needs work before it stands" looks the same as "looks solid".
+  looks_solid: 'green',
+  consider_addressing: 'amber',
+  address_first: 'red',
+  refused: 'gray',
   // Plan item status
   planned: 'gray',
   skipped: 'gray',

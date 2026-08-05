@@ -63,12 +63,12 @@ def test_predicate_match_dispatches_to_matching_fixture():
             "tool": "record_search",
             "args": {"args.q": "Ohio"},
             "response": {"hits": "ohio-fixture"},
-        }))
+        }), encoding="utf-8")
         (tmp / "iowa.json").write_text(json.dumps({
             "tool": "record_search",
             "args": {"args.q": "Iowa"},
             "response": {"hits": "iowa-fixture"},
-        }))
+        }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(
             ["ohio", "iowa"], tmp
         )
@@ -91,7 +91,7 @@ def test_unmatched_call_returns_fixture_not_found_error():
             "tool": "record_search",
             "args": {"args.q": "Ohio"},
             "response": {"hits": "ohio"},
-        }))
+        }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(["only"], tmp)
         result = _invoke(tools_by_name, "record_search", {"q": "Texas"})
         body = _extract_response_dict(result)
@@ -110,7 +110,7 @@ def test_fixture_without_args_is_rejected():
         (tmp / "noargs.json").write_text(json.dumps({
             "tool": "record_search",
             "response": {"hits": "x"},
-        }))
+        }), encoding="utf-8")
         with pytest.raises(InvalidFixtureError):
             create_mock_server(["noargs"], tmp)
 
@@ -130,7 +130,7 @@ def test_fixture_input_schema_honored_for_tool_absent_from_build():
                 "required": ["query"],
             },
             "response": {"title": "X"},
-        }))
+        }), encoding="utf-8")
         server, _, tools_by_name = create_mock_server(["typed"], tmp)
         tool_obj = tools_by_name["future_tool_not_in_build"]
         assert tool_obj.input_schema["required"] == ["query"]
@@ -157,7 +157,7 @@ def test_build_schema_advertised_for_fixture_backed_tool():
             "tool": "record_person_matches",
             "args": {"id": "9XKV-ABC"},
             "response": {"matches": []},
-        }))
+        }), encoding="utf-8")
         server, _, tools_by_name = create_mock_server(["match"], tmp)
         schema = tools_by_name["record_person_matches"].input_schema
         # Real production schema: `id` is required and it is not the
