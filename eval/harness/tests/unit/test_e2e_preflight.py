@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import time
 
+import pytest
+
 import e2e.preflight as pf
 
 
@@ -248,6 +250,59 @@ def test_mcp_check_reports_an_unexpected_error_without_crashing(monkeypatch, tmp
     status, detail = pf._check_mcp_connection(status_getter=_boom)
     assert status == "FAIL"
     assert "transport closed" in detail
+
+
+def test_the_live_check_is_bounded_by_a_wall_it_can_walk_away_from():
+    """The ceiling must bound the whole operation, teardown included.
+
+    Measured 2026-08-05 against a stdio server that accepts the connection and
+    never speaks: with the budget wrapped around the coroutine alone, the check
+    returned the right FAIL but took 132.7s against a 90s ceiling — the +42.7s
+    was `asyncio.run`'s own loop shutdown, which no in-loop timeout can bound.
+    So the join, not `wait_for`, is what has to be the last word; assert the
+    thread is a daemon so a hung child cannot keep the process alive either.
+    """
+    import threading
+
+    started: list[threading.Thread] = []
+    joins: list[float | None] = []
+    real_start = threading.Thread.start
+    real_join = threading.Thread.join
+
+    def _record(self):
+        started.append(self)
+        return real_start(self)
+
+    def _record_join(self, timeout=None):
+        joins.append(timeout)
+        return real_join(self, timeout)
+
+    original = threading.Thread.start
+    original_join = threading.Thread.join
+    threading.Thread.start = _record  # type: ignore[method-assign]
+    threading.Thread.join = _record_join  # type: ignore[method-assign]
+    try:
+        # A getter that never returns: only a wall outside the loop ends this.
+        pf._MCP_CHECK_TIMEOUT_S_backup = pf._MCP_CHECK_TIMEOUT_S
+        pf._MCP_CHECK_TIMEOUT_S = 0.05
+        pf._MCP_TEARDOWN_GRACE_S = 0.05
+        try:
+            pf._live_mcp_status()
+        except Exception:  # noqa: BLE001 — the point is that it RETURNS
+            pass
+    finally:
+        threading.Thread.start = original  # type: ignore[method-assign]
+        threading.Thread.join = original_join  # type: ignore[method-assign]
+        pf._MCP_CHECK_TIMEOUT_S = pf._MCP_CHECK_TIMEOUT_S_backup
+        pf._MCP_TEARDOWN_GRACE_S = 15.0
+
+    worker = next((t for t in started if t.name == "e2e-preflight-mcp"), None)
+    assert worker is not None, "the live check must run behind a joinable wall"
+    assert worker.daemon, "a hung CLI child must not outlive the preflight process"
+    # A join with no timeout is the bug: it would wait out the same unbounded
+    # teardown the ceiling is supposed to cap.
+    assert joins and joins[0] is not None, "the wall must carry a deadline"
+    assert joins[0] == pytest.approx(0.10), "budget = ceiling + teardown grace"
 
 
 def test_mcp_connection_check_is_last_in_checks():

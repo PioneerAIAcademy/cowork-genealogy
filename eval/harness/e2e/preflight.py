@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import threading
 from pathlib import Path
 from typing import Any, Callable
 
@@ -60,6 +61,13 @@ _MCP_CHECK_TIMEOUT_S = 90.0
 
 # How often to re-ask while the server is still connecting. See _live_mcp_status.
 _MCP_POLL_INTERVAL_S = 0.5
+
+# Extra grace for tearing the CLI down, on top of the ceiling above. The SDK's
+# own shutdown is already bounded — stdin EOF, 5s, SIGTERM, 5s, SIGKILL
+# (claude_agent_sdk/_internal/transport/subprocess_cli.py) — so ~10s covers it;
+# 15 leaves room for the loop's own async-generator and executor shutdown. See
+# _live_mcp_status for why this needs to be a separate budget.
+_MCP_TEARDOWN_GRACE_S = 15.0
 
 
 # FamilySearch refresh tokens hard-expire ~24h after login. We can't read
@@ -224,7 +232,41 @@ def _live_mcp_status() -> Any:
                     return servers
                 await asyncio.sleep(_MCP_POLL_INTERVAL_S)
 
-    return asyncio.run(asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S))
+    # A HARD wall, on a thread we can walk away from. `asyncio.wait_for` bounds
+    # only the coroutine; `asyncio.run` then performs its own loop shutdown —
+    # cancel-all-tasks, `shutdown_asyncgens`, `shutdown_default_executor` —
+    # entirely OUTSIDE that budget. Measured 2026-08-05 against a deliberately
+    # hanging stdio server (accepts the connection, never speaks): the check
+    # returned the right FAIL but took 132.7s against this 90s ceiling, +42.7s
+    # of it after the coroutine had already settled. A ceiling a run can
+    # overshoot by half again is the "preflight that hangs" this constant exists
+    # to prevent, and no timeout *inside* the loop can fix it, because the
+    # overrun is the loop's own teardown. Wrapping `asyncio.timeout` around
+    # `_ask` would not have caught this for the same reason.
+    #
+    # A pathologically hung `node` child can therefore outlive the join. That is
+    # the deliberate trade: the SDK's escalation reaches SIGKILL on its own, this
+    # process is about to exit anyway, and a leaked child is strictly better than
+    # a preflight that never returns — an operator can act on a FAIL.
+    result: list[Any] = []
+    failure: list[BaseException] = []
+
+    def _run() -> None:
+        try:
+            result.append(
+                asyncio.run(asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S))
+            )
+        except BaseException as e:  # noqa: BLE001 — re-raised on the caller's thread
+            failure.append(e)
+
+    worker = threading.Thread(target=_run, name="e2e-preflight-mcp", daemon=True)
+    worker.start()
+    worker.join(timeout=_MCP_CHECK_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S)
+    if worker.is_alive():
+        raise TimeoutError("the MCP status check did not return within its budget")
+    if failure:
+        raise failure[0]
+    return result[0]
 
 
 def _check_mcp_connection(
@@ -267,7 +309,8 @@ def _check_mcp_connection(
         return (
             "FAIL",
             f"The genealogy MCP server never reported a settled status within "
-            f"{_MCP_CHECK_TIMEOUT_S:.0f}s — it stayed 'pending', or the CLI "
+            f"{_MCP_CHECK_TIMEOUT_S:.0f}s (+{_MCP_TEARDOWN_GRACE_S:.0f}s to shut "
+            "down) — it stayed 'pending', or the CLI "
             "never listed it at all. A server that hangs instead of failing "
             "blocks session start: an e2e run would die on 'Control request "
             "timeout: initialize' after ~60s. Check that "

@@ -56,11 +56,11 @@ from harness.skill_invocation import (
 
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
-    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
     genealogy_mcp_config,
+    is_no_match_tool_search,
     should_abort_at_init,
     tool_search_miss_streak,
     unavailable_message,
@@ -971,10 +971,10 @@ async def _run_agent(
     # nudge can't push the agent back into an empty tool set) and by the abort
     # path. `misses` is the consecutive no-match ToolSearch streak feeding the
     # mid-run backstop; see e2e.mcp_health for how it is calibrated.
-    # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES ToolSearch
-    # queries, so a backstop abort can name what was searched: that path writes
-    # no run log, so the console is the only place a false positive could ever
-    # be spotted.
+    # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES *no-match*
+    # ToolSearch queries — the ones that actually built the streak — so a
+    # backstop abort can name what was searched: that path writes no run log, so
+    # the console is the only place a false positive could ever be spotted.
     mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
@@ -1545,7 +1545,15 @@ async def _run_agent(
                                         response_summary=summary,
                                         mcp_call_count=tool_call_count["n"],
                                     )
-                                    if entry["tool"] == TOOL_SEARCH_NAME:
+                                    # Record only the lookups that BUILT the
+                                    # streak. A matched ToolSearch no longer
+                                    # resets it (see tool_search_miss_streak),
+                                    # so "the last N ToolSearch queries" is no
+                                    # longer the same set as "the N misses" —
+                                    # and it is the misses the operator needs to
+                                    # tell a dead server from a real streak of
+                                    # searches for tools that never existed.
+                                    if is_no_match_tool_search(entry["tool"], summary):
                                         q = (entry.get("args") or {}).get("query")
                                         mcp_state["queries"] = (
                                             mcp_state["queries"] + [str(q)]

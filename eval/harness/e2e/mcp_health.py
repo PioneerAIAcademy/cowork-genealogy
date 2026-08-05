@@ -77,14 +77,19 @@ NO_MATCH_MARKER = "no matching deferred tools"
 # Consecutive no-match ToolSearch results (with zero successful `mcp__` calls)
 # before the backstop aborts the run.
 #
-# CALIBRATED AGAINST THE INCIDENT, not guessed. Replaying the three lost runs
+# CALIBRATED AGAINST THE INCIDENT, not guessed — and re-measured across the
+# whole committed e2e corpus (142 run logs) when review found the starvation
+# hole that `tool_search_miss_streak` now closes. Replaying the three lost runs
 # (eval/runlogs/e2e/william-ferber-origins/run-2026-07-29_{02-09-46,12-16-49,
-# 17-05-11}.json) the streak reaches 3 at tool call 14 / 12 / 19 of 89 / 112 /
-# 74, and peaks at 4 / 4 / 5 — so 3 fires early with a margin of 1-2, while 5
-# would MISS two of the three. The healthy control run from the same night
-# (run-2026-07-29_18-46-15, verdict `pass`, 81 `mcp__` calls) never reaches a
-# streak of 1, so this cannot false-abort a working run. Both numbers are
-# regression-tested by the corpus replay in test_e2e_mcp_health.py.
+# 17-05-11}.json) the streak reaches 3 at tool call 12 / 11 / 13 of 89 / 112 /
+# 74 and peaks at 15 / 8 / 17. Against the other 138 runs — every committed run
+# that made at least one `mcp__` call — it peaks at **1**, so 3 keeps a margin
+# of 2 over the worst healthy run in the corpus and cannot false-abort one of
+# them. 5 would also detect all three, but buys nothing for the extra wall
+# clock. (The fourth zero-`mcp__` run, run-2026-07-29_02-31-20, recorded no
+# tool calls at all — it died during init, which preflight and the init check
+# own, not this backstop.) Regression-tested by the corpus replay in
+# test_e2e_mcp_health.py.
 CONSECUTIVE_TOOL_SEARCH_MISSES = 3
 
 # CLI statuses that mean "this server will not serve tools in this session".
@@ -226,11 +231,33 @@ def tool_search_miss_streak(
 ) -> int:
     """The consecutive-miss streak after folding in one tool result.
 
-    Consecutive *ToolSearch results*, not consecutive tool calls: in all three
-    lost runs the agent interleaved Glob / Read / WebSearch between its
-    searches, so a counter that reset on any other tool would never have
-    reached the threshold. Unrelated tools therefore carry the streak
-    unchanged; a ToolSearch that *matched* resets it.
+    Consecutive *no-match ToolSearch results*, not consecutive tool calls: in
+    all three lost runs the agent interleaved Glob / Read / WebSearch between
+    its searches, so a counter that reset on any other tool would never have
+    reached the threshold. Unrelated tools therefore carry the streak unchanged.
+
+    **A ToolSearch that matched carries it too — only an `mcp__` call resets
+    it.** `ENABLE_TOOL_SEARCH` defers the built-ins as well, so a match proves
+    only that *some* deferred tool exists, which says nothing about ours;
+    treating it as exculpatory let a dead server starve this counter forever
+    (genealogy miss → `select:WebFetch` match → repeat, never reaching the
+    threshold, run flails to the wall-clock cap). That is measured, not
+    hypothetical: replaying the incident, matched lookups reset a live streak
+    5 / 3 / 8 times, and the recorded queries are exactly that shape
+    (`select:TodoWrite,WebFetch,WebSearch`, `select:WebFetch`,
+    `select:PushNotification`). Detection survived only because enough misses
+    happened to fall consecutively anyway — peaks of 4 / 4 / 5 against a
+    threshold of 3. Genealogy-*intent* queries reset it too:
+    `'record search familysearch'` and `'genealogy record search'` both matched
+    something irrelevant, because ToolSearch ranks keywords and returns its best
+    hit rather than nothing. Carrying instead of resetting raises those peaks to
+    15 / 8 / 17 while leaving all 138 healthy runs at 1 (see the threshold
+    comment above), so it costs no false-abort margin at all.
+
+    Keying exculpation on the `mcp__` counter rather than on the reply text is
+    also what keeps this independent of the response summarizer, which was
+    rewritten mid-review: a dispatched genealogy call is proof the CLI
+    advertised the tool, and reading it needs no payload parsing.
 
     `mcp_call_count` is the run's `mcp__`-only counter, incremented in
     `pretool_hook` — so it counts genealogy calls **attempted**, not ones that
@@ -243,13 +270,16 @@ def tool_search_miss_streak(
     a surface that NEVER worked, not one that died after working — despite
     mid-run death being the case it was added for. Widening it (a windowed
     "no successful genealogy call in the last N tool calls") is a spec change,
-    not a tidy-up, so it is not done here.
+    not a tidy-up, so it is not done here — issue #1300.
     """
     if tool != TOOL_SEARCH_NAME:
         return streak
-    if mcp_call_count == 0 and is_no_match_tool_search(tool, response_summary):
+    if mcp_call_count > 0:
+        # A genealogy call was dispatched, so the surface demonstrably exists.
+        return 0
+    if is_no_match_tool_search(tool, response_summary):
         return streak + 1
-    return 0
+    return streak
 
 
 def backstop_fired(streak: int) -> bool:

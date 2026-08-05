@@ -193,13 +193,44 @@ def test_streak_increments_only_while_no_mcp_call_has_succeeded():
     assert tool_search_miss_streak(2, mcp_call_count=1, **kwargs) == 0
 
 
-def test_a_matching_tool_search_resets_the_streak():
+def test_a_matching_tool_search_carries_the_streak_rather_than_resetting_it():
+    """A match proves *some* deferred tool exists, not that ours does.
+
+    `ENABLE_TOOL_SEARCH` defers the built-ins too, so a matched lookup is no
+    evidence about the genealogy surface. Only a dispatched `mcp__` call is
+    (see the test above).
+    """
     assert (
         tool_search_miss_streak(
             2, tool="ToolSearch", response_summary='{"matches": ["x"]}', mcp_call_count=0
         )
-        == 0
+        == 2
     )
+
+
+def test_a_dead_server_cannot_starve_the_backstop_with_unrelated_matches():
+    """The evasion review found on this branch, as a regression test.
+
+    Alternating a genealogy miss with a match on some *other* deferred tool
+    (`select:WebFetch` — a query shape recorded verbatim in all three lost runs)
+    used to hold the streak at 1 forever, so the backstop never fired and the
+    run flailed to the wall-clock cap. It must now reach the threshold.
+    """
+    streak = 0
+    for _ in range(CONSECUTIVE_TOOL_SEARCH_MISSES):
+        streak = tool_search_miss_streak(
+            streak,
+            tool="ToolSearch",
+            response_summary="No matching deferred tools found",
+            mcp_call_count=0,
+        )
+        streak = tool_search_miss_streak(
+            streak,
+            tool="ToolSearch",
+            response_summary='{"matches": ["WebFetch"]}',
+            mcp_call_count=0,
+        )
+    assert backstop_fired(streak)
 
 
 def test_unrelated_tools_carry_the_streak_unchanged():
@@ -254,9 +285,9 @@ def test_backstop_message_explains_the_streak_rather_than_a_status():
 # (run log, tool call number at which the backstop fires). Measured by
 # replaying the committed run logs; see CONSECUTIVE_TOOL_SEARCH_MISSES.
 LOST_RUNS = [
-    ("run-2026-07-29_02-09-46.json", 14),
-    ("run-2026-07-29_12-16-49.json", 12),
-    ("run-2026-07-29_17-05-11.json", 19),
+    ("run-2026-07-29_02-09-46.json", 12),
+    ("run-2026-07-29_12-16-49.json", 11),
+    ("run-2026-07-29_17-05-11.json", 13),
 ]
 HEALTHY_RUN = "run-2026-07-29_18-46-15.json"
 
@@ -268,11 +299,18 @@ def _replay(runlog: Path) -> tuple[int | None, int, int]:
     successful `mcp__` calls) — mirroring the orchestrator's loop, which folds
     each ToolResultBlock in arrival order and tracks its own `mcp__`-only count.
     """
-    payload = json.loads(runlog.read_text(encoding="utf-8"))
+    return _fold(json.loads(runlog.read_text(encoding="utf-8")).get("tool_calls", []))
+
+
+def _fold(calls: list) -> tuple[int | None, int, int]:
+    """The replay itself, over already-parsed `tool_calls`.
+
+    Split out so the corpus sweep below parses each run log once instead of
+    twice — these logs carry full transcripts and the sweep reads every one.
+    """
     streak = 0
     mcp_calls = 0
     fired_at = None
-    calls = payload.get("tool_calls", [])
     for index, call in enumerate(calls, start=1):
         tool = str(call.get("tool", ""))
         streak = tool_search_miss_streak(
@@ -325,3 +363,45 @@ def test_backstop_never_fires_on_the_healthy_run():
     fired_at, _total_calls, mcp_calls = _replay(runlog)
     assert mcp_calls > 0
     assert fired_at is None
+
+
+# Below the number of healthy runs committed when this was measured (138 of 142
+# logs), with room for pruning. Its job is to stop the sweep from passing
+# vacuously if the corpus is ever emptied or the field renamed.
+_MIN_HEALTHY_RUNS = 100
+
+
+def test_no_healthy_run_in_the_whole_corpus_false_aborts():
+    """The false-abort margin, measured against every committed run, not one.
+
+    Review of this branch raised the inverse hazard: a *healthy* session whose
+    early ToolSearches miss (a mistyped or genuinely absent tool name) reaching
+    the threshold before its first genealogy call, which aborts a good run AND
+    writes no run log to diagnose from. It is a real shape, so it is gated
+    rather than argued: fold every committed run log that made at least one
+    `mcp__` call through the detector and require that none of them fires.
+
+    Measured 2026-08-05 across 142 logs — 138 healthy — the worst healthy streak
+    is 1 against a threshold of 3, and tightening the reset rule (see
+    tool_search_miss_streak) did not move it. This is what keeps that true.
+    """
+    healthy = 0
+    offenders = []
+    for runlog in sorted(RUNLOG_ROOT.rglob("run-*.json")):
+        if runlog.name.endswith((".ann.json", ".final-tree.gedcomx.json")):
+            continue
+        calls = json.loads(runlog.read_text(encoding="utf-8")).get("tool_calls")
+        if not isinstance(calls, list):
+            continue
+        fired_at, _total, mcp_calls = _fold(calls)
+        if mcp_calls == 0:
+            continue  # a lost run — the arm above owns these
+        healthy += 1
+        if fired_at is not None:
+            offenders.append(f"{runlog.parent.name}/{runlog.name} fired at {fired_at}")
+    assert not offenders, "backstop would abort healthy runs: " + "; ".join(offenders)
+    assert healthy >= _MIN_HEALTHY_RUNS, (
+        f"only {healthy} healthy run logs found (expected >= {_MIN_HEALTHY_RUNS}); "
+        "this sweep is the false-abort evidence, so verify the corpus rather "
+        "than lowering the floor"
+    )
