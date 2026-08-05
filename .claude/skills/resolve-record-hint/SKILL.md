@@ -64,29 +64,51 @@ Wait for their conclusion before continuing.
 
 Ask which of the three applies, and collect only what that outcome needs:
 
-1. **True match** — nothing further needed.
+1. **True match** — the confirming record's resolvable FamilySearch ark.
 2. **Answerable, but differently** — what's actually true (a different date,
-   record, or person) in place of what's there now.
+   record, or person) in place of what's there now, **and that record's
+   resolvable FamilySearch ark**.
 3. **False match, no findable substitute** — the specific claim the agent
-   must not assert, plus confirmation that the search came up empty (or
-   turned up contradicting evidence).
+   must not assert, plus the record that disproves it (an age impossibility,
+   a date that contradicts another record, a directly-examined record that
+   turns out to be someone else) **and its resolvable FamilySearch ark**, plus
+   confirmation of what collection and date range was searched and came up
+   empty for a real substitute.
 
 In all three cases, also ask for their reasoning in plain language — this
 becomes the README's new "Notes for reviewers."
 
+Every outcome needs an ark: a resolved record-hint fixture whose
+`expected-findings.json` carries no literal `ark:/61903/...` in any finding's
+`supporting_sources` is a hard `ERROR` in Step 5 (issue #970).
+
+For outcome 3, the ark belongs to whichever record does the disproving —
+never to the absence itself. There is no ark for "no record establishes X";
+don't ask the genealogist to invent one, and don't accept a tree PID or the
+fixture's own `source_pid` as a substitute (issue #970's rejected shortcut —
+it carries no record provenance). See spec §3.6.1 (issue #1025).
+
 ## Step 4 — Write the files
 
 - **`expected-findings.json`**
-  - Outcome 1: leave unchanged.
+  - Outcome 1: leave unchanged, except to append the confirming record's
+    `ark:/61903/...` to a `supporting_sources` entry if no finding has one.
   - Outcome 2: edit the existing finding(s)' `description` / `details` /
-    `supporting_sources` to the corrected answer.
+    `supporting_sources` to the corrected answer, with that record's
+    `ark:/61903/...` in `supporting_sources`.
   - Outcome 3: replace the findings with a `"polarity": "avoid"` finding
     naming the wrong claim, paired with a `required: true` finding
     documenting the negative conclusion. Copy the JSON *shape* from
     `eval/tests/e2e/thomas-seaver-other-wife/expected-findings.json` — that
     file is a valid instance of the pair. (Its README is not a model for
     yours: that fixture was authored in this shape from the start, not
-    resolved from a hint.)
+    resolved from a hint.) Put the disproving record's literal
+    `ark:/61903/...` in `supporting_sources` on whichever of the two findings
+    it naturally belongs to (often the `avoid` finding, if it's the record
+    that contradicts the hint). Write the absence — "no record in
+    [collection], [date range], establishes X" — as plain prose in the
+    paired required finding's `supporting_sources`, with no ark attached to
+    that sentence (spec §3.6.1).
 
   Only use the fields spec §3.4 defines: `id`, `type`, `description`,
   `details`, `polarity`, `supporting_sources`, `required`. **Never write

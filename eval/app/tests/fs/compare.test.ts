@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildRunLog } from '../helpers/fixtureTree';
 import { compareRunLogs } from '../../lib/compare';
+import { hashSnapshot } from '../../lib/snapshot';
 import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
 function snapshotOf(skill: string, tests: number): Record<string, string> {
@@ -178,5 +179,39 @@ describe('compareRunLogs — snapshot diff panel', () => {
     expect(byPath.get('a.md')).toBe('modified');
     expect(byPath.get('b.md')).toBe('removed');
     expect(byPath.get('c.md')).toBe('added');
+  });
+});
+
+describe('mixed schema_version snapshots (v2 content vs v3 digests)', () => {
+  it('does not report every path modified when only one side is hashed', () => {
+    const content = snapshotOf('search-familysearch-wiki', 2);
+    const recent = buildLog({ version: 2, testIds: ['ut_0', 'ut_1'], snapshot: hashSnapshot(content) });
+    const previous = buildLog({ version: 1, testIds: ['ut_0', 'ut_1'], snapshot: content });
+
+    const result = compareRunLogs({
+      recent: { log: recent, annotation: null },
+      previous: { log: previous, annotation: null },
+    });
+
+    // Identical files, different storage shapes — nothing changed.
+    expect(result.snapshotDiff.filter((d) => d.kind === 'modified')).toEqual([]);
+    expect(result.rows.every((r) => !r.edited)).toBe(true);
+  });
+
+  it('still detects a genuine edit across the shapes', () => {
+    const content = snapshotOf('search-familysearch-wiki', 2);
+    const edited = { ...content };
+    edited['packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md'] = 'CHANGED\n';
+    const recent = buildLog({ version: 2, testIds: ['ut_0', 'ut_1'], snapshot: hashSnapshot(edited) });
+    const previous = buildLog({ version: 1, testIds: ['ut_0', 'ut_1'], snapshot: content });
+
+    const result = compareRunLogs({
+      recent: { log: recent, annotation: null },
+      previous: { log: previous, annotation: null },
+    });
+
+    expect(result.snapshotDiff.map((d) => d.path)).toContain(
+      'packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md',
+    );
   });
 });
