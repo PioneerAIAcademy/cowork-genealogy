@@ -70,7 +70,8 @@ export function buildIndex(
     ['conflicts', research.conflicts],
     ['hypotheses', research.hypotheses],
     ['timelines', research.timelines],
-    ['proof_summaries', research.proof_summaries]
+    ['proof_summaries', research.proof_summaries],
+    ['evaluations', research.evaluations]
   ]
 
   for (const [section, items] of sections) {

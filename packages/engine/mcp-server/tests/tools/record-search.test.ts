@@ -248,6 +248,30 @@ describe("recordSearchTool input validation", () => {
     ).rejects.toThrow(/recordType must be one of/);
   });
 
+  // The guard used `recordType in RECORD_TYPE_TO_INT`, and `in` walks the
+  // prototype chain — so "constructor" passed validation and buildSearchUrl
+  // then indexed out `Object`, sending
+  // `f.recordType=function%20Object()%20{%20[native%20code]%20}` upstream.
+  // All twelve Object.prototype own names reached here, not just this one —
+  // "constructor" and "__proto__" are the all-lowercase pair a model is likeliest
+  // to emit, and the tool schema's enum is not a runtime guard. hasOwn rejects
+  // every one of the twelve; the loop below asserts that rather than one sample.
+  it("13a. throws on an inherited Object.prototype key as recordType", () => {
+    for (const key of Object.getOwnPropertyNames(Object.prototype)) {
+      expect(() =>
+        validateInput({ surname: "Lincoln", recordType: key as never })
+      ).toThrow(/recordType must be one of/);
+    }
+  });
+
+  it("13b. never emits a non-numeric f.recordType", () => {
+    const url = buildSearchUrl({
+      surname: "Lincoln",
+      recordType: "constructor" as never,
+    });
+    expect(url).not.toMatch(/f\.recordType=(?!\d+(&|$))/);
+  });
+
   it("rejects non-4-digit year inputs", () => {
     expect(() =>
       validateInput({
@@ -1045,5 +1069,153 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     // Advisory only: an unreadable tree must never turn a good search into an error.
     expect(out.jurisdictionHints).toBeUndefined();
     expect(out.totalMatches).toBe(0);
+  });
+});
+
+// The parameter that gates ranking AND the jurisdiction hints above is supplied
+// on 59 of 171 record_search calls across the six committed `jimmie-jewel-neal`
+// runlogs — 0%, 0%, 0%, 100%, 55%, 39% by run. Both features therefore spend
+// most of their life switched off with nothing in the response or the runlog to
+// say so. `rankingSkipped` is the in-band nudge; these tests pin the exact
+// condition and, critically, the key ORDER.
+describe("recordSearchTool — rankingSkipped when no subject was named", () => {
+  let dir: string;
+
+  const oneResult = (): FSSearchResponse => ({
+    results: 1,
+    index: 0,
+    entries: [lincolnEntry()],
+  });
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-skipped-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("emits the note when projectPath was given but subjectId was not", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.rankingSkipped).toBeTruthy();
+    expect(out.ranked).toBeUndefined();
+
+    // Pin the wording, not just that a note exists. It rides two thirds of all
+    // searches, and it has already been wrong once — an earlier draft narrowed
+    // the schema's "omit it when" clause to a broad survey and dropped the
+    // second legitimate reason, which is the phrasing that then gets reinforced.
+    expect(out.rankingSkipped).toContain("subjectId");
+    expect(out.rankingSkipped).toContain("broad survey");
+    expect(out.rankingSkipped).toContain("not yet in the tree");
+    // Names what was actually given up, so the note is actionable.
+    expect(out.rankingSkipped).toContain("ranking");
+    expect(out.rankingSkipped).toContain("jurisdiction");
+  });
+
+  it("stays absent once a subject IS named", async () => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date: "1900", place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+
+    expect(out.rankingSkipped).toBeUndefined();
+    expect(out.ranked).toBeTruthy();
+  });
+
+  it("stays absent with no projectPath — nothing was on offer to skip", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln" });
+
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
+  it("fires on a search that DID find results — the condition is the args, not the outcome", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.totalMatches).toBeGreaterThan(0);
+    expect(out.rankingSkipped).toBeTruthy();
+  });
+
+  it("stays silent on a nil search WITH a subject, even though ranking did not run", async () => {
+    // The asymmetry worth pinning: ranking needs `out.staged` too, and a nil
+    // search stages nothing, so ranking is skipped here and yet no note is
+    // emitted — correctly, because the issue's condition is the args alone.
+    // 4 of the 18 subject-carrying calls in run-2026-07-31_13-02-13 are this
+    // case. Absence of the note means "a subject was named", NOT "ranking ran".
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 0, index: 0, entries: [] }),
+    );
+
+    const out = await recordSearchTool({
+      surname: "Lincoln",
+      projectPath: dir,
+      subjectId: "I1",
+    });
+
+    expect(out.totalMatches).toBe(0);
+    expect(out.staged).toBeNull();
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
+  it("treats a falsy subjectId the same way the ranking gate does", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "" });
+
+    // The ranking gate is `input.subjectId &&`, so an empty string skips ranking.
+    // The note has to agree with it or it would report the opposite of what ran.
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingSkipped).toBeTruthy();
+  });
+
+  it("is withheld from the staged sidecar, but kept on the live response", async () => {
+    // The sidecar becomes results/<logId>.json: shared project state that moves
+    // between machines, recording what the search RETURNED. A model-facing
+    // instruction is not that, and would otherwise be retained on 112 of 171
+    // searches. The live response must still carry it — that is where it is read.
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.rankingSkipped).toBeTruthy();
+    expect(out.staged).toBeTruthy();
+
+    const staged = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(staged.payload.rankingSkipped).toBeUndefined();
+    // Withholding must not disturb the rest of the payload, key order included.
+    expect(staged.payload.results).toHaveLength(1);
+    const text = JSON.stringify(staged.payload);
+    expect(text.indexOf('"query"')).toBeLessThan(text.indexOf('"results"'));
+  });
+
+  it("serializes BEFORE results, so a size-bounded runlog cannot drop it", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    // This is the whole point of the field's position. `results` is the largest
+    // field in the response; anything after it is what a head bound cuts first,
+    // which is why `ranked` appears 0 times across the 46 record_search calls in
+    // run-2026-07-31_13-02-13 despite 14 of them being ranked.
+    const keys = Object.keys(out);
+    expect(keys.indexOf("rankingSkipped")).toBeGreaterThan(-1);
+    expect(keys.indexOf("rankingSkipped")).toBeLessThan(keys.indexOf("results"));
+
+    const serialized = JSON.stringify(out);
+    expect(serialized.indexOf('"rankingSkipped"')).toBeLessThan(
+      serialized.indexOf('"results"'),
+    );
   });
 });

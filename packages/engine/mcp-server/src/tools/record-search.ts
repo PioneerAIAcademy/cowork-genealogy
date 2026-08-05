@@ -41,6 +41,22 @@ const FS_SEARCH_URL =
 const PAGINATION_CAP = 4999;
 /** Most jurisdiction candidates a nil marriage search will offer. See below. */
 const MAX_JURISDICTION_HINTS = 8;
+/**
+ * Emitted on every `projectPath`-carrying search that names no subject — 112 of
+ * the 171 calls (65.5%) across the six committed `jimmie-jewel-neal` runlogs, the
+ * complement of the 59 that carried `subjectId`. Kept short on purpose: at that
+ * rate its cost is paid per call while its benefit is being un-forgettable.
+ *
+ * The "omit it when" clause mirrors the tool schema's own wording rather than
+ * narrowing it. A person not yet in the tree is the second legitimate reason to
+ * omit, and since this note is re-delivered on two thirds of all searches, a
+ * narrower phrasing here is the one that would get reinforced.
+ */
+const RANKING_SKIPPED_NOTE =
+  "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
+  "not run. Pass the tree person this search is about as `subjectId` to enable " +
+  "both. Omit it only when the search is not about a specific tree person — a " +
+  "broad survey, or a person not yet in the tree.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -202,9 +218,13 @@ export function validateInput(input: RecordSearchInput): void {
     );
   }
 
+  // Object.hasOwn, not `in`: `in` walks the prototype chain, so the
+  // LLM-supplied `recordType: "constructor"` would satisfy the guard and then
+  // index out `Object` at the buildSearchUrl call below, sending
+  // `f.recordType=function%20Object()%20{...}` upstream instead of rejecting.
   if (
     input.recordType !== undefined &&
-    !(input.recordType in RECORD_TYPE_TO_INT)
+    !Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)
   ) {
     throw new Error(
       "recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."
@@ -280,7 +300,10 @@ export function buildSearchUrl(input: RecordSearchInput): string {
       `${input.recordCountry},${input.recordSubdivision}`
     );
   }
-  if (input.recordType) {
+  // hasOwn again, not just a truthiness check: buildSearchUrl is exported and
+  // reachable without validateInput, so the emit site keeps the invariant on
+  // its own rather than trusting the caller to have validated first.
+  if (input.recordType && Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)) {
     add("f.recordType", RECORD_TYPE_TO_INT[input.recordType]);
   }
   if (input.maritalStatus) add("f.maritalStatus", input.maritalStatus);
@@ -544,6 +567,38 @@ export async function recordSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // Placed before `results` because the run-log capture bounds response size
+    // and `results` is the largest field, so a trailing field is what gets
+    // dropped first. Belt and braces with the capture fix in
+    // `eval/harness/e2e/orchestrator.py`: this response has more than one
+    // consumer and only one of them is being widened here.
+    //
+    // The condition is `projectPath` present and `subjectId` absent, and NOTHING
+    // else. No tree read, no name/date matching, no attempt to judge whether the
+    // search "looked like" it was about a tree person — that test is a heuristic,
+    // and gating the signal on an unvalidated heuristic would bias the very
+    // coverage measurement the signal exists to produce. A caller running a
+    // legitimate broad survey gets one extra short field; whether an omission was
+    // legitimate is answered at analysis time from the args already in the runlog.
+    //
+    // Truthiness, not `=== undefined`, on `subjectId`, so an empty string reports
+    // the same way the ranking gate below treats it.
+    //
+    // The two conditions are NOT equivalent, in two directions, and the note's
+    // contract is the weaker of them — "absence means a subject was named", never
+    // "ranking ran":
+    //   - ranking additionally needs `out.staged`, so a nil search WITH a subject
+    //     skips ranking and correctly gets no note (4 of the 18 subject-carrying
+    //     calls in `run-2026-07-31_13-02-13`);
+    //   - and this uses `projectPath !== undefined` where ranking uses truthiness
+    //     plus successful staging, so `projectPath: ""` or a path that does not
+    //     exist emits the note while supplying `subjectId` would still enable
+    //     nothing. Both leave a `stagingError` on the response, which is the
+    //     accurate signal for that case; per #1073 this condition is the args
+    //     alone and must not start reading staging state.
+    ...(input.projectPath !== undefined && !input.subjectId
+      ? { rankingSkipped: RANKING_SKIPPED_NOTE }
+      : {}),
     results,
   };
 
@@ -551,10 +606,24 @@ export async function recordSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
+      // `rankingSkipped` is withheld from what gets staged. The staged envelope
+      // becomes `results/<logId>.json` — shared project state that moves between
+      // machines, and a record of what the upstream search RETURNED. This field
+      // is neither: it is a model-facing instruction about how to call the tool
+      // better next time, and it would otherwise be retained in 112 of 171
+      // sidecars on a real run. Same reasoning as the `projectPath`/`subjectId`
+      // strip inside `finalizeStagedResults`.
+      //
+      // Withheld HERE and not inside `stageSearchResults`, which is shared by
+      // `record_search`, `fulltext_search` and `external_links_search` and should
+      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // itself untouched, so the live response the model reads is unaffected and
+      // the key order (`rankingSkipped` before `results`) is preserved in both.
+      const { rankingSkipped: _advisory, ...persistable } = out;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",
-        response: out,
+        response: persistable,
       });
     } catch (error) {
       out.staged = null;
@@ -692,6 +761,10 @@ export async function recordSearchTool(
   if (
     isMarriageSearch &&
     foundNobody &&
+    // Explicit, rather than leaning on `isSubCountryPlace` to narrow: that
+    // predicate is intentionally not a type guard (see its comment), and this is
+    // what makes `jurisdictionHints.searchedPlace` a sound required `string`.
+    searchedPlace !== undefined &&
     isSubCountryPlace(searchedPlace) &&
     input.subjectId &&
     input.projectPath
