@@ -121,6 +121,11 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
     ("Edit", {"file_path": r"C:\Users\gen\proj\tree.gedcomx.json"}, "tree.gedcomx.json"),
     ("Write", {"file_path": "research.json"}, "research.json"),  # bare, no dir
     # --- no opinion: not a write tool ---
+    # MultiEdit stands in for a copy quietly WIDENING its tool tuple. The
+    # protected-file set has its own equality test below; the tool set has only
+    # these vectors, so without a negative here an addition to one copy's tuple
+    # passes every other assertion in the module.
+    ("MultiEdit", {"file_path": "/project/research.json"}, None),
     ("Read", {"file_path": "/project/research.json"}, None),
     ("Bash", {"command": "cat research.json"}, None),
     ("Glob", {"pattern": "**/research.json"}, None),
@@ -140,7 +145,12 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
 ]
 
 
-@pytest.mark.parametrize("label,predicate,protected", LOADED, ids=lambda v: str(v))
+# A list of ids, not a callable: pytest applies an `ids=` callable to each
+# argument separately, so it would be handed the function object and put its
+# memory address in the test id (different every run).
+@pytest.mark.parametrize(
+    "label,predicate,protected", LOADED, ids=[label for label, _, _ in LOADED]
+)
 def test_each_implementation_was_actually_loaded(label, predicate, protected):
     """Guards the loader: an empty namespace would make every test below pass."""
     assert callable(predicate), f"{label}: predicate did not load"
@@ -149,7 +159,9 @@ def test_each_implementation_was_actually_loaded(label, predicate, protected):
 
 def test_all_implementations_protect_the_same_files():
     sets = {label: protected for label, _, protected in LOADED}
-    distinct = {v for v in sets.values()}
+    # frozenset, not the tuple: membership is what the predicates test, so
+    # reordering the two names is behaviour-neutral and must not fail here.
+    distinct = {frozenset(v) for v in sets.values()}
     assert len(distinct) == 1, (
         "PROTECTED_PROJECT_FILES has diverged across the lockdown copies — a "
         f"file protected in one place and not another: {sets}"
@@ -183,8 +195,22 @@ def test_no_unregistered_copy_of_the_lockdown_exists():
     # `--untracked` matters: without it a copy added but not yet staged is
     # invisible, so this test would pass on exactly the commit that introduces
     # the drift. (It did, once, while being written.)
+    #
+    # Matched on an ASSIGNMENT, not a mention: a plain-string search also hits
+    # any test, comment, or doc script that merely names the constant, and that
+    # file would then fail here as a phantom "unregistered copy". `[[:space:]]`,
+    # not `\s` — `git grep -E` is POSIX ERE, where `\s` matches nothing and every
+    # registered copy reads as missing.
     found = subprocess.run(
-        ["git", "grep", "-l", "--untracked", "PROTECTED_PROJECT_FILES", "--", "*.py"],
+        [
+            "git",
+            "grep",
+            "-lE",
+            "--untracked",
+            r"PROTECTED_PROJECT_FILES[[:space:]]*[:=]",
+            "--",
+            "*.py",
+        ],
         cwd=REPO,
         capture_output=True,
         text=True,
