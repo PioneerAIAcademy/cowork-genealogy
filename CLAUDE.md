@@ -122,7 +122,7 @@ mocks (no E2B/Anthropic/OAuth needed).
   process doc, a measurement write-up, or a spec is *not* a plan: those go in
   `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
   "is this still pending?" at a glance. Eight such files were moved out in the
-  #953 follow-up.
+  follow-up that moved them.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
@@ -131,8 +131,17 @@ mocks (no E2B/Anthropic/OAuth needed).
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
-    --title "…" --body "…"
+    --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+  …"
   ```
+
+  Open the body with a `**Touches:**` line naming the files the work would
+  change, when you know them. Overlap between issues here is almost never
+  same-title — it is two issues wanting different lines in one file — and that
+  line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
+  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
+  fit against ~180 open issues is that pass's job, not the filer's.
 
   | Label | Use for |
   |---|---|
@@ -143,7 +152,8 @@ mocks (no E2B/Anthropic/OAuth needed).
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
   `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-  card in Backlog. A `gh` token without the `project` scope — the default after
+  card in Backlog; the one exception is the `feedback` label, which routes to
+  Ready. A `gh` token without the `project` scope — the default after
   `gh auth login` — fails a board write *while still creating the issue*, which
   looks like success. Reference the number in the PR body.
 
@@ -272,10 +282,8 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port — issue #911, which
-gates it on calibrating the shadow window first (#940, which used to carry this,
-is closed: its raw-write half shipped in #984/#989 and its detector half moved
-to #1054).
+design; it exists. What is missing is a production port, and it is gated on
+calibrating the shadow window first — the raw-write half has shipped.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -300,9 +308,9 @@ CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
 deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
 (`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
 and the hosted path set `"true"`, so they run *with* deferral, which is the
-opposite of what their comments claimed until #1173 corrected them. Nothing here
+opposite of what their comments claimed until they were corrected. Nothing here
 depends on the flag's value; the bare-name rule above is correct either way.
-Flipping it is separate work that has to re-measure the tool mix (issue #1110).
+Flipping it is separate work that has to re-measure the tool mix.
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
@@ -631,6 +639,12 @@ explicitly with the Agent tool.
   and rejects plans with no falsifiable acceptance check. Step 3 of
   [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), capped at two rounds
   (ADR-0007). `/critique-plan [path]`.
+- **`drift-critic`** — read-only. The step-6 counterpart: reads the plan and the
+  branch's full diff (including untracked files) and reports what the
+  implementation did that the plan didn't call for, what the plan called for
+  that isn't there, and what contradicts it. Not a bug finder — `/code-review`
+  owns correctness. A deviation recorded in `PLAN.md` or the PR body is not
+  drift. `/check-drift [path]`.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.
@@ -658,6 +672,13 @@ What replaced them is the templates they pointed at, used directly:
 | `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
 | `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
 | `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
+
+## Reviewing a PR
+
+Use `/review` (`.claude/skills/review/`). It ships with the repo, so cloning is
+the whole install — do not reach for a `/review` from any other toolchain, which
+teammates do not have and which reads neither this repo's suites nor the human
+reviews on the PR.
 
 ## What NOT to do
 

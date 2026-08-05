@@ -314,6 +314,10 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -q
 
+.PHONY: harness-lint
+harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
+	cd eval/harness && uv run ruff check .
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
@@ -349,11 +353,34 @@ gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-
 	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
 
 .PHONY: eval-timings
-eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20] [SINCE=all|N|YYYY-MM-DD]
 	# Reads the timing instrumentation already in the run logs — does NOT
 	# re-run anything. Use it to spot makespan long poles and the stall tax
 	# week over week. TOP overrides how many slowest tests to list.
-	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
+	# Shows every skill and MARKS the stale ones (newest run log >14d), sorted
+	# last, with a named summary. It does not filter: this is one row per
+	# skill, so a date cut would delete the skill rather than narrow a sample —
+	# hiding the very thing to act on, that it needs a re-run. SINCE=N filters
+	# when you want it.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: prune-runlogs
+prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
+	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+	#
+	# You should not normally need PRUNE: the harness prunes to the newest 5
+	# candidates per skill on every write (harness/runlog.py), so the cap holds
+	# on its own. This is the catch-up sweep and the escape hatch for a
+	# different K.
+	#
+	# REHASH=1 migrates pre-v3 logs (snapshot content -> sha256 digests,
+	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
+	# value is the same normalized string build_snapshot hashes, so no re-run
+	# is needed and no skill's active state changes.
+	cd eval/harness && uv run python -m scripts.prune_runlogs \
+	  $(if $(REHASH),--rehash,) \
+	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
+	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
@@ -448,31 +475,43 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) across every committed e2e run: make e2e-corpus | TEST=<slug>
-	# Pure analysis over committed run JSONs — no live run, no API. The
-	# cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# Defaults to the last 14 days and prints the window it used: the repo
+	# moves fast enough that older runs often describe behaviour already
+	# fixed, so a whole-corpus average silently mixes eras. SINCE=all opts
+	# back in for a retroactive integrity scan (issues #913, #1145).
+	#
+	# Also counts violations per arm and per fixture, and refuses to print a
+	# percentage whose denominator would be doing the work (issue #1176).
+	#
+	# The cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),)
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40
+e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD
 	# Also pure analysis, no API. Existed with no make target until #972.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),)
+	# Windowed to 14 days like every other reader. #911 step 1 wants a
+	# maximum-sample replay — pass SINCE=all for it; step 4 answers the
+	# staleness that motivates the window with *new* runs anyway.
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,)
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: skill-latency
-skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
+skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
@@ -480,7 +519,8 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
-		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
+		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,)) \
+		$(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
@@ -588,6 +628,12 @@ deploy-preflight:
 	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
 	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
 	fi
+	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING, unlike
+	# the advisory above: this one is a real build of the thing about to ship, so
+	# a failure here is a failure on the Fly builder minutes later. Nothing in CI
+	# builds this image — `make deploy` is the only path, so this is the check.
+	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
+	@node scripts/check-deploy-stage1.mjs
 
 .PHONY: deploy
 deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)

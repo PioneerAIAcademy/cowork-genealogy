@@ -6,6 +6,7 @@ two implementations are forced to agree byte-for-byte.
 """
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -138,11 +139,11 @@ def test_build_snapshot_covers_skill_files(tmp_path: Path):
     repo = tmp_path
     skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "search-familysearch-wiki"
     skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text("---\nname: search-familysearch-wiki\n---\nbody\n")
-    (skill_dir / "template.md").write_text("template\n")
+    (skill_dir / "SKILL.md").write_text("---\nname: search-familysearch-wiki\n---\nbody\n", encoding="utf-8")
+    (skill_dir / "template.md").write_text("template\n", encoding="utf-8")
     tests_dir = repo / "eval" / "tests" / "unit" / "search-familysearch-wiki"
     tests_dir.mkdir(parents=True)
-    (tests_dir / "rubric.md").write_text("# rubric\n")
+    (tests_dir / "rubric.md").write_text("# rubric\n", encoding="utf-8")
 
     snap = build_snapshot(skill="search-familysearch-wiki", repo_root=repo)
     assert "packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md" in snap
@@ -160,15 +161,15 @@ def test_build_snapshot_embeds_referenced_scenarios_and_fixtures(tmp_path: Path)
                  "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": "scenario-a"},
         "mcp_fixtures": ["fix-1", "fix-2"],
-    }))
+    }), encoding="utf-8")
     scen_dir = repo / "eval" / "fixtures" / "scenarios" / "scenario-a"
     scen_dir.mkdir(parents=True)
-    (scen_dir / "research.json").write_text("{}")
-    (scen_dir / "README.md").write_text("# scenario\n")
+    (scen_dir / "research.json").write_text("{}", encoding="utf-8")
+    (scen_dir / "README.md").write_text("# scenario\n", encoding="utf-8")
     fix_dir = repo / "eval" / "fixtures" / "mcp"
     fix_dir.mkdir(parents=True)
-    (fix_dir / "fix-1.json").write_text('{"tool": "x", "description": "y", "response": {}}')
-    (fix_dir / "fix-2.json").write_text('{"tool": "x", "description": "y", "response": {}}')
+    (fix_dir / "fix-1.json").write_text('{"tool": "x", "description": "y", "response": {}}', encoding="utf-8")
+    (fix_dir / "fix-2.json").write_text('{"tool": "x", "description": "y", "response": {}}', encoding="utf-8")
 
     snap = build_snapshot(skill="x", repo_root=repo)
     assert "eval/fixtures/scenarios/scenario-a/research.json" in snap
@@ -181,6 +182,53 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
     """No skill dir → empty snapshot, no exception."""
     snap = build_snapshot(skill="nope", repo_root=tmp_path)
     assert snap == {}
+
+
+def _skill_repo(tmp_path: Path, body: str = "body\n") -> Path:
+    """Minimal repo with one skill whose SKILL.md holds `body`."""
+    skill_dir = tmp_path / "packages" / "engine" / "plugin" / "skills" / "s1"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_build_snapshot_stores_hashes_not_content(tmp_path: Path):
+    """schema_version 3: values are sha256 digests, not file bytes. Git holds
+    the content; the snapshot only has to answer "does this still match?"."""
+    repo = _skill_repo(tmp_path, "---\nname: s1\n---\nhello\n")
+    snap = build_snapshot(skill="s1", repo_root=repo)
+
+    rel = "packages/engine/plugin/skills/s1/SKILL.md"
+    assert snap[rel] == hash_content("---\nname: s1\n---\nhello\n")
+    assert all(re.fullmatch(r"[a-f0-9]{64}", v) for v in snap.values())
+
+
+def test_diff_snapshot_hashed_matches_and_detects_drift(tmp_path: Path):
+    """A hashed snapshot compares clean against the tree it was built from,
+    and flags the path once the file changes."""
+    repo = _skill_repo(tmp_path, "original\n")
+    snap = build_snapshot(skill="s1", repo_root=repo)
+    assert diff_snapshot_vs_disk(snap, repo) == {}
+
+    (repo / "packages/engine/plugin/skills/s1/SKILL.md").write_text(
+        "edited\n", encoding="utf-8"
+    )
+    assert diff_snapshot_vs_disk(snap, repo) == {
+        "packages/engine/plugin/skills/s1/SKILL.md": "content-differs"
+    }
+
+
+def test_diff_snapshot_still_reads_legacy_content_snapshot(tmp_path: Path):
+    """Pre-3 run logs stored normalized content. They must keep evaluating
+    correctly so in-flight branches and unmigrated worktrees aren't stranded."""
+    repo = _skill_repo(tmp_path, "original\n")
+    rel = "packages/engine/plugin/skills/s1/SKILL.md"
+
+    legacy = {rel: "original\n"}  # content, not a digest
+    assert diff_snapshot_vs_disk(legacy, repo) == {}
+
+    (repo / rel).write_text("edited\n", encoding="utf-8")
+    assert diff_snapshot_vs_disk(legacy, repo) == {rel: "content-differs"}
 
 
 def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
@@ -205,7 +253,7 @@ def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
 
     snap = build_snapshot(skill="router", repo_root=repo)
     assert "packages/engine/plugin/agents/record-extractor.md" in snap
-    assert snap["packages/engine/plugin/agents/record-extractor.md"] == (
+    assert snap["packages/engine/plugin/agents/record-extractor.md"] == hash_content(
         "---\nname: record-extractor\n---\nagent body\n"
     )
     # Unreferenced agents are NOT embedded.
@@ -236,8 +284,8 @@ def test_build_snapshot_excludes_mcp_server_source(tmp_path: Path):
     src_dir = repo / "packages" / "engine" / "mcp-server" / "src"
     tools_dir = src_dir / "tools"
     tools_dir.mkdir(parents=True)
-    (tools_dir / "wikipedia.ts").write_text("export const x = 1;\n")
-    (src_dir / "constants.ts").write_text("export const UA = 'mozilla';\n")
+    (tools_dir / "wikipedia.ts").write_text("export const x = 1;\n", encoding="utf-8")
+    (src_dir / "constants.ts").write_text("export const UA = 'mozilla';\n", encoding="utf-8")
 
     snap = build_snapshot(skill="x", repo_root=repo)
     assert "packages/engine/mcp-server/src/tools/wikipedia.ts" not in snap
@@ -249,11 +297,11 @@ def test_build_snapshot_excludes_mcp_server_source(tmp_path: Path):
 
 def test_diff_detects_content_change(tmp_path: Path):
     f = tmp_path / "skill.md"
-    f.write_text("original\n")
+    f.write_text("original\n", encoding="utf-8")
     snapshot = {"skill.md": "original\n"}
     assert diff_snapshot_vs_disk(snapshot, tmp_path) == {}
 
-    f.write_text("edited\n")
+    f.write_text("edited\n", encoding="utf-8")
     diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
     assert diffs == {"skill.md": "content-differs"}
 
@@ -281,7 +329,7 @@ def test_diff_ignores_legacy_mcp_server_source(tmp_path: Path):
         "skill.md": "body\n",
         "packages/engine/mcp-server/src/constants.ts": "export const UA = 'old';\n",
     }
-    (tmp_path / "skill.md").write_text("body\n")
+    (tmp_path / "skill.md").write_text("body\n", encoding="utf-8")
     # The src/ file is absent on disk AND would differ — yet neither is flagged.
     assert diff_snapshot_vs_disk(snapshot, tmp_path) == {}
 

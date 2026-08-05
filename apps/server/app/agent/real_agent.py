@@ -473,7 +473,7 @@ class RealAgent:
         if sid and sid != self._resume_id:
             self._resume_id = sid
             try:
-                self._session_file.write_text(sid)
+                self._session_file.write_text(sid, encoding="utf-8")
             except OSError:
                 pass
 
