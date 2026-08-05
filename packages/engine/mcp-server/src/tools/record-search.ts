@@ -811,6 +811,19 @@ export const recordSearchToolSchema = {
     "not logged in. For ambiguous place names, call the places tool first. " +
     "To scope to a specific record collection, call the collections tool " +
     "first to find the right collectionId.",
+  // The `*Exact` descriptions below deliberately state what each qualifier does
+  // to the result COUNT rather than to retrieval. Measured live against
+  // /service/search/hr/v2/personas 2026-08-04 (issue #1093): these qualifiers do
+  // not change which records rank first, so none of them can surface a target a
+  // fuzzy search buries. Comparing the full top 200: the fuzzy and exact ID lists
+  // were identical for Zsigmondy (108,398 -> 634) and Mingazzini (40,906 -> 1,795),
+  // and for Geach (18,520,641 -> 23,185, an 800x count inflation) held 2 fuzzy-only
+  // records, the first at rank 100, moving the rest by at most 1 position. A
+  // county-scoped marriage search measured 35,510 fuzzy vs 2 exact with the same
+  // target ranked first either way, and the WRONG county returned 35,473 against
+  // the right county's 35,510. `surnameExact` is additionally harmful: on a record indexed
+  // `Neill`, surname `Neal` + surnameExact returns 0 where fuzzy returns the
+  // record. Full figures and method: docs/specs/record-search-tool-spec-v2.md.
   inputSchema: {
     type: "object",
     properties: {
@@ -819,59 +832,59 @@ export const recordSearchToolSchema = {
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact: { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants). Applies to `surnameAlt` too when both are set." },
-      givenNameExact: { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants). Applies to `givenNameAlt` too when both are set." },
+      surnameExact: { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count, not the ranking. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
+      givenNameExact: { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count, not the ranking. Excludes diminutives a period record may use (`Betty` for `Elizabeth`); pass a variant as a separate `givenName` instead. Applies to `givenNameAlt` too." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched exactly (no fuzz around the bounds)." },
+      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched hard rather than fuzzed. Excludes records whose indexed year falls just outside the range — common when an age was reported rather than a date." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      birthPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions (it still descends to child localities). Large effect on the count, none on the ranking; an unqualified county total is not a usable exhaustiveness signal. Set it when the count must mean something." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
+      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
       deathPlace: { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      deathPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      deathPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       marriageYearFrom: { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
       marriageYearTo: { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
+      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
       marriagePlace: { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      marriagePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      marriagePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
+      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      residencePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      residencePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       anyYearFrom: { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
       anyYearTo: { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched exactly." },
+      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched hard. Matched hard rather than fuzzed — same caution as `birthYearExact`." },
       anyPlace: { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      anyPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      anyPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
 
       spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
       spouseSurname: { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
+      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires the spouse's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      spouseSurnameExact: { type: "boolean", description: "When `true`, requires the spouse's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
       fatherSurname: { type: "string", description: "Father's family name." },
-      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
+      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires the father's given name to be present and match exactly. Unqualified it keeps records where the father is not indexed while still excluding a different father; setting it drops those, plus abbreviations like `Wm`. Rarely worth it." },
+      fatherSurnameExact: { type: "boolean", description: "When `true`, requires the father's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
       motherSurname: { type: "string", description: "Mother's family name." },
-      motherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
+      motherGivenNameExact: { type: "boolean", description: "When `true`, requires the mother's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      motherSurnameExact: { type: "boolean", description: "When `true`, requires the mother's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent." },
       parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
+      parentGivenNameExact: { type: "boolean", description: "When `true`, requires the parent's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      parentSurnameExact: { type: "boolean", description: "When `true`, requires the parent's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate)." },
       otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship." },
-      otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
-      otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
+      otherGivenNameExact: { type: "boolean", description: "When `true`, requires the co-occurring given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      otherSurnameExact: { type: "boolean", description: "When `true`, requires the co-occurring family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
 
       collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
