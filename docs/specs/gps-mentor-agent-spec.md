@@ -531,11 +531,14 @@ site actually follow this?"
    fact. It asks whether the sentence a descendant reads was written with care.
 
    Scope boundary: this reviews prose that already exists. The *writing*-side
-   doctrine — what `proof-conclusion` and `person-evidence` should do at the point
-   of disclosure, and the CARE / Indigenous-data-sovereignty dimension — is a
-   separate, unstarted piece of work in `docs/plan/content-advisory-doctrine-plan.md`.
-   Until it lands the mentor can flag a defect the pipeline gives no guidance to
-   avoid, so keep this check's findings advisory and specific rather than doctrinal.
+   doctrine lives in the skills that produce it — `proof-conclusion` opens a
+   sensitive passage with a content note and a plain-language summary before the
+   particulars, and names the CARE principles where the records are Indigenous
+   communities'; `person-evidence` flags a sensitive family-structure finding
+   forward instead of folding it into a routine `pe_` entry. This check is the
+   review-side counterpart, not a substitute: findings stay advisory and specific
+   ("this sentence lands harder than it needs to") rather than restating that
+   doctrine back at a skill that already carries it.
 
 5. **Research leads.** Does the write-up tell the reader where to go next? An
    honest one names its own remaining gaps and the records still worth trying. It

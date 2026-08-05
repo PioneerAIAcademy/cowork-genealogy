@@ -1,15 +1,18 @@
 # Content-advisory / CARE doctrine for sensitive findings — plan
 
-> **Status:** Proposed — not started, for the writing side this plan is about.
+> **Status: shipped — this file should be deleted.** Both changes §3 lists landed
+> in #1339: `proof-conclusion/SKILL.md` now carries content-note-first disclosure
+> with the CARE principles named, and `person-evidence/SKILL.md` carries the
+> flag-forward rule. #1339 did not delete this plan, so it kept claiming "not
+> started" for work that had shipped — the exact failure CLAUDE.md warns about for
+> a plan's `**Status:**` line. Only §4.2's stretch-goal eval fixture is outstanding;
+> per this repo's convention that belongs in an issue, not in a surviving plan.
 > Authored 2026-07-24 from a review of `DigitalArchivst/Open-Genealogy` (external
-> repo, cloned and read directly). No implementation branch yet.
-> **Partly pre-empted on the review side (#848):** `gps-mentor`'s narrative-craft
-> checks (`gps-mentor-agent-spec.md` §6.4, check 4) now review a finished write-up
-> for whether sensitive findings are *handled* with tact. That is review-only and
-> deliberately not doctrine — it flags a defect this plan's work would prevent.
-> Everything below (content-warning-first and gradual disclosure at the point of
-> disclosure, the CARE / Indigenous-data-sovereignty dimension, `proof-conclusion`
-> and `person-evidence`) remains unstarted and is still the substance of the plan.
+> repo, cloned and read directly).
+> **Related, review side (#848):** `gps-mentor`'s narrative-craft checks
+> (`gps-mentor-agent-spec.md` §6.4, check 4) review a finished write-up for whether
+> sensitive findings are *handled* with tact. That complements the writing-side
+> doctrine above rather than substituting for it.
 > **Goal:** give `proof-conclusion` (the actual disclosure point) and
 > `person-evidence` (the skill most likely to first surface a sensitive
 > discovery) explicit doctrine for handling findings like unknown

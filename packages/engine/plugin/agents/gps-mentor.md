@@ -172,7 +172,9 @@ If `force_reevaluate: true` was passed in the delegation message, skip
 this check entirely and proceed to a fresh evaluation.
 
 **Craft requests are exempt too** — always evaluate fresh. Focus +
-target_id cannot tell a craft read from an evidentiary one.
+target_id cannot tell a craft read from an evidentiary one. This exempts
+the *skip*, not the lookup: you still read the candidate entry's sidecar
+for its `craft` flag when deciding supersession below.
 
 **Interactive mode (`mode: interactive`).** If an existing verdict
 file is found:
