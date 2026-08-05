@@ -1,8 +1,23 @@
 # Search Strategy Levers — FamilySearch Records API
 
 When a search returns too many, too few, or zero results, iterate
-through these levers. All levers are expressed as API parameter
-manipulations.
+through these levers. Levers below are expressed in the upstream API's
+`q.*` / `f.*` syntax; `record_search` takes **camelCase** parameters:
+
+| API syntax | `record_search` parameter |
+|---|---|
+| `q.surname` / `q.givenName` | `surname` / `givenName` |
+| `q.<relative>GivenName` / `q.<relative>Surname` | `<relative>GivenName` / `<relative>Surname` — `spouse`, `father`, `mother`, `parent`, `other` |
+| `q.birthLikeDate.from` / `.to` | `birthYearFrom` / `birthYearTo` (same shape for `death`, `marriage`, `residence`, `any`) |
+| `q.birthLikePlace` | `birthPlace` (likewise `deathPlace`, `marriagePlace`, `residencePlace`, `anyPlace`) |
+| `q.anyDate` / `q.anyPlace` | `anyYearFrom`/`To`, `anyPlace` |
+| `<term>.exact=on` | `<term>Exact: true` — see the qualifier table at the end |
+| `f.collectionId` | `collectionId` |
+| `q.sex` | `sex` |
+| `q.recordCountry` / `q.recordSubcountry` | `recordCountry` / `recordSubdivision` |
+
+A few API constructs named below have **no** `record_search` parameter
+and are marked *(not reachable through `record_search`)*.
 
 ## Default strategy: broad-to-narrow
 
@@ -19,7 +34,9 @@ and expect a specific record.
 1. **>5,000 hits** → Narrow by `f.collectionId` first, then place
    jurisdiction, then add spouse/parent names.
 2. **100–5,000 hits** → Add `f.collectionId` and `q.sex`; add parent
-   name; consider `.exact=on` on place.
+   name. (A place qualifier will cut the count sharply but will not
+   re-order the results, so it is not the lever that surfaces a record —
+   see the qualifier table at the end.)
 3. **10–100 hits** → Evaluate the top results directly.
 4. **0 hits** → Apply levers in priority order (see below).
 
@@ -67,7 +84,7 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Restrict to collection | Add `f.collectionId={id}` | Strong match expected in one collection |
-| Drop all filters, single identifier | Search uncommon spouse name only, or `q.batchNumber` only | Brick wall; brute-force exhaustive |
+| Drop all filters, single identifier | Search an uncommon spouse name alone. (`q.batchNumber` alone is the other half of this lever upstream, but is *not reachable through `record_search`* — the tool has no batch parameter, so a batch-scoped search cannot be issued from here at all.) | Brick wall; brute-force exhaustive |
 
 ## Cluster / FAN club levers
 
@@ -112,11 +129,35 @@ A reasonably exhaustive indexed Records search has been performed when:
 - Checked for image-only collections via the Catalog
 - Documented every search attempt including zero-hit searches
 
-## Quick-reference: when to use `.exact=on`
+## Quick-reference: the `*Exact` qualifiers (usually: don't)
 
-| Parameter type | Default fuzzy expands to… | Use `.exact=on` when… |
+Measured 2026-08-04 against the live API. **These qualifiers change how
+many results come back. They do not change which results rank first, so
+none of them can surface a record a fuzzy search buried.** Displacement
+in the top 200 was 0 positions for two rare surnames and 1 position for
+a third whose count they cut 800-fold. If a search is not finding the
+record, an exact qualifier is not the lever — a different name value, a
+different place level, or a relative's name is.
+
+They are written `.exact=on` in the API and **camelCase booleans on the
+tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
+`marriageYearExact`, and so on for every event and relative family.
+
+| Tool parameter | Default (fuzzy) reaches | Setting it |
 |---|---|---|
-| Given name | Nicknames, abbreviations, diacritic variants | Name is a verbatim match; rare formal name |
-| Surname | Spelling variants via phonetic algorithm | Name is unusual; result list too noisy |
-| Place | Up to 3 jurisdiction levels above | Exclude parent-jurisdiction matches (children still included) |
-| Year | ±~2 years (undocumented, varies) | You have a verified date from a vital record |
+| `surnameExact` | Spelling variants via the phonetic algorithm — this is what bridges an index misspelling | **Usually wrong.** On a record indexed `Neill`, `surname: "Neal"` + `surnameExact` returned **0** where fuzzy returned the target. Only with a **confirmed** indexed spelling, or to size a pool (below) |
+| `givenNameExact` | Abbreviations (`Wm`→`William`) and *some* nicknames — `Eliza` and `Betsy` for `Elizabeth`, but not `Betty` | Excludes every variant, including the ones fuzzy did reach. To chase a nickname, pass it as its own `givenName` value instead |
+| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned 39,750 against the right county's 39,793 | Cuts the count hard (35,510 → 2 in one case) without re-ordering anything. Use when a total has to be defensible, not to find a record |
+| `<event>YearExact` | Fuzz around the range bounds | Excludes records whose indexed year sits just outside the range — common where an age was reported rather than a date. Fair when you hold a vital-record date |
+| relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …) | Keeps records where that relative was **never indexed**, while still excluding a different one | Drops those silent records *and* abbreviation variants — a 300-result survey lost the 11% indexed `Wm`/`Wm.` Rarely worth it |
+| `recordCountry` / `recordSubdivision` | Nothing — **already strict** | No qualifier exists and none is needed |
+
+**The one case that is genuinely about a qualifier: sizing a pool.** If
+you are about to record `results_available` or argue a search was
+reasonably exhaustive, an unqualified total will not support the claim —
+14,095 candidates is not a surveyed pool, and the same search with a
+qualifier returned 51. Narrow first, then make the claim.
+
+Full figures and method: `docs/specs/record-search-tool-spec-v2.md`
+§ "What `.exact=on` actually does", reproduced by
+`dev/probe-search-qualifiers.ts`.
