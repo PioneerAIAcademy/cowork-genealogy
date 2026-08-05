@@ -122,7 +122,7 @@ mocks (no E2B/Anthropic/OAuth needed).
   process doc, a measurement write-up, or a spec is *not* a plan: those go in
   `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
   "is this still pending?" at a glance. Eight such files were moved out in the
-  #953 follow-up.
+  follow-up that moved them.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
@@ -282,10 +282,8 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port — issue #911, which
-gates it on calibrating the shadow window first (#940, which used to carry this,
-is closed: its raw-write half shipped in #984/#989 and its detector half moved
-to #1054).
+design; it exists. What is missing is a production port, and it is gated on
+calibrating the shadow window first — the raw-write half has shipped.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -310,9 +308,9 @@ CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
 deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
 (`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
 and the hosted path set `"true"`, so they run *with* deferral, which is the
-opposite of what their comments claimed until #1173 corrected them. Nothing here
+opposite of what their comments claimed until they were corrected. Nothing here
 depends on the flag's value; the bare-name rule above is correct either way.
-Flipping it is separate work that has to re-measure the tool mix (issue #1110).
+Flipping it is separate work that has to re-measure the tool mix.
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
