@@ -33,7 +33,7 @@ def test_baseline_always_includes_write_and_edit(tmp_path):
     skill = tmp_path / "translation"
     skill.mkdir()
     (skill / "SKILL.md").write_text(
-        "---\nname: translation\nallowed-tools: []\n---\n# Translation"
+        "---\nname: translation\nallowed-tools: []\n---\n# Translation", encoding="utf-8"
     )
     tools = compute_allowed_tools("translation", tmp_path)
     assert "Write" in tools
@@ -45,7 +45,7 @@ def test_already_qualified_mcp_tool_passed_through(tmp_path):
     skill = tmp_path / "x"
     skill.mkdir()
     (skill / "SKILL.md").write_text(
-        "---\nname: x\nallowed-tools:\n  - mcp__custom__special\n  - bare_tool\n---"
+        "---\nname: x\nallowed-tools:\n  - mcp__custom__special\n  - bare_tool\n---", encoding="utf-8"
     )
     tools = compute_allowed_tools("x", tmp_path)
     assert "mcp__custom__special" in tools
@@ -64,7 +64,7 @@ def test_missing_skill_md_returns_baseline(tmp_path):
 def test_no_frontmatter_returns_baseline(tmp_path):
     skill = tmp_path / "no-fm"
     skill.mkdir()
-    (skill / "SKILL.md").write_text("# No frontmatter here\nJust body content.")
+    (skill / "SKILL.md").write_text("# No frontmatter here\nJust body content.", encoding="utf-8")
     tools = compute_allowed_tools("no-fm", tmp_path)
     assert "Read" in tools
     assert not any(t.startswith("mcp__") for t in tools)

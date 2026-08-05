@@ -178,10 +178,14 @@ def declared_skill_tools(skill_name: str, skills_dir: Path) -> set[str]:
 
     The gap between them is exactly the set a skill holds only because a
     subagent needs it — which the skill itself must not call. The per-context
-    policy (harness/context_policy.py) uses this to tell a legitimate direct
-    call from a boundary violation: `search-images` declares `image_read` and
-    browses pages itself, while `record-extraction` does not declare it and
-    holds it only via `@plugin:image-reader`, so its router must delegate.
+    policy (harness/context_policy.py) uses this for its "unless the skill
+    declared the tool itself" exemption: a legitimate direct call by a skill
+    that owns the tool is not a boundary violation. Today no skill declares
+    either guarded tool — `image_read` lives only on `agents/image-reader-opus.md`
+    (search-images moved to delegating via `@plugin:image-reader` on 2026-07-17)
+    and `extraction_append` only on `agents/record-extractor.md` — so the
+    exemption is currently unreachable and `agent_id` presence alone
+    discriminates (see `context_policy.py` and `e2e/orchestrator.py`).
     """
     fm = load_skill_frontmatter(skills_dir / skill_name / "SKILL.md")
     return {

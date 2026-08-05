@@ -259,7 +259,7 @@ stripped starting tree, then reviewed and pruned by the author.
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
 | `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
-| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
+| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched). For a resolved record-hint negative, see the disproving-record/absence split in §3.6.1 |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
@@ -355,6 +355,42 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+
+#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+
+A resolved-negative (outcome (c) above) makes two different claims,
+and they do not take the same citation:
+
+- **The disproving record** — whatever real record makes the hint
+  implausible or contradicted (an age impossibility, a date that
+  postdates a marriage, a directly-examined record that turns out to
+  be someone else). This is a real, ark-able record.
+- **The absence** — "no record in the collection establishes X." By
+  definition there is nothing to point an ark at.
+
+Once a resolvable ark is required on record-hint resolutions (issue
+#970), that requirement attaches to the **disproving record only**.
+Write it into the `avoid` finding's or the paired required finding's
+`supporting_sources` as a literal `ark:/61903/...`. The absence claim
+itself is written as plain prose — ideally naming the collection and
+date range searched — and is not required to carry an ark; none
+exists to cite. A fixture satisfies the ark requirement as long as
+*some* `supporting_sources` entry, on some finding in the fixture,
+carries the disproving record's ark — the absence sentence riding
+alongside it with no ark is not a gap.
+
+**The ark must be the full `ark:/61903/...` path — not the bare
+`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
+date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
+one), and a FamilySearch tree PID is shape-identical to a record ark
+id — so the cheapest way to satisfy a bare-id lint is pasting the
+fixture's own `source_pid`, which carries zero record provenance.
+`validate_fixture.py`'s `record_hint_citation_errors` enforces the
+full-path form for this reason; it cannot verify the ark actually
+resolves to the record claimed (CI holds no FamilySearch token) —
+what it buys is that a false citation becomes checkable in one click
+by a human reviewer instead of invisible.
 
 ---
 
@@ -615,6 +651,58 @@ recoverable *from records alone*. A real validity run (§14) proves
 this — a run can only pass with these tools blocked, so an
 answer reachable only via the tree will fail and the fixture won't validate.
 
+### 6.1.1 Main-thread `extraction_append` block (subagent-only guard)
+
+The same `PreToolUse` hook enforces one per-context rule in e2e:
+`extraction_append` may not be called on the main thread. Writing extracted
+assertions and sources is the Task-spawned `record-extractor` subagent's job; a
+main-thread call is the router substituting for a *failed* spawn and doing the
+extraction itself — a shape observed in production.
+
+The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
+in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
+subagent is its only legitimate caller and every legitimate call carries
+`agent_id`. The unit harness's third clause (the skill declared the tool itself)
+can never fire for it. The block is therefore a tool-specific check
+(`is_main_thread_extraction_append`), not the whole `SUBAGENT_ONLY_TOOLS` policy,
+so that a future skill legitimately declaring a guarded tool is not denied here.
+
+`image_read`, the set's other member, satisfies the same condition today — no
+skill has declared it since `search-images` moved to `@plugin:image-reader`
+(2026-07-17), and it now lives only on `agents/image-reader-opus.md` — so it is
+equally enforceable in e2e and is not enforced there yet. Generalizing the
+check to the whole set is tracked in `context_policy.py`'s own docstring.
+
+Semantics match the tree block — the denied call doesn't run, doesn't count
+toward the cap, and doesn't stop the run — but the denial reason tells the router
+to **report the spawn failure and stop**, not to retry another way (a deny that
+leaves the goal in place just relocates the substitution). Denied attempts are
+recorded in a separate `blocked_context_calls` array
+(`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
+because this is a write denied by a different guard.
+
+This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
+Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
+binds even under `bypassPermissions`), but its matcher is `Write|Edit|NotebookEdit`
+— it never sees an MCP tool call. Porting the per-context policy there is
+pending; the harness comments carry the pointer.
+
+This guard covers only the *main-thread* half of the `extraction_append`
+policy. The complementary *delegate* half — a general-purpose or otherwise
+unnamed subagent (anything but `record-extractor`) making the write — is caught
+post-hoc by `find_protected_writes_by_unnamed_delegate`
+(guardrail-enforcement-spec §11). That detector lists a main-thread
+call among its "legitimate" cases, but only as an attribution class (a
+main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
+actually forbids the router's main-thread call.
+
+The two halves are not enforced alike, and the difference matters when reading a
+run: the main-thread half is **denied**, the delegate half is only **logged**.
+`protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
+`E2eResult.__post_init__`, so it never moves the compliance axis until its
+false-positive rate is calibrated. A non-`record-extractor` delegate's
+`extraction_append` therefore still succeeds today; it is recorded, not blocked.
+
 ### 6.2 Provided documents (bundled external evidence)
 
 Some evidence lives on sites the FamilySearch MCP tools can't reach
@@ -767,17 +855,18 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `2` for the shape above. `1` is the same shape with a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
 corpus contains. Pre-detector runs (see §7.5) resolve to
 `compliance: not_checked` — an unknown, which is **never** counted as clean.
 
-`make e2e-corpus` prints the three axes across recent committed runs — the
-last 14 days by default, `SINCE=all` for the whole corpus. It names the window
-and the sample size in its own output, so a windowed number is never mistaken
-for a whole-corpus one.
+`make e2e-corpus` prints the three axes, plus violation counts and
+concentration, across recent committed runs — the last 14 days by default,
+`SINCE=all` for the whole corpus. It names the window and the sample size in
+its own output, so a windowed number is never mistaken for a whole-corpus one.
+See §9.
 
 ### 7.3 Variance and Calibration
 
@@ -959,6 +1048,59 @@ presence of the `guardrail_shadow_violations` key (the two shipped in the same
 commit). Retroactively scoring the corpus is tracked as issue #913, and needs
 the checks replayed at a pinned version to be meaningful.
 
+**`compliance` and `outcome` are not comparable across the `is_error` join.**
+Before it, `tool_calls[]` carried no `is_error` key, so the
+`entry.get("is_error") is True` gates in `skill_invocation.py` never fired and an
+**errored** tool call counted as a successful invocation. After it, both hard
+arms get strictly stricter: a failed `Skill` call no longer populates
+`find_effects_without_invocation`'s `invoked` set, and an errored `same_person`
+no longer enters `find_person_evidence_missing_same_person`'s `scored_ids`. Both
+feed `guardrail_bypass_violations`, so a run that reported `compliance: pass`
+before the join can report `fail` after it **from an identical trace**. That is
+the correct reading — an errored call was never a successful invocation — so a
+compliance delta across the boundary is not a regression signal.
+
+**The boundary is a commit, not cleanly a version — check both.** The join
+shipped in PR #1255 (main `4541a4c5`) with `harness_schema_version` left at `2`,
+on the argument that adding a key is additive. It is not, for a reader: `2` now
+means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
+is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
+for. `3` closes that. So:
+
+| Log reads | Has `is_error`? |
+|---|---|
+| `3` | yes — unambiguous |
+| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** |
+| `2` before `4541a4c5`, `1`, or absent | no |
+
+Zero logs sit in that ambiguous row today — the 555 committed runs are
+`{absent: 551, 1: 4}`, and none carries `is_error` — but the window is open
+until this bump lands, so a run made in it would.
+
+`"is_error" in entry` does not rescue a reader either way: an entry whose
+`ToolResultBlock` never arrived (any aborted or wall-clock-capped run) carries no
+key at all, at `3` exactly as at `2`.
+
+**Measured blast radius, so nobody over-corrects for this.** Replaying the
+committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
+result, across 66 of the 555 runs — but **none is a `same_person`,
+`research_append`, or `extraction_append`**. They are `record_search` (68),
+`external_links_search` (24), `fulltext_search` (20), `Glob`, `Grep`, `Bash` —
+tools no gate keys on, which the detectors already skipped via `owning_skills`
+returning empty. Entries any of the five gates would actually shed: **one
+errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
+is a correctness statement, not a warning of a large shift: the numbers issues
+#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
+blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
+a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
+is why the shift is this small.
+
+**`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
+version.** With the delta measured at ~1 entry, a v-split would add a column
+that always reads zero. Revisit only if #1282 lands (writer-tool failures become
+visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
+calibration itself is #911's.
+
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
 checks, §7 for the shadow-mode window).
@@ -969,10 +1111,77 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1); a `narration` array — each entry `{ tool_calls_before, kind, text }` with `kind` in `assistant` / `blocked` / `harness`, carrying the agent's prose between tool calls plus the two harness-side events that only mean anything in trace order, anchored by `tool_calls_before` — how many tool calls had already happened, so N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]` and 0 means before any tool call (a count, not an index). This replaced the `.transcript.md` artifact, removed 2026-08-03: that file was 87% a re-render of `tool_calls`, and the prose is the part that lived nowhere else. `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
+| `run-<timestamp>.json` | Structured result — **field table below.** |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
+
+### 8.1 `run-<timestamp>.json` fields
+
+One row per field. This was a single 4,136-character table cell until 2026-08-05;
+it led every doc-churn measurement in the repo because adding one field meant
+editing one unreadable line, and it had already accreted a duplicated clause.
+
+| Field | Meaning |
+|---|---|
+| `verdict` | The judge's **genealogical** conclusion. See §7.2.1. |
+| `compliance` | Whether the GPS guardrail skills actually ran. §7.5. |
+| `guardrail_bypass_violations` | The specific bypasses, when `compliance` is `fail`. |
+| `outcome` | **The gate** — `fail` when compliance failed, else `verdict`. |
+| `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
+| `stop_reason` | Why the run ended. §6.5. |
+| `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
+| `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
+| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
+| `blocked_context_calls[]` | Denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is a write denied by a different guard. §6.1.1. |
+| `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
+| `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
+| `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
+| `resumes`, `session_id` | §6 "Stall-detect + resume". |
+| `agent_model` | Effective parent model. |
+| `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
+| `effort_level` | Pinned via a project setting; default `high`. |
+| `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
+| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
+| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+
+Together the five reasoning-config fields (`agent_model` through `cli_version`)
+make an A/B across model × effort × output-budget self-describing from the log
+alone.
+
+#### 8.1.1 `tool_calls[]` — the joined keys
+
+`is_error`, `agent_id` and `agent_type` are joined when the call's
+`ToolResultBlock` arrives, so an entry whose result never arrived — any aborted
+or wall-clock-capped run — carries none of the three. `response_summary` is the
+exception: the entry literal initializes it, so it is present-but-`null` there
+rather than absent.
+
+A PreToolUse **deny** does reach this array: the denied call appears with the
+deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
+is the parallel structured record, not the only one — which is why an
+`is_error: true` entry is not automatically an upstream failure (§15).
+
+#### 8.1.2 `usage` when the `ResultMessage` never arrived
+
+Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts
+the stream before that message, which used to leave `usage` with no turns,
+duration or tokens at all — blinding exactly the runs worth investigating. The
+fallback reconstructs the block from the streamed assistant messages:
+
+- token counts are **exact**, deduplicated by message id (the SDK re-emits one
+  message per content block, each copy repeating that message's *cumulative*
+  usage, so summing on arrival multiplies the totals);
+- `duration_ms` comes from the monotonic clock;
+- the distinct-message count is reported as `assistant_messages`;
+- `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** rather than
+  synthesized — the SDK counts turns differently from distinct assistant
+  messages, only it knows the API/local split, and a run spans several models so
+  one price lookup would be wrong.
+
+**Never compare a `streamed_fallback` cost against a clean run's.**
 
 Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
 under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
@@ -1016,20 +1225,69 @@ but each iteration prints its own roll-up — the loop does not aggregate.
 
 For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
-the window through `axes_from_runlog` and reports all three axes, holding `not_checked`
-compliance separate from clean:
+the window through `axes_from_runlog` and reports all three axes, holding
+`not_checked` compliance separate from clean, then the violation detail
+beneath them:
 
 ```
-133 committed run(s)
-  recall (genealogy): 87 pass / 24 partial / 22 fail
-  compliance:         12 fail / 121 not_checked
-  gate (outcome):     81 pass / 22 partial / 30 fail
+$ make e2e-corpus
+Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded. Pass --since all for the whole corpus.
+82 committed run(s)
+  recall (genealogy): 49 pass / 10 partial / 23 fail
+  compliance:         21 fail / 61 not_checked
+  gate (outcome):     38 pass / 8 partial / 36 fail
+  NOTE: 61 run(s) have unknown compliance — written before the guardrail
+        detector existed, or by a version of it that cannot be pinned. They are
+        NOT counted as clean. See e2e.result.axes_from_runlog.
+  violations:         67 across 21 decidable run(s); 61 unknown recorded none
+    same_person (per person)            50
+    exhaustiveness                       6
+    proof-conclusion                     6
+    conflict-resolution                  5
+  concentration:
+    jimmie-jewel-neal                   19  (28% of all violations)
+    elisabetha-sugecz-parents            7  (10% of all violations)
+    cornelius-booysen-death              5  (7% of all violations)
+    … 14 further fixture(s) not shown, 36 violation(s) (54%)
+    NOTE: `jimmie-jewel-neal` alone accounts for 28% of violations (4.8x its even
+          share across 17 contributing fixtures). Any headline is substantially
+          this one fixture's behavior.
+  runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
+                         clean, so this is a floor on incidence, not a rate.
 ```
 
-(A snapshot taken 2026-08-02, not a live figure — run the command for
-current totals. The gap between the recall line and the gate line is the
-whole point: eight of those twelve non-compliant runs recovered the answer —
-six judge-pass, two judge-partial.)
+(A snapshot taken 2026-08-04, not a live figure — run the command for current
+totals. The gap between the recall line and the gate line is the whole point:
+runs that recovered the genealogical answer can still fail the gate on
+compliance.)
+
+**`violations:` and `runs w/ >=1 violation:` count different things** — individual
+violations and the runs carrying at least one. They are labelled apart because
+quoting one against the other's denominator is the error this report exists to
+prevent.
+
+**Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=all|N|YYYY-MM-DD` sets
+the window, defaulting to the last 14 days like every other run-log reader
+(`harness/since_window.py`), so a window is an argument rather than a figure
+hand-edited into prose. A malformed `SINCE` is rejected at parse time (exit 2)
+rather than silently selecting the wrong runs, and a run whose filename carries no
+parseable date is **kept**, so a naming change cannot quietly shrink the sample.
+
+**Every denominator the report prints excludes `not_checked`.** A rate or a
+per-run figure over `pass + fail + not_checked` asserts that the unknowns ran
+clean, which is exactly the inference `axes_from_runlog` refuses. So the violation
+total is stated across *decidable* runs — a `not_checked` run's violations field
+is absent, which is why it is unknown, and it therefore cannot contribute one —
+and where the decidable set is empty or all-one-way the report says so instead of
+printing a percentage. The `concentration:` block is suppressed below two
+contributing fixtures, since with one the leader trivially holds 100%.
+
+**The dominance NOTE fires on either of two triggers**, because neither works
+alone: an outright majority (>50% of violations), or an outsized share relative
+to an even split (≥3× `total / contributing fixtures`). A majority bar alone
+stays silent on a wide corpus — today's outlier is 39% across 11 contributing
+fixtures — and a relative bar alone is unreachable for small ones, where an even
+share is already 50%.
 
 No dashboard, no database — two functions reading committed runlogs. The
 console output is also the artifact stakeholders see.
@@ -1186,11 +1444,18 @@ changing anything, because the fix differs completely by cause.
    the last `narration` entry shows where. `tool_cap` / `max_turns` means it may be
    looping — look for repeated similar tool calls near the end.
 4. **For a regression, diff `run-<ts>.json::tool_calls` against the last
-   passing run.** Each entry carries `tool`, `args`, and `response_summary`:
+   passing run.** Each entry carries `tool`, `args`, `response_summary`,
+   `is_error`, `agent_id`, and `agent_type`:
    - different collection IDs touched → the agent took a different path;
    - different hit counts on the same search → FS may have reindexed;
    - **same calls, different `response_summary` → likely an agent or skill
      regression.**
+   - `is_error: true` on a call the passing run made cleanly → an upstream
+     failure, not a reasoning change — **unless the same call also appears in
+     `blocked_tree_reads`**, in which case it is a harness policy denial and
+     the agent trying to read the answer off the live tree *is* the reasoning
+     signal (§6.1). Absent entirely below `harness_schema_version` 3, so check
+     the version before reading it.
 
    > **One-time exception: `response_summary` changed format.**
    > `_summarize_tool_response` stopped head-truncating at 497 chars and now
@@ -1208,6 +1473,15 @@ changing anything, because the fix differs completely by cause.
    > change was authored days before it merged, so v1 logs exist with timestamps
    > later than the authoring date, and a date-based rule inverts for exactly
    > those.
+   >
+   > **A second boundary: `tool_calls[].is_error`.** Before it the key is absent
+   > and every call — including errored ones — read as successful to the
+   > guardrail detectors. Diffing `tool_calls` across it shows a new key on every
+   > entry; that is a capture change, not a regression. It also moves
+   > `compliance`/`outcome`, which the shadow/violation counts above do not —
+   > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
+   > cleanly a version number: see §7.5 "Historical runs" for the table and the
+   > measurement.
    >
    > Two format details that matter when diffing or grepping. Captures at or under
    > 500 chars are passed through verbatim, so they keep the raw MCP envelope in
