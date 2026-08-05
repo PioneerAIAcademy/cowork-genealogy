@@ -88,6 +88,30 @@ The MCP server exposes 47 tools.
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
 | `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
 
+### Project state (structured read/write)
+
+Everything that reads or writes `research.json` and `tree.gedcomx.json` goes
+through these. The writers validate the **whole** project in memory and write
+nothing on failure, and they assign every id — callers never predict one. Raw
+`Write`/`Edit` on either file is denied by a hook, so this table is the only
+way project state changes.
+
+| Tool | Purpose | Auth |
+|------|---------|------|
+| `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
+| `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
+| `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
+| `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
+| `materialize_facts` | Project extracted assertions onto tree persons | None |
+| `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
+| `tree_correct` | Correct an existing tree assertion in place | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
+| `merge_tree_persons` | Merge two local tree persons | None |
+| `merge_warnings` | Pre-merge conflict report for two tree persons | None |
+| `person_quality` | Evidence-quality summary for a tree person | None |
+| `rank_search_matches` | Rank search results against a named subject | None |
+| `convert_calendar` | Convert between Julian, Gregorian, and regnal/quaker dates | None |
+
 ### Reference and context
 
 | Tool | Purpose | Auth |
@@ -101,30 +125,6 @@ The MCP server exposes 47 tools.
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
-
-### Project state (the writer and projection tools)
-
-Everything that reads or writes `research.json` and `tree.gedcomx.json` goes
-through these. The writers validate the **whole** project in memory and write
-nothing on failure, and they assign every id — callers never predict one. Raw
-`Write`/`Edit` on either file is denied by a hook, so this table is the only
-way project state changes.
-
-| Tool | Purpose | Auth |
-|------|---------|------|
-| `research_append` | Write structured entries to the mutable `research.json` sections — append (the tool assigns the id) or update an existing entry in place | None |
-| `extraction_append` | The record-extraction lane's writer: persist ONE extracted record — its source entry plus one assertion per extracted fact. Narrowed to `sources` + `assertions` so a delegated extractor cannot reach the rest | None |
-| `research_log_append` | Append one research-log entry and, when a search retained raw results, write its `results/<log_id>.json` sidecar — atomically and schema-valid | None |
-| `research_query` | Filtered read of one `research.json` array section — the call to make instead of re-reading the whole document | None |
-| `tree_edit` | Add to `tree.gedcomx.json` — a fact, name, person, relationship, or source. **Additive only** | None |
-| `tree_correct` | Correct or remove entries in `tree.gedcomx.json` — update a fact, name, person, or source in place, or remove one on a tier downgrade | None |
-| `tree_forget` | Set up a practice run by removing information the researcher already has, so it must be re-derived. The only tool that deletes tree content wholesale | None |
-| `merge_tree_persons` | Collapse two or more persons already in the project tree into one, when they turn out to be the same person | None |
-| `merge_warnings` | Dry-run the coherence checks for a proposed merge **without** writing — the merge-mode analog of `person_warnings` | None |
-| `materialize_facts` | Write a record persona's extracted assertions onto a tree person as sourced facts and names. Takes references only; the tool resolves them | None |
-| `rank_search_matches` | Re-rank a staged `record_search` result set by match score against a tree subject, replacing FamilySearch's search ranker with its authoritative person matcher | FamilySearch |
-| `person_quality` | Read a person's FamilySearch data-quality score — live quality issues as plain-English sentences | FamilySearch |
-| `convert_calendar` | Convert a date between historical calendar systems — Old Style→New Style year, Julian→Gregorian day offset, Quaker numbered-month resolution | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -248,7 +248,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the exact tool call and narration turn. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
 | **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
 
 ## Agents
@@ -488,7 +488,7 @@ What's shipped:
 - **47 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **26 shipped skills.** Full GPS research cycle from `init-project`
+- **27 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three

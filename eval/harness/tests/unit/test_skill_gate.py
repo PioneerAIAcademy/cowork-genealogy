@@ -193,7 +193,6 @@ def test_incumbent_baseline_overlays_human_corrections(tmp_path):
     assert b is not None
     assert b.scores["ut_citation_002"][("base", "Correctness")] == 1  # corrected wins
     assert b.scores["ut_citation_002"][("base", "Completeness")] == 3  # judge score
-    assert b.skill_md == "the body"
     assert b.path.name == "v1_2026-07-16_10-00-00.json"
 
 

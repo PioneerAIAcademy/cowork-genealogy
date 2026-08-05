@@ -261,7 +261,6 @@ def _latest_runlog(skill_runlog_dir: Path) -> Path | None:
 class Baseline:
     scores: dict[str, dict[tuple[str, str], int | None]]  # test_id -> (s,n) -> score
     path: Path
-    skill_md: str | None  # the SKILL.md the baseline ran against (from the snapshot)
 
 
 def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
@@ -300,10 +299,7 @@ def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
             dims[(src, name)] = corrections[ck] if ck in corrections else d.get("score")
         scores[tid] = dims
 
-    skill_md = (env.get("snapshot") or {}).get(
-        f"packages/engine/plugin/skills/{skill}/SKILL.md"
-    )
-    return Baseline(scores=scores, path=log_path, skill_md=skill_md)
+    return Baseline(scores=scores, path=log_path)
 
 
 # --------------------------------------------------------------------------

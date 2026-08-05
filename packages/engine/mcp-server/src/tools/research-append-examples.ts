@@ -174,6 +174,36 @@ const EXAMPLES: Record<string, string> = {
   "superseded_by": null
 }`,
 
+  // `jurisdictions` entries are exactly { name, date_range } and `collections`
+  // exactly { id, title, date_range } — additionalProperties:false applies to
+  // the nested objects too, which is the rejection this one exists to prevent.
+  localities: `{
+  "place": "Pennsylvania, United States",
+  "for_place": "Schuylkill County, Pennsylvania",
+  "time_period": "1845-1908",
+  "jurisdictions": [
+    { "name": "Schuylkill County, Pennsylvania", "date_range": "1811-present" },
+    { "name": "Berks and Northampton Counties (parent jurisdictions)", "date_range": "pre-1811" }
+  ],
+  "collections": [
+    { "id": "2542790", "title": "Pennsylvania, Death Certificates, 1906-1968", "date_range": "1906-1968" }
+  ],
+  "quirks": [
+    "Schuylkill County was formed in 1811 from Berks and Northampton; pre-1811 records are filed under the parent counties.",
+    "Statewide civil birth/death registration began only in 1906 — earlier vital events rely on church, cemetery, and probate records."
+  ],
+  "guide_markdown": "## Schuylkill County, Pennsylvania - 1845-1908\\n\\nProbate is held by the county Register of Wills from 1811...",
+  "pages_read": [
+    { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
+    { "section": "getting_started", "url": null, "found": false },
+    { "section": "online_records", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records", "found": true },
+    { "section": "research_tips", "url": null, "found": false }
+  ],
+  "source": "locality-guide",
+  "created": "2026-07-18",
+  "updated": null
+}`,
+
   known_holdings: `{
   "holding_type": "document",
   "description": "Great-grandmother's family Bible with births recorded on the flyleaf",

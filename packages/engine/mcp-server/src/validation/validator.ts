@@ -104,15 +104,20 @@ const EXTERNAL_SITE_VALUES = new Set([
  * it isn't — `enums.schema.json` is, and this is a hand-maintained copy of it in
  * code. That copy drifting silently ships *bad validation*, which is strictly
  * worse than the stale prose crib note the same lint was built to catch, so it
- * gets the same guard. Nothing at runtime reads this.
+ * gets the same guard.
+ *
+ * `satisfies`, not `: Record<string, ReadonlySet<string>>` — the annotation
+ * erases the literal key names, so `VALIDATOR_ENUMS.log_outcomes` would compile,
+ * yield `undefined`, and throw at module load when a tool schema spreads it.
+ * Tool input schemas read this (see research-log-append.ts).
  */
-export const VALIDATOR_ENUMS: Record<string, ReadonlySet<string>> = {
+export const VALIDATOR_ENUMS = {
   ...CLOSED_ENUMS,
   selection_basis: SELECTION_BASIS_VALUES,
   date_certainty: DATE_CERTAINTY_VALUES,
   date_certainty_timeline: DATE_CERTAINTY_TIMELINE,
   external_site: EXTERNAL_SITE_VALUES,
-};
+} satisfies Record<string, ReadonlySet<string>>;
 
 // research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
 // (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
@@ -865,6 +870,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
+    }
+    // identity_question is the question's text — schema type string|null. Reject
+    // any other type (notably the boolean form that slipped past this validator
+    // and into the corpus before the completed-gate was fixed; issue #1001).
+    if (
+      c.identity_question != null &&
+      typeof c.identity_question !== "string"
+    ) {
+      addError(report, cp, "identity_question must be a string or null");
     }
   }
 

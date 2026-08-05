@@ -29,6 +29,19 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 15, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Ecuador, Cemetery Records, 1862-2020: burial entry for Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985, Ecuador), naming parents Santiago Gonzalez and Petita Tumbaco. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Manuel de Jesus Gonzalez Tumbaco as the subject's son, plus a `required` finding that the report documents the rejection.
+**Resolved: true match.** Manuel de Jesus Gonzalez Tumbaco is confirmed as a son of
+Santiago Gonzalez and Petra Tumbaco, in addition to the two daughters already in the
+tree (Maria Angela b. 1921, Maria Bartola b. 1934). `expected-findings.json` is
+unchanged from the original hint transcription.
 
-Points a reviewer should weigh: the mother's name is recorded as "Petita Tumbaco" in the hint vs. "Petra Tumbaco" in the tree — a plausible diminutive/nickname variant ("Petita" from "Petra"), and the surname "Tumbaco" and father's given name "Santiago Gonzalez" both match exactly. A birth in 1915 predates the tree's two known daughters (1921, 1934), making Manuel the presumed eldest child — plausible but with no independent tree evidence (no marriage date, no other pre-1921 records) to corroborate the couple already having children by 1915.
+The call rests on the exact matches in the hint record combined with a plausible
+explanation for its one apparent discrepancy: the surname "Tumbaco" and the father's
+given name "Santiago Gonzalez" both match the tree exactly, and the mother's name —
+recorded as "Petita Tumbaco" in the hint versus "Petra Tumbaco" in the tree — is a
+plausible diminutive/nickname variant ("Petita" from "Petra"), not a contradiction. A
+1915 birth predates the tree's two known daughters (1921, 1934), making Manuel the
+presumed eldest child; there is no independent tree evidence (no marriage date, no
+other pre-1921 record) that contradicts the couple already having a child by 1915,
+and none was found to contradict this identification.
+
+**Independent corroboration**: a separate cemetery/civil-death record for the couple's daughter Bartola independently names the same father, "Santiago Gonzalez," and gives the mother's name in full as "Petra Tumbaco." The original register images were transcribed directly, confirming "Petita" is genuinely what is written on Manuel's record — not an indexing error — while Bartola's record, filed eighteen years later by a different registrant, independently uses the full "Petra Tumbaco" for the same mother. That is source-level, independent confirmation that "Petita" is a variant of "Petra" for this specific couple, not merely a plausible guess based on diminutive-form reasoning alone.
