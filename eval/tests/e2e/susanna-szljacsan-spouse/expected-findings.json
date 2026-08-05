@@ -13,7 +13,9 @@
         }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry for Susanna Janeczky, naming parents Joannes Janeczky and Susanna Szliacsan"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry for Susanna Janeczky, naming parents Joannes Janeczky and Susanna Szliacsan: ark:/61903/1:1:KHQN-MSB (the mother's persona on that entry is ark:/61903/1:1:KHQN-MSY)",
+        "Four further Lisková baptisms to the same couple, independent of the hint record: Joannes 1875 ark:/61903/1:1:KHQN-VGS; Maria Janecsky Hrbolec 29 Oct 1882 ark:/61903/1:1:KHQN-MWR; Anna 4 Mar 1889 ark:/61903/1:1:KHQN-RFY; Ludovica Janetzky 4 Oct 1891 ark:/61903/1:1:KHQN-Q3X",
+        "The subject's own christening, 5 March 1850 Lisková, parents János Szljacsan and Maria Boron Munka: ark:/61903/1:1:KHQN-KC7 — the age anchor for the 1875-1891 childbearing span"
       ],
       "required": true
     },
@@ -30,7 +32,8 @@
         }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, Lisková, Ružomberok"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry for Susanna Janeczky, Lisková, Ružomberok: ark:/61903/1:1:KHQN-MSB",
+        "The original register page, which supplies the day-level date (27 April 1884, entry 22, house no. 115) and an Observatio note recording the child's death on 5 January 1887 — neither is in the index: ark:/61903/3:1:33SQ-GRQ4-94MT"
       ],
       "required": true
     }
