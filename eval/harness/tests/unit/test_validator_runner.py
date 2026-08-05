@@ -104,7 +104,7 @@ def test_assertion_error_captured_as_failure(tmp_path):
     bad = tmp_path / "test_universal.py"
     bad.write_text(
         "def test_always_fails(before_state, after_state, tool_calls):\n"
-        "    assert False, 'intentional'\n"
+        "    assert False, 'intentional'\n", encoding="utf-8"
     )
     results = run_validators(
         skill="x",
@@ -120,7 +120,7 @@ def test_assertion_error_captured_as_failure(tmp_path):
 
 def test_validator_with_no_args_still_runs(tmp_path):
     nullary = tmp_path / "test_universal.py"
-    nullary.write_text("def test_no_args():\n    assert 1 == 1\n")
+    nullary.write_text("def test_no_args():\n    assert 1 == 1\n", encoding="utf-8")
     results = run_validators(
         skill="x", validators_dir=tmp_path,
         before_state={}, after_state={}, tool_calls=[],
@@ -734,7 +734,7 @@ def test_pytest_skip_is_treated_as_pass_with_skipped_marker(tmp_path):
     bad.write_text(
         "import pytest\n"
         "def test_uses_skip(before_state, after_state, tool_calls):\n"
-        "    pytest.skip('not applicable to this state')\n"
+        "    pytest.skip('not applicable to this state')\n", encoding="utf-8"
     )
     results = run_validators(
         skill="x",
