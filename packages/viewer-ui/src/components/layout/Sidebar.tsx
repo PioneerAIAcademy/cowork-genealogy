@@ -68,6 +68,11 @@ export default function Sidebar({
       key: 'proof_summaries',
       label: 'Proof Summaries',
       countFn: () => research?.proof_summaries.length ?? 0
+    },
+    {
+      key: 'evaluations',
+      label: 'Mentor Evaluations',
+      countFn: () => research?.evaluations.length ?? 0
     }
   ]
 
