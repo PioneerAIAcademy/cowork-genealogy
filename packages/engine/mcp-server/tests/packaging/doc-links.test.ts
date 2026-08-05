@@ -455,14 +455,17 @@ describe("docs/ cite symbols, not line numbers", () => {
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
- * fails outright. Sweeping a file to zero deletes its entry.
+ * fails outright. Sweeping a file to zero deletes its entry. The first pass
+ * took the two worst offenders from 34 -> 17 and 14 -> 7; what remains is
+ * mostly evidence-shaped ("#702 measured that pattern"), where the citation
+ * IS the fact and stays.
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
-  "CLAUDE.md": 14,
+  "CLAUDE.md": 7,
   "docs/specs/e2e-test-spec.md": 17,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
-  "docs/specs/guardrail-enforcement-spec.md": 32,
+  "docs/specs/guardrail-enforcement-spec.md": 17,
   "docs/specs/hosted-web-workbench-spec.md": 4,
   "docs/specs/image-reader-agent-spec.md": 3,
   "docs/specs/image-reader-opus-agent-spec.md": 1,
@@ -519,5 +522,52 @@ describe("specs state the fact, not the ticket", () => {
       (rel) => !existsSync(join(projectRoot, rel)),
     );
     expect(stale, "delete the entry when its file goes").toEqual([]);
+  });
+});
+
+/**
+ * `README.md` is the user-facing catalog, and its tool list is a hand-copied
+ * inventory of something the code already owns (`manifest.json`'s `tools`,
+ * itself drift-tested against `allToolSchemas` in `manifest.test.ts`). Nothing
+ * checked the copy, and it rotted exactly as an unchecked copy does: it claimed
+ * **31 tools against 47 advertised**, with the entire structured-persistence
+ * writer surface — `research_append`, `tree_edit`, `extraction_append`,
+ * `materialize_facts`, and nine more — appearing nowhere in it.
+ *
+ * This closes the `docs/architecture.md` §9.4 row that named the gap.
+ *
+ * Name-presence only, deliberately. Asserting *where* a tool is described, or
+ * that its prose matches its schema, is a false-positive generator over a
+ * document whose job is readable grouping rather than exhaustive reference.
+ * Presence is the part that fails silently and the part a user actually loses.
+ */
+describe("README catalogs what ships", () => {
+  it("names every advertised MCP tool", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
+    ) as { tools: { name: string }[] };
+    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
+    const missing = manifest.tools.map((t) => t.name).filter((n) => !readme.includes(n));
+    expect(
+      missing,
+      "README.md is the user-facing catalog; a tool absent from it is a tool users " +
+        "cannot discover. Add it to the matching section, or drop it from manifest.json.",
+    ).toEqual([]);
+  });
+
+  it("states the shipped tool and skill counts correctly", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
+    ) as { tools: { name: string }[] };
+    const skills = readdirSync(join(projectRoot, "packages/engine/plugin/skills")).filter((d) =>
+      statSync(join(projectRoot, "packages/engine/plugin/skills", d)).isDirectory(),
+    );
+    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
+    const stated = (label: string): number | null => {
+      const m = readme.match(new RegExp(`\\*\\*(\\d+) ${label}`));
+      return m ? Number(m[1]) : null;
+    };
+    expect(stated("MCP tools"), "README's tool count").toBe(manifest.tools.length);
+    expect(stated("shipped skills"), "README's skill count").toBe(skills.length);
   });
 });

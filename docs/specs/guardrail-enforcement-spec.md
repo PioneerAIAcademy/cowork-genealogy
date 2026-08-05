@@ -14,8 +14,8 @@ layers have a more specific owner and are not re-specified here:
 
 **History.** This replaces `docs/plan/research-guardrail-bypass-plan.md`
 (deleted once its work shipped). The plan's §4.1–§4.4 map to §7, §5, §6 and §8
-below. Issue #940 (closed) carried the production port; #911 carries graduating
-§7 to hard-deny; #1054 carries the production detector.
+below. The production port of §6 has shipped; graduating §7 to a hard deny and
+porting §8's detectors to production have not.
 
 ---
 
@@ -101,9 +101,9 @@ genealogical consequences, not just procedural ones.
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
 persisted per run). The report now windows to the last 14 days like every
 other run-log reader; `SINCE=all` is the whole-corpus mode this table was
-measured in. Step 1 of #911 wants that maximum-sample replay — its own step 4
-then answers the staleness ("the historical corpus predates several of today's
-skills") with *new* runs.
+measured in: calibration wants that maximum-sample replay, and the staleness it
+inherits ("the historical corpus predates several of today's skills") is answered
+with *new* runs, not with a wider window.
 
 The numbers below are a point-in-time replay over the **99 runs committed when
 they were taken**, kept as the record of what motivated the window. The corpus
@@ -121,8 +121,7 @@ The count barely moves from 10 to 150, which is the tell that most of these are
 not "the window was slightly tight." Caveat that survives into any future
 calibration: runs older than the current four-skill decomposition reference
 skill names that no longer exist (`assertion-classification`, `check-warnings`)
-and will read as noise until filtered. Tracked as #911 (calibration) and #913
-(what past verdicts are worth).
+and will read as noise until filtered.
 
 ## 4. The enforcement layers
 
@@ -138,9 +137,9 @@ cannot, and none depends on another shipping first.
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** |
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
-today; §7 and §8 are measurement over eval runs. The production port of §8 is
-#1054, which is blocked on nothing being retained to detect against — the
-hosted path persists no tool-call ledger.
+today; §7 and §8 are measurement over eval runs. §8 cannot port to production
+until something is retained to detect against — the hosted path persists no
+tool-call ledger.
 
 The last row is the live, pre-write form of a question §8 already hard-fails
 post-run, so its doctrine needs no shadow period — but its *enforcement* does.
@@ -149,7 +148,7 @@ across 280 runs), because scoring a locally-minted tree person is not current
 agent behavior. Denying on that would intervene in four fifths of a suite
 costing $7-25 a run with no evidence for how the agent recovers, so it records
 into `guardrail_shadow_violations` and lets the write through. Graduating it to
-a deny is **#1231**, gated on these numbers. Note it asks a stricter question
+a deny is gated on these numbers. Note it asks a stricter question
 than its §8 counterpart: that one accepts a `same_person` anywhere in the run,
 including *after* the link, so link-then-score is a shadow hit and a post-run
 pass.
@@ -328,7 +327,7 @@ Design points that were paid for and should not be re-derived:
 and its default was a first-cut guess. Graduating it to deny requires knowing
 the false-positive rate, because a mistuned window hard-denies legitimate writes
 and can produce a stuck loop against the harness's own stall/budget machinery.
-That calibration is #911. Do not graduate it on intuition.
+**Measure the false-positive rate first. Do not graduate it on intuition.**
 
 ## 8. Post-run compliance detectors
 
@@ -350,8 +349,8 @@ Two properties worth keeping in view here:
   for this person" is a fact. None of the other three guardrail skills has an
   equally unambiguous fingerprint, which is why they stay on §7's windowed path.
 
-Porting these to production is #1054 — and that issue is about **retention**
-first, because the hosted path keeps no tool-call ledger to run them over.
+Porting these to production is a **retention** problem first: the hosted path
+keeps no tool-call ledger to run them over.
 
 ## 9. Options set aside
 
@@ -394,12 +393,8 @@ this section before reopening one.
 
 ## 10. Residual risks
 
-Live queue items are GitHub issues — #1129 (confirm the plugin hook binds in the
-hosted path, then delete the SDK copy), #1144 (do the guardrail skills'
-on-demand reference `Read`s survive compaction?), #1145 (is `gps-mentor`'s own
-gate skippable?), and #1146 (other same-batch self-satisfying gates in
-`research_append`). This section keeps only the risks that outlive any one of
-them.
+Open questions live on the board, not here. This section keeps only the risks
+that outlive any one of them.
 
 - **§7's window is a heuristic.** A model that invokes the right skill and then
   does something unrelated while the window is open passes. It bounds the
@@ -428,7 +423,7 @@ them.
 ## 11. Caller-attributed protected writes (shadow mode)
 
 **Status:** shadow only. Instrumented, never denied. Graduating it is gated on
-the same calibration as §7 (issue #911).
+the same calibration as §7.
 
 ### The rule
 
@@ -479,7 +474,7 @@ callers that have no declared identity at all. It does not supersede that ADR;
 it extends it to the dynamically-spawned case, which ADR-0006 does not cover.
 
 **Also rejected: two separate shadow axes** (unnamed-caller and doctrine-absent,
-calibrated independently). It would produce two uncalibrated numbers when #911
+calibrated independently). It would produce two uncalibrated numbers when one
 is already blocked on calibrating one, and the second axis needs exactly the
 adjacency heuristic retired below.
 
