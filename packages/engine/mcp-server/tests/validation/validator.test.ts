@@ -749,6 +749,41 @@ describe("Project Validator", () => {
         )
       ).toBe(true);
     });
+
+    it("rejects a boolean identity_question (schema type is string|null) — #1001", async () => {
+      const research = {
+        ...minimalResearch,
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [] },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        conflicts: [
+          {
+            id: "c_001",
+            conflict_type: "identity",
+            identity_question: true, // boolean — the schema-invalid form that persisted before #1001
+            description: "Identity question",
+            competing_assertion_ids: ["a_001"],
+            status: "unresolved",
+            blocks_question_ids: [],
+          },
+        ],
+      };
+      const tree = {
+        ...minimalTree,
+        sources: [{ id: "SD-001", title: "Test" }],
+      };
+      await writeProject(research as any, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("identity_question must be a string or null")
+        )
+      ).toBe(true);
+    });
   });
 
   describe("GedcomX validation", () => {

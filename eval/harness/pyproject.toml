@@ -28,13 +28,24 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
+    "ruff>=0.14.6",
 ]
+
+[tool.ruff.lint]
+# Undefined-name detection ONLY. This is not a style gate and must not grow
+# into one — every added rule is a new way for an unrelated PR to go red.
+#
+# What it catches that pytest cannot: two branches editing different hunks of
+# the same function merge cleanly and leave a name bound in neither. That is
+# how a `transcript.append(...)` survived the rename of `transcript` to
+# `narration` in `e2e/orchestrator.py` — clean merge, 1478 tests green, and a
+# NameError only once the deny path it sits in actually fires, mid-run.
+# A branch cannot lint itself out of this; only the merge result can be checked,
+# which is why the gate runs in CI (checkout resolves `refs/pull/N/merge`).
+select = ["F821"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
-markers = [
-    "e2e: end-to-end tests that hit the real Anthropic API (deselect with -m 'not e2e')",
-]

@@ -56,29 +56,29 @@ def _make_tests_dir(tmp_path: Path) -> Path:
     skill_a.mkdir(parents=True)
     skill_b.mkdir(parents=True)
     (skill_a / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     (skill_b / "rubric.md").write_text(
-        "# skill-b\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-b\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     (skill_a / "t1.json").write_text(json.dumps({
         "test": {"id": "ut_a_001", "skill": "skill-a", "name": "n", "type": "positive",
                   "description": "x", "tags": ["census", "1850"]},
         "input": {"user_message": "m", "scenario": None},
         "judge_context": [],
-    }))
+    }), encoding="utf-8")
     (skill_a / "t2.json").write_text(json.dumps({
         "test": {"id": "ut_a_002", "skill": "skill-a", "name": "n2", "type": "positive",
                   "description": "x", "tags": ["census"]},
         "input": {"user_message": "m", "scenario": None},
         "judge_context": [],
-    }))
+    }), encoding="utf-8")
     (skill_b / "t3.json").write_text(json.dumps({
         "test": {"id": "ut_b_001", "skill": "skill-b", "name": "n3", "type": "positive",
                   "description": "x", "tags": ["probate"]},
         "input": {"user_message": "m", "scenario": None},
         "judge_context": [],
-    }))
+    }), encoding="utf-8")
     return root
 
 
@@ -150,7 +150,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     for i, _ in enumerate(outcomes):
         (skill_dir / f"t{i}.json").write_text(json.dumps({
@@ -158,7 +158,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
             "judge_context": [],
-        }))
+        }), encoding="utf-8")
 
     # Stub auth + run_one_test + write_run_log.
     from harness.auth import AuthConfig
@@ -177,10 +177,10 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
                                         else "unmatched_tool_call" if outcome == "aborted_umc"
                                         else None)
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -254,7 +254,7 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     for i in range(5):
         (skill_dir / f"t{i}.json").write_text(json.dumps({
@@ -262,7 +262,7 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
             "judge_context": [],
-        }))
+        }), encoding="utf-8")
 
     monkeypatch.setattr(
         run_tests, "resolve_auth",
@@ -281,10 +281,10 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
             "totals": {"total_cost_usd": 0.40},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -338,7 +338,7 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     # 8 tests, $5 cap, one $2 outlier first then $0.10 each.
     for i in range(8):
@@ -347,7 +347,7 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
             "judge_context": [],
-        }))
+        }), encoding="utf-8")
 
     monkeypatch.setattr(
         run_tests, "resolve_auth",
@@ -365,10 +365,10 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": c},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -419,7 +419,7 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     for i in range(3):
         (skill_dir / f"t{i}.json").write_text(json.dumps({
@@ -427,7 +427,7 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
             "judge_context": [],
-        }))
+        }), encoding="utf-8")
 
     monkeypatch.setattr(
         run_tests, "resolve_auth",
@@ -444,10 +444,10 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": 0.0},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -482,7 +482,7 @@ def test_empty_selection_exits_two(tmp_path):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     import json
     (skill_dir / "t1.json").write_text(json.dumps({
@@ -490,7 +490,7 @@ def test_empty_selection_exits_two(tmp_path):
                   "type": "positive", "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
         "judge_context": [],
-    }))
+    }), encoding="utf-8")
     rc = run_tests.main(["--skill", "skill-nope", "--tests-dir", str(root)])
     assert rc == 2
 
@@ -507,23 +507,58 @@ def test_unknown_test_id_returns_empty(tmp_path):
 
 def test_resolve_concurrency_honors_explicit_flag():
     # An explicit --concurrency wins over the RAM-aware default, both ways.
-    assert run_tests._resolve_concurrency(8) == (8, "flag")
-    assert run_tests._resolve_concurrency(1) == (1, "flag")
-    assert run_tests._resolve_concurrency(16) == (16, "flag")
+    # detail is None on the flag path (no RAM reasoning to explain).
+    assert run_tests._resolve_concurrency(8) == (8, "flag", None)
+    assert run_tests._resolve_concurrency(1) == (1, "flag", None)
+    assert run_tests._resolve_concurrency(16) == (16, "flag", None)
 
 
 def test_resolve_concurrency_auto_is_bounded():
     # With no flag, the auto value stays within [floor, cap] regardless of
-    # the host's RAM (None/unknown RAM falls back to the floor).
-    value, source = run_tests._resolve_concurrency(None)
+    # the host's RAM.
+    value, source, detail = run_tests._resolve_concurrency(None)
     assert source == "auto"
-    assert run_tests._MIN_AUTO_CONCURRENCY <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert 1 <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert detail is not None
 
 
 def test_resolve_concurrency_zero_or_negative_falls_back_to_auto():
     # argparse can't stop a user passing 0/-1; treat it as "use the default".
-    assert run_tests._resolve_concurrency(0)[1] == "auto"
-    assert run_tests._resolve_concurrency(-4)[1] == "auto"
+    for bad in (0, -4):
+        value, source, detail = run_tests._resolve_concurrency(bad)
+        assert source == "auto"
+        assert value >= 1 and detail is not None
+
+
+@pytest.mark.parametrize(
+    "ram_gb, expected",
+    [
+        (1.0, 1),    # int(1//2)=0 -> floored to 1, never 0
+        (2.0, 1),    # a 2 GiB box gets ONE slot, not the old floor of 4 (#1026)
+        (4.0, 2),    # the box from the issue: measurement (2) now wins
+        (6.0, 3),
+        (8.0, 4),
+        (16.0, 8),   # cap
+        (32.0, 8),   # int(32//2)=16 -> capped at 8
+    ],
+)
+def test_resolve_concurrency_honors_measured_ram(monkeypatch, ram_gb, expected):
+    # The RAM measurement drives the slot count; the floor only forbids 0 and
+    # must NOT clamp a low-RAM box upward (that was the #1026 bug).
+    monkeypatch.setattr(run_tests, "_total_ram_gb", lambda: ram_gb)
+    value, source, detail = run_tests._resolve_concurrency(None)
+    assert (value, source) == (expected, "auto")
+    assert detail is not None and "GiB RAM" in detail
+
+
+def test_resolve_concurrency_undetectable_ram_runs_serial(monkeypatch):
+    # When RAM can't be measured we can't rule out a tiny box -> run serially,
+    # NOT the old fallback of 4.
+    monkeypatch.setattr(run_tests, "_total_ram_gb", lambda: None)
+    value, source, detail = run_tests._resolve_concurrency(None)
+    assert value == run_tests._FALLBACK_CONCURRENCY == 1
+    assert source == "auto"
+    assert detail is not None  # explains the fallback in the startup line
 
 
 def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
@@ -537,7 +572,7 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
     skill_dir = root / "skill-a"
     skill_dir.mkdir(parents=True)
     (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     n = 6
     for i in range(n):
@@ -546,7 +581,7 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
                       "type": "positive", "description": "x", "tags": []},
             "input": {"user_message": "m", "scenario": None},
             "judge_context": [],
-        }))
+        }), encoding="utf-8")
 
     monkeypatch.setattr(
         run_tests, "resolve_auth",
@@ -577,11 +612,11 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
 
     captured_logs: list[dict] = []
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         captured_logs.append(log)
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -623,7 +658,7 @@ def _write_minimal_test(skill_dir: Path, test_id: str, skill: str, *, execution=
     }
     if execution is not None:
         body["execution"] = execution
-    (skill_dir / f"{test_id}.json").write_text(json.dumps(body))
+    (skill_dir / f"{test_id}.json").write_text(json.dumps(body), encoding="utf-8")
 
 
 def _stub_partial(monkeypatch):
@@ -647,7 +682,7 @@ def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch)
         sdir = root / skill
         sdir.mkdir(parents=True)
         (sdir / "rubric.md").write_text(
-            "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+            "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
         )
         for tid in ids:
             _write_minimal_test(sdir, tid, skill)
@@ -666,11 +701,11 @@ def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch)
 
     captured_logs: list[dict] = []
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         captured_logs.append(log)
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}")
+        out.write_text("{}", encoding="utf-8")
         return out
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
@@ -703,7 +738,7 @@ def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monke
     sdir = root / "skill-a"
     sdir.mkdir(parents=True)
     (sdir / "rubric.md").write_text(
-        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     # Selection order is light, heavy, medium; LPT should run heavy->medium->light.
     _write_minimal_test(sdir, "ut_a_000_light", "skill-a")  # default 300
@@ -728,7 +763,7 @@ def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monke
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(
         run_tests, "write_run_log",
-        lambda log, *, runlogs_root, filename: Path(runlogs_root),
+        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root),
     )
     _stub_partial(monkeypatch)
 
@@ -755,7 +790,7 @@ def _write_prior_runlog(runlogs_root: Path, skill: str, durations_s: dict[str, f
             for tid, s in durations_s.items()
         ],
     }
-    (d / f"v1_{timestamp}.json").write_text(json.dumps(env))
+    (d / f"v1_{timestamp}.json").write_text(json.dumps(env), encoding="utf-8")
 
 
 def test_load_actual_durations_reads_latest_by_timestamp(tmp_path):
@@ -792,7 +827,7 @@ def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
     sdir = root / "skill-a"
     sdir.mkdir(parents=True)
     (sdir / "rubric.md").write_text(
-        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n"
+        "# x\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n", encoding="utf-8"
     )
     # All default cap (300) — only the prior actuals differentiate them.
     for tid in ("ut_a_000", "ut_a_001", "ut_a_002"):
@@ -816,7 +851,7 @@ def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root))
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root))
     _stub_partial(monkeypatch)
 
     rc = run_tests.main([
@@ -961,7 +996,7 @@ def test_preflight_allows_negative_only_selection(tmp_path, monkeypatch, capsys)
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:
@@ -985,7 +1020,7 @@ def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:

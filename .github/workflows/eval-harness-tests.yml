@@ -5,15 +5,24 @@ name: Eval harness tests
 #   - the skill re-invocation-section lint
 #     (docs/specs/feedback-case-spec.md §5 + §9 step 7),
 #   - research.json schema-stub / scenario-fixture validity against
-#     docs/specs/schemas/research.schema.json.
+#     docs/specs/schemas/research.schema.json,
+#   - the two schema trees being byte-identical (test_schema_mirrors.py).
+#
+# That last one is why BOTH schema paths are in PATTERNS below. The mirror at
+# packages/schema/schemas/ is not inert data any more: gen-enums.mjs generates
+# the TS unions FROM it (ADR-0008 tier 2), and that test is what licenses the
+# generator to read the local copy rather than docs/specs/schemas/. Matching
+# only the canonical tree meant a PR editing just the mirror skipped the one
+# job that runs the byte-identity check. enum-drift.test.ts compares the two
+# enums.schema.json copies under engine-tests.yml, so that half had cover;
+# research.schema.json and tree-gedcomx.schema.json had none.
 # Both previously drifted onto main because no CI job ran these tests —
 # §9 step 7 assumed a harness-test gate existed, but only the runlog
 # discipline check (check-runlogs.yml) was wired up.
 #
-# The single live-API end-to-end test (eval/harness/tests/e2e/, marked
-# `e2e` and additionally guarded by skipif on ANTHROPIC_API_KEY) is
-# excluded here via `-m 'not e2e'`: CI has no API key and must never bill
-# the Anthropic API.
+# Every test in this suite is offline and free. CI has no API key and must
+# never bill the Anthropic API, so nothing here may call a model — the same
+# invariant scripts/test.sh holds for the pre-PR gate.
 #
 # The CLI tests (test_cli.py) import run_tests.py, which refuses to run
 # against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
@@ -53,7 +62,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/harness/|^packages/engine/plugin/skills/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
+          # `^eval/runlogs/` is here because a harness test reads the real
+          # committed corpus rather than a tmp_path fixture —
+          # `test_every_corpus_member_yields_a_run_date`, the only guard against
+          # a runlog whose filename every window would silently pin inside it. A
+          # runlog-only PR is exactly the PR that adds corpus members, so
+          # omitting the path meant the one check that covers them never ran.
+          #
+          # `^packages/engine/plugin/hooks/` and `^apps/server/app/agent/` are
+          # here for test_write_lockdown_parity.py, which compares the three
+          # copies of the raw-write lockdown. Two of the three live outside every
+          # other branch of this pattern (plugin/skills/ does not cover
+          # plugin/hooks/), so without them a divergence landing in real_agent.py
+          # or guard_project_files.py alone never runs the test that exists to
+          # catch it. Keep in sync with IMPLEMENTATIONS in that module.
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/app/agent/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -107,7 +130,20 @@ jobs:
         working-directory: eval/harness
         run: uv sync --frozen
 
+      # Undefined names (ruff F821). Runs BEFORE pytest because it catches the
+      # one class of defect the suite structurally cannot: `actions/checkout`
+      # resolves `refs/pull/N/merge` on a pull_request event, so this lints the
+      # MERGE of the PR into main. Two branches editing different hunks of one
+      # function can merge with no conflict and leave a name bound in neither —
+      # green tests, NameError at runtime. Config (F821 only) is in
+      # eval/harness/pyproject.toml; keep it that way rather than adding rules
+      # here.
+      - name: Lint for undefined names (ruff F821)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/harness
+        run: uv run --frozen ruff check .
+
       - name: Run harness unit tests (excludes live-API e2e)
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/harness
-        run: uv run --frozen pytest -m 'not e2e'
+        run: uv run --frozen pytest

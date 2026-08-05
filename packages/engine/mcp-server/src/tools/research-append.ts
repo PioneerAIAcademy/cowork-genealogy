@@ -528,7 +528,12 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
   const key = labelKey(ft);
-  const canonical = FACT_TYPE_ALIASES[key];
+  // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
+  // index on `constructor` yields `Object`, which is truthy, so the assignment
+  // below would replace a string fact_type with a function.
+  const canonical = Object.hasOwn(FACT_TYPE_ALIASES, key)
+    ? FACT_TYPE_ALIASES[key]
+    : undefined;
   if (canonical) entry.fact_type = canonical;
   // A folded place-of-event variant must keep its place machine-readable: if
   // neither `place` nor `standard_place` is set, lift the human `value` (which
@@ -576,7 +581,11 @@ function applyOne(
   preCallExhaustiveDeclared?: Map<string, boolean>,
 ): AppliedOp {
   const section = op.section;
-  const config = SECTIONS[section];
+  // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
+  // the prototype chain — `constructor` yields the `Object` function, which is
+  // truthy, so `!config` fails to reject and execution runs on past the error
+  // this branch exists to raise.
+  const config = Object.hasOwn(SECTIONS, section) ? SECTIONS[section] : undefined;
   if (!config) {
     throw new ResearchAppendError(
       `section '${section}' is not supported by research_append (supported: ${Object.keys(SECTIONS).join(", ")})`,
@@ -606,7 +615,7 @@ function applyOne(
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
     // project completed while a BLOCKING conflict is unresolved. Blocking =
-    // status "unresolved" AND (identity_question true OR blocks_question_ids
+    // status "unresolved" AND (it is an identity conflict OR blocks_question_ids
     // non-empty). "resolved" and "moot" both settle a conflict. This is a
     // tool precondition on the status transition, not a document-validity
     // rule — an already-completed project with such a conflict still loads.
@@ -615,16 +624,23 @@ function applyOne(
     // 43-year birth mismatch) and completed the project anyway; prose-level
     // guardrails (warnings, mentor) fired and were rationalized away.
     if (section === "project" && op.fields.status === "completed") {
+      // An identity conflict is flagged by a non-empty identity_question STRING.
+      // The schema types identity_question as the question's text (string|null),
+      // never a boolean, so the old `=== true` was unsatisfiable dead code —
+      // an unresolved identity conflict slipped past the gate whenever
+      // blocks_question_ids was also empty (issue #1001).
+      const isIdentityConflict = (c: any) =>
+        typeof c.identity_question === "string" && c.identity_question.trim() !== "";
       const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
         (c: any) =>
           c &&
           c.status === "unresolved" &&
-          (c.identity_question === true ||
+          (isIdentityConflict(c) ||
             (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
       );
       if (blocking.length > 0) {
         const names = blocking
-          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${c.identity_question ? ", identity" : ""})`)
+          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
           .join(", ");
         throw new ResearchAppendError(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
@@ -1635,6 +1651,28 @@ function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: bo
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
+/**
+ * Writable `research.json` sections, declared once and spread into both the
+ * top-level `section` and the batch `ops[].section` enums below.
+ * Same pattern as `RESEARCH_QUERY_SECTIONS` in research-query.ts.
+ */
+export const RESEARCH_APPEND_SECTIONS = [
+  "sources",
+  "assertions",
+  "person_evidence",
+  "questions",
+  "plans",
+  "plan_items",
+  "conflicts",
+  "hypotheses",
+  "timelines",
+  "proof_summaries",
+  "evaluations",
+  "known_holdings",
+  "localities",
+  "project",
+] as const;
+
 export const researchAppendSchema = {
   name: "research_append",
   description:
@@ -1677,22 +1715,7 @@ export const researchAppendSchema = {
       },
       section: {
         type: "string",
-        enum: [
-          "sources",
-          "assertions",
-          "person_evidence",
-          "questions",
-          "plans",
-          "plan_items",
-          "conflicts",
-          "hypotheses",
-          "timelines",
-          "proof_summaries",
-          "evaluations",
-          "known_holdings",
-          "localities",
-          "project",
-        ],
+        enum: [...RESEARCH_APPEND_SECTIONS],
         description:
           "The research.json section to write. List sections take append/update " +
           "by id; `project` is the singleton metadata object — use op 'update' " +
@@ -1730,22 +1753,7 @@ export const researchAppendSchema = {
           properties: {
             section: {
               type: "string",
-              enum: [
-                "sources",
-                "assertions",
-                "person_evidence",
-                "questions",
-                "plans",
-                "plan_items",
-                "conflicts",
-                "hypotheses",
-                "timelines",
-                "proof_summaries",
-                "evaluations",
-                "known_holdings",
-                "localities",
-                "project",
-              ],
+              enum: [...RESEARCH_APPEND_SECTIONS],
               description: "The research.json section this op writes.",
             },
             op: { type: "string", enum: ["append", "update"], description: "append (tool assigns id) or update by id." },

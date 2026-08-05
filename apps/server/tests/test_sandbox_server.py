@@ -94,7 +94,7 @@ async def _drive(port, proj):
         assert saw_done, "no turn_done"
         assert " ".join(texts).strip(), "agent produced no text"
         # /project watch: write a new file → expect a research_updated delta
-        (proj / "research.json").write_text(json.dumps({"project": {"id": "p"}}))
+        (proj / "research.json").write_text(json.dumps({"project": {"id": "p"}}), encoding="utf-8")
         got_delta = False
         end = time.time() + 6
         while time.time() < end and not got_delta:

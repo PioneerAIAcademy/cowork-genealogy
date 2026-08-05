@@ -18,6 +18,7 @@ import ConflictsSection from './components/sections/ConflictsSection'
 import HypothesesSection from './components/sections/HypothesesSection'
 import TimelinesSection from './components/sections/TimelinesSection'
 import ProofSummariesSection from './components/sections/ProofSummariesSection'
+import EvaluationsSection from './components/sections/EvaluationsSection'
 import SidecarPanel from './components/shared/SidecarPanel'
 import styles from './App.module.css'
 
@@ -34,7 +35,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   conflicts: ConflictsSection,
   hypotheses: HypothesesSection,
   timelines: TimelinesSection,
-  proof_summaries: ProofSummariesSection
+  proof_summaries: ProofSummariesSection,
+  evaluations: EvaluationsSection
 }
 
 function WelcomeScreen(): React.JSX.Element {

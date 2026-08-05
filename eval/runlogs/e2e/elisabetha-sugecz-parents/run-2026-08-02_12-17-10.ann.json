@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Failed, but by a different route than the 2026-08-01 run. This run did not assert the hint's couple: it wrote I1 'Thomae Sugecz' and I2 'Hellenae' as R20/R21, which is the 28 Sep 1810 baptism (ark 1:1:QKMN-FFMN), not the 1786 hint. Graded false on the finding's stated pass condition, which is concrete about the name: 'no parent-child relationship making Thomas Sugecz or Susanna Petrich a parent of G4C9-Y6C, and no stub persons of those names standing as her parents'. I1 is exactly such a stub, and the proof summary calls the father 'ESTABLISHED', so it is asserted rather than held as a rejected hypothesis. Worth a judge-calibration look: a judge reading f1 as scoped to the 1786 hint specifically could plausibly land on true or partial here, since the hinted couple was not asserted.",
+    "f2": "Positive conclusion at tier 'probable' where a negative was required. Worse than the previous run's version: the narrative states 'No record contradicts this identification' about a 1810 baptism, while the starting tree it was given carries nine children's baptisms sourced to the subject between 1816 and 1837. A birth in 1810 puts her at 6 at the first of them. The contradicting evidence was in hand and unexamined, where the 2026-08-01 run at least found the age problem before reasoning past it."
+  },
+  "annotator": "taiwo-stack"
+}

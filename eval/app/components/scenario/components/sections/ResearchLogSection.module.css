@@ -137,3 +137,10 @@
   outline: 2px solid var(--accent-gold-strong);
   outline-offset: 1px;
 }
+
+/* Kept in step with packages/viewer-ui's copy (#1166). */
+.externalUrl {
+  color: var(--text-link);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
