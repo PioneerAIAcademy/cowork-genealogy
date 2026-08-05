@@ -124,17 +124,24 @@ if [[ -f "$FB_JSON" ]]; then
   # no usable interpreter: Windows ships an App Execution Alias stub at
   # AppData/Local/Microsoft/WindowsApps/python3 that exists but fails when run
   # (it exists to launch the Store). Probing only python3 therefore reports
-  # success, the run fails into `2>/dev/null || true`, and the prompt silently
-  # degrades to the "see feedback.json" fallback. Git for Windows installs
-  # expose the real interpreter as `python`.
+  # success, the run fails, and the prompt silently degrades to the
+  # "see feedback.json" fallback. Git for Windows installs expose the real
+  # interpreter as `python`.
+  #
+  # Take the output only when the interpreter exited 0. That stub prints its
+  # Store message and exits nonzero, and on some Windows builds the message
+  # lands on stdout — so trusting a failed run's stdout would print the advert
+  # under "User's prompt to issue first:" for the genealogist to paste.
   for PY in python3 python; do
     if [[ -n "$USER_PROMPT" ]]; then break; fi
     if command -v "$PY" >/dev/null 2>&1; then
-      USER_PROMPT="$("$PY" -c "import json,sys
+      if PY_OUT="$("$PY" -c "import json,sys
 try:
     print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt',''))
 except Exception:
-    pass" "$FB_JSON" 2>/dev/null || true)"
+    pass" "$FB_JSON" 2>/dev/null)"; then
+        USER_PROMPT="$PY_OUT"
+      fi
     fi
   done
 fi
