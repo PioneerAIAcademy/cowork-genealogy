@@ -101,7 +101,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^\.github/workflows/check-runlogs\.yml$'
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -172,6 +172,19 @@ jobs:
       - name: Check rubric/judge_context/agent tool-mention drift (warn-only)
         if: steps.scope.outputs.relevant == 'true'
         run: python eval/harness/scripts/check_rubric_tool_drift.py
+
+      # A doc citing a CLOSED issue as still-tracking. An issue number in prose
+      # is a copy of state GitHub owns, and nothing kept the copy honest:
+      # architecture.md §9.4 listed #999 as open tracking hours after it closed,
+      # and a human reading the row is what caught it. Scoped to TRACKING
+      # positions only (a Tracking table column, "tracked as #N") — citing a
+      # closed issue as history is correct and stays silent. Needs the API, so
+      # it is here rather than in pytest; every failure path exits 0.
+      - name: Check docs for closed-issue citations (warn-only)
+        if: steps.scope.outputs.relevant == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python eval/harness/scripts/check_doc_issue_refs.py
 
       # Blocking on hard rules (bad/mismatched name, or a description that
       # is missing, over 1024 chars, or contains angle brackets) for skills

@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  citedLineNumbers,
   citedMakeTargets,
   citedPaths,
   citedSlashCommands,
@@ -268,6 +269,162 @@ describe("doc and .claude/ tooling links", () => {
       `these KNOWN_ABSENT entries no longer match anything cited, so they are now ` +
         `blanket exemptions nobody can see: ${stale.map((e) => `${e.file} -> ${e.path}`).join(", ")}\n` +
         `Delete them from ${relative(projectRoot, fileURLToPath(import.meta.url))}.`,
+    ).toEqual([]);
+  });
+});
+
+/**
+ * Source citations that pin a line number, as they stood on 2026-08-04. Frozen
+ * so the ban below blocks *new* ones without demanding a 56-site sweep in the
+ * same PR that introduces the rule.
+ *
+ * These are not benign. Of three sampled in `research-append-tool-spec.md`,
+ * three already pointed at the wrong code — `validator.ts:417` is cited as the
+ * `exhaustive_declaration` coupling check and is the `stop_criteria` shape
+ * allow-list. Converting them to symbol references is issue #1305; until then
+ * this list is the honest record of what is known-wrong-shaped.
+ *
+ * `docs/plan/` is excluded from the walk entirely, not listed here: a plan is
+ * deleted when its work ships, so a cite inside one cannot outlive its subject.
+ *
+ * Removing a cite from a doc without removing it here fails the drift check
+ * below, so this list cannot quietly outlive the sweep that empties it.
+ */
+const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
+  "docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md": [
+    "packages/schema/src/index.ts:269",
+    "scripts/build-mcpb.mjs:26-27",
+  ],
+  "docs/agentic-system-critique.md": [
+    "allowed_tools.py:59",
+    "allowed_tools.py:61-68",
+    "allowed_tools.py:98-103",
+    "harness/orchestrator.py:206",
+    "real_agent.py:132-139",
+    "research-append.ts:622",
+    "research-query.ts:243-244",
+    "research-query.ts:29",
+    "skill_runner.py:57",
+  ],
+  "docs/architecture.md": [
+    "apps/server/app/agent/real_agent.py:130",
+    "eval/harness/e2e/orchestrator.py:175",
+    "packages/engine/plugin/hooks/guard_project_files.py:36",
+    "src/index.ts:736",
+  ],
+  "docs/realtime-architecture.md": [
+    "apps/server/app/models.py:45",
+    "local.py:195",
+    "runner.py:65",
+  ],
+  "docs/record-search-compaction-scope.md": ["results-staging.ts:108-124"],
+  "docs/specs/image-reader-opus-agent-spec.md": [
+    "e2e/orchestrator.py:752",
+    "index.ts:291-297",
+    "subprocess_cli.py:30",
+  ],
+  "docs/specs/match-merge-workflow-spec.md": ["gedcomx.ts:161"],
+  "docs/specs/merge-gedcomx-spec.md": [
+    "packages/engine/mcp-server/src/types/gedcomx.ts:112",
+    "packages/engine/mcp-server/src/types/gedcomx.ts:120",
+    "packages/engine/mcp-server/src/types/gedcomx.ts:139",
+  ],
+  "docs/specs/rank-search-matches-tool-spec.md": [
+    "relatives.ts:34",
+    "results-staging.ts:108-114",
+    "same-person.ts:199-206",
+    "same-person.ts:22",
+    "same-person.ts:67-91",
+    "validator.ts:1100-1114",
+  ],
+  "docs/specs/research-append-tool-spec.md": [
+    "validator.ts:417",
+    "validator.ts:607",
+    "validator.ts:637",
+  ],
+  "docs/specs/research-log-editor-spec.md": [
+    "src/validation/validator.ts:431",
+    "src/validation/validator.ts:953",
+    "validator.ts:1012",
+    "validator.ts:1022",
+    "validator.ts:1024",
+    "validator.ts:953",
+  ],
+  "docs/specs/same-person-match-relatives-spec.md": ["src/utils/mob.ts:299-336"],
+  "docs/specs/search-result-staging-spec.md": [
+    "src/tools/fulltext-search.ts:206",
+    "src/tools/record-search.ts:511",
+    "src/validation/validator.ts:1034",
+    "src/validation/validator.ts:988",
+  ],
+  "docs/specs/tree-edit-tool-spec.md": [
+    "src/types/gedcomx.ts:104",
+    "tests/tools/tree-edit.test.ts:950",
+  ],
+  "docs/specs/tree-materialization-spec.md": ["merge-warnings.ts:64"],
+  "docs/specs/validate-project-refactor-spec.md": [
+    "packages/engine/mcp-server/src/validation/validator.ts:104",
+    "src/tools/validate-research-schema.ts:20",
+    "validator.ts:104",
+    "validator.ts:236",
+    "validator.ts:737",
+    "validator.ts:988",
+  ],
+};
+
+/** Every `.md` under `docs/`, except `docs/plan/` (see the note above). */
+function docsMarkdown(root: string): string[] {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        if (entry === "plan") continue;
+        walk(full);
+      } else if (entry.endsWith(".md")) {
+        out.push(relative(root, full));
+      }
+    }
+  };
+  walk(join(root, "docs"));
+  return out.sort();
+}
+
+describe("docs/ cite symbols, not line numbers", () => {
+  it("bans new source-line citations under docs/", () => {
+    const offenders: string[] = [];
+    for (const rel of docsMarkdown(projectRoot)) {
+      const allowed = new Set(GRANDFATHERED_LINE_CITES[rel] ?? []);
+      for (const cite of citedLineNumbers(readFileSync(join(projectRoot, rel), "utf8"))) {
+        if (!allowed.has(cite)) offenders.push(`${rel} cites \`${cite}\``);
+      }
+    }
+    expect(
+      offenders,
+      "A line number is a copy of state the file owns, and nothing keeps the copy " +
+        "honest — 3 of 3 sampled cites in this repo already pointed at the wrong " +
+        "code. Cite the symbol (`validateExhaustiveDeclaration`), not the line; " +
+        "`citedPaths` already proves the file exists.",
+    ).toEqual([]);
+  });
+
+  it("has no stale grandfathered entries", () => {
+    const stale: string[] = [];
+    for (const [rel, cites] of Object.entries(GRANDFATHERED_LINE_CITES)) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) {
+        stale.push(`${rel} (file gone)`);
+        continue;
+      }
+      const present = new Set(citedLineNumbers(readFileSync(full, "utf8")));
+      for (const c of cites) {
+        if (!present.has(c)) stale.push(`${rel} no longer cites \`${c}\``);
+      }
+    }
+    expect(
+      stale,
+      "An exemption that stopped firing means the sweep reached it — delete the " +
+        "entry so the list keeps shrinking instead of becoming a blanket nobody reads.",
     ).toEqual([]);
   });
 });

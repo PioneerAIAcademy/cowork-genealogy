@@ -106,10 +106,10 @@ then answers the staleness ("the historical corpus predates several of today's
 skills") with *new* runs.
 
 The numbers below are a point-in-time replay over the **99 runs committed when
-they were taken**, kept as the record of what motivated the window. `SINCE=all`
-today scans the whole corpus, which has since grown (134 runs as of
-2026-08-04), so it reports larger absolute counts — the shape, not the
-figures, is what reproduces:
+they were taken**, kept as the record of what motivated the window. The corpus
+only grows, so `SINCE=all` reports larger absolute counts than this table — the
+shape, not the figures, is what reproduces. Re-run it rather than reading a
+count out of this page:
 
 | window | violations | runs affected |
 |---|---|---|
@@ -199,10 +199,13 @@ carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 also loads the plugin — but "the plugin loader does what you'd expect in the
 hosted path" is exactly the assumption issue #939 disproved for agents. Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
-same reason, so the redundancy is harmless. Tracked as issue #1129, which also
-covers the third copy in `eval/harness/e2e/orchestrator.py` — no test asserts
-the three agree, so a future addition to `PROTECTED_PROJECT_FILES` can silently
-lag in two of them.
+same reason, so the redundancy is harmless. Deleting the SDK copy was declined
+(issue #1129, closed not-planned) — all three stay. **No test asserts the three
+agree**, so a future addition to `PROTECTED_PROJECT_FILES` can silently lag in
+two of them; that gap is `docs/architecture.md` §9.4's, and the three copies are
+`packages/engine/plugin/hooks/guard_project_files.py`,
+`apps/server/app/agent/real_agent.py`, and
+`eval/harness/e2e/orchestrator.py`.
 
 **Deliberate gaps.**
 
@@ -220,7 +223,8 @@ lag in two of them.
   `localities`) and caps at 50 items with no pagination. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
-  *open* the file: `project_context` (`project-context.ts:115`) loads it, and
+  *open* the file: `project_context` (its `readJson` of `research.json` in
+  `packages/engine/mcp-server/src/tools/project-context.ts`) loads it, and
   roughly a dozen writer/validator tools (`tree_edit`, `tree_correct`,
   `tree_forget`, the merge tools, `materialize_facts`, `research_append`,
   `validate_research_schema`, …) load it to validate or rewrite it. But none of
@@ -255,37 +259,33 @@ Design points that were paid for and should not be re-derived:
   fills in itself is attested by the party we don't trust at the moment it
   matters. Direct precedent: `person-evidence`'s `match_score` was meant to
   attest that `same_person` was consulted, and its provenance guard was cut in
-  #695 for zero observed true positives across **all 15**
-  `eval/tests/unit/person-evidence/` cases as of that PR, against a real
-  false-positive class. (That suite has since grown past 15 — the count is the
-  scope of the measurement, not of the directory.)
+  #695 for zero observed true positives across **every**
+  `eval/tests/unit/person-evidence/` case as of that PR, against a real
+  false-positive class.
 - **Success-gated, off the joined `tool_calls[].is_error` — but only to the
   depth that key can see.** The intent is that an errored `Skill` call must not
   open the window, or "invoke the skill, let it fail, finish the write inline"
-  evades this check and §8 at once. The instrument is **not** a `PostToolUse`
-  hook (this bullet specified one until 2026-08-04; none was ever built, and
-  there is no `PostToolUse` hook anywhere in `eval/harness/`). It is the SDK's
-  `ToolResultBlock.is_error`, joined onto each entry by the message loop in
+  evades this check and §8 at once. The instrument is the SDK's
+  `ToolResultBlock.is_error`, joined onto each entry by `apply_tool_result` in
   `e2e/orchestrator.py` and read by the `entry.get("is_error") is True` gates in
   `harness/skill_invocation.py` — `recently_succeeded`,
   `find_unguarded_protected_writes`, `find_effects_without_invocation`,
   `find_person_evidence_missing_same_person`, and
-  `find_protected_writes_by_unnamed_delegate`. Those gates were written against a
-  key nothing set, so success-gating was inert in all five until the join landed
-  (`apply_tool_result`, PR #1255, main `4541a4c5`).
+  `find_protected_writes_by_unnamed_delegate`.
+
+  **There is no `PostToolUse` hook** anywhere in `eval/harness/`, and nothing
+  here should be built on one existing.
 
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:
 
-  - **`Skill` — launch only.** Every one of the 1,211 `Skill` results in the
-    committed corpus is a launch acknowledgement (`Launching skill: <name>`, 18
-    distinct values); the skill's work happens in later turns of the same
-    session. So `is_error` on a `Skill` entry catches an unknown-skill-name
-    launch failure — the corpus holds exactly one,
-    `<tool_use_error>Unknown skill: gps-mentor</tool_use_error>` — and nothing
-    else. **The invoke-then-let-it-fail evasion named at the top of this bullet
-    is still open.** Closing it needs an instrument that observes skill
-    *completion*, which `ToolResultBlock` is not.
+  - **`Skill` — launch only.** Every `Skill` result in the committed corpus is a
+    launch acknowledgement (`Launching skill: <name>`); the skill's work happens
+    in later turns of the same session. So `is_error` on a `Skill` entry catches
+    an unknown-skill-name launch failure and nothing else. **The
+    invoke-then-let-it-fail evasion named at the top of this bullet is still
+    open** — closing it needs an instrument that observes skill *completion*,
+    which `ToolResultBlock` is not. Tracked as issue #1298.
   - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
     from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
     without throwing, so a rejected write still records `is_error: false`
