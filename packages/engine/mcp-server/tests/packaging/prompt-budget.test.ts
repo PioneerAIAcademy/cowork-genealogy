@@ -217,7 +217,9 @@ function emitReport(): void {
 emitReport();
 
 // ---------------------------------------------------------------------------
-// Report — every test here always passes (warn-only)
+// Report — every test here always passes (warn-only). `emitReport` above is
+// what a CI reader sees; these names repeat it for `--reporter=verbose` and
+// the vitest UI.
 // ---------------------------------------------------------------------------
 
 describe("prompt-budget (warn-only)", () => {
@@ -230,8 +232,9 @@ describe("prompt-budget (warn-only)", () => {
   });
 
   if (baseSizes === null) {
-    // Local dev without origin/main fetched, or a push event in CI.
-    // Report absolute sizes as a fallback — still useful for orientation.
+    // Local dev without origin/main fetched, or a CI run whose fetch step
+    // failed. Report absolute sizes as a fallback — still useful for
+    // orientation.
     for (const [path, size] of headSizes) {
       it(`${short(path)}: ${formatKB(size)}`, () => {
         // Informational only — always passes.
@@ -244,7 +247,7 @@ describe("prompt-budget (warn-only)", () => {
   } else {
     for (const d of deltas) {
       it(label(d), () => {
-        // Warn-only: the test name carries the signal; the test always passes.
+        // Warn-only: the name carries the signal; the test always passes.
       });
     }
   }
