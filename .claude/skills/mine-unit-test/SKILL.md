@@ -239,7 +239,7 @@ from a fixture at `$REPO/eval/fixtures/mcp/<name>.json`
   it as an empty-results response.)
 - **Recorded path.** Full payloads live only in `run-<ts>.session.jsonl`, which
   is **usually absent** from committed runs. `tool_calls[].response_summary` is a
-  bounded summary: on a `harness_schema_version` 2 log it preserves every key, so
+  bounded summary: on a `harness_schema_version` 2 or higher log it preserves every key, so
   it usually **does** give you the fixture's shape, but lists past three entries
   are sampled and long strings cut, so it is **not** the values. On a version 1
   log it is a head truncation and gives you neither. So: if `session.jsonl` is

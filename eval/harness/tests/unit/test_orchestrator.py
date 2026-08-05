@@ -129,7 +129,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
         from harness.skill_runner import SkillRunResult
         workspace = kwargs["workspace"]
         (workspace / "schuylkill-county-pennsylvania.md").write_text(
-            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n"
+            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n", encoding="utf-8"
         )
         return SkillRunResult(
             text_response="I saved the file.",
