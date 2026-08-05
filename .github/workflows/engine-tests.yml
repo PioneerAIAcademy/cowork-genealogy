@@ -56,7 +56,7 @@ jobs:
           # adr-links.test.ts and doc-links.test.ts lint them. Without these three
           # a PR touching only a skill body, an agent, or an ADR skips vitest and
           # reports success — the lint would be dark for its entire domain.
-          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.claude/|^docs/adrs/|^docs/task-lifecycle\.md$|^\.github/workflows/engine-tests\.yml$'
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.claude/|^docs/|^\.github/workflows/engine-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 18, flag adds_son, confidence 3). Draft transcribed from a Honduran parish baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 18, flag adds_son, confidence 3). Resolved: true match. The 1889 San Miguel, Tegucigalpa baptism of Guillermo Salgado is confirmed as a son of Micaela Salgado (9XGG-PW4) and is already attached to her on FamilySearch."
 }
