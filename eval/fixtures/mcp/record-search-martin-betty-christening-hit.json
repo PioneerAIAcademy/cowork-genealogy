@@ -1,0 +1,151 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning the 1812 Bitton, Gloucestershire christening of Betty Martin, daughter of Thomas and Sophia Martin — the target of required finding f3 in the young-marriage-1828 e2e fixture. Fires only when the skill searches the DIMINUTIVE given name (`givenName: Betty`) rather than the formal `Elizabeth` the tree holds; a search under Elizabeth falls through to record-search-martin-elizabeth-no-target. Result counts and the rank-1 position are taken from a live probe of /service/search/hr/v2/personas on 2026-08-04 (fuzzy `Betty` + surname Martin + Gloucestershire + 1810-1814 returns this record first); persona and ARK identifiers are synthetic. ORDERING IS LOAD-BEARING: mock_mcp.py breaks on the first matching predicate, so this fixture must be listed before the Elizabeth one in the test's mcp_fixtures array.",
+  "args": {
+    "surname": "~Martin",
+    "givenName": "~Betty"
+  },
+  "response": {
+    "query": {
+      "surname": "Martin",
+      "givenName": "Betty",
+      "birthPlace": "Gloucestershire, England",
+      "birthYearFrom": 1808,
+      "birthYearTo": 1815
+    },
+    "totalMatches": 58691,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "personId": "GKR7-4TQ2",
+        "recordId": "GKR7-4TQ2",
+        "personName": "Betty Martin",
+        "score": 0.88,
+        "sex": "Female",
+        "birthDate": "1 November 1812",
+        "birthPlace": "Bitton, Gloucestershire, England",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1 November 1812",
+            "place": "Bitton, Gloucestershire, England"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR7-4TQ2",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Betty Martin christening, Bitton, 1 November 1812",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": {
+                "name": "Betty Martin",
+                "gender": "Female",
+                "role": "Principal"
+              },
+              "facts": [
+                {
+                  "type": "http://gedcomx.org/Christening",
+                  "date": { "original": "1 November 1812" },
+                  "place": { "original": "Bitton, Gloucestershire, England" }
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "display": { "name": "Thomas Martin", "gender": "Male", "role": "Father" }
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "display": { "name": "Sophia Martin", "gender": "Female", "role": "Mother" }
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GKR7-9BW4",
+        "recordId": "GKR7-9BW4",
+        "personName": "Betty Martin",
+        "score": 0.61,
+        "sex": "Female",
+        "birthDate": "1813",
+        "birthPlace": "Prinknash Park, Gloucestershire, England",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1813",
+            "place": "Prinknash Park, Gloucestershire, England"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR7-9BW4",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Betty Martin christening, Prinknash Park, 1813",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Betty Martin", "gender": "Female", "role": "Principal" }
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "display": { "name": "Elias Martin", "gender": "Male", "role": "Father" }
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GKR7-2XM8",
+        "recordId": "GKR7-2XM8",
+        "personName": "Betty Martin",
+        "score": 0.44,
+        "sex": "Female",
+        "birthDate": "1811",
+        "birthPlace": "Gloucestershire, England",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1811",
+            "place": "Gloucestershire, England"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR7-2XM8",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Betty Martin christening, 1811",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Betty Martin", "gender": "Female", "role": "Principal" }
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "display": { "name": "Margaret Martin", "gender": "Female", "role": "Mother" }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

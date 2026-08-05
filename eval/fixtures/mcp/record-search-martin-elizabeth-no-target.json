@@ -1,0 +1,142 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search under the FORMAL given name Elizabeth Martin in Gloucestershire, 1808-1815 — the search the agent actually ran across all three committed runs of the young-marriage-1828 e2e fixture. Returns a large pool of same-name christenings, none of them the target: no result names Thomas and Sophia Martin as parents, so required finding f3 is unreachable from this query however deeply it is triaged. Rows mirror the top of a live probe of /service/search/hr/v2/personas on 2026-08-04; persona and ARK identifiers are synthetic. This is the fall-through fixture: its predicate matches any Martin search, so it must be listed AFTER record-search-martin-betty-christening-hit in the test's mcp_fixtures array (mock_mcp.py breaks on the first matching predicate).",
+  "args": {
+    "surname": "~Martin"
+  },
+  "response": {
+    "query": {
+      "surname": "Martin",
+      "givenName": "Elizabeth",
+      "birthPlace": "Gloucestershire, England",
+      "birthYearFrom": 1808,
+      "birthYearTo": 1815
+    },
+    "totalMatches": 59524,
+    "paginationCappedAt": 4999,
+    "returned": 4,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "personId": "GKR8-7DL3",
+        "recordId": "GKR8-7DL3",
+        "personName": "Elizabeth Laura Martin",
+        "score": 0.55,
+        "sex": "Female",
+        "birthDate": "1813",
+        "birthPlace": "Gloucestershire, England",
+        "events": [
+          { "type": "Christening", "date": "1813", "place": "Gloucestershire, England" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR8-7DL3",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Elizabeth Laura Martin christening, 1813",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Elizabeth Laura Martin", "gender": "Female", "role": "Principal" }
+            },
+            { "id": "P2", "gender": "Male", "display": { "name": "Robert Martin", "gender": "Male", "role": "Father" } },
+            { "id": "P3", "gender": "Female", "display": { "name": "Sarah Martin", "gender": "Female", "role": "Mother" } }
+          ]
+        }
+      },
+      {
+        "personId": "GKR8-5NV9",
+        "recordId": "GKR8-5NV9",
+        "personName": "Elizabeth Martin",
+        "score": 0.53,
+        "sex": "Female",
+        "birthDate": "1811",
+        "birthPlace": "Gloucestershire, England",
+        "events": [
+          { "type": "Christening", "date": "1811", "place": "Gloucestershire, England" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR8-5NV9",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Elizabeth Martin christening, 1811",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Elizabeth Martin", "gender": "Female", "role": "Principal" }
+            },
+            { "id": "P2", "gender": "Male", "display": { "name": "Henry Martin", "gender": "Male", "role": "Father" } },
+            { "id": "P3", "gender": "Female", "display": { "name": "Sarah Martin", "gender": "Female", "role": "Mother" } }
+          ]
+        }
+      },
+      {
+        "personId": "GKR8-3QT6",
+        "recordId": "GKR8-3QT6",
+        "personName": "Elizabeth Ann Martin",
+        "score": 0.49,
+        "sex": "Female",
+        "birthDate": "1814",
+        "birthPlace": "Gloucestershire, England",
+        "events": [
+          { "type": "Christening", "date": "1814", "place": "Gloucestershire, England" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR8-3QT6",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Elizabeth Ann Martin christening, 1814",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Elizabeth Ann Martin", "gender": "Female", "role": "Principal" }
+            },
+            { "id": "P2", "gender": "Male", "display": { "name": "Joseph Martin", "gender": "Male", "role": "Father" } }
+          ]
+        }
+      },
+      {
+        "personId": "GKR8-8CF1",
+        "recordId": "GKR8-8CF1",
+        "personName": "Elizabeth Martin",
+        "score": 0.46,
+        "sex": "Female",
+        "birthDate": "1810",
+        "birthPlace": "Gloucestershire, England",
+        "events": [
+          { "type": "Christening", "date": "1810", "place": "Gloucestershire, England" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GKR8-8CF1",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Gloucestershire Parish Registers, 1538-1813",
+        "recordTitle": "Elizabeth Martin christening, 1810",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Female",
+              "display": { "name": "Elizabeth Martin", "gender": "Female", "role": "Principal" }
+            },
+            { "id": "P2", "gender": "Male", "display": { "name": "James Martin", "gender": "Male", "role": "Father" } },
+            { "id": "P3", "gender": "Female", "display": { "name": "Ann Martin", "gender": "Female", "role": "Mother" } }
+          ]
+        }
+      }
+    ]
+  }
+}

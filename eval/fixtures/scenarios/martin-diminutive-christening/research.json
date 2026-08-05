@@ -1,0 +1,66 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Establish the origins of Elizabeth Young née Martin (m. Thomas Young, 16 November 1828, St James, Bristol, Gloucestershire) — her christening and her parents",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-04",
+    "updated": "2026-08-04"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": ["none"],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where and when was Elizabeth Martin, wife of Thomas Young, christened?",
+      "rationale": "Her marriage in 1828 and her maiden surname Martin are established; her christening would fix her birth year and name her parents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-04",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-04",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1808-1815",
+          "repository": "FamilySearch",
+          "rationale": "A Gloucestershire parish christening in the years before 1815 would name her parents. She married in Bristol in 1828 and was described as of full age, so a christening in the 1808-1815 window is expected.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

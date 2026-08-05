@@ -1,0 +1,69 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Elizabeth",
+          "surname": "Martin",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1812",
+          "place": "Gloucestershire, England"
+        },
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "16 November 1828",
+          "place": "St James, Bristol, Gloucestershire, England"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Young",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Marriage",
+          "date": "16 November 1828",
+          "place": "St James, Bristol, Gloucestershire, England"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I1",
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Marriage",
+          "date": "16 November 1828",
+          "place": "St James, Bristol, Gloucestershire, England"
+        }
+      ]
+    }
+  ],
+  "sources": []
+}
