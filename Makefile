@@ -120,11 +120,14 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 
 # ── Worktrees ────────────────────────────────────────────────────
 # Git worktrees don't share gitignored files, so a freshly-added worktree lacks
-# the shared secrets (eval/.env) and installed deps (node_modules). These link
-# them to the primary worktree's copies. `install-hooks` makes new worktrees
-# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+# the shared secrets (eval/.env) and installed deps (node_modules). This links
+# the secrets and the npm-managed engine to the primary worktree's copies, and
+# INSTALLS the pnpm workspace locally — linking that one would resolve every
+# `@genealogy/*` import to the primary's source. `install-hooks` makes new
+# worktrees do this on `git worktree add`; `worktree-link` does it for an
+# existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
-worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
 	@scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
@@ -475,13 +478,16 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
 	# moves fast enough that older runs often describe behaviour already
 	# fixed, so a whole-corpus average silently mixes eras. SINCE=all opts
 	# back in for a retroactive integrity scan (issues #913, #1145).
+	#
+	# Also counts violations per arm and per fixture, and refuses to print a
+	# percentage whose denominator would be doing the work (issue #1176).
 	#
 	# The cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
@@ -625,6 +631,12 @@ deploy-preflight:
 	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
 	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
 	fi
+	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING, unlike
+	# the advisory above: this one is a real build of the thing about to ship, so
+	# a failure here is a failure on the Fly builder minutes later. Nothing in CI
+	# builds this image — `make deploy` is the only path, so this is the check.
+	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
+	@node scripts/check-deploy-stage1.mjs
 
 .PHONY: deploy
 deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)

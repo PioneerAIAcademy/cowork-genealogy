@@ -23,19 +23,32 @@ The PreToolUse hook can express it, because `PreToolUseHookInput` carries
 Probe-verified against the pinned CLI + SDK 0.1.81 — see
 `docs/plan/image-read-context-policy.md` §3.1.
 
-Two scope limits, both forced by `search-images` (plan §4.1):
+One scope limit (plan §4.1):
 
-- **Per-skill, not global.** `search-images` declares `image_read` in its own
-  `allowed-tools` and browses volumes page-by-page itself; a global guard would
-  deny every one of those calls and break the skill. The discriminator is the
-  skill's own declaration — *you may call what you declared; you may not call
-  what was granted only to your subagent*. Callers pass the pre-union set from
-  `allowed_tools.declared_skill_tools`.
-- **Unit harness only.** The e2e orchestrator cannot use this: its sub-skills
-  run in the same session via the `Skill` tool with no `agent_id` to attribute
-  them, so a legitimate `search-images` browse is indistinguishable from a
-  record-extraction router violation. e2e imports `bare_tool_name` from here
-  and nothing else.
+- **Per-skill, not global.** The discriminator is the skill's own declaration —
+  *you may call what you declared; you may not call what was granted only to
+  your subagent*. A skill that claims a guarded tool for itself may call it
+  directly; a global guard would deny those calls and break the skill. Callers
+  pass the pre-union set from `allowed_tools.declared_skill_tools`.
+
+  **No skill declares either guarded tool today**, so the exemption is currently
+  unreachable: `search-images` moved to delegating via `@plugin:image-reader`
+  (2026-07-17) and `image_read` lives only on `agents/image-reader-opus.md`;
+  `extraction_append` has only ever lived on `agents/record-extractor.md`. Both
+  facts are pinned by tests in `tests/unit/test_context_policy.py`. The clause
+  stays because it is the mechanism a future skill would need, not because
+  anything depends on it firing.
+
+e2e enforcement is **partial, and only for `extraction_append`** (#942). Because
+no skill declares it, `agent_id` presence alone discriminates a legitimate
+record-extractor call from a router substitution, which is all e2e can see — its
+sub-skills run in the same session via the `Skill` tool with no `agent_id` to
+attribute them. The e2e block is therefore tool-specific
+(`is_main_thread_extraction_append` in `e2e/orchestrator.py`) rather than a call
+to `subagent_only_violation`, which guards the whole set and takes a
+`declared_tools` argument e2e cannot supply. `image_read` meets the same
+condition today and is enforceable there too — issue #1273. e2e imports
+`bare_tool_name`, `is_subagent_call`, and `subagent_only_denial` from here.
 
 (e2e imports from `harness.*`, never the reverse.)
 """
@@ -45,15 +58,23 @@ from typing import Any
 # Tools that are unsafe on the main thread *when the skill did not claim them*.
 #
 # Membership here is necessary but NOT sufficient for a violation — see
-# subagent_only_violation. `search-images` declares `image_read` in its own
-# `allowed-tools` and browses pages itself, which is legitimate and must keep
-# working; `record-extraction` does not declare it and holds it only via
-# `@plugin:image-reader`, so its router must delegate. The declaration is the
-# discriminator.
+# subagent_only_violation. The declaration in a skill's own `allowed-tools` is
+# the discriminator: a skill may call what it declared; it may not call what was
+# granted only to its subagent.
 #
-# Keep this a plain set, not a policy engine — one entry does not justify
+# - `image_read` — held only by `agents/image-reader-opus.md`. It returns a page
+#   scan as inline base64; in the router's context the bytes accumulate and
+#   overflow the transport buffer, so every caller must delegate.
+# - `extraction_append` — held only by `agents/record-extractor.md`. When that
+#   agent fails to spawn, the router must report the failure and stop, not do
+#   the extraction and append itself (issue #942).
+#
+# No skill declares either, so the declared-tools exemption below still runs but
+# can never fire — no special-casing needed.
+#
+# Keep this a plain set, not a policy engine — two entries still do not justify
 # machinery. Matched on the bare name, so it is transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read"})
+SUBAGENT_ONLY_TOOLS = frozenset({"image_read", "extraction_append"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -98,16 +119,23 @@ def subagent_only_violation(
        we want the router to take.
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
-       that claimed the tool for itself may call it: `search-images` browses
-       volumes page-by-page via `image_read` and must keep working. A skill
-       that holds it only through the agent-union may not.
+       that claimed the tool for itself may call it directly; a skill that
+       holds it only through the agent-union may not. No skill declares either
+       guarded tool today — `search-images` moved to delegating via
+       `@plugin:image-reader` on 2026-07-17 — so this exemption is currently
+       unreachable, and `agent_id` presence alone decides (see
+       `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
     nothing** — i.e. the guard applies. Callers that cannot attribute a call to
     one skill should not use this function at all rather than pass None; see
     the e2e note in the module docstring.
     """
-    bare = bare_tool_name(input_data.get("tool_name", ""))
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # make `bare_tool_name(None)` raise TypeError, and a raising PreToolUse hook
+    # fails a call the agent was entitled to make (CLAUDE.md, "Plugin hooks").
+    # Mirrors the fail-closed guard in e2e's `is_main_thread_extraction_append`.
+    bare = bare_tool_name(input_data.get("tool_name") or "")
     if bare not in SUBAGENT_ONLY_TOOLS:
         return None
     if is_subagent_call(input_data):
@@ -117,23 +145,54 @@ def subagent_only_violation(
     return bare
 
 
+# Per-tool denial reasons. The reason text is the model's ONLY feedback on a
+# deny, so each guarded tool must name its own fix — a generic "not allowed here"
+# just relocates the substitution. The two fixes are genuinely different:
+# `image_read` has somewhere legitimate to go (delegate the read), whereas an
+# `extraction_append` deny means the delegation itself already failed, so the
+# only correct move is to surface that and stop — NOT to retry another way,
+# which would leave the goal in place and push the substitution elsewhere
+# (issue #942).
+_DENIAL_REASONS = {
+    "image_read": (
+        "image_read may not be called from the main session — it returns "
+        "inline base64 that overflows the transport buffer and crashes the "
+        "run. Delegate to the image-reader subagent (@plugin:image-reader), "
+        "which returns a text transcription."
+    ),
+    "extraction_append": (
+        "extraction_append may not be called from the main session — writing "
+        "extracted assertions and sources is the record-extractor subagent's "
+        "job (@plugin:record-extractor), never the router's. If that subagent "
+        "failed to spawn, report the spawn failure to the user and stop. Do "
+        "not extract the record and append it yourself, and do not retry "
+        "another way — the extraction must run in the subagent's isolated "
+        "context or not at all."
+    ),
+}
+
+# A fallback that still refuses, for a guarded tool added to SUBAGENT_ONLY_TOOLS
+# without a bespoke reason. Never expected to fire (a test pins parity), but a
+# deny with a vague reason beats a KeyError that crashes the hook.
+_DENIAL_REASON_FALLBACK = (
+    "{bare} may not be called from the main session — it is reserved for a "
+    "delegated subagent. Delegate the work rather than doing it here."
+)
+
+
 def subagent_only_denial(bare: str) -> dict[str, Any]:
     """A PreToolUse deny payload for a subagent-only tool called on main.
 
     Deliberately returns no `stopReason`: a denied call is a recoverable
-    mistake, not a fatal one. The run continues so the router can pivot to
-    delegating — matching how the e2e tree-read block behaves. The reason text
-    is the model's only feedback here, so it names the fix.
+    mistake, not a fatal one. The run continues so the router can pivot —
+    matching how the e2e tree-read block behaves. The reason text is the
+    model's only feedback here, so it names the fix per tool (`_DENIAL_REASONS`).
     """
+    reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                f"{bare} may not be called from the main session — it returns "
-                "inline base64 that overflows the transport buffer and crashes "
-                "the run. Delegate to the image-reader subagent "
-                "(@plugin:image-reader), which returns a text transcription."
-            ),
+            "permissionDecisionReason": reason,
         },
     }

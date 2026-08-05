@@ -699,6 +699,10 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     the run. Image reads must be delegated to the image-reader subagent, which
     absorbs the base64 in a throwaway context and returns text.
 
+    `extraction_append` writes the extracted assertions and sources. That is
+    the record-extractor subagent's job; a main-thread call is the router
+    substituting for a failed spawn and doing the extraction itself (#942).
+
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
     violation roughly 1-in-8, and a run could pass while violating. The
@@ -712,12 +716,26 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     if not blocked_context_calls:
         return
 
-    offenders = ", ".join(
-        sorted({c.get("tool", "?") for c in blocked_context_calls})
+    # Per-tool fix text: the owning subagent and the reason differ, and a
+    # message naming the wrong one sends the reader after the wrong bug.
+    owners = {
+        "image_read": (
+            "image_read → @plugin:image-reader, so the base64 never enters the "
+            "router's context"
+        ),
+        "extraction_append": (
+            "extraction_append → @plugin:record-extractor; if that subagent "
+            "failed to spawn, report the failure rather than extracting here"
+        ),
+    }
+    offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
+    fixes = "; ".join(
+        owners.get(t, f"{t} → delegate to its owning subagent")
+        for t in offending_tools
     )
     raise AssertionError(
-        f"subagent-only tool(s) called from the main session: {offenders} "
+        f"subagent-only tool(s) called from the main session: "
+        f"{', '.join(offending_tools)} "
         f"({len(blocked_context_calls)} call(s), denied by the hook). "
-        f"Delegate to the owning subagent (image reads → @plugin:image-reader) "
-        f"so the base64 never enters the router's context."
+        f"Delegate to the owning subagent — {fixes}."
     )
