@@ -6,15 +6,16 @@
 > plans filed under `docs/plan/` · want the critic to fix what it finds · want
 > to add a "Risky" tier to the lifecycle · wonder why a junior does not classify
 > their own task's risk · are about to hand a schema, auth, or plugin-agent
-> change to a junior.
+> change to a junior · wonder why the drift check is a second agent instead of a
+> `/code-review` flag · want to record a mid-flight re-plan in only one place.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-02 (#1177), risk half 2026-08-02 (#1188)
-- **Last updated:** 2026-08-03 (#1210)
+- **Last updated:** 2026-08-03 (drift half)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `docs/task-lifecycle.md`, `.claude/agents/plan-critic.md`, `.claude/commands/critique-plan.md`, `.claude/agents/task-reviewer.md`, `docs/specs/task-review-spec.md`
+- **Applies to:** `docs/task-lifecycle.md`, `.claude/agents/plan-critic.md`, `.claude/commands/critique-plan.md`, `.claude/agents/drift-critic.md`, `.claude/commands/check-drift.md`, `.claude/agents/task-reviewer.md`, `docs/specs/task-review-spec.md`, `.github/pull_request_template.md`
 - **Related:** ADR-0006, `docs/skill-lifecycle.md`, `docs/specs/task-review-spec.md` §3.1
 
 ## Context
@@ -53,7 +54,8 @@ a plan review, which is the interrupt `review-ready` exists to remove.
 ## Decision
 
 **The plan is a file, a read-only subagent attacks it before any code is
-written, and task risk is classified once — at triage, not by the developer.**
+written, a second read-only subagent checks the finished diff back against it,
+and task risk is classified once — at triage, not by the developer.**
 
 Concretely, for the plan:
 
@@ -64,6 +66,19 @@ Concretely, for the plan:
   lead as a task problem, not a plan problem.
 - Findings are verified by the author before being acted on or relayed —
   proposals included.
+
+And once the code exists:
+
+- `/check-drift` dispatches the `drift-critic` subagent, same tool grant, at
+  step 6. It asks only whether the diff is the code the plan described; whether
+  the code is *correct* stays with `/code-review`.
+- One pass, not two rounds. There is nothing to negotiate with a finished diff.
+- A mid-flight re-plan is recorded in **both** `PLAN.md` (which the critic
+  reads, and which is gitignored) and the PR's **Deviated from the plan** line
+  (which the reviewer reads). A deviation in one place only is invisible to the
+  other.
+- With no `PLAN.md`, the command stops rather than inventing a baseline —
+  Trivial tasks have no plan by design.
 
 And for risk:
 
@@ -89,6 +104,8 @@ And for risk:
 | **Ask in prose** — "review this plan", no command, no subagent | Two mechanisms, both silent. Description matching can miss, and a miss hands the job to main-context Claude — which wrote the plan and holds `Edit`/`Write`, so it agrees with itself and may begin implementing. Prose also passes a *paraphrase*; a critique of a paraphrase is indistinguishable from a real one by the time it reaches the author | Argued, not measured. The anchoring half is the same effect `docs/task-lifecycle.md` step 6 exists for |
 | **A skill instead of a command** | Same defect — skills fire by description matching. A command is invoked by name and cannot silently no-op | The three deleted subagents (#1161) are the standing evidence that silent `.claude/` failure modes go unnoticed |
 | **A general-purpose subagent** | Buys the fresh context but not the tool restriction, which is the only part a prompt cannot buy | ADR-0006 is the general form: capability is restricted by tool identity, not by prompt |
+| **Leave the drift check as a pasted prompt in step 6** *(what shipped in #1177, replaced here)* | The half of a step that is homework is the half that gets skipped, and a blockquote has no budget for what the check needs to be correct: resolving the plan when `PLAN.md` was never written, a diff base that includes untracked files, and the rule that a recorded deviation is not drift. It also forced the whole step into a fresh terminal tab, when only `/code-review` needs one | The step's own asymmetry — one half a command, the other half copy-paste. `/code-review` forks the session it runs in; a subagent does not, so the drift half never needed the tab |
+| **Fold drift into `/code-review`** | Different question, different input. `/code-review` reads the diff and asks whether the code is wrong; drift reads the diff *against the plan* and asks whether it is the code that was agreed. Code that is entirely correct and entirely unplanned is invisible to the first and is the whole point of the second | Argued, not measured. `/code-review` is not given the plan and cannot be, since `PLAN.md` is gitignored and absent from the diff it reads |
 | **Three or more critique rounds** | Round one finds real problems; round two confirms fixes and usually finds one more; round three yields style opinions and a longer plan | Argued, not measured. The originating branch ran two adversarial passes and found seven real defects; the value was in rounds one and two |
 | **Let the critic apply its own findings** | Collapses the verification step the design rests on. Read-only forces someone to decide which findings are real — the part that teaches the codebase | That branch's own round: one finding was rejected as wrong, and one *proposal* was relayed as though it existed when it did not |
 | **Per-task plans as files under `docs/plan/`** | That directory holds multi-week design docs reviewed with a designer and an engineer; a per-task plan is a different genre with a different lifespan. Filing one there means it lands on `main` and must be deleted when the work ships | `CLAUDE.md` § `docs/plan/`: "Two files here spent weeks claiming 'not yet implemented' and 'not yet branched' for things that had shipped." Reopened 2026-08-03 and re-declined: across 8 merged developer PRs (#1178, #1179, #1192, #1195, #1196, #1197, #1202, #1203) the plan's load-bearing half — scope, rejected alternatives, what the PR deliberately does *not* close — was already in the descriptions, unprompted. The template asks for that half directly rather than for the file |
@@ -141,9 +158,13 @@ instances and grow that list with entries nothing can check. So `task-reviewer`'
 `ready` row names the part most likely to need a senior, and
 `docs/task-lifecycle.md` § "Ask early" tells developers to ask.
 
-**Risks.** `plan-critic` has no eval the way a shipped skill does, so its
-judgement can degrade silently if the prompt drifts. The lint below catches stale
-paths, not weak criticism. And nothing measures how often triage misses a risk
+**Risks.** Neither `plan-critic` nor `drift-critic` has an eval the way a shipped
+skill does, so their judgement can degrade silently if the prompt drifts. The
+lint below catches stale paths and dead command names, not weak criticism.
+`drift-critic` carries one failure mode of its own: reporting an *approved*
+deviation as drift. A critic that cries wolf on its first run is a critic nobody
+runs twice, which is why the deviation record is specified in two places rather
+than left to convention. And nothing measures how often triage misses a risk
 category, so that cost is unquantified in either direction — the stop rule is the
 only instrument that would surface it, and it depends on a junior volunteering
 that their task was mis-scoped.
@@ -151,8 +172,11 @@ that their task was mis-scoped.
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/doc-links.test.ts` — every repo
-> path, markdown link, and `make` target cited in `.claude/agents/`,
-> `.claude/commands/`, `.claude/skills/`, and `docs/task-lifecycle.md` resolves.
+> path, markdown link, `make` target, and **slash command** cited in
+> `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, and
+> `docs/task-lifecycle.md` resolves. A slash command resolves to
+> `.claude/commands/<name>.md`, `.claude/skills/<name>/SKILL.md`,
+> `packages/engine/plugin/skills/<name>/SKILL.md`, or a named `BUILT_INS` entry.
 > `packages/engine/mcp-server/tests/packaging/adr-links.test.ts` — the same for
 > this file's `Applies to` and `Enforcement`.
 

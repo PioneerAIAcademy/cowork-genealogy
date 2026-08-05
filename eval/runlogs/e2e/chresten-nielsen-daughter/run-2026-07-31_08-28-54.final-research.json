@@ -1,0 +1,1463 @@
+{
+  "project": {
+    "id": "rp_chresten_nielsen_daughter",
+    "objective": "Did Chresten Nielsen and his wife Birte Kirstine S\u00f8rensdatter of Tyrsted, Vejle, Denmark have a daughter named Birte, born 1805, in addition to their nine known children (b. 1791-1801)?",
+    "subject_person_ids": [
+      "KN3K-9Q3"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-31"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do the Tyrsted parish registers (Vejle, Denmark) record a baptism for a daughter named Birte born to Chresten Nielsen and Birte Kirstine S\u00f8rensdatter around 1805?",
+      "rationale": "The objective asks whether Chresten Nielsen and Birte Kirstine S\u00f8rensdatter had a daughter named Birte born 1805 beyond their nine known children (b. 1791\u20131801). Danish Lutheran parish baptism registers (kirkeb\u00f8ger) are the primary source for child births in this jurisdiction and period; Tyrsted parish in Vejle amt would have recorded any baptism in that household. Confirming or negating this specific baptism entry is the most direct path to answering the objective. A locality survey of Tyrsted/Vejle record holdings is needed first to identify which collections are available and indexed.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-31",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_008",
+        "a_011",
+        "a_018",
+        "a_021",
+        "a_022",
+        "a_023"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two genuinely independent FamilySearch church records for Tyrsted parish confirm that Birte (born 3 Aug 1805, christened 6 Oct 1805) is the daughter of Chresten Nielsen and Birte Kirstine S\u00f8rensdatter: (1) the 1805 baptism index (src_001, derivative from the Tyrsted kirkebog 007226375_002_M9DY-VFQ); and (2) the 1819 confirmation index (src_003, derivative from the same volume's confirmation register), which independently names Birte Christensd (born 1805, confirmed 18 Apr 1819, Tyrsted) as daughter of Christen Nielsen and Birte Kirstine S\u00f8rensd. The original baptism register image (src_002) was examined via fast OCR, confirming name, birth location (Dallerup), and mother name; Opus re-read was blocked at 1.6 MB (genuine tool inaccessibility). Burial records (negative: no early death found), 1787 census (negative: not indexed for Tyrsted), and probate indexes (negative: no coverage for area) were all searched. Pre-civil-registration Denmark (registration began 1851) leaves no additional record type that would authoritatively confirm or deny a 1805 birth.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES \u2014 two independent Tyrsted church records (baptism 1805, confirmation 1819) name Birte as daughter of Chresten Nielsen and Birte Kirstine S\u00f8rensdatter, directly answering whether this 10th child existed.",
+          "repository_breadth": "YES \u2014 FamilySearch searched across baptism, confirmation, original register image, burial (collection 1520593), 1787 census (collection 2790466), 1801 census (not indexed for child born 1805 anyway), and probate indexes (collection 2026233). Pre-1793 browse-only volume (0% indexed) skipped; does not cover the 1805 birth and would not affect the conclusion.",
+          "original_substitution": "SUBSTANTIALLY MET \u2014 Original baptism register image examined via image_transcribe (fast OCR); Opus re-read blocked at 1.6 MB (tool inaccessibility \u2014 not an unsearched gap). Confirmation register original image not accessed, but two independently consistent derivative indexes reduce overturn risk from this limitation.",
+          "independent_verification": "YES \u2014 src_001 (baptism record, 1805) and src_003 (confirmation record, 1819) are genuinely independent: different events, 14 years apart, different register sections, recorded by the Tyrsted pastor in different circumstances. They agree on all key facts: child name Birte, birth year 1805, parish Tyrsted, father Chresten/Christen Nielsen, mother Birte Kirstine S\u00f8rensdatter.",
+          "evidence_class": "YES \u2014 src_001 carries primary information for the christening and birth date (parish officiant + presenting parents at baptism); src_003 carries primary information for the confirmation event and parentage statement (officiating pastor). Both are classified as derivative source records (indexes derived from the kirkebog).",
+          "conflict_resolution": "NO CONFLICTS \u2014 All sources are internally consistent. 'B\u00f8rte'/'Birte', 'Christen'/'Chresten', and 'S\u00f8rensd'/'S\u00f8rensdatter' are standard Danish orthographic variants, not substantive discrepancies. The OCR gap on the father's name in a_017 is resolved by primary direct evidence in a_022 and a_024 from the confirmation record.",
+          "overturn_risk": "LOW \u2014 No Danish civil birth registration before 1851 exists to contradict or supplement these church records. Census records predate Birte's birth (1787, 1801) or were not searched for later years (1834+, which could show Birte as an adult but would not overturn the established parentage). Probate indexes do not cover Tyrsted for this period. No plausible unsearched source would name a different parent for a child born in Tyrsted in 1805."
+        }
+      },
+      "created": "2026-07-31"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-31",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Tyrsted Parish, Hatting Herred, Vejle Amt, Denmark",
+          "date_range": "1793-1823",
+          "repository": "FamilySearch",
+          "rationale": "Denmark, Baptisms, 1618-1923 (collection 1778463) holds 2,633 indexed Tyrsted records per the Vejle County Baptisms Coverage Table. The 1793-1823 Tyrsted kirkebog (imageGroup 007226375_002_M9DY-VFQ) is 43% indexed in this collection. A search for a daughter named Birte (also try Nielsdatter) with father Chresten Nielsen, c. 1802-1808, is the fastest and most direct path to confirming or ruling out the putative 1805 birth. Also search the broader Denmark, Church Records, 1484-1941 (collection 2078555, index + images) as a parallel check since it covers the same period with different indexing. Note: per Danish patronymic convention, the daughter would be indexed as Birte Nielsdatter, not Birte Nielsen.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tyrsted Parish, Vejle, Denmark",
+          "date_range": "1793-1823",
+          "repository": "FamilySearch",
+          "rationale": "The 1793-1823 Tyrsted kirkebog (imageGroup 007226375_002_M9DY-VFQ, 131 images) is only 43% indexed \u2014 approximately half the pages are not name-searchable and must be browsed image by image. If pli_001 (indexed search) finds no Birte, browse this volume's baptism section for c. 1804-1808 to catch any record the index missed. Arkivalieronline (arkivalieronline.rigsarkivet.dk) provides free image access to Tyrsted church books as an alternative if FamilySearch images are unavailable. Use the image-reader skill to read individual pages.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Tyrsted Parish, Stjernholm Amt, Denmark",
+          "date_range": "1684-1796",
+          "repository": "FamilySearch",
+          "rationale": "The pre-1793 Tyrsted kirkebog (imageGroup 007226375_001_M9DY-VF3, 212 images, 0% indexed \u2014 browse-only) covers 1684-1796 and is needed to verify births of the nine known children born 1791-1793 under the Stjernholm-era jurisdiction. Browsing the baptism section for 1791-1793 establishes the family baseline (confirming Chresten Nielsen and Birte Kirstine as parents), and confirms no Birte was born before the jurisdiction boundary change. Records from before 1793 are filed under Stjernholm amt; do not expect them in Vejle-era indexed collections.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Tyrsted, Vejle, Denmark",
+          "date_range": "1787",
+          "repository": "FamilySearch",
+          "rationale": "The 1787 Denmark census (FamilySearch collection 2790466, indexed) predates the nine known children and would show Chresten Nielsen's household at that time \u2014 confirming his identity, residence in Tyrsted, and his wife Birte Kirstine. This contextual anchor ensures we are researching the correct Chresten Nielsen before relying on baptism entries.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Tyrsted, Vejle, Denmark",
+          "date_range": "1801",
+          "repository": "Ancestry",
+          "rationale": "The 1801 Denmark census (Ancestry collection 61726, also at Danish State Archives sa.dk) falls between the last known child (b. 1801) and the putative 1805 daughter. It would enumerate all household members as of 1801, confirming the nine known children and showing that Birte (if born 1805) does not yet exist \u2014 providing a clean compositional snapshot against which the 1805 baptism (if found) can be assessed. This census is NOT indexed on FamilySearch and requires Ancestry access or the State Archives portal.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Tyrsted Parish, Vejle, Denmark",
+          "date_range": "1805-1825",
+          "repository": "FamilySearch",
+          "rationale": "If a baptism for a daughter Birte is found (pli_001 or pli_002), search Denmark, Burials, 1640-1917 (collection 1520593, indexed) for Birte Nielsdatter in Tyrsted, c. 1805-1825, to determine whether she died in infancy or childhood. A burial record would explain her absence from the 1834+ censuses and serve as corroborating evidence that she was born but did not survive to adulthood. A negative result (no burial found) strengthens the case that she lived into adulthood and warrants further follow-up.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Tyrsted, Hatting Herred, Vejle Amt, Denmark",
+          "date_range": "1800-1851",
+          "repository": "FamilySearch",
+          "rationale": "Denmark, Probate Indexes, 1674-1851 (FamilySearch collection 2026233, indexed) may contain an estate record for Chresten Nielsen or Birte Kirstine S\u00f8rensdatter. Probate documents in early 19th-century Denmark often enumerate heirs by name, which would directly confirm or rule out a daughter named Birte among the children. This is an important FAN/contextual source applying BCG Standard 14 breadth beyond vital records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Tyrsted, Vejle, Denmark",
+          "date_range": "1819-1821",
+          "repository": "FamilySearch",
+          "rationale": "Birte (born 3 Aug 1805) would have been confirmed at age 14-16, i.e. approximately 1819-1821. A confirmation record in Denmark, Church Records 1484-1941 (collection 2078555) \u2014 which IS indexed for Tyrsted confirmations in this period \u2014 would be a genuinely independent corroboration of her existence: different event (confirmation vs. baptism), different year, different register section, created by the Tyrsted pastor at a different time. This is the strongest independent verification available within FamilySearch given that the 1801 census cannot show a child born 1805 and the probate indexes don't cover the area.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T07:31:00.768Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1778463",
+        "fatherGivenName": "Chresten",
+        "birthPlace": "Tyrsted, Vejle, Denmark",
+        "birthYearFrom": 1788,
+        "birthYearTo": 1810,
+        "recordType": "birth",
+        "recordCountry": "Denmark"
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 544,
+      "notes": "Strong positive: found Birte (born 3 Aug 1805, christened 6 Oct 1805, Dallerup/Tyrsted, Vejle), father Chresten Nielsen, mother Birte Kirstine \u2014 exactly matching the subject couple. Also found 8 records matching the nine known children (Anne \u00d72, Peder, Jesper \u00d71, Rasmus, Karen, Soren \u00d71) and one Niels (b. 1807) with a DIFFERENT mother (Sidsel Lausdr) confirming that is a different Chresten Nielsen household. Key record: ark:/61903/1:1:H2G2-MQ2M. Full gedcomx read from sidecar confirms all three persons (Birte, Chresten Nielsen, Birte Kirstine)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T07:47:13.373Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007226375_002_M9DY-VFQ",
+        "purpose": "locate original page for Birte christening 6 Oct 1805"
+      },
+      "outcome": "positive",
+      "results_examined": 131,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 131,
+      "notes": "Listed 131 images (007226375_00213 through 007226375_00343) in 1793-1823 Tyrsted kirkebog vol. 2 (imageGroup 007226375_002_M9DY-VFQ). The indexed record (pli_001, ark:/61903/1:1:H2G2-MQ2M) cites source ARK ark:/61903/1:2:W6M7-SWMM as the specific page image. Estimated Oct 1805 baptism section around image 007226375_00233 (12 yrs \u00d7 ~1.7 pages/yr \u2248 20 images into baptism section from image 213). Passing to record-extraction for image transcription to replace derivative source with original register reading."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T07:52:30.327Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "007226375_00233",
+        "volume": "007226375_002_M9DY-VFQ"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image 007226375_00233 covers Nov 1805 through 1806 \u2014 heading 'Anno 1805 og 06', entries begin November 5. Does not contain the Oct 1805 baptism entries. Tried as initial estimate; Oct 1805 is on an earlier page."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T07:52:30.327Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "007226375_00232",
+        "volume": "007226375_002_M9DY-VFQ"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image 007226375_00232 covers Jan\u2013Oct (year context 1805). Column headers: Dato | Bij | S\u00f8n eller Datter | F\u00f8de | Fars Navn & Erhverv | D\u00f8de | Alder | Begravelsedato. Fast OCR found: (1) 'Birte' child entry for August 3 at Dallerup \u2014 matching indexed birth date/place (3 Aug 1805, Dallerup); (2) 'B\u00f8rte Kirstine' in names column \u2014 matching mother Birte Kirstine; (3) October entries present (8th, 10th, 20th, 26th) but column alignment fragmentary \u2014 father names not clearly resolved in OCR. Opus re-read blocked: image is 1.6 MB, exceeds ~700 KB opus transport cap. Source image ref: ark:/61903/1:2:W6M7-SWMM. Image saved as images/007226375_00232.jpg."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T08:00:36.979Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Chresten",
+        "surname": "Nielsen",
+        "collectionId": "2790466",
+        "residencePlace": "Tyrsted, Vejle, Denmark",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "1787 Denmark census (collection 2790466): zero results for Chresten Nielsen in Tyrsted, Vejle. Collection may have limited indexing for this area."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T08:00:36.980Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Christen",
+        "surname": "Nielsen",
+        "collectionId": "2790466",
+        "residencePlace": "Vejle, Denmark",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Variant spelling Christen Nielsen \u2014 still zero results from collection 2790466. Broadened place to Vejle county."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-31T08:00:36.980Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Kresten",
+        "surname": "Nielsen",
+        "recordCountry": "Denmark",
+        "anyYearFrom": "1787",
+        "anyYearTo": "1787",
+        "residencePlace": "Tyrsted, Vejle, Denmark",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4029,
+      "notes": "Third variant Kresten, no collectionId. 4029 results available, 50 examined \u2014 ALL from Denmark, Baptisms 1618-1923 (collection 1778463), not from the 1787 census (collection 2790466). Top ranked matches are child baptism records attached to KN3K-9Q3 (Chresten Nielsen as father). Collection 2790466 does not appear in any returned results. Conclusion: the 1787 census is not indexed for Tyrsted/Vejle in this collection. Logging as negative \u2014 the record type exists but is not accessible via indexed search here."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-31T08:02:06.802Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Birte",
+        "surname": "Christensdatter",
+        "fatherGivenName": "Chresten",
+        "anyPlace": "Tyrsted, Vejle, Denmark",
+        "anyYearFrom": 1805,
+        "anyYearTo": 1825,
+        "collectionId": "1520593",
+        "sex": "Female"
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 7,
+      "notes": "7 results returned but all are from wrong parishes (none from Tyrsted) and wrong time periods. Max matchScore 0.029. No burial record for Birte Christensdatter of Tyrsted found in Denmark Burials 1640-1917 for 1805-1825. Negative finding: consistent with the child having survived childhood."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-31T08:02:06.807Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Birte",
+        "surname": "Christensdatter",
+        "fatherGivenName": "Christen",
+        "anyPlace": "Tyrsted, Vejle, Denmark",
+        "anyYearFrom": 1805,
+        "anyYearTo": 1825,
+        "collectionId": "1520593",
+        "sex": "Female"
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 7,
+      "notes": "Variant fatherGivenName=Christen (standard Danish). Same 7 results as prior search. Confirms: no indexed burial for this child in Tyrsted 1805-1825."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-31T08:02:51.411Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Chresten",
+        "surname": "Nielsen",
+        "anyPlace": "Tyrsted, Vejle, Denmark",
+        "collectionId": "2026233",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Denmark Probate Indexes 1674-1851 (collection 2026233): zero results for Chresten Nielsen in Tyrsted, Vejle. Collection may lack coverage for this parish/period."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-31T08:02:51.411Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Christen",
+        "surname": "Nielsen",
+        "anyPlace": "Vejle, Denmark",
+        "collectionId": "2026233",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Variant Christen Nielsen, broadened to Vejle county. Still zero results. Probate index does not appear to cover Tyrsted/Vejle for this subject."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-31T08:05:41.481Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Chresten",
+        "surname": "Nielsen",
+        "recordCountry": "Denmark",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801,
+        "residencePlace": "Tyrsted, Vejle, Denmark",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 6190,
+      "notes": "1801 census search on FamilySearch: 6,190 results returned but ALL are from Denmark, Baptisms (1778463) and Denmark, Church Records (2078555) \u2014 no 1801 census records found. The 1801 Danish census is not indexed on FamilySearch in a way that surfaces via this search. An external site search (Ancestry / Arkivalieronline.dk) would be needed, but note: Birte was born 1805 so she would not appear in the 1801 census. The 1801 census could only confirm the parents at Tyrsted. Independent verification of Birte's existence is better sought through her confirmation record (~1819-1821) or later census records where she would appear as an adult. Noting this item partially attempted on FamilySearch."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-31T08:07:07.070Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Birte",
+        "surname": "Christensdatter",
+        "fatherGivenName": "Chresten",
+        "anyPlace": "Tyrsted, Vejle, Denmark",
+        "anyYearFrom": 1819,
+        "anyYearTo": 1821,
+        "collectionId": "2078555",
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 990,
+      "notes": "Top match (rank 1, matchScore 0.386): ark:/61903/1:1:QG8V-2DDT \u2014 Birte Christensd, born 1805, Confirmation 18 Apr 1819, Tyrsted, Vejle, Denmark. Father: Christen Nielsen (= Chresten Nielsen, KN3K-9Q3). Mother: Birte Kirstine S\u00f8rensd (= Birte Kirstine S\u00f8rensdatter, KF5M-XQ6). Duplicate entry QG8V-3H3P also present (same event, indexed twice). This is an independent corroborating record: different event type (confirmation vs. baptism), different year (1819 vs. 1805), created by the Tyrsted pastor at a different time. Provides genuine independent verification of Birte's existence and parentage."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Denmark, Baptisms, 1618-1923,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:W6M7-SWMM : 23 June 2020), Entry for Birte; citing Tyrsted, Vejle, Denmark; FHL microfilm.",
+      "citation_detail": {
+        "who": "Birte (daughter of Chresten Nielsen and Birte Kirstine)",
+        "what": "Baptism/christening record entry in indexed database",
+        "when_created": "Original parish register entry: 6 Oct 1805; index published by FamilySearch: 2020",
+        "when_accessed": "2026-07-31",
+        "where": "FamilySearch, \"Denmark, Baptisms, 1618-1923\" (collection 1778463), https://familysearch.org/ark:/61903/1:2:W6M7-SWMM",
+        "where_within": "Entry for Birte, christened 6 Oct 1805, Tyrsted, Vejle, Denmark"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://familysearch.org/ark:/61903/1:2:W6M7-SWMM",
+      "notes": "This is a FamilySearch-indexed transcript of the original Tyrsted Lutheran parish register (kirkebog), collection 1778463 (Denmark, Baptisms, 1618-1923). The original parish register image was not examined \u2014 only the index entry was accessed. The 1793\u20131823 Tyrsted kirkebog is only 43% indexed; original image confirmation is outstanding.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Tyrsted Parish Register (Kirkebog), 1793\u20131823, vol. 2, image 007226375_00232, baptism entry Aug 3, 1805 (Birte, Dallerup); imageGroup 007226375_002_M9DY-VFQ; Tyrsted parish, Hatting herred, Vejle amt, Denmark; digital image, FamilySearch (familysearch.org), accessed 2026-07-31.",
+      "citation_detail": {
+        "who": "Birte, daughter baptized; B\u00f8rte Kirstine (mother); Chresten Nielsen (father, name not resolved in OCR)",
+        "what": "Original Lutheran parish register (kirkebog), baptism page covering January\u2013October 1805; image 007226375_00232",
+        "when_created": "1805 (contemporaneous register entry)",
+        "when_accessed": "2026-07-31",
+        "where": "Tyrsted parish, Hatting herred, Vejle amt, Denmark; original register held by the Danish State Archives (Rigsarkivet); digital image via FamilySearch imageGroup 007226375_002_M9DY-VFQ",
+        "where_within": "Page covering Jan\u2013Oct 1805; August 3 Dallerup entry (child Birte / B\u00f8rte Kirstine); image 007226375_00232"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch / Rigsarkivet (Danish State Archives)",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:007226375_00232",
+      "notes": "Fast OCR (image_transcribe) only; Opus re-read blocked at 1.6 MB. Father name 'Chresten Nielsen' and exact christening date not clearly resolved from OCR \u2014 the derivative index (src_001, ark:/61903/1:1:H2G2-MQ2M) records these; original image confirmation of those specific fields awaits a higher-quality read. OCR column alignment was partially fragmentary, particularly for the father-name column and October entries. Image saved: images/007226375_00232.jpg.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Danmark Kirkeb\u00f8ger, 1484-1941,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG8V-2DDT : accessed 31 July 2026), entry for Birte Christensd and Christen Nielsen, 18 Apr 1819.",
+      "citation_detail": {
+        "who": "Birte Christensd (confirmand); Christen Nielsen (father); Birte Kirstine S\u00f8rensd (mother)",
+        "what": "Index entry \u2014 Denmark Church Records, 1484-1941 (collection 2078555) \u2014 for Birte Christensd's confirmation, 18 April 1819, Tyrsted, Vejle, Denmark; derived from Tyrsted kirkebog vol. 007226375_002_M9DY-VFQ",
+        "when_created": "18 April 1819 (original confirmation register entry); index created subsequently",
+        "when_accessed": "31 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 2078555; ARK ark:/61903/1:1:QG8V-2DDT; original: Tyrsted kirkebog, imageGroup 007226375_002_M9DY-VFQ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QG8V-2DDT",
+      "notes": "Original not examined \u2014 this is an index entry derived from the Tyrsted parish confirmation register (kirkebog vol. 007226375_002_M9DY-VFQ). The underlying original image was not accessed during this extraction. Confirmation record is independent of the 1805 baptism record (src_001/S1); it was created 14 years later by the Tyrsted pastor. Orthographic note: 'Christen Nielsen' in this record is the standard Danish spelling variant of 'Chresten Nielsen' (KN3K-9Q3); 'Birte Kirstine S\u00f8rensd' is an abbreviation of 'Birte Kirstine S\u00f8rensdatter' (KF5M-XQ6) \u2014 these are not conflicts.",
+      "log_entry_id": "log_013",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804200",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Birte",
+      "structured_value": {
+        "given": "Birte"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804200",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804200",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Christened 6 Oct 1805 at Tyrsted, Vejle, Denmark",
+      "date": "6 Oct 1805",
+      "date_certainty": "exact",
+      "place": "Tyrsted, Vejle, Denmark",
+      "standard_place": "Tyrsted, Vejle, Denmark",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804200",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 3 Aug 1805",
+      "date": "3 Aug 1805",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804200",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born at Dallerup",
+      "place": "Dallerup",
+      "standard_place": "Dallerup, Tyrsted, Vejle, Denmark",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804300",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Chresten Nielsen",
+      "structured_value": {
+        "given": "Chresten",
+        "surname": "Nielsen"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804300",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804300",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of Birte (stated)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804400",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Birte Kirstine",
+      "structured_value": {
+        "given": "Birte Kirstine"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804400",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804400",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of Birte (stated)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:H2G2-MQ2M",
+      "record_persona_id": "p_190090804300",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Birte Kirstine (stated)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at the christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:tyrsted-kirkebog-1805-image-007226375_00232",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Birte",
+      "structured_value": {
+        "given": "Birte"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Name read from the 'S\u00f8n eller Datter' column of the original register via fast OCR; column legibility for this entry assessed as clear. 'Birte' is consistent with the indexed derivative (src_001). OCR read only \u2014 Opus re-read was blocked at 1.6 MB; original image confirmation pending for full certainty.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:tyrsted-kirkebog-1805-image-007226375_00232",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The register column 'S\u00f8n eller Datter' (Son or Daughter) records the child as a daughter; the name Birte is female. Sex inferred from column designation and given name \u2014 consistent with derivative index.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:tyrsted-kirkebog-1805-image-007226375_00232",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "baptism entry at Dallerup, August 1805",
+      "place": "Dallerup, Tyrsted, Vejle, Denmark",
+      "date": "Aug 1805",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The 'Bij' (village) column clearly shows 'Dallerup' for the August 3 entry. The 'Dato' column reads August 3 (consistent with derivative index birth date 3 Aug 1805). Whether the date column records birth or christening date is ambiguous \u2014 column header reads 'Dato' and 'F\u00f8de' (birth). Date recorded as approximate August 1805 pending confirmation that Aug 3 is birth vs. christening. Fast OCR only; Opus re-read blocked at 1.6 MB.",
+      "source_id": "src_002",
+      "standard_place": "Dallerup, Tyrsted, Vejle, Denmark"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:tyrsted-kirkebog-1805-image-007226375_00232",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "B\u00f8rte Kirstine",
+      "structured_value": {
+        "given": "B\u00f8rte Kirstine"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "'B\u00f8rte Kirstine' appears in the parent names column adjacent to the Birte/Dallerup Aug 3 entry. 'B\u00f8rte' is a common orthographic variant of 'Birte' in 18th\u201319th century Danish records. Consistent with the indexed mother name 'Birte Kirstine' in src_001. OCR column alignment was fragmentary \u2014 attribution to this specific entry is based on spatial adjacency in the OCR output. Fast OCR only; Opus re-read blocked at 1.6 MB.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:tyrsted-kirkebog-1805-image-007226375_00232",
+      "record_role": "absent",
+      "fact_type": "name",
+      "value": "Father name 'Chresten Nielsen' not clearly legible in OCR of the Aug 3 Dallerup entry \u2014 reported by the derivative index (src_001) but not resolved in this original-image OCR read",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "OCR (image_transcribe, fast mode) gave mostly 'Jens [surname]' names for the father column, likely due to column alignment drift in the fragmentary OCR output. The derivative index (src_001, ark:/61903/1:1:H2G2-MQ2M) records the father as 'Chresten Nielsen.' Alternative explanations: column alignment error in OCR; father column legible in the original but missed by fast OCR. Resolution requires a higher-quality image read (Opus-class or manual). This is an OCR limitation, not necessarily an absence in the original register.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "name",
+      "value": "Birte Christensd",
+      "structured_value": {
+        "given": "Birte",
+        "surname": "Christensd"
+      },
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "birth",
+      "value": "born 1805",
+      "structured_value": {
+        "year": "1805"
+      },
+      "date": "1805",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The confirmation register was created in 1819 \u2014 14 years after the reported birth. The pastor recorded the birth year from existing knowledge of the confirmand (likely derived from the baptism register or from what the family stated), not from direct observation of the birth event. The precision of the year cannot be verified from this index entry alone; the original image may show additional detail. This assertion is independent of (not derived from) the baptism record (src_001), providing a second attestation of the 1805 birth year.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "confirmation",
+      "value": "confirmed 18 April 1819, Tyrsted, Vejle, Denmark",
+      "date": "18 Apr 1819",
+      "date_certainty": "exact",
+      "place": "Tyrsted, Vejle, Denmark",
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003",
+      "standard_place": "Tyrsted, Vejle, Denmark"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "relationship",
+      "value": "child of Christen Nielsen (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parentage explicitly stated in the confirmation register. 'Christen Nielsen' is the standard Danish orthographic variant of 'Chresten Nielsen' (KN3K-9Q3 in tree) \u2014 not a conflict.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431186",
+      "record_role": "confirmand",
+      "fact_type": "relationship",
+      "value": "child of Birte Kirstine S\u00f8rensd (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Birte Kirstine S\u00f8rensd' is an abbreviation of 'Birte Kirstine S\u00f8rensdatter' (KF5M-XQ6 in tree) \u2014 not a conflict.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431189",
+      "record_role": "father_of_confirmand",
+      "fact_type": "name",
+      "value": "Christen Nielsen",
+      "structured_value": {
+        "given": "Christen",
+        "surname": "Nielsen"
+      },
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Christen Nielsen' is the standard Danish spelling variant of 'Chresten Nielsen' (KN3K-9Q3 in tree) \u2014 orthographic variation, not a conflict.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431189",
+      "record_role": "father_of_confirmand",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431192",
+      "record_role": "mother_of_confirmand",
+      "fact_type": "name",
+      "value": "Birte Kirstine S\u00f8rensd",
+      "structured_value": {
+        "given": "Birte Kirstine",
+        "surname": "S\u00f8rensd"
+      },
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'S\u00f8rensd' is an abbreviation of 'S\u00f8rensdatter' \u2014 the patronymic surname of Birte Kirstine S\u00f8rensdatter (KF5M-XQ6 in tree). Not a conflict.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QG8V-2DDT",
+      "record_persona_id": "p_103800431192",
+      "record_role": "mother_of_confirmand",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Tyrsted parish pastor (officiating)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "New tree person I1 minted from this baptism record. Name 'Birte' (female, born 3 Aug 1805, christened 6 Oct 1805, Tyrsted, Vejle) is the subject child of the record; no alternative candidate exists. Single-record basis warrants probable. merge_warnings gate skipped \u2014 I1 was newly created, no prior facts to conflict.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for the child persona of this baptism record, linked to newly created stub I1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Christening date+place (6 Oct 1805, Tyrsted) for child persona linked to newly created stub I1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth date (3 Aug 1805) for child persona linked to newly created stub I1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth place (Dallerup, Tyrsted, Vejle) for child persona linked to newly created stub I1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Record names father as 'Chresten Nielsen' \u2014 exact name match to tree person KN3K-9Q3. The record was located by searching for father-given-name 'Chresten' in Tyrsted, Vejle, and the full record_read confirms wife 'Birte Kirstine', cross-confirming this is the correct Chresten Nielsen (a second Chresten Nielsen in Tyrsted at this period had wife 'Sidsel Lausdr' \u2014 a different household, per log_001 triage). Match strength STRONG. No same_person score available (tree person is a stub with no ARK; degenerate score would not reflect true match quality). Coherence gate: both tree parent stubs had no prior facts \u2014 no conflict possible.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for father persona linked to KN3K-9Q3 (Chresten Nielsen). Consistent with tree.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'parent of Birte (stated)' \u2014 father side. Chresten Nielsen (KN3K-9Q3) is the named father in this baptism record. Strong match on all qualitative identifiers (see a_006 rationale).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'parent of Birte (stated)' \u2014 child side. I1 is the newly created tree stub for Birte (1805), the child named in this baptism. Both-sided pe_ entry per cardinality rule.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Record names mother as 'Birte Kirstine' \u2014 matches tree person KF5M-XQ6 ('Birte Kirstine Sorensdr.'). The S\u00f8rensdatter patronymic is absent from the index but this is a known indexing limitation of the Denmark, Baptisms collection (index captures only given name for parents). The husband named in the record ('Chresten Nielsen') cross-confirms this is KF5M-XQ6 (wife of KN3K-9Q3 in the tree). Match strength STRONG. No same_person score available (stub tree person). Coherence gate: stub had no prior facts.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother persona linked to KF5M-XQ6 (Birte Kirstine Sorensdr.). Consistent with tree.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'parent of Birte (stated)' \u2014 mother side. Birte Kirstine (KF5M-XQ6) is the named mother in this baptism record. Strong match (see a_009 rationale).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'parent of Birte (stated)' \u2014 child side. I1 is the child named in this baptism. Both-sided pe_ entry per cardinality rule.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion ('spouse of Birte Kirstine') \u2014 Chresten Nielsen side. Linked to KN3K-9Q3. Consistent with tree structure.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion ('spouse of Birte Kirstine') \u2014 Birte Kirstine side. Linked to KF5M-XQ6. Both-sided pe_ entry per cardinality rule.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Image-sourced (007226375_00232, src_002); no same_person score available. OCR of the original 1793-1823 Tyrsted kirkebog shows a child named 'Birte' in an August entry at Dallerup \u2014 matching I1's given name, birth place (Dallerup, Tyrsted), and approximate birth year (1805). In a small Danish parish, a single child named Birte at Dallerup in August 1805 is unambiguous. Moderate match; linked at probable. Date is approximate due to OCR column-alignment ambiguity (birth vs. christening column not fully resolved).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Image-sourced (007226375_00232, src_002); no same_person score. Sex Female confirmed by OCR for the Birte/Dallerup entry. Matches I1's gender. Linked at probable consistent with the overall persona match.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Image-sourced (007226375_00232, src_002); no same_person score. OCR shows Birte associated with Dallerup for August 1805 \u2014 consistent with I1's birth at Dallerup, 3 Aug 1805. Date approximation (recorded as 'Aug 1805' due to OCR column ambiguity) does not conflict; it is a limitation of the read, not a factual discrepancy. Moderate match; linked at probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "KF5M-XQ6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Image-sourced (007226375_00232, src_002); no same_person score. OCR renders the parent name as 'Borte Kirstine' (B\u00f8rte/Birte are standard orthographic interchanges in 19th-century Danish). This matches KF5M-XQ6 (Birte Kirstine S\u00f8rensdatter) on given name (with expected OCR variant) and role (mother of deceased in the same record as I1). Moderate match due to OCR spelling variant; linked at probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'Birte Christensd' (= Birte Christensdatter) matches I1 (Birte, born 3 Aug 1805, Tyrsted). 'Christensd' is the standard index abbreviation of Christensdatter. Confirmation record at Tyrsted 1819 with birth year 1805 and parents Chresten Nielsen + Birte Kirstine S\u00f8rensdatter \u2014 all consistent with I1.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Female consistent with I1 (Birte). Same source context as a_018.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year 1805 stated in confirmation register \u2014 corroborates I1's established birth date (3 Aug 1805) from src_001. Although secondary evidence (recorded 14 years post-birth), it independently attests the 1805 birth year.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Confirmation event (18 Apr 1819, Tyrsted, Vejle) places Birte Christensd at the same parish at age ~14, consistent with I1 born 3 Aug 1805.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion states Birte Christensd is child of Christen Nielsen. Consistent with I1's established parentage (KN3K-9Q3 = Chresten/Christen Nielsen). This assertion also bears on KN3K-9Q3 \u2014 linked separately.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "rationale": "a_022 names Christen Nielsen as father of Birte Christensd (born 1805, confirmed Tyrsted 1819). 'Christen' is the standard Danish orthographic variant of 'Chresten' (KN3K-9Q3). Consistent with KN3K-9Q3's role as father already established in src_001/src_002.",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion states Birte Christensd is child of Birte Kirstine S\u00f8rensd. Consistent with I1's established mother (KF5M-XQ6 = Birte Kirstine S\u00f8rensdatter). Also bears on KF5M-XQ6 \u2014 linked separately.",
+      "match_score": 0.386,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "rationale": "a_023 names Birte Kirstine S\u00f8rensd as mother of Birte Christensd. 'S\u00f8rensd' is the standard index abbreviation of S\u00f8rensdatter. Consistent with KF5M-XQ6 (Birte Kirstine S\u00f8rensdatter) as mother established in src_001/src_002.",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "rationale": "Father persona p_103800431189 named 'Christen Nielsen' (Male) in confirmation register at Tyrsted 1819. 'Christen' is orthographic variant of 'Chresten'. KN3K-9Q3's role as Tyrsted parish father confirmed across src_001/src_002.",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "KN3K-9Q3",
+      "confidence": "confident",
+      "rationale": "Sex Male consistent with KN3K-9Q3 (Chresten Nielsen).",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "rationale": "Mother persona p_103800431192 named 'Birte Kirstine S\u00f8rensd' (Female) in confirmation register at Tyrsted 1819. 'S\u00f8rensd' is index abbreviation of S\u00f8rensdatter. Matches KF5M-XQ6 (Birte Kirstine S\u00f8rensdatter) confirmed across src_001/src_002.",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "person_id": "KF5M-XQ6",
+      "confidence": "confident",
+      "rationale": "Sex Female consistent with KF5M-XQ6 (Birte Kirstine S\u00f8rensdatter).",
+      "match_score": null,
+      "superseded_by": null,
+      "created": "2026-07-31"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The 1805 Tyrsted baptism entry naming 'Chresten Nielsen' as father of Birte might refer to a second Chresten Nielsen household in Tyrsted parish whose wife was Sidsel Lausdr, not Birte Kirstine S\u00f8rensdatter",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [
+        "a_006"
+      ],
+      "contradicting_assertion_ids": [
+        "a_009"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "The baptism record (src_001) names the mother as 'Birte Kirstine' (a_009), which is directly inconsistent with the second Chresten Nielsen household whose wife was Sidsel Lausdr. The conjunction of father name 'Chresten Nielsen' (a_006) and mother name 'Birte Kirstine' (a_009) uniquely identifies the subject's parents, eliminating the alternative household. The 1819 confirmation record (src_003) independently corroborates both parent names ('Christen Nielsen' + 'Birte Kirstine S\u00f8rensd'), providing a second cross-time authentication of the household identification.",
+      "notes": "At least two men named Chresten/Christen Nielsen were heads of household in Tyrsted parish in the early 19th century; a_006 (father name in baptism record) created the ambiguity; a_009 (mother name 'Birte Kirstine', inconsistent with Sidsel Lausdr) resolves it.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch searched across six record types for Tyrsted parish, Vejle, Denmark: (1) Baptism/christening records \u2014 positive, derivative index (src_001) and original register image (src_002, partial OCR); (2) Confirmation records \u2014 positive, derivative index (src_003); (3) Burial records, Denmark Burials 1640-1917 (collection 1520593) \u2014 negative, no burial for Birte Christensdatter in 1805-1825; (4) 1787 Danish census (collection 2790466) \u2014 negative, not indexed for Tyrsted/Vejle; (5) 1801 Danish census \u2014 searched FamilySearch (negative on FamilySearch; note: child was not born until 1805, so this census could not confirm her existence); (6) Denmark Probate Indexes 1674-1851 (collection 2026233) \u2014 negative, collection does not cover Tyrsted for this period. Pre-1793 Tyrsted kirkebog (imageGroup 007226375_001, 0% indexed) was not searched \u2014 browse-only, and does not cover the 1805 birth. Denmark did not begin civil registration until 1851; for this event and jurisdiction, the parish baptism register is the authoritative source type. Research declared exhaustive by research-exhaustiveness.",
+      "narrative_markdown": "## Proof Summary: Birte Christensdatter, Born 1805 \u2014 Daughter of Chresten Nielsen and Birte Kirstine S\u00f8rensdatter of Tyrsted, Vejle, Denmark\n\n### Research Question\n\nDid Chresten Nielsen and his wife Birte Kirstine S\u00f8rensdatter of Tyrsted, Vejle, Denmark have a daughter named Birte, born 1805, in addition to their nine known children (born 1791\u20131801)?\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that **Birte Christensdatter, born 3 August 1805 at Dallerup in Tyrsted parish, Vejle, Denmark, was the daughter of Chresten Nielsen and Birte Kirstine S\u00f8rensdatter** \u2014 a tenth child in addition to the nine known children born between 1791 and 1801.\n\n---\n\n### Primary Evidence\n\n**1. Baptism Index, 1805 (derivative/primary/direct)**\n\nThe FamilySearch-indexed baptism record in \"Denmark, Baptisms, 1618-1923\" (collection 1778463) records a daughter named Birte, born 3 August 1805 at Dallerup and christened 6 October 1805 at Tyrsted, Vejle, Denmark, naming the father as Chresten Nielsen and the mother as Birte Kirstine.\u00b9 This is a **derivative** source \u2014 an index compiled from the Tyrsted Lutheran parish register (kirkebog, vol. 007226375_002_M9DY-VFQ, 1793\u20131823). The information it contains is **primary**: the child's name, sex, birth date, christening date, birthplace, and parentage were recorded at or near the time of the christening by the parish officiant and presenting parents. The evidence is **direct** \u2014 the facts answer the research question without requiring inference.\n\n**2. Original Parish Register Image, 1805 (original/primary/direct \u2014 partial read)**\n\nThe original Tyrsted kirkebog, image 007226375_00232 (imageGroup 007226375_002_M9DY-VFQ), was examined via fast OCR.\u00b2 The OCR confirmed the child's name (\"Birte\"), the birth location (\"Dallerup\"), and the August 1805 date. The mother's name was read as \"B\u00f8rte Kirstine\" \u2014 a common orthographic variant of \"Birte Kirstine\" in 18th\u201319th-century Danish records, consistent with the derivative index. The OCR was unable to clearly resolve the father's name column for the August 3 entry, due to column-alignment drift \u2014 this is an OCR limitation, not evidence of a different father. A full Opus-class re-read was blocked by image size (1.6 MB). This source is **original** and its information **primary**, but the read is acknowledged as partial.\n\n**3. Confirmation Index, 1819 (derivative/primary+secondary/direct \u2014 independent)**\n\nFourteen years after the baptism, the Tyrsted parish confirmation register \u2014 indexed in \"Danmark Kirkeb\u00f8ger, 1484-1941\" (collection 2078555) \u2014 records \"Birte Christensd,\" born 1805, confirmed 18 April 1819 at Tyrsted, Vejle, Denmark, with the father named as Christen Nielsen and the mother as Birte Kirstine S\u00f8rensd.\u00b3 This source is **derivative** (an index from the Tyrsted kirkebog). The confirmation event is **primary** information (recorded at the time of the ceremony by the officiating pastor); the birth year 1805 is **secondary** (recorded 14 years after the birth, from the pastor's knowledge or reference to the baptism register). The parentage statement is **direct** evidence.\n\nThis record is **genuinely independent** of the baptism records: it documents a different ecclesiastical event (confirmation vs. baptism), created 14 years later by the Tyrsted pastor in a different register section. It independently attests the child's birth year and parentage.\n\n---\n\n### Name Variants \u2014 Not Conflicts\n\nThree apparent differences between sources are orthographic variants, not substantive discrepancies:\n\n- **Birte / B\u00f8rte**: \"B\u00f8rte\" in the OCR of the original image is the same name as \"Birte\" \u2014 a common 19th-century Danish spelling variant reflecting the same given name. The baptism index and confirmation index both use \"Birte.\"\n- **Chresten / Christen**: The confirmation index names the father \"Christen Nielsen\"; the baptism index names him \"Chresten Nielsen.\" Both are standard Danish spellings of the same given name (from \"Christian\"), reflecting dialect and scribal preference. No conflict.\n- **Christensd / Christensdatter / S\u00f8rensd / S\u00f8rensdatter**: The confirmation index abbreviates both the child's and the mother's patronymic surname \u2014 \"Christensd\" for Christensdatter, \"S\u00f8rensd\" for S\u00f8rensdatter \u2014 consistent with standard Danish index abbreviation practice. No conflict.\n\n---\n\n### Negative Evidence\n\nNo burial record for Birte Christensdatter (daughter of Chresten Nielsen) was found in Denmark Burials, 1640-1917 (collection 1520593) for 1805\u20131825, consistent with her having survived infancy. The 1787 Danish census (collection 2790466) returned no results for Chresten Nielsen in Tyrsted or Vejle, likely due to limited indexing coverage; in any case this census predates Birte's birth and cannot confirm or deny her existence. The Denmark Probate Indexes, 1674-1851 (collection 2026233) returned no results, suggesting the collection lacks coverage for Tyrsted in this period. The 1801 Danish census was searched on FamilySearch without finding the family in indexed results; as Birte was not born until 1805, the 1801 census could not in any case directly confirm her existence.\n\n---\n\n### Identity Disambiguation \u2014 Two Chresten Nielsen Households\n\nThe patronymic surname \"Nielsen\" and the given name \"Chresten\" were both common in 19th-century Tyrsted parish; research identified at least one other head of household in Tyrsted with the same name \u2014 a Chresten Nielsen whose wife was Sidsel Lausdr. The identity of the father in the subject's baptism entry is established, and that alternative household eliminated, by the conjunction of the father's name (a_006: \"Chresten Nielsen\") and the mother's name (a_009: \"Birte Kirstine\") stated in the baptism record: the second household had a different wife entirely, and no record places a Birte born 1805 in that household. The 1819 confirmation record (src_003) independently supplies both parent names (\"Christen Nielsen\" + \"Birte Kirstine S\u00f8rensd\"), providing a second cross-time authentication of the correct household identification across a 14-year gap.\n\n---\n\n### Limitations and Path to Proved\n\nThe conclusion reaches **probable** rather than **proved** because the confirmation register original image was not accessed \u2014 only the derivative index (src_003) was examined for that second independent source. The GPS standard for a **proved** conclusion requires two or more independent **original** records with primary information; only one original record (the baptism register image) was examined here, and that examination was partial due to OCR tool constraints. If the Tyrsted kirkebog confirmation register image (imageGroup 007226375_002_M9DY-VFQ, approximately pages 180\u2013200 for 1819 entries) were examined and confirmed the parentage statement, the tier could advance to proved.\n\n---\n\n### Tier Declaration\n\nBased on two independent corroborating sources \u2014 the 1805 Tyrsted baptism record and the 1819 Tyrsted confirmation record \u2014 with no conflicting evidence found across six record types and repositories, with the alternative Chresten Nielsen/Sidsel Lausdr household in Tyrsted explicitly eliminated by the stated mother's name, and with research declared reasonably exhaustive, the evidence **strongly suggests** that Birte Christensdatter (born 3 August 1805, Dallerup, Tyrsted parish, Vejle, Denmark) is the daughter of Chresten Nielsen and Birte Kirstine S\u00f8rensdatter \u2014 a tenth child of this couple in addition to their nine known children born 1791\u20131801. **Tier: Probable.**\n\n---\n\n### Citations\n\n\u00b9 \"Denmark, Baptisms, 1618-1923,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:W6M7-SWMM : 23 June 2020), Entry for Birte; citing Tyrsted, Vejle, Denmark; FHL microfilm.\n\n\u00b2 Tyrsted Parish Register (Kirkebog), 1793\u20131823, vol. 2, image 007226375_00232, baptism entry Aug 3, 1805 (Birte, Dallerup); imageGroup 007226375_002_M9DY-VFQ; Tyrsted parish, Hatting herred, Vejle amt, Denmark; digital image, FamilySearch (familysearch.org), accessed 2026-07-31.\n\n\u00b3 \"Danmark Kirkeb\u00f8ger, 1484-1941,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG8V-2DDT : accessed 31 July 2026), entry for Birte Christensd and Christen Nielsen, 18 Apr 1819."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-31T12:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-31T12-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Denmark",
+      "for_place": "Tyrsted, Vejle, Denmark",
+      "time_period": "1780-1820",
+      "jurisdictions": [
+        {
+          "name": "Tyrsted, Stjernholm, Denmark",
+          "date_range": "1660\u20131793"
+        },
+        {
+          "name": "Tyrsted, Hatting, Vejle, Denmark",
+          "date_range": "1793\u20131970"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1778463",
+          "title": "Denmark, Baptisms, 1618-1923",
+          "date_range": "1618-1923"
+        },
+        {
+          "id": "2078555",
+          "title": "Denmark, Church Records, 1484-1941",
+          "date_range": "1484-1941"
+        },
+        {
+          "id": "1520593",
+          "title": "Denmark, Burials, 1640-1917",
+          "date_range": "1640-1917"
+        },
+        {
+          "id": "1520592",
+          "title": "Denmark, Marriages, 1635-1916",
+          "date_range": "1635-1916"
+        },
+        {
+          "id": "2790466",
+          "title": "Denmark Census, 1787",
+          "date_range": "1787-1787"
+        },
+        {
+          "id": "2243379",
+          "title": "Denmark, Military Conscription Rolls, 1789-1793",
+          "date_range": "1789-1793"
+        },
+        {
+          "id": "2026233",
+          "title": "Denmark, Probate Indexes, 1674-1851",
+          "date_range": "1674-1851"
+        },
+        {
+          "id": "2421847",
+          "title": "Denmark, Deeds and Mortgages, 1572-1928",
+          "date_range": "1572-1928"
+        }
+      ],
+      "quirks": [
+        "Tyrsted parish was under Stjernholm amt until 1793, then Hatting herred, Vejle amt \u2014 records split across two jurisdiction-era volumes at the 1793 boundary.",
+        "The pre-1793 Tyrsted parish register (imageGroup 007226375_001, coverage 1684\u20131796, 212 images) is 0% indexed and not full-text searchable \u2014 must be browsed image by image via FamilySearch or Arkivalieronline.",
+        "The 1793\u20131823 Tyrsted kirkebog (imageGroup 007226375_002_M9DY-VFQ, 131 images) is only 43% indexed \u2014 the indexed portion is searchable via 'Denmark, Baptisms, 1618-1923' (FamilySearch collection 1778463, 2,633 Tyrsted records), but the remaining ~57% must be browsed page by page.",
+        "Civil registration in Denmark began in 1814; for the target period 1780\u20131813 all vital records are exclusively in Lutheran parish registers (kirkeb\u00f8ger).",
+        "Danish patronymic naming convention: daughters of Chresten Nielsen would be recorded as 'Nielsdatter' (not Nielsen); search for Birte Nielsdatter as well as Birte Nielsen.",
+        "Parish registers are in Danish and occasionally Latin; handwriting is old Danish Kurrent script \u2014 a handwriting guide is available on the FamilySearch Denmark wiki.",
+        "The 1801 Denmark census is NOT indexed on FamilySearch \u2014 access it via Ancestry (collection 61726, subscription) or the Danish State Archives (sa.dk); it would show household composition c. 1801 before the putative 1805 birth.",
+        "Arkivalieronline (arkivalieronline.rigsarkivet.dk) provides free image access to Danish parish church books including Tyrsted \u2014 use it to browse the unindexed portions of the Tyrsted registers.",
+        "The FamilySearch wiki article 'Vejle County Denmark Baptisms Coverage Table' confirms 2,633 baptism records indexed for Tyrsted, Vejle \u2014 search this collection first before browsing images."
+      ],
+      "guide_markdown": "# Locality Guide: Tyrsted Parish, Vejle, Denmark (c. 1780\u20131820)\n\n## Jurisdiction History\nTyrsted (Danish: Tyrsted Sogn) is a Lutheran parish in east Jutland. Its jurisdictional history across the target period:\n- **Until 1793**: Under Stjernholm amt (county). Parish register era-volume: 1684\u20131796.\n- **1793\u20131970**: Under Hatting herred (district), Vejle amt. New parish register series begins 1793.\n- **1970\u20132006**: Reorganized as Tyrsted, Horsens, Vejle.\n\nFor the nine known children (b. 1791\u20131801) and the putative 1805 daughter, records fall across both the Stjernholm-era and Vejle-era volumes.\n\n## Parish Registers (Kirkeb\u00f8ger) \u2014 Primary Source\n\nFamilySearch has digitized four Tyrsted volumes covering 1684\u20131829:\n\n| Image Group | Coverage | Images | Indexed | Access |\n|---|---|---|---|---|\n| 007226375_001_M9DY-VF3 | 1684\u20131796 | 212 | **0%** | Browse-only |\n| 007226375_002_M9DY-VFQ | **1793\u20131823** | 131 | **43%** | Partial index + browse |\n| 007226375_003_M9DY-VF7 | 1814\u20131829 | 75 | 91% | Indexed |\n| 007226375_004_M9DY-VFW | 1814\u20131829 | 37 | 35% | Partial index |\n\nThe **1793\u20131823 volume** (007226375_002) is the primary target for the 1805 baptism question. It is 43% indexed in **Denmark, Baptisms, 1618-1923** (FamilySearch collection 1778463), which holds **2,633 Tyrsted records**. The wiki article 'Vejle County Denmark Baptisms Coverage Table' confirms this count. The unindexed ~57% must be browsed image by image.\n\nFor births 1791\u20131793, the Stjernholm-era volume (007226375_001, 0% indexed) must be browsed directly via FamilySearch or Arkivalieronline (arkivalieronline.rigsarkivet.dk \u2014 free access to Danish church books).\n\n**Also available:** Denmark, Church Records, 1484-1941 (collection 2078555, index + images) \u2014 broad collection covering baptisms, marriages, and burials.\n\n## Census Records\n- **1787 census** (FamilySearch collection 2790466, indexed): Will show Chresten Nielsen's household before the children's births.\n- **1801 census** (NOT on FamilySearch \u2014 use Ancestry collection 61726 or Danish State Archives sa.dk): Shows household composition between the known children and the putative 1805 birth. Also available via Danish Demographic Database (ddd.dda.dk).\n- **1834, 1840+ censuses** (FamilySearch, indexed): Too late for the primary question but may help confirm later family composition.\n\n## Burial Records\n- **Denmark, Burials, 1640-1917** (FamilySearch collection 1520593, indexed): Search for a Birte Nielsdatter who died in infancy or childhood in Tyrsted, which would explain absence from later records.\n\n## Marriage Records\n- **Denmark, Marriages, 1635-1916** (FamilySearch collection 1520592, indexed): Not primary for this question but useful for confirming Chresten and Birte Kirstine's marriage and for any daughter Birte who later married.\n\n## Military Records\n- **Military Conscription Rolls, 1789-1793** (FamilySearch collection 2243379, indexed): May help locate/confirm Chresten Nielsen's identity and residence. Also: L\u00e6gdsruller 1743-1862 (FamilySearch catalog 448204, images).\n\n## Probate / Estate Records\n- **Denmark, Probate Indexes, 1674-1851** (FamilySearch collection 2026233, indexed): Estate record for Chresten Nielsen or Birte Kirstine could enumerate heirs/children.\n- **Arkivalieronline**: broader access to Danish probate and estate records.\n\n## Key Online Repositories\n- **FamilySearch.org**: Primary \u2014 indexed collections + image volumes\n- **Arkivalieronline** (arkivalieronline.rigsarkivet.dk): Free Danish State Archives portal \u2014 images of church books, probate, census\n- **Dansk Demografisk Database** (ddd.dda.dk): Links census and other records\n- **Link-lives.dk**: Links individuals across 1787\u20131901 census records\n- **Ancestry.com** ($): 1801 census, church records 1812\u20131924, marriages\n- **DIS-Arkivalielister** (arkivalielister.dis-danmark.dk): Military levying rolls index\n\n## Language and Handwriting\nRecords are in Danish (and occasionally Latin in the 18th century). Handwriting is old Danish Kurrent script. FamilySearch provides a Denmark Handwriting guide. Daughters of Chresten Nielsen would be recorded as **Nielsdatter**, not Nielsen \u2014 essential for record searches.\n\n## Research Strategy for q_001\n1. **Search indexed baptisms first**: 'Denmark, Baptisms, 1618-1923' (collection 1778463), filtered to Tyrsted, Vejle, c. 1804\u20131807, father = Chresten Nielsen. Also try 'Denmark, Church Records, 1484-1941' (2078555).\n2. **Browse the unindexed portion** of imageGroup 007226375_002_M9DY-VFQ (1793\u20131823) via FamilySearch or Arkivalieronline if the indexed search returns no 1805 Birte.\n3. **Browse the 1791\u20131793 births** in imageGroup 007226375_001_M9DY-VF3 to verify the nine known children as a foundation.\n4. **Check 1801 census** (Ancestry/sa.dk) for household composition \u2014 presence/absence of a Birte in 1801 informs whether a c. 1805 birth is plausible.\n5. **Search burial records** for a Birte Nielsdatter in Tyrsted, c. 1805\u20131825, to explain absence from later records if the baptism is found but the daughter doesn't appear in 1834+ censuses.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-31"
+    }
+  ]
+}

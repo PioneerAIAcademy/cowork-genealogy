@@ -131,8 +131,17 @@ mocks (no E2B/Anthropic/OAuth needed).
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
-    --title "…" --body "…"
+    --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+  …"
   ```
+
+  Open the body with a `**Touches:**` line naming the files the work would
+  change, when you know them. Overlap between issues here is almost never
+  same-title — it is two issues wanting different lines in one file — and that
+  line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
+  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
+  fit against ~180 open issues is that pass's job, not the filer's.
 
   | Label | Use for |
   |---|---|
@@ -143,7 +152,8 @@ mocks (no E2B/Anthropic/OAuth needed).
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
   `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-  card in Backlog. A `gh` token without the `project` scope — the default after
+  card in Backlog; the one exception is the `feedback` label, which routes to
+  Ready. A `gh` token without the `project` scope — the default after
   `gh auth login` — fails a board write *while still creating the issue*, which
   looks like success. Reference the number in the PR body.
 
@@ -631,6 +641,12 @@ explicitly with the Agent tool.
   and rejects plans with no falsifiable acceptance check. Step 3 of
   [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), capped at two rounds
   (ADR-0007). `/critique-plan [path]`.
+- **`drift-critic`** — read-only. The step-6 counterpart: reads the plan and the
+  branch's full diff (including untracked files) and reports what the
+  implementation did that the plan didn't call for, what the plan called for
+  that isn't there, and what contradicts it. Not a bug finder — `/code-review`
+  owns correctness. A deviation recorded in `PLAN.md` or the PR body is not
+  drift. `/check-drift [path]`.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.
@@ -658,6 +674,13 @@ What replaced them is the templates they pointed at, used directly:
 | `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
 | `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
 | `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
+
+## Reviewing a PR
+
+Use `/review` (`.claude/skills/review/`). It ships with the repo, so cloning is
+the whole install — do not reach for a `/review` from any other toolchain, which
+teammates do not have and which reads neither this repo's suites nor the human
+reviews on the PR.
 
 ## What NOT to do
 

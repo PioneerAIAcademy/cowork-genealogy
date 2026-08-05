@@ -13,11 +13,10 @@ from e2e.corpus_report import (
     classify,
     format_report,
     main,
-    run_timestamp,
     tally,
     violations_of,
 )
-from e2e.runlog_paths import all_result_jsons
+from e2e.runlog_selection import all_result_jsons, is_result_json, run_date
 from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
@@ -270,26 +269,65 @@ def test_report_flags_a_dominant_fixture_so_the_next_outlier_self_discloses(
     assert "alone accounts for" in out
 
 
-def test_run_timestamp_rejects_the_sidecars_that_share_a_run_stem(tmp_path: Path):
+def test_concentration_names_what_the_top_n_cap_withheld(tmp_path: Path):
+    """A truncated list that does not say it is truncated reads as the complete
+    set of contributors — which is how a three-fixture headline gets quoted off
+    a corpus with many more. The tail is summarised, never silently dropped."""
+    paths = []
+    for i, n in enumerate([9, 4, 3, 2, 2]):
+        d = tmp_path / f"fx{i}"
+        d.mkdir()
+        paths.append(_write(d, f"run-{i}.json", {
+            "harness_schema_version": 1, "compliance": "fail",
+            "verdict": "pass", "outcome": "fail",
+            "guardrail_bypass_violations": ["'same_person' x"] * n,
+        }))
+    _, compliance, gate, _, arms, fix = tally(paths)
+    out = format_report(Counter(), compliance, gate, n_runs=5, arms=arms, per_fixture=fix)
+
+    assert "fx0" in out and "fx1" in out and "fx2" in out
+    # 5 contributors, 3 named — the other two carry 4 of 20 violations (20%).
+    assert "… 2 further fixture(s) not shown, 4 violation(s) (20%)" in out
+    assert "fx3" not in out and "fx4" not in out
+
+
+def test_concentration_is_silent_when_nothing_was_withheld(tmp_path: Path):
+    """The counterpart: the line must not appear when the list IS complete, or
+    it becomes noise that trains the reader to skip the real disclosure."""
+    paths = []
+    for i, n in enumerate([5, 3]):
+        d = tmp_path / f"fx{i}"
+        d.mkdir()
+        paths.append(_write(d, f"run-{i}.json", {
+            "harness_schema_version": 1, "compliance": "fail",
+            "verdict": "pass", "outcome": "fail",
+            "guardrail_bypass_violations": ["'same_person' x"] * n,
+        }))
+    _, compliance, gate, _, arms, fix = tally(paths)
+    out = format_report(Counter(), compliance, gate, n_runs=2, arms=arms, per_fixture=fix)
+    assert "not shown" not in out
+
+
+def test_corpus_membership_rejects_the_sidecars_that_share_a_run_stem():
     """`.ann` / `.final-*` siblings would triple the denominator. This bit a
     hand-written analysis of exactly this corpus."""
-    assert run_timestamp(Path("run-2026-07-30_18-09-08.json")) == "2026-07-30_18-09-08"
-    assert run_timestamp(Path("run-2026-07-30_18-09-08.ann.json")) is None
-    assert run_timestamp(Path("run-2026-07-30_18-09-08.final-tree.gedcomx.json")) is None
-    assert run_timestamp(Path("summary.json")) is None
+    assert is_result_json(Path("run-2026-07-30_18-09-08.json"))
+    assert not is_result_json(Path("run-2026-07-30_18-09-08.ann.json"))
+    assert not is_result_json(Path("run-2026-07-30_18-09-08.final-tree.gedcomx.json"))
+    assert not is_result_json(Path("summary.json"))
 
 
-def test_every_corpus_member_yields_a_run_timestamp():
+def test_every_corpus_member_yields_a_run_date():
     """The other direction of the pair above, over the REAL committed corpus.
 
-    `run_timestamp` defers membership to `is_result_json` and only parses the
-    stem, so these two must agree by construction. This catches the case that
-    breaks `--since` silently: a committed runlog that counts as a corpus member
-    but whose name `RUN_STEM` cannot parse would be dropped from every windowed
-    report while still inflating the unwindowed one.
+    `filter_since` KEEPS a run whose filename carries no parseable date, so a
+    naming change cannot silently shrink a window — but it would then pin every
+    such run inside every window, which is the same reporting error pointed the
+    other way. Membership and datability must agree by construction, and this is
+    what says so over the live corpus rather than a fixture.
     """
-    unparseable = [p.name for p in all_result_jsons() if run_timestamp(p) is None]
-    assert not unparseable, f"corpus members with no parseable timestamp: {unparseable}"
+    undated = [p.name for p in all_result_jsons() if run_date(p) is None]
+    assert not undated, f"corpus members with no parseable date: {undated}"
 
 
 # ── the report's denominators (issue #1176 follow-ups) ───────────────────────
@@ -436,16 +474,16 @@ def test_a_violation_free_corpus_produces_empty_counters(tmp_path: Path):
 # ── --since (issue #1176): the window must not move on a typo ────────────────
 
 
-def test_since_rejects_a_malformed_timestamp(capsys):
-    """Unvalidated, `--since` is a lexicographic compare against a filename
-    stem: `2026-07-27_20:00:00` silently DROPS a 20:30 run and
-    `2026-07-27-20-00-00` silently KEEPS a 19:00 one, both under a header
-    asserting the window asked for. Reject the value, not the runs."""
-    for bad in ("2026-7-27_20-00-00", "2026-07-27_20:00:00", "2026-07-27-20-00-00"):
+def test_since_rejects_a_malformed_window(capsys):
+    """A window that moves on a typo is the defect this report exists to retire,
+    so the value is rejected rather than the runs. `parse_since` is wired as
+    argparse's `type=`, so this fires on every invocation — including the ones
+    that would go on to ignore the cutoff."""
+    for bad in ("2026-07-27_20:00:00", "07-27-2026", "2026-13-01", "yesterday"):
         with pytest.raises(SystemExit) as e:
             main(["--since", bad])
         assert e.value.code == 2
-    assert "YYYY-MM-DD_HH-MM-SS" in capsys.readouterr().err
+    assert "'all', a number of days, or YYYY-MM-DD" in capsys.readouterr().err
 
 
 def test_since_reports_an_empty_window_distinctly_from_an_empty_corpus(
@@ -461,43 +499,52 @@ def test_since_reports_an_empty_window_distinctly_from_an_empty_corpus(
     orig = cr.all_result_jsons
     try:
         cr.all_result_jsons = lambda: [run]
-        assert main(["--since", "2027-01-01_00-00-00"]) == 1
-        assert "at or after 2027-01-01_00-00-00" in capsys.readouterr().err
+        assert main(["--since", "2027-01-01"]) == 1
+        assert "on/after 2027-01-01" in capsys.readouterr().err
 
         cr.all_result_jsons = lambda: []
-        assert main(["--since", "2027-01-01_00-00-00"]) == 1
+        assert main(["--since", "2027-01-01"]) == 1
         err = capsys.readouterr().err
         assert "No committed runs found." in err
-        assert "at or after" not in err
+        assert "on/after" not in err
     finally:
         cr.all_result_jsons = orig
 
 
-def test_since_is_inclusive_of_its_own_timestamp(tmp_path: Path, capsys):
-    """Pins existing behavior across 1b's rewrite of the filter: `--since` names
-    a detector's ship date, so the run AT that timestamp is inside the window."""
+def test_since_is_inclusive_of_its_own_date(tmp_path: Path, capsys):
+    """`--since` names a detector's ship date, so a run ON that date is inside
+    the window. The boundary is the whole reason a window is quotable at all."""
     import e2e.corpus_report as cr
     fixture = tmp_path / "fx"
     fixture.mkdir()
-    early = _write(fixture, "run-2026-07-27_19-59-59.json", {"verdict": "pass"})
-    exact = _write(fixture, "run-2026-07-27_20-00-00.json", {"verdict": "fail"})
+    early = _write(fixture, "run-2026-07-26_19-59-59.json", {"verdict": "pass"})
+    exact = _write(fixture, "run-2026-07-27_00-00-00.json", {"verdict": "fail"})
 
     orig = cr.all_result_jsons
     cr.all_result_jsons = lambda: [early, exact]
     try:
-        assert main(["--since", "2026-07-27_20-00-00"]) == 0
+        assert main(["--since", "2026-07-27"]) == 0
     finally:
         cr.all_result_jsons = orig
     out = capsys.readouterr().out
-    assert "1 committed run(s) since 2026-07-27_20-00-00" in out
+    assert "Window: runs on/after 2026-07-27 — 1 of 2 run(s)" in out
     assert "1 fail" in out
 
 
-def test_since_scope_line_names_the_window():
-    """Pins existing behavior across 1m's edits to the same function: a windowed
-    report must say so, or its numbers get quoted as the whole corpus."""
-    out = format_report(
-        Counter({"pass": 1}), Counter({"pass": 1}), Counter({"pass": 1}),
-        n_runs=1, since="2026-07-27_20-00-00",
+def test_a_windowed_report_says_so_where_it_states_a_denominator():
+    """`describe_window` names the window once, above the report. The rate line
+    still has to scope its own refusal, or "no run has a decidable compliance
+    axis" reads as a claim about the whole corpus when it is about 14 days."""
+    windowed = format_report(
+        Counter({"pass": 1}), Counter({"not_checked": 1}), Counter({"pass": 1}),
+        n_runs=1, windowed=True,
     )
-    assert out.startswith("1 committed run(s) since 2026-07-27_20-00-00")
+    whole = format_report(
+        Counter({"pass": 1}), Counter({"not_checked": 1}), Counter({"pass": 1}),
+        n_runs=1, windowed=False,
+    )
+    assert "in this window" in windowed and "in the corpus" not in windowed
+    assert "in the corpus" in whole and "in this window" not in whole
+    # The window itself is `describe_window`'s to name — stating it twice
+    # invites the two lines to disagree.
+    assert "Window:" not in windowed

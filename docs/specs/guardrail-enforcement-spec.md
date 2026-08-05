@@ -99,7 +99,17 @@ genealogical consequences, not just procedural ones.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
-persisted per run):
+persisted per run). The report now windows to the last 14 days like every
+other run-log reader; `SINCE=all` is the whole-corpus mode this table was
+measured in. Step 1 of #911 wants that maximum-sample replay — its own step 4
+then answers the staleness ("the historical corpus predates several of today's
+skills") with *new* runs.
+
+The numbers below are a point-in-time replay over the **99 runs committed when
+they were taken**, kept as the record of what motivated the window. `SINCE=all`
+today scans the whole corpus, which has since grown (134 runs as of
+2026-08-04), so it reports larger absolute counts — the shape, not the
+figures, is what reproduces:
 
 | window | violations | runs affected |
 |---|---|---|
@@ -125,11 +135,24 @@ cannot, and none depends on another shipping first.
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
+| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** |
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. The production port of §8 is
 #1054, which is blocked on nothing being retained to detect against — the
 hosted path persists no tool-call ledger.
+
+The last row is the live, pre-write form of a question §8 already hard-fails
+post-run, so its doctrine needs no shadow period — but its *enforcement* does.
+Replayed over the committed e2e corpus it fires in 65 of 81 fixtures (265 hits
+across 280 runs), because scoring a locally-minted tree person is not current
+agent behavior. Denying on that would intervene in four fifths of a suite
+costing $7-25 a run with no evidence for how the agent recovers, so it records
+into `guardrail_shadow_violations` and lets the write through. Graduating it to
+a deny is **#1231**, gated on these numbers. Note it asks a stricter question
+than its §8 counterpart: that one accepts a `same_person` anywhere in the run,
+including *after* the link, so link-then-score is a shadow hit and a post-run
+pass.
 
 ## 5. Write-boundary invariant
 
@@ -249,9 +272,47 @@ Design points that were paid for and should not be re-derived:
   `eval/tests/unit/person-evidence/` cases as of that PR, against a real
   false-positive class. (That suite has since grown past 15 — the count is the
   scope of the measurement, not of the directory.)
-- **Success-gated, via `PostToolUse`.** An errored `Skill` call must not open
-  the window, or "invoke the skill, let it fail, finish the write inline"
-  evades this check and §8 at once — a `Skill` call really is in the log.
+- **Success-gated, off the joined `tool_calls[].is_error` — but only to the
+  depth that key can see.** The intent is that an errored `Skill` call must not
+  open the window, or "invoke the skill, let it fail, finish the write inline"
+  evades this check and §8 at once. The instrument is **not** a `PostToolUse`
+  hook (this bullet specified one until 2026-08-04; none was ever built, and
+  there is no `PostToolUse` hook anywhere in `eval/harness/`). It is the SDK's
+  `ToolResultBlock.is_error`, joined onto each entry by the message loop in
+  `e2e/orchestrator.py` and read by the `entry.get("is_error") is True` gates in
+  `harness/skill_invocation.py` — `recently_succeeded`,
+  `find_unguarded_protected_writes`, `find_effects_without_invocation`,
+  `find_person_evidence_missing_same_person`, and
+  `find_protected_writes_by_unnamed_delegate`. Those gates were written against a
+  key nothing set, so success-gating was inert in all five until the join landed
+  (`apply_tool_result`, PR #1255, main `4541a4c5`).
+
+  **What that buys, and what it does not.** `is_error` reports whether the *tool
+  call* failed, which is not the same question as whether the *skill* succeeded:
+
+  - **`Skill` — launch only.** Every one of the 1,211 `Skill` results in the
+    committed corpus is a launch acknowledgement (`Launching skill: <name>`, 18
+    distinct values); the skill's work happens in later turns of the same
+    session. So `is_error` on a `Skill` entry catches an unknown-skill-name
+    launch failure — the corpus holds exactly one,
+    `<tool_use_error>Unknown skill: gps-mentor</tool_use_error>` — and nothing
+    else. **The invoke-then-let-it-fail evasion named at the top of this bullet
+    is still open.** Closing it needs an instrument that observes skill
+    *completion*, which `ToolResultBlock` is not.
+  - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
+    from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
+    without throwing, so a rejected write still records `is_error: false`
+    (issue #1282).
+  - **What it does gate today:** MCP tools that throw — an errored
+    `same_person` no longer enters `find_person_evidence_missing_same_person`'s
+    `scored_ids`, and an errored `tree_edit` no longer counts as a protected
+    write in `find_unguarded_protected_writes`.
+
+  Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
+  across that join. The boundary is the commit, not cleanly a version number —
+  #1255 shipped it at `harness_schema_version` 2 and the bump to 3 came after, so
+  a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
+  §7.5 has the table. The measured delta on the committed corpus is two entries.
 - **Keyed by `(skill, question_id)` where a question id is derivable**, not by
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no

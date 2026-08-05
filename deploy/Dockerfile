@@ -22,7 +22,13 @@ WORKDIR /repo
 # packages/schema and packages/viewer-ui. Copy the workspace manifests
 # first for a cached install, then the sources those three need.
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
-COPY packages/schema/package.json packages/schema/
+# packages/schema goes in WHOLE and BEFORE the install, unlike its siblings: its
+# postinstall generates the gitignored src/enums.generated.ts, so with only the
+# manifest here the install dies MODULE_NOT_FOUND on scripts/gen-enums.mjs — and
+# `pnpm --filter web build` below is not turbo, so nothing else would generate
+# it. Costs the install layer's cache on a schema edit; nothing else invalidates
+# it. `make deploy` replays this stage (scripts/check-deploy-stage1.mjs).
+COPY packages/schema packages/schema
 COPY packages/viewer-ui/package.json packages/viewer-ui/
 COPY apps/web/package.json apps/web/
 # apps/electron is a workspace member but the web build does not need it; a
@@ -30,7 +36,6 @@ COPY apps/web/package.json apps/web/
 COPY apps/electron/package.json apps/electron/
 RUN pnpm install --frozen-lockfile --filter web...
 
-COPY packages/schema packages/schema
 COPY packages/viewer-ui packages/viewer-ui
 COPY apps/web apps/web
 COPY tsconfig.base.json turbo.json ./

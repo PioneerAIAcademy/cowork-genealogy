@@ -69,7 +69,7 @@ classes, and one false-negative blind spot (see the P0).** Since the post-run co
 detector shipped (#914, 2026-07-27), **every run either carried at least one
 guardrail-bypass violation or cannot be checked at all — not one is known to be
 clean.** That is not a rate and this document no longer states one; for the
-current counts run `make e2e-corpus SINCE=2026-07-27_20-00-00`. In the five failing runs of 2026-07-30 that
+current counts run `make e2e-corpus SINCE=2026-07-27`. In the five failing runs of 2026-07-30 that
 completed (the window §7 describes — they are not the five most recent on the
 committed corpus) the LLM judge scored the *genealogy* **pass on three and partial on
 two** — every one was failed by the detector.
@@ -82,8 +82,9 @@ two** — every one was failed by the detector.
 > clean" and "did not emit" are indistinguishable. Both published rates were
 > computed by treating the unknowns as clean, which is the precise inference the
 > repo's own resolver refuses ("laundering unknowns into confident passes").
-> **Zero committed runs yet carry the post-#972 shape**, so the rate becomes
-> measurable only as new runs accumulate.
+> Runs carrying the post-#972 shape have now started landing — every one so far
+> resolves `fail`, so the denominator a rate needs (a run known *clean*) still
+> does not exist and the rate becomes measurable only as more accumulate.
 >
 > **Do not hand-compute this again.** `make e2e-corpus [SINCE=…]` reports the
 > axes, the violation total, the per-arm split and the per-fixture
@@ -93,12 +94,12 @@ two** — every one was failed by the detector.
 **What is countable is violations, not runs — and two shapes hold regardless of
 when you count.** One arm (`find_person_evidence_missing_same_person`) produces
 the large majority of them, and **one fixture, `jimmie-jewel-neal`, produces
-roughly two-fifths of all violations in the corpus** — the same fixture that is
-the cost and duration outlier (§6). Any headline built on this corpus is
+several times its even share of all violations** — the same fixture that is the
+cost and duration outlier (§6). Any headline built on this corpus is
 substantially that one fixture's behavior. **For current figures run
-`make e2e-corpus [SINCE=…]`**, which prints the per-arm split and the
-concentration; deliberately not repeated here, because a number written into
-this paragraph is stale the next time a run lands.
+`make e2e-corpus [SINCE=…]`**, which prints the per-arm split and flags the
+dominant fixture against its even share; deliberately not repeated here, because
+a number written into this paragraph is stale the next time a run lands.
 
 **On the narrow window §3's P0 and §9 are stated against, that arm produced 16
 of the 25 violations.** That figure is frozen to that window on purpose — it is
@@ -866,21 +867,25 @@ use** — 112 of them record a cost and 22 do not (all 19 timeouts, 2 errors, 1
 inactivity). One corpus, one denominator. Regenerate rather than trusting these:
 they move every time a run lands.
 
-**Guardrail violations since the detector shipped (2026-07-27 20:00).**
-Regenerate rather than trusting the snapshot below — it moves every time a run
-lands, and did so between this paragraph being written and the PR being opened:
+**Guardrail violations since the detector shipped (2026-07-27).** The window is
+that whole day, so it also carries the two runs from that morning, which
+predate the detector and land in `not_checked` — they change no decidable
+figure. Regenerate rather than trusting the snapshot below; it moves every time
+a run lands, and did so between this paragraph being written and the PR being
+opened:
 
 ```
-make e2e-corpus SINCE=2026-07-27_20-00-00
+make e2e-corpus SINCE=2026-07-27
 ```
 
-Snapshot, **2026-08-04**: 30 runs in the window; **13 resolve `fail`, 0 resolve
-`pass`, 17 `not_checked`**; 49 violations across the 13 decidable runs (the 17
+Snapshot, **2026-08-04**: 40 runs in the window; **21 resolve `fail`, 0 resolve
+`pass`, 19 `not_checked`**; 67 violations across the 21 decidable runs (the 19
 unknown recorded none — their field is absent, which is *why* they are unknown)
-— 35 × "tree person is new this run and has a `person_evidence` link" (with no
-`same_person`), 5 × exhaustiveness declared without `research-exhaustiveness`,
-5 × proof/conclusion effect without `proof-conclusion`, 4 × conflict analysis
-without `conflict-resolution`; `jimmie-jewel-neal` alone supplies 19 (39%).
+— 50 × "tree person is new this run and has a `person_evidence` link" (with no
+`same_person`), 6 × exhaustiveness declared without `research-exhaustiveness`,
+6 × proof/conclusion effect without `proof-conclusion`, 5 × conflict analysis
+without `conflict-resolution`; `jimmie-jewel-neal` alone supplies 19 (28%, 4.8×
+its even share across 17 contributing fixtures).
 **Read with §0.2: this is a count, not a rate — no run in the corpus is known
 clean — and #998/#999/#1006 leave even the count an unquantified-false-positive
 floor.**

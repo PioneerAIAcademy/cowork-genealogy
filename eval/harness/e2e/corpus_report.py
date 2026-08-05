@@ -37,31 +37,35 @@ the violation total: it is stated across decidable runs, because a `not_checked`
 run's violations field is absent and so it cannot contribute one.
 
 CLI (from eval/harness/):
-  uv run python -m e2e.corpus_report
+  uv run python -m e2e.corpus_report                        # last 14 days
+  uv run python -m e2e.corpus_report --since all            # whole corpus
+  uv run python -m e2e.corpus_report --since 2026-07-27     # detector ship date
   uv run python -m e2e.corpus_report --test bagley-father-1884
-  uv run python -m e2e.corpus_report --since 2026-07-27_20-00-00
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from collections import Counter
 from pathlib import Path
 from typing import NamedTuple
 
-from e2e.runlog_paths import all_result_jsons, is_result_json, result_jsons_for
+from e2e.runlog_selection import (
+    add_since_arg,
+    all_result_jsons,
+    describe_window,
+    filter_since,
+    result_jsons_for,
+)
 from e2e.result import axes_from_runlog
 
 VERDICT_ORDER = ("pass", "partial", "fail", "skipped")
 
-# One definition of the run-timestamp shape. `RUN_STEM` and `--since` validation
-# both build on it, so a `--since` the corpus could never match is rejected at
-# parse time rather than silently selecting nothing.
-TS = r"\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
-RUN_STEM = re.compile(rf"^run-({TS})$")
+# How many fixtures the concentration block names individually. The remainder is
+# summarised on one line rather than dropped — see `_concentration_lines`.
+TOP_CONTRIBUTORS = 3
 
 # Substring → arm. Ordered: the first match wins, so a more specific probe must
 # precede a more general one. Keep in sync with the detector's message text in
@@ -92,19 +96,6 @@ class Tally(NamedTuple):
     problems: list[str]
     arms: Counter
     per_fixture: Counter
-
-
-def run_timestamp(path: Path) -> str | None:
-    """The timestamp of a run file, or None if `path` is not one.
-
-    Membership is `is_result_json`'s call, not this function's — asking twice by
-    two mechanisms is how the two drift apart. This only parses the stem of a
-    path that already belongs to the corpus.
-    """
-    if not is_result_json(path):
-        return None
-    m = RUN_STEM.match(path.stem)
-    return m.group(1) if m else None
 
 
 def decidable_runs(compliance: Counter) -> int:
@@ -183,7 +174,7 @@ def _counts(c: Counter, order: tuple[str, ...]) -> str:
     return " / ".join(parts) if parts else "(none)"
 
 
-def _compliance_rate_line(compliance: Counter, *, since: str | None = None) -> str:
+def _compliance_rate_line(compliance: Counter, *, windowed: bool = False) -> str:
     """The rate, or an explicit refusal to state one.
 
     A percentage over `pass + fail + not_checked` would assert that every
@@ -198,7 +189,7 @@ def _compliance_rate_line(compliance: Counter, *, since: str | None = None) -> s
     """
     ok, bad = compliance.get("pass", 0), compliance.get("fail", 0)
     decidable = decidable_runs(compliance)
-    scope = "in this window" if since else "in the corpus"
+    scope = "in this window" if windowed else "in the corpus"
     if decidable == 0:
         return (
             f"  runs w/ >=1 violation: NOT MEASURABLE — no run {scope} has a "
@@ -238,10 +229,19 @@ def _concentration_lines(per_fixture: Counter, total: int) -> list[str]:
     if not total or len(contributors) < 2:
         return []
     lines = ["  concentration:"]
-    for slug, n in per_fixture.most_common(3):
-        if not n:
-            continue
+    shown = [(slug, n) for slug, n in per_fixture.most_common(TOP_CONTRIBUTORS) if n]
+    for slug, n in shown:
         lines.append(f"    {slug:34} {n:3}  ({_pct(n, total)}% of all violations)")
+    # Name what the cap withheld. A truncated list that does not say it is
+    # truncated reads as the complete set of contributors, which is how a
+    # three-fixture headline gets quoted off a seventeen-fixture corpus.
+    withheld = len(contributors) - len(shown)
+    if withheld:
+        hidden = total - sum(n for _, n in shown)
+        lines.append(
+            f"    … {withheld} further fixture(s) not shown, "
+            f"{hidden} violation(s) ({_pct(hidden, total)}%)"
+        )
     top_slug, top_n = per_fixture.most_common(1)[0]
     # Two independent triggers, either sufficient — neither works alone.
     #
@@ -295,13 +295,13 @@ def format_report(
     n_runs: int,
     arms: Counter | None = None,
     per_fixture: Counter | None = None,
-    since: str | None = None,
+    windowed: bool = False,
     skipped: int = 0,
 ) -> str:
+    # The window itself is named by `describe_window`, printed immediately
+    # above this — stating it twice invites the two lines to disagree.
     not_checked = compliance.get("not_checked", 0)
     scope = f"{n_runs} committed run(s)"
-    if since:
-        scope += f" since {since}"
     if skipped:
         scope += f" ({skipped} unreadable, excluded)"
     lines = [
@@ -324,7 +324,7 @@ def format_report(
         for arm, n in arms.most_common():
             lines.append(f"    {arm:34} {n:3}")
         lines.extend(_concentration_lines(per_fixture or Counter(), total_violations))
-    lines.append(_compliance_rate_line(compliance, since=since))
+    lines.append(_compliance_rate_line(compliance, windowed=windowed))
     return "\n".join(lines)
 
 
@@ -336,58 +336,38 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     ap.add_argument("--test", help="restrict to one fixture slug")
-    ap.add_argument(
-        "--since",
-        metavar="YYYY-MM-DD_HH-MM-SS",
-        help=(
-            "only runs at or after this timestamp. Use it to scope to a "
-            "detector's ship date rather than hand-editing a window into prose."
-        ),
-    )
+    # `--since` is the shared one (`harness/since_window.py`), not a second
+    # spelling of it: `type=parse_since` rejects a malformed value at parse
+    # time, and `filter_since` KEEPS a run whose filename carries no parseable
+    # date rather than dropping it, so a naming change cannot silently shrink
+    # the window. Both properties are what a local implementation had to
+    # re-derive. Its granularity is a date, which costs nothing here — every
+    # decidable figure this report prints is identical whether the detector's
+    # ship day is included whole or excluded whole; only `not_checked` moves,
+    # and that is the bucket the report draws no conclusion from.
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
-    # Unvalidated, `--since` is a lexicographic compare against a filename stem,
-    # so `2026-07-27_20:00:00` silently drops a 20:30 run and `2026-07-27-20-00-00`
-    # silently keeps a 19:00 one — both under a header asserting the window asked
-    # for. A window that moves on a typo is the defect this whole report exists
-    # to retire, so reject the value rather than the runs.
-    if args.since and not re.fullmatch(TS, args.since):
-        ap.error("--since must be YYYY-MM-DD_HH-MM-SS")
-
-    paths = result_jsons_for(args.test) if args.test else all_result_jsons()
-    n_before = len(paths)
-    unparseable: list[Path] = []
-    if args.since:
-        kept = []
-        for p in paths:
-            ts = run_timestamp(p)
-            if ts is None:
-                # A corpus member whose stem cannot be parsed would otherwise be
-                # dropped from every windowed report and counted by every
-                # unwindowed one, under a header asserting the window asked for
-                # — the silent-window-shift class `--since` validation closes.
-                unparseable.append(p)
-            elif ts >= args.since:
-                kept.append(p)
-        paths = kept
+    all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    cutoff = args.since
+    paths = filter_since(all_paths, cutoff)
     if not paths:
-        # Branch on whether the corpus had anything, not on whether the flag was
-        # passed: an empty corpus reported as an empty window sends the reader
+        # Branch on whether the corpus had anything, not on whether a window was
+        # in effect: an empty corpus reported as an empty window sends the reader
         # hunting for a window bug that isn't there.
-        where = f" at or after {args.since}" if (args.since and n_before) else ""
+        where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
         return 1
 
     counts = tally(paths)
-    for path in unparseable:
-        print(f"  skip {path}: filename has no parseable run timestamp", file=sys.stderr)
     for problem in counts.problems:
         print(f"  skip {problem}", file=sys.stderr)
     # Unreadable files are excluded from every count, so they must be excluded
     # from the denominator too — the skip lines go to stderr, and a report piped
     # to a file would otherwise carry an inflated count with no trace of why.
-    skipped = len(counts.problems) + len(unparseable)
-    parsed = len(paths) - len(counts.problems)
+    skipped = len(counts.problems)
+    parsed = len(paths) - skipped
+    print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(
         format_report(
             counts.recall,
@@ -396,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
             n_runs=parsed,
             arms=counts.arms,
             per_fixture=counts.per_fixture,
-            since=args.since,
+            windowed=cutoff is not None,
             skipped=skipped,
         )
     )

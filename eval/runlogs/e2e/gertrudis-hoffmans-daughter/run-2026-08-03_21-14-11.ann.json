@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "The genealogical finding was correctly recovered and attached (recall 1/1, PASS): Elisabeth Jansen (I1) is linked as a daughter of both Petrus Jansen (KN19-QB1, R11) and Gertrudis Hoffmans (KN19-Q19, R12). The overall compliance failure is due solely to the #963 provenance bypass: new persons (I1 Elisabeth Jansen, I2 Martinus Geerts, I3 Anna Jan Neli_n) received person_evidence links without corresponding same_person invocations. This is a process/compliance issue, not a genealogy or recall failure - exactly the pattern PR #1178's in-run PreToolUse deny is designed to prevent; here the #1027 post-run detector flagged it. Proof reasoning is sound (score 3)."
+  }
+}

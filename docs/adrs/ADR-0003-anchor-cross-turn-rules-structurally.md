@@ -135,8 +135,8 @@ and "did not emit" are indistinguishable and every post-detector run lands on
 `fail` or `not_checked`. **Do not quote a violation rate for this decision or
 against it.** `make e2e-corpus [SINCE=…]` reports what is countable — the
 violation total, the per-arm split (one arm dominates) and the per-fixture
-concentration (one fixture supplies roughly two-fifths) — and refuses a
-percentage whose denominator would be doing the work.
+concentration (one fixture supplies several times its even share) — and refuses
+a percentage whose denominator would be doing the work.
 
 ## Revisit when
 

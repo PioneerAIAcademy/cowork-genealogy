@@ -1,0 +1,294 @@
+{
+  "persons": [
+    {
+      "id": "MTNY-RXQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Rafael",
+          "surname": "Reyes"
+        },
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Manuel Rafael",
+          "surname": "Reyes",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RFX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Serapia",
+          "surname": "Benavides Cueva"
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Serapia",
+          "surname": "Benavides",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RF1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Cipriano",
+          "surname": "Reyes"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RNH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Fermina",
+          "surname": "Lozano"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Rita",
+          "surname": "Reyes",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "January 1913",
+          "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F3",
+          "type": "DeathRegistration",
+          "date": "22 July 1932",
+          "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "value": "death registered 22 July 1932 at Santa Elena, Usulut\u00e1n, El Salvador via court judgment (sentencia ejecutoriada); registrar Miguel Angel Velasques, secretary Carlos Aparicio Florencio Herrera",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Burial",
+          "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "MaritalStatus",
+          "value": "soltera (unmarried) at time of death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Occupation",
+          "value": "oficios dom\u00e9sticos (domestic work)",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "standard_place": "Santa Elena, Usulut\u00e1n, El Salvador",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Filiation",
+          "value": "hija leg\u00edtima (legitimate daughter) of Manuel Rafael Reyes and Serapia Benavides",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MTNY-RXQ",
+      "person2": "MTNY-RFX",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "19 JAN 1860",
+          "standard_date": "19 Jan 1860",
+          "place": "Santa Catarina,Usulutan,Usulutan,El Salvador",
+          "standard_place": "Usulut\u00e1n, Usulut\u00e1n, El Salvador"
+        },
+        {
+          "id": "e82ae229-a9f4-4ca2-911a-21c2569ec968",
+          "type": "Marriage",
+          "date": "19 Jan 1860",
+          "standard_date": "19 Jan 1860",
+          "place": "Santa Catarina de Alejandria, Usulut\u00e1n, Usulut\u00e1n, El Salvador",
+          "standard_place": "Santa Catarina de Alejandr\u00eda, Usulut\u00e1n, Usulut\u00e1n Este, Usulut\u00e1n, El Salvador"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "MTNY-RF1",
+      "person2": "MTNY-RNH"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "MTNY-RF1",
+      "child": "MTNY-RXQ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MTNY-RNH",
+      "child": "MTNY-RXQ",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "MTNY-RXQ",
+      "child": "I1",
+      "id": "R5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "MTNY-RFX",
+      "child": "I1",
+      "id": "R6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "71KV-X3T",
+      "title": "Rafael Reyes Lozano, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N9V-VMQL : Wed Dec 17 03:18:40 UTC 2025), Entry for Rafael Reyes Lozano and Cipriano Reyes, 19 Jan 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N9V-VMQL"
+    },
+    {
+      "id": "9QFY-NSB",
+      "title": "Rafael Reyes, \"El Salvador, Marriages, 1810-1930\"",
+      "citation": "\"El Salvador matrimonios, 1810-1930\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FGY7-TCL : 16 December 2025), Rafael Reyes, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGY7-TCL"
+    },
+    {
+      "id": "S1",
+      "title": "Registro para Rita Reyes, \"El Salvador Registro Civil, 1704-2001\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6DQ4-1RQC",
+      "citation": "\"El Salvador Registro Civil, 1704-2001,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6DQ4-1RQC : accessed 4 August 2026), entry for Rita Reyes and Manuel Rafael Reyes, 22 July 1932."
+    }
+  ]
+}
