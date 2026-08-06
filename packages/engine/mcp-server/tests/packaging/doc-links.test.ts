@@ -382,7 +382,13 @@ function docsMarkdown(root: string): string[] {
         if (entry === "plan") continue;
         walk(full);
       } else if (entry.endsWith(".md")) {
-        out.push(relative(root, full));
+        // Normalize to forward slashes: `relative` yields backslashes on
+        // Windows, and every key in GRANDFATHERED_LINE_CITES (and every path
+        // this test reports) is written with `/`. Without this, no
+        // grandfathered entry ever matches on Windows and all six pre-existing
+        // cites are reported as new — green on CI, red on the whole team's
+        // laptops.
+        out.push(relative(root, full).split(/[\\/]/).join("/"));
       }
     }
   };
