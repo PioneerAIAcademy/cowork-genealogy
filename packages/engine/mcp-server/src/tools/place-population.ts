@@ -36,9 +36,10 @@ export async function populationTool(
   let response: Response;
   try {
     response = await fetchWithTimeout(url);
-  } catch {
+  } catch (err) {
+    const cause = err instanceof Error ? err.message : String(err);
     throw new Error(
-      "Population data service is unavailable. Is the Pop Stats API running?"
+      `Population data service is unavailable. Is the Pop Stats API running? (${cause})`
     );
   }
 

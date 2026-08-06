@@ -27,6 +27,13 @@ const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
+// fetchWithTimeout's default (30s) budgets the request/response headers, not
+// the body — AbortSignal.timeout is absolute from creation and keeps running
+// while the multi-MB body streams in below. A full-size page scan at typical
+// throughput needs more than 30s end-to-end, so this fetch gets the same 90s
+// budget as the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
+const IMAGE_FETCH_TIMEOUT_MS = 90_000;
+
 export interface FsImageInput {
   imageId?: string;
   ark?: string;
@@ -96,13 +103,17 @@ export interface FetchedFsImage {
 export async function fetchFsImageBytes(url: string): Promise<FetchedFsImage> {
   const token = await getValidToken();
 
-  const response = await fetchWithTimeout(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "image/*,*/*",
-      "User-Agent": BROWSER_USER_AGENT,
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "image/*,*/*",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-  });
+    IMAGE_FETCH_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -117,7 +128,20 @@ export async function fetchFsImageBytes(url: string): Promise<FetchedFsImage> {
     );
   }
 
-  const buffer = await response.arrayBuffer();
+  // The body read happens outside fetchWithTimeout's own try/catch, so a
+  // mid-stream abort (same IMAGE_FETCH_TIMEOUT_MS clock, still running) would
+  // otherwise surface as a raw TimeoutError instead of a readable message.
+  let buffer: ArrayBuffer;
+  try {
+    buffer = await response.arrayBuffer();
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new Error(
+        `FamilySearch image fetch timed out after ${IMAGE_FETCH_TIMEOUT_MS}ms while reading the response body.`
+      );
+    }
+    throw err;
+  }
   return {
     bytes: new Uint8Array(buffer),
     contentType: rawContentType.split(";")[0].trim(),

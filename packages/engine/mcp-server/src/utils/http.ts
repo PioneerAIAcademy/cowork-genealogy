@@ -13,6 +13,9 @@ export async function fetchWithTimeout(
   timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS
 ): Promise<Response> {
   try {
+    // `signal` is spread last deliberately: no caller passes its own signal
+    // today (grep `signal:` under src/ outside this file), and the timeout
+    // must always win if one ever does — not silently drop the timeout.
     return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
   } catch (err) {
     if (err instanceof Error && err.name === "TimeoutError") {
