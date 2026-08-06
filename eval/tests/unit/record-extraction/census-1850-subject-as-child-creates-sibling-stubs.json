@@ -5,7 +5,14 @@
     "name": "Subject-as-child census — assertion-only extraction; flags record-vs-tree children discrepancy",
     "type": "positive",
     "description": "When the subject (Patrick Flynn) appears as a child in an 1850 census household, record-extraction is ASSERTION-ONLY: it extracts the per-person assertions for every household member (Thomas, Bridget, Patrick, John) — including relationship-type assertions for the children — and creates/reuses the record's S-entry, but it writes NO tree persons, names, or relationships. Minting the sibling person stubs (Bridget, John) and writing their ParentChild edges is person-evidence's household-skeleton job (via materialize_facts create-or-enrich + tree_edit add_relationship), not extraction's; `mcp__genealogy__tree_edit` is not in record-extraction's frontmatter. The mid-research-flynn scenario seeds Patrick (I1) and Thomas (I2) — plus Mary (I3) and James (I4), prior-research children documented from St. Mary's baptismal registers (R2/R3 cite S5, not this census). Mary and James do NOT appear on this 1850 census, and Bridget/John (on the census) are not yet in the tree: the record-vs-tree children discrepancy is an identity question the skill must SURFACE in its summary, never a data error to 'fix' by writing, renaming, or removing tree persons. This test discriminates (a) full atomic per-person extraction with the pre-1880 `_inferred` relationship rule, (b) surfacing the identity discrepancy, and (c) the negative guard that extraction touches no tree persons/edges even when the user asks about the siblings.",
-    "tags": ["extraction", "1850", "1850-census", "subject-as-child", "relationship-assertions", "identity-question"]
+    "tags": [
+      "extraction",
+      "1850",
+      "1850-census",
+      "subject-as-child",
+      "relationship-assertions",
+      "identity-question"
+    ]
   },
   "input": {
     "user_message": "search-records found this 1850 U.S. Census record where Patrick appears as a child in Thomas Flynn's household. Extract assertions for everyone in the household, and flag anything about the siblings I should follow up on.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXYZ-TP4 · Dwelling 84, Family 91\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Thomas Flynn | 32 | M | Laborer | Ireland |\n| Bridget Flynn | 7 | F |  | Ireland |\n| Patrick Flynn | 5 | M |  | Ireland |\n| John Flynn | 2 | M |  | Pennsylvania |",
@@ -23,5 +30,71 @@
     "max_turns": 60,
     "max_wall_clock_seconds": 1500,
     "sdk_message_silence_seconds": 600
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Laborer",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pennsylvania",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "evidence_type": "indirect",
+      "optional": true
+    }
+  ]
 }
