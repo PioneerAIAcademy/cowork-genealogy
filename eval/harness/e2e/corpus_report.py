@@ -61,7 +61,7 @@ from e2e.runlog_selection import (
 )
 from e2e.result import axes_from_runlog
 
-VERDICT_ORDER = ("pass", "partial", "fail", "skipped")
+VERDICT_ORDER = ("pass", "partial", "fail", "ungraded", "skipped")
 
 # How many fixtures the concentration block names individually. The remainder is
 # summarised on one line rather than dropped — see `_concentration_lines`.

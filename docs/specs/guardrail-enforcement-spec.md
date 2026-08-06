@@ -382,9 +382,13 @@ this section before reopening one.
   is tool-name-granular only — not a substitute for any layer here.
 - **Per-turn scoping for a production detector** — proposed for #1054 and dead.
   Three of `find_effects_without_invocation`'s arms read whole-document state
-  with no baseline, so at turn scope they latch permanently after the first
-  legitimate write; and a hosted "turn" is one user message, while an autonomous
-  research request is the whole run.
+  with no baseline — research-exhaustiveness, conflict-resolution, and
+  proof-conclusion's `proof_summaries` half — so at turn scope they latch
+  permanently after the first legitimate write; and a hosted "turn" is one user
+  message, while an autonomous research request is the whole run.
+  (proof-conclusion's tree half and the person-evidence arm are
+  `starting_tree`-baselined — a run-level baseline, which does not help at turn
+  scope.)
 - **Enforcing coherence at the write boundary instead of provenance** — PR #997,
   closed with review. Replayed over 113 committed runs it flagged 3 where the
   shipped provenance check flagged 63, with an empty set difference: it detects
@@ -514,5 +518,6 @@ move the `compliance` axis until its false-positive rate is measured. Detector:
   of them bind in production; §9.4 lists what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
 - Issues #911 (calibrate §7), #913 (what past verdicts are worth), #1054
-  (retain a hosted ledger, then port §8), #998 (§8 check 1's seed-state arm),
+  (retain a hosted ledger, then port §8), #998 (closed — §8 check 1's
+  proof-conclusion arm now takes the `starting_tree` baseline),
   #940 (closed — the production port of §6)
