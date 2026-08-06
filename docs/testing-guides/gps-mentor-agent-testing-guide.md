@@ -334,6 +334,8 @@ least three to confirm auto-delegation works on varied phrasing:
 - "Second opinion."
 - "Critique my proof."
 - "Am I ready to conclude?"
+- "Is this a good read?" *(craft — see below)*
+- "Polish this for my family." *(craft — see below)*
 
 For each trigger, watch what happens:
 
@@ -410,6 +412,47 @@ action (e.g. "Plan items still in progress: [pli_001]. Complete them
 before pre-exhaustiveness review.") and still write a `refused`
 verdict to disk plus an `ev_NNN` entry — refusals are part of the
 audit trail.
+
+### Verify the narrative-craft path (spec §6.4)
+
+No automated suite covers this today: the unit harness keys every test
+to a skill directory, and `gps-mentor` is an agent. The agent itself is
+staged and observable in e2e runs (spec §17.1), so this is a missing
+suite rather than an impossible one — but until it exists, a genealogist
+reading real output is the verification. Run **both** halves; the
+positive test alone does not exercise the refusal.
+
+**Positive.** With a real proof summary in the project, ask:
+
+> "Is this a good read?"
+
+Check that:
+
+- The reply **opens with the scope sentence** — read for how it reads,
+  not for whether the evidence holds up — *above* the
+  `# Mentor review:` heading. A missing scope sentence is a bug, not a
+  stylistic choice.
+- The feedback is genealogical craft advice, not generic writing advice.
+  If it would read the same for a blog post about anything, the wording
+  needs another pass.
+- No axis name from §6.4 appears in the prose ("audience calibration",
+  "context provision"). Those are internal shorthand.
+- The heading reads `# Mentor review: how this reads — <ps_id>`, not
+  `on-demand`.
+- Style findings land in `consider_addressing` with
+  `standard: "Craft — …"`, and the verdict is **not** `address_first`
+  unless the carried-over check (§6.3 check 3, narrative
+  self-containment) or a real GPS problem surfaced.
+- The verdict sidecar carries `"craft": true` — §12.3's supersession
+  rule has nothing to read without it.
+
+**Negative.** In a project with no proof summary written yet, ask the
+same question. The agent must refuse cleanly, naming
+`proof-conclusion` as the way to produce something to read — not
+improvise generic advice about writing. A refusal still writes a verdict
+file and an `ev_NNN` entry; check it recorded `target_id: "project"`,
+since there is no `ps_` to name and a fabricated one would fail
+validation and lose the refusal.
 
 ### What success looks like
 
