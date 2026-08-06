@@ -65,10 +65,10 @@ def _print_compliance(result: E2eResult) -> None:
 #
 # A deliberate local literal, NOT an import from result.py. Gradedness and
 # committability are two different axes — the lead's own words on PR #1239 —
-# and result.py's set is the *committability* one. #1239 widens it to include
-# `ungraded`, so importing it would silently make a judge crash count as
-# "graded" the moment that lands. Keeping this separate is what lets the block
-# in `_run_one` stay correct both before and after.
+# and result.py's set is the *committability* one, which #1239 widened to
+# include `ungraded`. Importing it would classify a judge crash as graded, which
+# is exactly backwards: `ungraded` means the judge did NOT reach a conclusion,
+# and is committable only because the tree survived and can be re-graded.
 _GRADED_VERDICTS = ("pass", "partial", "fail")
 
 
@@ -106,8 +106,9 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
     judge_error = (result.judge_output or {}).get("error")
     if judge_error:
         return (
-            f"the judge itself failed ({judge_error}) — the agent's work is "
-            "intact, so this is worth re-running"
+            f"the judge itself failed ({judge_error}) — the agent's work and its "
+            "tree are intact, so this can be re-graded without re-running the "
+            "research"
         )
     if skip_judge:
         return "--skip-judge was passed, so no grade was requested"
@@ -134,10 +135,14 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  result: {paths['result']}")
     # Two independent axes, reported separately (#1245). Fusing them is what
     # made a judge crash unreadable: "the judge didn't run" was printed as a
-    # property of the scratch prefix, so the two causes that share that prefix
-    # were indistinguishable. After #1239 they stop coinciding entirely — a
-    # judge crash becomes committable while still being ungraded — and a single
-    # `if committable` branch would then say nothing at all about the crash.
+    # property of the scratch prefix, so the causes that share that prefix were
+    # indistinguishable. #1239 has now made them stop coinciding — a judge crash
+    # is committable while still being ungraded — so a single `if committable`
+    # branch would say nothing at all about the crash.
+    #
+    # Merged with #1239's own version of this block. Its `elif` meant a run that
+    # produced NO TREE fell through to the generic scratch line and still did
+    # not say why; asking the two questions separately covers that case too.
     if is_ungraded(result):
         print(
             f"  no grade: "
@@ -258,6 +263,32 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
+    # Key-validity preflight. A duplicated or revoked key is truthy, so the
+    # agent run proceeds (it uses the SDK's own auth), but the judge silently
+    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
+    # spending anything. Does NOT abort on a missing key: --skip-judge already
+    # handles that (produces verdict="skipped"), and the e2e path has never
+    # blocked on absence.
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key and not args.skip_judge:
+        from e2e.judge import DEFAULT_JUDGE_MODEL
+        from harness.auth import verify_judge_key
+
+        rejected_status = verify_judge_key(api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A $7+ e2e run would complete and then silently discard the "
+                f"result because the judge can't grade it.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"\n"
+                f"Re-run with --skip-judge to proceed without grading.",
+                file=sys.stderr,
+            )
+            return 2
+
     kwargs = {
         "runlog_root": args.runlog_root,
         "mcp_server_entry": args.mcp_server_entry,
@@ -286,7 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
     # Verified against all 122 committed runs — the gate distribution is
     # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped"})
+    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
     return 1 if failed else 0
 
 

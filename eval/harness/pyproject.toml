@@ -49,3 +49,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+markers = [
+    "requires_engine_build: needs the compiled packages/engine/mcp-server/build/ (mock_mcp catalog + ts_validator); run make engine-build",
+]

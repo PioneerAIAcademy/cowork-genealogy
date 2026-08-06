@@ -109,6 +109,18 @@ upgraded since July, and the new failure classes documented here
 only by transcript reading, which is exactly the argument for the
 judge-infra package being first on the board.
 
+> **Update (2026-08-05, issue #1133).** Provenance nulling is now partly
+> caught deterministically, in two halves. The *source-ref* half (a fact/name/
+> edge pointing at no source — the cruz "0/13 facts carried a ref" leak) is
+> unrepresentable at the engine write seam, per the mandatory-ref golden in
+> `materialize-facts.test.ts` / `tree-edit.test.ts`. The *citation-string* half
+> (cruz "11/14 citation-less tree sources"; birkeland "F1/F2") — which that
+> golden explicitly disowns — is now flagged by a shadow-mode compliance check,
+> `find_citation_nulling_in_conclusions`, scoped to sources backing a written
+> conclusion (e2e-test-spec.md §7.5). It logs to `guardrail_shadow_violations`
+> and does not yet fail runs; graduating it to a hard check is gated on reading
+> its corpus fire rate.
+
 ## 5. Disposition
 
 All five of the window's recommendations shipped; the three

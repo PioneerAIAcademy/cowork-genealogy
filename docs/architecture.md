@@ -1151,12 +1151,14 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and two **warn-only** lints
-worth knowing because they fire right after the two most common tasks:
+§3), and three **warn-only** lints
+worth knowing because they fire right after the three most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
-what happens after you add a tool) and `check_rubric_tool_drift.py` (a tool named
+what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one). And
+tools — what happens after you grant one), and `check_negative_reciprocity.py`
+(a negative routing edge `A → B` with no `B → A` test backing it — what happens
+after you widen a description). And
 `eval/harness/tests/unit/test_schema_mirrors.py` for the `packages/schema` mirror.
 
 ### 9.3 The two eval tiers
@@ -1188,6 +1190,7 @@ taught a reader nothing.
 | **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
 | **Nothing checks that a new `research.json` field is *written*** (site 8 in §6), and only partly that it is *taught* (site 6). Rendering (site 7) is guarded by `field-render-drift.test.ts`; `research-append-examples.test.ts` covers site 6 for schema-`required` fields only. | An optional field can be legal and rendered while no worked example teaches its shape and no skill emits it. |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. |
+| **Nothing enforces that a negative routing pair is pinned from *both* directions.** `check_negative_reciprocity.py` reports one-directional edges but never blocks, by design — 45 of the corpus's 79 routing edges have no reciprocal. | A description edit can fix routing `A → B` and break `B → A` with the suite green. The warnings land in the step log and compete for GitHub's per-step annotation-rendering cap (10 at time of writing) against the sibling lints' 73 and 68, so the edge a PR *adds* is not distinguishable from the standing backlog. |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. |
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
 | **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. |
@@ -1217,7 +1220,9 @@ and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly lik
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives the three axes plus violation counts, the per-arm split
 and per-fixture concentration, across the last 14 days of committed runs —
-every run-log reader windows that way, `SINCE=all` to opt out — and the
+every run-log reader windows that way, `SINCE=all` to opt out — `make
+e2e-agent-tools` reports, per plugin agent, which declared tools it never
+actually called across those runs, and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
@@ -1230,7 +1235,11 @@ lives. A test is not just its definition: it usually needs a matching
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
 1 by policy. 82 of the 373 definitions are **negative** tests that exist to prove
-a skill does *not* trigger; add one whenever you widen a description.
+a skill does *not* trigger; add one whenever you widen a description — and add
+its **reciprocal** in the other skill's directory, since a negative test pins one
+direction of a routing pair only and the fix that stops A over-triggering is
+exactly what can start B under-triggering (`unit-test-spec.md` § 6;
+`check_negative_reciprocity.py` warns on the one-directional ones).
 
 **Write or update a spec.** `docs/specs/<tool>-tool-spec.md`, landed **before**
 the tool. A spec is checkable when it states, per behavior: the exact input
