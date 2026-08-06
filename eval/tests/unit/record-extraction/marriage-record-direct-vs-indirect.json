@@ -24,5 +24,35 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    },
+    {
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self",
+      "information_quality": "primary"
+    }
+  ]
 }
