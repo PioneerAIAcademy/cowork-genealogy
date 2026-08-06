@@ -68,10 +68,11 @@ qualifier does **not** work the way its name implies.
   So the qualifier cannot surface a record you could not otherwise
   reach. Do not set it hoping to find something; the fuzzy search has
   already put the best match at the top.
-- **An unqualified county scope barely discriminates.** The *wrong*
-  Arkansas county (`Yell`) returned **39,750** against the right
-  county's **39,793**. A county-level total therefore tells you almost
-  nothing about whether the records you want are in that county.
+- **An unqualified county scope barely discriminates.** From the *same*
+  query, the *wrong* Arkansas county (`Yell`) returned **35,473** against
+  the right county's **35,510** — **0.1% apart**, with the target absent
+  from the wrong-county results. A county-level total therefore tells you
+  almost nothing about whether the records you want are in that county.
 - **What the qualifier is genuinely for:** making a count mean
   something. If you are about to log `results_available` or argue a
   search was reasonably exhaustive, an unqualified place total will not

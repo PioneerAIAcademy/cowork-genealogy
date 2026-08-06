@@ -135,7 +135,8 @@ Measured 2026-08-04 against the live API. **These qualifiers change how
 many results come back. They do not change which results rank first, so
 none of them can surface a record a fuzzy search buried.** Displacement
 in the top 200 was 0 positions for two rare surnames and 1 position for
-a third whose count they cut 800-fold. If a search is not finding the
+a third whose count they cut 799-fold — and on that third, exact also
+**dropped 2 records fuzzy had returned**. If a search is not finding the
 record, an exact qualifier is not the lever — a different name value, a
 different place level, or a relative's name is.
 
@@ -147,7 +148,7 @@ tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
 |---|---|---|
 | `surnameExact` | Spelling variants via the phonetic algorithm — this is what bridges an index misspelling | **Usually wrong.** On a record indexed `Neill`, `surname: "Neal"` + `surnameExact` returned **0** where fuzzy returned the target. Only with a **confirmed** indexed spelling, or to size a pool (below) |
 | `givenNameExact` | Abbreviations (`Wm`→`William`) and *some* nicknames — `Eliza` and `Betsy` for `Elizabeth`, but not `Betty` | Excludes every variant, including the ones fuzzy did reach. To chase a nickname, pass it as its own `givenName` value instead. **One real exception:** an initials search (`givenName: "J W"`) — initials *are* the indexed form, so exactness is what stops the fuzzy expansion swallowing them, the same confirmed-spelling logic as the surname row |
-| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned 39,750 against the right county's 39,793 | Cuts the count hard (35,510 → 2 in one case) without re-ordering anything. Use when a total has to be defensible, not to find a record |
+| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned 35,473 against the right county's 35,510 — 0.1% apart | Cuts the count hard (35,510 → 2 on that same query) without re-ordering anything. Use when a total has to be defensible, not to find a record |
 | `<event>YearExact` | Fuzz around the range bounds | Excludes records whose indexed year sits just outside the range — common where an age was reported rather than a date. Fair when you hold a vital-record date |
 | relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …) | Keeps records where that relative was **never indexed**, while still excluding a different one | Drops those silent records *and* abbreviation variants — a 300-result survey lost the 11% indexed `Wm`/`Wm.` Rarely worth it |
 | `recordCountry` / `recordSubdivision` | Nothing — **already strict** | No qualifier exists and none is needed |
