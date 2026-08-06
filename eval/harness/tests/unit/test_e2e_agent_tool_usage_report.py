@@ -9,7 +9,9 @@ import pytest
 
 from e2e.agent_tool_usage_report import (
     BUILTIN_TOOLS,
+    agent_bodies_by_agent,
     bare_tool_name,
+    body_mentions,
     declared_tools_by_agent,
     diff_agents,
     format_report,
@@ -257,6 +259,55 @@ def test_agent_never_seen_in_a_run_is_reported_as_such(tmp_path: Path):
     assert "declared, NEVER called (1): image_transcribe" not in out
 
 
+# ── never-called classification: mentioned-in-body vs not (Dallan's ask) ──────
+
+
+def test_body_mentions_matches_whole_names_only():
+    body = "Use `wiki_search` here. Also research_query for lookups."
+    assert body_mentions(body, "wiki_search")
+    assert body_mentions(body, "research_query")
+    assert not body_mentions(body, "wiki_place_page")
+    # Whole-word: a longer token that merely contains the name does not match.
+    assert not body_mentions("call wiki_searches often", "wiki_search")
+
+
+def test_never_called_is_split_on_whether_the_body_asks_for_the_tool(tmp_path: Path):
+    """Dallan's two cases: a never-called tool the body never mentions is a delete
+    candidate; one the body DOES ask for is a body-clarity / binding gap."""
+    _write(tmp_path, "run-1.json", {
+        "subagents": [_capture("gps-mentor", ["research_query"])],
+    })
+    s = scan([tmp_path / "run-1.json"])
+    declared = {"gps-mentor": {"research_query", "wiki_search", "orphan_tool"}}
+    bodies = {"gps-mentor": "The body explains `wiki_search` but not the other."}
+    diffs, _ = diff_agents(declared, s, bodies)
+    (d,) = diffs
+    assert d.declared_never_used == ["orphan_tool", "wiki_search"]
+    assert d.mentioned_in_body == ["wiki_search"]  # orphan_tool is NOT in the body
+
+    out = format_report(diffs, {}, s)
+    assert "wiki_search" in out and "clarify the body" in out
+    assert "orphan_tool" in out and "candidate to drop from tools:" in out
+
+
+def test_diff_without_bodies_treats_every_never_called_tool_as_unmentioned(tmp_path: Path):
+    """`bodies` is optional; omitting it must not crash and must classify
+    everything as not-in-body (the conservative default)."""
+    _write(tmp_path, "run-1.json", {"subagents": [_capture("gps-mentor", ["x"])]})
+    s = scan([tmp_path / "run-1.json"])
+    diffs, _ = diff_agents({"gps-mentor": {"x", "wiki_search"}}, s)  # no bodies arg
+    assert diffs[0].mentioned_in_body == []
+
+
+def test_real_gps_mentor_body_mentions_its_never_called_wikis():
+    """The live case Dallan pointed at: gps-mentor's two never-called tools are
+    both written up in its body, so they are the 'clarify the body' case, not
+    'delete the grant'. Pins that against the real agent file."""
+    bodies = agent_bodies_by_agent()
+    assert body_mentions(bodies["gps-mentor"], "wiki_search")
+    assert body_mentions(bodies["gps-mentor"], "wiki_place_page")
+
+
 # ── output + windowing ────────────────────────────────────────────────────────
 
 
@@ -271,7 +322,8 @@ def test_format_report_surfaces_never_called_and_the_unattributed_section(tmp_pa
     declared = {"gps-mentor": {"research_query", "wiki_search"}}
     diffs, unattributed = diff_agents(declared, s)
     out = format_report(diffs, unattributed, s)
-    assert "declared, NEVER called (1): wiki_search" in out
+    assert "declared, NEVER called (1):" in out
+    assert "wiki_search" in out
     assert "Unattributed delegations" in out
     assert "general-purpose" in out and "tree_edit" in out
     assert "Attribution coverage:" in out

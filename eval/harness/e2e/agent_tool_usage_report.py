@@ -14,6 +14,16 @@ Pairs with #1084 (a live probe of "declared and actually bound"); this covers
 "declared but never reached for" from the committed corpus. `gps-mentor`'s
 never-called tools here are the candidates #1084's live probe would target.
 
+Each never-called tool is classified by whether the agent's **body prose** asks
+for it, which is what makes the finding actionable (Dallan, PR #1085 review):
+
+- **not mentioned in the body** — granted but never asked for; a candidate to
+  drop from the agent's `tools:`.
+- **mentioned in the body** — the body tells the agent to call it, yet it never
+  does (`gps-mentor`'s two wiki tools). Either the body is not forcing enough, or
+  the grant did not bind — and *that* split is exactly what #1084's live probe
+  resolves; this offline report cannot.
+
 Adds NO instrumentation to a run (same posture as `corpus_report.py` /
 `guardrail_shadow_report.py` / `latency_report.py`): pure analysis over
 already-committed data.
@@ -56,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -110,6 +121,46 @@ def declared_tools_by_agent(
         name = fm.get("name") or md.stem
         out[name] = {bare_tool_name(t) for t in (fm.get("tools") or [])}
     return out
+
+
+def _agent_body(md: Path) -> str:
+    """The prose an agent `.md` carries AFTER its frontmatter — the instructions,
+    not the `tools:` grant. Empty for a missing/frontmatter-less file.
+
+    The grant lives in the frontmatter; whether the *body* tells the agent to
+    call a tool is the separate question this feeds. So the frontmatter block
+    (and its `tools:` list) is deliberately excluded — a tool named only there is
+    granted, not asked for.
+    """
+    if not md.exists():
+        return ""
+    text = md.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return text
+    parts = text.split("---", 2)
+    return parts[2] if len(parts) >= 3 else text
+
+
+def agent_bodies_by_agent(
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> dict[str, str]:
+    """Each plugin agent's body prose, keyed by frontmatter `name`."""
+    out: dict[str, str] = {}
+    for md in sorted(agents_dir.glob("*.md")):
+        fm = load_skill_frontmatter(md)
+        name = fm.get("name") or md.stem
+        out[name] = _agent_body(md)
+    return out
+
+
+def body_mentions(body: str, tool: str) -> bool:
+    """True when the agent's body prose references `tool` by its bare name.
+
+    Word-boundary match so `wiki_search` is not found inside a longer token, and
+    so a name wrapped in backticks/parens (the usual way the bodies cite a tool,
+    e.g. ``` `wiki_search` ```) still matches.
+    """
+    return re.search(rf"\b{re.escape(tool)}\b", body) is not None
 
 
 class UsageScan(NamedTuple):
@@ -226,10 +277,18 @@ class AgentDiff(NamedTuple):
     declared_and_used: list[str]
     declared_never_used: list[str]
     used_not_declared: list[str]
+    # Subset of declared_never_used the agent's BODY prose references. The split
+    # is the actionable one (Dallan, PR #1085 review): a never-called tool the
+    # body never mentions is dead weight in `tools:` — a delete candidate; one the
+    # body DOES ask for (gps-mentor's wikis) is a body-clarity or binding gap, the
+    # latter being what #1084's live probe exists to disambiguate.
+    mentioned_in_body: list[str]
 
 
 def diff_agents(
-    declared: dict[str, set[str]], scan_result: UsageScan
+    declared: dict[str, set[str]],
+    scan_result: UsageScan,
+    bodies: dict[str, str] | None = None,
 ) -> tuple[list[AgentDiff], dict[str, set[str]]]:
     """Per plugin agent, the three-way split; plus the unattributed non-plugin set.
 
@@ -237,20 +296,28 @@ def diff_agents(
     plugin agent: folding it into the diff makes its whole tool set
     "used-but-not-declared" and reads as *the allow-list is not binding*, which is
     false. It is returned separately for a stand-alone section.
+
+    `bodies` maps agent name -> body prose (from `agent_bodies_by_agent`); each
+    never-called tool is tagged with whether that prose mentions it. Omit it (or
+    pass `None`) and every never-called tool is treated as un-mentioned.
     """
+    bodies = bodies or {}
     diffs: list[AgentDiff] = []
     for agent in sorted(declared):
         dec = declared[agent]
         used = scan_result.used.get(agent, set())
+        never_used = sorted(dec - used)
+        body = bodies.get(agent, "")
         diffs.append(
             AgentDiff(
                 agent=agent,
                 captures=scan_result.captures.get(agent, 0),
                 declared_and_used=sorted(dec & used),
-                declared_never_used=sorted(dec - used),
+                declared_never_used=never_used,
                 # Built-ins bypass the MCP allow-list, so they can never evidence a
                 # non-binding grant — drop them from this column only.
                 used_not_declared=sorted((used - dec) - BUILTIN_TOOLS),
+                mentioned_in_body=[t for t in never_used if body_mentions(body, t)],
             )
         )
 
@@ -306,11 +373,19 @@ def format_report(
             f"  declared & used ({len(d.declared_and_used)}): "
             f"{', '.join(d.declared_and_used) or '(none)'}"
         )
-        # Named individually — this is the deliverable (the #1084 candidates).
-        lines.append(
-            f"  declared, NEVER called ({len(d.declared_never_used)}): "
-            f"{', '.join(d.declared_never_used) or '(none)'}"
-        )
+        # Named individually AND classified by whether the body asks for the tool
+        # — the deliverable, and what makes it actionable (delete vs. clarify).
+        if not d.declared_never_used:
+            lines.append("  declared, NEVER called (0): (none)")
+        else:
+            lines.append(f"  declared, NEVER called ({len(d.declared_never_used)}):")
+            mentioned = set(d.mentioned_in_body)
+            for tool in d.declared_never_used:
+                if tool in mentioned:
+                    action = "mentioned in body → clarify the body, or a binding gap (#1084)"
+                else:
+                    action = "not in body → candidate to drop from tools:"
+                lines.append(f"    {tool:22} {action}")
         # Should be empty. A non-empty set is usually the allow-list not binding —
         # but the capture source counts attempts with no success/failure signal,
         # so a denied/errored attempt the runlog couldn't mark can also land here.
@@ -334,10 +409,13 @@ def format_report(
     lines.extend(
         [
             "Limits (this is a report, not a gate):",
-            "  - A rarely-needed declared tool showing never-called is not by "
-            "itself a defect;",
-            "    it is a candidate to check (#1084's live binding probe), not a "
-            "violation.",
+            "  - A never-called tool is a candidate, not a defect. `not in body` "
+            "→ likely drop it",
+            "    from `tools:`; `mentioned in body` → clarify the body or check "
+            "binding (#1084).",
+            "    The body scan is a whole-word name match — it cannot tell a "
+            "genuine call site",
+            "    from a mere mention, only presence from absence.",
             "  - Capture coverage is partial (see the coverage line) — absence of "
             "a call is",
             "    sometimes absence of a capture, not proof the tool was never "
@@ -384,7 +462,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  skip {problem}", file=sys.stderr)
 
     declared = declared_tools_by_agent()
-    diffs, unattributed = diff_agents(declared, scan_result)
+    bodies = agent_bodies_by_agent()
+    diffs, unattributed = diff_agents(declared, scan_result, bodies)
 
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_report(diffs, unattributed, scan_result))
