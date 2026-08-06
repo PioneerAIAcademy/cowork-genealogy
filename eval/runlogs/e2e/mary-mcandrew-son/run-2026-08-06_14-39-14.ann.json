@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Over-claimed a sixth child. The specific 1873 avoid-target (John A Morgan, PID 9NJ7-Z6L) is absent from the tree — the agent never encountered or tested that hint — but f1's pass condition requires no sixth child at all, and the agent added person I1 = Martin Magin (b. 24 Sep 1887, Detroit) as a sixth child via relationships R15 (John Mogan -> I1) and R16 (Mary McAndrew -> I1), source S2 (Michigan County Births 1867-1917, ark:/61903/1:1:QLT2-G99Q). Sixth child asserted, so fail.",
+    "f2": "Documented the opposite conclusion. proof_summaries ps_001 (tier 'probable') concludes John Mogan and Mary McAndrew had at least one child not previously in the tree — Martin Magin (b. 1887) — resting on a single Wayne County birth register entry (three FS collection entries all derived from the same register) plus the 1900 census '7 born / 6 living' fertility arithmetic. The required negative conclusion (no sixth child established; the 1873 birth belongs to a different family) was never reached, and the 1873 hint was never addressed. project.status set to 'completed' with the positive conclusion standing. Proof-quality (score 1, unsound): the 'probable' tier rests on single-source evidence corroborated only by its own derivatives, with an acknowledged but hand-waved conflict ('Mich' father birthplace vs. Irish-born everywhere else, dismissed as 'a clerical error') and the subject absent from the 1900 census at an age he should have appeared; gps-mentor critique ev_001 flagged it 'address_first' and the agent finalized anyway."
+  },
+  "annotator": "developer"
+}
