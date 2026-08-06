@@ -197,3 +197,66 @@ def test_an_unrecognised_verdict_does_not_crash_the_rollup():
     # tolerated by `.get`. Assert the tolerance survives the rewrite.
     out = _capture([_make_result("a", "???", tags={"era": "1800s"})])
     assert "era" in out
+
+
+# --- an ungradeable run must say WHY (#1245) --------------------------
+#
+# The clause after "scratch run" used to be one fixed string for all three
+# causes. For a judge crash it printed directly under `stop_reason: completed`,
+# so the two lines together read "this run succeeded and produced nothing".
+
+from e2e.run_e2e import ungradeable_reason  # noqa: E402
+
+
+def _skipped(**kw) -> E2eResult:
+    return E2eResult(
+        test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+        stop_reason="completed", usage={}, **kw,
+    )
+
+
+def test_a_judge_crash_says_so_and_says_the_work_survived():
+    out = ungradeable_reason(_skipped(judge_output={"error": "APIStatusError: 401"}))
+    assert "judge itself failed" in out
+    assert "401" in out, "quote the judge's own error, not a generic phrase"
+    assert "re-running" in out
+
+
+def test_no_tree_is_not_confused_with_a_judge_crash():
+    out = ungradeable_reason(_skipped(judge_output={}))
+    assert "no final tree" in out
+    assert "judge itself failed" not in out
+
+
+def test_skip_judge_is_named_as_the_deliberate_choice_it_is():
+    out = ungradeable_reason(_skipped(judge_output={}), skip_judge=True)
+    assert "--skip-judge" in out
+
+
+def test_a_judge_crash_outranks_skip_judge():
+    # If the judge raised, it was asked to run, so skip_judge cannot also be
+    # the explanation. Order matters here, not just coverage.
+    out = ungradeable_reason(
+        _skipped(judge_output={"error": "boom"}), skip_judge=True
+    )
+    assert "judge itself failed" in out
+
+
+def test_the_three_causes_are_mutually_distinguishable():
+    """The whole point: #1245 could not be diagnosed because they were not."""
+    reasons = {
+        ungradeable_reason(_skipped(judge_output={"error": "x"})),
+        ungradeable_reason(_skipped(judge_output={})),
+        ungradeable_reason(_skipped(judge_output={}), skip_judge=True),
+    }
+    assert len(reasons) == 3
+
+
+def test_no_grade_is_ever_disclosed():
+    """Spec 7.4 blindness: the operator grades this run later, so the message
+    must not leak the judge's conclusion."""
+    out = ungradeable_reason(
+        _skipped(judge_output={"error": "boom", "verdict": "pass", "proof_quality": 3})
+    )
+    for leaked in ("pass", "proof_quality", "verdict"):
+        assert leaked not in out, f"leaked {leaked!r} into a pre-grading message"

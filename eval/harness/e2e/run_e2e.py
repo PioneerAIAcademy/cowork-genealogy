@@ -61,6 +61,40 @@ def _print_compliance(result: E2eResult) -> None:
         print(f"    - {text}")
 
 
+def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
+    """Why a run produced no grade — the clause after "scratch run" (#1245).
+
+    The message used to be a single fixed string, "the judge didn't run, so
+    there's nothing to grade or commit". For a judge crash that lands directly
+    under `stop_reason: completed`, and the pair reads as "this run succeeded
+    and produced nothing". Three different causes printed identically, so a
+    batch of 19 gave an operator no way to tell a broken environment from runs
+    that genuinely failed — which is what issue #1245 was reported as.
+
+    **Blindness-safe** (spec §7.4, and the same line `_run_one` walks above):
+    this reads only whether `judge_output` carries an `error` key, never a
+    grade field. A judge crash is a harness fact, like `stop_reason` and
+    `compliance`, not a genealogical conclusion. The prohibition in
+    `result.py` on reading `judge_output` binds `interpret-e2e-result`, whose
+    job is explaining what the agent recovered; it is not a blanket ban.
+
+    Pure and free of I/O so every arm is testable — `_run_one` cannot be, since
+    it drives a live 20-to-60-minute run.
+    """
+    judge_error = (result.judge_output or {}).get("error")
+    if judge_error:
+        return (
+            f"the judge itself failed ({judge_error}) — the agent's work is "
+            "intact, so this is worth re-running"
+        )
+    if skip_judge:
+        return "--skip-judge was passed, so no grade was requested"
+    return (
+        "the agent produced no final tree for the judge to grade — see "
+        "stop_reason above for how it ended"
+    )
+
+
 async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"\n=== Running {fixture_dir.name} ===")
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
@@ -78,8 +112,8 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  result: {paths['result']}")
     if not is_committable_run(result.verdict):
         print(
-            "  (scratch run — gitignored; the judge didn't run, so there's "
-            "nothing to grade or commit)"
+            "  (scratch run — gitignored; "
+            f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))})"
         )
     else:
         print(
