@@ -1101,3 +1101,28 @@ def test_summary_records_an_abort_that_carried_no_reason(capsys):
         [{"test_id": "a", "skill": "s", "outcome": "aborted", "reason": ""}], capsys
     )
     assert "unrecorded" in out
+
+
+def test_the_live_progress_line_names_the_abort_reason(tmp_path, monkeypatch, capsys):
+    """The surface an operator actually watches during a long suite.
+
+    `_print_summary` lands after every test has finished; this line is the only
+    thing visible while a 20-test suite is still running, and a bare `aborted`
+    here is what left issue #1245 undiagnosable in real time. The existing
+    exit-code tests already drive this path, so without an output assertion a
+    regression to a bare `aborted` would stay green.
+    """
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "— aborted [max_turns]" in out, (
+        "the progress line must carry the reason, not just the outcome"
+    )
+
+
+def test_the_end_of_suite_tally_names_the_abort_reason_too(tmp_path, monkeypatch, capsys):
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "1 pass, 1 aborted of 2 test(s)" in out
+    assert "1x max_turns" in out

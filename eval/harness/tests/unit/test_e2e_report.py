@@ -6,7 +6,7 @@ import io
 from contextlib import redirect_stdout
 
 from e2e.report import print_rollup
-from e2e.result import E2eResult
+from e2e.result import E2eResult, is_committable_run
 
 
 def _capture(results: list[E2eResult]) -> str:
@@ -319,3 +319,14 @@ def test_gradedness_does_not_import_the_committability_set():
 
     assert r._GRADED_VERDICTS == ("pass", "partial", "fail")
     assert "ungraded" not in r._GRADED_VERDICTS
+
+
+def test_an_ungraded_run_is_also_uncommittable_today():
+    """The assertion PLAN.md §3 asked for, and the reason gradedness needed its
+    own axis: today the two coincide, so this passes on both. After #1239 a
+    judge crash becomes committable while staying ungraded, and only the
+    `is_ungraded` half will still hold — which is what `_GRADED_VERDICTS`
+    being a separate literal protects."""
+    r = _skipped(judge_output={"error": "APIStatusError: 401"})
+    assert is_ungraded(r) is True
+    assert is_committable_run(r.verdict) is False
