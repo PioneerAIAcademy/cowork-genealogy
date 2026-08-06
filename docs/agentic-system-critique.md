@@ -203,9 +203,9 @@ MCP guidance); the value here is the unforgeable enforcement mechanism, not the
 insight.
 
 **1.3 Cross-environment tool binding treated as a first-class hazard.** Every
-MCP tool in an agent's `tools:` **and** `disallowedTools:` is listed under both
-server spellings, because the server's registration key belongs to whoever
-registers it and the VM-side plugin cannot control it.
+MCP tool in an agent's `tools:` **and** `disallowedTools:` is listed under every
+server spelling — three as of #1341 — because the server's registration key belongs
+to whoever registers it and the VM-side plugin cannot control it.
 `tests/packaging/agent-tool-names.test.ts` derives the bridge prefix from
 `manifest.json`'s `display_name`, so renaming the extension fails in CI rather
 than silently in production. The namespacing hazard itself is widely documented

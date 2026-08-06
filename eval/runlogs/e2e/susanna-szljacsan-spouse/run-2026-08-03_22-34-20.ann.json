@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Tree carries R6 Couple LDK6-6SH <-> I2 (Joannes Janeczky), sourced to S3 = 1:1:KHQN-MSB, the hint record. I2 has a BirthName and no facts of his own, which is all the record supports.",
+    "f2": "Recovered beyond what the finding asks. I3 Susanna Janeczky with F2 Christening 27 April 1884 (standard_date 1884-04-27, Liskova) and F3 Death 5 January 1887, both sourced to the original register image S4 = 3:1:33SQ-GRQ4-94MT; R7/R8 link her to both parents. The finding only required 'about 1884'; the agent went to the manuscript and got day precision plus a death fact the fixture did not have."
+  },
+  "annotator": "genealogy-team (regraded 2026-08-04 after the fixture moved to outcome (a); the withdrawn f3 hedge finding is no longer graded)"
+}
