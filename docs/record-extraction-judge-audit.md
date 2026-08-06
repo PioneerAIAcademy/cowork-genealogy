@@ -51,11 +51,12 @@ for the duration of this audit.
   **3,412** graded across 651 test-instances.
 - **Skill under test:** `claude-sonnet-4-6` on all 39 runs (the envelope's
   `model` field). **Judge:** `DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"`
-  at `JUDGE_TEMPERATURE = 0.0` (`eval/harness/harness/judge.py:30`, `:40`) —
-  the judge model is project-global and is *not* recorded per run, so it is read
-  from the harness, not the run log. Minor caveat: only the **first** judge
-  attempt is temperature-pinned (`judge.py:410`); a re-sample after a malformed
-  response falls back to default sampling by design.
+  at `JUDGE_TEMPERATURE = 0.0`, both in `eval/harness/harness/judge.py` — the
+  judge model is project-global and is *not* recorded per run, so it is read
+  from the harness, not the run log. Minor caveat: inside `grade`, only the
+  **first** attempt passes `JUDGE_TEMPERATURE` to `_create_message_with_retry`;
+  a re-sample after a malformed response falls back to default sampling by
+  design.
 - **Six distinct `judge_prompt_hash` values** across the window, so run-to-run
   movement is confounded by judge-prompt edits as well as skill edits.
 - The corpus **grew from 13 to 27 tests** over the window. Only the last two run
