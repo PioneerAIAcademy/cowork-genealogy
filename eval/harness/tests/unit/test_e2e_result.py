@@ -176,7 +176,7 @@ def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
 
 
 def test_is_committable_run_graded_verdicts():
-    for v in ("pass", "partial", "fail"):
+    for v in ("pass", "partial", "fail", "ungraded"):
         assert is_committable_run(v) is True
     for v in ("skipped", "aborted", ""):
         assert is_committable_run(v) is False
@@ -186,6 +186,7 @@ def test_runlog_prefix_graded_vs_scratch():
     assert runlog_prefix("pass") == "run-"
     assert runlog_prefix("partial") == "run-"
     assert runlog_prefix("fail") == "run-"
+    assert runlog_prefix("ungraded") == "run-"
     assert runlog_prefix("skipped") == "scratch_"
 
 
@@ -287,10 +288,12 @@ def test_guardrail_bypass_does_not_touch_the_genealogical_verdict():
         ("pass", [], "pass"),
         ("partial", [], "partial"),
         ("fail", [], "fail"),
+        ("ungraded", [], "ungraded"),
         ("skipped", [], "skipped"),
         ("pass", ["v"], "fail"),
         ("partial", ["v"], "fail"),
         ("fail", ["v"], "fail"),
+        ("ungraded", ["v"], "fail"),
         ("skipped", ["v"], "fail"),
     ],
 )
@@ -346,6 +349,37 @@ def test_a_judgeless_run_with_violations_stays_a_scratch_run(tmp_path: Path):
         timestamp="2026-05-26_14-30-45",
     )
     assert paths["result"].name.startswith("scratch_")
+
+
+def test_ungraded_verdict_derives_correct_axes():
+    """An ungraded run (judge exception) has a tree but was never graded.
+    It is committable (run- prefix) and its outcome passes through as
+    'ungraded' when compliance is clean."""
+    r = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="ungraded", stop_reason="completed",
+    )
+    assert r.compliance == "pass"
+    assert r.outcome == "ungraded"
+    assert is_committable_run(r.verdict) is True
+    assert runlog_prefix(r.verdict) == "run-"
+
+
+def test_ungraded_run_with_violations_is_still_committed(tmp_path: Path):
+    """An ungraded run with violations stays committable — the tree exists
+    and can be re-graded, unlike a skipped run which has no tree."""
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="ungraded", stop_reason="completed",
+        guardrail_bypass_violations=["'person-evidence' was never invoked"],
+    )
+    assert result.outcome == "fail"
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree={"persons": []}, final_research={},
+        timestamp="2026-05-26_14-30-45",
+    )
+    assert paths["result"].name.startswith("run-")
 
 
 # --- axes_from_runlog: reading the pre-#972 corpus --------------------------
