@@ -173,8 +173,10 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
-the third row is not a style preference — it is a write that cannot succeed. That is what
-happened to `question-selection`, which carried three such instructions until #1386.
+the third row is not a style preference — it is a write that cannot succeed. Skill prose
+has told an agent to do exactly that: `question-selection` carried three instructions to
+retire a question with `superseded` / `answered`, values `question_status` has never
+defined, and every such write was rejected on validation.
 
 ### Ownership for `tree.gedcomx.json`
 
