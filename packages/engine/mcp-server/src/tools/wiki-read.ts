@@ -1,4 +1,5 @@
 import { getWikiApiUrl } from "../auth/config.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
@@ -24,7 +25,7 @@ export async function wikiReadTool(input: WikiReadInput): Promise<WikiPageResult
 
   let response: Response;
   try {
-    response = await fetch(pageUrl, {
+    response = await fetchWithTimeout(pageUrl, {
       method: "GET",
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });

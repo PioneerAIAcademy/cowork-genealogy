@@ -1,4 +1,5 @@
 import { getWikiApiUrl } from "../auth/config.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
@@ -16,7 +17,7 @@ export async function wikiSearch(
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetchWithTimeout(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
