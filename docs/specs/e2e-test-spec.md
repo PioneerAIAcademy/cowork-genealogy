@@ -1147,7 +1147,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
-| `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent file the run staged. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. §8.1.3. |
+| `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
@@ -1165,6 +1165,25 @@ A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
 is the parallel structured record, not the only one — which is why an
 `is_error: true` entry is not automatically an upstream failure (§15).
+
+#### 8.1.2 `usage` when the `ResultMessage` never arrived
+
+Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts
+the stream before that message, which used to leave `usage` with no turns,
+duration or tokens at all — blinding exactly the runs worth investigating. The
+fallback reconstructs the block from the streamed assistant messages:
+
+- token counts are **exact**, deduplicated by message id (the SDK re-emits one
+  message per content block, each copy repeating that message's *cumulative*
+  usage, so summing on arrival multiplies the totals);
+- `duration_ms` comes from the monotonic clock;
+- the distinct-message count is reported as `assistant_messages`;
+- `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** rather than
+  synthesized — the SDK counts turns differently from distinct assistant
+  messages, only it knows the API/local split, and a run spans several models so
+  one price lookup would be wrong.
+
+**Never compare a `streamed_fallback` cost against a clean run's.**
 
 #### 8.1.3 `git_sha` / `skills_hash` — run provenance
 
@@ -1189,6 +1208,12 @@ on every record-hint-resolution PR and destroy the signal. (`__pycache__` and
 dotfiles a `copytree` would carry are excluded as gitignored non-prompt noise.)
 Implementation: `eval/harness/e2e/provenance.py`.
 
+It hashes the **source** files, not the staged copies, so a `--agent-model` run
+(which rewrites each staged agent's `model:` frontmatter — see
+`_override_agent_model`) carries the same `skills_hash` as an unforced run of the
+same tree. That override is recorded separately as `subagent_model_override`;
+read the two together.
+
 **Known limit, by design:** a hash proves *whether* two runs used the same
 prompt; it can never tell you *what* changed. When the diff is needed, the git
 SHA plus the hash reconstruct it from the repo in the common case where the tree
@@ -1197,25 +1222,6 @@ boundary, not an oversight — and, like every provenance field here, it is
 **evidence for a human reviewer, not a CI gate**: an e2e run is graded days after
 the tree has moved, so a "committed hash matches working tree" check would red
 every e2e PR.
-
-#### 8.1.2 `usage` when the `ResultMessage` never arrived
-
-Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts
-the stream before that message, which used to leave `usage` with no turns,
-duration or tokens at all — blinding exactly the runs worth investigating. The
-fallback reconstructs the block from the streamed assistant messages:
-
-- token counts are **exact**, deduplicated by message id (the SDK re-emits one
-  message per content block, each copy repeating that message's *cumulative*
-  usage, so summing on arrival multiplies the totals);
-- `duration_ms` comes from the monotonic clock;
-- the distinct-message count is reported as `assistant_messages`;
-- `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** rather than
-  synthesized — the SDK counts turns differently from distinct assistant
-  messages, only it knows the API/local split, and a run spans several models so
-  one price lookup would be wrong.
-
-**Never compare a `streamed_fallback` cost against a clean run's.**
 
 Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
 under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed

@@ -246,8 +246,10 @@ class E2eResult:
     # because it is a `default_factory` field its key is emitted
     # unconditionally — which makes its mere PRESENCE the only reliable
     # fingerprint of "the code that wrote this runlog had the detector" for
-    # the 122 pre-v1 logs. There is no other signal: `usage.cli_version` is
-    # absent or null in every committed run, and nothing records a git sha.
+    # the 122 pre-v1 logs. There is no other signal *on those logs*:
+    # `usage.cli_version` is absent or null in every committed run, and none of
+    # them records a git sha. (`git_sha` below landed later — issue #1091 — so it
+    # fingerprints runs from that point on, not the pre-v1 corpus this is about.)
     # `test_e2e_result.py` pins the 6 known-fingerprint runs so removing this
     # field fails loudly instead of silently reclassifying them.
     # (Logs written from HARNESS_SCHEMA_VERSION >= 1 carry `compliance`
