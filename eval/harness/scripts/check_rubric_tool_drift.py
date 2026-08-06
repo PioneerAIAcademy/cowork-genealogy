@@ -205,8 +205,8 @@ def judge_context_mentions(
 
 
 def _frontmatter_list_block(lines: list[str], key: str) -> set[str]:
-    """Bare, dual-spelling-normalized names under `<key>:` in a frontmatter
-    block's lines. Shared by tools:/disallowedTools: parsing below."""
+    """Bare, prefix-normalized names under `<key>:` in a frontmatter block's
+    lines. Shared by tools:/disallowedTools: parsing below."""
     out: set[str] = set()
     in_block = False
     for line in lines:
@@ -229,8 +229,10 @@ def _frontmatter_list_block(lines: list[str], key: str) -> set[str]:
 def agent_declared_tools(agent_md: Path) -> tuple[set[str], set[str]]:
     """(tools, disallowedTools) bare-name sets from an agent's frontmatter.
 
-    Dual-spelled MCP entries (mcp__genealogy__X and
-    mcp__remote-devices__...__X) both normalize to the bare tool name `X`.
+    All three server spellings of an MCP entry — mcp__genealogy__X,
+    mcp__remote-devices__Genealogy_Research__X, and mcp__Genealogy_Research__X —
+    normalize to the bare tool name `X`. The split is on the last `__`, so this
+    stays correct if a fourth registrar appears.
     """
     if not agent_md.exists():
         return set(), set()
