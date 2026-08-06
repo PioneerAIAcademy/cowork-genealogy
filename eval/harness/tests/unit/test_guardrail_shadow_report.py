@@ -16,13 +16,16 @@ from pathlib import Path
 from e2e.guardrail_shadow_report import (
     _is_result_json,
     all_result_jsons,
+    format_citation_nulling,
     format_detail,
     format_summary,
     format_provenance,
+    scan_citation_nulling,
     scan_corpus,
     scan_provenance,
     scan_one,
 )
+from harness.skill_invocation import CITATION_NULLING_KIND
 
 
 def _write_run(dir_, name, tool_calls):
@@ -216,4 +219,46 @@ def test_format_provenance_counts_runs_not_just_entries(tmp_path):
     b = _write_result(tmp_path / "fx2", "run-1.json", [_provenance_entry("I3")])
     text = format_provenance(scan_provenance([a, b]))
     assert "3 person_evidence link(s)" in text
+    assert "across 2 run(s)" in text
+
+
+# --- scan_citation_nulling / format_citation_nulling (issue #1133) ------------
+# The #1133 citation-nulling class ALSO carries `detail`, so it must be told
+# apart from the #963 provenance gaps by its `kind` key — else the shadow
+# fire-rate measurement the graduation decision is gated on double-counts.
+
+
+def _citation_entry(sid="src_001"):
+    return {
+        "index": -1,
+        "tool": "research.json",
+        "required_skill": "citation",
+        "question_id": "q_001",
+        "kind": CITATION_NULLING_KIND,
+        "detail": f"concluded source {sid} (via assertion a_001, proof_summary ps_001) has a null/empty citation string",
+    }
+
+
+def test_scan_citation_nulling_picks_up_only_citation_entries(tmp_path):
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _citation_entry()])
+    out = scan_citation_nulling([p])
+    assert len(out) == 1
+    assert out[0]["kind"] == CITATION_NULLING_KIND
+    assert out[0]["fixture"] == "fx"
+
+
+def test_scan_provenance_excludes_citation_entries(tmp_path):
+    """A citation-nulling entry carries `detail` too, but must NOT be counted as
+    a #963 person_evidence-provenance gap."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _citation_entry()])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
+def test_format_citation_nulling_counts_runs_not_just_entries(tmp_path):
+    a = _write_result(tmp_path / "fx1", "run-1.json", [_citation_entry("src_001"), _citation_entry("src_002")])
+    b = _write_result(tmp_path / "fx2", "run-1.json", [_citation_entry("src_003")])
+    text = format_citation_nulling(scan_citation_nulling([a, b]))
+    assert "3 concluded source(s)" in text
     assert "across 2 run(s)" in text

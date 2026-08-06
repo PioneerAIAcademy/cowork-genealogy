@@ -1,32 +1,38 @@
-# ADR-0004: Dual-spell every MCP tool name in agent frontmatter
+# ADR-0004: Spell every MCP tool name under all three server registrations
+
+> The filename still reads `dual-spell`. It is a permanent slug, kept so existing
+> links resolve; the decision below is the current one.
 
 > **Read before you:** grant a tool to a plugin agent · deny a tool to a plugin
 > agent · write a `ToolSearch` query in a skill or agent body · rename the
-> desktop extension · wonder why every tool appears twice in a `tools:` list.
+> desktop extension · wonder why every tool appears three times in a `tools:` list.
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-05 (#1341 — two spellings became three)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/plugin/agents`, `packages/engine/mcp-server/manifest.json`
-- **Related:** ADR-0002, ADR-0006, `docs/architecture.md` §5.2, issues #650, #698, #695, #939
+- **Related:** ADR-0002, ADR-0006, `docs/architecture.md` §5.2, issues #650, #698, #695, #939, #1341
 
 ## Context
 
 An MCP server's name is chosen by **whoever registers it**, not by the server.
 The plugin ships into the VM and cannot control that choice. In practice the same
-47 tools appear under two different prefixes:
+47 tools appear under three different prefixes:
 
 | Registrar | Prefix |
 |---|---|
 | `.mcp.json`, both eval harnesses, the hosted control plane | `mcp__genealogy__<tool>` |
-| Cowork, reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
+| Cowork **in the cloud**, reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
+| Cowork **on the user's own computer**, reaching the same `.mcpb` directly | `mcp__Genealogy_Research__<tool>` |
 
-Cowork's bridge derives its segment from `manifest.json`'s `display_name`
+Both Cowork forms derive the segment from `manifest.json`'s `display_name`
 ("Genealogy Research" → `Genealogy_Research`), which is a *product* string —
-chosen for the install dialog, not for us.
+chosen for the install dialog, not for us. Only the cloud form is namespaced,
+because only it has a bridge to traverse. **Run mode is a per-task setting**, so
+which of the two is live is not a property of the install.
 
 Agent frontmatter entries are matched **exactly**: no prefix fallback, no
 inherit-on-miss. And the failure when every entry misses is not a degraded agent
@@ -41,7 +47,8 @@ That is not hypothetical, and the history is worth reading precisely — the usu
 | **#650** (07-12) | the three then-existing agents ship qualified against the eval harness's `genealogy` key |
 | **#657** (07-15) | moved to **bare** names, on the reasoning that "the `mcp__genealogy__` prefix breaks in Cowork" |
 | **#698** (07-17) | moved back to qualified — bare leaves the subagent toolless in the SDK path |
-| **#742** (07-18) | **both spellings**, which is the only state that works everywhere |
+| **#742** (07-18) | **both spellings** — correct for the two registrars known at the time |
+| **#1341** (08-05) | **all three** — Cowork on the user's own computer is a third registrar; `record-extractor` was refused there, and the three agents whose entries are all MCP follow by the same rule |
 
 Two full reversals before the answer stuck, and **every test passed at every
 step**. That is the argument for the lint, not the anecdote.
@@ -57,18 +64,24 @@ systematic sweep.
 The deny side is sharper still. `disallowedTools:` binds **even under
 `bypassPermissions`**, which is the hosted path's mode (#695), making it the last
 line keeping `record-extractor` off the broad `research_append`. A deny naming
-one spelling binds *nothing* wherever the server carries the other name — and
+one spelling binds *nothing* wherever the server carries another name — and
 unlike a missing grant, a missing deny fails open and silently.
 
 ## Decision
 
 **Every MCP tool in an agent's `tools:` — and in `disallowedTools:` — is listed
-twice, once under each server spelling:**
+three times, once under each live server spelling:**
 
 ```yaml
-- mcp__genealogy__record_read
-- mcp__remote-devices__Genealogy_Research__record_read
+- mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
+- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
 ```
+
+The last two both derive from `manifest.json`'s `display_name`; only the bridged
+one is namespaced under `remote-devices`. **Which one is live depends on where the
+Cowork task runs**, which is a per-task setting the plugin cannot see, so an agent
+needs all three.
 
 This is safe because unrecognized entries are ignored so long as at least one
 resolves.
@@ -82,7 +95,7 @@ Three corollaries:
   name (`query: "+research_append"`), which matches whatever prefix the session
   exposes. Cowork defers tool schemas past a size threshold and offers no control
   over it, so `ToolSearch` is the real load path there — and
-  `select:mcp__genealogy__…` resolves to nothing behind the bridge.
+  `select:mcp__genealogy__…` resolves to nothing in either Cowork mode.
 - **Built-in tools (`Read`) stay bare**, and skill `allowed-tools` stays bare
   everywhere — it is not an exact-match spawn filter.
 
@@ -90,6 +103,7 @@ Three corollaries:
 
 | Option | Why rejected | Evidence |
 |---|---|---|
+| **Two spellings** (harness + bridge), the original form of this ADR | Missed Cowork's on-computer registration, which uses `display_name` with no `remote-devices` segment. `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized — in the mode that reaches the host extension directly. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
 | **One qualified name** (whichever prefix the author happens to know) | The exact failure of #650/#698. Whichever one you pick is wrong in some environment, and CI — which registers under `genealogy` — cannot see it | #650/#698; all three agents broken in Cowork, CI green |
 | **Bare names only** | Leaves the subagent toolless in the SDK path used by the unit harness. Bare works for skills' `allowed-tools` but not for the agent spawn filter | `CLAUDE.md` § "Dual-spelled tool names" |
 | **Grant the server-level prefix** `mcp__remote-devices` and let everything through | That namespace carries `device_bash`, `device_commit_files`, `project_memory_write`. A read-only critique agent would get host shell access | `agent-tool-names.test.ts` header comment |
@@ -99,7 +113,7 @@ Three corollaries:
 
 ## Consequences
 
-**Gains.** Agents bind correctly in all four environments from one declaration,
+**Gains.** Agents bind correctly in every environment from one declaration,
 and the rename hazard is caught by CI rather than in production. The underlying
 namespacing hazard is documented across several frameworks including Anthropic's
 own surfaces (claude-code#18763); what this adds is treating allow/deny binding
@@ -111,19 +125,26 @@ critique §9 retracted a neighbouring novelty claim for the same reason.)
 
 **Costs, knowingly accepted.**
 
-1. **Every capability list is twice as long**, and the duplication looks like a
+1. **Every capability list is three times as long**, and the duplication looks like a
    mistake to anyone who has not read this ADR. `record-extractor`'s frontmatter
    is visibly repetitive.
-2. **Adding a tool means remembering both lines.** The lint catches a missing
-   second spelling; nothing catches a *pair* of correct entries for a tool the
+2. **Adding a tool means remembering all three lines.** The lint catches a missing
+   spelling; nothing catches a *complete set* of correct entries for a tool the
    agent's body never uses — `record-extractor` has carried `place_search` and
-   `place_search_all` under both spellings since 2026-07-18 while its body tells
+   `place_search_all` under both original spellings since 2026-07-18, and all three
+   since 2026-08-05, while its body tells
    it to omit `standard_place`.
 3. **A third registrar would need a third spelling**, and the failure mode would
-   again be silent in whichever environment we did not think of.
+   again be silent in whichever environment we did not think of. **That happened,
+   in #1341**, and it was silent for exactly the predicted reason: the lint derived
+   its expected prefixes from the two registrars we knew about, so it agreed with
+   the omission and stayed green. A fourth would do the same. `bareName()` now
+   throws on an unrecognized prefix instead of slicing it against another prefix's
+   length, which turns the next instance from a wrong bare name into a named
+   failure.
 
 **Risks.** The lint verifies *spelling*, not *binding*. An agent can be perfectly
-declared under both names, pass every check, and still not hold the tool at
+declared under every name, pass every check, and still not hold the tool at
 runtime — the SDK init handshake exposes only name, description, and model per
 agent, so there is nothing to assert against (#1084/#1085). The sibling hazard is
 agent *resolution*: a bare-name delegation silently falling back to a
@@ -132,18 +153,21 @@ general-purpose stand-in that binds none of the deny list (#939).
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` —
-> asserts both spellings are present for every MCP tool in `tools:` and
-> `disallowedTools:`; **derives** the bridge prefix from `manifest.json`'s
-> `display_name`, so renaming the extension fails in CI; asserts all five
-> registration sites still agree on the `genealogy` key; and fails any
-> `select:mcp__…` in a plugin body.
+> asserts all three spellings are present for every MCP tool in `tools:` and
+> `disallowedTools:`; **derives** both `display_name`-based prefixes from
+> `manifest.json`, so renaming the extension fails in CI; asserts all five
+> registration sites still agree on the `genealogy` key; throws rather than
+> mis-slicing on an unrecognized prefix; and fails any `select:mcp__…` in a
+> plugin body.
 
 What it does **not** catch: whether a granted tool actually binds at runtime
 (#1084/#1085); whether the agent's body ever tells it to call the tool; and a
-third prefix nobody has registered yet.
+**fourth** prefix nobody has registered yet. No CI job can see any of these. Only a
+live Cowork session can, and only in the run mode being tested — a cloud-mode check
+would have passed throughout #1341.
 
 ## Revisit when
 
 The runtime gains prefix-insensitive matching or an inherit-on-miss default — or
 a check appears that can verify binding rather than spelling, at which point the
-dual-spelling lint becomes a subset of a stronger one.
+multi-spelling lint becomes a subset of a stronger one.
