@@ -1108,7 +1108,9 @@ For each `entry` in `response.entries`:
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |
 | API returns 400 | Read response body as JSON, extract `body.errors[]`, join with `; `. Throw: `"FamilySearch search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
-| API returns other non-OK status | Throw: `"FamilySearch search API error: ${status} ${statusText}"` |
+| API returns 429 or 5xx | Transient. Retried with backoff (3 attempts). If still failing after retries, surfaced via the network/timeout terminal error below — NOT returned as a short/empty result set. |
+| Request times out (per-attempt `AbortSignal.timeout`, 25s) or `fetch` rejects (network error) | Transient. Retried with backoff (3 attempts). If still failing, throw: `"FamilySearch record search did not complete after 3 attempts (network timeout or transient error): ${detail}. This is a transient failure, NOT an empty result — coverage is unknown."` The distinguishable message is the point: a timed-out search must never look like an exhaustive one that found little. |
+| API returns other non-OK status (non-retryable, e.g. 404 or other 4xx) | Throw: `"FamilySearch search API error: ${status} ${statusText}"`. (429/5xx do NOT reach here — see the retried row above.) |
 | API returns 200 with empty `entries` | Return `{ ..., totalMatches: <upstream>, returned: 0, results: [], hasMore: false }`. |
 
 ---

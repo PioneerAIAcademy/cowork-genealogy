@@ -851,10 +851,10 @@ into one boolean made a correct run and a wrong one read identically
 
 | field | values | meaning |
 |---|---|---|
-| `verdict` | `pass` \| `partial` \| `fail` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), or `skipped` when the judge didn't run. Never modified by anything else. |
+| `verdict` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), `ungraded` when the judge raised an exception (tree exists but was never graded — can be re-graded), or `skipped` when the judge didn't run (no tree). Never modified by anything else. |
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
-| `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
+| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
 | `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
@@ -1040,6 +1040,35 @@ checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
+**A fourth check runs in shadow mode only: citation-string
+nulling.** `find_citation_nulling_in_conclusions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and flags a
+source that **backs a written conclusion** — i.e. one a `proof_summaries`
+entry's `supporting_assertion_ids` reference, via `assertion.source_id →
+sources[].id` — whose ESM `citation` string is null or empty. This is the
+provenance-nulling half the engine's write-seam guard deliberately does **not**
+cover: a null *source-ref* on authored tree content is already unrepresentable
+(the mandatory-ref golden in `materialize-facts.test.ts` / `tree-edit.test.ts`),
+but the citation *string* is explicitly out of scope there
+(`tree-materialization-spec.md`, "The ESM citation string is out of scope
+here"), and none of the three checks above read it. It is the cruz "11/14
+citation-less tree sources" / birkeland "F1/F2 citation-less conclusion facts"
+class from `record-extraction-consolidation-closing-report.md` §4, invisible to
+the judge.
+
+Unlike the three hard checks, this one **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
+repository's shadow → measure → graduate posture (same as §7's recency check
+and the `same_person` provenance check). The gate on a `proof_summaries` entry is
+deliberate: tree citations are populated by `proof-conclusion` at *upload*
+time, so a run that legitimately stops before upload has empty citations by
+design — scoping to sources of an actual written conclusion is what keeps a
+future hard version from false-positiving on honest partial runs. Its entries
+carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
+their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
+fourth check is gated on reading that shadow fire rate across the corpus first**
+— not decided here.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
@@ -1146,6 +1175,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+| `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
+| `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
@@ -1183,12 +1214,53 @@ fallback reconstructs the block from the streamed assistant messages:
 
 **Never compare a `streamed_fallback` cost against a clean run's.**
 
-Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
-under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
-`fail` is deliberately retained signal: a capability gap to retry later, exactly
-as a failing unit test is committed. Only a `skipped` run (the judge never ran —
-no tree to grade) is written with a `scratch_<timestamp>.*` prefix that
-`.gitignore` keeps out of version control. Fixture *validity* is a separate axis
+#### 8.1.3 `git_sha` / `skills_hash` — run provenance
+
+These two fields exist because a graded run once landed alongside a
+`search-records` SKILL.md edit and claimed to demonstrate it, yet nothing in the
+committed artifact said which skill version had run — the reconstruction from the
+transcript contradicted the claim. They make that claim checkable.
+
+`skills_hash` is a **single digest**, not a per-file map and not a full snapshot.
+The trade, measured when it was decided: a full snapshot (the unit-runlog form)
+was 43% of every unit run log's bytes, storing prose nothing reads back — e2e
+runs are not gated on activeness, so the content is never diffed. A per-file
+`{path: hash}` map names *which* file changed but costs ~15.8 KB/run (≈6% of the
+263 KB median e2e envelope) to answer what `git_sha` plus a re-hash already answer
+whenever the tree was clean. So the identity, not the content, is what is stored.
+
+It hashes **exactly what `build_workspace` stages** — every non-dot subdirectory
+of the skills dir, recursively, plus the top-level agent `.md` files — and
+nothing else. The fixture, `eval/tests/unit/**`, MCP fixtures, and the compiled
+engine are deliberately out of scope: folding any of them in would flip the hash
+on every record-hint-resolution PR and destroy the signal. (`__pycache__` and
+dotfiles a `copytree` would carry are excluded as gitignored non-prompt noise.)
+Implementation: `eval/harness/e2e/provenance.py`.
+
+It hashes the **source** files, not the staged copies, so a `--agent-model` run
+(which rewrites each staged agent's `model:` frontmatter — see
+`_override_agent_model`) carries the same `skills_hash` as an unforced run of the
+same tree. That override is recorded separately as `subagent_model_override`;
+read the two together.
+
+**Known limit, by design:** a hash proves *whether* two runs used the same
+prompt; it can never tell you *what* changed. When the diff is needed, the git
+SHA plus the hash reconstruct it from the repo in the common case where the tree
+was clean. Like the absence of a `skills_invoked` field (§15), this is a chosen
+boundary, not an oversight — and, like every provenance field here, it is
+**evidence for a human reviewer, not a CI gate**: an e2e run is graded days after
+the tree has moved, so a "committed hash matches working tree" check would red
+every e2e PR.
+
+Any **committable** run — verdict `pass`, `partial`, `fail`, or `ungraded` — is
+committed under the `run-<timestamp>.*` names above. A graded run (`pass` /
+`partial` / `fail`) must be graded (§7.4); a committed `fail` is deliberately
+retained signal: a capability gap to retry later, exactly as a failing unit test
+is committed. An `ungraded` run (the judge raised an exception — the tree exists
+but was never graded) is also committed because the tree can be re-graded later.
+Only a `skipped` run (the judge never ran — no tree to grade) is written with a
+`scratch_<timestamp>.*` prefix that `.gitignore` keeps out of version control.
+Fixture *validity* is a separate axis
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails

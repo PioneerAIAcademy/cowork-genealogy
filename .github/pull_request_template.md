@@ -66,6 +66,15 @@
            for the `eval-cosmetic-skip` label instead of burning a paid run.
            Rules: eval/CLAUDE.md § "GitHub Action rules". -->
 
+- [ ] If I changed a skill's `description` frontmatter or its DO NOT clauses, I
+      added or refreshed the negative test on **both** sides of every routing
+      pair I touched — not just the direction I was fixing.
+      <!-- The edit that stops A over-triggering is the one that can start B
+           under-triggering, and a one-directional pair hides it.
+           `check_negative_reciprocity.py` reports the gaps, but only after the
+           fact and only as a warning — this box is the part that prevents them.
+           Nothing enforces it; it is here because the lint can't be. -->
+
 ## Follow-on issues
 
 <!-- Numbers filed for work you deferred. DEVELOPMENT.md § "Follow-on work". -->
