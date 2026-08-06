@@ -449,6 +449,13 @@ async def _execute_single_run(
     )
 
     # --- Judge ----------------------------------------------------------
+    # Advisories from _extract_dimensions (a dropped unknown/duplicate
+    # dimension, #1361) — populated only on the successful branch below.
+    # judge_results (the `judge` field) has no warnings property of its own
+    # (additionalProperties:false — docs/specs/schemas/run-log.schema.json)
+    # so these are folded into the SKILL-level `output.warnings` instead,
+    # via _build_warnings below, alongside its other advisory kinds.
+    judge_dimension_warnings: list[dict[str, Any]] = []
     if validators_passed and result.aborted_reason is None:
         _judge_start = time.perf_counter()
         try:
@@ -484,6 +491,7 @@ async def _execute_single_run(
                 cached_input_tokens=judge_output.cached_input_tokens,
                 output_tokens=judge_output.output_tokens,
             )
+            judge_dimension_warnings = judge_output.warnings
         # Records judge wall-clock on every attempted branch (success or
         # error). The skipped branch below leaves the 0.0 default.
         judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
@@ -561,6 +569,7 @@ async def _execute_single_run(
                     skill_frontmatter=skill_frontmatter,
                     attempted_mcp_calls=result.attempted_mcp_calls,
                     unread_skill_calls=result.unread_skill_calls,
+                    judge_warnings=judge_dimension_warnings,
                 ))
                 else {}
             ),
@@ -714,6 +723,7 @@ def _build_warnings(
     skill_frontmatter: dict[str, Any] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     unread_skill_calls: list[list[str]] | None = None,
+    judge_warnings: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -731,8 +741,15 @@ def _build_warnings(
     - unread skill call when a Skill tool call carried the invoked skill's
       name under a key the harness doesn't read, meaning the SDK's Skill
       contract moved and `skills_invoked` is undercounting.
+    - dropped judge dimension (`dropped_unknown_rubric_dimension` /
+      `dropped_duplicate_dimension`, #1361) — passed in already-built by
+      the caller from `JudgeOutput.warnings`, since building them requires
+      the judge's raw tool_use output, which this function never sees.
+      Same drop-not-fail rationale as the tool-usage dimension above: v1.8
+      demoted that check from a hard gate to a warning for the same
+      reason — a naming mismatch shouldn't cost the whole test.
     """
-    warnings: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = list(judge_warnings or [])
 
     # Skill-tool contract drift. Without this the failure is invisible:
     # skills_invoked stays empty, every routing verdict reads "never
