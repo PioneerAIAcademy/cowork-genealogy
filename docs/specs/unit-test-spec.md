@@ -627,7 +627,7 @@ across the whole suite to serve the one test that wants it. A callee that is
 neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
 this field existed — it runs without its own tools.
 
-> **Correction (2026-07-31, issue #1012).** This section previously described
+> **Correction (2026-07-31).** This section previously described
 > stubbing as trading away integration coverage at the caller/callee seam.
 > There was no such coverage to trade: until `run_skills` existed, a callee had
 > no way to obtain its tools, so *not* stubbing bought a callee that improvised.
