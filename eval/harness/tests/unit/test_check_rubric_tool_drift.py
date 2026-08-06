@@ -149,7 +149,14 @@ def test_judge_context_mentions_malformed_json_returns_empty(tmp_path: Path) -> 
     )
 
 
-def test_agent_declared_tools_dual_spelling_normalizes(tmp_path: Path) -> None:
+def test_agent_declared_tools_multi_spelling_normalizes(tmp_path: Path) -> None:
+    """All three server spellings must collapse to one bare name.
+
+    The fixture carries the on-computer spelling (`mcp__Genealogy_Research__`, no
+    `remote-devices` segment) as well as the harness and bridged forms, so this
+    exercises the shape that actually ships. It previously carried only the two
+    older spellings, which passed without ever reaching the third (#1341).
+    """
     agent_md = tmp_path / "gps-mentor.md"
     agent_md.write_text(
         "---\n"
@@ -158,9 +165,11 @@ def test_agent_declared_tools_dual_spelling_normalizes(tmp_path: Path) -> None:
         "  - Read\n"
         "  - mcp__genealogy__research_append\n"
         "  - mcp__remote-devices__Genealogy_Research__research_append\n"
+        "  - mcp__Genealogy_Research__research_append\n"
         "disallowedTools:\n"
         "  - mcp__genealogy__record_search\n"
         "  - mcp__remote-devices__Genealogy_Research__record_search\n"
+        "  - mcp__Genealogy_Research__record_search\n"
         "---\n"
         "# body\n",
         encoding="utf-8",
