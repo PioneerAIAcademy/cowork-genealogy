@@ -460,6 +460,23 @@ describe("recordSearchTool error propagation", () => {
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
+  // #1316: 429 is the OTHER transient status. The 5xx test above proves the
+  // retry machinery, but 429 is a separate operand of `status === 429 || status
+  // >= 500` — only an explicit 429 case guards that arm. Without it a regression
+  // dropping the `=== 429` check would fall through to the generic error below,
+  // never retry, and the 5xx test would still pass.
+  it("retries 429 and throws the terminal transient-failure error when exhausted", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+    });
+    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
   // #1316: a timeout (AbortSignal firing → fetch rejects) is transient too.
   it("retries a timeout and throws the terminal error when exhausted", async () => {
     mockFetch.mockRejectedValue(
