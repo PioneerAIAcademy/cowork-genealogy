@@ -1192,7 +1192,6 @@ but was never graded) is also committed because the tree can be re-graded later.
 Only a `skipped` run (the judge never ran — no tree to grade) is written with a
 `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of version control.
 Fixture *validity* is a separate axis
-
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
