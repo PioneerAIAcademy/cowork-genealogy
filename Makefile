@@ -29,8 +29,14 @@ EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
 # Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
-# manifest or lockfile changes.
-$(JS_DEPS): package.json pnpm-lock.yaml
+# root manifest, the lockfile, the member list, or ANY member's manifest
+# changes. A member's package.json is listed because it carries that member's
+# lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
+# to packages/schema and touched neither, so every existing checkout kept a
+# stamp newer than both prerequisites, never reinstalled, and never ran the
+# generator that postinstall exists to run.
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
+            $(wildcard packages/*/package.json apps/*/package.json)
 	pnpm install
 	@touch $@
 

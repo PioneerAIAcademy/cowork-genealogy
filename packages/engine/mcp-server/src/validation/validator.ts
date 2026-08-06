@@ -400,7 +400,7 @@ export const RESEARCH_SHAPES = {
     "created", "updated",
   ]),
   researcher_profile: new Set([
-    "experience_level", "subscriptions", "narration_guidance",
+    "experience_level", "subscriptions", "narration_guidance", "intended_audience",
   ]),
   known_holding: new Set([
     "id", "holding_type", "description", "relates_to_person_ids",
@@ -566,6 +566,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ng = rp.narration_guidance;
       if (ng !== null && ng !== undefined && typeof ng !== "string") {
         addError(report, rpPath, "narration_guidance must be a string");
+      }
+      const ia = rp.intended_audience;
+      if (ia !== null && ia !== undefined && typeof ia !== "string") {
+        addError(report, rpPath, "intended_audience must be a string");
       }
     }
   }
