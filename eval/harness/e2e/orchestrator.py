@@ -57,6 +57,8 @@ from harness.skill_invocation import (
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
+    genealogy_mcp_status,
+    genealogy_mcp_terminal_fault,
     read_research_json,
     read_tree_json,
     should_continue_run,
@@ -71,6 +73,16 @@ DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
+
+# MCP connection guard (stop_checker.genealogy_mcp_*). When the init message
+# reports the genealogy MCP server still `pending` (not yet connected), give it
+# this many tool calls to actually produce a reachable genealogy tool before
+# concluding it never will and aborting. Generous on purpose: it only arms when
+# init already flagged the server as not-connected, and a healthy /research flow
+# reaches a genealogy tool well within this budget — so a `connected` run never
+# trips it. A terminal status (failed/needs-auth/disabled) aborts at init and
+# never waits for this. See the never-reachable watchdog in _run_and_collect.
+MCP_UNREACHABLE_TOOLCALL_LIMIT = 25
 
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
@@ -779,6 +791,16 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
     return _bare_tool_name(tool)
 
 
+def _is_genealogy_tool_name(name: str) -> bool:
+    """Whether a tool-call name belongs to the genealogy MCP server, under
+    either server spelling (the e2e harness registers it as `genealogy`; the
+    Cowork remote-device bridge namespaces it `Genealogy_Research`). Used by
+    the never-reachable watchdog to tell a real genealogy tool call from the
+    ToolSearch/filesystem flailing that happens when the server never connects.
+    """
+    return name.startswith("mcp__genealogy__") or "Genealogy_Research__" in name
+
+
 _USAGE_FIELDS = (
     "input_tokens",
     "output_tokens",
@@ -917,6 +939,15 @@ async def _run_agent(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # MCP connection guard state. `mcp_servers_init` is the raw `mcp_servers`
+    # list from the init system message (persisted in the runlog for diagnosis);
+    # `genealogy_init_status` is the genealogy server's status from it; and
+    # `genealogy_tool_seen` flips true the first time a genealogy MCP tool call
+    # appears. Together they drive the fast-abort so a server that never connects
+    # doesn't burn the whole run budget. See MCP_UNREACHABLE_TOOLCALL_LIMIT.
+    mcp_servers_init: dict[str, Any] = {"v": None}
+    genealogy_init_status: dict[str, str | None] = {"v": None}
+    genealogy_tool_seen = {"v": False}
     # mcp__-only, for the tool_calls budget cap. Distinct from activity_count
     # below, which powers the no-progress stop check.
     tool_call_count = {"n": 0}
@@ -1396,6 +1427,8 @@ async def _run_agent(
                                 _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
                             elif block.name.startswith("mcp__"):
                                 _emit(f"   - {_bare_tool_name(block.name)}")
+                                if _is_genealogy_tool_name(block.name):
+                                    genealogy_tool_seen["v"] = True
                             progressed = True
                     # Record before the timeline append so a message that
                     # arrives moments before a timeout still counts.
@@ -1403,6 +1436,26 @@ async def _run_agent(
                     timeline.append(
                         [round(now - run_started, 1), "assistant", assistant_tool_names]
                     )
+                    # MCP never-reachable watchdog: init reported the genealogy
+                    # server still `pending`, and it has produced no reachable
+                    # tool after many calls — it is not going to connect. Abort
+                    # before the whole budget is spent flailing (issue #1354).
+                    if (
+                        aborted_reason is None
+                        and genealogy_init_status["v"] == "pending"
+                        and not genealogy_tool_seen["v"]
+                        and len(tool_calls) >= MCP_UNREACHABLE_TOOLCALL_LIMIT
+                    ):
+                        aborted_reason = "error"
+                        error = (
+                            "genealogy MCP server never left 'pending' — no "
+                            f"genealogy tool was reachable across {len(tool_calls)} "
+                            "tool calls, so the agent could not research. The MCP "
+                            "server did not connect; rebuild/reconnect it (see "
+                            "docs/e2e-testing-guide.md) and re-run."
+                        )
+                        _emit(f"[mcp-guard] {error}")
+                        return
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
                     content = message.content
@@ -1447,6 +1500,27 @@ async def _run_agent(
                     ver = data.get("version") or data.get("cli_version")
                     if ver:
                         cli_version["v"] = ver
+                    if message.subtype == "init":
+                        # MCP connection guard. The CLI reports each server's
+                        # connection state here. A terminal fault (failed /
+                        # needs-auth / disabled / absent) will never recover, so
+                        # abort now rather than let the agent flail for tools
+                        # that never arrive. `pending` is left to the
+                        # never-reachable watchdog in the tool-call branch below.
+                        servers = data.get("mcp_servers")
+                        mcp_servers_init["v"] = servers
+                        genealogy_init_status["v"] = genealogy_mcp_status(servers)
+                        fault = genealogy_mcp_terminal_fault(servers)
+                        if fault is not None:
+                            aborted_reason = "error"
+                            error = (
+                                f"{fault} — aborting before the run. The genealogy "
+                                "MCP tools are unreachable, so the agent cannot "
+                                "research. Rebuild/reconnect the server (see "
+                                "docs/e2e-testing-guide.md) and re-run."
+                            )
+                            _emit(f"[mcp-guard] {error}")
+                            return
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
@@ -1556,6 +1630,11 @@ async def _run_agent(
         "session_id": session_id["id"],
         "resumes": resumes["n"],
         "resume_on_stall": resume_on_stall,
+        # Raw `mcp_servers` list from the init system message — the genealogy
+        # server's connection status at session start. Persisted so a run that
+        # failed on an unconnected server is diagnosable from the runlog alone,
+        # and so `pending`-vs-`failed` frequency can be calibrated later.
+        "mcp_servers_init": mcp_servers_init["v"],
         "timeline": timeline,
         # Reasoning knobs actually used, so a run is self-describing when we
         # A/B effort × output-budget against subagent behavior. `effort_level`
