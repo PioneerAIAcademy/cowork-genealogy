@@ -204,10 +204,14 @@ plan items complete.
   questions are narrow, single-fact, testable sub-problems.
 - **Don't declare exhaustiveness here.** Closing questions is the
   `research-exhaustiveness` skill's job — this skill only creates them.
-- **Never delete a question.** To retire one, `research_append`
-  `op: "update"` its `status` (`superseded` / `answered`); the id is
-  preserved. Never write a second `q_` for a question that already exists —
-  update its status instead.
+- **Never delete a question, and never change an existing question's `status`
+  here.** `question_status` ∈ `open` | `in_progress` | `exhaustive_declared` |
+  `resolved`. This skill owns none of those transitions —
+  `exhaustive_declared` is `research-exhaustiveness`'s, `resolved` is
+  `proof-conclusion`'s — so there is no way to retire a question here, and none
+  is needed: an overtaken question stays as it is, and why it was set aside
+  belongs in the new question's `rationale`. Never write a second `q_` for a
+  question that already exists.
 - **Historical context matters.** Factor in jurisdictional boundary changes,
   migration, wars, and record availability for the time and place.
 
@@ -228,11 +232,11 @@ plan items complete.
 
 ## Re-invocation behavior
 
-**Writes:** entries in the `questions` section of `research.json` (`q_` ids)
-and their `status`, via `research_append`.
+**Writes:** new entries in the `questions` section of `research.json` (`q_`
+ids), via `research_append`. Not their `status` after creation — see the Rules
+above.
 
-**On repeat invocation:** re-evaluate which question is next. Update an
-existing question's `status` in place (`op: "update"` — e.g. mark it
-`answered` or `superseded`; the id is preserved, never deleted), or select a
-question already present. Add a new `q_` only when the next question isn't
-already in the section — never write a second `q_` for the same question.
+**On repeat invocation:** re-evaluate which question is next, and either select
+a question already present or add a new `q_` when the next question isn't
+already in the section — never write a second `q_` for the same question, and
+never revise an existing question's `status` to retire it.

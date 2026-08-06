@@ -301,6 +301,14 @@ const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
       "source_classification",
     ],
   },
+  // question-selection states the legal question statuses in order to say it
+  // writes none of them (#1135). Declared with ∈ rather than as prose so this
+  // lint owns the copy — the instruction it replaced named two values that were
+  // never in the enum at all, and nothing noticed.
+  {
+    relPath: "skills/question-selection/SKILL.md",
+    enums: ["question_status"],
+  },
 ];
 
 // ─── Tests ─────────────────────────────────────────────────────────
