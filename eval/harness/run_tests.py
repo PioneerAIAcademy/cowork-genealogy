@@ -56,6 +56,7 @@ from harness.runlog import (
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
+    DEFAULT_KEEP_CANDIDATES,
     is_releasable_invocation,
     next_filename_for,
     now_utc_filename_timestamp,
@@ -916,7 +917,13 @@ def main(argv: list[str] | None = None) -> int:
             tests=entries,
         )
         path = write_run_log(
-            log, runlogs_root=paths.runlogs_root, filename=filename
+            log,
+            runlogs_root=paths.runlogs_root,
+            filename=filename,
+            on_prune=lambda removed: print(
+                f"  → pruned {len(removed)} file(s) beyond the newest "
+                f"{DEFAULT_KEEP_CANDIDATES} candidates — commit the deletions"
+            ),
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")

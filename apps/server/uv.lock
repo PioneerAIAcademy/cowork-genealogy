@@ -297,6 +297,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "anyio" },
+    { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
@@ -319,6 +320,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "anyio", specifier = ">=4.14.2" },
+    { name = "jsonschema", specifier = ">=4.22.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
 ]

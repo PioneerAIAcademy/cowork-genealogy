@@ -28,6 +28,10 @@ const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
 // tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
 const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 
+// A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
+// `_HASH_RE` in eval/harness/harness/snapshot.py.
+const HASH_RE = /^[a-f0-9]{64}$/;
+
 const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
@@ -171,14 +175,55 @@ export function hashSnapshot(snapshot: Record<string, string>): Record<string, s
 }
 
 /**
+ * True when every value is a sha256 hex digest (`schema_version` >= 3).
+ * Mirrors Python `is_hashed_snapshot()`. Detected by shape rather than by
+ * `schema_version` because callers pass only the map; requiring *every*
+ * value to match keeps a legacy content snapshot from being misread.
+ */
+export function isHashedSnapshot(snapshot: Record<string, string>): boolean {
+  const values = Object.values(snapshot);
+  return values.length > 0 && values.every((v) => HASH_RE.test(v));
+}
+
+/**
+ * Put two snapshots on comparable terms.
+ *
+ * schema_version 3 stores sha256 digests; pre-3 logs stored normalized
+ * content. Comparing one of each by equality reports EVERY path as modified —
+ * silently, since nothing validates schema_version at read time — which then
+ * flags every test as edited and drops the whole comparison. Hashing the
+ * content side first makes the mixed case correct.
+ *
+ * Lives here rather than beside one caller because both snapshot-vs-snapshot
+ * comparisons need it: `lib/compare.ts` (the compare page) and the trend
+ * route's `diffTestFiles`. Mirrors the same alignment in Python's
+ * `same_test_inputs`. Drop this once no pre-3 run log remains.
+ */
+export function alignSnapshots(
+  a: Record<string, string>,
+  b: Record<string, string>,
+): [Record<string, string>, Record<string, string>] {
+  const aHashed = isHashedSnapshot(a);
+  const bHashed = isHashedSnapshot(b);
+  if (aHashed === bHashed) return [a, b];
+  return [aHashed ? a : hashSnapshot(a), bHashed ? b : hashSnapshot(b)];
+}
+
+/**
  * Compare snapshot against on-disk files under `repoRoot`. Returns a
  * `{path: reason}` map of mismatches. Mirrors Python's
  * `diff_snapshot_vs_disk()`.
+ *
+ * Accepts both shapes: `schema_version` 3 stores sha256 digests, so disk
+ * bytes are hashed before comparing; pre-3 run logs stored normalized
+ * content and are compared directly. Drop the content arm once no pre-3
+ * run log remains.
  */
 export async function diffSnapshotVsDisk(
   snapshot: Record<string, string>,
   repoRoot: string,
 ): Promise<Record<string, 'missing-on-disk' | 'content-differs'>> {
+  const hashed = isHashedSnapshot(snapshot);
   const out: Record<string, 'missing-on-disk' | 'content-differs'> = {};
   for (const [rel, expected] of Object.entries(snapshot)) {
     if (rel.startsWith(MCP_SRC_PREFIX)) continue;
@@ -190,7 +235,8 @@ export async function diffSnapshotVsDisk(
       out[rel] = 'missing-on-disk';
       continue;
     }
-    const actual = normalize(rel, bytes);
+    const normalized = normalize(rel, bytes);
+    const actual = hashed ? hashContent(normalized) : normalized;
     if (actual !== expected) {
       out[rel] = 'content-differs';
     }

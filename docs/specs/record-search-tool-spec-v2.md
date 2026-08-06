@@ -242,8 +242,113 @@ Strict surname + birth-place match:
 | `returned` | number | Number of results in this response (≤ `count`). |
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
+| `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+
+### `rankingSkipped` — saying so when no subject was named
+
+Host-side ranking (`ranked`) and `jurisdictionHints` are both gated on
+`subjectId`. When it is absent both silently do nothing: no error, no note,
+nothing in the response or the run log to say a feature was bypassed.
+
+Measured `subjectId` coverage across the six graded `jimmie-jewel-neal` runs is
+**59 of 171 `record_search` calls (34.5%)** — by run, in order: 0%, 0%, 0%, 100%,
+55%, 39%. `search-records/SKILL.md` already carries four "pass `subjectId`"
+instructions, and the tool's own schema says *"supply it for any search where you
+know which tree person you are looking for, which is nearly all of them"*. So the
+answer is not a fifth instruction: this is the same decay curve that motivated
+folding ranking into `record_search` in the first place, and a field re-delivered
+on every call is immune to the compaction that erodes prose.
+
+**The condition is `projectPath` present and `subjectId` absent — and nothing
+else.** No tree read, no name/date matching, no attempt to judge whether the
+search "looked like" it was about a tree person. That test is a heuristic, and
+gating the signal on an unvalidated heuristic would bias the very coverage
+measurement the signal exists to produce. A caller running a legitimate broad
+survey gets one extra short field; whether a given omission was legitimate is
+answered at analysis time from the args already in the run log.
+
+Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
+gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
+claiming ranking was skipped when it ran, or the reverse.
+
+#### Key order
+
+`rankingSkipped` is emitted **before `results`** in the response object. `results`
+is by far the largest field, so anything serialized after it is the first thing any
+size bound drops. The motivating evidence: across the 46 `record_search` calls in
+`run-2026-07-31_13-02-13` the existing `ranked` **field** appears in the run log
+**0 times**, though 18 of those calls supplied `subjectId` and **14 were actually
+ranked** (the other 4 were nil searches, where staging returns `null` so the
+`out.staged &&` half of the ranking gate never fires).
+
+**The capture fix does not obviate this, though a first draft of this section
+claimed it mostly did.** Key preservation only helps a capture that *has* keys. Of
+the 1544 tool results in the six committed runs, **434 arrive as a plain string,
+238 of them over the threshold** — for those `_summarize_response` applies only the
+string bound, there is nothing to preserve, and position is fully decisive. A
+further 11 hit `_RUNLOG_MAX_CHARS` and degrade to a head cut of the summary. So the
+ordering matters for roughly 16% of captures, not the 0.7% that draft asserted.
+`record_search` itself lands in the plain-string class whenever its response comes
+back as the MCP over-limit error.
+
+Two further consumers keep the ordering load-bearing regardless: the model's own
+context window, and anything else that bounds this response without the harness's
+key preservation. #1073's Definition of Done requires the ordering in any case.
+
+The capture side was widened in the same change
+(`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
+key rather than head-truncating at 497 chars). Both halves are kept: the response
+is read by more than one consumer, and only one of them was fixed.
+
+That capture carries a hard invariant — **it never emits a shorter capture than
+the old head-truncation would have.** A response that already fit is passed
+through verbatim, and where a key-preserving summary comes out shorter than a
+497-char prefix would (a long list of small items) the longer of the two is kept.
+Both halves are needed: an unconditional summarize narrowed 91 of 284 real tool
+results, because `_summarize_response` samples any list past three entries.
+
+**The invariant is a LENGTH floor, not a content guarantee, and content loss does
+happen.** Two mechanisms can drop something the old head cut kept while the floor
+still holds: `_summarize_response` samples any list past three entries, and its
+depth cap replaces anything nested past 8 levels with a `_truncated_for_depth`
+marker. A verified instance, in `run-2026-07-31_13-02-13` — a 3928-char response
+whose old 500-char capture contained `"type":"Birth","date":"08 Nov 1919"` and
+whose new 2165-char capture does not, because that fact was the 4th entry of a
+7-entry list. So the honest claim is "never emits a *shorter* capture", full stop.
+Do not extend it to "captures everything it used to"; an earlier version of this
+section asserted zero content loss and was wrong.
+
+**Size cost.** Captured response text grows **2.16x** across the 1544 tool results
+in the six committed runs. `run-<ts>.json` is committed to git, so that is the
+price of the change, stated rather than discovered later.
+
+That 2.16x is the whole cost. `_summarize_tool_response` has exactly one caller —
+`tool_calls[].response_summary`. It had a second until #1238, which rendered the
+tool-call `args` into `run-<ts>.transcript.md`; #1238 removed both the transcript
+and that call site, so no other artifact grows.
+
+**`response_summary` now has two shapes.** Under the verbatim threshold it keeps
+the raw MCP envelope, in which the tool's document is an escaped string; over it,
+the document is unwrapped into real JSON keys. Consequences, and the reason
+`docs/specs/e2e-test-spec.md` §15 ("Evidence to read, in order", step 4) carries a
+matching caveat: **741 of the 1544 captures (48%) differ from what the old code
+produced**, so the first run after this lands shows a changed `response_summary` on
+half of all calls against every earlier baseline — which that spec's triage rule
+would otherwise read as an agent regression. And grepping a *quoted* key misses the
+escaped form, while grepping the bare name over-matches agent prose (`ranked`
+appears 4 times in `run-2026-07-31_13-02-13` as narrative text and a `Grep`
+pattern, against 0 occurrences of the actual field). Neither form is reliable
+alone.
+
+#### What this does not do
+
+`rankingSkipped` is a nudge, not a structural anchor — it neither rejects the
+call nor blocks a downstream step. Unit tests prove the field is emitted; **they
+prove nothing about whether coverage rises.** The only signal for that is the
+next live `make e2e-run TEST=jimmie-jewel-neal`, and the number to compare is
+coverage %, not "the field appears".
 
 ### `jurisdictionHints` — where else to look when a marriage search does not find the subject
 
@@ -288,13 +393,25 @@ field on `RankSearchMatchesResult`, not sniffing the `diagnostic` string.
 A nil-**only** trigger was tried first and is too narrow: in one verification run
 it fired once, at 121 of 180 minutes. Note that both triggers need `subjectId`, so
 a caller that omits it gets neither the hint nor host-side ranking — measured
-`subjectId` coverage across four graded runs was 0% / 100% / 55% / 39%, which
-bounds how often either can fire at all. That gap is tracked separately; do not
-read a run with low coverage as evidence about the trigger width.
+`subjectId` coverage across the six graded runs is **59 of 171 calls (34.5%)**:
+0% / 0% / 0% / 100% / 55% / 39%. That bounds how often either can fire at all. Do
+not read a run with low coverage as evidence about the trigger width.
+
+**The trigger width has not been re-evaluated since, and is still owed a run.**
+Widening from nil-only to `nil || subjectResolvable === false` was decided against
+`run-2026-07-30_23-05-46`, which carried 55% coverage — so the binding constraint
+in that run was reachability, not width. The verification run that followed
+(`run-2026-07-31_13-02-13`) fired the hint **0 times**: 6 of its 7 marriage
+searches omitted `subjectId`, and the one that supplied it found its subject, so
+the trigger correctly stayed quiet. That run is therefore evidence about coverage
+and no evidence at all about width. `rankingSkipped` is the nudge aimed at
+coverage; once a run lands with materially higher coverage, re-read this section
+and check whether the wider trigger now fires too often. Until then, treat the
+width as untested rather than settled.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
+| `searchedPlace` | string | Echo of the place actually searched: `marriagePlace` when given, otherwise `recordSubdivision` + `recordCountry` joined (see "Place matching"). Never absent — `isSubCountryPlace()` gates the hint and returns `false` for `undefined`, so the hint cannot exist without a place. |
 | `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). **Capped at 8** — the tail of a distance-ordered list is its least useful part, and this lands in a response whose assembly elsewhere strips `gedcomx` and hoists `collectionTitle` for context economy. The jurisdiction already searched is excluded, including differently-spelled and **narrower** forms of it; a **broader** place is kept, since a wider search reaches the other localities inside it. |
 | `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
 
@@ -355,6 +472,25 @@ A country term alone does not count as a scoped place: `isSubCountryPlace()` gat
 the hint, and it is exported from `marriage-jurisdictions.ts` rather than duplicated
 here because `placeTokens` deliberately collapses the distinction it tests (its
 empty-fallback makes a country-only place look like any other single-token place).
+
+`isSubCountryPlace` returns `boolean` and is deliberately **not** a
+`place is string` type predicate. The predicate is unsound in its negative branch —
+`isSubCountryPlace("United States")` is `false` while the argument is plainly a
+string — so it would let TypeScript narrow an `else` to `undefined`. Callers that
+need the string narrowed test `!== undefined` themselves; that explicit check is
+what makes `jurisdictionHints.searchedPlace` a sound required `string`.
+
+**Known wart, recorded rather than fixed.** `isSubCountryPlace("Co., USA")` returns
+`true`. `placeParts` strips `co` out of `co.` and leaves the bare `"."`, which
+survives the empty-string filter and counts as a locality. The failure mode is
+precisely the one this guard exists to prevent — a country-wide search reading as
+scoped — so it is worth an eventual fix. It is left alone here because `placeParts`
+also feeds `placeTokens` → `samePlace`, i.e. the jurisdiction **exclusion and
+ordering** this spec flags as load-bearing and requiring a live run to re-verify,
+and because no real caller produces that input (`marriagePlace` and
+`recordSubdivision` always carry a name). Pinned by a `KNOWN WART` test in
+`tests/utils/marriage-jurisdictions.test.ts` so a future change to `placeParts`
+surfaces it.
 
 It is compared to each candidate on comma-separated tokens, lowercased, with
 `County`/`Co.` dropped and the country term dropped unless it is all that remains.
@@ -952,6 +1088,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 11 | Throws on `sex` other than Male/Female/Unknown (case-insensitive) | sex enum validation |
 | 12 | Throws on `maritalStatus` other than the four allowed values (case-sensitive) | maritalStatus enum validation |
 | 13 | Throws on `recordType` other than the eight allowed values | recordType enum validation |
+| 13a | Throws on an inherited `Object.prototype` key (`"constructor"`) as `recordType` | recordType enum validation, own-property only |
+| 13b | Never emits a non-numeric `f.recordType`, even when `buildSearchUrl` is called without `validateInput` | Emit-site invariant |
 | 14 | Builds URL with all `q.*` params correctly | Param mapping |
 | 15 | `surnameExact=true` emits both `q.surname.exact=on` and `q.surname.exact.1=on` when `surnameAlt` is set | Modifier + cardinality stack |
 | 16 | `birthYearExact=true` emits `q.birthLikeDate.exact=on` | Year-exact mapping |

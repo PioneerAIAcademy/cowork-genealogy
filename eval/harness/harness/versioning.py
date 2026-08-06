@@ -67,6 +67,45 @@ def classify_ann(filename: str) -> Classification:
     return Classification("other", None, None)
 
 
+#: How many candidate run logs to keep per skill. Nothing in the repo reads
+#: deeper than this: `skill_latency_report` reads logs[-1]/logs[-2],
+#: `check_runlogs` and `skill-improver` read the latest, and the CRUD UI halts
+#: on first match. `rubric-critic` is the one reader that wants depth — it
+#: flags dimensions whose score "swings across runs/versions with no code
+#: change" — which is why this is 5 and not 2. See GitHub issue #985.
+DEFAULT_KEEP_CANDIDATES = 5
+
+
+def prunable_candidates(filenames: list[str], *, keep: int) -> list[str]:
+    """Candidate run-log filenames to delete, keeping the `keep` newest.
+
+    Ordering is by (version, timestamp) — both ascending, so the newest
+    candidate sorts last. Timestamps are `YYYY-MM-DD_HH-MM-SS`, which sorts
+    correctly as a string.
+
+    Never returns:
+      - a **released** `v{N}.json` — those are the blessed canonical versions
+        and are kept forever;
+      - a **scratch** or unrecognized name — scratch runs are gitignored local
+        artifacts, and `other` covers anything this module does not own.
+
+    Keyed on rank, not age. An age rule would delete the *only* run log for
+    any skill nobody touched that month, and `check_runlogs` rule 2 gates the
+    next edit to that skill on exactly that file.
+    """
+    if keep < 1:
+        raise ValueError(f"keep must be >= 1, got {keep}")
+    candidates = [
+        (c.version, c.timestamp, name)
+        for name in filenames
+        if (c := classify(name)).kind == "candidate"
+        and c.version is not None
+        and c.timestamp is not None
+    ]
+    candidates.sort()
+    return [name for _, _, name in candidates[:-keep]] if len(candidates) > keep else []
+
+
 def ann_filename_for(runlog_filename: str) -> str:
     """Return the `.ann.json` filename for the given run-log filename."""
     if not runlog_filename.endswith(".json"):

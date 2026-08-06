@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listRunLogsForSkill, runLogHistogram } from '@/lib/fs/runlogs';
 import { readAnnotation } from '@/lib/fs/annotations';
+import { alignSnapshots } from '@/lib/snapshot';
 import type { RunLogFile } from '@/lib/types';
 
 interface TrendPoint {
@@ -37,7 +38,10 @@ function correctedWeightedMean(
   return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
-function diffTestFiles(prevSnap: Record<string, string>, currSnap: Record<string, string>, skill: string) {
+function diffTestFiles(prevSnapRaw: Record<string, string>, currSnapRaw: Record<string, string>, skill: string) {
+  // A v2 (content) and a v3 (digest) snapshot compare unequal on every path,
+  // which would report every test modified. See alignSnapshots.
+  const [prevSnap, currSnap] = alignSnapshots(prevSnapRaw, currSnapRaw);
   const prefix = `eval/tests/unit/${skill}/`;
   const prevTests = new Set(Object.keys(prevSnap).filter((k) => k.startsWith(prefix) && k.endsWith('.json')));
   const currTests = new Set(Object.keys(currSnap).filter((k) => k.startsWith(prefix) && k.endsWith('.json')));

@@ -99,7 +99,8 @@ enforced in code, nothing new needed.
 - `name: image-reader-opus`
 - `model: claude-opus-4-8` — the whole point of this agent is that its *own*
   model does the reading.
-- `tools: [image_read]` — both server spellings, per the repo convention.
+- `tools: [image_read]` — all three server spellings, per the repo convention
+  (ADR-0004): the harness key, plus cloud and on-computer Cowork.
   No other tools: this agent does not write `research.json` / tree, create
   assertions/sources, or search indexes.
 - `description:` worded **narrowly** — an explicit re-read request, not a

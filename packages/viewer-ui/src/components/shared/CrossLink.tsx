@@ -19,6 +19,7 @@ const sectionNavMap: Record<string, string> = {
   hypotheses: 'hypotheses',
   timelines: 'timelines',
   proof_summaries: 'proof_summaries',
+  evaluations: 'evaluations',
   project: 'project_overview',
   gedcomx_persons: 'project_overview',
   gedcomx_relationships: 'project_overview',
