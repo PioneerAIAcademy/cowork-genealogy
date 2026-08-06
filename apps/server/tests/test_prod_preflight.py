@@ -38,6 +38,32 @@ def _settings(**overrides) -> Settings:
     return Settings(**{**_PROD, **overrides})
 
 
+def test_secret_defaults_are_literals_so_the_comparison_can_work():
+    """Guard the assumption the entire gate rests on.
+
+    `assert_production_config` detects a dev-default secret with
+    `getattr(s, field) == Settings.model_fields[field].default`. That only works
+    while both fields declare **plain literal** defaults. Redeclare either with
+    `Field(default_factory=...)` and `.default` becomes `PydanticUndefined`, the
+    real dev secret compares `False`, and the gate silently passes a production
+    deploy running on `dev-insecure-secret-change-me`.
+
+    Nothing else catches it: every other test in this file injects
+    `Settings.model_fields[...].default` as the *value*, so under a
+    `default_factory` they would compare `PydanticUndefined` against itself and
+    stay green. This is the one assertion that fails, and it fails immediately.
+    """
+    for field in ("session_secret", "ws_signing_key"):
+        assert isinstance(Settings.model_fields[field].default, str), (
+            f"{field} no longer declares a literal default. "
+            f"assert_production_config compares against "
+            f"Settings.model_fields['{field}'].default, which is now "
+            f"PydanticUndefined — the production gate for this secret is dead. "
+            f"Either restore the literal default or rewrite the check to read "
+            f"the default_factory's value."
+        )
+
+
 def test_prod_with_everything_set_returns_cleanly():
     assert assert_production_config(_settings()) is None
 

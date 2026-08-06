@@ -220,6 +220,9 @@ def assert_production_config(s: Settings) -> None:
     # require both fields to keep plain literal defaults: redeclared with
     # `Field(default_factory=…)`, `.default` becomes PydanticUndefined, every
     # comparison goes False, and a defaulted secret ships with the gate green.
+    # Guarded by test_prod_preflight.py::
+    # test_secret_defaults_are_literals_so_the_comparison_can_work — no other
+    # test catches it, because they all inject `.default` as the value.
     for field in ("session_secret", "ws_signing_key"):
         if getattr(s, field) == Settings.model_fields[field].default:
             env = field.upper()
