@@ -41,6 +41,18 @@ entries plausibly justify writing a first plan for q_001 without also
 requiring a locality survey (the `localities` entry is pre-seeded, matching
 the "surveyed" convention) — if not, adjust or drop entries.
 
+**Second correction (2026-08-06):** the test's `judge_context` originally carved
+out a "scope limit" for a real baseline-run finding — `Skill('search-records')`
+reporting `record_search` unavailable, because this harness's per-test tool
+allowlist is computed from the tested skill's own `allowed-tools` only
+(`eval/harness/harness/allowed_tools.py::compute_allowed_tools`) and does not
+extend to a callee invoked via `Skill(...)`. `ut_search_records_018` already
+has the correct, documented answer to this exact problem —
+`execution.stub_skills` — so this test now uses that instead of a judge_context
+workaround: `Skill('search-records')` is stubbed to a canned confirmation that
+execution proceeded, removing the harness artifact from the transcript
+entirely rather than asking the judge to reason around it.
+
 ## Used by
 
 - `research-plan` tests where the invoking message combines a plan request

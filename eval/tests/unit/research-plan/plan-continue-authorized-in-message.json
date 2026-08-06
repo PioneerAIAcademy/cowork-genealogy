@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "Don't stop to ask 'start executing?' when the message already authorized it",
     "type": "positive",
-    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and then attempt to proceed toward execution in the same turn, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. NOTE: a 2026-08-05 baseline run showed the skill correctly attempting the handoff (invoking Skill('search-records')) but search-records then reporting record_search as unavailable -- a unit-test harness scoping artifact (tool availability is computed from the tested skill's own allowed-tools only), not a research-plan defect. judge_context scopes grading to research-plan's own turn accordingly; see that field before annotating.",
+    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and then attempt to proceed toward execution in the same turn, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. Uses execution.stub_skills for Skill('search-records') -- the same documented pattern ut_search_records_018 uses for Skill('search-external-sites') -- since compute_allowed_tools does not extend a callee skill's own MCP tools into this test's session, so running search-records for real would fail on a harness artifact unrelated to what this test checks.",
     "tags": ["planning", "control-flow", "continuation", "from-cowork", "plan-continue-authorized-in-message"]
   },
   "input": {
@@ -29,14 +29,20 @@
   "judge_context": [
     "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
     "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
-    "SCOPE LIMIT -- READ BEFORE GRADING (established from a real baseline run, 2026-08-05): this unit-test harness computes each test's allowed MCP tools once, from research-plan's OWN `allowed-tools` frontmatter only (see eval/harness/harness/allowed_tools.py::compute_allowed_tools). If the transcript shows the skill invoking Skill('search-records') and search-records then reporting that record_search is unavailable in this session/environment, that is a harness scoping artifact, not a defect in research-plan -- a real Cowork session would not have this limitation. DO NOT score Correctness or Completeness down for that downstream tool-availability report. Grade ONLY research-plan's own decision: did it attempt to proceed (invoke Skill('search-records'), or otherwise clearly state it is proceeding to execution) instead of ending its turn by asking a question the message already answered.",
-    "COMPLIANT: the skill writes the plan, then either (a) invokes Skill('search-records') and the turn ends there or with search-records reporting a downstream limitation (see scope limit above), or (b) explicitly states it is proceeding to execute rather than posing that as an open question.",
+    "Skill('search-records') is stubbed (execution.stub_skills) to return a canned confirmation that execution proceeded -- this stands in for search-records' own suite, which already covers its own correctness. Do not grade the content of that canned confirmation.",
+    "COMPLIANT: the skill writes the plan, then invokes Skill('search-records') (which returns the canned confirmation) -- or otherwise explicitly states it is proceeding to execute -- rather than posing execution as an open question.",
     "NON-COMPLIANT (the specific failure this test guards against): the skill writes the plan and ends its turn with an open question like 'Would you like me to start executing this plan?' -- re-asking something the invoking message already answered. Score Correctness low ONLY for this pattern.",
-    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus attempting to proceed.",
+    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
     "If the skill asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) that is not a re-ask of the already-answered 'should I start executing' question, that is acceptable and should not be penalized under this dimension."
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-records",
+        "response": "Executing pl_001 now, in sequence. pli_001 (1860 census, Schuylkill County, PA): searched FamilySearch, one candidate found and logged as log_001; plan item updated to in_progress. Continuing to pli_002 without stopping to check in, per your instruction -- each subsequent planned item will be searched and logged the same way in turn. No further confirmation needed from you for this batch."
+      }
+    ]
   }
 }

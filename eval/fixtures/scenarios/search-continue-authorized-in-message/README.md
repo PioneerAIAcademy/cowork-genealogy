@@ -41,6 +41,23 @@ could ever match it. Two fixtures now cover the two most likely real
 argument shapes (collectionId-anchored, and an `anyPlace`-anchored
 fallback for a run that doesn't use the rationale's collectionId).
 
+**Second correction (post-fixture-fix run, 2026-08-06):** with the fixture gap fixed, the
+run instead ABORTED on `max_turns` (default 20) -- the model went further than the test
+required, delegating to `record-extraction` for pli_001's result before starting pli_002,
+which is real production-realistic (if arguably over-eager, given search-records'
+"let the user confirm before extraction" default) behavior but costs extra turns. Bumped
+`execution.max_turns` to 40 in the test JSON so the full two-item continuation can complete
+and actually get judged.
+
+**Third correction (same day):** raising the turn budget wasn't enough -- the re-run instead
+hit `max_wall_clock_seconds` (400s), because the model tried to delegate to
+`record-extraction`, which itself couldn't reach `extraction_append` (`ToolSearch` is not in
+that sub-agent's allowed tools under this harness's per-test scoping), and spent most of the
+budget retrying that dead end before ever reaching pli_002. Reworded `input.user_message` to
+explicitly scope extraction OUT ("I'll handle extraction myself afterward") so the model stays
+on the two searches this test is actually about, and added a `judge_context` scope note in
+case it still wanders into extraction anyway.
+
 ## Used by
 
 - `search-records` tests asserting that when an active plan has more than
