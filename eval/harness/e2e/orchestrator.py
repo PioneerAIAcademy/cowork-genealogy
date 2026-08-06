@@ -45,6 +45,7 @@ from harness.context_policy import (
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -1615,6 +1616,25 @@ async def _run_agent(
         _emit(
             f"[unnamed-delegate] {len(unnamed_delegate_violations)} protected write(s) "
             "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
+        )
+
+    # SHADOW MODE ONLY (issue #1133) — a post-hoc read of the FINAL research.json,
+    # not a tool_calls scan: a source that BACKS A WRITTEN CONCLUSION carries an
+    # empty ESM citation string (the provenance-nulling half the engine's
+    # write-seam ref guard deliberately disowns; see
+    # find_citation_nulling_in_conclusions). Folded into the same already-plumbed
+    # `guardrail_shadow_violations` field, discriminated by its `kind` key so the
+    # shadow report counts it in its own bucket. Logs; never fails the run.
+    # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
+    # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
+    citation_nulling_shadow = find_citation_nulling_in_conclusions(
+        read_research_json(workspace)
+    )
+    if citation_nulling_shadow:
+        guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
+        _emit(
+            f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
+            "with a null/empty citation string (shadow mode — not failed)"
         )
 
     return (
