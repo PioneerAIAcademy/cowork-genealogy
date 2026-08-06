@@ -141,6 +141,8 @@ Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** T
 
 The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) is per-test, not per-dimension — aggregated across runs for dashboard reporting.
 
+**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results.
+
 ## Snapshot model
 
 Every run log embeds a `snapshot: {repo-relative-path: sha256-of-normalized-content}` block covering every file the run depended on:

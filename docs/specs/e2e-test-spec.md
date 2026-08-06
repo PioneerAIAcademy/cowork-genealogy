@@ -955,9 +955,23 @@ Three integrity rules make the agreement number trustworthy:
   human label is independent of the judge under test. Blindness is a property of
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
-  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
-  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
-  deferred to `/interpret-e2e-result`, which is itself blind to them.
+  must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
+  compliance axis, and — when the judge reached no conclusion at all — a
+  `no grade:` line saying which cause it was, and stops there; `verdict`,
+  `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
+  is itself blind to them.
+
+  That third line is on the harness-fact side of this rule, not an exception to
+  it. It distinguishes a judge that raised (quoting the judge's own error text)
+  from an agent that produced no final tree, from `--skip-judge`; none of those
+  is a genealogical conclusion, and the presence of an error says nothing about
+  what the agent recovered. It exists because the previous single fixed string
+  printed the same words for all three, directly beneath
+  `stop_reason: completed`, so a judge crash read as "this run succeeded and
+  produced nothing" — indistinguishable, in a batch, from runs that genuinely
+  failed. **Gradedness is a separate axis from committability**: after a judge
+  crash becomes committable, a run can be ungraded *and* worth committing for
+  re-grading, so the two are reported on their own lines.
 
   > **Caveat on annotations collected before 2026-07-31.** Until then the
   > harness printed the judge's verdict *and* its `proof_quality` score to the
