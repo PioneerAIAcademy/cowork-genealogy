@@ -209,9 +209,8 @@ plan items complete.
   `resolved`. This skill owns none of those transitions —
   `exhaustive_declared` is `research-exhaustiveness`'s, `resolved` is
   `proof-conclusion`'s — so there is no way to retire a question here, and none
-  is needed: an overtaken question stays as it is, and why it was set aside
-  belongs in the new question's `rationale`. Never write a second `q_` for a
-  question that already exists.
+  is needed: an overtaken question stays as it is. Never write a second `q_` for
+  a question that already exists.
 - **Historical context matters.** Factor in jurisdictional boundary changes,
   migration, wars, and record availability for the time and place.
 
@@ -239,4 +238,4 @@ above.
 **On repeat invocation:** re-evaluate which question is next, and either select
 a question already present or add a new `q_` when the next question isn't
 already in the section — never write a second `q_` for the same question, and
-never revise an existing question's `status` to retire it.
+never revise an existing question's `status`.

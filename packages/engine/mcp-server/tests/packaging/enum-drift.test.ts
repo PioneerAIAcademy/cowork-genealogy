@@ -346,7 +346,7 @@ describe("enum-drift lint", () => {
     );
   });
 
-  // The EXPECTED registry only protects the two files listed in it. Everywhere
+  // The EXPECTED registry only protects the files listed in it. Everywhere
   // else — the 75 references/ files and the rubrics — a declaration this scan
   // can't parse would otherwise vanish without a trace, which is exactly the
   // surface the registry does not cover. Fail on the parse instead of on the
