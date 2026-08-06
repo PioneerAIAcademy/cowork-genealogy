@@ -39,21 +39,31 @@ def _settings(**overrides) -> Settings:
 
 
 def test_prod_with_everything_set_returns_cleanly():
-    assert_production_config(_settings()) is None
+    assert assert_production_config(_settings()) is None
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "expected_in_message"),
+    ("field", "value", "named", "not_named"),
     [
-        ("session_secret", _DEFAULT_SESSION_SECRET, "SESSION_SECRET"),
-        ("ws_signing_key", _DEFAULT_WS_SIGNING_KEY, "WS_SIGNING_KEY"),
-        ("database_url", None, "DATABASE_URL"),
+        ("session_secret", _DEFAULT_SESSION_SECRET, "SESSION_SECRET", ("WS_SIGNING_KEY", "DATABASE_URL")),
+        ("ws_signing_key", _DEFAULT_WS_SIGNING_KEY, "WS_SIGNING_KEY", ("SESSION_SECRET", "DATABASE_URL")),
+        ("database_url", None, "DATABASE_URL", ("SESSION_SECRET", "WS_SIGNING_KEY")),
     ],
 )
-def test_prod_with_a_default_refuses_and_names_it(field, value, expected_in_message):
+def test_prod_with_a_default_refuses_and_names_only_it(field, value, named, not_named):
+    """Names the offender — and *only* the offender.
+
+    The negative half is the load-bearing one: without it, an implementation that
+    reports every setting whenever any one of them is wrong passes green, and an
+    operator who correctly rotated two of three is sent to rotate all three. That is
+    the deploy cycle the collect-then-raise design exists to save.
+    """
     with pytest.raises(RuntimeError) as exc:
         assert_production_config(_settings(**{field: value}))
-    assert expected_in_message in str(exc.value)
+    message = str(exc.value)
+    assert named in message
+    for other in not_named:
+        assert other not in message, f"{other} is correctly configured but the refusal names it"
 
 
 def test_refusal_names_every_offender_at_once():

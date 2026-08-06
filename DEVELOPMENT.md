@@ -487,11 +487,15 @@ built web client from a single origin. Full procedure in
 
 ```bash
 # Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
-# and DATABASE_URL are REQUIRED: PUBLIC_URL is https, so the app refuses to boot
-# without them (config.assert_production_config). Omitting one is not a silent
-# downgrade: the process exits at startup with a message naming the missing setting.
+# and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app refuses to boot
+# if DATABASE_URL is unset or either secret is still at its development default
+# (config.assert_production_config). Not a silent downgrade: the process exits at
+# startup naming the offending setting. (A blank-but-set secret still boots — #1367.)
+# DATABASE_URL takes the Neon DIRECT (non-pooler) URL. Keep every comment ABOVE this
+# command: a trailing `\  # …` is an escaped space plus a comment, which silently
+# truncates the command and drops every argument after it.
 fly secrets set \
-  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
+  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —

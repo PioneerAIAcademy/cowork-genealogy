@@ -228,12 +228,14 @@ def assert_production_config(s: Settings) -> None:
                 f'    Fix: fly secrets set {env}="$(openssl rand -hex 32)"'
             )
 
+    # `is_sqlite` is `not database_url`, so this covers unset AND set-but-blank.
     if s.is_sqlite:
         problems.append(
-            "  DATABASE_URL is unset, so this would run on SQLite under DATA_DIR —\n"
-            "    ephemeral rootfs (deploy/fly.toml mounts no volume), losing every\n"
-            "    user, session and allowlist row on the next machine restart.\n"
-            '    Fix: fly secrets set DATABASE_URL="postgresql://…neon.tech/DB?sslmode=require"'
+            "  DATABASE_URL is unset or blank, so this would run on SQLite under\n"
+            "    DATA_DIR — ephemeral rootfs (deploy/fly.toml mounts no volume), losing\n"
+            "    every user, session and allowlist row on the next machine restart.\n"
+            "    Fix: fly secrets set "
+            'DATABASE_URL="postgresql://USER:PASS@HOST.neon.tech/DB?sslmode=require"'
         )
 
     if problems:

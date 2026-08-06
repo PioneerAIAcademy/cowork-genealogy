@@ -165,8 +165,10 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 
 **Boot-enforced** (issue #1123): because `PUBLIC_URL` is https, the app calls
 `config.assert_production_config` as the first statement of `main.py`'s lifespan and
-**refuses to start** if any of those three is missing or still at its development
-default. The refusal names each offending setting and its `fly secrets set` remedy.
+**refuses to start** when `DATABASE_URL` is unset or blank, or either secret is still
+at its development default. The refusal names each offending setting — and only the
+offending ones — with its `fly secrets set` remedy. A secret set to a blank or weak
+value still boots; closing that is issue #1367.
 Before this, forgetting one silently produced forgeable session cookies, forgeable WS
 tokens, or a database that vanished on the next machine restart.
 
