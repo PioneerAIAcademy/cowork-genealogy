@@ -30,8 +30,8 @@ Two more tests:
 **1. Numbered, zero-padded, never reused.** `ADR-0007-short-slug.md`. A deleted
 ADR's number stays retired.
 
-**2. Titled as an action.** "Dual-spell every MCP tool name in agent
-frontmatter," not "Tool naming." A reader scanning the index should see what was
+**2. Titled as an action.** "Spell every MCP tool name under all three server
+registrations," not "Tool naming." A reader scanning the index should see what was
 decided, not what it was about.
 
 **3. These are living documents. Edit them freely.**
