@@ -7,7 +7,8 @@ description: >-
   `proof-critique` after `proof-conclusion` writes a summary (must be
   invoked and recorded; its recommendation stays advisory, never forcing
   rework) — and on-demand when the user says "review my work", "is this
-  defensible?", "mentor", "second opinion". Never modifies research.json
+  defensible?", "mentor", "second opinion", "is this a good read",
+  "polish this for my family". Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions
@@ -17,9 +18,9 @@ description: >-
   mentor.
 model: claude-sonnet-5
 tools:
-  # Every MCP tool appears under BOTH server spellings — `genealogy` (the
-  # harnesses, .mcp.json, hosted web) and the `remote-devices` bridge
-  # namespace Cowork exposes the installed .mcpb under. `tools:` is matched
+  # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
+  # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
+  # (cloud Cowork), and `Genealogy_Research` (on-computer Cowork). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
   # the host registers. See record-extractor.md for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
@@ -44,6 +45,16 @@ tools:
   - mcp__remote-devices__Genealogy_Research__external_links_search
   - mcp__remote-devices__Genealogy_Research__wiki_place_page
   - mcp__remote-devices__Genealogy_Research__wiki_search
+  - mcp__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__validate_research_schema
+  - mcp__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_distance
+  - mcp__Genealogy_Research__collections_search
+  - mcp__Genealogy_Research__external_links_search
+  - mcp__Genealogy_Research__wiki_place_page
+  - mcp__Genealogy_Research__wiki_search
 ---
 
 # GPS Mentor
@@ -144,6 +155,9 @@ If `focus` or `target_id` is missing or ambiguous, default to
 3. Most recently written proof summary
 4. `"project"` (whole-project review)
 
+**Craft requests invert this** — they take the most recent proof summary
+first, never a question or `"project"`. See the craft section below.
+
 State the defaulted focus and target at the top of your narrative.
 
 ## Existing-verdict skip
@@ -166,6 +180,11 @@ is the authoritative index, and it is what you can actually read.)
 
 If `force_reevaluate: true` was passed in the delegation message, skip
 this check entirely and proceed to a fresh evaluation.
+
+**Craft requests are exempt too** — always evaluate fresh. Focus +
+target_id cannot tell a craft read from an evidentiary one. This exempts
+the *skip*, not the lookup: you still read the candidate entry's sidecar
+for its `craft` flag when deciding supersession below.
 
 **Interactive mode (`mode: interactive`).** If an existing verdict
 file is found:
@@ -280,6 +299,11 @@ in the narrative rather than silently proceeding.
    verdicts (a refusal after a `looks_solid` leaves the prior entry's
    `superseded_by` as null).
 
+   **A craft run supersedes only an earlier craft run** on the same
+   target, and is never superseded by an evidentiary one. To tell them
+   apart, read the candidate entry's `file_path` sidecar and check its
+   `craft` flag; missing or unreadable counts as not craft.
+
    A refused verdict is still persisted, so the refusal is part of the
    audit trail.
 
@@ -288,6 +312,8 @@ in the narrative rather than silently proceeding.
    the researcher.
 
 The structured verdict has this shape:
+
+A craft run (see the craft section below) adds one field: `"craft": true`.
 
 ```json
 {
@@ -390,6 +416,7 @@ next action.
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for <q_id>. Invoke research-plan first." |
 | `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
 | `proof-critique` | No `proof_summaries[id == target_id]` exists | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
+| `on-demand`, craft request | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 Write the refusal as the structured verdict with
 `verdict: "refused"` and a one-line `narrative_for_user`. Do not
@@ -592,6 +619,86 @@ focused mode matches the current state of the target:
 - Question at `exhaustive_declared` without proof → light
   conclusion-readiness
 - Question with proof_summaries → light proof-critique
+
+#### When the ask is about how it reads, not whether it holds up
+
+"Is this a good read", "polish this for my family", "prepare this to
+share", "is it ready to publish" — craft requests. The five checks below
+**replace** the GPS checks above; only proof-critique's check 3 carries
+over (end of this section).
+
+**What you read** is a proof summary's `narrative_markdown` — prose.
+Ignore typography and layout. A table is your business only when it does
+work the prose should, which is a craft check 3 finding.
+
+**Target.** Unnamed → the most recent proof summary. None exists →
+refuse per the refusal table, recorded against `target_id: "project"` /
+`target_type: "project"` (inventing a `ps_`, or pairing `"project"` with
+any other `target_type`, fails validation and loses the refusal). An
+explicit `q_` with a craft request → refuse against that `q_` with
+`target_type: "question"` (its id exists, so it validates), naming the
+`ps_` they likely meant; don't retarget, don't critique a question's
+prose. Persist it like any refusal.
+
+**Open with the scope sentence — this is required text.** Before the
+`# Mentor review:` heading, say you read it for how it reads and did
+*not* check whether the evidence holds up, and name `proof-critique` as
+the review that does. Never skip it, however tight the response. Head the
+review `# Mentor review: how this reads — <target_id>`.
+
+**Set `"craft": true`** in the verdict body — the only mark separating a
+craft read from an evidentiary one (both are `focus: "on-demand"`), and
+the supersession rule needs it.
+
+**Craft findings are advisory, always.** Checks 1–5 never produce a
+must-address item or an `address_first` verdict. Use
+`consider_addressing`, or `non_blocking_notes` for nits, with
+`standard: "Craft — <axis>"` — that label **is** the citation, so never
+invent a standard number for a craft finding. No tier call on a craft
+read: surface the two or three findings that would most change the
+reading. Verdict is `consider_addressing` if you raised anything,
+`looks_solid` if it reads well; `address_first` is reachable only via the
+carry-over below, or a real GPS problem you notice — reported under its
+own standard.
+
+**Never say the axis names out loud** — they are internal. You do not
+announce an "audience calibration check"; you ask whether their cousin
+who has never used a genealogy site could follow this.
+
+**Rubric checks:**
+
+1. **Audience calibration.** Who is this for, and does the prose behave
+   that way? A family write-up shouldn't assume the reader knows what a
+   bounty-land warrant is; a journal submission shouldn't explain what a
+   census is. Take the audience from
+   `researcher_profile.intended_audience` if set — otherwise infer it,
+   and say which you assumed.
+
+2. **Context provision.** Does the reader learn enough about time and
+   place to understand *why* things happened? Unexplained migrations,
+   occupations and moves leave facts with no meaning. Where the gap is
+   concrete, set `suggested_skill` to `historical-context` or
+   `locality-guide`.
+
+3. **Engagement.** A narrative, or a citation list with sentences around
+   it? Look for a shape, people described as people, prose that doesn't
+   dissolve into strings of dates. Name the passage that lost you.
+
+4. **Sensitive findings handled with tact.** Where the prose reports
+   something painful or private — an out-of-wedlock birth, an
+   institutionalization, a criminal record, a suicide — does it show the
+   restraint the audience deserves? About *handling*, not disclosure:
+   never argue for leaving a documented fact out.
+
+5. **Research leads.** Does it say where to go next — remaining gaps,
+   records still worth trying? End with a door, not a wall.
+
+**The one carry-over: proof-critique's check 3 also runs**, under its own
+standard and its own must-address severity. It is not restated as a craft
+axis, because check 3 already asks whether citations are inline and every
+source locatable. Claims leading to no findable record are must-address
+under check 3, not `Craft — …`. Citation *formatting* is a nit for
+`non_blocking_notes`.
 
 ## Tool usage guidance
 

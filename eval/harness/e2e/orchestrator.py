@@ -40,6 +40,8 @@ from claude_agent_sdk import (
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    is_subagent_call,
+    subagent_only_denial,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
@@ -48,6 +50,8 @@ from harness.skill_invocation import (
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
+    same_person_scored_ids,
+    unguarded_new_person_evidence_links,
 )
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
@@ -157,6 +161,42 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
+def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
+    """Whether this is `extraction_append` on the main thread — the #942 bug.
+
+    `extraction_append` is the record-extractor subagent's private writer: it is
+    declared by NO skill's `allowed-tools` and lives only on
+    `agents/record-extractor.md`. So the only legitimate caller is the
+    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
+    the main thread (no `agent_id`) is the router substituting for a failed
+    spawn and doing the extraction itself.
+
+    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    sufficient discriminator — which is all e2e can see, since its sub-skills run
+    in the same session via the `Skill` tool with no `agent_id` to attribute them
+    (see `harness.context_policy` docstring). We deny the bare tool directly
+    rather than routing through `subagent_only_violation`, which guards the whole
+    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
+    tool-specific also means a future skill that legitimately declares a guarded
+    tool is not denied here.
+
+    `image_read`, the set's other member, satisfies the same condition today — no
+    skill has declared it since `search-images` moved to `@plugin:image-reader`
+    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
+    equally enforceable here and simply is not yet: that is outside #942's blast
+    radius, tracked as issue #1273.
+    """
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # raise AttributeError here, and a raising hook fails a call the agent was
+    # entitled to make (CLAUDE.md, "Plugin hooks"). Fail closed to "not blocked".
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return False
+    return (
+        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        and not is_subagent_call(input_data)
+    )
+
+
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     """Whether a tool call is denied by THIS fixture's `blocked_tools`.
 
@@ -197,6 +237,113 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+# Cap on how many person ids the issue-#963 shadow entry names inline. A single
+# batch research_append can append person_evidence for many new persons; without
+# a cap the recorded detail string could balloon to an unreadable length. Show
+# the first N, then "+M more".
+_MAX_SHADOW_IDS = 10
+
+
+def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
+    """Seed-tree person ids for the issue-#963 same_person check, read from the
+    IMMUTABLE fixture file.
+
+    `starting_tree_path` is `FixtureCaps`/`Fixture.starting_tree_path`, which
+    `load_fixture` sets to `<fixture_dir>/starting-tree.gedcomx.json` — the
+    committed fixture input, NOT the per-run workspace copy `build_workspace`
+    makes at `<workspace>/tree.gedcomx.json` and the run then mutates. Reading
+    the fixture path (not the workspace) is what guarantees these ids are the
+    run's *starting* state, so "new this run" is computed against a baseline the
+    run can't have changed.
+
+    Returns the id set, or **None on any read/parse failure** so the check FAILS
+    OPEN (the caller skips it). An empty set would instead mis-classify every
+    legitimate seed-person link as "new + unscored" and log a shadow entry for
+    each one on nothing worse than a fixture/IO hiccup, inflating exactly the
+    number this is here to measure. Failing open loses only the in-run signal;
+    the post-run hard-fail (find_person_evidence_missing_same_person, which does
+    its own seed read) still backstops any real bypass.
+
+    Non-string `persons[].id` values are dropped rather than admitted as None:
+    the ids this set is compared against are always strings, so a None member
+    could never match, and admitting it would make the `set[str]` annotation a
+    lie for no benefit.
+
+    The failure is printed to stderr rather than swallowed or sent to a logger:
+    the harness has no module logger, and every other operator-facing signal
+    here (`_emit`, the blocked-tool notices) is a direct stderr print for the
+    same reason — it always shows in the run's captured output on the
+    genealogist team's Windows consoles. Kept diagnosable, not silent.
+    """
+    try:
+        seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(
+            f"  [warn] could not read seed tree {starting_tree_path} "
+            f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
+            "for this run; the post-run guardrail check still applies.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return None
+    persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
+    return {p["id"] for p in persons if isinstance(p, dict) and isinstance(p.get("id"), str)}
+
+
+def person_evidence_provenance_gap(
+    tool_name: str,
+    tool_input: dict[str, Any] | None,
+    *,
+    tool_calls: list[dict[str, Any]],
+    starting_person_ids: set[str],
+) -> str | None:
+    """The issue-#963 provenance gap for a pending `research_append` that links
+    a brand-new, unscored tree person via `person_evidence`, or None if clean.
+
+    SHADOW MODE — the caller records this and lets the write through; it does
+    not deny. Graduating to a real deny is issue #1231, gated on the shadow
+    numbers this produces.
+
+    Pure decision logic, extracted from `pretool_hook` so the clean, fail-open,
+    and gap paths are unit-testable without spinning up the SDK.
+
+    Scoring is read from `tool_calls` alone. There is deliberately no
+    `pending_tool_uses` argument: `pretool_hook` runs from a spawned control-
+    request task while `tool_calls` is appended by the message loop, so a
+    `same_person` issued in the SAME turn as the write may not be visible yet
+    (the SDK buffers up to 100 messages before the loop drains them). Passing
+    `pending_tool_uses` did not fix that — the AssistantMessage branch appends
+    one entry object to `tool_calls` AND stores it in `pending_tool_uses`, so
+    the latter is always a subset of the former and unioning them adds nothing.
+    Under shadow mode a same-turn miss costs one over-counted log line; closing
+    it properly means accumulating scored ids inside the hook itself, which is
+    #1231's job when this graduates.
+
+    Ordering note — this is a STRICTER question than the post-run detector
+    `find_person_evidence_missing_same_person` asks. That one is whole-run: a
+    `same_person` anywhere, INCLUDING after the link, satisfies it. This one
+    only sees calls already made, so link-then-score is a gap here and a pass
+    there. Rare but real (one occurrence in the committed corpus:
+    ferber-marriage 2026-07-21, person I5 linked at call #45 and scored at
+    #68), and it is a genuine divergence, not an equivalence — read the shadow
+    count with that in mind.
+    """
+    scored = same_person_scored_ids(tool_calls)
+    unguarded = unguarded_new_person_evidence_links(
+        tool_name, tool_input, scored_ids=scored, starting_ids=starting_person_ids
+    )
+    if not unguarded:
+        return None
+    shown = ", ".join(unguarded[:_MAX_SHADOW_IDS])
+    if len(unguarded) > _MAX_SHADOW_IDS:
+        shown += f", +{len(unguarded) - _MAX_SHADOW_IDS} more"
+    return (
+        f"person_evidence link written for new tree person(s) {shown} with no "
+        "prior same_person call: a brand-new identity should be scored before it "
+        "is asserted (research/SKILL.md doctrine; issue #963)."
+    )
 
 
 @dataclass
@@ -593,6 +740,23 @@ def _summarize_tool_response(content: Any) -> str:
     return text if len(text) >= len(head) else head
 
 
+def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: str) -> None:
+    """Populate the producer-side fields on a `tool_calls` entry when its
+    `ToolResultBlock` arrives: the response summary, and `is_error`.
+
+    Split out of `_consume` so the producer half is unit-testable — the
+    guardrail gates in `skill_invocation.py` skip an entry when
+    `entry.get("is_error") is True`, and until this set the field nothing did,
+    so every gate treated a failed Skill call as a success (#999). The existing
+    gate tests fabricate `is_error` themselves, so they can't catch that; this
+    helper can. `is True` normalizes the SDK's None-on-success (`is_error` is
+    `bool | None`, `None` when the call succeeded) into a clean bool the gates
+    and the acceptance test can rely on.
+    """
+    entry["response_summary"] = summary
+    entry["is_error"] = block.is_error is True
+
+
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
     """Human-legible label for a `timeline` entry's tool-names list.
 
@@ -697,19 +861,20 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
 ) -> tuple[
-    list[dict[str, Any]],
-    list[str],
-    dict[str, Any],
-    str | None,
-    str | None,
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[str],
+    list[dict[str, Any]],  # tool_calls
+    list[dict[str, Any]],  # narration
+    dict[str, Any],  # usage
+    str | None,  # aborted_reason
+    str | None,  # error
+    list[dict[str, Any]],  # blocked_tree_reads
+    list[dict[str, Any]],  # blocked_context_calls
+    list[dict[str, Any]],  # guardrail_shadow_violations
+    list[str],  # unnamed_delegate_violations
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
     Returns (tool_calls, narration, usage, aborted_reason, error,
-    blocked_tree_reads, guardrail_shadow_violations,
+    blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
@@ -727,6 +892,18 @@ async def _run_agent(
     # violation rate between old and new runs.
     narration: list[dict[str, Any]] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
+    # Seed-tree person ids for the issue-#963 same_person-provenance check (in
+    # pretool_hook), read once from the IMMUTABLE fixture file. None on a read
+    # failure => the check fails open for this run. See load_seed_person_ids for
+    # the full rationale (immutable-path guarantee, fail-open, stderr warning).
+    starting_person_ids: set[str] | None = load_seed_person_ids(fixture.starting_tree_path)
+    # issue #963, SHADOW MODE — hook-sourced provenance gaps (a person_evidence
+    # link written before any same_person scored that identity). Folded into
+    # `guardrail_shadow_violations` at the end of the run so the whole shadow
+    # signal lands in one already-plumbed field; entries carry `required_skill`
+    # to match that list's shape. Nothing reads this into a verdict.
+    provenance_shadow: list[dict[str, Any]] = []
+
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
     # the matching tool_calls entry when its ToolResultBlock arrives below.
@@ -752,6 +929,11 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Every denied main-thread `extraction_append` — the router doing the
+    # record-extractor's job because the subagent failed to spawn (#942). The
+    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
+    # the PreToolUse deny); this list is the record that it did not run.
+    blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
     # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
@@ -850,14 +1032,40 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is
-        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
-        # §4.1. It is unit-only because the guard needs to know which SKILL is
-        # active, and e2e cannot know: sub-skills run in this same session via
-        # the Skill tool (no `agent_id` to attribute them), so a legitimate
-        # `search-images` browse — which declares `image_read` and pages through
-        # volumes itself — is indistinguishable from a record-extraction router
-        # violation. Denying on the bare tool name would break real browsing.
+        # NOTE: the per-context tool policy (harness/context_policy.py) is only
+        # PARTIALLY enforced here — see that module's docstring.
+        #   - `extraction_append` IS enforced (below). No skill declares it, so
+        #     its only legitimate caller is the Task-spawned record-extractor,
+        #     which carries `agent_id`; a main-thread call is the #942 router
+        #     substitution. `agent_id` presence alone discriminates, which is all
+        #     e2e can see — sub-skills run in this same session via the Skill
+        #     tool with no `agent_id` to attribute them, so the full per-skill
+        #     check (`subagent_only_violation`) has no `declared_tools` to take.
+        #   - `image_read`, the set's other member, is NOT enforced here yet. It
+        #     meets the same condition today (no skill declares it; it lives only
+        #     on agents/image-reader-opus.md) — issue #1273.
+        if is_main_thread_extraction_append(input_data):
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on the main thread — writing extracted "
+                        "assertions is the record-extractor subagent's job. If it "
+                        "failed to spawn, report the failure and stop (#942)."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            return subagent_only_denial(bare)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -926,6 +1134,54 @@ async def _run_agent(
                     ),
                 },
             }
+
+        # docs/specs/guardrail-enforcement-spec.md §8, issue #963 — a
+        # person_evidence link for a BRAND-NEW tree person should be preceded
+        # by a same_person call scoring that identity, the doctrine
+        # find_person_evidence_missing_same_person already hard-fails on
+        # post-run. This is the LIVE, pre-write form of that question, and it
+        # runs in SHADOW MODE: it records and lets the write through.
+        #
+        # Why shadow and not a deny, despite same_person being a required call
+        # rather than a windowed heuristic: replaying this check over the
+        # committed e2e corpus, 65 of 81 fixtures fire at least one hit (265
+        # across 280 runs). Scoring a locally-minted person is simply not
+        # current agent behavior, so a deny here would not be a rare guardrail
+        # — it would intervene in four fifths of a suite costing $7-25 a run,
+        # with no e2e evidence for how the agent recovers. Graduating it is
+        # issue #1231, gated on the numbers this produces. Unlike the two
+        # post-hoc shadow detectors below, this one must live in the hook: the
+        # thing being measured is what a PreToolUse gate would have done, and
+        # only a live hook sees the write before it lands.
+        #
+        # Skipped entirely when starting_person_ids is None (seed read failed —
+        # fail open; see load_seed_person_ids). The bare == "research_append"
+        # gate just avoids a needless tool_calls scan on every other call —
+        # person_evidence_provenance_gap also returns None for any non-
+        # research_append tool, so it's safe either way. Decision logic lives in
+        # that helper so it's unit-testable without the SDK.
+        if bare == "research_append" and starting_person_ids is not None:
+            provenance_gap = person_evidence_provenance_gap(
+                tool_name,
+                input_data.get("tool_input") or {},
+                tool_calls=tool_calls,
+                starting_person_ids=starting_person_ids,
+            )
+            if provenance_gap:
+                # Shaped to match find_unguarded_protected_writes' entries so
+                # both can share `guardrail_shadow_violations` without a reader
+                # having to branch on which source an entry came from.
+                # `detail` is the discriminator: only this source sets it.
+                provenance_shadow.append(
+                    {
+                        "index": len(tool_calls),
+                        "tool": bare,
+                        "required_skill": "person-evidence",
+                        "question_id": None,
+                        "detail": provenance_gap,
+                    }
+                )
+                _emit("[guardrail-shadow] person_evidence w/o prior same_person")
 
         tool_call_count["n"] += 1
         if tool_call_count["n"] > fixture.caps.tool_calls:
@@ -1157,7 +1413,7 @@ async def _run_agent(
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
-                                    entry["response_summary"] = summary
+                                    apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
@@ -1331,6 +1587,17 @@ async def _run_agent(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
             "with no recent matching Skill invocation (shadow mode — not denied)"
         )
+    # issue #963 — fold in the hook-sourced provenance gaps collected live in
+    # pretool_hook. Same list because both answer "a guardrail's effect landed
+    # without its guardrail", and one field keeps the shadow signal readable in
+    # one place; kept ordered after the post-hoc entries so the two sources stay
+    # distinguishable by their `detail` key.
+    if provenance_shadow:
+        guardrail_shadow_violations = guardrail_shadow_violations + provenance_shadow
+        _emit(
+            f"[guardrail-shadow] {len(provenance_shadow)} person_evidence link(s) "
+            "written with no prior same_person (shadow mode — not denied)"
+        )
 
     # SHADOW MODE ONLY, same as the block above — see
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate
@@ -1357,6 +1624,7 @@ async def _run_agent(
         aborted_reason,
         error,
         blocked_tree_reads,
+        blocked_context_calls,
         guardrail_shadow_violations,
         unnamed_delegate_violations,
     )
@@ -1492,6 +1760,7 @@ async def run_e2e_test(
             aborted,
             error,
             blocked_tree_reads,
+            blocked_context_calls,
             guardrail_shadow_violations,
             unnamed_delegate_violations,
         ) = await _run_agent(
@@ -1591,6 +1860,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            blocked_context_calls=blocked_context_calls,
             narration=narration,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
