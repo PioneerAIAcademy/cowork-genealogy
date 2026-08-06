@@ -75,7 +75,7 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 
 | `selector` | Required field(s) | Removes |
 |---|---|---|
-| `parents-of` | `personId` | the person's parents, and the ParentChild links to them |
+| `parents-of` | `personId` | the person's parents, the ParentChild links to them, **and the person's own `Parents` documentary facts** (see §2.1.1) |
 | `children-of` | `personId` | the person's children, and the ParentChild links to them |
 | `spouses-of` | `personId` | the person's spouses, and the couple relationships |
 | `birth-of` | `personId` | that person's Birth facts |
@@ -94,6 +94,24 @@ matched nothing — …"`. Re-running a selector whose target is already gone
 therefore fails loudly, which reads as "this was already forgotten." An unknown
 `personId` is likewise an error, phrased to distinguish a tree person id from a
 FamilySearch PID.
+
+#### 2.1.1 Parentage is carried twice — `parents-of` strips both
+
+FamilySearch encodes a parentage conclusion **redundantly**: as `ParentChild`
+relationships *and* as a documentary `Parents` fact on the child's own record
+(a fact whose `value` names the parents, e.g. `"Geo… Wilcox - Caroline E
+Woodruff"`). `person_read` returns both. If `parents-of` stripped only the
+relationships, the answer would survive as that fact — and it can be the **sole**
+carrier, when the established parents were never added as tree persons at all.
+So `parents-of` also removes the subject's own `Parents`-type facts, matched by
+type — consistent with the structural, never-by-value rule, since the `Parents`
+*value* naming the parents is never read. Their presence also satisfies the
+"matched nothing" check: `parents-of` on a person with a `Parents` fact but no
+parent relationship succeeds rather than erroring. Reported as
+`factsByType: { Parents: n }`, a kind not a value.
+
+The same fact-vs-structure redundancy applies to `spouses-of` and person-level
+`Marriage` facts, which `spouses-of` does **not** yet strip.
 
 ### 2.2 Cascade
 

@@ -219,7 +219,17 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           { "parents-of": "parents", "children-of": "children", "spouses-of": "spouses" } as const
         )[kind];
         const { people, rels } = relatives(tree, pid, relation);
-        if (people.size === 0 && rels.size === 0) {
+        // FamilySearch carries parentage TWICE: as ParentChild relationships
+        // and as a documentary `Parents` fact on the child's own record
+        // (person_read returns both). Forgetting a person's parents must take
+        // that fact too, or the answer survives on the child. It can even be
+        // the SOLE carrier — when the established parents were never added as
+        // tree persons, only the `Parents` fact remains — so its presence also
+        // keeps the selector from erroring as "matched nothing" (issue #1314).
+        // Scoped to parents-of; the spouses-of/`Marriage`-fact variant is #1417.
+        const parentageFactIds =
+          kind === "parents-of" ? factIdsOfType(tree, pid, "Parents") : new Set<string>();
+        if (people.size === 0 && rels.size === 0 && parentageFactIds.size === 0) {
           throw new TreeForgetError(
             `'${kind}' matched nothing — ${pid} has no ${relation} in the tree, ` +
               `so there is nothing to forget.`,
@@ -227,6 +237,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         people.forEach((p) => t.persons.add(p));
         rels.forEach((r) => t.relationships.add(r));
+        parentageFactIds.forEach((f) => t.facts.add(f));
         break;
       }
       case "birth-of":
@@ -473,7 +484,9 @@ export const treeForgetSchema = {
               ],
               description:
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
-                "them (cascades). birth-of/death-of: that person's Birth/Death facts. " +
+                "them (cascades). parents-of ALSO removes the person's own `Parents` " +
+                "documentary facts, so the forgotten parentage does not survive as a fact " +
+                "on the child. birth-of/death-of: that person's Birth/Death facts. " +
                 "facts-of: that person's facts of one type (needs factType). person: one " +
                 "person, cascading every relationship touching them. fact/relationship: one " +
                 "specific entity by id.",
