@@ -145,3 +145,55 @@ def test_rollup_always_states_compliance_even_when_clean():
     out = _capture([_make_result("a", "pass")])
     assert "compliance: 1/1 clean" in out
     assert "overall gate: 1/1 pass" in out
+
+
+# --- ungradeable runs must not read as failures (#1245) ---------------
+#
+# A run that produced no grade is not a run that failed the genealogy. The
+# rollup used to render an all-ungraded tag as "0/N", byte-identical to a tag
+# where every run genuinely failed, which is the miscount acceptance criterion
+# 4 of #1245 asks about.
+
+
+def test_an_all_ungraded_tag_is_not_rendered_as_an_all_failed_tag():
+    ungraded = _capture(
+        [_make_result(f"t{i}", "skipped", tags={"era": "1800s"}) for i in range(3)]
+    )
+    failed = _capture(
+        [_make_result(f"t{i}", "fail", tags={"era": "1800s"}) for i in range(3)]
+    )
+    assert "0/3" in ungraded and "0/3" in failed  # the recall count is the same...
+    assert ungraded != failed, "...so the line must say which of the two it is"
+    assert "3 ungraded" in ungraded
+    assert "ungraded" not in failed
+
+
+def test_a_mixed_tag_names_only_the_ungraded_ones():
+    out = _capture(
+        [
+            _make_result("a", "pass", tags={"era": "1800s"}),
+            _make_result("b", "fail", tags={"era": "1800s"}),
+            _make_result("c", "skipped", tags={"era": "1800s"}),
+        ]
+    )
+    assert "1/3 (1 ungraded)" in out
+
+
+def test_an_unrecognised_verdict_is_printed_rather_than_swallowed():
+    """`verdict` arrives as whatever string the judge returned, so a value
+    outside the vocabulary is reachable. It used to land in a dict key nothing
+    rendered, leaving the totals quietly failing to reconcile."""
+    out = _capture(
+        [
+            _make_result("a", "pass", tags={"era": "1800s"}),
+            _make_result("b", "kinda-ok?", tags={"era": "1800s"}),
+        ]
+    )
+    assert "1 unrecognised" in out
+
+
+def test_an_unrecognised_verdict_does_not_crash_the_rollup():
+    # The pre-fix bucket seeded four fixed keys; anything else had to be
+    # tolerated by `.get`. Assert the tolerance survives the rewrite.
+    out = _capture([_make_result("a", "???", tags={"era": "1800s"})])
+    assert "era" in out
