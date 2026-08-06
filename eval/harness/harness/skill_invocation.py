@@ -274,10 +274,12 @@ def find_effects_without_invocation(
     person-evidence checks ignore what a seeded fixture already carried before
     this run began: the person-evidence arm ignores persons that already had
     facts/names, and the proof-conclusion arm ignores ParentChild/Couple
-    relationships and primary facts already present — so each flags only what
-    this run produced. Without it every seeded relationship or already-unlinked
-    seed person would read as a violation. Best-effort and may over-flag when
-    omitted.
+    relationships and primary facts already present, flagging a conclusion
+    encoded as a NEW relationship or an ADDED primary fact (it does not see one
+    written into an existing relationship, e.g. a marriage fact dated onto a
+    seeded couple — issue #1368). Without it every seeded relationship or
+    already-unlinked seed person would read as a violation. Best-effort and may
+    over-flag when omitted.
 
     Each arm keys on a *product* of the skill, never on the skill's mere
     footprint — see `_is_conflict_resolution_product` for why the
@@ -346,10 +348,14 @@ def find_effects_without_invocation(
         baseline = 0 if starting_tree is None else starting_primary_counts.get(p.get("id"), 0)
         return count > baseline
 
-    # A conclusion's tree encoding counts only when it is NEW this run. The
-    # proof_summaries half needs no baseline — no fixture seeds a non-empty
-    # proof_summaries — but a primary fact or a ParentChild/Couple relationship
-    # is routinely seeded, so both are diffed against the starting tree.
+    # Detects a conclusion encoded as a NEW ParentChild/Couple relationship or an
+    # ADDED primary fact, each diffed against the starting tree (both are routinely
+    # seeded). It does NOT see a conclusion written into an existing relationship —
+    # a marriage fact dated onto a seeded couple, a parentage re-classified
+    # Biological->Adopted — nor a primary fact replaced in place (count 1->1 reads
+    # as unchanged); the proof_summaries disjunct still catches the normal path
+    # where a summary is also written (issue #1368). proof_summaries itself needs
+    # no baseline — no fixture seeds a non-empty one.
     has_primary_fact = any(isinstance(p, dict) and _has_new_primary_fact(p) for p in persons)
     has_conclusion_relationship = any(
         isinstance(r, dict)

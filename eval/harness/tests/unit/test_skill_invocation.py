@@ -318,6 +318,20 @@ def test_does_not_flag_a_seeded_primary_fact_already_in_the_starting_tree():
     assert not any("proof-conclusion" in v for v in violations)
 
 
+def test_flags_a_placeholder_relationship_re_pointed_this_run():
+    """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
+    would read that genuinely-re-pointed relationship as seeded — a false negative
+    in the one gate that overrides the judge. Shape taken from young-marriage-1828,
+    which seeds {parent: PID-TODO, child: p-child-thomas, id: rel-1}."""
+    starting = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "PID-TODO", "child": "p-child-thomas"}]}
+    tree = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "G7X1-234", "child": "p-child-thomas"}]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
 def test_flags_a_new_unlinked_person_with_no_person_evidence_invocation():
     """The materialize_facts identity-bypass route the adversarial review found."""
     tree = {"persons": [{"id": "I9", "names": [{"given": "New"}], "facts": [{"type": "Birth"}]}], "relationships": []}
