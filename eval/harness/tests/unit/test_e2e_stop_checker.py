@@ -7,6 +7,8 @@ from pathlib import Path
 
 from e2e.stop_checker import (
     derive_stop_reason,
+    genealogy_mcp_status,
+    genealogy_mcp_terminal_fault,
     project_completed,
     read_research_json,
     read_tree_json,
@@ -179,3 +181,65 @@ def test_should_continue_blocks_first_nudge_even_with_equal_counts():
         research=_INCOMPLETE, nudges_used=0, max_nudges=5,
         tool_count=5, tool_count_at_last_nudge=-1,
     ) is True
+
+
+# ── MCP connection guard ─────────────────────────────────────────────────
+
+
+def test_genealogy_mcp_status_reads_connected():
+    servers = [{"name": "genealogy", "status": "connected"}]
+    assert genealogy_mcp_status(servers) == "connected"
+
+
+def test_genealogy_mcp_status_reads_pending():
+    servers = [{"name": "genealogy", "status": "pending"}]
+    assert genealogy_mcp_status(servers) == "pending"
+
+
+def test_genealogy_mcp_status_none_when_no_list():
+    # Older CLI that emits no mcp_servers on init — cannot assess.
+    assert genealogy_mcp_status(None) is None
+
+
+def test_genealogy_mcp_status_none_when_server_absent():
+    assert genealogy_mcp_status([{"name": "other", "status": "connected"}]) is None
+
+
+def test_terminal_fault_none_when_connected():
+    assert genealogy_mcp_terminal_fault([{"name": "genealogy", "status": "connected"}]) is None
+
+
+def test_terminal_fault_none_when_pending():
+    # `pending` may still connect — left to the orchestrator watchdog, not a hard abort.
+    assert genealogy_mcp_terminal_fault([{"name": "genealogy", "status": "pending"}]) is None
+
+
+def test_terminal_fault_none_when_no_list():
+    # No mcp_servers at all → don't abort (backward-compatible with older CLI).
+    assert genealogy_mcp_terminal_fault(None) is None
+
+
+def test_terminal_fault_reports_failed():
+    fault = genealogy_mcp_terminal_fault([{"name": "genealogy", "status": "failed"}])
+    assert fault is not None and "failed" in fault
+
+
+def test_terminal_fault_reports_needs_auth():
+    fault = genealogy_mcp_terminal_fault([{"name": "genealogy", "status": "needs-auth"}])
+    assert fault is not None and "needs-auth" in fault
+
+
+def test_terminal_fault_reports_disabled():
+    fault = genealogy_mcp_terminal_fault([{"name": "genealogy", "status": "disabled"}])
+    assert fault is not None and "disabled" in fault
+
+
+def test_terminal_fault_reports_absent_from_populated_list():
+    # A populated list that does NOT include genealogy means it isn't registered.
+    fault = genealogy_mcp_terminal_fault([{"name": "some-other", "status": "connected"}])
+    assert fault is not None and "absent" in fault
+
+
+def test_terminal_fault_names_other_servers_when_absent():
+    fault = genealogy_mcp_terminal_fault([{"name": "some-other", "status": "connected"}])
+    assert "some-other" in fault

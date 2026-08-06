@@ -98,3 +98,70 @@ def derive_stop_reason(
     if project_completed(research):
         return "completed"
     return "natural_end"
+
+
+# ── MCP connection guard ─────────────────────────────────────────────────
+# The e2e run spawns the genealogy MCP server over stdio and the agent
+# researches through its tools. When that server never connects, the agent
+# can't call a single research/writer tool — but nothing stops it: it flails
+# (ToolSearch loops, filesystem probing, subagent connection probes) until a
+# cap fires, wasting the whole wall-clock and dollar budget. Observed live:
+# 65 min / $9.38 / 202 turns with zero genealogy tool calls. The CLI reports
+# each server's connection state in the init system message's `mcp_servers`
+# list; these helpers read it so the orchestrator can abort fast instead.
+
+GENEALOGY_MCP_SERVER_NAME = "genealogy"
+
+# Statuses a server will NOT recover from within the run — abort immediately.
+# `pending` is deliberately excluded: it may still connect, so the orchestrator
+# handles it with a slower never-reachable watchdog rather than a hard abort.
+_TERMINAL_MCP_FAULTS = frozenset({"failed", "needs-auth", "disabled"})
+
+
+def genealogy_mcp_status(
+    mcp_servers: Any, server_name: str = GENEALOGY_MCP_SERVER_NAME
+) -> str | None:
+    """The genealogy server's reported connection status, or None.
+
+    None means "cannot assess": the init message carried no `mcp_servers`
+    list (older CLI), the genealogy server was not listed, or its entry had
+    no string status. Callers that must distinguish "absent from a populated
+    list" from "no list at all" use ``genealogy_mcp_terminal_fault``.
+    """
+    if not isinstance(mcp_servers, list):
+        return None
+    for server in mcp_servers:
+        if isinstance(server, dict) and server.get("name") == server_name:
+            status = server.get("status")
+            return status if isinstance(status, str) else None
+    return None
+
+
+def genealogy_mcp_terminal_fault(
+    mcp_servers: Any, server_name: str = GENEALOGY_MCP_SERVER_NAME
+) -> str | None:
+    """A human-readable reason if the genealogy server is in a terminal-bad
+    state at session init (won't recover), else None.
+
+    Returns None when the CLI reported no ``mcp_servers`` at all — can't
+    assess, so stay backward-compatible and don't abort. Returns a reason
+    when the list IS present but the genealogy server is absent from it (not
+    registered) or carries a terminal status. ``connected``/``pending`` → None
+    (``pending`` is left to the orchestrator's never-reachable watchdog).
+    """
+    if not isinstance(mcp_servers, list):
+        return None
+    entry = next(
+        (s for s in mcp_servers if isinstance(s, dict) and s.get("name") == server_name),
+        None,
+    )
+    if entry is None:
+        others = [s.get("name") for s in mcp_servers if isinstance(s, dict)]
+        return (
+            f"genealogy MCP server '{server_name}' is absent from the init "
+            f"mcp_servers list (servers reported: {others or 'none'})"
+        )
+    status = entry.get("status")
+    if status in _TERMINAL_MCP_FAULTS:
+        return f"genealogy MCP server '{server_name}' init status is '{status}'"
+    return None
