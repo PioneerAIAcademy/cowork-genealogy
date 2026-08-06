@@ -406,8 +406,9 @@ the suite isn't N variations of the same shape:
 | `geography` | Country (`US`) or US state/county (`US-VA`, `US-NY-Albany`) |
 
 Authors may add more tag dimensions as the suite grows
-(`record_type`, `ambiguity_level`, etc.). The roll-up report (§9)
-groups results by each dimension.
+(`record_type`, `ambiguity_level`, etc.). Tags are cross-run reporting
+metadata consumed by `make e2e-corpus` (§9); the per-invocation console
+roll-up does not display them (§7.4 blind-grading constraint).
 
 ---
 
@@ -959,13 +960,21 @@ Three integrity rules make the agreement number trustworthy:
   compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
   deferred to `/interpret-e2e-result`, which is itself blind to them.
 
-  > **Caveat on annotations collected before 2026-07-31.** Until then the
-  > harness printed the judge's verdict *and* its `proof_quality` score to the
-  > console the moment a run finished. Any `.ann.json` written by someone who
-  > watched their own run was drawn with the judge's answer already on screen —
-  > `proof_quality_score` most directly, since the console printed the very
-  > number the annotator then records. Treat pre-2026-07-31 proof-quality
-  > agreement as an upper bound, not a clean measurement.
+  > **Caveat on annotations collected before PR #1114.** The roll-up has
+  > printed verdict-bearing output since the harness's first commit
+  > (`git show d371694a:eval/harness/e2e/report.py`). PR #972 (2026-07-31)
+  > removed the per-run verdict print but left the end-of-suite roll-up
+  > intact — recall summary, overall gate, and by-tag breakdowns all
+  > restated the verdict. PR #1114 removed those lines. Any `.ann.json`
+  > committed before #1114 was drawn with some form of the verdict on
+  > screen. `calibrate_judge` does not exclude these rows; the bias is
+  > accepted and ages out as new blind annotations replace them.
+  >
+  > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
+  > when the combined gate fails, so with compliance clean, `make`'s
+  > error line tells the grader the verdict failed. The exit code is
+  > retained because a batch shell loop has no other signal for failure.
+  > This is a known, accepted residual — not a bug to fix.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
@@ -1205,26 +1214,19 @@ change before diffing across it — see §15, "Evidence to read, in order", step
 ## 9. Roll-up Report
 
 At the end of a `run_e2e.py` invocation the harness prints a console summary of
-the run. The roll-up is shaped to aggregate across fixtures — grouping by the
-`tags` dimensions — because it also serves a shell loop that runs several
-fixtures back to back (§6: there is no built-in sweep):
+the run. Only **compliance** and **cost/duration** are shown — verdict-bearing
+lines (recall summary, overall gate, by-tag breakdowns) are deliberately
+omitted to preserve blind grading (§7.4, issue #1114):
 
 ```
-E2E suite: 1/1 recall pass
   compliance: 0/1 clean — 1 guardrail bypass (isabel-carvajal-daughter)
-  overall gate: 0/1 pass
-  by question_type:  parents 1/1
   avg cost: $3.40 / run     avg wall-clock: 28 min / run
 ```
 
-The recall line, the compliance line and the gate line are always all three
-printed — a silent compliance line puts us back to one number meaning two
-things (§7.2.1).
-
-**This roll-up is per-invocation, and an invocation is one fixture** (§6:
-there is no built-in sweep), so it always reports `n/1`. The by-tag
-breakdowns exist for a shell loop that runs several fixtures back to back,
-but each iteration prints its own roll-up — the loop does not aggregate.
+The compliance line is always printed — a silent compliance line puts us back
+to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+gate, by-tag) are available via `make e2e-corpus` (below), which reads
+committed run logs and is not part of the grading path.
 
 For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
