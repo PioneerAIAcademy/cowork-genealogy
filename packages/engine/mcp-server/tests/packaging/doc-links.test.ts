@@ -382,7 +382,7 @@ function docsMarkdown(root: string): string[] {
         if (entry === "plan") continue;
         walk(full);
       } else if (entry.endsWith(".md")) {
-        out.push(relative(root, full));
+        out.push(relative(root, full).replace(/\\/g, "/"));
       }
     }
   };
