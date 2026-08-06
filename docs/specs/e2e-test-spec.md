@@ -1146,6 +1146,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+| `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
+| `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent file the run staged. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. §8.1.3. |
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
@@ -1163,6 +1165,38 @@ A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
 is the parallel structured record, not the only one — which is why an
 `is_error: true` entry is not automatically an upstream failure (§15).
+
+#### 8.1.3 `git_sha` / `skills_hash` — run provenance
+
+These two fields exist because a graded run once landed alongside a
+`search-records` SKILL.md edit and claimed to demonstrate it, yet nothing in the
+committed artifact said which skill version had run — the reconstruction from the
+transcript contradicted the claim. They make that claim checkable.
+
+`skills_hash` is a **single digest**, not a per-file map and not a full snapshot.
+The trade, measured when it was decided: a full snapshot (the unit-runlog form)
+was 43% of every unit run log's bytes, storing prose nothing reads back — e2e
+runs are not gated on activeness, so the content is never diffed. A per-file
+`{path: hash}` map names *which* file changed but costs ~15.8 KB/run (≈6% of the
+263 KB median e2e envelope) to answer what `git_sha` plus a re-hash already answer
+whenever the tree was clean. So the identity, not the content, is what is stored.
+
+It hashes **exactly what `build_workspace` stages** — every non-dot subdirectory
+of the skills dir, recursively, plus the top-level agent `.md` files — and
+nothing else. The fixture, `eval/tests/unit/**`, MCP fixtures, and the compiled
+engine are deliberately out of scope: folding any of them in would flip the hash
+on every record-hint-resolution PR and destroy the signal. (`__pycache__` and
+dotfiles a `copytree` would carry are excluded as gitignored non-prompt noise.)
+Implementation: `eval/harness/e2e/provenance.py`.
+
+**Known limit, by design:** a hash proves *whether* two runs used the same
+prompt; it can never tell you *what* changed. When the diff is needed, the git
+SHA plus the hash reconstruct it from the repo in the common case where the tree
+was clean. Like the absence of a `skills_invoked` field (§15), this is a chosen
+boundary, not an oversight — and, like every provenance field here, it is
+**evidence for a human reviewer, not a CI gate**: an e2e run is graded days after
+the tree has moved, so a "committed hash matches working tree" check would red
+every e2e PR.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
