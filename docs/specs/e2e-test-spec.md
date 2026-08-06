@@ -851,10 +851,10 @@ into one boolean made a correct run and a wrong one read identically
 
 | field | values | meaning |
 |---|---|---|
-| `verdict` | `pass` \| `partial` \| `fail` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), or `skipped` when the judge didn't run. Never modified by anything else. |
+| `verdict` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), `ungraded` when the judge raised an exception (tree exists but was never graded — can be re-graded), or `skipped` when the judge didn't run (no tree). Never modified by anything else. |
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
-| `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
+| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
 | `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
@@ -1223,12 +1223,15 @@ boundary, not an oversight — and, like every provenance field here, it is
 the tree has moved, so a "committed hash matches working tree" check would red
 every e2e PR.
 
-Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
-under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
-`fail` is deliberately retained signal: a capability gap to retry later, exactly
-as a failing unit test is committed. Only a `skipped` run (the judge never ran —
-no tree to grade) is written with a `scratch_<timestamp>.*` prefix that
-`.gitignore` keeps out of version control. Fixture *validity* is a separate axis
+Any **committable** run — verdict `pass`, `partial`, `fail`, or `ungraded` — is
+committed under the `run-<timestamp>.*` names above. A graded run (`pass` /
+`partial` / `fail`) must be graded (§7.4); a committed `fail` is deliberately
+retained signal: a capability gap to retry later, exactly as a failing unit test
+is committed. An `ungraded` run (the judge raised an exception — the tree exists
+but was never graded) is also committed because the tree can be re-graded later.
+Only a `skipped` run (the judge never ran — no tree to grade) is written with a
+`scratch_<timestamp>.*` prefix that `.gitignore` keeps out of version control.
+Fixture *validity* is a separate axis
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
