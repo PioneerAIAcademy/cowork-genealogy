@@ -10,7 +10,9 @@ New to how skills are built, tested, and improved? Start with the lifecycle map:
 eval/
   harness/         Python test harness (Claude Agent SDK)
     harness/      Implementation modules (snapshot, versioning, runlog, …)
-    scripts/      GH-action helpers (check_runlogs.py, check_tool_coverage.py)
+    scripts/      GH-action helpers (check_runlogs.py, check_tool_coverage.py,
+                  check_rubric_tool_drift.py, check_negative_reciprocity.py,
+                  check_skill_frontmatter.py, check_e2e_fixtures.py)
     validators/   Per-skill deterministic validators
     judge/        LLM-judge prompt (prompt.md) — project-global, separately hashed
     e2e/          E2e orchestrator, judge, and CLI
@@ -207,7 +209,7 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
 3. Junior opens the CRUD UI, reviews every dimension on the latest candidate (sparse `.ann.json` becomes complete).
 4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Two warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture) and a judge-prompt-hash match (rule 2b).
+5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
