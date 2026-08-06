@@ -375,7 +375,7 @@ def test_ungraded_run_with_violations_is_still_committed(tmp_path: Path):
     )
     assert result.outcome == "fail"
     paths = write_result_files(
-        result=result, runlog_dir=tmp_path, transcript="",
+        result=result, runlog_dir=tmp_path,
         final_tree={"persons": []}, final_research={},
         timestamp="2026-05-26_14-30-45",
     )

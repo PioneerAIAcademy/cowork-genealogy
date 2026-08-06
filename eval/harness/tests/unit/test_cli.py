@@ -1113,7 +1113,7 @@ def _stub_run_through(monkeypatch, tmp_path):
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, on_prune=None: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:
