@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
 import {
   buildFeedbackZip,
@@ -101,7 +101,7 @@ describe('buildFeedbackZip — feedback.json', () => {
     const result = await buildFeedbackZip(makeOptions(folder))
     const payload = await readFeedbackJson(result.zipBase64)
     expect(typeof payload.project_folder_path).toBe('string')
-    expect((payload.project_folder_path as string).startsWith('/')).toBe(true)
+    expect(isAbsolute(payload.project_folder_path as string)).toBe(true)
   })
 
   it('emits submitted_at as an ISO 8601 UTC string with Z suffix', async () => {
