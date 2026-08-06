@@ -106,13 +106,13 @@
       ],
       "quirks": [
         "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
-        "Deed/land records are held by the county Recorder of Deeds from 1811 -- coal-region land was often leased or sold to mining companies rather than bought by miners themselves, so a deed search can confirm or rule out a land-driven move.",
+        "Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright by laborers.",
         "Roman Catholic parishes fell under the Diocese of Philadelphia until the Diocese of Scranton was erected in 1868; sacramental registers are held at the parish/diocese, not the county.",
-        "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events rely on church, cemetery, and probate records.",
+        "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events are recorded in church, cemetery, and probate records instead.",
         "Some naturalization and church films for the anthracite coal region are browse-only image groups (volume_search shows ~0% record-searchable) -- browse image-by-image.",
-        "County tax and exoneration lists (available via curated external links) record property and occupation and can corroborate a work-driven relocation independent of census years."
+        "County tax and exoneration lists for this period exist and are reachable via curated external links."
       ],
-      "guide_markdown": "## Schuylkill County, Pennsylvania - 1870-1882\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region -- a common destination for work-driven migration in this period. Deed/land records are held by the county Recorder of Deeds from 1811; coal-region land was often company-leased rather than purchased outright. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906. Some coal-region naturalization and church films are browse-only. County tax lists corroborate occupation and residence between census years.",
+      "guide_markdown": "## Schuylkill County, Pennsylvania - 1870-1882\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906 -- pre-1906 events are recorded in church, cemetery, and probate records instead. Some coal-region naturalization and church films are browse-only. County tax and exoneration lists for this period are reachable via curated external links.",
       "pages_read": [
         { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
         { "section": "getting_started", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started", "found": true },

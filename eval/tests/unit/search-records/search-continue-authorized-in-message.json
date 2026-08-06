@@ -13,7 +13,8 @@
   },
   "mcp_fixtures": [
     "record-search-1880-census-sheahan",
-    "record-search-church-sheahan"
+    "record-search-church-sheahan-collectionid",
+    "record-search-church-sheahan-anyplace"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: when an active plan has more than one `planned` item and the invoking message already authorizes continuing through the whole plan, search-records must execute successive planned items in the same turn rather than stopping after one to ask whether to continue.",

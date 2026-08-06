@@ -24,8 +24,22 @@ test before that text is edited, per the same "capture before you fix"
 principle — it is a confirmatory test for a documented-but-not-directly-
 observed control-flow gap, not a capture of an observed one. Flagged
 explicitly per issue #1319's discussion. No real person's data is
-involved; the two MCP fixtures (`record-search-1880-census-sheahan`,
-`record-search-church-sheahan`) were authored for this test alone.
+involved; the MCP fixtures (`record-search-1880-census-sheahan`,
+`record-search-church-sheahan-collectionid`, `record-search-church-sheahan-anyplace`)
+were authored for this test alone.
+
+**Correction (post-baseline-run):** the church item's rationale now names the
+real `collectionId` (1401638, "Pennsylvania, Church and Town Records,
+1708-1985" -- reused from the existing `collections-search-schuylkill`
+fixture) directly, matching `search-records/SKILL.md`'s own guidance that
+`collectionId` may come "from `collections_search` output **or plan
+rationale**." The first baseline run's fixture for this item anchored on a
+`recordType` argument that `record_search` does not accept at all (verified
+against `packages/engine/mcp-server/src/tools/record-search.ts` -- it is a
+`research_log_append` logging field, not a tool parameter), so no real call
+could ever match it. Two fixtures now cover the two most likely real
+argument shapes (collectionId-anchored, and an `anyPlace`-anchored
+fallback for a run that doesn't use the rationale's collectionId).
 
 ## Used by
 
