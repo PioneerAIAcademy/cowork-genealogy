@@ -61,8 +61,30 @@ def _print_compliance(result: E2eResult) -> None:
         print(f"    - {text}")
 
 
+# The verdicts that mean the judge actually reached a conclusion.
+#
+# A deliberate local literal, NOT an import from result.py. Gradedness and
+# committability are two different axes — the lead's own words on PR #1239 —
+# and result.py's set is the *committability* one. #1239 widens it to include
+# `ungraded`, so importing it would silently make a judge crash count as
+# "graded" the moment that lands. Keeping this separate is what lets the block
+# in `_run_one` stay correct both before and after.
+_GRADED_VERDICTS = ("pass", "partial", "fail")
+
+
+def is_ungraded(result: E2eResult) -> bool:
+    """Whether the judge failed to reach a conclusion on this run.
+
+    Independent of whether the run is *committable*. Today the two coincide;
+    after #1239 a judge crash is committable (the tree exists and can be
+    re-graded later) while still being ungraded, and an operator needs telling
+    about it either way.
+    """
+    return result.verdict not in _GRADED_VERDICTS
+
+
 def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
-    """Why a run produced no grade — the clause after "scratch run" (#1245).
+    """Why a run produced no grade (#1245).
 
     The message used to be a single fixed string, "the judge didn't run, so
     there's nothing to grade or commit". For a judge crash that lands directly
@@ -110,17 +132,25 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
     print(f"  result: {paths['result']}")
-    if not is_committable_run(result.verdict):
+    # Two independent axes, reported separately (#1245). Fusing them is what
+    # made a judge crash unreadable: "the judge didn't run" was printed as a
+    # property of the scratch prefix, so the two causes that share that prefix
+    # were indistinguishable. After #1239 they stop coinciding entirely — a
+    # judge crash becomes committable while still being ungraded — and a single
+    # `if committable` branch would then say nothing at all about the crash.
+    if is_ungraded(result):
         print(
-            "  (scratch run — gitignored; "
-            f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))})"
+            f"  no grade: "
+            f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))}"
         )
-    else:
+    if is_committable_run(result.verdict):
         print(
             "  Next: /interpret-e2e-result to see what it recovered, then "
             "/grade-e2e-run to grade it.\n"
             "  Commit the run log + its .ann.json together before landing."
         )
+    else:
+        print("  (scratch run — gitignored)")
     return result
 
 

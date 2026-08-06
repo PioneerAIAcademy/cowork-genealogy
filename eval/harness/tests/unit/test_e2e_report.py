@@ -208,9 +208,9 @@ def test_an_unrecognised_verdict_does_not_crash_the_rollup():
 from e2e.run_e2e import ungradeable_reason  # noqa: E402
 
 
-def _skipped(**kw) -> E2eResult:
+def _skipped(verdict: str = "skipped", **kw) -> E2eResult:
     return E2eResult(
-        test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+        test_id="t", captured_at="2026-08-05_00-00-00", verdict=verdict,
         stop_reason="completed", usage={}, **kw,
     )
 
@@ -260,3 +260,62 @@ def test_no_grade_is_ever_disclosed():
     )
     for leaked in ("pass", "proof_quality", "verdict"):
         assert leaked not in out, f"leaked {leaked!r} into a pre-grading message"
+
+
+def test_an_untagged_unrecognised_verdict_is_named_at_the_headline():
+    """The per-tag loop never sees an untagged run, so the headline has to be
+    where an unreadable verdict surfaces. It previously printed nothing."""
+    out = _capture([_make_result("a", "kinda-ok?")])
+    assert "1 unrecognised" in out
+
+
+def test_the_headline_reconciles_with_the_run_count():
+    out = _capture(
+        [
+            _make_result("a", "pass"),
+            _make_result("b", "fail"),
+            _make_result("c", "skipped"),
+            _make_result("d", "???"),
+        ]
+    )
+    line = next(ln for ln in out.splitlines() if ln.startswith("E2E suite:"))
+    assert "1/4 recall pass" in line
+    for token in ("1 fail", "1 skipped", "1 unrecognised"):
+        assert token in line, f"{token} missing; the headline must sum to 4"
+
+
+# --- gradedness is a separate axis from committability (#1245 / #1239) ---
+#
+# The console block used to key both on `is_committable_run`. That is fine only
+# while the two coincide. PR #1239 makes a judge crash committable (the tree
+# exists and can be re-graded) while it is still ungraded, at which point a
+# single committability branch would say nothing about the crash at all — the
+# exact silence #1245 was filed about.
+
+from e2e.run_e2e import is_ungraded  # noqa: E402
+
+
+def test_a_graded_run_is_not_flagged_as_ungraded():
+    for verdict in ("pass", "partial", "fail"):
+        assert not is_ungraded(_skipped(verdict=verdict))
+
+
+def test_todays_ungradeable_verdict_is_flagged():
+    assert is_ungraded(_skipped())  # verdict="skipped"
+
+
+def test_the_post_1239_verdict_is_flagged_too():
+    """`ungraded` does not exist yet. When #1239 lands it must still be caught,
+    which is why gradedness uses its own literal instead of importing
+    result.py's set — that set is the COMMITTABILITY axis and #1239 widens it."""
+    assert is_ungraded(_skipped(verdict="ungraded"))
+
+
+def test_gradedness_does_not_import_the_committability_set():
+    """Guards the reason the two are separate. If someone 'tidies' this by
+    importing result.py's set, a judge crash starts reading as graded the
+    moment #1239 merges, silently."""
+    import e2e.run_e2e as r
+
+    assert r._GRADED_VERDICTS == ("pass", "partial", "fail")
+    assert "ungraded" not in r._GRADED_VERDICTS

@@ -18,8 +18,10 @@ from e2e.result import E2eResult
 #
 # `skipped` is the harness's own value for a run that produced nothing to grade
 # (spec §7.2). PR #1239 is adding `ungraded` alongside it for the narrower
-# "judge raised while a tree existed" case; when that lands, add it to
-# UNGRADED_VERDICTS and nothing else here needs to change.
+# "judge raised while a tree existed" case; when that lands it must go in
+# **both** tuples below. KNOWN_VERDICTS seeds the bucket keys, and
+# UNGRADED_VERDICTS is summed with `if v in bucket` — so adding it to the second
+# alone would sum zero and print every ungraded run as "unrecognised" instead.
 KNOWN_VERDICTS = ("pass", "partial", "fail", "skipped")
 
 # The subset that means "this run produced no grade". NOT failures, and the
@@ -44,6 +46,11 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
     partials = sum(1 for r in results if r.verdict == "partial")
     fails = sum(1 for r in results if r.verdict == "fail")
     skipped = sum(1 for r in results if r.verdict == "skipped")
+    # A verdict this module does not know. Counted at the HEADLINE, not only in
+    # the per-tag loop below: an untagged run never reaches that loop, so an
+    # unreadable verdict would leave `0/1 recall pass` and no other trace, which
+    # is the same silent non-reconciliation issue #1245 is about.
+    unrecognised = sum(1 for r in results if r.verdict not in KNOWN_VERDICTS)
 
     # The recall line counts the GENEALOGICAL verdict only. It is labelled as
     # such because it is no longer the whole story: a run can recover the
@@ -55,6 +62,8 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         summary += f", {fails} fail"
     if skipped:
         summary += f", {skipped} skipped"
+    if unrecognised:
+        summary += f", {unrecognised} unrecognised"
     print(summary)
 
     # Compliance + the combined gate, always printed — a silent compliance
