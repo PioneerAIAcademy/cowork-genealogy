@@ -94,9 +94,13 @@ def test_no_plan_writes_when_resolved(before_state, after_state, test):
     rests on — and appending to `pl_002` is the obvious way to write a plan
     without creating one.
 
-    This is the routing-independent gate for `ut_research_plan_003`
+    This is one of two routing-independent gates for `ut_research_plan_003`
     (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
-    may leave a mark on `plans[]`.
+    may leave a mark on `plans[]`. Its companion
+    `test_resolved_question_not_reopened` guards the question's own state —
+    `status`, `exhaustive_declaration`, `project.status` — which this one does
+    not look at and which is the likelier harm on that prompt. Both are gated
+    on the same tag; neither is sufficient alone.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")
