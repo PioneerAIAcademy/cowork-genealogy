@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -501,7 +502,7 @@ export async function recordSearchTool(
   const token = await getValidToken();
   const url = buildSearchUrl(paired);
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",

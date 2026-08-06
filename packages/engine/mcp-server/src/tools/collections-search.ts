@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   FSCollectionData,
   FSCollectionEntry,
@@ -99,7 +100,7 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",

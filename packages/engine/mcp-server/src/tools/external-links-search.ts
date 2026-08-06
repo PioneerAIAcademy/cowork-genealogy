@@ -1,4 +1,5 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import type {
@@ -60,7 +61,7 @@ async function fetchPage(
   url.searchParams.set("offset", String(offset));
   url.searchParams.set("count", String(PAGE_SIZE));
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": BROWSER_USER_AGENT,
       Accept: "application/json",

@@ -6,6 +6,7 @@
 
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "./http.js";
 import { toArk, arkToUrl } from "./ark.js";
 
 // An imageId is a digitized-image identifier of the form NUMBER_NUMBER
@@ -95,7 +96,7 @@ export interface FetchedFsImage {
 export async function fetchFsImageBytes(url: string): Promise<FetchedFsImage> {
   const token = await getValidToken();
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "image/*,*/*",

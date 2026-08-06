@@ -2,6 +2,7 @@ import type { PopulationResponse, PopulationToolInput } from "../types/place-pop
 export type { PopulationToolInput } from "../types/place-population.js";
 import { loadConfig } from "../auth/config.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
+import { fetchWithTimeout } from "../utils/http.js";
 
 const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 
@@ -34,7 +35,7 @@ export async function populationTool(
 
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetchWithTimeout(url);
   } catch {
     throw new Error(
       "Population data service is unavailable. Is the Pop Stats API running?"
