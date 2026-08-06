@@ -3,36 +3,41 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Antonio Fernandes Fernandes Lucas's wife was Antonia de Jesus de Jesus — a different name from the tree's recorded wife, Maria Joana (married 1890).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Antonio Fernandes Lucas (PID GK89-82B, b. 1838, Santo António, Funchal, Madeira, son of José Fernandes Lucas and Francisca Luisa) had a wife named Antonia de Jesus, or any child by her, distinct from his tree-recorded wife Maria Joana. The Antonio Fernandes Lucas who partnered with Antonia de Jesus at the sítio of Encruzilhadas — and buried three children by her there between 1889 and 1896 (a recurring couple, not a one-time clerical entry) — is independently identified by his own 1895 death record as \"Antonio Fernandes Lucas Junior,\" born 1840, a shoemaker, son of Manuel/Manoel Fernandes Lucas and Luiza de Jesus: different parents entirely from GK89-82B's documented José Fernandes Lucas and Francisca Luisa. That death record also dates his death to 25 Nov 1895 — before GK89-82B's tree-documented family with Maria Joana produced their daughter Julia in 1899, a chronological impossibility if they were the same man. A second, independent Registro Civil record — Julia's own 1967 death entry — names her father Antônio Fernandes Lucas's wife as Maria Joana Joana, not Antonia de Jesus, confirming the 1890 marriage held for the rest of the couple's documented lives. Pass = the final tree/research contains no second spouse Antonia de Jesus and no child by her for this subject, or such a candidate appears only as an explicitly rejected hypothesis.",
       "details": {
         "subject_person": "Antonio Fernandes Lucas (GK89-82B)",
         "relation": "spouse",
-        "target_person": {
-          "name": "Antonia de Jesus de Jesus",
-          "birth": "unknown, likely Santo António, Funchal, Madeira, Portugal"
+        "wrong_candidate": {
+          "name": "Antonia de Jesus, partner of a different, identifiable \"Antonio Fernandes Lucas Junior\" (b. 1840, d. 25 Nov 1895) at Encruzilhadas, Santo António",
+          "note": "Ruled out on two independent grounds: (1) parentage — the Encruzilhadas Antonio's own death record names his parents as Manuel/Manoel Fernandes Lucas and Luiza de Jesus, not GK89-82B's José Fernandes Lucas and Francisca Luisa; (2) chronology — that Antonio died 25 Nov 1895, before GK89-82B's documented family with Maria Joana produced a daughter (Julia) in 1899"
         }
       },
       "supporting_sources": [
-        "Portugal, Registro Civil, 1437-2023 — death registration for Maria (b. Jul 1894), naming parents Antonio Fernandes Fernandes Lucas and Antonia de Jesus de Jesus"
+        "Portugal, Registro Civil, 1437-2023 — death entry for Antonio Fernandes Lucas (\"Junior\"), 25 Nov 1895, age 55, shoemaker, Encruzilhadas, Santo António, married to Antonia de Jesus, legitimate son of Manuel/Manoel Fernandes Lucas and Luiza de Jesus (ark:/61903/1:1:6YGB-P2V2) — the disproving record",
+        "Portugal, Madeira, Registros da Igreja Católica, 1044-1990 — death entry for Maria Fernandes Lucas, b. 1887, d. 30 May 1889, daughter of Antonio Fernandes Lucas and Antonia de Jesus, Santo António (ark:/61903/1:1:6B2L-FKDP)",
+        "Portugal, Madeira, Registros da Igreja Católica, 1044-1990 — death entry for Maria Lucas, b. 1893, d. 5 Sep 1894, daughter of Antonio Fernandes Lucas and Antonia de Jesus, Santo António (ark:/61903/1:1:6BCT-KZMV)",
+        "Portugal, Madeira, Registros da Igreja Católica, 1044-1990 — death entry for José Fernandes Lucas, b. 1895, d. 12 Aug 1896, legitimate son of Antonio Fernandes Lucas and Antonia de Jesus, Santo António (ark:/61903/1:1:6BCY-B2F4)",
+        "Portugal, Registro Civil, 1437-2023 — entry for Julia do Espirito Santo Lucas's death, 13 Mar 1967 (ark:/61903/1:1:65Y2-YP94), which independently names her father Antônio Fernandes Lucas's wife as Maria Joana Joana"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "Antonio Fernandes Fernandes Lucas and Antonia de Jesus de Jesus had a daughter, Maria, born July 1894 and who died young, per the same death registration.",
+      "type": "fact",
+      "description": "Having checked the tree's own attached sources for Antonio Fernandes Lucas (his 1890 marriage to Maria Joana, and the 1967 Registro Civil entry for their daughter Julia that independently confirms that marriage) against the hint record and the Encruzilhadas death entries, the agent should document a negative/rejected conclusion: no record in Portugal, Registro Civil, 1437-2023 or Portugal, Madeira, Registros da Igreja Católica, 1044-1990 for the Santo António, Funchal parish (c. 1887-1896) ties Antonio Fernandes Lucas (GK89-82B) to Antonia de Jesus. The Encruzilhadas family belongs to a distinct, identifiable individual — \"Antonio Fernandes Lucas Junior,\" b. 1840, d. 1895, son of Manuel Fernandes Lucas and Luiza de Jesus — not a hypothesis to leave open.",
       "details": {
         "subject_person": "Antonio Fernandes Lucas (GK89-82B)",
-        "relation": "child",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Maria",
-          "birth": "July 1894, Santo António, Funchal, Madeira, Portugal"
+          "name": "documented negative conclusion: no second wife or child by Antonia de Jesus found for this subject",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Portugal, Registro Civil, 1437-2023 — death registration for Maria, b. Jul 1894, Santo António, Funchal, Madeira"
+        "No record in Portugal, Registro Civil, 1437-2023 or Portugal, Madeira, Registros da Igreja Católica, 1044-1990 for the Santo António, Funchal parish (c. 1887-1896) — searched via the subject's own attached vital-record entries, the hint record, and the Encruzilhadas death entries for the other couple's three children — ties Antonio Fernandes Lucas (GK89-82B) to Antonia de Jesus"
       ],
-      "required": false
+      "required": true
     }
   ]
 }
