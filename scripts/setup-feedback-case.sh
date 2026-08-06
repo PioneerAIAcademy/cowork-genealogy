@@ -120,13 +120,30 @@ if [[ -f "$FB_JSON" ]]; then
   if command -v jq >/dev/null 2>&1; then
     USER_PROMPT="$(jq -r '.user_prompt // empty' "$FB_JSON" 2>/dev/null || true)"
   fi
-  if [[ -z "$USER_PROMPT" ]] && command -v python3 >/dev/null 2>&1; then
-    USER_PROMPT="$(python3 -c "import json,sys
+  # Try python3 then python. On Windows, `command -v python3` succeeds even with
+  # no usable interpreter: Windows ships an App Execution Alias stub at
+  # AppData/Local/Microsoft/WindowsApps/python3 that exists but fails when run
+  # (it exists to launch the Store). Probing only python3 therefore reports
+  # success, the run fails, and the prompt silently degrades to the
+  # "see feedback.json" fallback. Git for Windows installs expose the real
+  # interpreter as `python`.
+  #
+  # Take the output only when the interpreter exited 0. That stub prints its
+  # Store message and exits nonzero, and on some Windows builds the message
+  # lands on stdout — so trusting a failed run's stdout would print the advert
+  # under "User's prompt to issue first:" for the genealogist to paste.
+  for PY in python3 python; do
+    if [[ -n "$USER_PROMPT" ]]; then break; fi
+    if command -v "$PY" >/dev/null 2>&1; then
+      if PY_OUT="$("$PY" -c "import json,sys
 try:
-    print(json.load(open(sys.argv[1])).get('user_prompt',''))
+    print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt',''))
 except Exception:
-    pass" "$FB_JSON" 2>/dev/null || true)"
-  fi
+    pass" "$FB_JSON" 2>/dev/null)"; then
+        USER_PROMPT="$PY_OUT"
+      fi
+    fi
+  done
 fi
 
 # --- Print "next steps" ---

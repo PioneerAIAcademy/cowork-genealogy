@@ -67,8 +67,8 @@ phrasing to the evidence strength:
 ### High confidence (definitive)
 - "The evidence establishes that..."
 - "Records confirm that..." / "The research proves that..."
-- Use when: multiple independent primary sources agree, no
-  conflicts, direct evidence
+- Use when: multiple independent original sources agree, each
+  carrying primary information, no conflicts, direct evidence
 
 ### Moderate confidence (conditional)
 - "The evidence strongly suggests that..."

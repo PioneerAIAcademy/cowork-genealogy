@@ -88,7 +88,7 @@ Facts about this system live in one of three places:
 
 | Tier | Owns | Read when |
 |---|---|---|
-| **`CLAUDE.md`** (repo root) | **The imperative.** "List both spellings." "Pass `encoding="utf-8"`." The rules you must follow to make a correct change. | Always — the only tier auto-loaded into every session. |
+| **`CLAUDE.md`** (repo root) | **The imperative.** "List every spelling." "Pass `encoding="utf-8"`." The rules you must follow to make a correct change. | Always — the only tier auto-loaded into every session. |
 | **This guide** | **The map.** What the pieces are, how they bind, where a change lands, what nothing checks. It restates an imperative only where you need it to size a blast radius, and names `CLAUDE.md` as that rule's owner. **On conflict, `CLAUDE.md` wins.** | Before a change whose blast radius you don't already know. |
 | [**`docs/adrs/`**](adrs/) | **The why.** One decision per file: forces, alternatives tried and rejected, consequences knowingly accepted. Its Context/Decision/Alternatives are frozen history; its `Applies to`/`Enforcement` pointers are live and CI-linted. | A rule looks arbitrary, or you want to change it. Index below. |
 
@@ -121,7 +121,7 @@ routing surface — find your task, then open that ADR.
 | [0001](adrs/ADR-0001-run-network-code-on-the-host.md) | Run all network code on the host; ship only offline code into the VM | add a feature that calls an external API · write a script that ships in a skill or hook · debug a call that returns nothing with no error |
 | [0002](adrs/ADR-0002-decompose-into-tools-skills-and-agents.md) | Decompose into MCP tools, skills, and plugin agents by what each needs | add any capability and wonder where it goes · choose between a skill and a subagent · add a tool for something the model could just do |
 | [0003](adrs/ADR-0003-anchor-cross-turn-rules-structurally.md) | Anchor cross-turn rules structurally rather than in prose | write a new rule into a `SKILL.md` or agent body · fix a compliance failure by making an instruction clearer · reinforce a rule that keeps being violated |
-| [0004](adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md) | Dual-spell every MCP tool name in agent frontmatter | grant or deny a tool to a plugin agent · write a `ToolSearch` query · rename the desktop extension |
+| [0004](adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md) | Spell every MCP tool name under all three server registrations | grant or deny a tool to a plugin agent · write a `ToolSearch` query · rename the desktop extension |
 | [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
 | [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
@@ -207,7 +207,7 @@ The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
 > (`.claude/agents/`, which are developer tooling for this repo — today
 > `plan-critic`, `drift-critic`, `rubric-critic`, `skill-improver`, and
 > `task-reviewer`). The
-> dual-spelling rule in §5.2 applies to plugin agents only; these declare bare
+> multi-spelling rule in §5.2 applies to plugin agents only; these declare bare
 > tool names.
 
 ### 3.1 The most important rule in this repo: anchor rules structurally
@@ -457,7 +457,7 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 Remember the unit suite grades a *single invocation in fresh context* — it will
 happily bless a cut that removes something only a multi-hour session needs.
 
-**Add a plugin agent.** Write the body self-contained (§3.4), dual-spell every
+**Add a plugin agent.** Write the body self-contained (§3.4), spell every
 tool (§5.2), and pin `model:` deliberately. Then run `make agent-smoke` (§8) —
 and note that no CI job runs it.
 
@@ -567,7 +567,7 @@ the most expensive mistake in this layer, because two of the three fail
 | Surface | Spelling | Binds in production? |
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — the hosted path runs `bypassPermissions` with no allowlist at all. Still enforcing in the unit harness. |
-| Agent `tools:` / `disallowedTools:` | **dual-spelled**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
+| Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative in production, enforcing in tests
@@ -586,34 +586,44 @@ and the gap between a skill's own declaration and its agents' union is exactly
 what the per-context policy uses to tell a legitimate direct call from a boundary
 violation. **Declare accurately.**
 
-### 5.2 Agent frontmatter: dual-spelled, exactly matched
+### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 
 *(Imperative owned by `CLAUDE.md` § "Dual-spelled tool names".)* Every MCP tool
-in an agent's `tools:` — **and** `disallowedTools:` — appears **twice**:
+in an agent's `tools:` — **and** `disallowedTools:` — appears **three times**:
 
 ```yaml
-- mcp__genealogy__record_read
-- mcp__remote-devices__Genealogy_Research__record_read
+- mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
+- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
 ```
 
 The MCP server's name belongs to whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both harnesses, and
-the hosted control plane register it under `genealogy`; Cowork reaches the
-host-installed `.mcpb` through a remote-device bridge that namespaces it by
-`manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`).
+the hosted control plane register it under `genealogy`. Cowork uses
+`manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`)
+**both** times, but namespaces it under `remote-devices` only when the task runs
+in the cloud and has to reach the host through the device bridge. A task running
+on the user's own computer reaches the `.mcpb` directly and gets the bare
+`display_name` segment. **Run mode is a per-task setting the plugin cannot see**,
+so all three must be present.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 *every* entry misses, the runtime refuses to spawn the agent at all ("would be
 spawned with zero tools — refusing"). That is how #650/#698 broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
-against the harness's arbitrary dict key rather than the product's name. Listing
-both spellings is safe because unrecognized entries are ignored so long as one
-resolves.
+against the harness's arbitrary dict key rather than the product's name. The
+on-computer registrar repeated the shape one registrar later — the on-computer spelling was missing,
+`record-extractor` was refused outright with all 16 of its entries named
+unrecognized, and the lint agreed with the omission because it derived its expected
+prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
+declares a bare `Read`, which always resolves, so it would spawn holding that
+alone rather than be refused.) Listing every
+spelling is safe because unrecognized entries are ignored so long as one resolves.
 
 `disallowedTools:` matters **more**, not less: a deny binds even under
 `bypassPermissions` (the hosted path, #695), so it is the last line keeping
 `record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently binds nothing wherever the server carries the other name.
+spelling silently binds nothing wherever the server carries another name.
 
 **Two standing prohibitions:**
 
@@ -622,8 +632,8 @@ spelling silently binds nothing wherever the server carries the other name.
   — it would hand a read-only agent shell access to the host.
 - **Never hardcode a qualified name in a `ToolSearch` query.** Search by bare
   name (`query: "+research_append"`), which matches whatever prefix the session
-  exposes. `select:mcp__genealogy__…` resolves to nothing behind the Cowork
-  bridge.
+  exposes. `select:mcp__genealogy__…` resolves to nothing in either Cowork mode —
+  behind the bridge or on the user's own computer.
 
 Built-in tools (`Read`) stay **bare** in agent frontmatter. Skill
 `allowed-tools` stays **bare** everywhere.
@@ -666,7 +676,7 @@ extractor past its prose lane and it fabricated a match score. The analysis:
 |---|---|---|
 | Prose in the agent body | **No** | a caller can prompt past it |
 | A parameter on the tool input | **No** | the caller supplies the input |
-| **Tool identity** | **Yes** | the agent's frontmatter omits the broad writer *and* denies it under both spellings |
+| **Tool identity** | **Yes** | the agent's frontmatter omits the broad writer *and* denies it under all three spellings |
 
 Full rationale and error contract: `research-append-tool-spec.md` §11.
 
@@ -736,13 +746,14 @@ enforcing-vs-shadow status.
 
 ### If you're asked to…
 
-**Give an agent a new tool.** Add it to `tools:` under **both** spellings. Then:
+**Give an agent a new tool.** Add it to `tools:` under **all three** spellings. Then:
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since #650 (2026-07-12), under
-  both spellings since #742 (07-18), while its body tells it to *omit*
-  `standard_place` (`record-extractor.md:361`) — dead grants that every lint
+  has held `place_search` and `place_search_all` since #650 (2026-07-12), under two
+  spellings since #742 (07-18) and all three since 2026-08-05, while its body tells
+  it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
+  instruction) — dead grants that every lint
   passes. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
@@ -758,7 +769,7 @@ enforcing-vs-shadow status.
   fix that was never loaded."
 
 **Restrain something.** Pick the layer by *who* you are restraining: a subagent →
-its `disallowedTools:` (both spellings) or a narrowed tool (§5.3); the main
+its `disallowedTools:` (all three spellings) or a narrowed tool (§5.3); the main
 thread → a `PreToolUse` hook (§5.4); a cross-turn invariant → the tool contract
 (§3.1). **An allow-list can never restrain the main thread** — it can only
 subtract from what the session already holds. Record the new guardrail's
@@ -1061,7 +1072,8 @@ Four environments run the engine, and they load the plugin differently.
 
 | Environment | Skills | Agents | Hooks | MCP server |
 |---|---|---|---|---|
-| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | host `.mcpb` via the remote-device bridge |
+| **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | host `.mcpb` via the remote-device bridge |
+| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | live server under `genealogy` |
@@ -1121,7 +1133,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | Test | Asserts |
 |---|---|
 | `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
-| `agent-tool-names.test.ts` | dual-spelling; derives the bridge prefix from `display_name`; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
+| `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
@@ -1132,6 +1144,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails** (§9.4). Its unit half does assert, over the delta arithmetic only |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1179,6 +1192,7 @@ taught a reader nothing.
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
 | **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. |
 | **The `places-guidance.md` exemption is existence-only.** | A regression inside `research-plan`'s copy passes silently. |
+| **Nothing blocks prompt-body growth.** `prompt-budget.test.ts` reports the per-file byte delta on every `SKILL.md` and agent body and always passes; the deltas live only in each PR's `vitest` job log, so there is no history to set a ceiling from. | A PR can add 7 KB to the largest prompt in the repo with CI green, which is how `search-records/SKILL.md` reached 54 KB unnoticed. |
 | **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. |
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" |
 | **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Two unnamed false-positive classes, plus a false-negative blind spot: before the three-axis split the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable and **no post-detector run resolves `pass`** — every one is `fail` or `not_checked`. Separately, `is_error` is populated, but it only observes *tool-level* failure: a `Skill` result is a launch acknowledgement (`Launching skill: <name>`), so "invoke the skill, let it fail, finish the write inline" still reads as a success, and a writer tool that returns `{ok:false}` without throwing does too. | **Do not quote a violation rate**, and do not graduate a gate on one. Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — read the report's `concentration:` block before quoting any total. |
