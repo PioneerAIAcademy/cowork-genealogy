@@ -23,6 +23,10 @@ The three files per run ({prefix} = `run-` or `scratch_`):
 - {prefix}<timestamp>.final-tree.gedcomx.json — agent's final tree
 - {prefix}<timestamp>.final-research.json — agent's final research.json
 
+Each run also carries provenance (issue #1091): `git_sha` (the tree it started
+from) and `skills_hash` (a digest of the skill + agent prompts it staged), so a
+committed run can be tied to the prompt that produced it. See e2e/provenance.py.
+
 See e2e-test-spec.md §8.
 """
 
@@ -202,6 +206,21 @@ class E2eResult:
     # invisible to the one reader whose job is explaining a run (issue #972).
     guardrail_bypass_violations: list[str] = field(default_factory=list)
 
+    # Provenance — which prompt produced this run (issue #1091). Both default so
+    # every historical run log stays a valid E2eResult. See e2e/provenance.py.
+    #
+    # `git_sha` — `git rev-parse HEAD` at run start; lets a reviewer check out the
+    # exact tree. `skills_hash` — one sha256 over the sorted {path: hash} of every
+    # skill + agent SOURCE file the run stages; catches an UNCOMMITTED SKILL.md
+    # edit that `git_sha` cannot (the PR #1079 case this was filed for), since it
+    # hashes working-tree content. It hashes the source, not the staged copy, so
+    # it does not move with `--agent-model` (see `subagent_model_override`, and
+    # e2e-test-spec.md §8.1.3). Known limit: a hash proves WHETHER two runs used the
+    # same prompt, never WHAT changed — reconstruct that from the SHA + a re-hash
+    # on a clean tree. Evidence for a reviewer, not a gate: no CI reads either.
+    git_sha: str | None = None
+    skills_hash: str | None = None
+
     # Schema marker for readers. See HARNESS_SCHEMA_VERSION.
     harness_schema_version: int = HARNESS_SCHEMA_VERSION
 
@@ -233,8 +252,10 @@ class E2eResult:
     # because it is a `default_factory` field its key is emitted
     # unconditionally — which makes its mere PRESENCE the only reliable
     # fingerprint of "the code that wrote this runlog had the detector" for
-    # the 122 pre-v1 logs. There is no other signal: `usage.cli_version` is
-    # absent or null in every committed run, and nothing records a git sha.
+    # the 122 pre-v1 logs. There is no other signal *on those logs*:
+    # `usage.cli_version` is absent or null in every committed run, and none of
+    # them records a git sha. (`git_sha` above landed later — issue #1091 — so it
+    # fingerprints runs from that point on, not the pre-v1 corpus this is about.)
     # `test_e2e_result.py` pins the 6 known-fingerprint runs so removing this
     # field fails loudly instead of silently reclassifying them.
     # (Logs written from HARNESS_SCHEMA_VERSION >= 1 carry `compliance`
