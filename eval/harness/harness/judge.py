@@ -415,7 +415,7 @@ def grade(
                 "Bump max_tokens (currently 4096) or shorten rubric/criteria."
             )
         try:
-            dimensions = _extract_dimensions(response)
+            dimensions = _extract_dimensions(response, rubric)
             break
         except JudgeError as e:
             last_parse_error = e
@@ -528,7 +528,14 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
     )
 
 
-def _extract_dimensions(response) -> list[dict[str, Any]]:
+def _extract_dimensions(response, rubric: Rubric) -> list[dict[str, Any]]:
+    """Parse and validate the judge's submit_grading tool_use.
+
+    `rubric` supplies the authoritative set of valid `source: "rubric"`
+    dimension names for this skill (#1361) — every call site already holds
+    one (`grade()` takes it as a parameter), so this is a threading change,
+    not new plumbing.
+    """
     tool_uses = [b for b in response.content if getattr(b, "type", None) == "tool_use"]
     if len(tool_uses) != 1:
         raise JudgeError(
@@ -560,6 +567,42 @@ def _extract_dimensions(response) -> list[dict[str, Any]]:
     for d in dims:
         if isinstance(d.get("score"), str) and d["score"] in _NULL_STRINGS:
             d["score"] = None
+
+    # Reject a duplicate (source, name) pair anywhere in dimensions[], even
+    # when the two scores agree — agreement is not proof the duplication is
+    # harmless, since nothing guarantees it (#1361). Checked before
+    # base_by_name is built below, so a duplicate can't hide behind that
+    # dict's last-write-wins lookup.
+    seen_dim_keys: set[tuple[Any, Any]] = set()
+    for d in dims:
+        dim_key = (d.get("source"), d.get("name"))
+        if dim_key in seen_dim_keys:
+            raise JudgeError(
+                f"judge emitted duplicate dimension: source={d.get('source')!r} "
+                f"name={d.get('name')!r} — every dimension may appear at most "
+                f"once per run"
+            )
+        seen_dim_keys.add(dim_key)
+
+    # Reject a source:"rubric" dimension name that isn't in the parsed
+    # rubric.md. Invented names, a rubric sub-heading misread as a
+    # dimension, and casing variants of a real name (e.g. "Assertion
+    # Atomicity" vs the real "Assertion atomicity") all fail here rather
+    # than silently creating or merging into a grading category (#1361).
+    # The comparison is exact-string / case-sensitive by design —
+    # normalizing casing would hide a judge that is not following the
+    # rubric verbatim.
+    valid_rubric_names = rubric.dimension_names()
+    for d in dims:
+        if d.get("source") != "rubric":
+            continue
+        name = d.get("name")
+        if name not in valid_rubric_names:
+            raise JudgeError(
+                f"judge emitted unknown rubric dimension {name!r} for skill "
+                f"{rubric.skill!r}; valid rubric dimensions are: "
+                f"{sorted(valid_rubric_names)}"
+            )
 
     # Enforce per-base-dimension null policy. The grading-tool schema
     # accepts null on every score; that flexibility exists for Tool

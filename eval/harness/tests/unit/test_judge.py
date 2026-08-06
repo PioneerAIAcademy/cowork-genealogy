@@ -10,18 +10,32 @@ from types import SimpleNamespace
 import pytest
 
 from harness import judge
-from harness.rubric import parse_rubric
+from harness.rubric import empty_rubric, parse_rubric
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 # Use citation/ as the rubric fixture — it stays after the search-familysearch-wiki
 # rubric deletion (citation is pure GPS craft, see phase-2 triage).
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
+# Real rubric with the exact dimension names implicated in #1361's evidence
+# (re-cased and duplicated in historical record-extraction run logs).
+RECORD_EXTRACTION_RUBRIC = REPO_ROOT / "eval/tests/unit/record-extraction/rubric.md"
 
 
 @pytest.fixture
 def sample_rubric():
     return parse_rubric(CITATION_RUBRIC.read_text(encoding="utf-8"))
+
+
+@pytest.fixture
+def record_extraction_rubric():
+    return parse_rubric(RECORD_EXTRACTION_RUBRIC.read_text(encoding="utf-8"))
+
+
+# _extract_dimensions tests that only exercise base dimensions don't care
+# what the rubric's valid name set is — pass an empty one so the #1361
+# rubric-name validation has nothing to check against.
+_NO_RUBRIC = empty_rubric("test-skill")
 
 
 def test_prompt_hash_is_sha256_hex():
@@ -92,7 +106,7 @@ def test_extract_dimensions_happy_path():
         input={"dimensions": _base_dims_with_tool_arguments_null()},
     )
     response = SimpleNamespace(content=[tool_block])
-    dims = judge._extract_dimensions(response)
+    dims = judge._extract_dimensions(response, _NO_RUBRIC)
     names = [d["name"] for d in dims]
     assert names == ["Correctness", "Completeness", "Tool Arguments"]
 
@@ -111,7 +125,7 @@ def test_extract_dimensions_strips_unknown_fields():
         type="tool_use", name="submit_grading", input={"dimensions": dims},
     )
     response = SimpleNamespace(content=[tool_block])
-    out = judge._extract_dimensions(response)
+    out = judge._extract_dimensions(response, _NO_RUBRIC)
     for d in out:
         assert set(d) <= {"source", "name", "score", "rationale"}, d
     assert [d["name"] for d in out] == [
@@ -128,7 +142,7 @@ def test_extract_dimensions_rejects_missing_tool_arguments():
     )
     response = SimpleNamespace(content=[tool_block])
     with pytest.raises(judge.JudgeError, match="Tool Arguments"):
-        judge._extract_dimensions(response)
+        judge._extract_dimensions(response, _NO_RUBRIC)
 
 
 def test_extract_dimensions_rejects_null_score_on_correctness():
@@ -141,7 +155,7 @@ def test_extract_dimensions_rejects_null_score_on_correctness():
     )
     response = SimpleNamespace(content=[tool_block])
     with pytest.raises(judge.JudgeError, match="null"):
-        judge._extract_dimensions(response)
+        judge._extract_dimensions(response, _NO_RUBRIC)
 
 
 def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
@@ -154,7 +168,7 @@ def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
         type="tool_use", name="submit_grading", input={"dimensions": dims},
     )
     response = SimpleNamespace(content=[tool_block])
-    out = judge._extract_dimensions(response)
+    out = judge._extract_dimensions(response, _NO_RUBRIC)
     ta = next(d for d in out if d["name"] == "Tool Arguments")
     assert ta["score"] == 2
 
@@ -162,21 +176,156 @@ def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
 def test_extract_dimensions_rejects_zero_tool_uses():
     response = SimpleNamespace(content=[SimpleNamespace(type="text", text="foo")])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response)
+        judge._extract_dimensions(response, _NO_RUBRIC)
 
 
 def test_extract_dimensions_rejects_multiple_tool_uses():
     tu = SimpleNamespace(type="tool_use", name="submit_grading", input={"dimensions": []})
     response = SimpleNamespace(content=[tu, tu])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response)
+        judge._extract_dimensions(response, _NO_RUBRIC)
 
 
 def test_extract_dimensions_rejects_wrong_tool_name():
     bad = SimpleNamespace(type="tool_use", name="other_tool", input={})
     response = SimpleNamespace(content=[bad])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response)
+        judge._extract_dimensions(response, _NO_RUBRIC)
+
+
+# --- #1361: rubric dimension name validation ----------------------------
+#
+# eval/tests/unit/record-extraction/rubric.md has carried the same three
+# `##` headings ("Assertion atomicity", "Informant identification",
+# "Evidence type accuracy") across 39 historical run logs. The fixtures
+# below reproduce two real incidents recovered from git history at commit
+# a2d5a4cf (eval/runlogs/unit/record-extraction/, pruned from the working
+# tree by the #1238 retention policy but preserved in git objects):
+# v1_2026-07-11_23-19-58 (ut_record_extraction_014, Title-Cased all three
+# real dimensions) and v1_2026-07-19_22-34-49 (ut_record_extraction_018,
+# emitted "Informant identification" twice in one run, both scored 3).
+
+
+def _record_extraction_base_dims():
+    """The three base dimensions, scored as in the real
+    ut_record_extraction_014 run (v1_2026-07-11_23-19-58)."""
+    return [
+        {"source": "base", "name": "Correctness", "score": 2,
+         "rationale": "mostly correct but one compound non-atomic assertion"},
+        {"source": "base", "name": "Completeness", "score": 3,
+         "rationale": "all required components addressed for every person"},
+        {"source": "base", "name": "Tool Arguments", "score": 3,
+         "rationale": "all MCP tool calls passed appropriate arguments"},
+    ]
+
+
+def test_extract_dimensions_accepts_correctly_cased_rubric_dimensions(
+    record_extraction_rubric,
+):
+    """Sanity check the new validation isn't overly strict: the real,
+    correctly-cased rubric dimension names must still pass."""
+    dims = _record_extraction_base_dims() + [
+        {"source": "rubric", "name": "Assertion atomicity", "score": 3,
+         "rationale": "correct casing, matches the rubric.md heading"},
+        {"source": "rubric", "name": "Informant identification", "score": 3,
+         "rationale": "correct casing, matches the rubric.md heading"},
+        {"source": "rubric", "name": "Evidence type accuracy", "score": 3,
+         "rationale": "correct casing, matches the rubric.md heading"},
+    ]
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    out = judge._extract_dimensions(response, record_extraction_rubric)
+    rubric_names = [d["name"] for d in out if d["source"] == "rubric"]
+    assert rubric_names == [
+        "Assertion atomicity", "Informant identification", "Evidence type accuracy",
+    ]
+
+
+def test_extract_dimensions_rejects_recased_rubric_dimension_name(
+    record_extraction_rubric,
+):
+    """Reproduces v1_2026-07-11_23-19-58 ut_record_extraction_014: the judge
+    Title-Cased a real dimension ("Assertion atomicity" -> "Assertion
+    Atomicity"). A casing variant must be rejected outright, not silently
+    normalized to the real name — normalizing would hide a judge that is
+    not following the rubric verbatim (#1361 acceptance criterion 2)."""
+    dims = _record_extraction_base_dims() + [
+        {"source": "rubric", "name": "Assertion Atomicity", "score": 2,
+         "rationale": "title-cased variant of the real 'Assertion atomicity'"},
+    ]
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError) as excinfo:
+        judge._extract_dimensions(response, record_extraction_rubric)
+    msg = str(excinfo.value)
+    assert "Assertion Atomicity" in msg  # the offending name
+    assert "Assertion atomicity" in msg  # the real name, surfaced via the valid set
+
+
+def test_extract_dimensions_rejects_invented_rubric_dimension(
+    record_extraction_rubric,
+):
+    """Reproduces the invented dimensions from the #974 audit (e.g. 'FAN
+    lead treatment', 'Relationship roles') — a rubric-sourced name absent
+    from rubric.md must fail the run rather than persist (#1361 AC1)."""
+    dims = _record_extraction_base_dims() + [
+        {"source": "rubric", "name": "FAN lead treatment", "score": 2,
+         "rationale": "an invented dimension with no rubric.md heading behind it"},
+    ]
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError) as excinfo:
+        judge._extract_dimensions(response, record_extraction_rubric)
+    msg = str(excinfo.value)
+    assert "FAN lead treatment" in msg
+    assert "Assertion atomicity" in msg  # the valid set is surfaced to the operator
+
+
+def test_extract_dimensions_rejects_duplicate_rubric_dimension(
+    record_extraction_rubric,
+):
+    """Reproduces v1_2026-07-19_22-34-49 ut_record_extraction_018:
+    'Informant identification' emitted twice in one run's raw judge output,
+    both times scored 3. Must be rejected even though the scores agree —
+    agreement is not proof the duplication is harmless, and nothing
+    guarantees it holds on every run (#1361 acceptance criterion 3)."""
+    dims = _record_extraction_base_dims() + [
+        {"source": "rubric", "name": "Assertion atomicity", "score": 3,
+         "rationale": "first dimension, correct name"},
+        {"source": "rubric", "name": "Informant identification", "score": 3,
+         "rationale": "first occurrence of this dimension"},
+        {"source": "rubric", "name": "Evidence type accuracy", "score": 3,
+         "rationale": "third dimension, correct name"},
+        {"source": "rubric", "name": "Informant identification", "score": 3,
+         "rationale": "duplicate occurrence, same score as the first"},
+    ]
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError, match="duplicate"):
+        judge._extract_dimensions(response, record_extraction_rubric)
+
+
+def test_extract_dimensions_rejects_duplicate_base_dimension(record_extraction_rubric):
+    """The duplicate check is symmetric across both sources, not just
+    rubric — a repeated base dimension is rejected too, rather than
+    silently collapsing to whichever instance base_by_name's dict lookup
+    reaches first (#1361 acceptance criterion 3)."""
+    dims = _record_extraction_base_dims()
+    dims.append(dict(dims[0]))  # duplicate the first base dimension verbatim
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    with pytest.raises(judge.JudgeError, match="duplicate"):
+        judge._extract_dimensions(response, record_extraction_rubric)
 
 
 def test_compute_cost_for_known_model():
@@ -455,6 +604,40 @@ def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatc
     assert len(client.calls) == 2
     assert client.calls[0]["temperature"] == 0.0
     assert "temperature" not in client.calls[1]
+    assert [d["name"] for d in out.dimensions] == [
+        "Correctness",
+        "Completeness",
+        "Tool Arguments",
+    ]
+
+
+def _recased_rubric_dimension_response():
+    """A first draw that Title-Cases a real rubric dimension name — the
+    same #1361 defect as the ut_record_extraction_014 fixtures above, but
+    exercised here through the full grade() retry loop rather than a bare
+    _extract_dimensions() call."""
+    dims = _base_dims_with_tool_arguments_null() + [
+        {"source": "rubric", "name": "Evidence Explained Compliance", "score": 2,
+         "rationale": "title-cased variant of the real dimension name"},
+    ]
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    return SimpleNamespace(
+        content=[tool_block], stop_reason="tool_use", usage=_usage()
+    )
+
+
+def test_judge_resamples_after_recased_rubric_dimension(sample_rubric, monkeypatch):
+    """A #1361-invalid draw (re-cased rubric dimension name) must be
+    rejected and trigger the same resample recovery as any other malformed
+    judge draw — not silently normalized, and not silently persisted."""
+    client, out = _grade_with(
+        monkeypatch,
+        sample_rubric,
+        [_recased_rubric_dimension_response(), _parseable_response()],
+    )
+    assert len(client.calls) == 2
     assert [d["name"] for d in out.dimensions] == [
         "Correctness",
         "Completeness",
