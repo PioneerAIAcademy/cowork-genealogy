@@ -376,14 +376,23 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         "If this call was denied, the entire batch was rejected — including any "
         "ops in other sections — and must be re-issued after the same_person "
         "call. "
-        # The doctrine escape. Scoring applies only to record_search-sourced
-        # assertions, and a locally-minted stub returns a degenerate score that
-        # person-evidence/SKILL.md says to treat as "no score available"; without
-        # a stated way out, those legitimate writes have no satisfying move.
-        "If no score is obtainable at all — the assertion is not "
-        "record_search-sourced (null record_persona_id), or the id is an "
-        "unresolvable stub returning a degenerate score — say so in the link's "
-        "`rationale` and proceed."
+        # The one real escape: scoring needs a record persona to compare
+        # against, and a non-record_search assertion has no record_persona_id.
+        #
+        # There is deliberately NO escape for "the id is a locally-minted stub".
+        # person-evidence/SKILL.md says such an id returns a degenerate score to
+        # be treated as "no score available", but that guidance (2026-07-02)
+        # predates the match-engine mint-hardening (2026-07-07) and is stale.
+        # Probed live against the API (dev/probe-same-person-local-id.ts): with
+        # the tree focus person's ARK removed the score is 0.9999484 against a
+        # 0.999967 control — and identical across two runs despite randomFsId()
+        # minting a fresh id each call. FS scores document CONTENT, so a minted
+        # person IS scorable, and telling the agent otherwise would hand it a
+        # documented way to skip a call that works.
+        "If no score is obtainable — the assertion is not record_search-sourced, "
+        "so it has no record_persona_id to compare against — say so in the "
+        "link's `rationale` and proceed. A locally-minted tree id is NOT such a "
+        "case: it scores on document content and must be scored."
     )
 
 

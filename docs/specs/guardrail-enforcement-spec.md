@@ -188,15 +188,43 @@ runs. The reason text now names that shape, says the **entire batch** is
 rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
 median of 17 ops), and states the escape below.
 
-**A deny would also block writes doctrine sanctions — this is a fifth
-prerequisite the issue did not name.** `person-evidence/SKILL.md` scopes scoring
-to `record_search`-sourced assertions only ("Match scoring works **only** for
-`record_search`-sourced assertions"; FTS-, image- and PDF-sourced assertions have
-a null `record_persona_id`), and separately says a locally-minted stub returns a
-degenerate score to be treated as "no score available". Neither case can satisfy
-the gate at all. Until the check is narrowed, the reason's stated escape — record
-in the link's `rationale` that no score was obtainable, and proceed — is what
-keeps those writes from being unsatisfiable.
+**One class of write genuinely cannot satisfy the gate — and one that looks like
+it can't, does.** `person-evidence/SKILL.md` scopes scoring to
+`record_search`-sourced assertions only ("Match scoring works **only** for
+`record_search`-sourced assertions"): an FTS-, image- or PDF-sourced assertion
+has a null `record_persona_id`, so there is no record persona to compare
+against. That case is real, and the reason's stated escape — record in the link's
+`rationale` that no score was obtainable, and proceed — is what keeps it
+satisfiable.
+
+The same skill also says a locally-minted stub returns a degenerate score to be
+treated as "no score available". **That guidance is stale, and acting on it would
+be the more expensive mistake**, because it excuses the agent from the exact call
+this layer exists to require. It dates from 2026-07-02; the match-engine
+mint-hardening that made an ARK-less focus person score on document content
+landed 2026-07-07, five days later. Probed live
+(`packages/engine/mcp-server/dev/probe-same-person-local-id.ts`), holding the
+record side and every fact constant and varying only the tree side's `ark`:
+
+| arm | tree focus | score |
+|---|---|---|
+| A | real ARK (control) | `0.999967` |
+| B1 | ARK removed, local id `I1` | `0.9999484` |
+| B2 | identical to B1, fresh random mint | `0.9999484` |
+| C | every tree ARK removed | `0.9999484` |
+
+B1 and B2 are identical although `randomFsId()` mints a different id per call,
+and stripping every ARK degrades nothing further — the score is document
+content, not identity resolution. **A newly-minted tree person is scorable, so
+the gate is achievable for it.** The consequence for graduation is the opposite
+of what the fire rate suggests on its own: the rate measures an agent that does
+not know the call shape, not a gate that cannot be met — which makes the reason
+rewrite the lever, and a later deny more defensible than the raw number implies.
+
+One caveat on the probe: it is a single pair with strongly agreeing name, date,
+place and a parent relationship. A minted person carrying thinner content will
+score lower — but that is a real weak-match signal, which is what the gate is
+for, not an ARK artifact.
 
 **Trying a deny on one fixture.** `make e2e-run TEST=<slug>
 PERSON_EVIDENCE_GUARD=deny` (default `shadow`) blocks the write instead of only
@@ -480,16 +508,21 @@ that outlive any one of them.
   This is the reason §7 ships in shadow and the reason `Bash` is left open in
   §6 — in both cases deliberately, in favor of the failure mode that is merely
   wrong over the one that is stuck.
-- **A gate can be unsatisfiable by doctrine, not just mistuned.** §4's live
-  provenance check asks for a `same_person` score on writes that
-  `person-evidence`'s own doctrine says cannot be scored — a non-`record_search`
-  assertion has no `record_persona_id`, and a locally-minted stub returns a
-  degenerate score to be read as "no score available". A fire-rate measurement
-  cannot distinguish this from a tuning problem: both look like "fires too
-  often". Before graduating any layer here, check the owning skill's doctrine for
-  cases where **no** call sequence satisfies the gate, and either narrow the
-  check or give the reason a stated escape. Narrowing this one to
-  `record_search`-sourced assertions is open work.
+- **A gate can be unsatisfiable by doctrine, not just mistuned** — and the
+  owning skill's doctrine can itself be stale. §4's live provenance check asks
+  for a `same_person` score on writes `person-evidence` says cannot be scored.
+  One of those two claims is true (a non-`record_search` assertion has no
+  `record_persona_id` to compare against); the other — that a locally-minted stub
+  returns a degenerate score — was **refuted by probing the live API**, and had
+  been superseded by a match-engine change five days after it was written. A
+  fire-rate measurement distinguishes none of this: an impossible gate, a
+  mistuned one, and an achievable one the agent has been told to skip all look
+  identical from the count. Before graduating any layer here, read the owning
+  skill's doctrine for cases where no call sequence satisfies the gate — **and
+  date each claim against the code it describes** rather than trusting it,
+  because a stale excuse in a skill body suppresses the very call the guardrail
+  is measuring. Narrowing this check to `record_search`-sourced assertions is
+  open work; correcting the stale stub guidance is separate skill-prose work.
 - **`Skill`-tool content injection under compaction is unverified.** All four
   guardrail skills `Read` their own `references/*.md` on demand, in-session. If
   that read is as unreliable as #702 found the agent case to be, the failure

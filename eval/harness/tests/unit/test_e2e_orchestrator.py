@@ -852,6 +852,32 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
     assert "rationale" in reason
 
 
+def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
+    """The reason must NOT tell the agent a locally-minted id is unscorable.
+
+    person-evidence/SKILL.md says such an id returns a degenerate score to treat
+    as "no score available" (2026-07-02). That is stale: the match-engine
+    mint-hardening (2026-07-07) made an ARK-less focus person score on document
+    content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
+    with its ARK removed scores 0.9999484 against a 0.999967 control, identical
+    across two runs despite a fresh random mint each call.
+
+    So an escape for that case would hand the agent a documented reason to skip
+    the one call this gate exists to require. The only escape offered is the real
+    one: no record persona to compare against."""
+    reason = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert reason is not None
+    assert "degenerate" not in reason.lower()
+    assert "unresolvable stub" not in reason.lower()
+    # the surviving escape is still stated
+    assert "record_persona_id" in reason
+
+
 # --- person_evidence_deny_decision (issue #1231 prereq 3: deny + loop valve) --
 
 
