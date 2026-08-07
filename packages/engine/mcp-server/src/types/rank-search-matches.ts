@@ -96,5 +96,19 @@ export interface RankSearchMatchesResult {
    *  through `person_evidence`). Reported separately from facts because name
    *  variants alone measurably move the score. */
   subjectEnrichedNames?: number;
+  /**
+   * Present only when the search anchored on a relative AND at least one
+   * returned match does not carry that relative. Says so in words, because the
+   * match score cannot: it measures name/date/place agreement and is blind to
+   * whether the record names the father you searched for. A top-ranked hit with
+   * `father: absent` is where that blindness is most dangerous — it looks more
+   * confirmed than anything else on the page.
+   *
+   * Deliberately a note and not a score adjustment. `rank_search_matches` is
+   * specced as a re-ranker and review surface, not a classifier; making `absent`
+   * move `matchScore` is a scoring-policy change that needs calibration first
+   * and would shift every ranking in the eval corpus.
+   */
+  relativeTermNote?: string;
   matches: RankedMatch[];
 }

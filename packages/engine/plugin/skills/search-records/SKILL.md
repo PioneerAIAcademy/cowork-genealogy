@@ -257,6 +257,20 @@ old per-result `same_person` loop and the separate `source_attachments` call bot
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
+- **If you anchored the search on a relative's name, read `relativeTerms` before
+  you write anything about that relationship.** FamilySearch keeps records that
+  do not *contradict* the relative you named, not only records that carry them —
+  so a search with `fatherGivenName: "William"` returns hits that name no father
+  at all, and they look identical to the ones that name him. Each result says
+  which: `present` (the record names one — the name is right there, compare it
+  yourself), `absent` (it names none), `unknown` (could not be determined).
+  On `absent` or `unknown`, the record is **consistent with** that relative and
+  is not evidence *for* them. Write "consistent with", never "confirming her
+  father William". The match score cannot catch this for you — it measures name,
+  date and place agreement and never looks at the relationship, so an `absent`
+  record can outrank one that names him. `rank_search_matches` returns a
+  `relativeTermNote` when any returned match is `absent`; if you see it, the
+  ranking is telling you its own top hits do not carry the relative.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —

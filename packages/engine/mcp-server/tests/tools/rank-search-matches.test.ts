@@ -687,6 +687,56 @@ describe("rank_search_matches", () => {
     });
   });
 
+  it("warns when returned matches do not carry the relative that was searched for", async () => {
+    // The score cannot say this: it measures name/date/place agreement and is
+    // blind to whether the record names the father. A top-ranked hit with
+    // `father: absent` looks more confirmed than anything else on the page.
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const rows = ["AA1", "AA2", "AA3"].map((suffix, i) => {
+      const r = candidate({
+        recordId: `ark:/61903/1:1:AAAA-${suffix}`,
+        primaryId: `p${i + 1}`,
+      }) as Record<string, unknown>;
+      r.relativeTerms =
+        i === 0
+          ? { father: { status: "present", name: "Wm. Neal" } }
+          : { father: { status: "absent" } };
+      return r;
+    });
+    const ref = await stage(rows);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.relativeTermNote).toContain("2 name no father");
+    expect(out.relativeTermNote).toContain("not evidence of them");
+  });
+
+  it("does not warn on unknown — only on absent", async () => {
+    // "We could not tell" is not a finding to warn about, and warning on it
+    // would train the caller to ignore the note.
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const row = candidate({
+      recordId: "ark:/61903/1:1:AAAA-AA1",
+      primaryId: "p1",
+    }) as Record<string, unknown>;
+    row.relativeTerms = { father: { status: "unknown" } };
+    const ref = await stage([row]);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.relativeTermNote).toBeUndefined();
+  });
+
   it("omits relativeTerms on the stub when the staged row has none", async () => {
     await writeTree();
     scorePairMock.mockResolvedValue(scoreResult(0.9, 4));

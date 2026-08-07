@@ -13,9 +13,9 @@ import type {
 } from "../types/gedcomx.js";
 import type {
   KinPrefix,
+  KinTerm,
   RelativeTermFinding,
   RelativeTerms,
-  ResolvableKinPrefix,
 } from "../types/relative-terms.js";
 import type {
   FSSearchResponse,
@@ -371,21 +371,24 @@ export function findRepresentedPerson(
   return principal ? { person: principal, anchor: "principal" } : null;
 }
 
-/** Which relative prefixes the caller supplied a NAME for (#1324).
+/** Which relative terms the caller supplied a NAME for, and the names (#1324).
  *
  * The `*Exact` booleans deliberately do not count: `fatherGivenNameExact` with
  * no `fatherGivenName` sends no `q.fatherGivenName` at all, so no father
- * constraint was applied and there is nothing to report on. `other` is excluded
- * — see `ResolvableKinPrefix`.
+ * constraint was applied and there is nothing to report on.
  */
-export function suppliedKinPrefixes(input: RecordSearchInput): ResolvableKinPrefix[] {
-  const out: ResolvableKinPrefix[] = [];
+export function suppliedKinTerms(input: RecordSearchInput): KinTerm[] {
+  const out: KinTerm[] = [];
+  const record = input as unknown as Record<string, unknown>;
   for (const group of KIN_GROUPS) {
-    if (group.prefix === "other") continue;
-    const record = input as unknown as Record<string, unknown>;
-    if (record[`${group.prefix}GivenName`] || record[`${group.prefix}Surname`]) {
-      out.push(group.prefix);
-    }
+    const given = record[`${group.prefix}GivenName`];
+    const surname = record[`${group.prefix}Surname`];
+    if (!given && !surname) continue;
+    out.push({
+      prefix: group.prefix,
+      ...(typeof given === "string" ? { given } : {}),
+      ...(typeof surname === "string" ? { surname } : {}),
+    });
   }
   return out;
 }
@@ -507,6 +510,55 @@ function resolveSpouseTerm(
   return unresolvableEndpoint ? { status: "unknown" } : { status: "absent" };
 }
 
+/** Case- and punctuation-insensitive comparison of one name part. */
+function namePartMatches(queried: string | undefined, found: string | undefined): boolean {
+  if (!queried) return true; // caller did not constrain this half
+  if (!found) return false;
+  const norm = (s: string) => s.toLowerCase().replace(/[.,'`-]/g, "").trim();
+  return norm(queried) === norm(found);
+}
+
+/**
+ * `other` — a co-occurring person of unspecified relationship.
+ *
+ * Unlike the other four prefixes there is no relationship role to resolve
+ * against, so the only available question is whether any co-person's NAME
+ * answers the query. That makes its status vocabulary genuinely narrower, and
+ * pretending otherwise is what makes this field dangerous:
+ *
+ * - `present` — a co-person's name matches. A real positive, and `name` says who.
+ * - `unknown` — co-people exist, none matches by name. NOT `absent`: we compare
+ *   names exactly (bar case and punctuation) while FamilySearch matched fuzzily,
+ *   so a `Wm.`-vs-`William` miss here means "we could not confirm it", never
+ *   "the person is not on this record".
+ * - `absent` — the record carries no co-person at all. Rare: all 384 surveyed
+ *   real results are multi-person, since search entries carry the whole
+ *   household. Kept because a one-person entry is legal, not because it is common.
+ *
+ * The `absent` that IS reachable for father/mother/spouse rests on the record
+ * positively naming someone else in that role. No such evidence exists here, so
+ * no such denial is offered.
+ */
+function resolveOtherTerm(
+  persons: Map<string, SimplifiedPerson>,
+  primaryId: string,
+  term: KinTerm,
+): RelativeTermFinding {
+  let coPersonCount = 0;
+  for (const [id, person] of persons) {
+    if (id === primaryId) continue;
+    coPersonCount += 1;
+    const name = person.names?.[0];
+    if (
+      namePartMatches(term.given, name?.given) &&
+      namePartMatches(term.surname, name?.surname)
+    ) {
+      return presentWithName(person);
+    }
+  }
+  return coPersonCount === 0 ? { status: "absent" } : { status: "unknown" };
+}
+
 /**
  * Per-result answer to "is the relative I anchored on actually on this record?"
  *
@@ -519,14 +571,14 @@ function resolveSpouseTerm(
 export function resolveRelativeTerms(
   gedcomx: SimplifiedGedcomX | undefined,
   primaryId: string | undefined,
-  prefixes: readonly ResolvableKinPrefix[],
+  terms: readonly KinTerm[],
   anchor: PersonaAnchor,
 ): RelativeTerms | undefined {
-  if (prefixes.length === 0) return undefined;
+  if (terms.length === 0) return undefined;
 
   const allUnknown = (): RelativeTerms =>
     Object.fromEntries(
-      prefixes.map((p) => [p, { status: "unknown" as const }]),
+      terms.map((t) => [t.prefix, { status: "unknown" as const }]),
     ) as RelativeTerms;
 
   // Anchor is a guess — see `PersonaAnchor`.
@@ -534,23 +586,35 @@ export function resolveRelativeTerms(
   // The persona could not be identified inside the graph at all.
   if (!primaryId) return allUnknown();
 
-  // No graph to read. An empty array is NOT the same as "resolves cleanly and
-  // yields nobody": we cannot tell "no father recorded" from "relationships not
-  // returned for this entry", so all three shapes are `unknown`.
-  const relationships = gedcomx?.relationships;
-  if (!relationships || relationships.length === 0) return allUnknown();
-
   const persons = new Map<string, SimplifiedPerson>();
   for (const p of gedcomx?.persons ?? []) {
     if (p.id) persons.set(p.id, p);
   }
 
+  // No graph to read. An empty array is NOT the same as "resolves cleanly and
+  // yields nobody": we cannot tell "no father recorded" from "relationships not
+  // returned for this entry", so all three shapes are `unknown`. `other` is
+  // exempt — it reads `persons[]`, not the relationship graph, so a missing
+  // graph does not blind it.
+  const relationships = gedcomx?.relationships ?? [];
+  const graphUnusable = relationships.length === 0;
+
   const out: RelativeTerms = {};
-  for (const prefix of prefixes) {
-    out[prefix] =
-      prefix === "spouse"
-        ? resolveSpouseTerm(relationships, persons, primaryId)
-        : resolveParentTerm(relationships, persons, primaryId, prefix);
+  for (const term of terms) {
+    if (term.prefix === "other") {
+      out.other = resolveOtherTerm(persons, primaryId, term);
+    } else if (graphUnusable) {
+      out[term.prefix] = { status: "unknown" };
+    } else if (term.prefix === "spouse") {
+      out.spouse = resolveSpouseTerm(relationships, persons, primaryId);
+    } else {
+      out[term.prefix] = resolveParentTerm(
+        relationships,
+        persons,
+        primaryId,
+        term.prefix,
+      );
+    }
   }
   return out;
 }
@@ -609,7 +673,7 @@ function pickFactOriginal(
 
 export function mapEntry(
   entry: FSSearchEntry,
-  prefixes: readonly ResolvableKinPrefix[] = [],
+  terms: readonly KinTerm[] = [],
 ): RecordSearchResult | null {
   const represented = findRepresentedPerson(entry);
   if (!represented) return null;
@@ -722,7 +786,7 @@ export function mapEntry(
   const relativeTerms = resolveRelativeTerms(
     result.gedcomx,
     result.primaryId,
-    prefixes,
+    terms,
     anchor,
   );
   if (relativeTerms) result.relativeTerms = relativeTerms;
@@ -836,10 +900,10 @@ export async function recordSearchTool(
 
   const data: FSSearchResponse = await response.json();
   const entries = data.entries ?? [];
-  // Not point-free: `.map(mapEntry)` would pass the array index as `prefixes`.
-  const kinPrefixes = suppliedKinPrefixes(input);
+  // Not point-free: `.map(mapEntry)` would pass the array index as `terms`.
+  const kinTerms = suppliedKinTerms(input);
   const results = entries
-    .map((entry) => mapEntry(entry, kinPrefixes))
+    .map((entry) => mapEntry(entry, kinTerms))
     .filter((r): r is RecordSearchResult => r !== null);
 
   // Standardize places across the whole response in one pass (dedup spans all
@@ -1163,8 +1227,8 @@ export const recordSearchToolSchema = {
       parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown. A record that names no parent at all is kept too, since silence is not a contradiction — read `relativeTerms.parent` on each result to see which." },
       parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
       parentSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
-      otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate). Note: `otherGivenName` / `otherSurname` get no `relativeTerms` entry — co-occurrence alone is not evidence of a specific relationship." },
-      otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship. Note: `otherGivenName` / `otherSurname` get no `relativeTerms` entry — co-occurrence alone is not evidence of a specific relationship." },
+      otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate). `relativeTerms.other` reports whether a co-person on the record carries this name: `present` (one does), `unknown` (co-people exist, none matches — names are compared exactly, so a spelling variant lands here), `absent` (the record names nobody else)." },
+      otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship. `relativeTerms.other` reports whether a co-person on the record carries this name: `present` (one does), `unknown` (co-people exist, none matches — names are compared exactly, so a spelling variant lands here), `absent` (the record names nobody else)." },
       otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
       otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 

@@ -658,6 +658,7 @@ performed would recreate this field's own failure mode one layer up.
 | `mother` | ParentChild parent whose `gender` is exactly `"Female"` |
 | `parent` | Any ParentChild parent, regardless of sex — mirrors `q.parentGivenName` |
 | `spouse` | The **other** endpoint of a Couple row in which the persona is an endpoint |
+| `other` | Any co-person whose **name** matches the query — no relationship role exists to resolve against |
 
 `father` and `mother` are **sex-derived**, and resolve in three ordered
 branches: `present` if a parent of that sex is on the record; else `unknown` if
@@ -687,12 +688,33 @@ no `fullText`, so the parts must be joined) and tolerates a missing half. If the
 join yields nothing the status is still `present` **without** a `name`: presence
 is established by the relationship, not by the name.
 
-**`other` is excluded.** `q.otherGivenName` matches any co-occurring person of
-unspecified relationship, so the only available rule is "some other person is on
-this record" — and every one of the 384 surveyed real results is multi-person.
-That makes the answer a constant `present` naming an arbitrary co-person who
-need not be the one that matched the query, which is the same confidently-wrong
-claim this field exists to remove.
+**`other` is the exception to all of the above, and its status vocabulary is
+genuinely narrower.** `q.otherGivenName` names a co-occurring person of
+*unspecified* relationship, so there is no relationship role to resolve against
+and the only available question is whether some co-person's **name** answers the
+query. Names are compared exactly, ignoring case and punctuation (`Wm.` matches
+` wm `, but not `William`).
+
+That asymmetry is deliberate. "Some other person is on this record" would be a
+useless rule — every one of the 384 surveyed real results is multi-person, since
+search entries carry the whole household — and would make `other` a constant
+`present` naming an arbitrary bystander.
+
+| Status | When |
+|---|---|
+| `present` | A co-person's name matches. A real positive; `name` says who. |
+| `unknown` | Co-people exist, none matches by name. |
+| `absent` | The record carries **no** co-person at all. Rare, but legal. |
+
+A name miss is `unknown`, never `absent`: we compare exactly while FamilySearch
+matched fuzzily, so a `Wm.`-vs-`William` miss means "could not confirm", not
+"not on this record". The `absent` that *is* reachable for `father`/`mother`/
+`spouse` rests on the record positively naming someone else in that role, and no
+such evidence exists here — so no such denial is offered.
+
+`other` reads `persons[]` rather than the relationship graph, so `unknown`
+trigger 3 (no graph) does not apply to it: a record with no `relationships` can
+still answer an `other` term.
 
 **Survives staging.** Resolved inside `mapEntry` before the staged slim block
 deletes `gedcomx`, so it reaches both the inline stub and the sidecar payload.
@@ -1202,7 +1224,7 @@ types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 
 ### `packages/engine/mcp-server/src/types/relative-terms.ts`
 
-`KinPrefix`, `ResolvableKinPrefix`, `RelativeTermStatus`,
+`KinPrefix`, `KinTerm`, `RelativeTermStatus`,
 `RelativeTermFinding`, `RelativeTerms`. A third module rather than either
 tool's own types file: `types/record-search.ts` already imports from
 `types/rank-search-matches.ts`, which imports nothing, so declaring these in
@@ -1223,15 +1245,16 @@ either and importing from the other would make the two mutually importing.
   modifiers, encodes values, applies the default `m.*` flags.
 - `mapEntry(entry, prefixes?)` — `FSSearchEntry → RecordSearchResult` mapping
   (the 11-step procedure above). `prefixes` is the relative-name prefix list
-  from `suppliedKinPrefixes`; omitted, no `relativeTerms` is emitted.
+  from `suppliedKinTerms`; omitted, no `relativeTerms` is emitted.
 - `extractEvent(fact)` — `FSFact → RecordSearchEvent`.
 - `findRepresentedPerson(entry)` — the persona match used in step 1 of mapping.
   Returns `{ person, anchor }`, where `anchor` is `"ark"` for a positive
   identification and `"principal"` for the fallback guess. `relativeTerms`
   refuses to resolve on a `"principal"` anchor.
-- `suppliedKinPrefixes(input)` — which relative prefixes the caller supplied a
-  *name* for. Excludes `other`; ignores the `*Exact` booleans.
-- `resolveRelativeTerms(gedcomx, primaryId, prefixes, anchor)` — pure resolver
+- `suppliedKinTerms(input)` — which relative terms the caller supplied a *name*
+  for, and the names. Ignores the `*Exact` booleans. `other` needs the names
+  themselves; the four role-based prefixes ignore them.
+- `resolveRelativeTerms(gedcomx, primaryId, terms, anchor)` — pure resolver
   over the simplified doc. See the `relativeTerms` section above.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
@@ -1299,11 +1322,15 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 47 | `spouse: absent` when there is no Couple row | Negative path |
 | 48 | `name` joins given + surname and tolerates a missing surname | Name derivation |
 | 49 | `relativeTerms` emitted only when a relative *name* was supplied | `*Exact` alone does not count |
-| 50 | Never emits an entry for `other` | Deliberate exclusion |
-| 51 | Survives the staged slim block, inline **and** in the sidecar on disk | The integration the design turns on |
+| 50 | `other` resolves by name match against co-people | No relationship role exists |
+| 51 | `other` is `unknown`, not `absent`, when no co-person name matches | Exact compare vs FS's fuzzy one |
+| 52 | `other` matches across case and punctuation | `Wm.` vs ` wm ` |
+| 53 | `other` is `absent` only when the record has no co-person | The one reachable denial |
+| 54 | `other` still answers when the relationship graph is missing | It reads `persons[]`, not the graph |
+| 55 | Survives the staged slim block, inline **and** in the sidecar on disk | The integration the design turns on |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
-after this table was last extended. Cases 35–51 cover `relativeTerms`.
+after this table was last extended. Cases 35–55 cover `relativeTerms`.
 
 ### Smoke-test script
 

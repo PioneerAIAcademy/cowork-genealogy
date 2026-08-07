@@ -18,25 +18,25 @@
 export type KinPrefix = "spouse" | "father" | "mother" | "parent" | "other";
 
 /**
- * The prefixes a finding can be reported for.
+ * A relative term the caller actually supplied, with the names they gave.
  *
- * `other` is excluded deliberately. `q.otherGivenName` matches any co-occurring
- * person of unspecified relationship, so the only available rule is "some other
- * person is on this record" — and every one of the 384 real staged results
- * surveyed for #1324 is multi-person. That makes the answer a constant
- * `present` naming an arbitrary co-person who need not be the one that matched
- * the query, which is the same confidently-wrong claim this field exists to
- * remove. Closing it needs name matching; tracked separately.
+ * `other` needs the names, not just the prefix: it has no relationship role to
+ * resolve against, so the only way to answer it is to compare co-person names
+ * to the query. The four role-based prefixes ignore the names entirely.
  */
-export type ResolvableKinPrefix = Exclude<KinPrefix, "other">;
+export interface KinTerm {
+  prefix: KinPrefix;
+  given?: string;
+  surname?: string;
+}
 
 /**
  * Whether the relative the caller anchored on is actually on the record.
  *
  * - `present` — the record names a relative in this role; `name` carries theirs.
- *   NOT a match verdict: the tool does not re-run FamilySearch's fuzzy matcher
- *   and must not claim to have. `Wm.` against a query of `William` is reported
- *   as-is so the caller can judge it.
+ *   For the four role-based prefixes this is NOT a match verdict: the tool does
+ *   not re-run FamilySearch's fuzzy matcher and must not claim to have. `Wm.`
+ *   against a query of `William` is reported as-is so the caller can judge it.
  * - `absent` — the record names no such relative. The case #1324 is about.
  * - `unknown` — could not be determined. Never guessed, because a wrongly
  *   denied relative reads as *disconfirming*, which is worse than silence.
@@ -60,4 +60,4 @@ export interface RelativeTermFinding {
  * `fatherGivenNameExact` with no `fatherGivenName` sends no father constraint,
  * so there is nothing to report on.
  */
-export type RelativeTerms = Partial<Record<ResolvableKinPrefix, RelativeTermFinding>>;
+export type RelativeTerms = Partial<Record<KinPrefix, RelativeTermFinding>>;

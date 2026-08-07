@@ -27,6 +27,7 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import type { KinPrefix, KinTerm } from "../../src/types/relative-terms.js";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -1411,12 +1412,20 @@ function householdEntry(opts?: {
   } as unknown as FSSearchEntry;
 }
 
-/** Run an entry through mapEntry and hand back just the resolved terms. */
+/** Run an entry through mapEntry and hand back just the resolved terms.
+ *
+ * Accepts bare prefixes for the four role-based terms (which ignore the queried
+ * names) and full `{prefix, given, surname}` objects for `other`, which has no
+ * relationship role and can only be answered by comparing names.
+ */
 function termsFor(
   entry: FSSearchEntry,
-  prefixes: ("father" | "mother" | "parent" | "spouse")[],
+  terms: (KinPrefix | KinTerm)[],
 ) {
-  return mapEntry(entry, prefixes)?.relativeTerms;
+  const normalized: KinTerm[] = terms.map((t) =>
+    typeof t === "string" ? { prefix: t } : t,
+  );
+  return mapEntry(entry, normalized)?.relativeTerms;
 }
 
 describe("#1324 relativeTerms", () => {
@@ -1556,19 +1565,62 @@ describe("#1324 relativeTerms", () => {
     expect(exactOnly.results[0].relativeTerms).toBeUndefined();
   });
 
-  it("50. never emits an entry for `other`", async () => {
+  it("50. resolves `other` by name match against co-people on the record", async () => {
     mockFetch.mockResolvedValue(
       makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
     );
     const result = await recordSearchTool({
       surname: "Sugecz",
       fatherGivenName: "Wm.",
-      otherGivenName: "Anybody",
+      otherGivenName: "Anna",
+      otherSurname: "Kovacs",
     });
-    expect(Object.keys(result.results[0].relativeTerms!)).toEqual(["father"]);
+    expect(result.results[0].relativeTerms).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
   });
 
-  it("51. survives the staged slim block, inline and in the sidecar on disk", async () => {
+  it("51. reports `other` unknown, not absent, when no co-person's name matches", () => {
+    // We compare names exactly while FamilySearch matched fuzzily, so a miss
+    // means "could not confirm", never "not on this record". Reporting `absent`
+    // here would be the false disconfirmation this whole field exists to stop.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "Jozsef" }]),
+    ).toEqual({ other: { status: "unknown" } });
+  });
+
+  it("52. matches `other` across case and punctuation", () => {
+    // `Wm.` vs `wm` is the same indexed person spelled differently; an exact
+    // string compare would call that a miss and downgrade a real positive.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "  wm ", surname: "NEAL" }]),
+    ).toEqual({ other: { status: "present", name: "Wm. Neal" } });
+  });
+
+  it("53. reports `other` absent only when the record carries no co-person", () => {
+    expect(
+      termsFor(householdEntry({ father: false, mother: false, spouses: 0 }), [
+        { prefix: "other", given: "Anna" },
+      ]),
+    ).toEqual({ other: { status: "absent" } });
+  });
+
+  it("54. answers `other` even when the relationship graph is missing", () => {
+    // `other` reads persons[], not the relationship graph, so the no-graph
+    // trigger that blinds the four role-based prefixes does not blind it.
+    expect(
+      termsFor(householdEntry({ relationships: "omit" }), [
+        "father",
+        { prefix: "other", given: "Anna", surname: "Kovacs" },
+      ]),
+    ).toEqual({
+      father: { status: "unknown" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
+  });
+
+  it("55. survives the staged slim block, inline and in the sidecar on disk", async () => {
     // The integration the whole design turns on: `gedcomx` is deleted from the
     // staged rows and relativeTerms must outlive it in BOTH copies. Asserting a
     // surviving `unknown` here would prove nothing, so this asserts `present`.

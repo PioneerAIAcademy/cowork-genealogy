@@ -149,6 +149,9 @@ export async function rankSearchMatches(
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
 
+  const relativeTermNote = buildRelativeTermNote(matches);
+  if (relativeTermNote) out.relativeTermNote = relativeTermNote;
+
   if (noSignal && subjectTooThin) {
     // Withhold the ranking rather than flag it. Returning a ranked-LOOKING
     // top-10 that is really search order is the silent-degradation path: the
@@ -369,6 +372,44 @@ export async function buildSubjectDoc(
 }
 
 // ─── Stub projection ─────────────────────────────────────────────────────────
+
+/**
+ * Say, in words, that some of these high-scoring matches do not carry the
+ * relative the search was anchored on.
+ *
+ * The score cannot say it. `matchScore` measures name/date/place agreement
+ * between the subject and the candidate; it never looks at whether the record
+ * names the father you searched for. So a record that is merely *consistent*
+ * with William — because FamilySearch keeps records that do not contradict him
+ * — can outrank one that actually names him, and arrive at the top of the list
+ * looking like the best-evidenced hit on the page. That is the exact confusion
+ * `relativeTerms` exists to remove, and it is worst here.
+ *
+ * Counts only `absent`, never `unknown`: "we could not tell" is not a finding
+ * to warn about, and warning on it would train the caller to ignore the note.
+ */
+function buildRelativeTermNote(matches: RankedMatch[]): string | undefined {
+  const absentByPrefix = new Map<string, number>();
+  for (const m of matches) {
+    for (const [prefix, finding] of Object.entries(m.relativeTerms ?? {})) {
+      if (finding.status === "absent") {
+        absentByPrefix.set(prefix, (absentByPrefix.get(prefix) ?? 0) + 1);
+      }
+    }
+  }
+  if (absentByPrefix.size === 0) return undefined;
+
+  const parts = [...absentByPrefix.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([prefix, n]) => `${n} name no ${prefix}`);
+  return (
+    `Of the ${matches.length} matches returned, ${parts.join(", ")} ` +
+    `(\`relativeTerms\`). The match score does not account for this — it ` +
+    `measures name, date and place agreement only. Those records are ` +
+    `CONSISTENT with the relative you searched for, not evidence of them, so ` +
+    `do not write them up as confirming the relationship.`
+  );
+}
 
 function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   const r = s.result;
