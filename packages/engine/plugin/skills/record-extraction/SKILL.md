@@ -222,6 +222,11 @@ person-evidence) or return to the orchestrator that invoked you.
 Presenting a summary and yielding with records still unextracted is a
 failure — the summary is a progress marker, not a stopping point.
 
+**Exception — a `record-extractor` spawn failure:** report it and stop;
+do not extract the record yourself or retry another way. This rule assumes
+the agent ran, so a failed spawn is the one case where a still-unextracted
+record is not a reason to keep going.
+
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not

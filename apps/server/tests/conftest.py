@@ -20,6 +20,12 @@ os.environ["GOOGLE_CLIENT_SECRET"] = ""
 os.environ["FAMILYSEARCH_WEB_ENABLED"] = "false"
 os.environ["ANTHROPIC_API_KEY"] = ""         # keep the real key out of test assertions
 os.environ["DATABASE_URL"] = ""              # tests always run on SQLite, never a dev .env Postgres
+# An https PUBLIC_URL means "production" to config.assert_production_config, which the
+# lifespan runs on every `with TestClient(app)`. The suite's DATABASE_URL is blank and
+# its WS_SIGNING_KEY is the dev default, so the moment anyone puts an https PUBLIC_URL
+# in apps/server/.env, every TestClient test would die on that refusal locally while CI
+# (which has no .env) stayed green.
+os.environ["PUBLIC_URL"] = "http://127.0.0.1:1837"
 
 # Public /v1 bearer keys. `api-bot@…` is deliberately NOT on the allowlist (above)
 # — it proves an operator-granted key mints a User the allowlist would reject.
