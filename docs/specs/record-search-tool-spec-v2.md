@@ -463,6 +463,50 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 
 #### Place matching
 
+> **Live-run exemption for tokenizer-only changes.** The mandate above — treat a
+> ranking change as behavioural and re-verify against a live run — has one
+> measured exception. A `placeParts`/tokenizer change is exempt when **nothing a
+> run would actually feed to `placeParts` tokenizes differently** before and after.
+> That is exactly two input classes, and the criterion must be checked against
+> both:
+>
+> 1. **Tree facts** — `place`/`standard_place` in every
+>    `eval/tests/e2e/*/starting-tree.gedcomx.json` (what the harness stages) **and**
+>    every `*.final-tree.gedcomx.json` in `eval/runlogs/` (the run's *mutable* tree
+>    is what `record_search` reads, not the starting one). Note `standard_place ||
+>    place` — the standardized form wins where both exist.
+> 2. **Recorded search arguments** — `marriagePlace` and `recordSubdivision` in
+>    `eval/runlogs/e2e/`, which is where `searchedPlace` comes from.
+>
+> Deliberately **not** in the criterion: `unstripped-tree.gedcomx.json` (an
+> authoring artifact, never staged into a run), `research.json` assertion places,
+> README prose, and transcript text. A change may move those and still qualify —
+> which is exactly what happened below, so read the two classes above as the whole
+> test, not as a summary of a wider scan.
+>
+> Applied once, for the `\bco\.?\b` fix below, and the numbers are the criterion
+> run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
+> `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
+> **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
+> Exempt.
+>
+> Seven strings *did* change elsewhere in `eval/` — run-log outputs, one fixture
+> README line, and two `unstripped-tree.gedcomx.json` files. That is why the
+> criterion is scoped to the two input classes rather than to a corpus-wide diff: a
+> wider scan is the wrong test and would have refused an exemption that is correct.
+> A live run here would have sampled run-to-run jitter rather than the change.
+>
+> **Unexercised is not unreachable, and the distinction is the whole point.** Real
+> FamilySearch tree data does spell counties this way — `ruse-children`'s
+> `unstripped-tree.gedcomx.json` carries `place: "Seneca Co., O."` and
+> `mcaloney-mother`'s carries `"Hants Co.,Nova Scotia,Canada"` — so a fact whose
+> `standard_place` is absent would put the abbreviated form straight into
+> `placeParts` (`marriage-jurisdictions.ts` reads `standard_place || place`). That
+> has not happened in the corpus: of the 10,730 placed facts across every tree
+> file, the 150 with no `standard_place` contain no `co` token. A change that moves
+> a tokenized value any fixture actually feeds to `samePlace` still needs the live
+> run. This exemption is not a general licence to skip one.
+
 `searchedPlace` is the caller's `marriagePlace` when given, otherwise
 `recordSubdivision` + `recordCountry` joined — the caller usually scopes a marriage
 search with the latter pair, and reading only `marriagePlace` left the exclusion
@@ -480,17 +524,30 @@ string — so it would let TypeScript narrow an `else` to `undefined`. Callers t
 need the string narrowed test `!== undefined` themselves; that explicit check is
 what makes `jurisdictionHints.searchedPlace` a sound required `string`.
 
-**Known wart, recorded rather than fixed.** `isSubCountryPlace("Co., USA")` returns
-`true`. `placeParts` strips `co` out of `co.` and leaves the bare `"."`, which
-survives the empty-string filter and counts as a locality. The failure mode is
-precisely the one this guard exists to prevent — a country-wide search reading as
-scoped — so it is worth an eventual fix. It is left alone here because `placeParts`
-also feeds `placeTokens` → `samePlace`, i.e. the jurisdiction **exclusion and
-ordering** this spec flags as load-bearing and requiring a live run to re-verify,
-and because no real caller produces that input (`marriagePlace` and
-`recordSubdivision` always carry a name). Pinned by a `KNOWN WART` test in
-`tests/utils/marriage-jurisdictions.test.ts` so a future change to `placeParts`
-surfaces it.
+**The `Co.` qualifier, and why the first spelling of the regex was wrong.**
+`placeParts` drops `County`/`Co.` with `/\bcounty\b|\bco\b\.?/`. The abbreviation's
+dot is part of the qualifier and must be consumed with it. The original
+`\bco\.?\b` could not: after matching `co.` the trailing `\b` fails, so the engine
+backtracks and matches bare `co`, leaving a `"."` that survives the empty-string
+filter and counts as a locality. `\bco\b\.?` asserts the boundary first, then eats
+the dot.
+
+That stray token had two effects, and the reported one was the smaller. It made
+`isSubCountryPlace("Co., USA")` return `true`, so a country-wide search read as
+scoped — the failure this guard exists to prevent. More importantly it made
+`placeParts("Hill Co., Texas")` return `["hill .", "texas"]`, so `samePlace` did
+not match a tree place of `"Hill, Texas, United States"`: the **exclusion** failed
+and the jurisdiction a search had just come back empty on was offered back as an
+alternative (with its sub-places alongside it). It also split one jurisdiction into
+two candidates, since `placeTokens(...).join("|")` is the dedupe key.
+
+Reachable in principle — real tree data spells counties this way, and a fact with
+no `standard_place` feeds the abbreviated form straight into `placeParts` — though
+nothing in the corpus exercises it, which is why the fix qualified for the live-run
+exemption at the top of this section. Pinned by two tests in
+`tests/utils/marriage-jurisdictions.test.ts`: the `isSubCountryPlace` case, and an
+exclusion case scoped `"Hill Co., Texas"` that pins the root cause rather than the
+symptom.
 
 It is compared to each candidate on comma-separated tokens, lowercased, with
 `County`/`Co.` dropped and the country term dropped unless it is all that remains.
