@@ -77,7 +77,7 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 |---|---|---|
 | `parents-of` | `personId` | the person's parents, the ParentChild links to them, **and the person's own `Parents` documentary facts** (see §2.1.1) |
 | `children-of` | `personId` | the person's children, and the ParentChild links to them |
-| `spouses-of` | `personId` | the person's spouses, and the couple relationships |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own `Marriage`/`Divorce`/`Annulment` documentary facts** (see §2.1.1) |
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
@@ -95,23 +95,27 @@ therefore fails loudly, which reads as "this was already forgotten." An unknown
 `personId` is likewise an error, phrased to distinguish a tree person id from a
 FamilySearch PID.
 
-#### 2.1.1 Parentage is carried twice — `parents-of` strips both
+#### 2.1.1 A conclusion is carried twice — the relative selectors strip both
 
-FamilySearch encodes a parentage conclusion **redundantly**: as `ParentChild`
-relationships *and* as a documentary `Parents` fact on the child's own record
-(a fact whose `value` names the parents, e.g. `"Geo… Wilcox - Caroline E
-Woodruff"`). `person_read` returns both. If `parents-of` stripped only the
-relationships, the answer would survive as that fact — and it can be the **sole**
-carrier, when the established parents were never added as tree persons at all.
-So `parents-of` also removes the subject's own `Parents`-type facts, matched by
-type — consistent with the structural, never-by-value rule, since the `Parents`
-*value* naming the parents is never read. Their presence also satisfies the
-"matched nothing" check: `parents-of` on a person with a `Parents` fact but no
-parent relationship succeeds rather than erroring. Reported as
-`factsByType: { Parents: n }`, a kind not a value.
+FamilySearch encodes a conclusion **redundantly**: as graph structure *and* as a
+documentary fact on the subject's own record. `person_read` returns both. If a
+relative selector stripped only the structure, the answer would survive as that
+fact — and the fact can be the **sole** carrier, when the related persons were
+never added as tree persons at all. So the relative selectors also remove the
+subject's own facts of the matching type(s), matched by type — consistent with
+the structural, never-by-value rule, since the fact *value* naming the relatives
+is never read. Their presence also satisfies the "matched nothing" check: the
+selector succeeds on a person with such a fact but no matching relationship
+rather than erroring. Reported as `factsByType`, a kind not a value.
 
-The same fact-vs-structure redundancy applies to `spouses-of` and person-level
-`Marriage` facts, which `spouses-of` does **not** yet strip.
+- **`parents-of`** strips the subject's `Parents`-type fact (a fact whose
+  `value` names the parents, e.g. `"Geo… Wilcox - Caroline E Woodruff"`).
+- **`spouses-of`** strips the subject's `Marriage`/`Divorce`/`Annulment`-type
+  facts, the person-level echo of the conclusion the `Couple` relationship also
+  carries as its own facts.
+
+`children-of` needs no such sweep: the redundant `Parents` fact lives on the
+child, whom `children-of` removes wholesale.
 
 ### 2.2 Cascade
 
