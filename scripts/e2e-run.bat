@@ -15,18 +15,14 @@ if "%TEST%"=="" (
 )
 
 cd /d "%~dp0.."
-echo [engine-build] Checking engine build...
-if not exist "packages\engine\mcp-server\node_modules" (
-    echo [engine-build] Installing engine node_modules (first time)...
-    pushd packages\engine\mcp-server
-    npm ci
-    popd
-    if errorlevel 1 ( echo ERROR: engine npm ci failed & exit /b 1 )
-)
-pushd packages\engine\mcp-server
-npm run build
-popd
-if errorlevel 1 ( echo ERROR: engine build failed & exit /b 1 )
+call "%~dp0engine-build.bat"
+if errorlevel 1 exit /b 1
 
 cd eval\harness
-uv run python -m e2e.run_e2e --test %TEST%
+set _MODEL_ARG=
+set _EFFORT_ARG=
+set _TOKENS_ARG=
+if not "%AGENT_MODEL%"=="" set _MODEL_ARG=--agent-model %AGENT_MODEL%
+if not "%EFFORT_LEVEL%"=="" set _EFFORT_ARG=--effort-level %EFFORT_LEVEL%
+if not "%MAX_OUTPUT_TOKENS%"=="" set _TOKENS_ARG=--max-output-tokens %MAX_OUTPUT_TOKENS%
+uv run python -m e2e.run_e2e --test %TEST% %_MODEL_ARG% %_EFFORT_ARG% %_TOKENS_ARG%
