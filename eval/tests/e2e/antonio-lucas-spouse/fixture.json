@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 27, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a Portuguese civil death record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 27, flags adds_spouse/adds_daughter, confidence 3). Resolved false match: the hint's Antonia de Jesus/daughter Maria (b. 1894) belongs to a different, identified man — \"Antonio Fernandes Lucas Junior,\" b. 1840, d. 25 Nov 1895, son of Manuel Fernandes Lucas and Luiza de Jesus (ark:/61903/1:1:6YGB-P2V2) — not GK89-82B, whose parents were José Fernandes Lucas and Francisca Luisa. The subject's 1890 marriage to Maria Joana is independently confirmed by their daughter Julia's 1967 death entry (ark:/61903/1:1:65Y2-YP94). See README \"Notes for reviewers\"."
 }

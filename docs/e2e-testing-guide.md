@@ -389,7 +389,8 @@ It copies the newest run's final tree + `research.json` into `eval/e2e-view/`
 for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
 
 **Verdict:** `pass` (all required findings matched) / `partial` (some) / `fail`
-(none) / `skipped` (the judge never ran).
+(none) / `ungraded` (the judge raised an exception — tree exists, can be
+re-graded) / `skipped` (the judge never ran).
 
 **Stop reason** — what each one means, as opposed to what triggers it
 (spec §6):
