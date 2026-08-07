@@ -387,6 +387,10 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   if (r.deathPlace) stub.deathPlace = r.deathPlace;
   if (r.collectionTitle) stub.collectionTitle = r.collectionTitle;
   if (r.recordArk) stub.recordArk = r.recordArk;
+  // Carried through, not recomputed: the staged row already holds the answer and
+  // the ranker has no business re-deriving it. Without this the top-ranked stub
+  // is exactly where a "father absent" hit looks most confirmed (#1324).
+  if (r.relativeTerms) stub.relativeTerms = r.relativeTerms;
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different

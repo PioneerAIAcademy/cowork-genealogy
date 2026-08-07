@@ -233,7 +233,10 @@ Sorted by `matchScore` descending; no gedcomx.
       "matchScore": 0.99999,       // 0–1; null on persistent FS-call failure — never dropped
       "matchConfidence": 5,        // 1–10; omitted on no-match
       "attachedToSubject": false,  // only when checkAttachments
-      "attachedToOther": true
+      "attachedToOther": true,
+      "relativeTerms": {           // only when the search anchored on a relative
+        "father": { "status": "absent" }
+      }
     }
     // … up to `top` (default 10)
   ]
@@ -242,6 +245,24 @@ Sorted by `matchScore` descending; no gedcomx.
 
 Each stub is ~150 bytes. Returning the top 10 keeps the model-facing payload
 small while the full scored set lives in the score log and the staged file.
+
+### `relativeTerms` — carried, never computed or scored
+
+Copied verbatim from the staged row when it is there, and omitted when it is
+not. The ranker neither derives it nor lets it move `matchScore`.
+
+It has to reach the stub because the top-ranked result is precisely where a
+father-anchored hit that names no father looks *most* confirmed: it scored well
+on names, dates and places, and nothing on the stub says the father is missing.
+A scorer that cannot see "father absent" keeps rating those hits as
+relative-confirmed, which is why the ranker is in scope for this field at
+all.
+
+Making the score itself react to `absent` is deliberately **not** done here.
+That is a scoring-policy change: it needs calibration before any weight is
+chosen, and would silently move every ranking in the eval corpus. Tracked
+separately. See `record-search-tool-spec-v2.md` § `relativeTerms` for the
+statuses and how they are resolved.
 
 ## Tool schema
 

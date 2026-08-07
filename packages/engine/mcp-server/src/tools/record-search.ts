@@ -5,7 +5,18 @@ import {
   standardizePlaces,
   collectFacts,
 } from "../utils/gedcomx-convert.js";
-import type { GedcomX } from "../types/gedcomx.js";
+import type {
+  GedcomX,
+  SimplifiedGedcomX,
+  SimplifiedPerson,
+  SimplifiedRelationship,
+} from "../types/gedcomx.js";
+import type {
+  KinPrefix,
+  RelativeTermFinding,
+  RelativeTerms,
+  ResolvableKinPrefix,
+} from "../types/relative-terms.js";
 import type {
   FSSearchResponse,
   FSSearchEntry,
@@ -108,7 +119,9 @@ const EVENT_GROUPS: EventGroup[] = [
 ];
 
 interface KinGroup {
-  prefix: string;
+  // Narrowed from `string` so `resolveRelativeTerms` can key a `RelativeTerms`
+  // map off this without a cast (#1324).
+  prefix: KinPrefix;
   apiGiven: string;
   apiSurname: string;
 }
@@ -326,7 +339,21 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   return `${FS_SEARCH_URL}?${params.join("&")}`;
 }
 
-export function findRepresentedPerson(entry: FSSearchEntry): FSPerson | null {
+/**
+ * How confidently the persona was identified inside the entry.
+ *
+ * `ark` is a positive identification: the entry's own id matched a persistent
+ * identifier on that person. `principal` is a fallback guess, and #1093's live
+ * probe showed why it cannot be trusted to anchor relatives — when the search
+ * matched the father himself, resolving relatives against the principal returns
+ * the searched person and "makes a silent record look like a contradicting
+ * one." `resolveRelativeTerms` refuses to answer on a `principal` anchor.
+ */
+export type PersonaAnchor = "ark" | "principal";
+
+export function findRepresentedPerson(
+  entry: FSSearchEntry,
+): { person: FSPerson; anchor: PersonaAnchor } | null {
   const persons = entry.content?.gedcomx?.persons ?? [];
   if (persons.length === 0) return null;
 
@@ -335,12 +362,197 @@ export function findRepresentedPerson(entry: FSSearchEntry): FSPerson | null {
     for (const p of persons) {
       const arks = p.identifiers?.[PERSISTENT_ID_URI] ?? [];
       if (arks.some((url) => url.endsWith(entryId))) {
-        return p;
+        return { person: p, anchor: "ark" };
       }
     }
   }
 
-  return persons.find((p) => p.principal === true) ?? null;
+  const principal = persons.find((p) => p.principal === true);
+  return principal ? { person: principal, anchor: "principal" } : null;
+}
+
+/** Which relative prefixes the caller supplied a NAME for (#1324).
+ *
+ * The `*Exact` booleans deliberately do not count: `fatherGivenNameExact` with
+ * no `fatherGivenName` sends no `q.fatherGivenName` at all, so no father
+ * constraint was applied and there is nothing to report on. `other` is excluded
+ * — see `ResolvableKinPrefix`.
+ */
+export function suppliedKinPrefixes(input: RecordSearchInput): ResolvableKinPrefix[] {
+  const out: ResolvableKinPrefix[] = [];
+  for (const group of KIN_GROUPS) {
+    if (group.prefix === "other") continue;
+    const record = input as unknown as Record<string, unknown>;
+    if (record[`${group.prefix}GivenName`] || record[`${group.prefix}Surname`]) {
+      out.push(group.prefix);
+    }
+  }
+  return out;
+}
+
+/** `present` with a name when one can be built, without when it cannot.
+ *
+ * `simplifyName` writes `given`/`surname` and no `fullText`, so the
+ * `display?.name` path `mapEntry` uses for its own `personName` is unavailable
+ * here and the parts must be joined. 7 of 83 real parents carry no `surname`,
+ * so the join tolerates a missing half; if it yields nothing we still report
+ * `present`, because presence is established by the relationship, not the name.
+ */
+function presentWithName(person: SimplifiedPerson): RelativeTermFinding {
+  const name = [person.names?.[0]?.given, person.names?.[0]?.surname]
+    .filter(Boolean)
+    .join(" ");
+  return name ? { status: "present", name } : { status: "present" };
+}
+
+/**
+ * `father` / `mother` / `parent` against the persona's ParentChild rows.
+ *
+ * Three ordered branches, and the order is the whole safety property:
+ *
+ *   1. `present` — a parent of the asked-for sex is on the record.
+ *   2. `unknown` — some parent's sex could not be established (absent `gender`,
+ *      the literal `"Unknown"`, or an endpoint id naming nobody in `persons[]`).
+ *   3. `absent`  — every parent was established and none is that sex, or there
+ *      are no parent rows at all.
+ *
+ * Indeterminacy is checked BEFORE absence so "we could not establish the sex"
+ * can never become a denial. But absence is still reachable: a record naming
+ * only the mother genuinely IS evidence that no father was indexed, and that is
+ * the signal #1324 exists to surface. 20 of the 384 surveyed results sit in that
+ * cell, so collapsing this to a single "not provably Male → unknown" predicate
+ * would quietly destroy the feature's main output on exactly the records that
+ * carry the most information.
+ */
+function resolveParentTerm(
+  relationships: SimplifiedRelationship[],
+  persons: Map<string, SimplifiedPerson>,
+  primaryId: string,
+  prefix: "father" | "mother" | "parent",
+): RelativeTermFinding {
+  const wantedSex =
+    prefix === "father" ? "Male" : prefix === "mother" ? "Female" : undefined;
+
+  const candidates: SimplifiedPerson[] = [];
+  let unresolvableEndpoint = false;
+
+  for (const rel of relationships) {
+    if (rel.type !== "ParentChild" || rel.child !== primaryId) continue;
+    if (rel.parent === undefined) {
+      unresolvableEndpoint = true;
+      continue;
+    }
+    const parent = persons.get(rel.parent);
+    if (!parent) {
+      unresolvableEndpoint = true;
+      continue;
+    }
+    candidates.push(parent);
+  }
+
+  // `parent` is sex-agnostic — it mirrors `q.parentGivenName`, which is what a
+  // caller uses precisely when they do not know the sex. The sex gate must not
+  // leak into it.
+  if (wantedSex === undefined) {
+    if (candidates.length > 0) return presentWithName(candidates[0]);
+    return unresolvableEndpoint ? { status: "unknown" } : { status: "absent" };
+  }
+
+  const match = candidates.find((p) => p.gender === wantedSex);
+  if (match) return presentWithName(match);
+
+  const anyUnprovableSex = candidates.some(
+    (p) => p.gender !== "Male" && p.gender !== "Female",
+  );
+  if (unresolvableEndpoint || anyUnprovableSex) return { status: "unknown" };
+
+  return { status: "absent" };
+}
+
+/** `spouse` against the persona's Couple rows.
+ *
+ * Reports the endpoint that is NOT the persona. A Couple row is symmetric and
+ * the persona may be either `person1` or `person2`, so reading a fixed side
+ * would report the searched person as their own spouse on half the records.
+ * When both endpoints are the persona, or the other endpoint names nobody in
+ * `persons[]`, the answer is `unknown` rather than `absent`.
+ */
+function resolveSpouseTerm(
+  relationships: SimplifiedRelationship[],
+  persons: Map<string, SimplifiedPerson>,
+  primaryId: string,
+): RelativeTermFinding {
+  let unresolvableEndpoint = false;
+
+  for (const rel of relationships) {
+    if (rel.type !== "Couple") continue;
+    const { person1, person2 } = rel;
+    if (person1 !== primaryId && person2 !== primaryId) continue;
+
+    const otherId = person1 === primaryId ? person2 : person1;
+    if (otherId === undefined || otherId === primaryId) {
+      unresolvableEndpoint = true;
+      continue;
+    }
+    const spouse = persons.get(otherId);
+    if (!spouse) {
+      unresolvableEndpoint = true;
+      continue;
+    }
+    // First in document order. `name` is one name, not a list; a caller needing
+    // the full picture reads the record.
+    return presentWithName(spouse);
+  }
+
+  return unresolvableEndpoint ? { status: "unknown" } : { status: "absent" };
+}
+
+/**
+ * Per-result answer to "is the relative I anchored on actually on this record?"
+ *
+ * Pure — no I/O — and reads the SIMPLIFIED doc `mapEntry` has already built, so
+ * every case is unit-testable without a fetch mock.
+ *
+ * Returns `undefined` when the caller supplied no relative name, so the field is
+ * omitted rather than emitted empty.
+ */
+export function resolveRelativeTerms(
+  gedcomx: SimplifiedGedcomX | undefined,
+  primaryId: string | undefined,
+  prefixes: readonly ResolvableKinPrefix[],
+  anchor: PersonaAnchor,
+): RelativeTerms | undefined {
+  if (prefixes.length === 0) return undefined;
+
+  const allUnknown = (): RelativeTerms =>
+    Object.fromEntries(
+      prefixes.map((p) => [p, { status: "unknown" as const }]),
+    ) as RelativeTerms;
+
+  // Anchor is a guess — see `PersonaAnchor`.
+  if (anchor !== "ark") return allUnknown();
+  // The persona could not be identified inside the graph at all.
+  if (!primaryId) return allUnknown();
+
+  // No graph to read. An empty array is NOT the same as "resolves cleanly and
+  // yields nobody": we cannot tell "no father recorded" from "relationships not
+  // returned for this entry", so all three shapes are `unknown`.
+  const relationships = gedcomx?.relationships;
+  if (!relationships || relationships.length === 0) return allUnknown();
+
+  const persons = new Map<string, SimplifiedPerson>();
+  for (const p of gedcomx?.persons ?? []) {
+    if (p.id) persons.set(p.id, p);
+  }
+
+  const out: RelativeTerms = {};
+  for (const prefix of prefixes) {
+    out[prefix] =
+      prefix === "spouse"
+        ? resolveSpouseTerm(relationships, persons, primaryId)
+        : resolveParentTerm(relationships, persons, primaryId, prefix);
+  }
+  return out;
 }
 
 export function extractEvent(fact: FSFact): RecordSearchEvent | null {
@@ -395,9 +607,13 @@ function pickFactOriginal(
   return undefined;
 }
 
-export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
-  const person = findRepresentedPerson(entry);
-  if (!person) return null;
+export function mapEntry(
+  entry: FSSearchEntry,
+  prefixes: readonly ResolvableKinPrefix[] = [],
+): RecordSearchResult | null {
+  const represented = findRepresentedPerson(entry);
+  if (!represented) return null;
+  const { person, anchor } = represented;
   if (!entry.id) return null;
 
   const facts = person.facts ?? [];
@@ -498,6 +714,18 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
     result.gedcomx = toSimplified(rawGedcomx as unknown as GedcomX);
   }
   if (person.id) result.primaryId = person.id;
+
+  // Resolved HERE, before the staged slim block deletes `result.gedcomx`, so the
+  // finding survives into both the inline response and the staged sidecar
+  // (#1324). Resolving it downstream of the slim would be resolving against
+  // nothing.
+  const relativeTerms = resolveRelativeTerms(
+    result.gedcomx,
+    result.primaryId,
+    prefixes,
+    anchor,
+  );
+  if (relativeTerms) result.relativeTerms = relativeTerms;
 
   return result;
 }
@@ -608,8 +836,10 @@ export async function recordSearchTool(
 
   const data: FSSearchResponse = await response.json();
   const entries = data.entries ?? [];
+  // Not point-free: `.map(mapEntry)` would pass the array index as `prefixes`.
+  const kinPrefixes = suppliedKinPrefixes(input);
   const results = entries
-    .map(mapEntry)
+    .map((entry) => mapEntry(entry, kinPrefixes))
     .filter((r): r is RecordSearchResult => r !== null);
 
   // Standardize places across the whole response in one pass (dedup spans all
@@ -917,24 +1147,24 @@ export const recordSearchToolSchema = {
       anyPlace: { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       anyPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
 
-      spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
-      spouseSurname: { type: "string", description: "Spouse's family name." },
+      spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record). A record that names no spouse at all is kept too, since silence is not a contradiction — read `relativeTerms.spouse` on each result to see which." },
+      spouseSurname: { type: "string", description: "Spouse's family name. A record that names no spouse at all is kept too, since silence is not a contradiction — read `relativeTerms.spouse` on each result to see which." },
       spouseGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
       spouseSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
-      fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
-      fatherSurname: { type: "string", description: "Father's family name." },
+      fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father). A record that names no father at all is kept too, since silence is not a contradiction — read `relativeTerms.father` on each result to see which." },
+      fatherSurname: { type: "string", description: "Father's family name. A record that names no father at all is kept too, since silence is not a contradiction — read `relativeTerms.father` on each result to see which." },
       fatherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
       fatherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
-      motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
-      motherSurname: { type: "string", description: "Mother's family name." },
+      motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother). A record that names no mother at all is kept too, since silence is not a contradiction — read `relativeTerms.mother` on each result to see which." },
+      motherSurname: { type: "string", description: "Mother's family name. A record that names no mother at all is kept too, since silence is not a contradiction — read `relativeTerms.mother` on each result to see which." },
       motherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
       motherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
-      parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent." },
-      parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown." },
+      parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent. A record that names no parent at all is kept too, since silence is not a contradiction — read `relativeTerms.parent` on each result to see which." },
+      parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown. A record that names no parent at all is kept too, since silence is not a contradiction — read `relativeTerms.parent` on each result to see which." },
       parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
       parentSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
-      otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate)." },
-      otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship." },
+      otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate). Note: `otherGivenName` / `otherSurname` get no `relativeTerms` entry — co-occurrence alone is not evidence of a specific relationship." },
+      otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship. Note: `otherGivenName` / `otherSurname` get no `relativeTerms` entry — co-occurrence alone is not evidence of a specific relationship." },
       otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
       otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
 
@@ -950,7 +1180,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Omit `projectPath` for an exploratory search you do not intend to log (results come back inline at full fidelity)." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Omit `projectPath` for an exploratory search you do not intend to log (results come back inline at full fidelity)." },
     },
   },
 };

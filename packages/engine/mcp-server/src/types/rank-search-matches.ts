@@ -4,6 +4,8 @@
 // a tree subject, returning compact gedcomx-free stubs. Spec:
 // docs/specs/rank-search-matches-tool-spec.md.
 
+import type { RelativeTerms } from "./relative-terms.js";
+
 export interface RankSearchMatchesInput {
   /** Absolute path to the active project directory. */
   projectPath: string;
@@ -58,6 +60,11 @@ export interface RankedMatch {
   /** Only set when `checkAttachments` and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
+  /** Carried verbatim from the staged row. The ranker neither computes nor
+   *  scores it — a scorer that cannot see "father absent" would keep rating
+   *  those hits as relative-confirmed, which is why it has to reach the stub
+   *  (#1324). */
+  relativeTerms?: RelativeTerms;
 }
 
 export interface RankSearchMatchesResult {
