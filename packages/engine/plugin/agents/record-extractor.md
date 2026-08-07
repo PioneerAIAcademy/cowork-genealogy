@@ -260,6 +260,11 @@ fact to record, and **not negative evidence** (never a `"No X recorded"`
 assertion; negative evidence is a *person* expected-but-absent, see
 Negative evidence).
 
+**Worked example.** 1850 household — Thomas (Occupation: "Laborer"),
+Bridget (blank), Patrick (blank), John (blank). Occupation assertions
+written: **one** (Thomas). Not four. The three blank cells produce nothing
+— neither a positive assertion nor a `"No occupation"` negative.
+
 ## Step 3 — Extract and classify assertions
 
 **One fact per assertion.** Separate age from a birth claim — distinct
@@ -483,6 +488,13 @@ the census `household_member` default and NOT the death-certificate
 `family_not_present`. `self` is fully correct there; only the census lacks
 the "who answered" record that would justify it.
 
+**Worked example.** Proximity follows the *record type*, not the fact. The
+same fact — a head's own "age 32" — is `informant_proximity:
+household_member` on an 1850 census (a census does not establish that the
+person answered for themselves), but `self` on that person's own marriage
+license (where they demonstrably supplied it). Match the proximity to what
+the record establishes about who spoke.
+
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
   duration of illness. Proximity `official_duty` — the medical
@@ -595,6 +607,13 @@ OWN age, birthplace, or parents to the clerk on a marriage or
 civil-registration record stays `direct` — they are relaying their own
 facts, not another person's. The test: did the informant have
 primary knowledge of *this* fact?
+
+**Worked example.** The one fact "born Ireland" classifies by *who
+reports it on which record*: on an 1850 census (a household member
+reporting) the birthplace (`birth`+`place`) is `direct`; on a 1908 death
+certificate (the widow relaying the decedent's birthplace) the same fact
+is `indirect`. And the birth *year* derived from a stated age is
+`indirect` on both — a value the record never stated outright.
 
 **Age, birthplace, birth year — separate assertions:** on a census,
 "age 32, born Ireland" yields three atomic assertions with different
