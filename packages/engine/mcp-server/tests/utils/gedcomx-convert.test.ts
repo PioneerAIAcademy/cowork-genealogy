@@ -343,6 +343,45 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(names[1].preferred).toBe(true);
   });
 
+  // Test 9b — #1318: the preferred name is moved to names[0] even when
+  // FamilySearch lists an alternate (AlsoKnownAs) before it. A wrong primary
+  // manufactures a phantom conflict downstream — person_read / person_ancestors
+  // read names[0].
+  it("puts the preferred name first when GedcomX lists an alternate before it (#1318)", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          names: [
+            {
+              type: "http://gedcomx.org/AlsoKnownAs",
+              nameForms: [{ parts: [{ type: "http://gedcomx.org/Given", value: "Alternate Given" }] }],
+            },
+            {
+              preferred: true,
+              nameForms: [
+                {
+                  parts: [
+                    { type: "http://gedcomx.org/Given", value: "Preferred Given" },
+                    { type: "http://gedcomx.org/Surname", value: "Preferred Surname" },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const names = result.persons?.[0].names ?? [];
+    // The preferred name leads, so every names[0] consumer picks it.
+    expect(names[0].preferred).toBe(true);
+    expect(names[0].given).toBe("Preferred Given");
+    expect(names[0].surname).toBe("Preferred Surname");
+    // The alternate is retained, just not first.
+    expect(names[1].given).toBe("Alternate Given");
+    expect(names[1].type).toBe("AlsoKnownAs");
+  });
+
   // Test 10 — Rule 5: primary passes through, never synthesized from position
   it("preserves primary: true when set; omits the field when absent", () => {
     const result = toSimplified({
