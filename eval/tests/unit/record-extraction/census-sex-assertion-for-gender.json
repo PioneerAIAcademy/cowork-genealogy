@@ -5,7 +5,15 @@
     "name": "Census extraction emits a sex assertion per persona (so minted persons get gender, not Unknown)",
     "type": "positive",
     "description": "When extracting an 1850 census household whose Sex column states each member's sex, record-extraction must emit a `fact_type: \"sex\"` assertion for every persona whose sex the record states (Thomas=Male, Bridget=Female, Patrick=Male, John=Male), alongside the usual name/age/birthplace assertions. Sex is a non-fact identity attribute that `materialize_facts` reads to set the gender of any person person-evidence later mints from the record; omitting it silently creates every minted household member as `gender: \"Unknown\"`. This test guards the general rule (any record stating a persona's sex must yield a sex assertion), using a census as the vehicle, and keeps the existing assertion-only / pre-1880-inferred-relationship behavior as regression guards.",
-    "tags": ["extraction", "1850", "1850-census", "sex", "gender", "non-fact-assertion", "re-invoke-safe"]
+    "tags": [
+      "extraction",
+      "1850",
+      "1850-census",
+      "sex",
+      "gender",
+      "non-fact-assertion",
+      "re-invoke-safe"
+    ]
   },
   "input": {
     "user_message": "search-records found this 1850 U.S. Census record for Thomas Flynn's household. Extract assertions for everyone in the household.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXYZ-TP4 · Dwelling 84, Family 91\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Thomas Flynn | 32 | M | Laborer | Ireland |\n| Bridget Flynn | 7 | F |  | Ireland |\n| Patrick Flynn | 5 | M |  | Ireland |\n| John Flynn | 2 | M |  | Pennsylvania |",
@@ -22,5 +30,59 @@
     "max_turns": 60,
     "max_wall_clock_seconds": 1500,
     "sdk_message_silence_seconds": 600
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "evidence_type": "direct",
+      "optional": true
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "evidence_type": "direct",
+      "optional": true
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "evidence_type": "direct",
+      "optional": true
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "evidence_type": "direct",
+      "optional": true
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pennsylvania",
+      "evidence_type": "direct"
+    }
+  ]
 }
