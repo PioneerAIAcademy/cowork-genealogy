@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_person_evidence_026",
+    "skill": "person-evidence",
+    "name": "Detect and flag a household member expected from the tree but absent from the record — unprompted",
+    "type": "positive",
+    "description": "Guards the DERIVATION half of the absent-member rule (SKILL.md Step 1: 'a person expected in the household — a known spouse or child from the tree — absent from the record' must be flagged as an identity question). The 1860 census household of George Ackerman is extracted in research.json (assertions a_001-a_007: head + two children Henry and Margaret). George's wife Catherine (I2) is in the tree via a Couple relationship (R1) with no death fact, so she would be expected in an 1860 household George heads — but she is NOT among the record's personas. Crucially, the absence is stated NOWHERE: not in the user message, not in the log notes, not in any assertion. So the skill must DERIVE it by comparing George's tree family against the record roster, not echo a hint. This is the gap ut_021 leaves open: ut_021 hands the absent member in its prompt ('his son Patrick ... does not appear in this census'), so a run passes by repeating it. person-evidence must build the household (link head, mint Henry + Margaret with sourced facts, write the parent-child edges) AND, on its own, surface Catherine's unexplained absence as an identity question — never renaming/overwriting Catherine or fabricating a persona for her.",
+    "tags": ["person-evidence", "household-skeleton", "absent-member", "detection", "multi-person"]
+  },
+  "input": {
+    "user_message": "person-evidence: I've extracted George Ackerman's 1860 census household into research.json (assertions a_001-a_007). George is already in the tree (I1). Link these assertions to persons and build out this household skeleton in the tree.",
+    "scenario": "census-household-absent-spouse"
+  },
+  "judge_context": [
+    "The record's household is George Ackerman (head, a_001 -> already linked to I1 via pe_001) plus two children absent from the tree: Henry (child_1: name a_002, birth a_003) and Margaret (child_2: name a_005, birth a_006). Each child must be MINTED carrying its sourced census facts via materialize_facts create-or-enrich (name + gender + birth with source-refs, not a name-only shell) and linked, and the George->Henry / George->Margaret parent-child edges (relationship assertions a_004 / a_007, src_001 -> tree source S1) written via tree_edit add_relationship with a source-ref at LOWER ref quality (a pre-1880 census parent-child edge is INDIRECT). A merge_warnings dry-run is a plus, not required (pre-extracted assertions, no candidate document).",
+    "THE DIMENSION UNDER TEST: George's wife Catherine (I2) is in the tree, joined to George by the Couple relationship R1, and has NO death fact — so she would be expected in an 1860 household George heads. She does NOT appear among the record's personas (there is no assertion for her). The skill must, ON ITS OWN, surface Catherine's unexplained absence as an identity/research question — e.g. she may have died before 1860, been enumerated elsewhere, separated, or this 'George Ackerman' may be a different man. Pass requires the skill to flag this absence; treat the 'Person minting and connecting edges' dimension as the anchor for it.",
+    "DERIVATION, NOT ECHO: the absence is stated nowhere the skill is handed — not in the user message, not in the log_001 notes, not in any assertion or citation (all of which mention only the head and the two children). Crediting the flag therefore requires the skill to have COMPARED George's tree family (which includes wife Catherine via R1) against the record roster and derived that she is missing. A run that only builds the household and never notices Catherine is absent FAILS this test even though the minting/edges are correct — silently treating the record roster as the complete family is the exact failure this test guards.",
+    "The skill must NOT 'resolve' the absence by renaming or overwriting Catherine (I2) to match a record persona, nor fabricate an assertion or persona for her. Flagging the open question is the complete, correct response; adjudicating why she is absent belongs to later research, not to this link step.",
+    "Tool Arguments: minting the children and writing the edges is the expected tool use. If the skill additionally reasons from the tree + assertions without an extra query, that is fine; no same_person call is required (the head is already linked and the children are new stubs, not identity matches)."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}
