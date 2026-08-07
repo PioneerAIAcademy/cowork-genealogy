@@ -50,6 +50,14 @@
 
 ## Test plan
 
+<!-- If this PR touches a code/infra file (.ts/.tsx/.js/.mjs/.cjs/.py/.json/
+     .yml/.yaml) outside packages/engine/plugin/skills/, packages/engine/
+     plugin/agents/, eval/fixtures/, eval/tests/, eval/runlogs/, or docs/,
+     a senior-developers approval is required by branch protection — see
+     .github/CODEOWNERS for the exact rule. Peer approval alone will not
+     unblock merge. This is a convenience note; GitHub's merge button is
+     the actual enforcement. -->
+
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
            paid per-skill eval run, not this gate. On Windows, say so here and
