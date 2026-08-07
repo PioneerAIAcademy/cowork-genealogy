@@ -480,12 +480,61 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
+   | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
 
    The `caps.*` values are the harness defaults in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
    fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
+
+   **`mcp_unavailable` writes no run-log files at all** — the harness prints the
+   error and exits non-zero (`2`, matching the other "this run never happened"
+   exits, not `1` = "a test failed"). None of §8's artifacts is written, no
+   `E2eResult` is constructed, and **the judge is never called**. "This run never
+   happened."
+
+   *Why this retention rule, and not the two obvious alternatives* — a settled
+   decision, 2026-08-02. Every compliance, cost and recall figure in this repo
+   is computed over `eval/runlogs/`, so what a failed run leaves behind is a
+   load-bearing decision:
+
+   - *Rejected — write the log and mark it ungradeable.* This needs
+     `check_e2e_fixtures.py`'s grading exemption widened from *treeless* to
+     *treeless-or-`mcp_unavailable`* **and** a `corpus_report.py` filter: two
+     extra sites where a miss silently skews every number in the repo. Writing
+     nothing needs neither, which is precisely why it was chosen.
+   - *Rejected — treat it like any other run.* That books an environment failure
+     as a genealogical `fail`, which is the confusion this stop reason exists to
+     end, and still pays for an opus judge call. Note the judge's own
+     `final_tree is None` guard does **not** catch this: `build_workspace` copies
+     the fixture's starting tree into the workspace, so an aborted run *has* a
+     tree.
+   - *Cost accepted:* nothing survives for forensics — no `narration`, no
+     `tool_calls`, no run log at all. Root-causing **why** a
+     server fails to start is deliberately out of scope; this reason exists to
+     make the failure legible and cheap, so that the root cause can be chased
+     against clean signal instead of a 90-minute ambiguous `fail`.
+
+   Detection targets **absence, not an error reply.** In the three runs this was
+   built from, the agent made zero `mcp__` calls out of 275 — the tools were
+   simply not in the session, so no "tool not found" was ever returned, and with
+   `ENABLE_TOOL_SEARCH` deferring the genealogy schemas the only visible symptom
+   was `ToolSearch` answering "No matching deferred tools found". Measured on the
+   same CLI: the init message advertises **0** `mcp__genealogy__*` tools even on a
+   perfectly healthy run, so a detector keyed on tool-name presence would fire on
+   every run — the server list is the only sound signal.
+
+   **`pending` is deliberately not an abort**, and that is measured rather than
+   cautious: a *healthy* server's init arrives at ~11s still reading `pending`
+   (it settles to `connected` at ~25s), while a server that died at startup has
+   already settled to `failed` by the time its init arrives. A
+   `status != "connected"` assert would therefore have aborted **every healthy
+   run**. A `pending` that never resolves, or a dead server that settles late,
+   falls through to the `ToolSearch` backstop. The check is also scoped to the
+   `genealogy` server by name: the same list carries the operator's own
+   claude.ai connectors, which routinely report `needs-auth`. Thresholds and
+   their calibration against the incident: `e2e/mcp_health.py`.
 
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
@@ -975,7 +1024,12 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Grading is
+edited after grading) is a hard error: re-grade or delete it. A grade whose
+**fixture was retired** is the same hard error with the same
+remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
+split changes the researcher question and the starting tree, so the run was
+never executed against the fixture it would then be graded under — and leave
+the run log itself; the corpus readers still count it. Grading is
 **same-PR**: every committed run is graded in the PR that commits it (all
 gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
 `check-e2e-fixtures`
@@ -1039,6 +1093,35 @@ Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
+
+**A fourth check runs in shadow mode only: citation-string
+nulling.** `find_citation_nulling_in_conclusions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and flags a
+source that **backs a written conclusion** — i.e. one a `proof_summaries`
+entry's `supporting_assertion_ids` reference, via `assertion.source_id →
+sources[].id` — whose ESM `citation` string is null or empty. This is the
+provenance-nulling half the engine's write-seam guard deliberately does **not**
+cover: a null *source-ref* on authored tree content is already unrepresentable
+(the mandatory-ref golden in `materialize-facts.test.ts` / `tree-edit.test.ts`),
+but the citation *string* is explicitly out of scope there
+(`tree-materialization-spec.md`, "The ESM citation string is out of scope
+here"), and none of the three checks above read it. It is the cruz "11/14
+citation-less tree sources" / birkeland "F1/F2 citation-less conclusion facts"
+class from `record-extraction-consolidation-closing-report.md` §4, invisible to
+the judge.
+
+Unlike the three hard checks, this one **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
+repository's shadow → measure → graduate posture (same as §7's recency check
+and the `same_person` provenance check). The gate on a `proof_summaries` entry is
+deliberate: tree citations are populated by `proof-conclusion` at *upload*
+time, so a run that legitimately stops before upload has empty citations by
+design — scoping to sources of an actual written conclusion is what keeps a
+future hard version from false-positiving on honest partial runs. Its entries
+carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
+their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
+fourth check is gated on reading that shadow fire rate across the corpus first**
+— not decided here.
 
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
@@ -1146,6 +1229,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+| `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
+| `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
@@ -1183,6 +1268,44 @@ fallback reconstructs the block from the streamed assistant messages:
 
 **Never compare a `streamed_fallback` cost against a clean run's.**
 
+#### 8.1.3 `git_sha` / `skills_hash` — run provenance
+
+These two fields exist because a graded run once landed alongside a
+`search-records` SKILL.md edit and claimed to demonstrate it, yet nothing in the
+committed artifact said which skill version had run — the reconstruction from the
+transcript contradicted the claim. They make that claim checkable.
+
+`skills_hash` is a **single digest**, not a per-file map and not a full snapshot.
+The trade, measured when it was decided: a full snapshot (the unit-runlog form)
+was 43% of every unit run log's bytes, storing prose nothing reads back — e2e
+runs are not gated on activeness, so the content is never diffed. A per-file
+`{path: hash}` map names *which* file changed but costs ~15.8 KB/run (≈6% of the
+263 KB median e2e envelope) to answer what `git_sha` plus a re-hash already answer
+whenever the tree was clean. So the identity, not the content, is what is stored.
+
+It hashes **exactly what `build_workspace` stages** — every non-dot subdirectory
+of the skills dir, recursively, plus the top-level agent `.md` files — and
+nothing else. The fixture, `eval/tests/unit/**`, MCP fixtures, and the compiled
+engine are deliberately out of scope: folding any of them in would flip the hash
+on every record-hint-resolution PR and destroy the signal. (`__pycache__` and
+dotfiles a `copytree` would carry are excluded as gitignored non-prompt noise.)
+Implementation: `eval/harness/e2e/provenance.py`.
+
+It hashes the **source** files, not the staged copies, so a `--agent-model` run
+(which rewrites each staged agent's `model:` frontmatter — see
+`_override_agent_model`) carries the same `skills_hash` as an unforced run of the
+same tree. That override is recorded separately as `subagent_model_override`;
+read the two together.
+
+**Known limit, by design:** a hash proves *whether* two runs used the same
+prompt; it can never tell you *what* changed. When the diff is needed, the git
+SHA plus the hash reconstruct it from the repo in the common case where the tree
+was clean. Like the absence of a `skills_invoked` field (§15), this is a chosen
+boundary, not an oversight — and, like every provenance field here, it is
+**evidence for a human reviewer, not a CI gate**: an e2e run is graded days after
+the tree has moved, so a "committed hash matches working tree" check would red
+every e2e PR.
+
 Any **committable** run — verdict `pass`, `partial`, `fail`, or `ungraded` — is
 committed under the `run-<timestamp>.*` names above. A graded run (`pass` /
 `partial` / `fail`) must be graded (§7.4); a committed `fail` is deliberately
@@ -1191,7 +1314,11 @@ is committed. An `ungraded` run (the judge raised an exception — the tree exis
 but was never graded) is also committed because the tree can be re-graded later.
 Only a `skipped` run (the judge never ran — no tree to grade) is written with a
 `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of version control.
-Fixture *validity* is a separate axis
+**A fourth category exists: a run that stops `mcp_unavailable` writes none of
+the files above** — not even a `scratch_` one — because the genealogy tools
+were absent and nothing it produced describes the fixture or the records (see
+the retention rule under §6's `stop_reason` table). Fixture *validity* is a
+separate axis
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
@@ -1435,7 +1562,10 @@ changing anything, because the fix differs completely by cause.
    reasoning in order. Each narration entry is
    `{tool_calls_before, kind, text}` with `kind` one of `assistant` (the
    agent's own prose), `blocked` (a denied tool), or `harness` (a
-   continue-nudge). `tool_calls_before` is how many tool calls had already
+   continue-nudge, or a harness-side status note — every run carries one at
+   `tool_calls_before: 0` recording whether the genealogy MCP surface was
+   present at session start; see §6's `mcp_unavailable` row).
+   `tool_calls_before` is how many tool calls had already
    happened — N means the entry sits between `tool_calls[N-1]` and
    `tool_calls[N]`, 0 means before any tool call — so the two replay as one
    trace. Most failures are obvious here: it stopped, looped, or made the

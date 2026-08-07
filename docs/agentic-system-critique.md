@@ -113,8 +113,9 @@ row). It is the subject of **#1006**, which was
 introduction date.** Splitting every run with a tool ledger on the doctrine's
 landing date shows compliance *falling* afterwards (27% before, 19% after) and
 `same_person` calls predating the rule by three weeks (see the P0). **#998**
-documents a second arm firing on seeded tree state with no `starting_tree`
-baseline (3 of the 25). **#999** documents that `is_error` is never populated,
+(landed) fixed a second arm that had fired on seeded tree state with no
+`starting_tree` baseline — the proof-conclusion arm now baselines against the
+starting tree, counting only conclusion effects new this run. **#999** documents that `is_error` is never populated,
 so a *failed* `Skill` call is credited as a successful invocation across all four
 checks. Calibrating these is a prerequisite to acting on the rate, not a
 follow-up.
@@ -398,16 +399,16 @@ limit is the thing to fix — not the rubric.
 Ordered by leverage per unit of work, against the *measured* failure. Each item
 names its own exit criteria.
 
-### P0 — Calibrate the compliance detectors (#998, #999, #1006)
+### P0 — Calibrate the compliance detectors (#999, #1006)
 
 Every compliance number in this document comes from them, including the one that
 justifies the rest of this list. #999 is a small fix — populate `is_error` so a
 failed `Skill` call stops counting as a successful invocation — but necessary,
 not sufficient, per the issue itself: a skill that runs and produces nothing
-still returns success. #998 needs a `starting_tree` baseline so the
-proof-conclusion arm stops firing on seeded relationships (the arm keys on *any*
-ParentChild/Couple in the final tree; `starting_tree` is consulted only for
-person fact-counts).
+still returns success. **#998 landed:** the proof-conclusion arm now takes the
+same `starting_tree` baseline the person-evidence arm has, counting only
+ParentChild/Couple relationships and primary facts *new this run* rather than
+any in the final tree — so it no longer fires on a fixture's seeded tree state.
 
 **#1006's confound is settled, not partially resolved (2026-08-01).** The issue
 is now titled "(settled: doctrine gap, not an anachronistic check)". The

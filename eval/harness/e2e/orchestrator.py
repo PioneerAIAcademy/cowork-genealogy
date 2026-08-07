@@ -45,6 +45,7 @@ from harness.context_policy import (
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -54,6 +55,18 @@ from harness.skill_invocation import (
     unguarded_new_person_evidence_links,
 )
 
+from e2e import provenance
+from e2e.mcp_health import (
+    CONSECUTIVE_TOOL_SEARCH_MISSES,
+    backstop_fired,
+    classify_server_status,
+    find_server_entry,
+    genealogy_mcp_config,
+    is_no_match_tool_search,
+    should_abort_at_init,
+    tool_search_miss_streak,
+    unavailable_message,
+)
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -63,6 +76,20 @@ from e2e.stop_checker import (
 )
 from e2e.subagent_capture import collect_subagents
 from e2e import judge as judge_module
+
+
+class McpUnavailableError(RuntimeError):
+    """The genealogy MCP surface was absent, so this run never happened.
+
+    Issue #941. Raised by `run_e2e_test` *after* the agent stops and *before*
+    the judge or any file write, which is what implements the lead's retention
+    decision: an `mcp_unavailable` run writes no run-log files at all, makes no
+    judge call, and exits non-zero. Rationale and the rejected alternatives are
+    in docs/specs/e2e-test-spec.md beside the `stop_reason` table.
+
+    Carries the operator-facing text (e2e.mcp_health.unavailable_message) as
+    its message, so `run_e2e.py` can print it verbatim.
+    """
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -941,6 +968,16 @@ async def _run_agent(
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
     last_nudge_activity_count = {"n": -1}
+    # #941 — the genealogy MCP surface's health. `unavailable` latches True on
+    # the first detector hit and is read by the Stop hook (so an in-flight
+    # nudge can't push the agent back into an empty tool set) and by the abort
+    # path. `misses` is the consecutive no-match ToolSearch streak feeding the
+    # mid-run backstop; see e2e.mcp_health for how it is calibrated.
+    # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES *no-match*
+    # ToolSearch queries — the ones that actually built the streak — so a
+    # backstop abort can name what was searched: that path writes no run log, so
+    # the console is the only place a false positive could ever be spotted.
+    mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
 
@@ -1210,6 +1247,7 @@ async def _run_agent(
             max_nudges=fixture.caps.max_continue_nudges,
             tool_count=activity_count["n"],
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
+            mcp_unavailable=mcp_state["unavailable"],
         ):
             return {}
         continue_nudges["n"] += 1
@@ -1244,13 +1282,24 @@ async def _run_agent(
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
-        mcp_servers={
-            "genealogy": {
-                "type": "stdio",
-                "command": "node",
-                "args": [str(mcp_server_entry)],
-            },
-        },
+        # One definition, shared with preflight's connection check (#941) — a
+        # preflight that proves a *different* config than the run uses is the
+        # bug class that issue was filed about.
+        mcp_servers=genealogy_mcp_config(mcp_server_entry),
+        # ...and `strict_mcp_config` is what makes that sharing mean anything:
+        # without it the CLI merges file/user-scoped MCP config over the block
+        # above, so preflight (which sets it) and the run (which did not) could
+        # resolve the same `genealogy` key to different servers — reopening the
+        # gap from the other side.
+        #
+        # Measured, not assumed: a run's own init message listed the operator's
+        # claude.ai connectors (`needs-auth`) even though `build_workspace`
+        # stages no `.mcp.json` and `cwd` is a fresh tempdir — user scope leaks
+        # in. Nothing usable is lost by dropping them: `allowed_tools` below is
+        # `BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"]`, so a foreign MCP tool
+        # was never callable in an e2e run; this only stops one from being
+        # advertised, and removes a way to shadow the server under test.
+        strict_mcp_config=True,
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
         # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
         # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
@@ -1336,6 +1385,56 @@ async def _run_agent(
 
     async def _consume():
         nonlocal usage, error, aborted_reason
+
+        def _abort_mcp_unavailable(
+            entry: dict[str, Any] | None,
+            *,
+            backstop: bool = False,
+            queries: list[str] | None = None,
+        ) -> None:
+            """Latch the #941 abort. Callers `return` immediately after.
+
+            Travels as an `aborted_reason` sentinel rather than an exception on
+            purpose: a raise from inside this coroutine is swallowed by the
+            generic `except Exception` around `_consume()` below and relabelled
+            `error`, which is the very confusion this detector exists to end.
+            `run_e2e_test` turns the sentinel into `McpUnavailableError` after
+            `_run_agent` returns, before the judge or any file write.
+            """
+            nonlocal aborted_reason, error
+            mcp_state["unavailable"] = True
+            aborted_reason = "mcp_unavailable"
+            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Recorded like every other harness-side event even though THIS path
+            # never persists it (the run writes no files at all — see
+            # run_e2e_test). Kept so the in-memory trace is complete and so a
+            # future change to the retention rule needs no new code here.
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "harness",
+                    "text": f"ABORT (mcp_unavailable) — {error}",
+                }
+            )
+            _emit("[abort] genealogy MCP server unavailable — this run never happened")
+
+        async def _shutdown(it) -> None:
+            """Close the query stream so the CLI subprocess exits before we go.
+
+            This abort fires seconds into a run, while every other stop reason
+            takes minutes and then spends ~30s in the judge. That difference
+            matters on Windows: a live CLI child still holds handles inside the
+            workspace, so `TemporaryDirectory.__exit__` raises
+            `PermissionError [WinError 32]` — and because `__exit__` runs before
+            our exception propagates, that error *replaces* McpUnavailableError,
+            burying the operator message and returning the wrong exit code
+            (observed 2026-08-04). Mirrors the resume path's teardown below.
+            """
+            try:
+                await asyncio.wait_for(it.aclose(), timeout=15)
+            except Exception:  # noqa: BLE001 — teardown is best-effort
+                pass
+
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
@@ -1432,6 +1531,43 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
+                                    # #941 backstop — for a server that dies
+                                    # AFTER init, when there is no init message
+                                    # left to read. Absence surfaces only as
+                                    # ToolSearch finding nothing (the genealogy
+                                    # schemas are deferred under
+                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # no-match lookups while not one `mcp__`
+                                    # call has ever succeeded. Threshold and
+                                    # reset rule are calibrated against the
+                                    # three lost runs in e2e.mcp_health.
+                                    mcp_state["misses"] = tool_search_miss_streak(
+                                        mcp_state["misses"],
+                                        tool=entry["tool"],
+                                        response_summary=summary,
+                                        mcp_call_count=tool_call_count["n"],
+                                    )
+                                    # Record only the lookups that BUILT the
+                                    # streak. A matched ToolSearch no longer
+                                    # resets it (see tool_search_miss_streak),
+                                    # so "the last N ToolSearch queries" is no
+                                    # longer the same set as "the N misses" —
+                                    # and it is the misses the operator needs to
+                                    # tell a dead server from a real streak of
+                                    # searches for tools that never existed.
+                                    if is_no_match_tool_search(entry["tool"], summary):
+                                        q = (entry.get("args") or {}).get("query")
+                                        mcp_state["queries"] = (
+                                            mcp_state["queries"] + [str(q)]
+                                        )[-CONSECUTIVE_TOOL_SEARCH_MISSES:]
+                                    if backstop_fired(mcp_state["misses"]):
+                                        _abort_mcp_unavailable(
+                                            None,
+                                            backstop=True,
+                                            queries=mcp_state["queries"],
+                                        )
+                                        await _shutdown(iterator)
+                                        return
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1450,6 +1586,85 @@ async def _run_agent(
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
+                    # #941 — the decisive check, and it costs nothing: the CLI's
+                    # init message lists every MCP server it tried to connect
+                    # (`mcp_servers: [{name, status}]`, a required field of its
+                    # own init schema). Three e2e runs were lost to a genealogy
+                    # server that never connected; the agent then improvised for
+                    # 35 minutes and two of the three declared success.
+                    #
+                    # Measured against this CLI (2026-08-04), which is why the
+                    # classification is three-way and not a `!= "connected"`
+                    # assert:
+                    #   - dead server  -> init at ~25s, status ALREADY "failed"
+                    #     (it settles in ~4s), so this aborts at ~25s.
+                    #   - healthy      -> init at ~11s, status still "pending"
+                    #     (it settles at ~25s). A "not connected -> abort" test
+                    #     would kill EVERY healthy run here.
+                    # So `pending` is the normal healthy reading at init, and a
+                    # dead server that settles late lands there too — which is
+                    # what the ToolSearch backstop below exists to catch.
+                    #
+                    # Scoped to the genealogy server by name on purpose: this
+                    # list also carries the operator's own claude.ai connectors
+                    # (observed: "claude.ai Google Drive"/"Slack" as
+                    # `needs-auth`), so an "any server unhealthy" test would
+                    # abort every run on such a machine.
+                    if message.subtype == "init":
+                        servers = data.get("mcp_servers")
+                        health = classify_server_status(servers)
+                        # Only a run that has done NOTHING can be declared never
+                        # to have happened. This branch is NOT reachable only at
+                        # t=0: a resume after a stall (resume_on_stall, ON by
+                        # default) re-spawns the CLI — and with it the MCP server
+                        # — and emits a FRESH init. If that second spawn fails 40
+                        # minutes into a run that already did real, tool-backed
+                        # research, aborting would raise before
+                        # write_result_files and throw all of it away while
+                        # printing "no research was possible", which would be
+                        # false. So past the first genealogy call this degrades
+                        # to a recorded warning: the run keeps its artifacts and
+                        # ends on its own terms (natural_end / a cap), which is
+                        # the honest verdict for a run that did work and then
+                        # lost its tools.
+                        abort_now = should_abort_at_init(
+                            health, mcp_call_count=tool_call_count["n"]
+                        )
+                        nothing_attempted_yet = tool_call_count["n"] == 0
+                        note = {
+                            "connected": "connected — tools available",
+                            "inconclusive": (
+                                "still connecting (normal at init); the "
+                                "ToolSearch backstop covers it from here"
+                            ),
+                            "unavailable": (
+                                "UNAVAILABLE — aborting"
+                                if nothing_attempted_yet
+                                else (
+                                    "UNAVAILABLE on this session, but "
+                                    f"{tool_call_count['n']} genealogy call(s) "
+                                    "already happened — NOT aborting; the run "
+                                    "keeps its artifacts and ends on its own"
+                                )
+                            ),
+                        }[health]
+                        # Persisted on every run, healthy ones included: `init`
+                        # arrives before any tool call, so this lands at
+                        # tool_calls_before 0 and tells a reader whether the
+                        # surface was there at all.
+                        narration.append(
+                            {
+                                "tool_calls_before": len(tool_calls),
+                                "kind": "harness",
+                                "text": (
+                                    f"genealogy MCP server at session start: {note}"
+                                ),
+                            }
+                        )
+                        if abort_now:
+                            _abort_mcp_unavailable(find_server_entry(servers))
+                            await _shutdown(iterator)
+                            return
                 elif isinstance(message, ResultMessage):
                     timeline.append([round(now - run_started, 1), "result", []])
                     usage = {
@@ -1617,6 +1832,25 @@ async def _run_agent(
             "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
         )
 
+    # SHADOW MODE ONLY (issue #1133) — a post-hoc read of the FINAL research.json,
+    # not a tool_calls scan: a source that BACKS A WRITTEN CONCLUSION carries an
+    # empty ESM citation string (the provenance-nulling half the engine's
+    # write-seam ref guard deliberately disowns; see
+    # find_citation_nulling_in_conclusions). Folded into the same already-plumbed
+    # `guardrail_shadow_violations` field, discriminated by its `kind` key so the
+    # shadow report counts it in its own bucket. Logs; never fails the run.
+    # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
+    # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
+    citation_nulling_shadow = find_citation_nulling_in_conclusions(
+        read_research_json(workspace)
+    )
+    if citation_nulling_shadow:
+        guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
+        _emit(
+            f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
+            "with a null/empty citation string (shadow mode — not failed)"
+        )
+
     return (
         tool_calls,
         narration,
@@ -1742,7 +1976,23 @@ async def run_e2e_test(
 
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
-    with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
+    # Provenance (#1091), captured at run start from the repo files this run
+    # stages — the prompt identity, so a committed run ties back to what produced
+    # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
+    # its default, DEFAULT_PLUGIN_AGENTS); if an `--agents-dir` override is ever
+    # threaded there, thread it here too or the hash silently diverges.
+    run_git_sha = provenance.git_sha(REPO_ROOT)
+    run_skills_hash = provenance.skills_hash(skills_dir, DEFAULT_PLUGIN_AGENTS)
+
+    # ignore_cleanup_errors: on Windows a CLI child that outlives the run keeps
+    # handles inside the workspace, and TemporaryDirectory.__exit__ then raises
+    # PermissionError [WinError 32] — which REPLACES whatever exception the block
+    # was already propagating (observed with #941's McpUnavailableError, where it
+    # buried the operator message and changed the exit code). A leaked temp dir is
+    # strictly better than a masked error; the OS reclaims it.
+    with tempfile.TemporaryDirectory(
+        prefix=f"e2e-{fixture.id}-", ignore_cleanup_errors=True
+    ) as tmp:
         workspace = build_workspace(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
@@ -1777,6 +2027,19 @@ async def run_e2e_test(
         stop_reason = derive_stop_reason(
             sdk_aborted_reason=aborted, research=final_research
         )
+
+        # #941 — bail out here, and only here. One raise, placed between the
+        # stop_reason and the judge, satisfies the whole retention decision:
+        # the judge below never fires (its `final_tree is None` guard would NOT
+        # have caught this — build_workspace copies the fixture's starting tree
+        # in, so an aborted run HAS a tree and would have paid for an opus
+        # call), and neither write_result_files nor the session.jsonl copy is
+        # reached, so no run-log files exist and no E2eResult is ever built.
+        # "This run never happened" — print the error, exit non-zero.
+        if stop_reason == "mcp_unavailable":
+            raise McpUnavailableError(
+                error or unavailable_message(None)
+            )
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:
@@ -1871,6 +2134,8 @@ async def run_e2e_test(
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
+            git_sha=run_git_sha,
+            skills_hash=run_skills_hash,
         )
 
         runlog_dir = runlog_root / fixture.id

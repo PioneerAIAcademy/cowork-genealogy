@@ -50,6 +50,14 @@
 
 ## Test plan
 
+<!-- If this PR touches a code/infra file (.ts/.tsx/.js/.mjs/.cjs/.py/.json/
+     .yml/.yaml) outside packages/engine/plugin/skills/, packages/engine/
+     plugin/agents/, eval/fixtures/, eval/tests/, eval/runlogs/, or docs/,
+     a senior-developers approval is required by branch protection — see
+     .github/CODEOWNERS for the exact rule. Peer approval alone will not
+     unblock merge. This is a convenience note; GitHub's merge button is
+     the actual enforcement. -->
+
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
            paid per-skill eval run, not this gate. On Windows, say so here and
@@ -65,6 +73,15 @@
       <!-- Behaviour-neutral skill edit (typo, rewording, comment)? Ask a senior
            for the `eval-cosmetic-skip` label instead of burning a paid run.
            Rules: eval/CLAUDE.md § "GitHub Action rules". -->
+
+- [ ] If I changed a skill's `description` frontmatter or its DO NOT clauses, I
+      added or refreshed the negative test on **both** sides of every routing
+      pair I touched — not just the direction I was fixing.
+      <!-- The edit that stops A over-triggering is the one that can start B
+           under-triggering, and a one-directional pair hides it.
+           `check_negative_reciprocity.py` reports the gaps, but only after the
+           fact and only as a warning — this box is the part that prevents them.
+           Nothing enforces it; it is here because the lint can't be. -->
 
 ## Follow-on issues
 

@@ -1036,7 +1036,10 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
   suspends reconnects while the tab is hidden, precisely so a backgrounded tab
   cannot silently resume a paused sandbox. What retained sandboxes cost while
   paused is a vendor billing question this repo does not answer.
-- `ws_signing_key` defaults to a dev value; production needs a real one.
+- `ws_signing_key` still defaults to a dev value, but a production deploy can no
+  longer run on it: when `PUBLIC_URL` is https and `ws_signing_key`, `session_secret`,
+  or `DATABASE_URL` is missing or still at its default, the app refuses to boot
+  (`config.assert_production_config`, first statement of `main.py`'s lifespan).
 
 > **Both source docs were corrected 2026-08-02.** `docs/realtime-architecture.md`
 > and `docs/realtime-rearch-status.md` used to carry a
@@ -1151,12 +1154,14 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and two **warn-only** lints
-worth knowing because they fire right after the two most common tasks:
+§3), and three **warn-only** lints
+worth knowing because they fire right after the three most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
-what happens after you add a tool) and `check_rubric_tool_drift.py` (a tool named
+what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one). And
+tools — what happens after you grant one), and `check_negative_reciprocity.py`
+(a negative routing edge `A → B` with no `B → A` test backing it — what happens
+after you widen a description). And
 `eval/harness/tests/unit/test_schema_mirrors.py` for the `packages/schema` mirror.
 
 ### 9.3 The two eval tiers
@@ -1188,6 +1193,7 @@ taught a reader nothing.
 | **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
 | **Nothing checks that a new `research.json` field is *written*** (site 8 in §6), and only partly that it is *taught* (site 6). Rendering (site 7) is guarded by `field-render-drift.test.ts`; `research-append-examples.test.ts` covers site 6 for schema-`required` fields only. | An optional field can be legal and rendered while no worked example teaches its shape and no skill emits it. |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. |
+| **Nothing enforces that a negative routing pair is pinned from *both* directions.** `check_negative_reciprocity.py` reports one-directional edges but never blocks, by design — 45 of the corpus's 79 routing edges have no reciprocal. | A description edit can fix routing `A → B` and break `B → A` with the suite green. The warnings land in the step log and compete for GitHub's per-step annotation-rendering cap (10 at time of writing) against the sibling lints' 73 and 68, so the edge a PR *adds* is not distinguishable from the standing backlog. |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. |
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
 | **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. |
@@ -1197,9 +1203,10 @@ taught a reader nothing.
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" |
 | **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Two unnamed false-positive classes, plus a false-negative blind spot: before the three-axis split the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable and **no post-detector run resolves `pass`** — every one is `fail` or `not_checked`. Separately, `is_error` is populated, but it only observes *tool-level* failure: a `Skill` result is a launch acknowledgement (`Launching skill: <name>`), so "invoke the skill, let it fail, finish the write inline" still reads as a success, and a writer tool that returns `{ok:false}` without throwing does too. | **Do not quote a violation rate**, and do not graduate a gate on one. Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — read the report's `concentration:` block before quoting any total. |
 | **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. |
-| **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. |
+| **No automated check exercises the absent-MCP-surface halt condition.** The halt itself now exists — an e2e run aborts `mcp_unavailable` when the CLI's init message reports the genealogy server unavailable, or when the mid-run `ToolSearch` backstop fires (`eval/harness/e2e/mcp_health.py`). But `make harness-test` covers only its **pure** functions; no job spawns a session, so a break in either `orchestrator.py` call site would stay green. | The live arm is proved by hand with `run_e2e --mcp-server-entry <dead stub>`, and preflight's spawn by `make e2e-preflight`. Neither runs in CI. Was: three runs made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget — raw writes closed since #984/#989, and the silent failure is closed by the halt described here. |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. |
+| **Nothing proves the production boot refusal is reachable or legible.** `test_prod_preflight.py` asserts `assert_production_config` and its lifespan wiring offline; no check runs against a real `fly deploy`. | A gate that never fires, or fires with an unreadable message, looks identical to a correctly configured deploy. |
 | **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. |
 
 ### If you're asked to…
@@ -1217,7 +1224,9 @@ and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly lik
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives the three axes plus violation counts, the per-arm split
 and per-fixture concentration, across the last 14 days of committed runs —
-every run-log reader windows that way, `SINCE=all` to opt out — and the
+every run-log reader windows that way, `SINCE=all` to opt out — `make
+e2e-agent-tools` reports, per plugin agent, which declared tools it never
+actually called across those runs, and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
@@ -1230,7 +1239,11 @@ lives. A test is not just its definition: it usually needs a matching
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
 1 by policy. 82 of the 373 definitions are **negative** tests that exist to prove
-a skill does *not* trigger; add one whenever you widen a description.
+a skill does *not* trigger; add one whenever you widen a description — and add
+its **reciprocal** in the other skill's directory, since a negative test pins one
+direction of a routing pair only and the fix that stops A over-triggering is
+exactly what can start B under-triggering (`unit-test-spec.md` § 6;
+`check_negative_reciprocity.py` warns on the one-directional ones).
 
 **Write or update a spec.** `docs/specs/<tool>-tool-spec.md`, landed **before**
 the tool. A spec is checkable when it states, per behavior: the exact input

@@ -137,6 +137,7 @@ def test_fixture_input_schema_honored_for_tool_absent_from_build():
         assert "query" in tool_obj.input_schema["properties"]
 
 
+@pytest.mark.requires_engine_build
 def test_build_schema_advertised_for_fixture_backed_tool():
     """The core of the drift fix: a fixture-backed tool that exists in the
     compiled build advertises the real production input schema, not a
@@ -144,11 +145,6 @@ def test_build_schema_advertised_for_fixture_backed_tool():
     schema, so the model probed with `{}`). Skips gracefully if the build
     is absent (the loader degrades to a permissive schema, no schema to
     assert)."""
-    from harness.mock_mcp import _load_build_tool_catalog
-
-    if not _load_build_tool_catalog().get("record_person_matches"):
-        pytest.skip("mcp-server build not present; build catalog unavailable")
-
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         # A fixture with NO input_schema of its own — the schema must come
@@ -166,16 +162,12 @@ def test_build_schema_advertised_for_fixture_backed_tool():
         assert schema.get("additionalProperties") is not True
 
 
+@pytest.mark.requires_engine_build
 def test_live_tool_advertises_build_schema():
     """Live tools pull their input schema from the same build catalog. The
     `ops` batch array on research_append is the field the old hand-maintained
     mirror once dropped — assert it is advertised. Skips if the build is
     absent."""
-    from harness.mock_mcp import _load_build_tool_catalog
-
-    if not _load_build_tool_catalog().get("research_append"):
-        pytest.skip("mcp-server build not present; build catalog unavailable")
-
     # Live tools register regardless of fixtures, so any fixture set works.
     server, _, tools_by_name = create_mock_server(
         ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
@@ -185,6 +177,7 @@ def test_live_tool_advertises_build_schema():
     assert schema["properties"]["ops"]["type"] == "array"
 
 
+@pytest.mark.requires_engine_build
 def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     """record_search ranks host-side when given a subjectId, so the mock must
     compose the test's own rank fixture in — otherwise a skill that correctly
@@ -193,11 +186,6 @@ def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     Skips when the build is absent, like the two tests above: staging runs
     through the COMPILED stager, so with no build `staged` is never set and
     this fails for an environmental reason rather than a real one."""
-    from harness.mock_mcp import _load_build_tool_catalog
-
-    if not _load_build_tool_catalog().get("record_search"):
-        pytest.skip("mcp-server build not present; build catalog unavailable")
-
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
         FIXTURES_DIR,
