@@ -11,9 +11,11 @@ from pathlib import Path
 import pytest
 
 from harness.skill_invocation import (
+    CITATION_NULLING_KIND,
     CONFLICT_ANALYSIS_FIELDS,
     DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
+    find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -285,6 +287,50 @@ def test_flags_a_primary_fact_with_no_proof_conclusion_invocation_even_with_no_p
 def test_flags_a_parent_child_relationship_with_no_proof_conclusion_invocation():
     tree = {"persons": [], "relationships": [{"type": "ParentChild", "person1": "I1", "person2": "I2"}]}
     violations = find_effects_without_invocation([], {}, tree)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_does_not_flag_a_seeded_relationship_already_in_the_starting_tree():
+    """Issue #998: the proof-conclusion arm took no starting-tree baseline, so a
+    fixture's seeded ParentChild/Couple read as this run's conclusion. 99 of 104
+    fixtures ship such relationships, so the arm fired on seed state alone."""
+    rel = {"type": "ParentChild", "parent": "I1", "child": "I2"}
+    tree = {"persons": [], "relationships": [rel]}
+    starting = {"persons": [], "relationships": [rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_relationship_created_this_run_against_the_starting_tree():
+    """The other side of the baseline: a ParentChild present only in the FINAL
+    tree is this run's work and must still fire when proof-conclusion is absent."""
+    starting = {"persons": [], "relationships": []}
+    tree = {"persons": [], "relationships": [{"type": "ParentChild", "parent": "I1", "child": "I2"}]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_does_not_flag_a_seeded_primary_fact_already_in_the_starting_tree():
+    """Defensive: no fixture ships a primary:true fact today, but the primary-fact
+    half is baselined the same way so a future seeded one cannot fire the arm."""
+    person = {"id": "I1", "facts": [{"type": "Death", "primary": True}]}
+    tree = {"persons": [person], "relationships": []}
+    starting = {"persons": [person]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_placeholder_relationship_re_pointed_this_run():
+    """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
+    would read that genuinely-re-pointed relationship as seeded — a false negative
+    in the one gate that overrides the judge. Shape taken from young-marriage-1828,
+    which seeds {parent: PID-TODO, child: p-child-thomas, id: rel-1}."""
+    starting = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "PID-TODO", "child": "p-child-thomas"}]}
+    tree = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "G7X1-234", "child": "p-child-thomas"}]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
     assert any("proof-conclusion" in v for v in violations)
 
 
@@ -860,3 +906,121 @@ def test_unguarded_links_pe_op_missing_person_id_is_skipped():
     assert unguarded_new_person_evidence_links(
         "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
     ) == []
+
+
+# --- find_citation_nulling_in_conclusions (issue #1133, shadow) --------------
+# The citation-STRING half of provenance nulling: a source backing a WRITTEN
+# conclusion whose ESM citation string is empty. Gated on a proof_summaries
+# entry so it stays inert on honest partial runs (tree citations are populated
+# at upload time). The source-REF half is already unrepresentable at the engine
+# write seam, so it is deliberately NOT covered here.
+
+
+def _research_with_conclusion(*, citation):
+    """A minimal research.json: one proof_summary citing one assertion whose
+    source carries `citation`. `citation` is the value under test."""
+    return {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "assertions": [{"id": "a_001", "source_id": "src_001", "fact_type": "birth"}],
+        "sources": [{"id": "src_001", "citation": citation}],
+    }
+
+
+def test_citation_nulling_fires_on_a_concluded_null_citation():
+    out = find_citation_nulling_in_conclusions(_research_with_conclusion(citation=None))
+    assert len(out) == 1
+    v = out[0]
+    assert v["kind"] == CITATION_NULLING_KIND
+    assert v["required_skill"] == "citation"
+    assert v["question_id"] == "q_001"
+    assert "src_001" in v["detail"]
+    # int index + string tool so guardrail_shadow_report's :<4 / :<30 formatters
+    # never hit a None format spec.
+    assert isinstance(v["index"], int) and isinstance(v["tool"], str)
+
+
+def test_citation_nulling_fires_on_empty_and_whitespace_citation():
+    assert len(find_citation_nulling_in_conclusions(_research_with_conclusion(citation=""))) == 1
+    assert len(find_citation_nulling_in_conclusions(_research_with_conclusion(citation="   "))) == 1
+
+
+def test_citation_nulling_silent_when_citation_present():
+    good = _research_with_conclusion(citation="1850 U.S. Census, Schuylkill Co., Pa., dwelling 84.")
+    assert find_citation_nulling_in_conclusions(good) == []
+
+
+def test_citation_nulling_inert_without_a_proof_summary():
+    """The gate: an assertion+source with an empty citation but NO written
+    conclusion is a legitimate partial run, not a violation."""
+    research = {
+        "proof_summaries": [],
+        "assertions": [{"id": "a_001", "source_id": "src_001"}],
+        "sources": [{"id": "src_001", "citation": None}],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_only_flags_sources_backing_the_conclusion():
+    """A citation-less source NOT referenced by the conclusion's
+    supporting_assertion_ids is out of scope — only concluded evidence is held
+    to a citation."""
+    research = {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "assertions": [
+            {"id": "a_001", "source_id": "src_001"},  # cited by the conclusion
+            {"id": "a_099", "source_id": "src_099"},  # NOT cited by the conclusion
+        ],
+        "sources": [
+            {"id": "src_001", "citation": "A full citation."},
+            {"id": "src_099", "citation": None},  # citation-less but not concluded
+        ],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_dedups_one_source_cited_by_many_assertions():
+    research = {
+        "proof_summaries": [
+            {
+                "id": "ps_001",
+                "question_id": "q_001",
+                "supporting_assertion_ids": ["a_001", "a_002"],
+            }
+        ],
+        "assertions": [
+            {"id": "a_001", "source_id": "src_001"},
+            {"id": "a_002", "source_id": "src_001"},  # same source
+        ],
+        "sources": [{"id": "src_001", "citation": ""}],
+    }
+    out = find_citation_nulling_in_conclusions(research)
+    assert len(out) == 1  # one (conclusion, source) pair, not two
+
+
+def test_citation_nulling_tolerates_dangling_and_sourceless_refs():
+    """Dangling assertion/source refs and assertions with no source_id are
+    schema concerns, not this detector's — it skips them without erroring."""
+    research = {
+        "proof_summaries": [
+            {
+                "id": "ps_001",
+                "question_id": "q_001",
+                "supporting_assertion_ids": ["a_missing", "a_nosrc", "a_dangling"],
+            }
+        ],
+        "assertions": [
+            {"id": "a_nosrc"},  # no source_id
+            {"id": "a_dangling", "source_id": "src_missing"},  # source not in sources[]
+        ],
+        "sources": [],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_defensive_on_none_and_empty():
+    assert find_citation_nulling_in_conclusions(None) == []
+    assert find_citation_nulling_in_conclusions({}) == []

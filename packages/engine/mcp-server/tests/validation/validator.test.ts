@@ -87,6 +87,43 @@ describe("Project Validator", () => {
       expect(result.valid).toBe(true);
     });
 
+    // intended_audience is what gps-mentor's narrative-craft checks read to judge
+    // audience calibration against a stated audience instead of guessing.
+    it("accepts researcher_profile.intended_audience", async () => {
+      const research = {
+        ...minimalResearch,
+        researcher_profile: { intended_audience: "submission to NGSQ" },
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts a null intended_audience", async () => {
+      const research = {
+        ...minimalResearch,
+        researcher_profile: { intended_audience: null },
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects a non-string intended_audience", async () => {
+      const research = {
+        ...minimalResearch,
+        researcher_profile: { intended_audience: ["cousins"] },
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("intended_audience must be a string"))
+      ).toBe(true);
+    });
+
     it("accepts timeline with new optional fields", async () => {
       const research = {
         ...minimalResearch,
@@ -1647,6 +1684,7 @@ describe("Research closed shapes", () => {
         experience_level: "intermediate",
         subscriptions: ["Ancestry"],
         narration_guidance: "Be concise",
+        intended_audience: "my cousins, none of them researchers",
       },
       known_holdings: [
         {
