@@ -195,55 +195,40 @@ describe("imageReadTool — ark input", () => {
     expect(fetchedUrl).toBe(url);
   });
 
-  it("forwards i/cc/groupId from a full page URL onto the resolver URL", async () => {
-    // Some 3:1:/3:2: ARKs are waypoints into a multi-image film/register —
-    // the bare ARK can resolve to the wrong image within that group.
-    // FamilySearch's own browser URL disambiguates with these params.
+  it("forwards i/cc/groupId from a full page URL, and recovers via the fallback when that URL isn't an image", async () => {
+    // Wiring test: the URL-computation logic itself (forwarding params,
+    // dropping irrelevant ones, offering a fallback) is covered directly
+    // against resolveFsImageInput in tests/utils/fs-image-fetch.test.ts.
+    // This confirms imageReadTool actually threads url + fallbackUrl through
+    // to fetchFsImageBytes end to end — the regression from unconditionally
+    // forwarding i=/cc=/groupId= (#1203 review) was exactly a wiring gap: a
+    // non-image response with no fallback attempted.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === "content-type" ? "text/html" : null,
+      },
+      arrayBuffer: async () => new ArrayBuffer(0),
+    });
     mockImageResponse();
     const url =
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=999&cc=1858355&groupId=1858355";
 
-    await imageReadTool({ ark: url });
+    const result = await imageReadTool({ ark: url });
 
-    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355"
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=999&cc=1858355&groupId=1858355"
     );
-  });
-
-  it("drops irrelevant query params, keeping only i/cc/groupId", async () => {
-    mockImageResponse();
-    const url =
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112";
-
-    await imageReadTool({ ark: url });
-
-    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112"
-    );
-  });
-
-  it("adds no query string when a full URL carries no image-context params", async () => {
-    mockImageResponse();
-    const url =
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en";
-
-    await imageReadTool({ ark: url });
-
-    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(fetchedUrl).toBe(
+    expect(mockFetch.mock.calls[1][0]).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
     );
-  });
-
-  it("adds no query string for a bare ARK (no URL to carry context)", async () => {
-    mockImageResponse();
-
-    await imageReadTool({ ark: "ark:/61903/3:1:9392-9ZVZ-X" });
-
-    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(fetchedUrl).toBe(
+    expect(result.metadata.mimeType).toBe("image/jpeg");
+    // metadata.url reports the URL that actually worked, not the failed primary.
+    expect(result.metadata.url).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
     );
   });

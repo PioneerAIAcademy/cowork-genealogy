@@ -61,7 +61,10 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 export async function imageTranscribeTool(
   input: ImageTranscribeInput
 ): Promise<ImageTranscribeResult> {
-  const { url, label } = resolveFsImageInput(input, "image_transcribe");
+  const { url, label, fallbackUrl } = resolveFsImageInput(
+    input,
+    "image_transcribe"
+  );
 
   // Resolve credentials/config BEFORE fetching the image: a missing key
   // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
@@ -69,7 +72,10 @@ export async function imageTranscribeTool(
   const apiKey = await getOpenRouterApiKey();
   const model = await getOpenRouterModel();
 
-  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(url);
+  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(
+    url,
+    fallbackUrl
+  );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   const prompt = buildOcrPrompt(input.lookingFor);
 

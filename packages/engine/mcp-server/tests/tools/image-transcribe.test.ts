@@ -132,59 +132,25 @@ describe("imageTranscribeTool — request + happy path", () => {
 });
 
 describe("imageTranscribeTool — ark URL query-param forwarding", () => {
-  // Mirrors image-read.test.ts's coverage of the same shared
-  // resolveFsImageInput/arkToImageUrl behavior (fs-image-fetch.ts) — some
-  // 3:1:/3:2: ARKs are waypoints into a multi-image film/register, and the
-  // bare ARK can resolve to the wrong image within that group. FamilySearch's
-  // own browser URL disambiguates with i=/cc=/groupId= query params, which
-  // must be forwarded onto the resolved URL image_transcribe actually fetches.
-  it("forwards i/cc/groupId from a full page URL onto the resolver URL", async () => {
+  // Wiring test: the URL-computation logic itself (forwarding i=/cc=/
+  // groupId=, dropping irrelevant params, offering a fallback) is covered
+  // directly against resolveFsImageInput in
+  // tests/utils/fs-image-fetch.test.ts. fetchFsImageBytes is mocked here
+  // (not `fetch`), so the retry-on-non-image-response logic itself isn't
+  // observable at this level — this only confirms imageTranscribeTool
+  // destructures fallbackUrl from resolveFsImageInput and threads it through
+  // as fetchFsImageBytes's second argument, the same way image-read.ts does.
+  it("passes both the resolved URL and its fallback through to fetchFsImageBytes", async () => {
     mockOpenRouterOk("some text");
     const url =
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
 
     await imageTranscribeTool({ ark: url });
 
-    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355"
-    );
-  });
-
-  it("drops irrelevant query params, keeping only i/cc/groupId", async () => {
-    mockOpenRouterOk("some text");
-    const url =
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112";
-
-    await imageTranscribeTool({ ark: url });
-
-    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112"
-    );
-  });
-
-  it("adds no query string when a full URL carries no image-context params", async () => {
-    mockOpenRouterOk("some text");
-    const url = "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en";
-
-    await imageTranscribeTool({ ark: url });
-
-    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
-    );
-  });
-
-  it("adds no query string for a bare ARK (no URL to carry context)", async () => {
-    mockOpenRouterOk("some text");
-
-    await imageTranscribeTool({ ark: "ark:/61903/3:1:9392-9ZVZ-X" });
-
-    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
-    expect(fetchedUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
-    );
+    expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X",
+    ]);
   });
 });
 

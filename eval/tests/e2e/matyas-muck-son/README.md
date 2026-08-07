@@ -1,4 +1,4 @@
-# Muck Mátyás — second son named András (b. 1881)
+# Muck Mátyás — second son named András (b. 1887)
 
 **Source PID:** `97M5-6H8`
 **Mátyás Muck is deceased.** (FamilySearch ToS requires

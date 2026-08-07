@@ -33,9 +33,12 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  const { url, label } = resolveFsImageInput(input, "image_read");
+  const { url, label, fallbackUrl } = resolveFsImageInput(input, "image_read");
 
-  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(url);
+  const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
+    url,
+    fallbackUrl
+  );
 
   // Refuse oversized images before encoding — returning them would overflow
   // the MCP transport buffer and crash the session (see MAX_INLINE_IMAGE_BYTES).
@@ -75,7 +78,7 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   return {
     imageData,
     metadata: {
-      url,
+      url: resolvedUrl,
       mimeType: contentType,
       sizeBytes,
       ...(imageRef ? { imageRef } : {}),
