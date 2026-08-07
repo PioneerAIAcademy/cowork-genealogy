@@ -28,6 +28,7 @@ from e2e.orchestrator import (
     DEFAULT_MCP_SERVER_ENTRY,
     DEFAULT_PLUGIN_SKILLS,
     DEFAULT_RUNLOG_ROOT,
+    McpUnavailableError,
     PERSON_EVIDENCE_GUARD_MODES,
     PERSON_EVIDENCE_GUARD_SHADOW,
     run_e2e_test,
@@ -262,6 +263,15 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
         return 130
+    except McpUnavailableError as e:
+        # #941 — an environment failure, not a test result. Nothing was written
+        # (see run_e2e_test) and there is nothing to roll up: "this run never
+        # happened". Ahead of the generic handler below, which would print it as
+        # a harness ERROR and imply the run is a data point. Exit 2 matches the
+        # other "this run never happened" exits above (missing fixtures root,
+        # missing fixture) rather than 1, which means "a test failed".
+        print(f"\n{e}", file=sys.stderr)
+        return 2
     except Exception as e:  # noqa: BLE001 — report, then fall through to a nonzero exit
         print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
         return 1

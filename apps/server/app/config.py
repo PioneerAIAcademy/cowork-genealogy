@@ -179,6 +179,77 @@ class Settings(BaseSettings):
         return self.data_dir / "sandboxes"
 
 
+def assert_production_config(s: Settings) -> None:
+    """Refuse to boot a production deploy that is still on development defaults.
+
+    Called first in `main.py`'s lifespan, so a misconfigured deploy exits at startup
+    instead of coming up and quietly minting forgeable credentials. Everything
+    checked here is silent when wrong — that is the entry criterion:
+
+    - `session_secret` signs the login cookie (`auth._serializer`, salt `wb-session`)
+      AND the FamilySearch OAuth `state` (`fs_oauth.fs_serializer`, salt `fs-oauth`),
+      so a default value forges both a session and the login CSRF token.
+    - `ws_signing_key` is the HMAC master key behind every per-sandbox WS handshake
+      token (`ws_token.sandbox_secret`), so a default value forges all of them.
+    - An unset `DATABASE_URL` is SQLite under DATA_DIR, and `deploy/fly.toml` mounts
+      no volume (the DB lives on Neon), so in production that is an ephemeral rootfs:
+      every user, session and allowlist row is lost on the next machine restart.
+
+    `ANTHROPIC_API_KEY` / `E2B_API_KEY` are deliberately NOT checked — their absence
+    fails loudly on the first session create.
+
+    Not a pydantic validator: `main.py` calls `get_settings()` at module scope, so a
+    validator would fire at *import* and surface as a traceback rather than a refusal.
+
+    The production discriminant is an https `public_url` — the same signal
+    `auth.cookie_secure()` already uses. `deploy/fly.toml` sets it in `[env]` (not a
+    secret, so it always ships) and both local targets pin http. NOT
+    `sandbox_provider == "e2b"`, which would break `make server-e2b` locally.
+
+    Raises:
+        RuntimeError: naming every offending setting and its remedy, so one deploy
+            fixes all of them rather than discovering them one restart at a time.
+    """
+    if not s.public_url.startswith("https"):
+        return
+
+    problems: list[str] = []
+
+    # Compare against the DECLARED default, never a copied literal — a literal here
+    # silently stops matching the day someone rewords the default above. This does
+    # require both fields to keep plain literal defaults: redeclared with
+    # `Field(default_factory=…)`, `.default` becomes PydanticUndefined, every
+    # comparison goes False, and a defaulted secret ships with the gate green.
+    # Guarded by test_prod_preflight.py::
+    # test_secret_defaults_are_literals_so_the_comparison_can_work — no other
+    # test catches it, because they all inject `.default` as the value.
+    for field in ("session_secret", "ws_signing_key"):
+        if getattr(s, field) == Settings.model_fields[field].default:
+            env = field.upper()
+            problems.append(
+                f"  {env} is still the development default.\n"
+                f'    Fix: fly secrets set {env}="$(openssl rand -hex 32)"'
+            )
+
+    # `is_sqlite` is `not database_url`, so this covers unset AND set-but-blank.
+    if s.is_sqlite:
+        problems.append(
+            "  DATABASE_URL is unset or blank, so this would run on SQLite under\n"
+            "    DATA_DIR — ephemeral rootfs (deploy/fly.toml mounts no volume), losing\n"
+            "    every user, session and allowlist row on the next machine restart.\n"
+            "    Fix: fly secrets set "
+            'DATABASE_URL="postgresql://USER:PASS@HOST.neon.tech/DB?sslmode=require"'
+        )
+
+    if problems:
+        raise RuntimeError(
+            f"Refusing to boot: PUBLIC_URL is {s.public_url} (a production deploy), "
+            "but the configuration is incomplete.\n"
+            + "\n".join(problems)
+            + "\n  See DEVELOPMENT.md § Deploy to Fly.io."
+        )
+
+
 @lru_cache
 def get_settings() -> Settings:
     s = Settings()
