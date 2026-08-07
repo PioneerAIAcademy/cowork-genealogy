@@ -169,6 +169,12 @@ above it, and the distinction is the thing to understand before reading either:
   the graduation gate ("run a real suite and read the entries") could not be answered
   from the corpus at all. It needs no code: the next committed e2e run produces
   stored entries by itself.
+- Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
+  current checkout, so a graded run committed on an unmerged branch is not
+  skipped, it is never seen. Two are known to sit outside `main` today, one of
+  them the first run to store live entries for this check at all. Read a rate
+  off an up-to-date `main` with in-flight fixture PRs merged, or it is biased at
+  the moment it is used.
 - The **replayed** count reads the whole pre-hook corpus: at the time of writing
   **111 of the 137 runs that link a person have ≥1 gap (750 links, 72
   fixtures)**, with one run skipped and named for having no committed seed tree.

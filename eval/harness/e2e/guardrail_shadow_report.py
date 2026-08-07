@@ -216,6 +216,15 @@ def replay_provenance(
     the corpus's error-shaped entries is a `same_person`, `research_append`, or
     `extraction_append`.
 
+    **The corpus is branch-scoped.** This reads `eval/runlogs/e2e/` as it exists
+    in the CURRENT checkout, so a graded run committed on an unmerged branch is
+    invisible — it is not skipped, it is never seen, and nothing here can say so.
+    Two are known: `katalin-horak-son` and `heinrich-dewus-children-death`, both
+    on `land-heinrich-dewus-children-fixture`, and the latter is the first run
+    ever to store live entries for this check. Read any rate off an up-to-date
+    `main` with in-flight fixture PRs merged, or it is biased at exactly the
+    moment it is used.
+
     A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
     `skipped` and excluded from both counts, never silently dropped — with no
     baseline every person reads as new, which would manufacture exactly the
