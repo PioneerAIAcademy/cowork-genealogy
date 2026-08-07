@@ -187,6 +187,20 @@ function factIdsOfType(
   );
 }
 
+/** factIdsOfType across several types, unioned — the person-level facts a
+ *  relative selector must sweep alongside the structure it removes. */
+function factIdsOfTypes(
+  tree: SimplifiedGedcomX,
+  personId: string,
+  factTypes: string[],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const factType of factTypes) {
+    factIdsOfType(tree, personId, factType).forEach((id) => ids.add(id));
+  }
+  return ids;
+}
+
 // ─── selector resolution ─────────────────────────────────────────────────────
 
 interface Targets {
@@ -219,7 +233,25 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           { "parents-of": "parents", "children-of": "children", "spouses-of": "spouses" } as const
         )[kind];
         const { people, rels } = relatives(tree, pid, relation);
-        if (people.size === 0 && rels.size === 0) {
+        // FamilySearch carries a conclusion TWICE: as structure AND as a
+        // documentary fact on the subject's own record (person_read returns
+        // both). Forgetting the structure must take the fact too, or the answer
+        // survives on the subject. Each fact can even be the SOLE carrier — when
+        // the related persons were never added as tree persons — so its presence
+        // also keeps the selector from erroring as "matched nothing".
+        //   parents-of  → the subject's `Parents` fact       (issue #1314)
+        //   spouses-of  → the subject's `Marriage`/`Divorce`/`Annulment` facts,
+        //                 the person-level echo of the Couple relationship's own
+        //                 facts (issue #1417)
+        // children-of is unaffected: the `Parents` fact lives on the child, whom
+        // children-of removes wholesale.
+        const redundantFactIds =
+          kind === "parents-of"
+            ? factIdsOfType(tree, pid, "Parents")
+            : kind === "spouses-of"
+              ? factIdsOfTypes(tree, pid, ["Marriage", "Divorce", "Annulment"])
+              : new Set<string>();
+        if (people.size === 0 && rels.size === 0 && redundantFactIds.size === 0) {
           throw new TreeForgetError(
             `'${kind}' matched nothing — ${pid} has no ${relation} in the tree, ` +
               `so there is nothing to forget.`,
@@ -227,6 +259,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         people.forEach((p) => t.persons.add(p));
         rels.forEach((r) => t.relationships.add(r));
+        redundantFactIds.forEach((f) => t.facts.add(f));
         break;
       }
       case "birth-of":
@@ -473,7 +506,10 @@ export const treeForgetSchema = {
               ],
               description:
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
-                "them (cascades). birth-of/death-of: that person's Birth/Death facts. " +
+                "them (cascades). parents-of ALSO removes the person's own `Parents` " +
+                "documentary facts, and spouses-of ALSO removes the person's own " +
+                "`Marriage`/`Divorce`/`Annulment` facts, so the forgotten conclusion does not " +
+                "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death facts. " +
                 "facts-of: that person's facts of one type (needs factType). person: one " +
                 "person, cascading every relationship touching them. fact/relationship: one " +
                 "specific entity by id.",
