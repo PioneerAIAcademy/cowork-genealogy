@@ -226,8 +226,14 @@ def test_extract_dimensions_rejects_wrong_tool_name():
 # the resample loop can't rescue a prompt-correlated mistake (attempt 0 is
 # temperature-pinned, so a retry can repeat the identical error) — so a
 # hard raise here would have turned correct skill output into a recorded
-# failure on every future run of about a dozen tests. Structural garbage
-# (an invalid `source`, a non-string `name`) still raises: see the
+# failure. Measured against the committed corpus with each run's rubric
+# resolved to the text actually in force at run time (a digest-only
+# snapshot resolved against git history, not assumed to match today's
+# on-disk file): one test drops on every historical draw
+# (research-plan/ut_research_plan_007, 5/5) and 21 more drop on at least
+# one draw (22 tests total; see
+# test_corpus_replay_never_raises_on_committed_run_logs). Structural
+# garbage (an invalid `source`, a non-string `name`) still raises: see the
 # structural-garbage tests below and the docstring on _extract_dimensions.
 
 
@@ -351,6 +357,41 @@ def test_extract_dimensions_drops_invented_dimension_after_valid_ones_ut016_shap
     assert warnings[0]["valid_names"] == sorted([
         "Assertion atomicity", "Informant identification", "Evidence type accuracy",
     ])
+
+
+def test_extract_dimensions_dropped_dimension_preserves_score_and_rationale(
+    record_extraction_rubric,
+):
+    """#1361 review (S1): a dropped dimension's own score and rationale must
+    survive into its warning dict, not just kind/name. Without this, a
+    dropped fail (score 1) or partial (score 2) vanishes from
+    judge_dimensions with no trace, and
+    orchestrator._compute_outcome's `scores = [d["score"] for d in
+    judge_dimensions]` can silently turn a fail/partial into a more
+    lenient outcome purely because the dropped entry no longer
+    contributes to that list — reachable case the review constructed:
+    a dropped score-1 dimension with a substantive rationale."""
+    dims = _record_extraction_base_dims() + [
+        {"source": "rubric", "name": "Assertion Atomicity", "score": 1,
+         "rationale": "a substantive fail rationale that must not vanish"},
+        {"source": "rubric", "name": "Informant identification", "score": 3,
+         "rationale": "valid, first occurrence"},
+        {"source": "rubric", "name": "Evidence type accuracy", "score": 3,
+         "rationale": "valid"},
+        {"source": "rubric", "name": "Informant identification", "score": 2,
+         "rationale": "duplicate, partial score that must not vanish either"},
+    ]
+    out, warnings = judge._extract_dimensions(
+        _tool_use_response(dims), record_extraction_rubric
+    )
+    assert len(warnings) == 2
+    by_kind = {w["kind"]: w for w in warnings}
+    unknown = by_kind["dropped_unknown_rubric_dimension"]
+    assert unknown["score"] == 1
+    assert unknown["rationale"] == "a substantive fail rationale that must not vanish"
+    duplicate = by_kind["dropped_duplicate_dimension"]
+    assert duplicate["score"] == 2
+    assert duplicate["rationale"] == "duplicate, partial score that must not vanish either"
 
 
 def test_extract_dimensions_drops_rubric_dimension_under_empty_rubric():
@@ -578,18 +619,38 @@ def test_grading_tool_for_rubric_empty_rubric_is_base_only():
 # The missing guard the redesign needed: does the real judge output
 # committed in eval/runlogs/unit/ actually survive this function without
 # raising? Everything above is a hand-built fixture; this is the check
-# against reality that caught the original raise-based design's blocker
-# (raising on ~3% of historical draws, converting correct skill output
-# into recorded failures — see the commit message for the measured rate).
+# against reality that caught the original raise-based design's blocker.
+# Measured rate against the committed corpus (1873 judge draws): 2.19%
+# (41 draws) would have raised under the original raise-based design once
+# each run's rubric snapshot is resolved to the text actually in force at
+# run time (a digest-only snapshot resolved against git history — see
+# _rubric_for_snapshot's caveat below on what THIS quick guard does
+# instead, which is cheaper and slightly less precise).
 
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _rubric_for_snapshot(skill: str, snapshot_text, disk_rubrics: dict):
-    """The rubric to replay a run log's judge output against: the log's
-    own embedded snapshot of rubric.md when it stored real content (older
-    logs sometimes stored a bare sha256 hex digest instead), else today's
-    on-disk rubric.md for that skill."""
+    """The rubric to replay a run log's judge output against.
+
+    When the run log's snapshot stored rubric.md's real content directly
+    (schema_version < 3, or a skill excluded from hashing), use that. When
+    it stored a bare sha256 digest instead (the common case — true for
+    most of the committed corpus), this does NOT resolve the digest
+    against git history to recover the text that was actually in force at
+    run time; it falls back to TODAY's on-disk rubric.md for that skill.
+    That is a real approximation, not a stand-in for the true text: a
+    rubric heading renamed since a run was made (e.g. timeline's
+    "Impossibility detection" -> "Deferral of logical-impossibility
+    detection", commit 5350504a) makes that run's real, contemporaneous
+    dimension name look like a drop here even though it wasn't one at the
+    time. This guard is deliberately cheap (no git subprocess calls) and
+    exists to catch a raise, not to produce a precise drop-rate — a
+    disk-fallback drop is still a drop (never a raise), so the guarantee
+    this test checks (never raises) holds regardless of which rubric
+    version is used; only the exact drop *count*, not the raise
+    guarantee, is sensitive to this approximation.
+    """
     if isinstance(snapshot_text, str) and not _HEX64.match(snapshot_text.strip()):
         try:
             return parse_rubric_or_empty(skill, snapshot_text)
@@ -600,12 +661,18 @@ def _rubric_for_snapshot(skill: str, snapshot_text, disk_rubrics: dict):
 
 def test_corpus_replay_never_raises_on_committed_run_logs():
     """Feed every committed unit run log's real judge output through
-    _extract_dimensions, against that log's own rubric. Must NEVER raise
-    JudgeError for a naming/duplicate mismatch — only structural garbage
-    may still raise, and none has been observed (see the dedicated tests
-    above). Dropping is fine and expected; this only guards against the
-    one thing the redesign exists to prevent: a historical judge draw that
-    would newly convert a passing test into a hard `fail`.
+    _extract_dimensions. Must NEVER raise JudgeError for a naming/
+    duplicate mismatch — only structural garbage may still raise, and
+    none has been observed (see the dedicated tests above). Dropping is
+    fine and expected; this only guards against the one thing the
+    redesign exists to prevent: a historical judge draw that would newly
+    convert a passing test into a hard `fail`.
+
+    Rubric resolution is a fallback-to-disk approximation for most of the
+    corpus, not each log's true historical rubric — see
+    _rubric_for_snapshot's docstring. That affects the exact drop count
+    this test would report, not the never-raises guarantee it actually
+    asserts.
 
     Negative tests are graded against empty_rubric, matching
     orchestrator._run_judge's actual behavior.
@@ -668,6 +735,24 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
         f"\ncorpus replay: {len(log_paths)} run logs, {total_draws} judge draws, "
         f"{dropped_total} dimension(s) dropped-with-warning, "
         f"{len(unexpected_raises)} unexpected raise(s)"
+    )
+    # #1361 review (S2): without these two, the loop above can silently
+    # process zero draws (every log's rubric resolves to None and every
+    # iteration hits the `continue` above) and the test still passes,
+    # since `unexpected_raises == []` holds vacuously on an empty run.
+    # Mutant-verified: `return None` at the top of _rubric_for_snapshot
+    # made every log skip and this test stayed green until these were
+    # added. 1000 is a loose floor well under the measured 1873 draws —
+    # tight enough to catch "nothing ran", loose enough not to need
+    # updating as the corpus grows.
+    assert total_draws > 1000, (
+        f"only {total_draws} judge draws were actually replayed — the loop "
+        f"may be skipping every log (e.g. every rubric resolved to None)"
+    )
+    assert dropped_total > 0, (
+        "zero dimensions were dropped across the whole corpus — expected "
+        "at least the known historical drops (unknown-name/duplicate); "
+        "a value of exactly 0 here is itself suspicious, not reassuring"
     )
     assert unexpected_raises == [], (
         f"{len(unexpected_raises)} historical judge draw(s) newly raise JudgeError "

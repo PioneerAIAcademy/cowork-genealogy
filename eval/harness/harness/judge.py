@@ -603,8 +603,14 @@ def _extract_dimensions(
       resample loop can't rescue a *prompt-correlated* mistake (attempt 0
       is temperature-pinned and the model repeats its own mistake),
       raising here would convert correct skill output into a recorded
-      `fail` on every future run of roughly a dozen tests. Dropping the
-      offending entry and recording why in the returned warnings list
+      `fail`. Measured against the committed run-log corpus, resolving
+      each run's rubric.md snapshot to the text actually in force at run
+      time (a sha256 digest snapshot is resolved against git history, not
+      assumed to match today's on-disk file): one test drops on every
+      historical draw (research-plan's FAN-pivot test,
+      ut_research_plan_007, 5/5) and 21 more drop on at least one draw (22
+      tests total; see test_corpus_replay_never_raises_on_committed_run_logs).
+      Dropping the offending entry and recording why in the returned warnings list
       (surfaced by the caller as `output.warnings` — see grade()) keeps
       the run gradable on its real dimensions while still surfacing the
       judge's naming failure for a human to read, rather than either
@@ -683,6 +689,18 @@ def _extract_dimensions(
                 ),
                 "source": d["source"],
                 "name": d["name"],
+                # The dropped draw's own score/rationale, not the survivor's
+                # — otherwise a dropped fail (score 1) or partial (score 2)
+                # vanishes from judge_dimensions with no trace, and
+                # orchestrator._compute_outcome's `scores = [d["score"] for
+                # d in judge_dimensions]` can silently flip the outcome
+                # (fail/partial -> a more lenient one) since the dropped
+                # entry no longer contributes to that list (#1361 review).
+                # `.get()`, not `[...]`: a dimension missing "score" or
+                # "rationale" entirely is a separate, pre-existing gap this
+                # warning must not crash on while recording it.
+                "score": d.get("score"),
+                "rationale": d.get("rationale"),
             })
             continue
         seen_dim_keys.add(dim_key)
@@ -715,6 +733,12 @@ def _extract_dimensions(
                 ),
                 "name": d["name"],
                 "valid_names": sorted(valid_rubric_names),
+                # See the duplicate-warning dict above: preserve the
+                # dropped draw's own score/rationale so a dropped fail/
+                # partial can't silently disappear from the outcome
+                # computation with no trace (#1361 review).
+                "score": d.get("score"),
+                "rationale": d.get("rationale"),
             })
             continue
         kept.append(d)
@@ -723,10 +747,15 @@ def _extract_dimensions(
     # Enforce per-base-dimension null policy. The grading-tool schema
     # accepts null on every score; that flexibility exists for Tool
     # Arguments. We reject null on Correctness/Completeness here so the
-    # judge can't silently skip a substantive base dimension. Unaffected
-    # by the drops above: a base dimension is never a drop candidate
-    # (rubric-name check only touches source=="rubric"), and duplicates of
-    # a base dimension were already resolved to their first occurrence.
+    # judge can't silently skip a substantive base dimension. The
+    # rubric-name-drop pass above never touches a base dimension (it only
+    # inspects source=="rubric"), but a duplicate base dimension IS a drop
+    # candidate in the dedup pass, and that changes behavior relative to
+    # main: main's base_by_name dict comprehension (below) silently kept
+    # whichever duplicate came LAST; the dedup pass above now keeps the
+    # FIRST and drops the rest with a warning instead. Deliberate, pinned
+    # by test_extract_dimensions_drops_duplicate_base_dimension — not an
+    # oversight, and not a no-op relative to pre-#1361 behavior.
     base_by_name = {
         d.get("name"): d for d in dims if d.get("source") == "base"
     }
