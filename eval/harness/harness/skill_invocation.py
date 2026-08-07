@@ -894,3 +894,139 @@ def find_citation_nulling_in_conclusions(
                 }
             )
     return violations
+
+
+# Marks a conflict-not-persisted shadow entry in the shared
+# `guardrail_shadow_violations` list, told apart from the citation-nulling and
+# #963 person_evidence buckets by this `kind` in `guardrail_shadow_report.py`.
+CONFLICT_UNPERSISTED_KIND = "conflict_unpersisted"
+
+# Substrings in a `conflict_resolution` stop-criterion that mean "there was no
+# conflict to persist" — checked before firing so an honest "no conflicts" note
+# is not read as an unpersisted resolution.
+_NO_CONFLICT_SUBSTRINGS = (
+    "no conflict",
+    "no material conflict",
+    "no remaining conflict",
+    "no unresolved conflict",
+    "no discrepanc",  # "no discrepancy" / "no discrepancies"
+    "without conflict",
+)
+# Whole-field values (stripped, lowercased) that mean the same thing. Matched
+# exactly rather than as substrings so a bare "none"/"n/a" can't false-negative
+# a real resolution sentence that merely contains those letters.
+_NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
+
+
+def find_unpersisted_conflict_resolutions(
+    research: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on
+    a conflict it says was resolved, but no structured ``conflicts[]`` entry backs
+    it — the resolution lives only in prose, so the viewer's Conflicts section is
+    blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
+    the conflict-side sibling of ``find_citation_nulling_in_conclusions``.
+
+    THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
+    with 25 assertions and 2 ``proof_summaries`` whose narrative carried a full
+    "Conflict Discussion" and whose ``exhaustive_declaration.stop_criteria.
+    conflict_resolution`` read "Ella Chase marriage conflict resolved …" — yet
+    ``conflicts`` was ``[]`` and every ``resolved_conflict_ids`` was ``[]``. The
+    conflict was reasoned through by ``proof-conclusion`` / ``research-exhaustiveness``
+    and never routed to ``conflict-resolution`` (the sole writer of ``conflicts[]``,
+    per ``docs/specs/research-schema-spec.md`` §155), so nothing was persisted.
+
+    GATED ON A WRITTEN CONCLUSION. Fires only when a ``proof_summaries`` entry
+    exists — a run that legitimately stops before concluding has an empty
+    ``conflicts[]`` by design and must not fire. For each concluded question, the
+    reliance signal is a non-trivial ``conflict_resolution`` stop-criterion on that
+    question's ``exhaustive_declaration`` (a *structured* field with bounded
+    vocabulary — deliberately NOT the free ``narrative_markdown``, which cannot be
+    parsed reliably). A ``conflict_resolution`` that says there was no conflict
+    (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
+
+    The reliance is BACKED, and no violation fires, when the proof_summary's
+    ``resolved_conflict_ids`` cites at least one ``conflicts[]`` entry with
+    ``status == "resolved"``. Otherwise the resolution is asserted but unpersisted.
+
+    SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
+    (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
+    fails a run. Because the reliance signal is a text heuristic on one structured
+    field, this ships shadow-first to measure the fire rate before any promotion to
+    a hard gate — exactly how the citation-nulling detector (#1358) is staged.
+    """
+    research = research or {}
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # the gate: no written conclusion, nothing is held to a conflict record
+
+    questions = research.get("questions") if isinstance(research.get("questions"), list) else []
+    conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
+    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict)}
+    resolved_conflict_ids = {
+        c.get("id")
+        for c in conflicts
+        if isinstance(c, dict) and c.get("status") == "resolved" and c.get("id")
+    }
+
+    def _resolution_claimed(question: dict[str, Any]) -> str | None:
+        """The stop-criterion text if it asserts a resolution, else None."""
+        decl = question.get("exhaustive_declaration")
+        if not isinstance(decl, dict):
+            return None
+        crit = decl.get("stop_criteria")
+        if not isinstance(crit, dict):
+            return None
+        cr = crit.get("conflict_resolution")
+        if not isinstance(cr, str):
+            return None
+        crl = cr.strip().lower()
+        if crl in _NO_CONFLICT_EXACT:
+            return None
+        if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):
+            return None
+        return cr
+
+    violations: list[dict[str, Any]] = []
+    seen: set[tuple[Any, Any]] = set()  # one entry per (conclusion, question)
+    for ps in proof_summaries:
+        if not isinstance(ps, dict):
+            continue
+        ps_id = ps.get("id")
+        qid = ps.get("question_id")
+        rcids = (
+            ps.get("resolved_conflict_ids")
+            if isinstance(ps.get("resolved_conflict_ids"), list)
+            else []
+        )
+        if any(rc in resolved_conflict_ids for rc in rcids):
+            continue  # backed by a real resolved conflicts[] entry — fine
+        question = questions_by_id.get(qid)
+        if not isinstance(question, dict):
+            continue  # no linked question to read a reliance signal from
+        if _resolution_claimed(question) is None:
+            continue  # no conflict claimed (or explicitly "no conflicts") — nothing owed
+        key = (ps_id, qid)
+        if key in seen:
+            continue
+        seen.add(key)
+        violations.append(
+            {
+                "index": -1,  # post-hoc final-state read; there is no tool-call index
+                "tool": "research.json",
+                "required_skill": "conflict-resolution",
+                "question_id": qid,
+                "kind": CONFLICT_UNPERSISTED_KIND,
+                "detail": (
+                    f"proof_summary {ps_id} (question {qid}) relies on a resolved "
+                    "conflict per its exhaustive_declaration.stop_criteria."
+                    "conflict_resolution, but no resolved conflicts[] entry backs it "
+                    "and resolved_conflict_ids is empty"
+                ),
+            }
+        )
+    return violations

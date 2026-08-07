@@ -36,6 +36,7 @@ from e2e.runlog_selection import (
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
+    CONFLICT_UNPERSISTED_KIND,
     find_unguarded_protected_writes,
 )
 
@@ -138,7 +139,9 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     carries `detail` and is counted separately by `scan_citation_nulling`.
     """
     return _scan_stored(
-        paths, lambda v: "detail" in v and v.get("kind") != CITATION_NULLING_KIND
+        paths,
+        lambda v: "detail" in v
+        and v.get("kind") not in (CITATION_NULLING_KIND, CONFLICT_UNPERSISTED_KIND),
     )
 
 
@@ -148,6 +151,15 @@ def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
     ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1317 conflict-unpersisted shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a written conclusion relying on a resolved
+    conflict that no `conflicts[]` entry backs). Identified by
+    `kind == CONFLICT_UNPERSISTED_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == CONFLICT_UNPERSISTED_KIND)
 
 
 def format_provenance(violations: list[dict[str, Any]]) -> str:
@@ -173,6 +185,18 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
         "\n§7.5 citation-nulling check (issue #1133, shadow): "
         f"{len(violations)} concluded source(s) with a null/empty citation "
         f"string, across {affected} run(s)."
+    )
+
+
+def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
+    """One flat count, like the other post-hoc checks: a fact about the final
+    research.json, not a windowed recency scan. This is the number the
+    graduation decision (shadow → hard gate) is gated on for issue #1317."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\nconflict-unpersisted check (issue #1317, shadow): "
+        f"{len(violations)} concluded question(s) relying on an unpersisted "
+        f"conflict resolution, across {affected} run(s)."
     )
 
 
@@ -206,6 +230,9 @@ def main(argv: list[str] | None = None) -> int:
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
+    conflict_unpersisted = scan_conflict_unpersisted(paths)
+    print(format_conflict_unpersisted(conflict_unpersisted))
+
     if args.detail:
         smallest = min(windows)
         print(f"\nViolations at window={smallest}:")
@@ -215,6 +242,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nConflict unpersisted (issue #1317), {len(conflict_unpersisted)}:")
+        for v in conflict_unpersisted:
             print(f"  {v['fixture']:<35} {v['detail']}")
     return 0
 
