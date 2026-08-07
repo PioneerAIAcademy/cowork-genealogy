@@ -106,9 +106,11 @@ Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsu
 
 ### 1. Get the research objective
 
-Get from the user: a FamilySearch person ID (preferred), or name + known facts for `person_search`; and the research objective in one sentence.
+**This step blocks — unlike the profile and holdings interviews below, do NOT proceed past it without an explicit objective.** Before calling `person_read`, building the tree, or doing any pedigree analysis, you need BOTH: (a) a FamilySearch person ID (preferred) or name + known facts for `person_search`, AND (b) the research objective in the user's own words.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If the user provides just an ID, formulate a default objective from what's missing. If no ID, search by name (see below). If too vague (no named individual), ask for clarification.
+If the user gives a PID (or a name) with no stated objective, STOP and ask: "What would you like to research about [name, once known]?" Do NOT invent, assume, or default an objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — a wrong assumption sends the whole project in a direction the user didn't ask for. This is the one interview question in this skill that is blocking; the researcher-profile and known-holdings questions below are not.
+
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below) — but still confirm the objective before or alongside the name search, not after. If too vague (no named individual), ask for clarification.
 
 ### Searching by name
 

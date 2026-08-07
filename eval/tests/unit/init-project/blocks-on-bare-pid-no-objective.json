@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_init_project_010",
+    "skill": "init-project",
+    "name": "Blocks on a bare PID with no stated objective instead of inventing one",
+    "type": "positive",
+    "description": "The user supplies only a FamilySearch person ID, with no research objective at all. Per SKILL.md Step 1, the objective is the one blocking question in this skill — init-project must ask what the user wants to research rather than inventing a default objective from the person's data, and must not call person_read, build the tree, or write any files before the objective is known.",
+    "tags": ["initialization", "objective-required", "blocking-question", "issue-1320", "no-premature-write"]
+  },
+  "input": {
+    "user_message": "Start a new research project. FamilySearch person ID LZNY-BRF.",
+    "scenario": null
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Should ask the user what they want to research (the objective) before doing anything else — a bare PID with no stated goal is not enough to proceed past Step 1.",
+    "Should NOT call person_read, person_search, or place_search — the objective must be captured before the tree is fetched. Tool Arguments should be N/A since no tools should be called.",
+    "Should NOT write research.json or tree.gedcomx.json — no files exist yet at this point in the workflow.",
+    "Should NOT invent, guess, or default an objective from the person ID alone (e.g., a hallucinated migration or relationship narrative drawn from facts the skill hasn't even fetched yet) — this is the specific failure mode this test guards against (issue #1320).",
+    "This is not a refusal — init-project is still the correct skill for this request; it is simply asking its one blocking question before proceeding. Contrast with the researcher-profile and known-holdings questions elsewhere in the skill, which are explicitly non-blocking and default silently when unanswered."
+  ]
+}
