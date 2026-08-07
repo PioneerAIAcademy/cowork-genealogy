@@ -103,7 +103,6 @@
       "evidence_type": "direct",
       "informant_proximity": "self",
       "information_quality": "primary"
-      "evidence_type": "direct"
     },
     {
       "record_role": "mother_of_bride",
@@ -111,7 +110,6 @@
       "evidence_type": "direct",
       "informant_proximity": "self",
       "information_quality": "primary"
-      "evidence_type": "direct"
     }
   ]
 }
