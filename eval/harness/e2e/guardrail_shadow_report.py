@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +34,10 @@ from e2e.runlog_selection import (
     is_result_json as _is_result_json,
     result_jsons_for,
 )
-from harness.skill_invocation import find_unguarded_protected_writes
+from harness.skill_invocation import (
+    CITATION_NULLING_KIND,
+    find_unguarded_protected_writes,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -93,17 +97,20 @@ def format_detail(violations: list[dict[str, Any]]) -> str:
     return "\n".join(lines) if lines else "  (none)"
 
 
-def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
-    """The issue-#963 provenance shadow entries STORED in each run's
-    `guardrail_shadow_violations` (a `person_evidence` link written with no
-    prior `same_person`), enriched with their source file.
+def _scan_stored(
+    paths: list[Path], keep: Callable[[dict[str, Any]], bool]
+) -> list[dict[str, Any]]:
+    """Read STORED shadow entries across a corpus, keeping those `keep` selects,
+    each enriched with its source file/fixture.
 
     Read rather than replayed, unlike the §7 sweep above: that check is a pure
     function of `tool_calls` at a given window, so it can be recomputed for any
-    window from a committed log. This one is not — it depends on the seed tree
-    the run started from and on what the live hook could see at the moment of
-    the write, so the run has to record it. Entries are identified by the
-    `detail` key, which only the hook's source sets.
+    window from a committed log. The stored families are not — the #963
+    provenance gap depends on the seed tree and on what the live hook could see;
+    the #1133 citation-nulling class is a post-hoc read of the final
+    research.json. Both share `guardrail_shadow_violations` and are told apart by
+    their keys, so each family passes its own predicate here. Unreadable files
+    are skipped with a stderr note, never raised.
     """
     out: list[dict[str, Any]] = []
     for path in paths:
@@ -113,7 +120,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
             print(f"  skip {path}: {e}", file=sys.stderr)
             continue
         for v in data.get("guardrail_shadow_violations") or []:
-            if not isinstance(v, dict) or "detail" not in v:
+            if not isinstance(v, dict) or not keep(v):
                 continue
             try:
                 display_path = str(path.relative_to(REPO_ROOT))
@@ -121,6 +128,26 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
                 display_path = str(path)
             out.append({**v, "file": display_path, "fixture": path.parent.name})
     return out
+
+
+def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#963 provenance shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a `person_evidence` link written with no
+    prior `same_person`). Identified by the `detail` key, which only the stored
+    sources set — but EXCLUDING the #1133 citation-nulling class, which also
+    carries `detail` and is counted separately by `scan_citation_nulling`.
+    """
+    return _scan_stored(
+        paths, lambda v: "detail" in v and v.get("kind") != CITATION_NULLING_KIND
+    )
+
+
+def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1133 citation-nulling shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a source backing a written conclusion whose
+    ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
 
 
 def format_provenance(violations: list[dict[str, Any]]) -> str:
@@ -134,6 +161,19 @@ def format_provenance(violations: list[dict[str, Any]]) -> str:
         f"person_evidence link(s) with no prior same_person, across {affected} run(s).",
     ]
     return "\n".join(lines)
+
+
+def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
+    """One flat count — no window column, like `format_provenance`: the #1133
+    check is a fact about the final research.json, not a windowed recency scan.
+    This is the number the graduation decision (shadow → hard §7.5 compliance
+    check) is gated on."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7.5 citation-nulling check (issue #1133, shadow): "
+        f"{len(violations)} concluded source(s) with a null/empty citation "
+        f"string, across {affected} run(s)."
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -163,6 +203,9 @@ def main(argv: list[str] | None = None) -> int:
     provenance = scan_provenance(paths)
     print(format_provenance(provenance))
 
+    citation_nulling = scan_citation_nulling(paths)
+    print(format_citation_nulling(citation_nulling))
+
     if args.detail:
         smallest = min(windows)
         print(f"\nViolations at window={smallest}:")
@@ -170,6 +213,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nProvenance gaps (issue #963), {len(provenance)}:")
         for v in provenance:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
+        print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
+        for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
     return 0
 
 

@@ -403,6 +403,43 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
     assert "expected at least one" in (required.error or "")
 
 
+def test_expected_classifications_value_pins_the_fact_value():
+    """`value` (#1108) checks the fact VALUE, not a layer. The ut_013 leak —
+    Patrick's birthplace persisted 'Pennsylvania' where the record says
+    'Ireland' — is `direct` either way, so only a value matcher catches it.
+    Substring + case-insensitive, read from the attribute-relevant field."""
+    # Correct value → passes.
+    ok = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
+          "place": "Ireland", "evidence_type": "direct"}],
+        [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
+          "value": "Ireland", "evidence_type": "direct"}],
+    )
+    assert ok.passed is True, f"unexpected failure: {ok.error}"
+
+    # The ut_013 leak: wrong birthplace value, still classified `direct` → the
+    # value matcher fails where the evidence_type facet alone would pass.
+    leak = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
+          "place": "Pennsylvania", "evidence_type": "direct"}],
+        [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
+          "value": "Ireland", "evidence_type": "direct"}],
+    )
+    assert leak.passed is False
+    for frag in ("a_1", "Ireland", "Pennsylvania"):
+        assert frag in (leak.error or ""), f"missing {frag!r}: {leak.error}"
+
+    # Place standardization is tolerated ("Pennsylvania" ⊂ "Pennsylvania, United States").
+    std = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_3", "fact_type": "birth",
+          "place": "Pennsylvania", "standard_place": "Pennsylvania, United States",
+          "evidence_type": "direct"}],
+        [{"record_role": "child_3", "fact_type": "birth", "attribute": "place",
+          "value": "Pennsylvania", "evidence_type": "direct"}],
+    )
+    assert std.passed is True, f"unexpected failure: {std.error}"
+
+
 def test_expected_classifications_attribute_facet_separates_birth_claims():
     """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
     (date set, `indirect`) share the `birth` fact_type but are independently
@@ -801,14 +838,10 @@ def test_no_duplicate_tree_ids_flags_a_repeat():
     assert ok is not None and ok.passed
 
 
+@pytest.mark.requires_engine_build
 def test_full_validation_catches_reference_integrity():
-    # Drives the compiled TS validateParsed; skip (never fail) when build/ is
-    # absent, matching the validator's own skip-not-fail contract.
-    from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
-
+    # Drives the compiled TS validateParsed via _run_universal; the marker skips
+    # (never fails) when build/ is absent, matching the skip-not-fail contract.
     # A dangling ParentChild endpoint passes jsonschema but must fail full
     # validation (reference integrity jsonschema cannot express).
     dangling = {
@@ -822,13 +855,11 @@ def test_full_validation_catches_reference_integrity():
     assert ok is not None and ok.passed, "a clean project must pass full validation"
 
 
+@pytest.mark.requires_engine_build
 def test_full_validation_catches_cross_file_subject_person_id():
     # #987 plan §2/§6: the most likely init-project defect — subject_person_ids
     # naming a person the tree does not contain (init-project hand-writes both).
     from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
 
     research = _empty_research_state()["research_json"]
     research = {**research, "project": {**research["project"], "subject_person_ids": ["I9"]}}
@@ -837,15 +868,13 @@ def test_full_validation_catches_cross_file_subject_person_id():
     assert any("subject_person_ids" in e and "I9" in e for e in errors), errors
 
 
+@pytest.mark.requires_engine_build
 def test_validator_crash_is_not_reported_as_missing_build():
     # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
     # be reported as None ("build missing") and silently passed. A bare string in
     # persons trips a TypeError in the TS validator — exactly the malformed tree
     # this feature exists to catch.
     from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
 
     research = _empty_research_state()["research_json"]
     crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
