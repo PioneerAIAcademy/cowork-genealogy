@@ -146,3 +146,138 @@ def test_record_extraction_unions_image_reader_opus_image_read():
 def test_search_images_unions_image_reader_opus_image_read():
     tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
     assert "mcp__genealogy__image_read" in tools
+
+
+# --- Sub-skill union (issue #1012) -----------------------------------------
+#
+# `Skill("<name>")` loads the callee's instructions into the SAME conversation,
+# so the callee's tool calls are checked against the CALLER's allowlist. Before
+# this union, search-external-sites ran inside search-records holding neither
+# place_search nor external_links_search — and the failure was silent: the model
+# invented an Ancestry URL from prose rather than erroring. These run against
+# the real plugin files, not a tmp_path fixture, because the bug was a real gap
+# between two real skills and a synthetic pair would not have caught it.
+
+
+def test_skill_refs_finds_every_declared_callee():
+    from harness.allowed_tools import skill_refs_for_skill
+
+    callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
+    assert callees == [
+        "project-status",
+        "record-extraction",
+        "research-plan",
+        "search-external-sites",
+    ]
+
+
+def test_skill_refs_accepts_both_quote_styles_and_drops_self():
+    from harness.allowed_tools import skill_refs_in_text
+
+    assert skill_refs_in_text('call Skill("a-skill") then Skill(\'b-skill\')') == [
+        "a-skill",
+        "b-skill",
+    ]
+    assert skill_refs_in_text("Skill( \"spaced\" )") == ["spaced"]
+    assert skill_refs_in_text("prose about Skill and skills") == []
+
+
+def test_callee_tools_absent_until_the_test_opts_in():
+    """Opt-in, not automatic: every test that does not declare `run_skills`
+    keeps the allowlist it had before #1012.
+
+    Unioning all four of search-records' callees unconditionally would let any
+    of them reach a tool with no fixture, tripping the Phase 2 gate and
+    aborting the CALLER's test — arming a nondeterministic failure on 24 tests
+    to serve the one that wants it.
+    """
+    tools = compute_allowed_tools("search-records", PLUGIN_SKILLS)
+    assert "mcp__genealogy__place_search" not in tools
+    assert "mcp__genealogy__external_links_search" not in tools
+
+
+def test_opting_in_unions_that_callees_tools():
+    tools = compute_allowed_tools(
+        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+    )
+    # The two search-external-sites needs and search-records lacks.
+    assert "mcp__genealogy__place_search" in tools
+    assert "mcp__genealogy__external_links_search" in tools
+    # The caller's own tools survive the union.
+    assert "mcp__genealogy__record_search" in tools
+
+
+def test_opting_in_to_one_callee_does_not_grant_another():
+    tools = compute_allowed_tools(
+        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+    )
+    # volume_search belongs to research-plan / record-extraction, not to
+    # search-external-sites. Declaring one callee must not widen to the rest.
+    assert "mcp__genealogy__volume_search" not in tools
+
+
+def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
+    with pytest.raises(ValueError, match="never invokes"):
+        compute_allowed_tools(
+            "search-records", PLUGIN_SKILLS, run_skills={"timeline"}
+        )
+
+
+# --- Preflight: permission is not existence --------------------------------
+
+
+def test_preflight_flags_a_live_callee_with_no_fixtures():
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills=set(),
+        registered_tools={"record_search"},
+    )
+    pairs = {(c, t) for c, t in missing if c == "search-external-sites"}
+    assert ("search-external-sites", "place_search") in pairs
+    assert ("search-external-sites", "external_links_search") in pairs
+
+
+def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills=set(),
+        registered_tools={
+            "record_search",
+            "place_search",
+            "external_links_search",
+            "research_append",
+            "research_log_append",
+        },
+    )
+    assert [(c, t) for c, t in missing if c == "search-external-sites"] == []
+
+
+def test_preflight_ignores_a_stubbed_callee():
+    """A stubbed callee never executes, so it never calls a tool and needs
+    no fixtures. This is why ut_search_records_018 stays green unchanged."""
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills={"search-external-sites"},
+        registered_tools={"record_search"},
+    )
+    assert all(c != "search-external-sites" for c, _ in missing)
+
+
+def test_preflight_message_names_both_remedies():
+    from harness.allowed_tools import format_uncovered_callee_fixtures
+
+    msg = format_uncovered_callee_fixtures(
+        "ut_x_001", [("search-external-sites", "place_search")]
+    )
+    assert "ut_x_001" in msg
+    assert "place_search" in msg
+    assert "stub_skills" in msg
