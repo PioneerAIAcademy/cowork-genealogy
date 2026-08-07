@@ -133,7 +133,22 @@ did these jobs until 2026-08-02, when all three were deleted as stale — see
 ### Follow-on work you find along the way
 
 Implementing one task almost always turns up others — a stale doc, a missing
-test, a defect you're not fixing here. **File each one as a GitHub issue in the
+test, a defect you're not fixing here. The rest of this section is about
+filing what you *defer* — it assumes you've already decided not to fix it now.
+Make that decision first, and default toward not deferring:
+
+**Fold it into the current PR unless there's a real reason not to.** A stray
+issue is easy to create and easy to forget; a PR that closes the gap it found
+needs nothing else to remember it. File a new issue instead of fixing it here
+only when at least one of these holds, and say which in the PR description:
+the fix needs a different reviewer or skill (a code fix found during fixture
+work, or vice versa); it would blow this PR's own scope enough to slow its
+review meaningfully; it depends on a decision only the lead can make; or it's
+a different skill's eval slot and bundling it would force a second paid run.
+"I noticed it in passing" is not one of these — on its own it's a reason to
+fix it now, not to file it.
+
+For whatever you do decide to defer: **file each one as a GitHub issue in the
 same PR that defers it.** Ask Claude to do it; it is one command and needs no
 board access:
 
