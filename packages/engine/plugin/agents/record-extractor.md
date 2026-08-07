@@ -418,6 +418,19 @@ Rules that sharpen the tree:
   answered. Exception: a fact **no possible household respondent** could
   have witnessed — a parent's or grandparent's birthplace — is
   `secondary` regardless of who answered.
+  **"Likely him" is not "known" — Question 1 still gates it.** Naming the
+  head of household as informant with `"likely X himself"` phrasing is
+  correct for `informant`/`informant_proximity`, but a plausible guess is
+  not the SAME as knowing — decision-tree Question 1 asks "do we know the
+  informant?", and the honest answer for a pre-1940 census is still NO
+  even when one household member is the obvious candidate. Concretely: on
+  a 1900 census, John Becker's own `name` and `birth` (date and place)
+  assertions, informant `"unknown household member (likely John Becker
+  himself)"`, are `information_quality: indeterminate` — **not**
+  `primary`. Reasoning "he'd know his own name, so primary" answers
+  Question 2 (did the informant have firsthand knowledge) while skipping
+  back over Question 1 (is the informant actually confirmed); Question 1
+  controls whenever it is unresolved, no matter how obvious the guess.
 
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
@@ -526,8 +539,31 @@ the "who answered" record that would justify it.
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**
 - **Officiant / clerk:** informant for the marriage event itself (date,
-  place, ceremony). Proximity `official_duty` (officiant) or `witness`
-  (clerk who recorded the signed return).
+  place, ceremony) **when the record names one** — a license or
+  certificate identifying the minister/priest who performed the ceremony
+  or the clerk who recorded the return. Proximity `official_duty`
+  (officiant) or `witness` (clerk who recorded the signed return).
+  - **A bare marriage index has no officiant or clerk to name — do not
+    invent one.** An index entry (a FamilySearch/county register
+    transcription giving only names + a year + a place, no ceremony
+    detail) names nobody who performed or recorded the marriage; there is
+    no "the clerk" to point `informant` at. On that shape, the marriage
+    date/place assertion's informant is still the **parties themselves**
+    at `self` — the same as their other facts — not a fabricated
+    `official_duty` clerk. Concretely: "Groom: Wm. H. Ferber / Bride: Emma
+    Becker / Marriage year: 1890 / Event place: Hamilton County, Ohio,"
+    with no officiant or clerk named anywhere on the entry, takes
+    informant `self` (the parties) for the marriage-event assertion, not
+    `informant: "marriage clerk or officiant"` — that title names nobody
+    on the record and is a guess dressed as a classification. Only shift
+    to officiant/clerk once the record actually identifies one. **This is
+    a change to the marriage-EVENT assertion's informant only.** An index
+    being a bare index does not touch the parent-name rule above: a
+    stated parent name on an index is `evidence_type: direct` exactly as
+    on a full certificate — being an index affects *who witnessed the
+    ceremony*, not whether the parties directly stated their parents'
+    names. Do not let "this is a bare index, be more cautious" reasoning
+    generalize past the one assertion it actually applies to.
   - **Place = the locality, not the venue.** Set `place` to the civil
     jurisdiction (town/county/state); keep a church/cemetery/hospital name
     in `value`/notes. A building name fed to the resolver mis-geocodes (e.g.
@@ -551,6 +587,28 @@ the "who answered" record that would justify it.
 - The **child's** own name/birth facts on the register are
   `household_member` (a parent supplied them) — never `self` (a christened
   infant cannot report), and never the officiant.
+
+**Obituary informants** — family-supplied, but the SUBJECT's own stated
+facts are still `direct`:
+- **The informant is the family/funeral home who supplied the notice** —
+  generic (`"family member or funeral home (unidentified)"`) is fine when
+  the obituary names no one specifically. Proximity depends on WHICH fact:
+  the subject's death itself and their residence at death are close
+  enough to the reporting family to be `household_member` (a spouse or
+  child living with or near the subject); the subject's birth date and
+  birthplace, decades earlier, are `family_not_present` — the same
+  informant, a different proximity for a different fact, exactly as the
+  death-certificate rows above split by fact, not by person.
+- **`evidence_type` is stated-vs-inferred here too — do not re-run the
+  death-certificate secondhand-knowledge test on `evidence_type`.** An
+  obituary's stated birth date and birthplace ("born January 8, 1930, in
+  Brigham City...") are `direct`: the notice states them outright. Marking
+  them `indirect` because the informant (a surviving child) wasn't present
+  for the birth is the death-certificate reasoning bleeding into a record
+  type where it doesn't belong — that secondhand-ness is what
+  `information_quality: secondary` is for, not a reason to downgrade
+  `evidence_type`. The rule from Layer 3 applies unchanged: stated =
+  `direct`, regardless of who's relaying it or how long ago it happened.
 
 When the informant is named on the record, use their name.
 

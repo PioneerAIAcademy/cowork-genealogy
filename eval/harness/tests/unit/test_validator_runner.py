@@ -529,6 +529,130 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
         )
 
 
+# --- `value` matcher (issue #1108): fact-value ground truth, not just classification ---
+
+
+def test_expected_classifications_value_pass_when_place_contains_expected():
+    """A matcher's coarse value ('Ireland') is satisfied by a more specific
+    resolved `standard_place` ('County Cork, Ireland') — substring match,
+    either direction, not exact equality."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_2",
+            "fact_type": "birth",
+            "standard_place": "County Cork, Ireland",
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "child_2",
+                "fact_type": "birth",
+                "attribute": "place",
+                "value": "Ireland",
+            }
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_value_fails_on_contaminated_value():
+    """The ut_record_extraction_013 defect this matcher exists to catch: the
+    census states Ireland, but the persisted assertion carries Pennsylvania
+    (contamination from unrelated project state). A value mismatch is
+    reported by assertion id, with both the expected and actual value."""
+    assertions = [
+        {
+            "id": "a_patrick",
+            "record_role": "child_2",
+            "fact_type": "birth",
+            "place": "Pennsylvania",  # census actually states Ireland
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "child_2",
+                "fact_type": "birth",
+                "attribute": "place",
+                "value": "Ireland",
+            }
+        ],
+    )
+    assert result.passed is False
+    for fragment in ("a_patrick", "Ireland", "Pennsylvania"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_expected_classifications_value_requires_attribute():
+    """`value` without a recognized `attribute` is a test-authoring error —
+    there is no field to read the value off — and must fail loudly rather
+    than silently pass (no fact/date field named means nothing would ever
+    be checked)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_2",
+            "fact_type": "birth",
+            "place": "Ireland",
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_2", "fact_type": "birth", "value": "Ireland"}],
+    )
+    assert result.passed is False
+    assert "attribute" in (result.error or "").lower()
+
+
+def test_expected_classifications_value_accepts_list_of_alternatives():
+    """A list of values means any is acceptable, same semantics as the
+    classification fields — used when a date is defensibly stated more than
+    one way in the fixture."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "date": "~1818",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "head_of_household",
+                "fact_type": "birth",
+                "attribute": "date",
+                "value": ["1817", "1818", "1819"],
+            }
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+    wrong = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "head_of_household",
+                "fact_type": "birth",
+                "attribute": "date",
+                "value": ["1845", "1846"],
+            }
+        ],
+    )
+    assert wrong.passed is False
+
+
 # --- record_persona_id corruption signature (shared persona across roles) ---
 
 _PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"

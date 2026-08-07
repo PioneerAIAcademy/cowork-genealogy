@@ -168,6 +168,41 @@ def _attribute_matches(assertion, attribute):
     return True
 
 
+def _value_token(v):
+    """Loose comparison token for a free-text place/date value: casefold +
+    trim only — unlike `_normalize_classification_token`, punctuation and
+    spacing are left alone because they carry meaning in a place name
+    ('New York' vs 'York') that stripping non-alphanumerics would destroy."""
+    return str(v or "").strip().casefold()
+
+
+def _value_contains(got, want):
+    """Case-insensitive substring match, either direction: a matcher naming
+    the coarse value the record actually states ('Ireland') must be
+    satisfied by a more specific resolved field ('County Cork, Ireland'),
+    and a matcher naming the fuller form must be satisfied by a bare one."""
+    got_n, want_n = _value_token(got), _value_token(want)
+    if not got_n or not want_n:
+        return False
+    return want_n in got_n or got_n in want_n
+
+
+def _value_matches(assertion, attribute, expected):
+    """issue #1108: does this assertion's `attribute` facet (place or date)
+    match one of `expected`'s allowed value(s)? `attribute` is required —
+    `value` names WHICH field to read off the assertion, so a matcher with a
+    `value` but no recognized `attribute` is a test-authoring error, not
+    something to silently pass (see the caller's guard)."""
+    allowed = expected if isinstance(expected, list) else [expected]
+    if attribute == "place":
+        candidates = [assertion.get("place"), assertion.get("standard_place")]
+    elif attribute == "date":
+        candidates = [assertion.get("date")]
+    else:
+        return False
+    return any(_value_contains(c, v) for c in candidates for v in allowed if c)
+
+
 def test_expected_classifications(before_state, after_state, test):
     """Fixture-gated: deterministic per-fixture classification ground truth.
 
@@ -175,23 +210,37 @@ def test_expected_classifications(before_state, after_state, test):
     block (threaded into `test` by the orchestrator; see
     unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
     pair plus expected values for any of `evidence_type`,
-    `informant_proximity`, `information_quality`. Semantics:
+    `informant_proximity`, `information_quality`, and optionally a `value`
+    (issue #1108) — the fact VALUE itself (a place or date string), read off
+    the `attribute` facet the matcher already declares.
+
+    Semantics:
 
       1. At least one NEW assertion (created by this run) with the
          matcher's record_role + fact_type must exist.
       2. EVERY new assertion with that record_role + fact_type must carry
          each classification value the matcher declares.
+      3. If the matcher also declares `value`, EVERY matching assertion's
+         `attribute` field (place: `place`/`standard_place`; date: `date`)
+         must contain — or be contained by — one of the allowed value(s).
+         `value` REQUIRES `attribute` to be `"place"` or `"date"`; declaring
+         `value` without one is a test-authoring error and fails loudly
+         rather than silently checking nothing.
 
     record_role / fact_type matching is normalized (see the helpers above)
     because both are open, model-chosen strings; the classification values
     themselves (`evidence_type`, `informant_proximity`,
-    `information_quality`) are closed enums and compare exactly. Failure
-    messages always show the ORIGINAL strings, not the normalized forms.
+    `information_quality`) are closed enums and compare exactly. `value` is
+    free text (place/date), so it compares case-insensitively by substring
+    in either direction rather than exact equality — a resolved
+    `standard_place` is often more specific than the value the record itself
+    states. Failure messages always show the ORIGINAL strings, not the
+    normalized forms.
 
-    This makes classification doctrine mechanically checkable per fixture —
-    the LLM judge still grades the dimensions, but these results are the
-    mechanical reference during annotation (they don't invert with judge
-    phrasing).
+    This makes classification doctrine — now including the fact value
+    itself — mechanically checkable per fixture: the LLM judge still grades
+    the dimensions, but these results are the mechanical reference during
+    annotation (they don't invert with judge phrasing).
     """
     matchers = test.get("expected_classifications") or []
     if not matchers:
@@ -218,6 +267,14 @@ def test_expected_classifications(before_state, after_state, test):
         role = m.get("record_role")
         fact = m.get("fact_type")
         attribute = m.get("attribute")  # optional facet: "date" | "place"
+        value = m.get("value")  # optional (issue #1108): the fact value itself
+        if value is not None and attribute not in ("place", "date"):
+            errors.append(
+                f"matcher (record_role='{role}', fact_type='{fact}') declares "
+                f"'value' but attribute='{attribute}' — value requires "
+                f"attribute: \"place\" or \"date\" to know which field to check"
+            )
+            continue
         # `optional`: do NOT hard-require the assertion to EXIST — only check its
         # classification IF it is present. Use for a fact whose *existence* is
         # completeness the skill produces unreliably (so gating on it flaps), but
@@ -266,6 +323,23 @@ def test_expected_classifications(before_state, after_state, test):
                         f"fact_type='{fact}'{attr_desc}): {field}='{got}' — "
                         f"expected {want}"
                     )
+            if value is not None and not _value_matches(a, attribute, value):
+                allowed = value if isinstance(value, list) else [value]
+                want = (
+                    "one of " + ", ".join(f"'{v}'" for v in allowed)
+                    if isinstance(value, list)
+                    else f"'{value}'"
+                )
+                got_desc = (
+                    f"place='{a.get('place')}' standard_place='{a.get('standard_place')}'"
+                    if attribute == "place"
+                    else f"date='{a.get('date')}'"
+                )
+                errors.append(
+                    f"assertions[{aid}] (record_role='{role}', "
+                    f"fact_type='{fact}'{attr_desc}): value mismatch — "
+                    f"expected {want}, got {got_desc}"
+                )
 
     assert not errors, (
         "expected_classifications violations:\n  - " + "\n  - ".join(errors)

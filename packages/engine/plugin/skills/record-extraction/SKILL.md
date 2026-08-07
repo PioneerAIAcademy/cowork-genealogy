@@ -221,6 +221,10 @@ next skill in the workflow (check-warnings for new tree persons, then
 person-evidence) or return to the orchestrator that invoked you.
 Presenting a summary and yielding with records still unextracted is a
 failure — the summary is a progress marker, not a stopping point.
+**Exception: if the `record-extractor` subagent failed to spawn**, report
+that failure to the user and stop — do not extract the record yourself
+(`extraction_append` is denied on the main thread for exactly this reason)
+and do not retry another way. Here, yielding is correct, not a failure.
 
 ## Tool availability
 

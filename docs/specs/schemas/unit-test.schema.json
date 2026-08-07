@@ -140,6 +140,13 @@
               { "type": "array", "items": { "type": "string" }, "minItems": 1 }
             ],
             "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
+          },
+          "value": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Issue #1108: the fact value itself (a place or date string), read off the field `attribute` names — `place`/`standard_place` for attribute \"place\", `date` for attribute \"date\". REQUIRES `attribute` to be set to \"place\" or \"date\"; declaring `value` without one fails the test loudly rather than silently checking nothing. Compared case-insensitively by substring in either direction (not exact equality), since a resolved `standard_place` is often more specific than the value the record itself states (e.g. a matcher's \"Ireland\" is satisfied by an assertion's \"County Cork, Ireland\"). A single string is exact-in-substring; a list means any is accepted. Only declare a value the record doctrine-fixes deterministically — this is what caught the ut_record_extraction_013 birthplace-contamination defect (issue #995)."
           }
         }
       }
