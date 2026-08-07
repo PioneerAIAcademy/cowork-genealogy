@@ -45,7 +45,9 @@ of the streaming path (affinity-free).
 Prereqs in `apps/server/.env`: `E2B_API_KEY`, `E2B_ACCESS_TOKEN`,
 `ANTHROPIC_API_KEY`, `FAMILYSEARCH_WEB_ENABLED=true`, a stable `SESSION_SECRET`,
 and — for anything but local dev — a real `WS_SIGNING_KEY`. The
-`genealogy-agent` image built (C2).
+`genealogy-agent` image built (C2). A real `WS_SIGNING_KEY` is only optional here
+because `PUBLIC_URL` is http locally; on an https host the app refuses to boot
+without it (`config.assert_production_config`, issue #1123).
 
 1. **Terminal A:** `make server-e2b`  (control plane on `127.0.0.1:1837`,
    `SANDBOX_PROVIDER=e2b`, `AGENT_MODE=real`).
@@ -88,7 +90,9 @@ sidecar, feedback) — never the stream.
 - **1h Hobby cap:** a continuously-active session force-pauses at ~1h (resumes in
   ~1s; a mid-turn pause breaks that turn). Proactive between-turn pause deferred.
 - **Delete-janitor** (abandoned-sandbox GC) deferred — use the explicit DELETE.
-- `ws_signing_key` defaults to a dev value; set a real one for prod.
+- `ws_signing_key` defaults to a dev value. Since issue #1123 this is enforced rather
+  than documented: an https `PUBLIC_URL` plus a default `ws_signing_key` (or
+  `session_secret`, or an unset `DATABASE_URL`) is a boot refusal.
 
 ## Rebuilding the image
 `cd <repo> && E2B_API_KEY=… E2B_ACCESS_TOKEN=… bash apps/server/sandbox/build-image.sh`
