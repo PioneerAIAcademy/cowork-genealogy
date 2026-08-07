@@ -27,9 +27,17 @@ import pytest
 def test_both_project_files_created(before_state, after_state, test):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
-    if the other validates."""
+    if the other validates.
+
+    Exception: tests tagged `no-premature-write` verify the opposite --
+    that init-project correctly blocks and asks (e.g. a bare PID with no
+    stated objective, per issue #1320) instead of writing files before it
+    has what it needs. For those, no files existing is the correct,
+    passing outcome, not a structural failure."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
+    if "no-premature-write" in test.get("tags", []):
+        pytest.skip("no-premature-write test: correct behavior is to write nothing yet")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
