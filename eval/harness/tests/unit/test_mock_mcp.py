@@ -7,13 +7,14 @@ e2e test.
 
 import asyncio
 import json
+import re
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from harness.fixtures import InvalidFixtureError
-from harness.mock_mcp import create_mock_server
+from harness.mock_mcp import RANKING_SKIPPED_NOTE, create_mock_server
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -62,12 +63,12 @@ def test_predicate_match_dispatches_to_matching_fixture():
             "tool": "record_search",
             "args": {"args.q": "Ohio"},
             "response": {"hits": "ohio-fixture"},
-        }))
+        }), encoding="utf-8")
         (tmp / "iowa.json").write_text(json.dumps({
             "tool": "record_search",
             "args": {"args.q": "Iowa"},
             "response": {"hits": "iowa-fixture"},
-        }))
+        }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(
             ["ohio", "iowa"], tmp
         )
@@ -90,7 +91,7 @@ def test_unmatched_call_returns_fixture_not_found_error():
             "tool": "record_search",
             "args": {"args.q": "Ohio"},
             "response": {"hits": "ohio"},
-        }))
+        }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(["only"], tmp)
         result = _invoke(tools_by_name, "record_search", {"q": "Texas"})
         body = _extract_response_dict(result)
@@ -109,7 +110,7 @@ def test_fixture_without_args_is_rejected():
         (tmp / "noargs.json").write_text(json.dumps({
             "tool": "record_search",
             "response": {"hits": "x"},
-        }))
+        }), encoding="utf-8")
         with pytest.raises(InvalidFixtureError):
             create_mock_server(["noargs"], tmp)
 
@@ -129,13 +130,14 @@ def test_fixture_input_schema_honored_for_tool_absent_from_build():
                 "required": ["query"],
             },
             "response": {"title": "X"},
-        }))
+        }), encoding="utf-8")
         server, _, tools_by_name = create_mock_server(["typed"], tmp)
         tool_obj = tools_by_name["future_tool_not_in_build"]
         assert tool_obj.input_schema["required"] == ["query"]
         assert "query" in tool_obj.input_schema["properties"]
 
 
+@pytest.mark.requires_engine_build
 def test_build_schema_advertised_for_fixture_backed_tool():
     """The core of the drift fix: a fixture-backed tool that exists in the
     compiled build advertises the real production input schema, not a
@@ -143,11 +145,6 @@ def test_build_schema_advertised_for_fixture_backed_tool():
     schema, so the model probed with `{}`). Skips gracefully if the build
     is absent (the loader degrades to a permissive schema, no schema to
     assert)."""
-    from harness.mock_mcp import _load_build_tool_catalog
-
-    if not _load_build_tool_catalog().get("record_person_matches"):
-        pytest.skip("mcp-server build not present; build catalog unavailable")
-
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         # A fixture with NO input_schema of its own — the schema must come
@@ -156,7 +153,7 @@ def test_build_schema_advertised_for_fixture_backed_tool():
             "tool": "record_person_matches",
             "args": {"id": "9XKV-ABC"},
             "response": {"matches": []},
-        }))
+        }), encoding="utf-8")
         server, _, tools_by_name = create_mock_server(["match"], tmp)
         schema = tools_by_name["record_person_matches"].input_schema
         # Real production schema: `id` is required and it is not the
@@ -165,16 +162,12 @@ def test_build_schema_advertised_for_fixture_backed_tool():
         assert schema.get("additionalProperties") is not True
 
 
+@pytest.mark.requires_engine_build
 def test_live_tool_advertises_build_schema():
     """Live tools pull their input schema from the same build catalog. The
     `ops` batch array on research_append is the field the old hand-maintained
     mirror once dropped — assert it is advertised. Skips if the build is
     absent."""
-    from harness.mock_mcp import _load_build_tool_catalog
-
-    if not _load_build_tool_catalog().get("research_append"):
-        pytest.skip("mcp-server build not present; build catalog unavailable")
-
     # Live tools register regardless of fixtures, so any fixture set works.
     server, _, tools_by_name = create_mock_server(
         ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
@@ -184,10 +177,15 @@ def test_live_tool_advertises_build_schema():
     assert schema["properties"]["ops"]["type"] == "array"
 
 
+@pytest.mark.requires_engine_build
 def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     """record_search ranks host-side when given a subjectId, so the mock must
     compose the test's own rank fixture in — otherwise a skill that correctly
-    passes subjectId gets nothing to triage and grades badly for it."""
+    passes subjectId gets nothing to triage and grades badly for it.
+
+    Skips when the build is absent, like the two tests above: staging runs
+    through the COMPILED stager, so with no build `staged` is never set and
+    this fails for an environmental reason rather than a real one."""
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
         FIXTURES_DIR,
@@ -224,6 +222,62 @@ def test_record_search_omits_ranked_without_subject(tmp_path):
     )
     body = _extract_response_dict(result)
     assert "ranked" not in body
+    # ...and the mock says so, the way the real tool does. Without this the
+    # nudge is invisible to every unit test and cannot be graded at all.
+    assert body["rankingSkipped"] == RANKING_SKIPPED_NOTE
+    # Before `results`, which is the property that survives a size bound.
+    keys = list(body)
+    assert keys.index("rankingSkipped") < keys.index("results")
+
+
+def test_record_search_omits_ranking_skipped_once_a_subject_is_named(tmp_path):
+    """The note's contract is "no subject was named" — never "ranking ran"."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    assert "rankingSkipped" not in _extract_response_dict(result)
+
+
+def test_record_search_omits_ranking_skipped_without_a_project(tmp_path):
+    """No projectPath means nothing was on offer to skip."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Flynn", "givenName": "Patrick"},
+    )
+    assert "rankingSkipped" not in _extract_response_dict(result)
+
+
+def test_ranking_skipped_note_has_not_drifted_from_the_typescript_source():
+    """The mock's copy and the tool's must stay byte-identical.
+
+    They cannot share a definition — TypeScript on the host, Python in the
+    harness — and a stale copy is silent: the eval would grade the skill against
+    a nudge production no longer sends.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/record-search.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const RANKING_SKIPPED_NOTE =(.*?);\n", src, re.DOTALL)
+    assert decl, "RANKING_SKIPPED_NOTE is gone from record-search.ts"
+    ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_note, "parsed an empty note — the declaration's shape changed"
+    assert ts_note == RANKING_SKIPPED_NOTE
 
 
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):

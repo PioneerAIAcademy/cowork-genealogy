@@ -5,7 +5,7 @@
  * in lib/schema/ (generated) are the runtime validators; this file is
  * the static-typing surface.
  *
- * Run log schema v2: one envelope per harness invocation, wrapping a
+ * Run log schema v3: one envelope per harness invocation, wrapping a
  * list of per-test entries. See docs/plan/eval-runlog-versioning.md.
  */
 
@@ -185,11 +185,11 @@ export interface TestEntry {
 export type RunInvocation = 'skill' | 'test' | 'tag';
 
 /**
- * Run-log envelope (schema v2). Wraps a list of per-test entries with
+ * Run-log envelope (schema v3). Wraps a list of per-test entries with
  * metadata, snapshot, and version info.
  */
 export interface RunLogFile {
-  schema_version: 2;
+  schema_version: 3;
   skill: string;
   version: number | null;
   released: boolean;
@@ -199,7 +199,7 @@ export interface RunLogFile {
   harness_version: string;
   model: string;
   judge_prompt_hash: string;
-  /** {repo-relative-path: normalized content}. */
+  /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;
   tests: TestEntry[];
   totals: RunLogTotals;

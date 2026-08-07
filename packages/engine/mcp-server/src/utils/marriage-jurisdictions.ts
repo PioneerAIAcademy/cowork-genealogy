@@ -84,13 +84,25 @@ interface TreeLike {
  */
 const COUNTRY_TERMS = new Set(["united states", "usa", "us"]);
 
-/** Comma-separated locality parts, lowercased, with `County`/`Co.` dropped. */
+/**
+ * Comma-separated locality parts, lowercased, with `County`/`Co.` dropped.
+ *
+ * The abbreviation's dot is part of the qualifier and must go with it. `\bco\b\.?`
+ * asserts the word boundary FIRST and then eats the dot; the earlier `\bco\.?\b`
+ * could not, because after consuming `co.` the trailing `\b` fails and the engine
+ * backtracks to bare `co` — leaving a `"."` that survives the empty-string filter
+ * and counts as a locality. That stray token made `"Hill Co., Texas"` tokenize as
+ * `["hill .", "texas"]`, so `samePlace` did not match the tree's
+ * `"Hill, Texas, United States"` and the jurisdiction a search had just come back
+ * empty on was offered back as an alternative — with its sub-places alongside it,
+ * and counted twice, since `placeTokens(...).join("|")` is also the dedupe key.
+ */
 function placeParts(place: string): string[] {
   return place
     .toLowerCase()
     .split(",")
     .map((part) => part.trim().replace(/\s+/g, " "))
-    .map((part) => part.replace(/\bcounty\b|\bco\.?\b/g, "").trim())
+    .map((part) => part.replace(/\bcounty\b|\bco\b\.?/g, "").trim())
     .filter((part) => part !== "");
 }
 
@@ -106,6 +118,13 @@ function placeParts(place: string): string[] {
  * because `placeTokens` below deliberately collapses the distinction this
  * predicate needs: its empty-fallback makes a country-only place look like any
  * other single-token place.
+ *
+ * Deliberately `boolean` and NOT a `place is string` type predicate, though it
+ * was written that way first. The predicate is unsound in its negative branch:
+ * `isSubCountryPlace("United States")` is false while `place` is very much a
+ * string, so TypeScript would narrow the `else` to `undefined` and hand the first
+ * author who writes one a compiler-blessed lie. Callers that need the string
+ * narrowed check `!== undefined` themselves, one token, no unsoundness.
  */
 export function isSubCountryPlace(place: string | undefined): boolean {
   if (!place) return false;

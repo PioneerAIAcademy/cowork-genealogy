@@ -118,6 +118,46 @@ def _load_api_key() -> str | None:
     return None
 
 
+def verify_judge_key(api_key: str, judge_model: str) -> int | None:
+    """Validate an API key with a 1-token liveness call.
+
+    Returns the HTTP status code (401 or 403) when the key is definitively
+    invalid, or ``None`` when the key is valid or when the failure is
+    transient (429, 529, connection error) or unexpected (any other
+    ``APIStatusError``).  Callers should abort on a non-None return and
+    let the suite proceed on None.
+
+    Import cost: ``anthropic`` is imported inside this function so the
+    cost is paid only when the check actually fires, not on every CLI
+    invocation.
+    """
+    import anthropic
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        client.messages.create(
+            model=judge_model,
+            max_tokens=1,
+            messages=[{"role": "user", "content": "ping"}],
+        )
+    except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
+        # 401/403 — bad credential.
+        return e.status_code
+    except (
+        anthropic.OverloadedError,
+        anthropic.RateLimitError,
+        anthropic.APIConnectionError,
+    ):
+        # 429/529/connection — transient Anthropic outage.  Let the suite
+        # run; the judge has its own retry loop for these.
+        pass
+    except anthropic.APIStatusError:
+        # Unexpected status (400, 404, 500, etc.) — not a key problem.
+        # Let the suite proceed; the judge will surface these when it runs.
+        pass
+    return None
+
+
 def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     """Env vars the Agent SDK subprocess should see.
 

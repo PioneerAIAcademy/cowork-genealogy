@@ -89,6 +89,15 @@
   line-height: 1.5;
 }
 
+/* Distinguishes intended_audience from narration_guidance, which shares the
+   .profileGuidance styling and would otherwise read as one run-on note. */
+.profileLabel {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
 .relNotesList {
   list-style: none;
   padding: 0;

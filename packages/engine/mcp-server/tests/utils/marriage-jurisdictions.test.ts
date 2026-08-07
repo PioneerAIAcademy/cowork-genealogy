@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { marriageJurisdictionCandidates } from "../../src/utils/marriage-jurisdictions.js";
+import {
+  marriageJurisdictionCandidates,
+  isSubCountryPlace,
+} from "../../src/utils/marriage-jurisdictions.js";
 
 /**
  * The rule under test, stated generally:
@@ -93,6 +96,20 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
   // had just searched back into its own list of alternatives.
   it("excludes a differently-spelled form of the same jurisdiction", () => {
     const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { ...WINDOW, searchedPlace: "Hill County, Texas" });
+    expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
+  });
+
+  // #1267, and the root cause the `isSubCountryPlace("Co., USA")` symptom pointed
+  // at. `placeParts`' old `\bco\.?\b` left a stray "." on every abbreviated
+  // county, so "Hill Co., Texas" tokenized as ["hill .", "texas"] and `samePlace`
+  // did not match the tree's ["hill", "texas"] — the exclusion silently failed and
+  // the jurisdiction just searched came back as an alternative, sub-places and
+  // all. Reachable in principle (real tree data spells counties this way, and a
+  // fact with no `standard_place` feeds the abbreviated form straight in), though
+  // nothing in the corpus exercises it. Without this test the root cause is
+  // untested and the next refactor of that regex reintroduces it.
+  it("excludes a jurisdiction searched with an abbreviated County qualifier", () => {
+    const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { ...WINDOW, searchedPlace: "Hill Co., Texas" });
     expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
   });
 
@@ -244,5 +261,49 @@ describe("marriageJurisdictionCandidates — ranking", () => {
     expect(arkansas).toBeGreaterThanOrEqual(0);
     expect(southCarolina).toBeGreaterThan(arkansas);
     expect(places[0]).not.toBe("South Carolina, United States");
+  });
+});
+
+// This predicate gates the whole hint and had no direct cover, which is how it
+// went a round as an unsound `place is string` type guard: false for
+// "United States" while the argument is plainly a string, so the compiler would
+// have narrowed a negative branch to `undefined`. It returns `boolean` now, and
+// these pin the behaviour the gate actually depends on.
+describe("isSubCountryPlace", () => {
+  it("is false for nothing at all", () => {
+    expect(isSubCountryPlace(undefined)).toBe(false);
+    expect(isSubCountryPlace("")).toBe(false);
+  });
+
+  it("is false for a country term alone, in each spelling", () => {
+    expect(isSubCountryPlace("United States")).toBe(false);
+    expect(isSubCountryPlace("USA")).toBe(false);
+    expect(isSubCountryPlace("US")).toBe(false);
+    expect(isSubCountryPlace("  united states  ")).toBe(false);
+  });
+
+  it("is true as soon as one part is narrower than the country", () => {
+    expect(isSubCountryPlace("Texas, United States")).toBe(true);
+    expect(isSubCountryPlace("Hill, Texas, United States")).toBe(true);
+    expect(isSubCountryPlace("Texas")).toBe(true);
+  });
+
+  it("does not mistake a bare County qualifier for a locality", () => {
+    // `placeParts` strips those words, so "County, United States" reduces to the
+    // country alone and must not read as scoped.
+    expect(isSubCountryPlace("County, United States")).toBe(false);
+    expect(isSubCountryPlace("Hill County, Texas")).toBe(true);
+  });
+
+  it("does not mistake an abbreviated County qualifier for a locality", () => {
+    // Was a KNOWN WART asserting `true` until #1267. `\bco\.?\b` could not consume
+    // the dot — after `co.` the trailing `\b` fails and the engine backtracks to
+    // bare `co` — so a "." survived the empty-string filter and counted as a
+    // locality. `\bco\b\.?` asserts the boundary first, then eats the dot.
+    //
+    // The symptom recorded here was the smaller half. The same stray token fed
+    // `placeTokens` -> `samePlace`, which is what the exclusion test below pins.
+    expect(isSubCountryPlace("Co., USA")).toBe(false);
+    expect(isSubCountryPlace("Hill Co., Texas")).toBe(true);
   });
 });

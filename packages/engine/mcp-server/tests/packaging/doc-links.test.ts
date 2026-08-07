@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  citedLineNumbers,
   citedMakeTargets,
   citedPaths,
   citedSlashCommands,
@@ -113,8 +114,19 @@ const COMMAND_ROOTS = [
   (name: string) => `packages/engine/plugin/skills/${name}/SKILL.md`,
 ];
 
+/**
+ * Own-property membership. `name in obj` walks the prototype chain, so a cited
+ * `/constructor` would match an inherited Object.prototype key and be silently
+ * treated as exempt — defeating the very staleness check this file exists to
+ * run. `constructor` is the only reachable one: `citedSlashCommands` extracts
+ * with a lowercase-only pattern, and every other Object.prototype key
+ * (`toString`, `valueOf`, `hasOwnProperty`) is camelCase.
+ */
+const has = (obj: Record<string, string>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
 function slashCommandResolves(name: string): boolean {
-  if (name in BUILT_INS) return true;
+  if (has(BUILT_INS, name)) return true;
   return COMMAND_ROOTS.some((root) => existsSync(join(projectRoot, root(name))));
 }
 
@@ -141,6 +153,15 @@ function isExempt(file: string, path: string): boolean {
 
 describe("doc and .claude/ tooling links", () => {
   const files = lintedFiles();
+  // Parsed once for the suite — the Makefile is identical across every linted
+  // file, so re-reading it inside the per-file it.each below was redundant work
+  // that grew linearly with LINTED_DIRS.
+  const makeTargets = makefileTargets(projectRoot);
+  // Every slash command the corpus cites — the input the BUILT_INS staleness
+  // guard below filters against. Built once, alongside the Makefile parse.
+  const citedCommands = new Set(
+    files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
+  );
 
   it("covers every surface it claims to", () => {
     for (const doc of LINTED_DOCS) {
@@ -202,8 +223,7 @@ describe("doc and .claude/ tooling links", () => {
 
   it.each(files)("%s names only make targets that still exist", (file) => {
     const body = readFileSync(join(projectRoot, file), "utf8");
-    const targets = makefileTargets(projectRoot);
-    const missing = citedMakeTargets(body).filter((t) => !targets.has(t));
+    const missing = citedMakeTargets(body).filter((t) => !makeTargets.has(t));
 
     expect(
       missing,
@@ -227,10 +247,7 @@ describe("doc and .claude/ tooling links", () => {
   });
 
   it("keeps no BUILT_INS entry the prose has stopped naming", () => {
-    const cited = new Set(
-      files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
-    );
-    const stale = Object.keys(BUILT_INS).filter((name) => !cited.has(name));
+    const stale = Object.keys(BUILT_INS).filter((name) => !citedCommands.has(name));
 
     expect(
       stale.map((c) => `/${c}`),
@@ -253,5 +270,312 @@ describe("doc and .claude/ tooling links", () => {
         `blanket exemptions nobody can see: ${stale.map((e) => `${e.file} -> ${e.path}`).join(", ")}\n` +
         `Delete them from ${relative(projectRoot, fileURLToPath(import.meta.url))}.`,
     ).toEqual([]);
+  });
+});
+
+/**
+ * Source citations that pin a line number, as they stood on 2026-08-04. Frozen
+ * so the ban below blocks *new* ones without demanding a 56-site sweep in the
+ * same PR that introduces the rule.
+ *
+ * These are not benign. Of three sampled in `research-append-tool-spec.md`,
+ * three already pointed at the wrong code — `validator.ts:417` is cited as the
+ * `exhaustive_declaration` coupling check and is the `stop_criteria` shape
+ * allow-list. Until each is converted to a symbol reference, this list is the
+ * honest record of what is known-wrong-shaped.
+ *
+ * `docs/plan/` is excluded from the walk entirely, not listed here: a plan is
+ * deleted when its work ships, so a cite inside one cannot outlive its subject.
+ *
+ * Removing a cite from a doc without removing it here fails the drift check
+ * below, so this list cannot quietly outlive the sweep that empties it.
+ */
+const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
+  "docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md": [
+    "packages/schema/src/index.ts:269",
+    "scripts/build-mcpb.mjs:26-27",
+  ],
+  "docs/agentic-system-critique.md": [
+    "allowed_tools.py:59",
+    "allowed_tools.py:61-68",
+    "allowed_tools.py:98-103",
+    "harness/orchestrator.py:206",
+    "real_agent.py:132-139",
+    "research-append.ts:622",
+    "research-query.ts:243-244",
+    "research-query.ts:29",
+    "skill_runner.py:57",
+  ],
+  "docs/architecture.md": [
+    "apps/server/app/agent/real_agent.py:130",
+    "eval/harness/e2e/orchestrator.py:175",
+    "packages/engine/plugin/hooks/guard_project_files.py:36",
+    "src/index.ts:736",
+  ],
+  "docs/realtime-architecture.md": [
+    "apps/server/app/models.py:45",
+    "local.py:195",
+    "runner.py:65",
+  ],
+  "docs/record-search-compaction-scope.md": ["results-staging.ts:108-124"],
+  "docs/specs/image-reader-opus-agent-spec.md": [
+    "e2e/orchestrator.py:752",
+    "index.ts:291-297",
+    "subprocess_cli.py:30",
+  ],
+  "docs/specs/match-merge-workflow-spec.md": ["gedcomx.ts:161"],
+  "docs/specs/merge-gedcomx-spec.md": [
+    "packages/engine/mcp-server/src/types/gedcomx.ts:112",
+    "packages/engine/mcp-server/src/types/gedcomx.ts:120",
+    "packages/engine/mcp-server/src/types/gedcomx.ts:139",
+  ],
+  "docs/specs/rank-search-matches-tool-spec.md": [
+    "relatives.ts:34",
+    "results-staging.ts:108-114",
+    "same-person.ts:199-206",
+    "same-person.ts:22",
+    "same-person.ts:67-91",
+    "validator.ts:1100-1114",
+  ],
+  "docs/specs/research-append-tool-spec.md": [
+    "validator.ts:417",
+    "validator.ts:607",
+    "validator.ts:637",
+  ],
+  "docs/specs/research-log-editor-spec.md": [
+    "src/validation/validator.ts:431",
+    "src/validation/validator.ts:953",
+    "validator.ts:1012",
+    "validator.ts:1022",
+    "validator.ts:1024",
+    "validator.ts:953",
+  ],
+  "docs/specs/same-person-match-relatives-spec.md": ["src/utils/mob.ts:299-336"],
+  "docs/specs/search-result-staging-spec.md": [
+    "src/tools/fulltext-search.ts:206",
+    "src/tools/record-search.ts:511",
+    "src/validation/validator.ts:1034",
+    "src/validation/validator.ts:988",
+  ],
+  "docs/specs/tree-edit-tool-spec.md": [
+    "src/types/gedcomx.ts:104",
+    "tests/tools/tree-edit.test.ts:950",
+  ],
+  "docs/specs/tree-materialization-spec.md": ["merge-warnings.ts:64"],
+  "docs/specs/validate-project-refactor-spec.md": [
+    "packages/engine/mcp-server/src/validation/validator.ts:104",
+    "src/tools/validate-research-schema.ts:20",
+    "validator.ts:104",
+    "validator.ts:236",
+    "validator.ts:737",
+    "validator.ts:988",
+  ],
+};
+
+/** Every `.md` under `docs/`, except `docs/plan/` (see the note above). */
+function docsMarkdown(root: string): string[] {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        if (entry === "plan") continue;
+        walk(full);
+      } else if (entry.endsWith(".md")) {
+        out.push(relative(root, full).replace(/\\/g, "/"));
+      }
+    }
+  };
+  walk(join(root, "docs"));
+  return out.sort();
+}
+
+describe("docs/ cite symbols, not line numbers", () => {
+  it("bans new source-line citations under docs/", () => {
+    const offenders: string[] = [];
+    for (const rel of docsMarkdown(projectRoot)) {
+      const allowed = new Set(GRANDFATHERED_LINE_CITES[rel] ?? []);
+      for (const cite of citedLineNumbers(readFileSync(join(projectRoot, rel), "utf8"))) {
+        if (!allowed.has(cite)) offenders.push(`${rel} cites \`${cite}\``);
+      }
+    }
+    expect(
+      offenders,
+      "A line number is a copy of state the file owns, and nothing keeps the copy " +
+        "honest — 3 of 3 sampled cites in this repo already pointed at the wrong " +
+        "code. Cite the symbol (`validateExhaustiveDeclaration`), not the line; " +
+        "`citedPaths` already proves the file exists.",
+    ).toEqual([]);
+  });
+
+  it("has no stale grandfathered entries", () => {
+    const stale: string[] = [];
+    for (const [rel, cites] of Object.entries(GRANDFATHERED_LINE_CITES)) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) {
+        stale.push(`${rel} (file gone)`);
+        continue;
+      }
+      const present = new Set(citedLineNumbers(readFileSync(full, "utf8")));
+      for (const c of cites) {
+        if (!present.has(c)) stale.push(`${rel} no longer cites \`${c}\``);
+      }
+    }
+    expect(
+      stale,
+      "An exemption that stopped firing means the sweep reached it — delete the " +
+        "entry so the list keeps shrinking instead of becoming a blanket nobody reads.",
+    ).toEqual([]);
+  });
+});
+
+/**
+ * Repo issue references per contract document, as they stood on 2026-08-05.
+ *
+ * **A spec owns the contract; GitHub owns the status.** An `#1234` in a spec is
+ * a copy of state that closes without telling anyone, and keeping the copy
+ * honest is a standing edit tax nobody signed up for — `CLAUDE.md` had five
+ * issue numbers in one sentence purely to explain which ticket carried which
+ * half of a since-split piece of work, and that sentence had already been
+ * rewritten once when one of them closed.
+ *
+ * The durable form is the **fact, not the ticket**: "all three copies stay and
+ * nothing asserts they agree" survives forever; "tracked as #1129" does not.
+ * If the conclusion is worth keeping, write it down — then the number adds
+ * nothing. If it is not, the number does not save you.
+ *
+ * Exempt, deliberately:
+ *  - **`owner/repo#N`** (`anthropics/claude-code#34573`). Evidence for a claim
+ *    about someone else's software, not ours to close, and dropping it removes
+ *    the reader's ability to check the claim.
+ *  - **`docs/adrs/`**. An ADR is a dated decision record; "three subagents were
+ *    deleted, issue #1161" stays true forever. History, not status.
+ *
+ * `docs/architecture.md` was exempt on the story that §9.4's job IS tracking.
+ * That did not survive contact: its compliance row was edited twice in 24 hours
+ * purely because a ticket closed, while the gap it describes never moved, and
+ * not one of §9.4's six consumers (`task-reviewer`, `review-ready`,
+ * `fill-ready`, `CLAUDE.md`, and two in-file pointers) reads a ticket number —
+ * they all ask for the gap and its consequence. The `Tracking` column is gone
+ * and the file is in scope like any other.
+ *
+ * A RATCHET, not a freeze: the count must match exactly, so removing a
+ * reference fails until the number here comes down with it, and adding one
+ * fails outright. Sweeping a file to zero deletes its entry. The first pass
+ * took the two worst offenders from 34 -> 17 and 14 -> 7; what remains is
+ * mostly evidence-shaped ("#702 measured that pattern"), where the citation
+ * IS the fact and stays.
+ */
+const ISSUE_REF_BASELINE: Record<string, number> = {
+  "CLAUDE.md": 7,
+  "docs/architecture.md": 27,
+  "docs/specs/e2e-test-spec.md": 17,
+  "docs/specs/feedback-case-spec.md": 1,
+  "docs/specs/gps-mentor-agent-spec.md": 1,
+  "docs/specs/guardrail-enforcement-spec.md": 17,
+  "docs/specs/hosted-web-workbench-spec.md": 4,
+  "docs/specs/image-reader-agent-spec.md": 3,
+  "docs/specs/image-reader-opus-agent-spec.md": 1,
+  "docs/specs/match-merge-workflow-spec.md": 3,
+  "docs/specs/merge-gedcomx-spec.md": 8,
+  "docs/specs/place-search-tool-spec.md": 1,
+  "docs/specs/record-search-tool-spec-v2.md": 3,
+  "docs/specs/research-append-tool-spec.md": 2,
+  "docs/specs/research-query-tool-spec.md": 5,
+  "docs/specs/research-schema-spec.md": 1,
+  "docs/specs/same-person-match-relatives-spec.md": 1,
+  "docs/specs/sandbox-provider-spec.md": 1,
+  "docs/specs/search-result-staging-spec.md": 1,
+  "docs/specs/skill-rewrites-for-persistence-tools-spec.md": 2,
+  "docs/specs/task-review-spec.md": 5,
+  "docs/specs/tree-forget-tool-spec.md": 1,
+  "docs/specs/tree-materialization-spec.md": 7,
+  "docs/specs/unit-test-spec-v2.md": 1,
+  "docs/specs/unit-test-spec.md": 7,
+};
+
+/** `#1234`, but not `owner/repo#1234` and not a `#anchor`. */
+function repoIssueRefs(text: string): string[] {
+  const upstreamStripped = text.replace(/[\w.-]+\/[\w.-]+#\d+/g, "");
+  return [...upstreamStripped.matchAll(/(?<![\w&#/])#(\d{3,5})\b/g)].map((m) => m[0]);
+}
+
+describe("specs state the fact, not the ticket", () => {
+  it("holds the issue-reference ratchet on contract docs", () => {
+    const scanned = [
+      ...docsMarkdown(projectRoot).filter((f) => f.startsWith("docs/specs/")),
+      "docs/architecture.md",
+      "README.md",
+      "CLAUDE.md",
+    ];
+    const drift: string[] = [];
+    for (const rel of scanned) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) continue;
+      const actual = repoIssueRefs(readFileSync(full, "utf8")).length;
+      const allowed = ISSUE_REF_BASELINE[rel] ?? 0;
+      if (actual > allowed) {
+        drift.push(
+          `${rel}: ${actual} issue refs, baseline ${allowed} — state the fact, not the ticket`,
+        );
+      } else if (actual < allowed) {
+        drift.push(`${rel}: down to ${actual} refs — lower its ISSUE_REF_BASELINE entry to ${actual}`);
+      }
+    }
+    expect(drift, "docs/adrs/ and upstream `owner/repo#N` refs are exempt.").toEqual([]);
+  });
+
+  it("has no baseline entry for a file that is gone or already clean", () => {
+    const stale = Object.keys(ISSUE_REF_BASELINE).filter(
+      (rel) => !existsSync(join(projectRoot, rel)),
+    );
+    expect(stale, "delete the entry when its file goes").toEqual([]);
+  });
+});
+
+/**
+ * `README.md` is the user-facing catalog, and its tool list is a hand-copied
+ * inventory of something the code already owns (`manifest.json`'s `tools`,
+ * itself drift-tested against `allToolSchemas` in `manifest.test.ts`). Nothing
+ * checked the copy, and it rotted exactly as an unchecked copy does: it claimed
+ * **31 tools against 47 advertised**, with the entire structured-persistence
+ * writer surface — `research_append`, `tree_edit`, `extraction_append`,
+ * `materialize_facts`, and nine more — appearing nowhere in it.
+ *
+ * This closes the `docs/architecture.md` §9.4 row that named the gap.
+ *
+ * Name-presence only, deliberately. Asserting *where* a tool is described, or
+ * that its prose matches its schema, is a false-positive generator over a
+ * document whose job is readable grouping rather than exhaustive reference.
+ * Presence is the part that fails silently and the part a user actually loses.
+ */
+describe("README catalogs what ships", () => {
+  it("names every advertised MCP tool", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
+    ) as { tools: { name: string }[] };
+    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
+    const missing = manifest.tools.map((t) => t.name).filter((n) => !readme.includes(n));
+    expect(
+      missing,
+      "README.md is the user-facing catalog; a tool absent from it is a tool users " +
+        "cannot discover. Add it to the matching section, or drop it from manifest.json.",
+    ).toEqual([]);
+  });
+
+  it("states the shipped tool and skill counts correctly", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
+    ) as { tools: { name: string }[] };
+    const skills = readdirSync(join(projectRoot, "packages/engine/plugin/skills")).filter((d) =>
+      statSync(join(projectRoot, "packages/engine/plugin/skills", d)).isDirectory(),
+    );
+    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
+    const stated = (label: string): number | null => {
+      const m = readme.match(new RegExp(`\\*\\*(\\d+) ${label}`));
+      return m ? Number(m[1]) : null;
+    };
+    expect(stated("MCP tools"), "README's tool count").toBe(manifest.tools.length);
+    expect(stated("shipped skills"), "README's skill count").toBe(skills.length);
   });
 });

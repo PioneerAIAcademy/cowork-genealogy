@@ -56,6 +56,7 @@ from harness.runlog import (
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
+    DEFAULT_KEEP_CANDIDATES,
     is_releasable_invocation,
     next_filename_for,
     now_utc_filename_timestamp,
@@ -538,8 +539,8 @@ def main(argv: list[str] | None = None) -> int:
     #
     # Negative tests are graded on routing and survive a dead judge, so a
     # negative-only selection still gets the old warning rather than an abort.
+    needs_judge = [s for s in specs if s.type == "positive"]
     if not auth.api_key:
-        needs_judge = [s for s in specs if s.type == "positive"]
         if needs_judge and not args.allow_missing_judge:
             print(
                 f"Judge preflight failed: no ANTHROPIC_API_KEY is set, but "
@@ -564,6 +565,31 @@ def main(argv: list[str] | None = None) -> int:
             "  and routing only.",
             file=sys.stderr,
         )
+    # Key present but invalid (e.g. duplicated or revoked). A truthy key passes
+    # the presence check above, the entire suite runs, and every positive test
+    # fails at grade time — the operator reads "everything failed" as a skill
+    # regression rather than an auth error. Catch it with a cheap 1-token
+    # liveness call before spending anything.
+    if auth.api_key and needs_judge and not args.allow_missing_judge:
+        from harness.auth import verify_judge_key
+        from harness.judge import DEFAULT_JUDGE_MODEL
+
+        rejected_status = verify_judge_key(auth.api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A duplicated or revoked key passes the presence check but fails "
+                f"every judge call, wasting the entire suite.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"  In a git worktree: make worktree-link\n"
+                f"\n"
+                f"Re-run with --allow-missing-judge to proceed anyway "
+                f"(validators and routing only).",
+                file=sys.stderr,
+            )
+            return 2
     # Large-suite variance warning: the judge is temperature-pinned, but the
     # *skill run* is not — claude-agent-sdk exposes no temperature field, so
     # model nondeterminism still leaks into single-run outcomes. Mostly fine
@@ -891,7 +917,13 @@ def main(argv: list[str] | None = None) -> int:
             tests=entries,
         )
         path = write_run_log(
-            log, runlogs_root=paths.runlogs_root, filename=filename
+            log,
+            runlogs_root=paths.runlogs_root,
+            filename=filename,
+            on_prune=lambda removed: print(
+                f"  → pruned {len(removed)} file(s) beyond the newest "
+                f"{DEFAULT_KEEP_CANDIDATES} candidates — commit the deletions"
+            ),
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")

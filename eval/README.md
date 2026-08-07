@@ -10,7 +10,9 @@ New to how skills are built, tested, and improved? Start with the lifecycle map:
 eval/
   harness/         Python test harness (Claude Agent SDK)
     harness/      Implementation modules (snapshot, versioning, runlog, …)
-    scripts/      GH-action helpers (check_runlogs.py, check_tool_coverage.py)
+    scripts/      GH-action helpers (check_runlogs.py, check_tool_coverage.py,
+                  check_rubric_tool_drift.py, check_negative_reciprocity.py,
+                  check_skill_frontmatter.py, check_e2e_fixtures.py)
     validators/   Per-skill deterministic validators
     judge/        LLM-judge prompt (prompt.md) — project-global, separately hashed
     e2e/          E2e orchestrator, judge, and CLI
@@ -172,9 +174,9 @@ The release flow is: junior iterates with `--skill X` → harness writes `v{N}_<
 
 Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schema.json`](../docs/specs/schemas/run-log.schema.json). One envelope per harness invocation, per skill, containing every test that ran. Key fields:
 
-- `schema_version` (currently `2`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
+- `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
-- `snapshot` — `{repo-relative-path: normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures, and the whole MCP source tree `packages/engine/mcp-server/src/**`). The active-state check compares this map to the working tree, so an MCP code change also makes prior run logs inactive and forces a re-run.
+- `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
   - `flaky`, `outcome_summary.aggregated_dimensions[]` (1–3 per-dimension scores)
@@ -204,10 +206,10 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/per-pr-review-workflow.md`](../docs/per-pr-review-workflow.md) for the per-PR cadence. Short version:
 
 1. Junior edits a skill / tests / scenarios / fixtures.
-2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate.
+2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
 3. Junior opens the CRUD UI, reviews every dimension on the latest candidate (sparse `.ann.json` becomes complete).
-4. Junior commits the candidate + annotation, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Two warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture) and a judge-prompt-hash match (rule 2b).
+4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
+5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
@@ -285,7 +287,7 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** a gradeable run (pass/partial/fail) commits as `runlogs/e2e/<test-id>/run-<timestamp>.*` and must be graded (`/grade-e2e-run`); only a skipped run (no tree) writes as gitignored `scratch_<timestamp>.*`. A committed fail is retained signal; only a pass validates the fixture (spec §14).
+- **Runlogs:** a committable run (pass/partial/fail/ungraded) commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; a graded one (pass/partial/fail) must be graded (`/grade-e2e-run`), and an `ungraded` one (the judge raised an exception, so the tree exists but was never graded) can be re-graded later. Only a skipped run (no tree) writes as gitignored `scratch_<timestamp>.*`. A committed fail is retained signal; only a pass validates the fixture (spec §14).
 
 ### Authoring a new fixture
 

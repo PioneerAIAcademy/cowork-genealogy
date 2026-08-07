@@ -22,46 +22,26 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from harness.skill_invocation import find_unguarded_protected_writes
+from e2e.runlog_selection import (
+    add_since_arg,
+    all_result_jsons,
+    describe_window,
+    filter_since,
+    is_result_json as _is_result_json,
+    result_jsons_for,
+)
+from harness.skill_invocation import (
+    CITATION_NULLING_KIND,
+    find_unguarded_protected_writes,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
 
 DEFAULT_WINDOWS = (10, 20, 40, 80, 150)
-
-
-def _is_result_json(p: Path) -> bool:
-    """A committed structured result, not its tree/research/ann/session siblings."""
-    name = p.name
-    return (
-        name.startswith("run-")
-        and name.endswith(".json")
-        and not name.endswith(".ann.json")
-        and ".final-" not in name
-    )
-
-
-def all_result_jsons() -> list[Path]:
-    """EVERY committed run, not just the latest per fixture — calibration
-    wants maximum sample size, unlike latency_report's "latest only" (which
-    exists to avoid stale per-fixture latency numbers, a different goal)."""
-    if not E2E_RUNLOGS.is_dir():
-        return []
-    out: list[Path] = []
-    for d in sorted(E2E_RUNLOGS.iterdir()):
-        if d.is_dir():
-            out.extend(sorted(p for p in d.iterdir() if _is_result_json(p)))
-    return out
-
-
-def result_jsons_for(test_slug: str) -> list[Path]:
-    d = E2E_RUNLOGS / test_slug
-    if not d.is_dir():
-        return []
-    return sorted(p for p in d.iterdir() if _is_result_json(p))
 
 
 def scan_one(path: Path, *, window: int) -> list[dict[str, Any]]:
@@ -117,6 +97,85 @@ def format_detail(violations: list[dict[str, Any]]) -> str:
     return "\n".join(lines) if lines else "  (none)"
 
 
+def _scan_stored(
+    paths: list[Path], keep: Callable[[dict[str, Any]], bool]
+) -> list[dict[str, Any]]:
+    """Read STORED shadow entries across a corpus, keeping those `keep` selects,
+    each enriched with its source file/fixture.
+
+    Read rather than replayed, unlike the §7 sweep above: that check is a pure
+    function of `tool_calls` at a given window, so it can be recomputed for any
+    window from a committed log. The stored families are not — the #963
+    provenance gap depends on the seed tree and on what the live hook could see;
+    the #1133 citation-nulling class is a post-hoc read of the final
+    research.json. Both share `guardrail_shadow_violations` and are told apart by
+    their keys, so each family passes its own predicate here. Unreadable files
+    are skipped with a stderr note, never raised.
+    """
+    out: list[dict[str, Any]] = []
+    for path in paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  skip {path}: {e}", file=sys.stderr)
+            continue
+        for v in data.get("guardrail_shadow_violations") or []:
+            if not isinstance(v, dict) or not keep(v):
+                continue
+            try:
+                display_path = str(path.relative_to(REPO_ROOT))
+            except ValueError:
+                display_path = str(path)
+            out.append({**v, "file": display_path, "fixture": path.parent.name})
+    return out
+
+
+def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#963 provenance shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a `person_evidence` link written with no
+    prior `same_person`). Identified by the `detail` key, which only the stored
+    sources set — but EXCLUDING the #1133 citation-nulling class, which also
+    carries `detail` and is counted separately by `scan_citation_nulling`.
+    """
+    return _scan_stored(
+        paths, lambda v: "detail" in v and v.get("kind") != CITATION_NULLING_KIND
+    )
+
+
+def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1133 citation-nulling shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a source backing a written conclusion whose
+    ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def format_provenance(violations: list[dict[str, Any]]) -> str:
+    """One flat count — no window column, because the #963 check has no window
+    (`same_person` is a required call, so "was it called for this person" is a
+    fact). Runs written before the check shipped simply contribute nothing."""
+    affected = len({v["file"] for v in violations})
+    lines = [
+        "",
+        f"§8 live provenance check (issue #963, shadow): {len(violations)} "
+        f"person_evidence link(s) with no prior same_person, across {affected} run(s).",
+    ]
+    return "\n".join(lines)
+
+
+def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
+    """One flat count — no window column, like `format_provenance`: the #1133
+    check is a fact about the final research.json, not a windowed recency scan.
+    This is the number the graduation decision (shadow → hard §7.5 compliance
+    check) is gated on."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7.5 citation-nulling check (issue #1133, shadow): "
+        f"{len(violations)} concluded source(s) with a null/empty citation "
+        f"string, across {affected} run(s)."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Retroactive §7 shadow-window calibration (issue #911).")
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
@@ -126,21 +185,37 @@ def main(argv: list[str] | None = None) -> int:
         help=f"comma-separated window sizes to compare (default: {','.join(str(w) for w in DEFAULT_WINDOWS)})",
     )
     ap.add_argument("--detail", action="store_true", help="also print every violation at the smallest window given")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})
-    paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    cutoff = args.since
+    paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
         return 1
 
     by_window = scan_corpus(paths, windows=windows)
+    print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_summary(by_window, n_runs=len(paths)))
+
+    provenance = scan_provenance(paths)
+    print(format_provenance(provenance))
+
+    citation_nulling = scan_citation_nulling(paths)
+    print(format_citation_nulling(citation_nulling))
 
     if args.detail:
         smallest = min(windows)
         print(f"\nViolations at window={smallest}:")
         print(format_detail(by_window[smallest]))
+        print(f"\nProvenance gaps (issue #963), {len(provenance)}:")
+        for v in provenance:
+            print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
+        print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
+        for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
     return 0
 
 

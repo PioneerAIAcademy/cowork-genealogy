@@ -40,15 +40,22 @@ from claude_agent_sdk import (
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    is_subagent_call,
+    subagent_only_denial,
 )
+from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
+    same_person_scored_ids,
+    unguarded_new_person_evidence_links,
 )
 
+from e2e import provenance
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -156,6 +163,42 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
+def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
+    """Whether this is `extraction_append` on the main thread — the #942 bug.
+
+    `extraction_append` is the record-extractor subagent's private writer: it is
+    declared by NO skill's `allowed-tools` and lives only on
+    `agents/record-extractor.md`. So the only legitimate caller is the
+    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
+    the main thread (no `agent_id`) is the router substituting for a failed
+    spawn and doing the extraction itself.
+
+    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    sufficient discriminator — which is all e2e can see, since its sub-skills run
+    in the same session via the `Skill` tool with no `agent_id` to attribute them
+    (see `harness.context_policy` docstring). We deny the bare tool directly
+    rather than routing through `subagent_only_violation`, which guards the whole
+    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
+    tool-specific also means a future skill that legitimately declares a guarded
+    tool is not denied here.
+
+    `image_read`, the set's other member, satisfies the same condition today — no
+    skill has declared it since `search-images` moved to `@plugin:image-reader`
+    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
+    equally enforceable here and simply is not yet: that is outside #942's blast
+    radius, tracked as issue #1273.
+    """
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # raise AttributeError here, and a raising hook fails a call the agent was
+    # entitled to make (CLAUDE.md, "Plugin hooks"). Fail closed to "not blocked".
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return False
+    return (
+        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        and not is_subagent_call(input_data)
+    )
+
+
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     """Whether a tool call is denied by THIS fixture's `blocked_tools`.
 
@@ -196,6 +239,113 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+# Cap on how many person ids the issue-#963 shadow entry names inline. A single
+# batch research_append can append person_evidence for many new persons; without
+# a cap the recorded detail string could balloon to an unreadable length. Show
+# the first N, then "+M more".
+_MAX_SHADOW_IDS = 10
+
+
+def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
+    """Seed-tree person ids for the issue-#963 same_person check, read from the
+    IMMUTABLE fixture file.
+
+    `starting_tree_path` is `FixtureCaps`/`Fixture.starting_tree_path`, which
+    `load_fixture` sets to `<fixture_dir>/starting-tree.gedcomx.json` — the
+    committed fixture input, NOT the per-run workspace copy `build_workspace`
+    makes at `<workspace>/tree.gedcomx.json` and the run then mutates. Reading
+    the fixture path (not the workspace) is what guarantees these ids are the
+    run's *starting* state, so "new this run" is computed against a baseline the
+    run can't have changed.
+
+    Returns the id set, or **None on any read/parse failure** so the check FAILS
+    OPEN (the caller skips it). An empty set would instead mis-classify every
+    legitimate seed-person link as "new + unscored" and log a shadow entry for
+    each one on nothing worse than a fixture/IO hiccup, inflating exactly the
+    number this is here to measure. Failing open loses only the in-run signal;
+    the post-run hard-fail (find_person_evidence_missing_same_person, which does
+    its own seed read) still backstops any real bypass.
+
+    Non-string `persons[].id` values are dropped rather than admitted as None:
+    the ids this set is compared against are always strings, so a None member
+    could never match, and admitting it would make the `set[str]` annotation a
+    lie for no benefit.
+
+    The failure is printed to stderr rather than swallowed or sent to a logger:
+    the harness has no module logger, and every other operator-facing signal
+    here (`_emit`, the blocked-tool notices) is a direct stderr print for the
+    same reason — it always shows in the run's captured output on the
+    genealogist team's Windows consoles. Kept diagnosable, not silent.
+    """
+    try:
+        seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(
+            f"  [warn] could not read seed tree {starting_tree_path} "
+            f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
+            "for this run; the post-run guardrail check still applies.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return None
+    persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
+    return {p["id"] for p in persons if isinstance(p, dict) and isinstance(p.get("id"), str)}
+
+
+def person_evidence_provenance_gap(
+    tool_name: str,
+    tool_input: dict[str, Any] | None,
+    *,
+    tool_calls: list[dict[str, Any]],
+    starting_person_ids: set[str],
+) -> str | None:
+    """The issue-#963 provenance gap for a pending `research_append` that links
+    a brand-new, unscored tree person via `person_evidence`, or None if clean.
+
+    SHADOW MODE — the caller records this and lets the write through; it does
+    not deny. Graduating to a real deny is issue #1231, gated on the shadow
+    numbers this produces.
+
+    Pure decision logic, extracted from `pretool_hook` so the clean, fail-open,
+    and gap paths are unit-testable without spinning up the SDK.
+
+    Scoring is read from `tool_calls` alone. There is deliberately no
+    `pending_tool_uses` argument: `pretool_hook` runs from a spawned control-
+    request task while `tool_calls` is appended by the message loop, so a
+    `same_person` issued in the SAME turn as the write may not be visible yet
+    (the SDK buffers up to 100 messages before the loop drains them). Passing
+    `pending_tool_uses` did not fix that — the AssistantMessage branch appends
+    one entry object to `tool_calls` AND stores it in `pending_tool_uses`, so
+    the latter is always a subset of the former and unioning them adds nothing.
+    Under shadow mode a same-turn miss costs one over-counted log line; closing
+    it properly means accumulating scored ids inside the hook itself, which is
+    #1231's job when this graduates.
+
+    Ordering note — this is a STRICTER question than the post-run detector
+    `find_person_evidence_missing_same_person` asks. That one is whole-run: a
+    `same_person` anywhere, INCLUDING after the link, satisfies it. This one
+    only sees calls already made, so link-then-score is a gap here and a pass
+    there. Rare but real (one occurrence in the committed corpus:
+    ferber-marriage 2026-07-21, person I5 linked at call #45 and scored at
+    #68), and it is a genuine divergence, not an equivalence — read the shadow
+    count with that in mind.
+    """
+    scored = same_person_scored_ids(tool_calls)
+    unguarded = unguarded_new_person_evidence_links(
+        tool_name, tool_input, scored_ids=scored, starting_ids=starting_person_ids
+    )
+    if not unguarded:
+        return None
+    shown = ", ".join(unguarded[:_MAX_SHADOW_IDS])
+    if len(unguarded) > _MAX_SHADOW_IDS:
+        shown += f", +{len(unguarded) - _MAX_SHADOW_IDS} more"
+    return (
+        f"person_evidence link written for new tree person(s) {shown} with no "
+        "prior same_person call: a brand-new identity should be scored before it "
+        "is asserted (research/SKILL.md doctrine; issue #963)."
+    )
 
 
 @dataclass
@@ -434,19 +584,179 @@ def _render_user_message(fixture: Fixture) -> str:
     )
 
 
-def _summarize_tool_response(content: Any) -> str:
-    """Short stringification of a tool result for the run log.
+def _unwrap_mcp_text_blocks(content: Any) -> Any:
+    """Parse the JSON document an MCP tool result carries inside a text block.
 
-    We don't need the full response in the runlog — just enough to
-    diff across runs when investigating drift. ~500 chars is plenty.
+    MCP results arrive as `[{"type": "text", "text": "<a whole JSON document>"}]`,
+    so to any generic summarizer the entire response is one very long *string*.
+    Bounding strings then keeps the head and hides every key, which is the
+    mechanism behind the `record_search` blindness described below. Parsing the
+    inner document first is what lets the summarizer work on real structure.
+
+    Anything that does not parse is passed through untouched — a plain-text tool
+    result stays a plain-text tool result.
+
+    Only an object or array is unwrapped. A bare JSON scalar is left as the string
+    it arrived as, because `json.loads` would otherwise coerce a tool result of
+    `"1"` to `1`, `"true"` to `True`, `"null"` to `None` and `"NaN"` to a float
+    nan — changing what the run log says the tool returned, which is the one thing
+    this artifact exists to record faithfully.
+    """
+    if not isinstance(content, list):
+        return content
+    out: list[Any] = []
+    for block in content:
+        text = (
+            block.get("text")
+            if isinstance(block, dict)
+            else getattr(block, "text", None)
+        )
+        if isinstance(text, str) and text.lstrip()[:1] in ("{", "["):
+            try:
+                out.append(json.loads(text))
+                continue
+            except (ValueError, RecursionError):
+                # RecursionError is not a ValueError: a deeply nested payload
+                # would otherwise escape to the run-level handler and abort a
+                # run that costs $7-25. The old code could not raise at all
+                # because it never parsed, so this must not either.
+                pass
+        out.append(block)
+    return out
+
+
+# The old head-truncation's threshold. A response at or under this was captured
+# whole before, so it is passed through whole now — the guarantee that this
+# function can only ever widen the artifact, never narrow it.
+_RUNLOG_VERBATIM_MAX = 500
+# Must not sit below the 497 content chars the old head-truncation kept, or this
+# function REGRESSES the artifact it exists to widen: a string-valued result
+# (`Read`, `Glob`, `Grep`, and a `record_search` that came back as the MCP
+# over-limit error) is one long string with no keys to preserve, so the string
+# bound is the whole budget for it.
+#
+# What this constant is and is NOT responsible for, since a first draft of this
+# comment credited it with the whole regression: at 200, 112 of the 284 tool
+# results in `run-2026-07-31_13-02-13` captured less than the old head cut, but
+# only **12** of those are string-valued (9 of them losing exactly 237 chars).
+# The other 100 are list-valued, losing 52.8 chars on average to
+# `_summarize_response`'s list sampling, which no string bound can fix — that is
+# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 23 of the
+# 112 and introduces 2 new ones (the bound is not monotone: for a string of
+# length just over 200, truncating at 200 plus the ~61-char marker is LONGER than
+# leaving it whole at 500), for a net of 21. The passthrough fixes the rest.
+#
+# Still far under the judge tier's 2000, because that copy is a throwaway prompt
+# and this one is committed to git.
+_RUNLOG_STRING_MAX = 500
+# Backstop for the widest tail: 11 of the 1544 tool results across the six
+# committed jimmie-jewel-neal runs (0.7%) reach it. Kept at 4000 rather than
+# raised, because at that hit rate a bigger cap grows a git-committed artifact for
+# the long tail alone. Must stay ABOVE _RUNLOG_VERBATIM_MAX or the never-shorter
+# floor at the end of _summarize_tool_response silently defeats it. Note what
+# happens for those 11: the output degrades to a head cut *of a summary*, which
+# reintroduces the un-reasonable-about bound this function otherwise rejects —
+# acceptable at 0.7%, but that is the trade, not an absence of one.
+_RUNLOG_MAX_CHARS = 4000
+
+
+def _summarize_tool_response(content: Any) -> str:
+    """Key-preserving summary of a tool result for the run log.
+
+    This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
+    made exactly the
+    fields worth diffing invisible. `record_search` leads with `results`, its
+    largest field by far, so every field serialized after it was cut: across the
+    46 `record_search` calls in `run-2026-07-31_13-02-13`, `ranked` appears in
+    the run log **0 times**, even though 18 of those calls supplied `subjectId`
+    and 14 of them were ranked. The run log is the artifact we assert tool
+    behavior from, and it was silently dropping the evidence — a head bound
+    cannot be reasoned about, because whether a field survives depends on how
+    much data happened to precede it.
+
+    So summarize by KEY instead, reusing the unit tier's `_summarize_response`
+    rather than growing a second summarizer: dicts keep every key, long lists
+    keep their length plus a sample, long strings are bounded with an explicit
+    marker. An overall cap stays as a backstop, since run logs are committed.
+
+    Responses that already fit are passed through VERBATIM rather than summarized.
+    That is not an optimization, it is what makes this strictly non-regressive:
+    `_summarize_response` samples any list past three entries, so summarizing
+    unconditionally *lost* content for 91 of the 284 tool results in
+    `run-2026-07-31_13-02-13` — short responses made of many small items, which
+    the old bound captured whole. Summarize only what the old code would have cut.
+
+    KNOWN CONSEQUENCE of that passthrough: `response_summary` now has two shapes.
+    Under the threshold it keeps the raw MCP envelope, where the tool's document is
+    an escaped string (`[{"type": "text", "text": "{\\"totalMatches\\": 0}"}]`);
+    over it, the document is unwrapped and its keys are real JSON keys. Two things
+    follow. A call whose payload crosses the threshold between runs flips
+    representation and shows a spurious diff, which matters because
+    `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
+    runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
+    escaped form does not contain it — grep the bare name, which matches both.
     """
     try:
-        text = content if isinstance(content, str) else json.dumps(content)
+        raw = content if isinstance(content, str) else json.dumps(content)
     except (TypeError, ValueError):
-        text = repr(content)
-    if len(text) > 500:
-        text = text[:497] + "..."
-    return text
+        raw = repr(content)
+    except RecursionError:
+        # NOT `repr(content)`: repr recurses too, so on the only input class that
+        # can raise here the fallback raises identically and the guard is a no-op.
+        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
+        # Letting it escape aborts a run costing $7-25, so degrade to a marker
+        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
+        # shallow list of dicts — but this function had no `json.dumps` of caller
+        # data at all before, so the exposure is new.
+        raw = f"<unserializable {type(content).__name__}: nesting too deep>"
+    if len(raw) <= _RUNLOG_VERBATIM_MAX:
+        return raw
+
+    summary = _summarize_response(
+        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
+    )
+    try:
+        text = summary if isinstance(summary, str) else json.dumps(summary)
+    except (TypeError, ValueError):
+        text = repr(summary)
+    if len(text) > _RUNLOG_MAX_CHARS:
+        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+
+    # Never emit a SHORTER capture than the old head-truncation would have. A
+    # key-preserving summary can come out shorter on a long list of small items —
+    # 14 of the 284 tool results in `run-2026-07-31_13-02-13` — and in those cases
+    # it is arguably the better record, since `_full_length: 26` beats an arbitrary
+    # 497-char prefix that never says how many entries there were. But "arguably
+    # better" is a judgement a reader takes on trust, whereas "never shorter" is a
+    # property they can check, and its absence is exactly what made the first cut
+    # of this change a regression.
+    #
+    # It is a LENGTH floor, not a content guarantee: a payload can clear it on one
+    # wide key while a sampled list drops entries the head cut happened to include.
+    # Zero of the 1544 tool results across the six committed runs do that, but do
+    # not restate this as "captures everything it used to".
+    #
+    # `_RUNLOG_MAX_CHARS` must stay above `_RUNLOG_VERBATIM_MAX`, or this floor
+    # silently defeats the cap applied just above it.
+    head = raw[: _RUNLOG_VERBATIM_MAX - 3] + "..."  # raw > _RUNLOG_VERBATIM_MAX here
+    return text if len(text) >= len(head) else head
+
+
+def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: str) -> None:
+    """Populate the producer-side fields on a `tool_calls` entry when its
+    `ToolResultBlock` arrives: the response summary, and `is_error`.
+
+    Split out of `_consume` so the producer half is unit-testable — the
+    guardrail gates in `skill_invocation.py` skip an entry when
+    `entry.get("is_error") is True`, and until this set the field nothing did,
+    so every gate treated a failed Skill call as a success (#999). The existing
+    gate tests fabricate `is_error` themselves, so they can't catch that; this
+    helper can. `is True` normalizes the SDK's None-on-success (`is_error` is
+    `bool | None`, `None` when the call succeeded) into a clean bool the gates
+    and the acceptance test can rely on.
+    """
+    entry["response_summary"] = summary
+    entry["is_error"] = block.is_error is True
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
@@ -553,24 +863,49 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
 ) -> tuple[
-    list[dict[str, Any]],
-    list[str],
-    dict[str, Any],
-    str | None,
-    str | None,
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[str],
+    list[dict[str, Any]],  # tool_calls
+    list[dict[str, Any]],  # narration
+    dict[str, Any],  # usage
+    str | None,  # aborted_reason
+    str | None,  # error
+    list[dict[str, Any]],  # blocked_tree_reads
+    list[dict[str, Any]],  # blocked_context_calls
+    list[dict[str, Any]],  # guardrail_shadow_violations
+    list[str],  # unnamed_delegate_violations
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
-    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
-    blocked_tree_reads, guardrail_shadow_violations,
+    Returns (tool_calls, narration, usage, aborted_reason, error,
+    blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
-    transcript: list[str] = []
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only make sense in trace order (a denied tool, a continue-nudge).
+    # Each entry carries `tool_calls_before` — how many tool calls had already
+    # happened. A value of N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N]; 0 means before any tool call. That is a COUNT, not an
+    # index: naming it as an index would be off by one, and a negative index
+    # would silently wrap in Python. This is what makes the stream
+    # reconstructible against tool_calls without being interleaved *into* it — that would break the
+    # specced {tool, args, response_summary} entry shape and, worse, shift the
+    # index windows find_unguarded_protected_writes() and recently_succeeded()
+    # compute (skill_invocation.py), silently changing the §7 shadow-window
+    # violation rate between old and new runs.
+    narration: list[dict[str, Any]] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
+    # Seed-tree person ids for the issue-#963 same_person-provenance check (in
+    # pretool_hook), read once from the IMMUTABLE fixture file. None on a read
+    # failure => the check fails open for this run. See load_seed_person_ids for
+    # the full rationale (immutable-path guarantee, fail-open, stderr warning).
+    starting_person_ids: set[str] | None = load_seed_person_ids(fixture.starting_tree_path)
+    # issue #963, SHADOW MODE — hook-sourced provenance gaps (a person_evidence
+    # link written before any same_person scored that identity). Folded into
+    # `guardrail_shadow_violations` at the end of the run so the whole shadow
+    # signal lands in one already-plumbed field; entries carry `required_skill`
+    # to match that list's shape. Nothing reads this into a verdict.
+    provenance_shadow: list[dict[str, Any]] = []
+
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
     # the matching tool_calls entry when its ToolResultBlock arrives below.
@@ -596,6 +931,11 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Every denied main-thread `extraction_append` — the router doing the
+    # record-extractor's job because the subagent failed to spawn (#942). The
+    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
+    # the PreToolUse deny); this list is the record that it did not run.
+    blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
     # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
@@ -694,14 +1034,40 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is
-        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
-        # §4.1. It is unit-only because the guard needs to know which SKILL is
-        # active, and e2e cannot know: sub-skills run in this same session via
-        # the Skill tool (no `agent_id` to attribute them), so a legitimate
-        # `search-images` browse — which declares `image_read` and pages through
-        # volumes itself — is indistinguishable from a record-extraction router
-        # violation. Denying on the bare tool name would break real browsing.
+        # NOTE: the per-context tool policy (harness/context_policy.py) is only
+        # PARTIALLY enforced here — see that module's docstring.
+        #   - `extraction_append` IS enforced (below). No skill declares it, so
+        #     its only legitimate caller is the Task-spawned record-extractor,
+        #     which carries `agent_id`; a main-thread call is the #942 router
+        #     substitution. `agent_id` presence alone discriminates, which is all
+        #     e2e can see — sub-skills run in this same session via the Skill
+        #     tool with no `agent_id` to attribute them, so the full per-skill
+        #     check (`subagent_only_violation`) has no `declared_tools` to take.
+        #   - `image_read`, the set's other member, is NOT enforced here yet. It
+        #     meets the same condition today (no skill declares it; it lives only
+        #     on agents/image-reader-opus.md) — issue #1273.
+        if is_main_thread_extraction_append(input_data):
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on the main thread — writing extracted "
+                        "assertions is the record-extractor subagent's job. If it "
+                        "failed to spawn, report the failure and stop (#942)."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            return subagent_only_denial(bare)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -715,9 +1081,15 @@ async def _run_agent(
                     "blocked_by": "tree",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
-                "disabled in e2e runs; recover the answer from records.\n"
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — tree-reading tools are disabled in "
+                        "e2e runs; recover the answer from records."
+                    ),
+                }
             )
             _emit(f"[blocked tree-read] {bare}")
             return {
@@ -740,9 +1112,15 @@ async def _run_agent(
                     "blocked_by": "fixture",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
-                "(fixture.json `blocked_tools`).\n"
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — disabled by this fixture "
+                        "(fixture.json `blocked_tools`)."
+                    ),
+                }
             )
             _emit(f"[blocked fixture tool] {bare}")
             return {
@@ -758,6 +1136,54 @@ async def _run_agent(
                     ),
                 },
             }
+
+        # docs/specs/guardrail-enforcement-spec.md §8, issue #963 — a
+        # person_evidence link for a BRAND-NEW tree person should be preceded
+        # by a same_person call scoring that identity, the doctrine
+        # find_person_evidence_missing_same_person already hard-fails on
+        # post-run. This is the LIVE, pre-write form of that question, and it
+        # runs in SHADOW MODE: it records and lets the write through.
+        #
+        # Why shadow and not a deny, despite same_person being a required call
+        # rather than a windowed heuristic: replaying this check over the
+        # committed e2e corpus, 65 of 81 fixtures fire at least one hit (265
+        # across 280 runs). Scoring a locally-minted person is simply not
+        # current agent behavior, so a deny here would not be a rare guardrail
+        # — it would intervene in four fifths of a suite costing $7-25 a run,
+        # with no e2e evidence for how the agent recovers. Graduating it is
+        # issue #1231, gated on the numbers this produces. Unlike the two
+        # post-hoc shadow detectors below, this one must live in the hook: the
+        # thing being measured is what a PreToolUse gate would have done, and
+        # only a live hook sees the write before it lands.
+        #
+        # Skipped entirely when starting_person_ids is None (seed read failed —
+        # fail open; see load_seed_person_ids). The bare == "research_append"
+        # gate just avoids a needless tool_calls scan on every other call —
+        # person_evidence_provenance_gap also returns None for any non-
+        # research_append tool, so it's safe either way. Decision logic lives in
+        # that helper so it's unit-testable without the SDK.
+        if bare == "research_append" and starting_person_ids is not None:
+            provenance_gap = person_evidence_provenance_gap(
+                tool_name,
+                input_data.get("tool_input") or {},
+                tool_calls=tool_calls,
+                starting_person_ids=starting_person_ids,
+            )
+            if provenance_gap:
+                # Shaped to match find_unguarded_protected_writes' entries so
+                # both can share `guardrail_shadow_violations` without a reader
+                # having to branch on which source an entry came from.
+                # `detail` is the discriminator: only this source sets it.
+                provenance_shadow.append(
+                    {
+                        "index": len(tool_calls),
+                        "tool": bare,
+                        "required_skill": "person-evidence",
+                        "question_id": None,
+                        "detail": provenance_gap,
+                    }
+                )
+                _emit("[guardrail-shadow] person_evidence w/o prior same_person")
 
         tool_call_count["n"] += 1
         if tool_call_count["n"] > fixture.caps.tool_calls:
@@ -790,10 +1216,16 @@ async def _run_agent(
             return {}
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
-        transcript.append(
-            f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}: agent yielded before "
-            "project.status=='completed'; instructing it to resume the loop.\n"
+        narration.append(
+            {
+                "tool_calls_before": len(tool_calls),
+                "kind": "harness",
+                "text": (
+                    f"continue-nudge {continue_nudges['n']}/"
+                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
+                    "project.status=='completed'; instructing it to resume the loop."
+                ),
+            }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
@@ -888,7 +1320,6 @@ async def _run_agent(
     )
 
     user_message = _render_user_message(fixture)
-    transcript.append(f"# E2e run: {fixture.id}\n\n## User message\n\n```\n{user_message}\n```\n\n## Trace\n")
 
     def _should_resume() -> bool:
         # Resume only in a provably-safe state: the flag is on, we have a session
@@ -941,10 +1372,16 @@ async def _run_agent(
                     assistant_tool_names: list[str] = []
                     for block in message.content:
                         if isinstance(block, TextBlock):
-                            transcript.append(f"\n**assistant:** {block.text}\n")
-                            narration = " ".join(block.text.split())
-                            if narration:
-                                _emit(narration[:200])
+                            narration.append(
+                                {
+                                    "tool_calls_before": len(tool_calls),
+                                    "kind": "assistant",
+                                    "text": block.text,
+                                }
+                            )
+                            one_line = " ".join(block.text.split())
+                            if one_line:
+                                _emit(one_line[:200])
                             progressed = True
                         elif isinstance(block, ToolUseBlock):
                             entry = {
@@ -956,10 +1393,6 @@ async def _run_agent(
                             pending_tool_uses[block.id] = entry
                             assistant_tool_names.append(
                                 _timeline_tool_label(block.name, block.input)
-                            )
-                            args_short = _summarize_tool_response(block.input)
-                            transcript.append(
-                                f"\n**tool_use** `{block.name}` — args: {args_short}\n"
                             )
                             if block.name == "Skill":
                                 _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
@@ -982,7 +1415,7 @@ async def _run_agent(
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
-                                    entry["response_summary"] = summary
+                                    apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
@@ -1001,7 +1434,6 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
-                                transcript.append(f"\n**tool_result:** {summary}\n")
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1157,6 +1589,17 @@ async def _run_agent(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
             "with no recent matching Skill invocation (shadow mode — not denied)"
         )
+    # issue #963 — fold in the hook-sourced provenance gaps collected live in
+    # pretool_hook. Same list because both answer "a guardrail's effect landed
+    # without its guardrail", and one field keeps the shadow signal readable in
+    # one place; kept ordered after the post-hoc entries so the two sources stay
+    # distinguishable by their `detail` key.
+    if provenance_shadow:
+        guardrail_shadow_violations = guardrail_shadow_violations + provenance_shadow
+        _emit(
+            f"[guardrail-shadow] {len(provenance_shadow)} person_evidence link(s) "
+            "written with no prior same_person (shadow mode — not denied)"
+        )
 
     # SHADOW MODE ONLY, same as the block above — see
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate
@@ -1176,13 +1619,33 @@ async def _run_agent(
             "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
         )
 
+    # SHADOW MODE ONLY (issue #1133) — a post-hoc read of the FINAL research.json,
+    # not a tool_calls scan: a source that BACKS A WRITTEN CONCLUSION carries an
+    # empty ESM citation string (the provenance-nulling half the engine's
+    # write-seam ref guard deliberately disowns; see
+    # find_citation_nulling_in_conclusions). Folded into the same already-plumbed
+    # `guardrail_shadow_violations` field, discriminated by its `kind` key so the
+    # shadow report counts it in its own bucket. Logs; never fails the run.
+    # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
+    # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
+    citation_nulling_shadow = find_citation_nulling_in_conclusions(
+        read_research_json(workspace)
+    )
+    if citation_nulling_shadow:
+        guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
+        _emit(
+            f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
+            "with a null/empty citation string (shadow mode — not failed)"
+        )
+
     return (
         tool_calls,
-        transcript,
+        narration,
         usage,
         aborted_reason,
         error,
         blocked_tree_reads,
+        blocked_context_calls,
         guardrail_shadow_violations,
         unnamed_delegate_violations,
     )
@@ -1195,7 +1658,7 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
-    runlog's own ``transcript.md`` (which is a lossy summary): only the JSONL has
+    runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
@@ -1300,6 +1763,15 @@ async def run_e2e_test(
 
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
+
+    # Provenance (#1091), captured at run start from the repo files this run
+    # stages — the prompt identity, so a committed run ties back to what produced
+    # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
+    # its default, DEFAULT_PLUGIN_AGENTS); if an `--agents-dir` override is ever
+    # threaded there, thread it here too or the hash silently diverges.
+    run_git_sha = provenance.git_sha(REPO_ROOT)
+    run_skills_hash = provenance.skills_hash(skills_dir, DEFAULT_PLUGIN_AGENTS)
+
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
         workspace = build_workspace(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
@@ -1313,11 +1785,12 @@ async def run_e2e_test(
 
         (
             tool_calls,
-            transcript_chunks,
+            narration,
             usage,
             aborted,
             error,
             blocked_tree_reads,
+            blocked_context_calls,
             guardrail_shadow_violations,
             unnamed_delegate_violations,
         ) = await _run_agent(
@@ -1363,7 +1836,12 @@ async def run_e2e_test(
                 verdict = str(judge_output.get("verdict") or "fail")
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}
-                verdict = "skipped"
+                # A run with a final tree is worth committing even when the judge
+                # failed — the tree can be re-graded later. "ungraded" is distinct
+                # from "fail" (the judge never reached a conclusion) and from
+                # "skipped" (no tree at all). The tree can be re-graded with
+                # /grade-e2e-run or by re-running the judge.
+                verdict = "ungraded"
             judge_seconds = time.monotonic() - judge_start
 
         # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
@@ -1417,24 +1895,27 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            blocked_context_calls=blocked_context_calls,
+            narration=narration,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
+            git_sha=run_git_sha,
+            skills_hash=run_skills_hash,
         )
 
         runlog_dir = runlog_root / fixture.id
         paths = write_result_files(
             result=result,
             runlog_dir=runlog_dir,
-            transcript="".join(transcript_chunks),
             final_tree=final_tree,
             final_research=final_research,
             timestamp=result.captured_at,
         )
 
-        # Copy the raw SDK session transcript next to the runlog. The runlog's
-        # transcript.md is a lossy summary; this JSONL carries per-message
+        # Copy the raw SDK session transcript next to the runlog. The runlog
+        # carries a summarized trace; this JSONL carries per-message
         # timestamps, per-turn token/cache usage, thinking, and untruncated
         # payloads. Best-effort — a missing session file never fails an
         # otherwise-successful run. Done inside the tempdir block so `workspace`

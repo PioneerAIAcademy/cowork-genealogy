@@ -154,6 +154,14 @@ Gating that pool needs a different and much shorter agent — does the hint reco
 exist, is the ark resolvable, is anyone else on this fixture — not a wider
 fan-out of this one. That agent does not exist yet.
 
+**`feedback`-labeled items are out of scope even under `--all`.** They carry
+`genealogist`, so they would otherwise land in that fan-out, but they are user
+bug reports filed automatically by the feedback endpoint — the body is a Drive
+link and a `make feedback-case` command, and every question this agent asks
+(staleness, refuted premise, blast radius, what verifies it) is answered by
+working the case, not by reading the issue. Reviewing one costs ~110k tokens to
+learn nothing. The triage they do need is `docs/alpha-feedback-guide.md`.
+
 ## 7. Measurements
 
 From the first run, 2026-08-02, over the unassigned `developer` pool:

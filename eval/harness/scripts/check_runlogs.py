@@ -14,7 +14,8 @@ docs/plan/eval-runlog-versioning.md §C6:
              reference it, and warns when that skill's run log is now stale
              (#1094 — see rule2_fixture_touched for why it only warns).
     Rule 3   the same run log's .ann.json has corrections for every
-             (test_id, dimension_source, dimension_name) triple.
+             (test_id, dimension_source, dimension_name) triple. An edited
+             annotation gates; a pruned (deleted) one does not.
     Rule 4   no two unit-test files share a `test.id`.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
@@ -131,6 +132,18 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
         elif status.startswith("R"):
             rows.append(("R", parts[-1]))  # dest path
     return rows
+
+
+def git_diff_deleted_paths() -> list[str]:
+    """Paths the PR DELETED. Used to tell a pruned annotation (housekeeping)
+    apart from an edited one (which must still gate rule 3)."""
+    base = os.environ["BASE_SHA"]
+    head = os.environ["HEAD_SHA"]
+    out = subprocess.check_output(
+        ["git", "diff", "--name-only", "--diff-filter=D", f"{base}...{head}"],
+        text=True,
+    )
+    return [line for line in out.splitlines() if line]
 
 
 def git_diff_touched_paths() -> list[str]:
@@ -494,8 +507,20 @@ def main() -> int:
         if classify(filename).kind == "released":
             touched_releases.setdefault(skill, []).append(path)
 
-    # Touched-skill detection for rules 2 + 3 uses the any-status view: a
-    # modification invalidates a snapshot just like an addition.
+    # Touched-skill detection for rules 2 + 3 is asymmetric by path class.
+    #
+    # Skill bodies, tests, and agents use the any-status view: a *modification*
+    # invalidates a snapshot just as surely as an addition.
+    #
+    # Run logs do not. A run log is not an input to its own snapshot, so
+    # modifying or deleting one cannot invalidate anything — only *adding* one
+    # is new evidence about a skill. Housekeeping that rewrites or prunes
+    # committed run logs (scripts/prune_runlogs.py) would otherwise mark every
+    # skill touched and hard-fail rule 2 on pre-existing fixture drift it did
+    # not cause (19 of 26 skills are already inactive on main; issues #1217,
+    # #1094).
+    added_runlog_paths = {p for _, p in changes if p is not None}
+    deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
@@ -504,8 +529,22 @@ def main() -> int:
     for path in touched_paths:
         m = RUNLOG_PATH_RE.match(path)
         if m:
-            # Any change under eval/runlogs/unit/<skill>/ touches that skill.
-            touched_skills.add(m.group(1))
+            # RUNLOG_PATH_RE matches `.ann.json` too (it ends in `.json`), and
+            # the two need opposite rules:
+            #
+            #   run log     — gates only when ADDED. Rewriting or pruning one is
+            #                 housekeeping; a run log is not an input to its own
+            #                 snapshot, so it cannot invalidate anything.
+            #   annotation  — gates unless DELETED. An *edited* .ann.json is a
+            #                 grading change and must still face rule 3, or a PR
+            #                 could walk an annotation back from complete to
+            #                 partial unchallenged. Only its deletion (pruned
+            #                 alongside its run log) is housekeeping.
+            if path.endswith(".ann.json"):
+                if path not in deleted_paths:
+                    touched_skills.add(m.group(1))
+            elif path in added_runlog_paths:
+                touched_skills.add(m.group(1))
             continue
         # Changes to skill files / tests surface their owning skill.
         m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)

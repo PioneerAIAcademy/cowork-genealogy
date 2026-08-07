@@ -93,7 +93,7 @@ The web side depends on `packages/schema`, never on the engine.
 
 - `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
   types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
-- `packages/viewer-ui/` — the extracted renderer (App, 13 sections, shared
+- `packages/viewer-ui/` — the extracted renderer (App, 14 sections, shared
   components, `ResearchDataProvider`), transport-agnostic via a
   `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
 - `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
@@ -122,7 +122,7 @@ mocks (no E2B/Anthropic/OAuth needed).
   process doc, a measurement write-up, or a spec is *not* a plan: those go in
   `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
   "is this still pending?" at a glance. Eight such files were moved out in the
-  #953 follow-up.
+  follow-up that moved them.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
@@ -131,8 +131,17 @@ mocks (no E2B/Anthropic/OAuth needed).
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
-    --title "…" --body "…"
+    --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+  …"
   ```
+
+  Open the body with a `**Touches:**` line naming the files the work would
+  change, when you know them. Overlap between issues here is almost never
+  same-title — it is two issues wanting different lines in one file — and that
+  line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
+  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
+  fit against ~180 open issues is that pass's job, not the filer's.
 
   | Label | Use for |
   |---|---|
@@ -143,7 +152,8 @@ mocks (no E2B/Anthropic/OAuth needed).
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
   `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-  card in Backlog. A `gh` token without the `project` scope — the default after
+  card in Backlog; the one exception is the `feedback` label, which routes to
+  Ready. A `gh` token without the `project` scope — the default after
   `gh auth login` — fails a board write *while still creating the issue*, which
   looks like success. Reference the number in the PR body.
 
@@ -212,33 +222,44 @@ the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
 
-**Dual-spelled tool names.** In `tools:` — and in `disallowedTools:` —
-every MCP tool **must** be listed twice, once under each server spelling:
+**Dual-spelled tool names.** (Heading kept as a stable anchor —
+`docs/architecture.md` §5.2 and ADR-0004 both cite it by name — though the rule now
+names three spellings.) In `tools:` — and in `disallowedTools:` —
+every MCP tool **must** be listed **three times**, once under each server
+spelling:
 
-    - mcp__genealogy__record_read
-    - mcp__remote-devices__Genealogy_Research__record_read
+    - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
+    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
+    - mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
 
 Bare names do not work (they leave the subagent toolless in the
 unit-harness SDK path), but neither does a single qualified name. The MCP
 server's name is chosen by whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both
 harnesses, and the hosted web control plane register it under the key
-`genealogy`; Cowork reaches the host-installed `.mcpb` through a
-remote-device bridge that namespaces it by `manifest.json`'s
-`display_name`. No single spelling resolves everywhere.
+`genealogy`. Cowork uses `manifest.json`'s `display_name` both times, but
+namespaces it under `remote-devices` only when the task runs **in the
+cloud** and reaches the host through the device bridge; a task running **on
+the user's own computer** reaches the `.mcpb` directly and gets the bare
+`display_name` segment. **Run mode is a per-task setting nothing in the
+plugin can see.** No single spelling resolves everywhere.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
 When every `tools:` entry misses, the runtime refuses to spawn the agent at
 all ("would be spawned with zero tools — refusing"). That is how #650/#698
 broke all three agents in Cowork while CI stayed green: they were qualified
 against the *harness's* arbitrary dict key rather than the product's name.
-Listing both spellings is safe because unrecognized entries are ignored so
+**The on-computer registrar repeated the shape** — that spelling
+was missing, `record-extractor` was refused outright, and the lint stayed green because
+it derived its expected prefixes from the two registrars we knew about.
+Listing every spelling is safe because unrecognized entries are ignored so
 long as at least one resolves.
 
 `disallowedTools:` matters more, not less. A deny binds even under
 `bypassPermissions` (the hosted path, issue #695), so it is the last line
 of defence keeping `record-extractor` off the broad `research_append` — and
-a deny naming one spelling silently fails to bind under the other.
+a deny naming one spelling silently fails to bind under the others. Unlike a
+missing grant, **a missing deny fails open and silently.**
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
@@ -272,10 +293,8 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port — issue #911, which
-gates it on calibrating the shadow window first (#940, which used to carry this,
-is closed: its raw-write half shipped in #984/#989 and its detector half moved
-to #1054).
+design; it exists. What is missing is a production port, and it is gated on
+calibrating the shadow window first — the raw-write half has shipped.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -284,10 +303,15 @@ the host.
 
 Built-in Cowork tools that are not MCP tools — `Read` — stay bare. Skills'
 `allowed-tools` frontmatter also stays **bare** (it is not an exact-match
-spawn filter); only agent `tools:`/`disallowedTools:` are dual-spelled.
-Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
-bridge prefix from `display_name` so renaming the extension fails loudly in
-CI instead of silently in production.
+spawn filter); only agent `tools:`/`disallowedTools:` carry every spelling.
+Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives both
+`display_name`-based prefixes from the manifest so renaming the extension fails
+loudly in CI instead of silently in production, and throws on an unrecognized
+prefix rather than slicing it against another prefix's length.
+
+**No CI job can verify that a granted tool actually binds.** Only a
+live Cowork session can, and only in the run mode being tested — a cloud-mode
+check would have passed while on-computer was broken.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
 genealogy tool schemas above a size threshold and offers no control over it, so
@@ -300,9 +324,9 @@ CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
 deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
 (`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
 and the hosted path set `"true"`, so they run *with* deferral, which is the
-opposite of what their comments claimed until #1173 corrected them. Nothing here
+opposite of what their comments claimed until they were corrected. Nothing here
 depends on the flag's value; the bare-name rule above is correct either way.
-Flipping it is separate work that has to re-measure the tool mix (issue #1110).
+Flipping it is separate work that has to re-measure the tool mix.
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
@@ -664,6 +688,13 @@ What replaced them is the templates they pointed at, used directly:
 | `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
 | `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
 | `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
+
+## Reviewing a PR
+
+Use `/review` (`.claude/skills/review/`). It ships with the repo, so cloning is
+the whole install — do not reach for a `/review` from any other toolchain, which
+teammates do not have and which reads neither this repo's suites nor the human
+reviews on the PR.
 
 ## What NOT to do
 

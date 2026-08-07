@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 _SPEC = importlib.util.spec_from_file_location(
@@ -18,8 +19,8 @@ _SPEC = importlib.util.spec_from_file_location(
 check_runlogs = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_runlogs)
 
-# check_runlogs' import inserts the harness dir on sys.path, so this resolves.
-from harness.snapshot import normalize  # noqa: E402
+# check_runlogs' import inserts the harness dir on sys.path, so these resolve.
+from harness.snapshot import build_snapshot, normalize  # noqa: E402
 
 
 def _log_with_one_dimension() -> dict:
@@ -144,14 +145,18 @@ def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
 # --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
 
 
-def _patch_diffs(monkeypatch, paths: list[str]) -> None:
-    """Point both git-diff views at a fixed change set: `git_diff_changes`
+def _patch_diffs(monkeypatch, paths: list[str], *, deleted: list[str] | None = None) -> None:
+    """Point the three git-diff views at a fixed change set: `git_diff_changes`
     (AR view, rule 1) sees every path as an add; `git_diff_touched_paths`
-    (any-status view, touched-skill detection) sees the same paths."""
+    (any-status view, touched-skill detection) sees the same paths;
+    `git_diff_deleted_paths` sees `deleted` (default none)."""
     monkeypatch.setattr(
         check_runlogs, "git_diff_changes", lambda: [("A", p) for p in paths]
     )
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(paths))
+    monkeypatch.setattr(
+        check_runlogs, "git_diff_deleted_paths", lambda: list(deleted or [])
+    )
 
 
 def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
@@ -192,8 +197,43 @@ def test_modified_skill_file_marks_skill_touched(monkeypatch, capsys, tmp_path):
     touched-skill detection uses the any-status view, not rule 1's AR view."""
     path = _make_present_skill(tmp_path, monkeypatch)
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [path])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
+def test_runlog_modify_or_delete_does_not_touch_skill(monkeypatch, capsys, tmp_path):
+    """Rewriting or pruning a committed run log is housekeeping, not evidence.
+    A run log is not an input to its own snapshot, so a non-AR change under
+    eval/runlogs/unit/<skill>/ must not gate rules 2 + 3 — otherwise a rehash
+    or prune sweep fails every skill on drift it did not cause."""
+    _make_present_skill(tmp_path, monkeypatch)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
     monkeypatch.setattr(
-        check_runlogs, "git_diff_touched_paths", lambda: [path]
+        check_runlogs,
+        "git_diff_touched_paths",
+        # modified in place (rehash) + deleted (prune, annotation included)
+        lambda: ["eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json", *pruned],
+    )
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: pruned)
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "no run logs" not in capsys.readouterr().out
+
+
+def test_added_runlog_still_marks_skill_touched(monkeypatch, capsys, tmp_path):
+    """The narrowing above must not widen into a blanket pass: *adding* a run
+    log is still evidence about a skill and still gates rules 2 + 3."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _patch_diffs(
+        monkeypatch,
+        ["eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"],
     )
     rc = check_runlogs.main()
     assert rc == 1
@@ -275,6 +315,7 @@ def test_touched_agent_gates_referencing_skill(monkeypatch, capsys, tmp_path):
         "git_diff_touched_paths",
         lambda: ["packages/engine/plugin/agents/spike-echo.md"],
     )
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
     rc = check_runlogs.main()
     assert rc == 1
     out = capsys.readouterr().out
@@ -534,3 +575,96 @@ def test_rule4_runs_only_when_tests_touched(monkeypatch, capsys, tmp_path):
     out = capsys.readouterr().out
     assert "::error" in out
     assert "test id `dup`" in out
+
+
+def test_edited_annotation_still_gates_rule3(monkeypatch, capsys, tmp_path):
+    """RUNLOG_PATH_RE matches `.ann.json` too, so the run-log narrowing must
+    not swallow annotation EDITS — walking a grade back from complete to
+    partial has to keep facing rule 3. Only a pruned (deleted) annotation is
+    housekeeping."""
+    _make_present_skill(tmp_path, monkeypatch)
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
+def test_deleted_annotation_does_not_gate(monkeypatch, capsys, tmp_path):
+    """The prune deletes an annotation with its run log; that must stay green."""
+    _make_present_skill(tmp_path, monkeypatch)
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "no run logs" not in capsys.readouterr().out
+
+
+# --- Rule 2 against a schema_version 3 (digest) snapshot -------------------
+
+
+def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, capsys):
+    """The gate itself, exercised on the shape the harness now writes.
+
+    The cosmetic-skip tests above all use a deliberately-missing path, so none
+    of them reaches the comparison at all. Without this, a `build_snapshot`
+    emitting digests while `diff_snapshot_vs_disk` still compared raw bytes
+    would have blocked *every* skill in CI and the unit suite would have stayed
+    green — the failure mode that motivated writing it.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    skill_md = tmp_path / "packages/engine/plugin/skills/s1/SKILL.md"
+    skill_md.parent.mkdir(parents=True)
+    skill_md.write_text("---\nname: s1\n---\nbody\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+    assert log["snapshot"], "fixture built no snapshot — the test would pass vacuously"
+    assert all(re.fullmatch(r"[a-f0-9]{64}", v) for v in log["snapshot"].values())
+
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
+
+    capsys.readouterr()  # drop anything emitted by the passing call above
+    skill_md.write_text("---\nname: s1\n---\nEDITED\n", encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+    out = capsys.readouterr().out
+    assert "NOT active" in out
+    assert "SKILL.md" in out  # names the drifted path, not just the count
+
+
+def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatch):
+    """`normalize()` runs BEFORE hashing, so stripping test.{name,description,
+    tags} still makes a cosmetic edit a no-op.
+
+    Undocumented invariant otherwise: hashing the raw bytes instead would turn
+    every rename of a test's display name into a forced paid re-run, and
+    nothing else in the suite composes build_snapshot with rule 2.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
+    tests_dir = tmp_path / "eval/tests/unit/s1"
+    tests_dir.mkdir(parents=True)
+    body = {
+        "test": {"id": "ut_1", "skill": "s1", "name": "original",
+                 "description": "d", "tags": ["a"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+
+    body["test"]["name"] = "RENAMED"
+    body["test"]["tags"] = ["z"]
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
+
+    body["input"]["user_message"] = "SUBSTANTIVE"
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1

@@ -2,7 +2,10 @@ name: add-to-project
 
 # Puts every new issue on the kanban board (org project
 # PioneerAIAcademy/projects/1) in Backlog, so triage is a column move rather
-# than a periodic archaeology sweep.
+# than a periodic archaeology sweep. One exception: an issue labelled
+# `feedback` goes straight to Ready — it is filed by the feedback endpoint,
+# nobody triages it, and `/fill-ready` never promotes one out of Backlog, so
+# a card that lands there is stranded.
 #
 # WHY. Nothing has ever linked issue creation to the board. On 2026-07-30 a
 # sweep found 28 open issues with no card — 13 of them filed in the previous
@@ -120,6 +123,9 @@ jobs:
             const PROJECT_NUMBER = 1;
             const STATUS_FIELD   = 'Status';
             const NEW_ITEM_STATUS = 'Backlog';
+            // An issue carrying this label skips triage entirely.
+            const READY_LABEL       = 'feedback';
+            const READY_ITEM_STATUS = 'Ready';
 
             const dryRun = process.env.DRY_RUN === 'true';
             const { owner, repo } = context.repo;
@@ -159,13 +165,27 @@ jobs:
                 `Was it renamed? New cards would land with no status.`);
               return;
             }
-            const targetOption = statusField.options.find(o => o.name === NEW_ITEM_STATUS);
-            if (!targetOption) {
-              core.setFailed(
-                `"${STATUS_FIELD}" has no option "${NEW_ITEM_STATUS}" — found: ` +
-                statusField.options.map(o => o.name).join(', '));
-              return;
+            // Both options are resolved up front, and a missing one fails the
+            // job. Resolving Ready lazily inside act() would mean a renamed
+            // column surfaced only on the first feedback submission — as a
+            // stranded card, not as a failed run.
+            const options = {};
+            for (const name of [NEW_ITEM_STATUS, READY_ITEM_STATUS]) {
+              const option = statusField.options.find(o => o.name === name);
+              if (!option) {
+                core.setFailed(
+                  `"${STATUS_FIELD}" has no option "${name}" — found: ` +
+                  statusField.options.map(o => o.name).join(', '));
+                return;
+              }
+              options[name] = option;
             }
+
+            // Feedback issues are filed by the Apps Script endpoint and nobody
+            // triages them; `/fill-ready` never promotes one out of Backlog, so
+            // Backlog is a dead end for this label rather than a waiting room.
+            const statusFor = issue =>
+              issue.labels.includes(READY_LABEL) ? READY_ITEM_STATUS : NEW_ITEM_STATUS;
 
             // ---- which issues to consider -----------------------------------
             const sweep = context.eventName === 'workflow_dispatch';
@@ -175,10 +195,12 @@ jobs:
                 { owner, repo, state: 'open', per_page: 100 });
               // listForRepo returns PRs too; they are not this board's business.
               issues = all.filter(i => !i.pull_request)
-                          .map(i => ({ number: i.number, node_id: i.node_id, title: i.title }));
+                          .map(i => ({ number: i.number, node_id: i.node_id, title: i.title,
+                                       labels: (i.labels || []).map(l => l.name) }));
             } else {
               const i = context.payload.issue;
-              issues = [{ number: i.number, node_id: i.node_id, title: i.title }];
+              issues = [{ number: i.number, node_id: i.node_id, title: i.title,
+                          labels: (i.labels || []).map(l => l.name) }];
             }
 
             // Where this issue already sits on OUR board, or null. An issue can
@@ -212,7 +234,7 @@ jobs:
             //      at all for the ~90% of issues already carded;
             //   2. add only when absent (still idempotent, so losing a race with
             //      Claude costs nothing);
-            //   3. re-read the status and set Backlog ONLY if it is empty — this
+            //   3. re-read the status and set the chosen one ONLY if it is empty — this
             //      is what makes it impossible to demote a card that Claude or a
             //      human created in Ready a moment earlier.
             //
@@ -220,6 +242,7 @@ jobs:
             // because it short-circuited before step 1 — 113 identical rows that
             // told you nothing. Step 1 is what makes the dry run worth running.
             async function act(issue) {
+              const status = statusFor(issue);
               const before = await existingCard(issue);
               if (before) {
                 return [`#${issue.number}`,
@@ -227,7 +250,7 @@ jobs:
                         issue.title.slice(0, 60)];
               }
               if (dryRun) {
-                return [`#${issue.number}`, `WOULD add to ${NEW_ITEM_STATUS}`, issue.title.slice(0, 60)];
+                return [`#${issue.number}`, `WOULD add to ${status}`, issue.title.slice(0, 60)];
               }
 
               const added = await github.graphql(`
@@ -261,9 +284,9 @@ jobs:
                   }) { projectV2Item { id } }
                 }`, {
                   project: project.id, item: itemId,
-                  field: statusField.id, option: targetOption.id });
+                  field: statusField.id, option: options[status].id });
 
-              return [`#${issue.number}`, `added to ${NEW_ITEM_STATUS}`, issue.title.slice(0, 60)];
+              return [`#${issue.number}`, `added to ${status}`, issue.title.slice(0, 60)];
             }
 
             const rows = [];

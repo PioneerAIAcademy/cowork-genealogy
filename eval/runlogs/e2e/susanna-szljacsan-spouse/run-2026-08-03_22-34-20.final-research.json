@@ -1,0 +1,1714 @@
+{
+  "project": {
+    "id": "rp_susanna_szljacsan_spouse",
+    "objective": "Who did Susanna Szljacsan of Liskov\u00e1, Ru\u017eomberok, Slovakia marry, and did she have a daughter named Susanna, baptized about 1884?",
+    "subject_person_ids": [
+      "LDK6-6SH"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-08-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Susanna Szljacsan of Liskov\u00e1, Ru\u017eomberok, Slovakia marry?",
+      "rationale": "The marriage question is the primary component of the research objective and is foundational: the husband's name will appear on any child's baptismal record from about 1884, making this the gatekeeper question. Greek Catholic and Roman Catholic church registers for Liskov\u00e1 survive in the FamilySearch Slovakia collection and should contain marriage records for the relevant period (roughly 1870\u20131895).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "All FamilySearch-accessible sources for q_001 have been searched: Slovakia Church and Synagogue Books 1592\u20131935 (indexed, collection 1554443), 1869 Hungarian census, and full-text search across 5 Szljacsan surname variants. One marriage candidate was found: Josephus Karlik + Susanna Sliocsan/Szliacsan, 8 January 1890, Liszkov\u00e1, Lipt\u00f3 County. However, the bride's stated age 44 (implying b.~1845\u20131846) conflicts 5 years with the subject's confirmed birth 5 March 1850, and this conflict cannot be resolved with currently accessible sources. The original church register (Cirkevn\u00e1 matrika 1755\u20131896, catalog 764336, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di) is not in FamilySearch RMS and is only accessible at the physical archive. Neighboring parishes (pli_004) have the same access barrier. MyHeritage Slovakia collection (pli_006) was deferred \u2014 requires interactive user capture and cannot be completed in autonomous mode. Terminating research for this autonomous run; the conclusion is provisional. In an interactive session, MyHeritage should be completed and the physical archive consulted to resolve the identity conflict.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Tentative only: Josephus Karlik is the sole marriage candidate found. The bride's stated age 44 (b.~1845\u20131846) conflicts 5 years with the subject's confirmed birth 5 March 1850; identity cannot be confirmed. The question has no defensible answer with current evidence.",
+          "repository_breadth": "FamilySearch Slovakia indexed collection (1554443), 1869 Hungarian census, and full-text search (5 surname variants: Szljacsan, Szliacsan, Sliocsan, Sliacsan, Szlja*) all searched. Original Liszk\u00f3falva church register (catalog 764336) is inaccessible remotely \u2014 held only at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di. Neighboring parishes (pli_004) have the same access barrier. MyHeritage (pli_006) deferred in autonomous mode: captureReceived: false (log_013).",
+          "original_substitution": "Karlik marriage record (src_001) was examined at original image level (log_005), upgrading it from the initial derivative index. Baptism source (src_002) remains at derivative level; original image ark:/61903/3:1:33S7-9RQ4-9CF5 not yet examined \u2014 this is identity corroboration, not the primary marriage evidence.",
+          "independent_verification": "Not met. The Karlik marriage record is the only evidence for the marriage event itself; no independent second source confirms it. The baptism (src_002) is independent but speaks to the subject's identity, not to the marriage. Two truly independent sources confirming the same marriage do not exist in the current evidence set.",
+          "evidence_class": "One original record with primary information (src_001, marriage register image, 8 Jan 1890). One derivative with primary information (src_002, baptism index, 5 March 1850). Original marriage evidence exists; identity evidence is derivative only.",
+          "conflict_resolution": "Unresolved: bride stated age 44 at marriage (8 Jan 1890) implies birth ~1845\u20131846; LDK6-6SH's confirmed birth is 5 March 1850 \u2014 a 5-year conflict. No accessible source identified that could resolve this. The conflict blocks confident identification of the bride with the research subject.",
+          "overturn_risk": "HIGH. The 5-year age discrepancy raises the possibility that the Karlik bride is a different Susanna Szliacsan \u2014 an older woman of the same name from the same village. MyHeritage (log_013, deferred) could contain either a confirming or an alternative marriage record. The physical archive (catalog 764336) is not remotely accessible. Any of these unsearched sources could change the conclusion."
+        }
+      },
+      "created": "2026-08-03"
+    },
+    {
+      "id": "q_002",
+      "question": "Was a daughter named Susanna baptized approximately 1884 in Liskov\u00e1, Lipt\u00f3 County to Susanna Szljacsan (LDK6-6SH)?",
+      "rationale": "The research objective asks whether Susanna Szljacsan had a daughter named Susanna baptized about 1884. A baptism around 1884 predates the 1890 Karlik marriage by six years \u2014 Susanna was recorded as a widow (vidua) in 1890, so any 1884 daughter would be from her prior unidentified marriage. The Slovakia Church and Synagogue Books collection (FamilySearch 1554443) indexes baptisms for Liskov\u00e1 and can be searched by the mother's name (Szljacsan and variants). Importantly, the daughter's baptism record would name the father, potentially identifying Susanna's first husband and providing an independent birth-year statement for the mother \u2014 directly relevant to resolving conflict c_001 (the 5-year age discrepancy). This question is independently pursuable via the same indexed collection used for q_001.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-08-03",
+      "resolution_assertion_ids": [
+        "a_032",
+        "a_034"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The indexed Slovakia Church Books record (src_003, pli_007) found exactly one match \u2014 Susanna Janeczky, baptized 1884, Liskov\u00e1, parents Joannes Janeczky and Susanna Szliacsan. The original page image (src_004, log_016) was then read and confirmed all indexed details with day-level precision: baptized 27 April 1884, mother's surname 'Szliacsan' as written by the priest in the original register. FTS (pli_009) was skipped because the Lipt\u00f3 County corpus gap was already established during q_001 (log_005). MyHeritage (pli_010) and the physical archive (pli_011) are unreachable in autonomous mode but are fallback sources rendered unnecessary by the confirmed original-image find. The index and image represent the same underlying document (the parish register); for an event-confirmation question this is the definitive source.",
+        "log_entry_ids": [
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the question is definitively answered. Susanna Janeczky was baptized 27 April 1884 in Liskov\u00e1 to parents Joannes Janeczky and Susanna Szliacsan. Two access paths to the same register (index + original image) agree on all facts.",
+          "repository_breadth": "FamilySearch Slovakia Church Books (1554443) searched as the primary indexed collection; original page image (ark:/61903/3:1:33SQ-GRQ4-94MT) read directly. FTS corpus gap for Lipt\u00f3 County confirmed in prior research (log_005). MyHeritage deferred (autonomous mode) and physical archive inaccessible \u2014 both are fallback repositories moot once the original was confirmed online.",
+          "original_substitution": "Yes \u2014 original register image read (log_016, src_004); derivative index (src_003) verified against the original. The day-level baptism date (27 April 1884) and the exact mother surname spelling ('Szliacsan') confirmed directly from the register.",
+          "independent_verification": "Qualified \u2014 the index and image access the same underlying document (the 1884 Liszk\u00f3falva RC register). No second independent source for a single baptism event exists; the original register is the standard and definitive record. This limitation is inherent to baptism records and does not impede a sound event-confirmation conclusion.",
+          "evidence_class": "Yes \u2014 src_004 provides primary information (contemporaneous register entry) accessed via original image. Evidence is direct for all stated facts.",
+          "conflict_resolution": "Yes within q_002 \u2014 no conflicts detected in this question's evidence. The identity uncertainty between the mother persona (Susanna Szliacsan) and LDK6-6SH is addressed by c_001 in q_001 and does not prevent answering q_002 at the event-confirmation level.",
+          "overturn_risk": "Low. The original register page image has been read and confirms all indexed data. No unsearched accessible source would likely contradict or supersede the primary-information register entry."
+        }
+      },
+      "created": "2026-08-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Liskov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Kingdom of Hungary / Ru\u017eomberok District, Slovakia",
+          "date_range": "1860-1895",
+          "repository": "FamilySearch",
+          "rationale": "Slovakia, Church and Synagogue Books, 1592\u20131935 (collection 1554443) is name-indexed with 19M records covering baptisms, marriages, and burials for all Slovakia including the Ru\u017eomberok district. A marriage entry for Susanna Szljacsan would name her husband directly. Searching here first maximizes the chance of a quick hit before browsing unindexed volumes. Per loc_001, search within the Ru\u017eomberok district and try variant spellings (Szljacs\u00e1n, Sliacsan, etc.).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Liszk\u00f3falva, Lipt\u00f3 County, Kingdom of Hungary",
+          "date_range": "1755-1896",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch Catalog entry 764336 (Cirkevn\u00e1 matrika, 1755\u20131896, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di) contains browse-only images of the Liszk\u00f3falva local church register covering the entire target period. If the indexed collection (pli_001) misses the marriage, direct browsing of this register's marriage section for the 1870\u20131895 window is the next most direct path. Records are in Latin/Hungarian.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Liszk\u00f3falva, Lipt\u00f3 County, Kingdom of Hungary",
+          "date_range": "1869",
+          "repository": "FamilySearch",
+          "rationale": "The 1869 Hungarian Census (collection 1986782, images only) is a FAN item: locating Susanna Szljacsan's household in Liszk\u00f3falva will establish her approximate birth year, her parents' names, and siblings \u2014 all of which help distinguish her from any same-named women and inform the marriage date range. This context is critical for correctly identifying her marriage record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Ru\u017eomberok district neighboring parishes, Lipt\u00f3 County, Kingdom of Hungary",
+          "date_range": "1860-1900",
+          "repository": "FamilySearch",
+          "rationale": "Smaller villages were often served by a neighboring mother parish. If Liszk\u00f3falva catalog 764336 is incomplete for the marriage years, the following Ru\u017eomberok-area parish catalog entries should be checked: Likavka RC 1884\u20131897 (catalog 762316), L\u00fa\u010dky RC 1790\u20131921 (catalog 764524), Ludrov\u00e1 RC 1713\u20131936 (catalog 764525), Liptovsk\u00e9 Rev\u00face RC 1787\u20131898 (catalog 762810), Liptovsk\u00fd Michal RC 1687\u20131901 (catalog 762997). All are browse-only images.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Slovakia (all Lipt\u00f3 County volumes)",
+          "date_range": "1860-1900",
+          "repository": "FamilySearch",
+          "rationale": "A full-text search on 'Szljacsan' (and phonetic variants) across the Slovakia church records corpus via the search-full-text skill will surface records in volumes that are not name-indexed. The surname is distinctive enough that a co-occurrence or surname-only full-text pass is likely to find the marriage even if the Ru\u017eomberok-district indexed and browse searches are inconclusive. Route to search-full-text skill.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Slovakia",
+          "date_range": "1592-1910",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage hosts Slovakia Church and Synagogue Books, 1592\u20131910 (a parallel digitization of the same register set). If the FamilySearch indexed search (pli_001) misses due to indexing gaps, the MyHeritage copy may have different coverage or indexing. Paid subscription required; route to search-external-sites skill.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "completed",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Liszkov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Kingdom of Hungary / Ru\u017eomberok District, Slovakia",
+          "date_range": "1878-1892",
+          "repository": "FamilySearch",
+          "rationale": "Slovakia, Church and Synagogue Books, 1592\u20131935 (collection 1554443) indexes baptisms for the Ru\u017eomberok district. Searching by child name Susanna plus mother name Szljacsan (and variants Szliacsan, Sliocsan, Sliacsan) in Liszkov\u00e1, 1878\u20131892, is the highest-yield direct path to the target baptism. If found, the record names the father (Susanna\u2019s unidentified first husband), providing an independent birth-year statement for the mother and potential evidence bearing on conflict c_001.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Liszkov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Kingdom of Hungary / Ru\u017eomberok District, Slovakia",
+          "date_range": "1878-1892",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_007: search collection 1554443 by mother name only (Szljacsan and variants) without restricting the child\u2019s name. Catches the target baptism if the child\u2019s name is misindexed or absent, and also surfaces sibling baptisms that confirm the family and identify the father. Same collection and date window as pli_007; different parameter set.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Slovakia (all Lipt\u00f3 County volumes)",
+          "date_range": "1878-1895",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search: co-occurrence of +Szljacsan +Susanna (and variant pairs: +Sliocsan +Susanna, +Szliacsan +Susanna) via the search-full-text skill. pli_005 (q_001) established that Lipt\u00f3 County church register volumes are not in the FamilySearch FTS corpus, so a nil result is expected; however, those earlier searches used surname-only queries, and a co-occurrence with a given name is a different parameter set. Route to search-full-text skill; cap at 3 variant pairs. This is low-probability but completes the FTS coverage for q_002.",
+          "fallback_for": "pli_008",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Slovakia (Ru\u017eomberok / Lipt\u00f3 County)",
+          "date_range": "1878-1895",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage Austria-Hungary Roman Catholic Indexes 1612\u20131966 (collection 10960) may index baptism records for Liszkov\u00e1 not captured in FamilySearch. Search for a female child named Susanna baptized 1878\u20131892 in the Liszkov\u00e1 area with mother Susanna Szljacsan (and variants). Same collection as pli_006 (q_001) but targeting baptisms rather than marriages. Requires interactive user capture \u2014 defer in autonomous mode per the search-external-sites skill protocol.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Liszkov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Kingdom of Hungary",
+          "date_range": "1755-1896",
+          "repository": "other",
+          "rationale": "Original Cirkevn\u00e1 matrika (1755\u20131896, FamilySearch Catalog entry 764336, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di) contains the Matricula Baptisatorum for Liszkov\u00e1. If pli_007\u2013pli_009 miss the target baptism, direct browsing of the baptism section for 1878\u20131892 is the definitive fallback. The register is not in FamilySearch RMS \u2014 the same barrier as pli_002/pli_004 (q_001). Requires physical visit to Byt\u010da, Slovak archives, or a separately-digitized copy. Cannot be completed in autonomous mode.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_012",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Liskov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Hungary (now Ru\u017eomberok, Slovakia)",
+          "date_range": "1865-1884",
+          "repository": "FamilySearch",
+          "rationale": "The 1884 baptism of Susanna Janeczky names Joannes Janeczky as the father and Susanna Szliacsan as the mother, implying a prior marriage between them. That marriage must have preceded the 1884 birth and almost certainly predates it by at least 1-2 years. A marriage record for Joannes Janeczky and Susanna Szliacsan would: (a) supply the mother's age at marriage, helping establish her birth year and resolve the 5-year discrepancy in c_001 (Karlik bride age 44 in 1890 vs LDK6-6SH b. 1850); (b) provide independent confirmation that Susanna Szliacsan of Liskov\u00e1 was the research subject LDK6-6SH; and (c) potentially upgrade q_001's proof tier from 'possible' to 'probable' if the marriage age data is consistent with b.1850.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Liskov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Hungary",
+          "date_range": "1868-1892",
+          "repository": "FamilySearch",
+          "rationale": "Fallback: if the Janeczky-Szliacsan marriage is not found under the bride's surname, search for any Joannes Janeczky marriage in collection 1554443 in the Liskov\u00e1 area. This would identify the bride and confirm (or deny) her as Susanna Szliacsan.",
+          "fallback_for": "pli_012",
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T20:45:19.316Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Szljacsan",
+        "givenName": "Susanna",
+        "recordType": "marriage",
+        "collectionId": "1554443",
+        "marriageYearFrom": 1865,
+        "marriageYearTo": 1895
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 9,
+      "notes": "9 results. Two are from Liszkov\u00e1, Lipt\u00f3 (exact place): (1) ark:/61903/1:1:6N9N-Q5K7 \u2014 Susanna Szljacsan (exact surname) married Josephus Blasko 7 Feb 1887, but bride's birth year indexed as 1865 \u2014 15 years after subject's proven 1850 birth. Likely a different Susanna Szljacsan (namesake). (2) ark:/61903/1:1:6N9N-WX4H \u2014 Susanna Szliacsan married Josephus Karlik 8 Jan 1890, birth year 1846 (4-year discrepancy from subject's 1850). Both need image review. Variant searches needed (Zsuzsanna, broader year range)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T20:48:15.985Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Szljacsan",
+        "givenName": "Zsuzsanna",
+        "recordType": "marriage",
+        "collectionId": "1554443"
+      },
+      "outcome": "negative",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 17,
+      "notes": "Hungarian-form variant (Zsuzsanna) returned 17 results. A third Liszkov\u00e1 marriage appeared: Susanna Szljacsan b.1835 married Andreas Nemcsek. None of the Liszkov\u00e1-area records match our subject's birth year of 1850. Three Liszkov\u00e1-area Susanna Szljacsan/variant women identified in the indexed collection: b.1835 (Nemcsek), b.1846 (Karlik 1890), b.1865 (Blasko 1887). Subject's marriage (b.1850) not found in indexed entries. Marriage likely in browse-only images of catalog 764336."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-03T20:48:33.520Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Szljacsan",
+        "givenName": "Susanna",
+        "collectionId": "1986782"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "As expected \u2014 the 1869 Hungarian Census (collection 1986782) is images-only and not name-indexed; record_search returns 0 results. This collection must be browsed image by image. Confirming nil \u2014 not an indexing gap for this plan item, but a known limitation of the collection."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T20:56:26.008Z",
+      "tool": "image_search",
+      "query": {
+        "catalogEntry": 764336,
+        "place": "Liszk\u00f3falva, Lipt\u00f3, Hungary",
+        "standardPlacesTriedForVolume": [
+          "Liskov\u00e1, Ru\u017eomberok, Slovakia",
+          "Ru\u017eomberok, Slovakia",
+          "Ru\u017eomberok, Czechoslovakia",
+          "Lipt\u00f3, Hungary (3 pages of 369 results)"
+        ],
+        "recordType": "Religious Marriage Registers",
+        "dateRange": "1755-1896"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Could not locate the Liszk\u00f3falva church register (FamilySearch Catalog 764336, Cirkevn\u00e1 matrika 1755-1896, held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010da) via volume_search. Tried standardPlace variants: Liskov\u00e1/Ru\u017eomberok/Slovakia, Ru\u017eomberok/Slovakia, Ru\u017eomberok/Czechoslovakia \u2014 all returned zero results or only a single L\u00fa\u010dky death register. Paginated through 3 pages (~150 of 369) of Lipt\u00f3 County volumes without finding Liszk\u00f3falva. The catalog entry is a physical archive collection not accessible through FamilySearch RMS. No imageGroupNumber obtainable; image browse not possible via this route. The image ARK from the indexed Karlik marriage record (sd_da1 pointing to 3:1:33SQ-GRQ4-9W3P) could not be resolved to an image group number either."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-08-03T21:13:41.641Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33SQ-GRQ4-9W3P",
+        "captureFile": "images/ark_61903_3_1_33SQ-GRQ4-9W3P.jpg"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original register image of Entry Nr. 1, 8 Jan 1890, Matricula copulatorum, Liskova parish. Groom Josephus Karlik: age 47, viduus, house #65. Bride Susanna Sliocsan: age 44, vidua, house #229. Witnesses: Josephus Hrnes\u00e1r and Ioannes J\u00falyp. No birth year column \u2014 index-derived birth year 1846 is now superseded by stated age 44. Bride's age 44 at Jan 1890 implies birth ~1845-1846, a 5-year discrepancy vs. LDK6-6SH (b. 5 Mar 1850)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T21:16:18.664Z",
+      "tool": "image_search",
+      "query": {
+        "catalogEntries": [
+          762316,
+          764524,
+          764525,
+          762810,
+          762997
+        ],
+        "parishes": [
+          "Likavka",
+          "L\u00fa\u010dky",
+          "Ludrov\u00e1",
+          "Liptovsk\u00e9 Rev\u00face",
+          "Liptovsk\u00fd Michal"
+        ],
+        "place": "Ru\u017eomberok district, Lipt\u00f3, Hungary",
+        "recordType": "Religious Marriage Registers",
+        "dateRange": "1860-1900"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Skipped \u2014 same access barrier as pli_002. The neighboring parish catalog entries (Likavka 762316, L\u00fa\u010dky 764524, Ludrov\u00e1 764525, Liptovsk\u00e9 Rev\u00face 762810, Liptovsk\u00fd Michal 762997) are all held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010da. volume_search for the Ru\u017eomberok district returned only a single L\u00fa\u010dky death register (not marriage). Image browsing of these unindexed volumes is not feasible via FamilySearch RMS. Proceeding to pli_005 (full-text search) as the next available path."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:18:20.787Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Szljacsan",
+        "scope": "unscoped \u2014 no collectionId"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Exact primary spelling. Zero results. FTS corpus does not contain this spelling from any collection."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:18:20.787Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Szliacsan",
+        "scope": "unscoped"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Indexed variant spelling. 2 results returned \u2014 both US migration records (1905): Stefan Szliacsan and Andras Szliacsan emigrating from Hungary. No church records from Slovakia/Hungary."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:18:20.787Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sliocsan",
+        "scope": "unscoped"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Spelling from original register image transcription (Entry 1, 8 Jan 1890, Liskova). Zero results."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:18:20.787Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sliacsan",
+        "scope": "unscoped"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Further variant. Zero results."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:18:20.787Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Szlja*",
+        "scope": "unscoped \u2014 wildcard prefix"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 10,
+      "notes": "Wildcard on Szlja- prefix. 10 results \u2014 all US migration/naturalization (1909-1942): Szljaczky, Szljapintuch, Szljawas, Szljachticzenko. No church marriage records from Slovakia/Hungary anywhere in the FTS corpus for any Szlja* surname. Conclusion: Lipt\u00f3 County church register volumes for Liszk\u00f3falva and surrounding parishes are not in the FTS transcript corpus. Full-text search cannot find Susanna Szljacsan's marriage via this route. 5-query cap reached."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T21:19:35.172Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Lipt\u00f3, Hungary",
+        "host": "myheritage.com",
+        "startYear": 1850,
+        "endYear": 1895
+      },
+      "outcome": "positive",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 71,
+      "notes": "92 total curated links for Lipt\u00f3, Hungary; 71 in year window. Best MyHeritage match: collection-10960 (Austria-Hungary Roman Catholic Indexes, 1612-1966) which explicitly covers baptism, marriage, and burial records. Also relevant: collection-30214 (Hungary Catholic Church Records, 1636-1895)."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T21:19:35.178Z",
+      "tool": "external_site",
+      "query": {
+        "site": "myheritage.com",
+        "collection": "10960 \u2014 Austria-Hungary Roman Catholic Indexes, 1612-1966",
+        "first": "Susanna",
+        "last": "Szljacsan",
+        "birth_year": 1850,
+        "birth_place": "Liszk\u00f3falva, Lipt\u00f3, Hungary",
+        "surname_variants_to_try": [
+          "Szljacsan",
+          "Szliacsan",
+          "Sliocsan"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "myheritage",
+        "url_generated": "https://www.myheritage.com/research/collection-10960/austria-hungary-roman-catholic-indexes-1612-1966?action=query&first=Susanna&last=Szljacsan&birth_year=1850&birth_place=Liszk%C3%B3falva",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture; not obtainable in autonomous run. URL generated for subsequent interactive session. Also try collection-30214 (Hungary Catholic Church Records 1636-1895): https://www.myheritage.com/research/collection-30214/hungary-catholic-church-records-1636-1895?action=query&first=Susanna&last=Szljacsan&birth_year=1850. Variants to try: Szliacsan, Sliocsan. Note: the plan specified 'Slovakia Church Books 1592-1910' but MyHeritage's best available collection for this jurisdiction in this period is the Austria-Hungary Roman Catholic Indexes."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-08-03T21:27:00.215Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KHQN-KC7"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read FamilySearch index record ark:/61903/1:1:KHQN-KC7 \u2014 'Slovakia, Church and Synagogue Books, 1592-1935', baptism entry for Susanna Szljacsan, 5 March 1850, Liskov\u00e1, Ru\u017eomberok, Slovakia. Parents: Joannes Szljacsan (father), Maria Boron Munka (mother). This record established LDK6-6SH in tree.gedcomx.json (source SG4J-XT3). Extracted here to create research.json assertions and person_evidence entries for LDK6-6SH \u2014 required to unblock research-exhaustiveness precondition check."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_007",
+      "performed": "2026-08-03T21:57:45.778Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Susanna",
+        "sex": "Female",
+        "motherSurname": "Szljacsan",
+        "motherGivenName": "Susanna",
+        "collectionId": "1554443",
+        "birthYearFrom": 1878,
+        "birthYearTo": 1892,
+        "recordType": "birth",
+        "recordCountry": "Slovakia"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 1,
+      "notes": "Found: Susanna Janeczky, baptized 1884, Liskov\u00e1, Ru\u017eomberok, Slovakia (ark:/61903/1:1:KHQN-MSB). Mother Susanna Szljacsan; child surname Janeczky indicates prior marriage. Directly relevant to q_002. Query: givenName=Susanna, sex=Female, motherSurname=Szljacsan, motherGivenName=Susanna, collectionId=1554443, birthYearFrom=1878, birthYearTo=1892, recordType=birth, recordCountry=Slovakia."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_007",
+      "performed": "2026-08-03T22:16:15.374Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33SQ-GRQ4-94MT"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original page image of Liszk\u00f3falva (Liskov\u00e1) RC baptism register, 1884. Entry No. 22: child Susanna, baptized 27 April 1884 (same day), parents Joannes Janeczky and Susanna Szliacsan, house 115, legitimate. Godfather: Joannes Hajta; Godmother: Marie epis. uxor. Observatio: '1887 die 5\u00b0 Januarii m. mortua' \u2014 the child died 5 January 1887. Mother's surname spelled 'Szliacsan' in original register, confirming the derivative index transcription. This reading upgrades src_003 (derivative index) with confirmation from the original page image and supplies the precise birth/baptism date and the child's death date."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" Matricula copulatorum, Liskova parish, Lipt\u00f3 County, Hungary, Entry Nr. 1, 8 January 1890, marriage of Josephus Karlik and Susanna Sliocsan; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-9W3P : accessed 3 August 2026); original register held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di (catalog entry 764336).",
+      "citation_detail": {
+        "who": "Josephus Karlik (groom) and Susanna Sliocsan (bride)",
+        "what": "Matricula copulatorum (Catholic marriage register), Liskova parish, Lipt\u00f3 County, Hungary \u2014 Entry Nr. 1, 8 January 1890",
+        "when_created": "8 January 1890",
+        "when_accessed": "3 August 2026",
+        "where": "FamilySearch, 'Slovakia, Church and Synagogue Books, 1592-1935' (collection 1554443); original register at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di, catalog 764336",
+        "where_within": "Matricula copulatorum, Liskova, 1890, Entry Nr. 1; image ark:/61903/3:1:33SQ-GRQ4-9W3P"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-9W3P",
+      "notes": "Original register image examined 3 August 2026. Latin-column format. Previously classified as derivative (index-only); upgraded to original upon examination of the register image. Bride recorded as 'Sliocsan' on register (= Szlj\u00e1csan phonetic variant). No birth year column exists \u2014 ages are stated (groom 47, bride 44). Index-derived birth year 1846 for bride is superseded by image. Bride's stated age 44 at January 1890 implies birth ~1845\u20131846, a 5-year discrepancy vs. research subject LDK6-6SH (confirmed birth 5 March 1850). Bride recorded as vidua (widow), indicating a prior unidentified marriage. Identity of this bride with LDK6-6SH is uncertain; discrepancy unresolved \u2014 do not link without corroboration.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" baptism entry for Susanna Szljacsan, Matricula Baptisatorum, Liszkov\u00e1 parish, Lipt\u00f3 County, Hungary, 5 March 1850; FamilySearch index (https://www.familysearch.org/ark:/61903/1:1:KHQN-KC7 : accessed 3 August 2026); original register held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di (catalog 764336), image ark:/61903/3:1:33S7-9RQ4-9CF5.",
+      "citation_detail": {
+        "who": "Susanna Szljacsan (baptized child); father Joannes Szljacsan; mother Maria Boron Munka",
+        "what": "Matricula Baptisatorum (Catholic baptism register), Liszkov\u00e1 parish, Lipt\u00f3 County, Hungary \u2014 entry for Susanna Szljacsan, 5 March 1850",
+        "when_created": "5 March 1850",
+        "when_accessed": "3 August 2026",
+        "where": "FamilySearch, 'Slovakia, Church and Synagogue Books, 1592-1935' (collection 1554443); original at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di, catalog 764336",
+        "where_within": "Matricula Baptisatorum, Liszkov\u00e1, 1850; index record ark:/61903/1:1:KHQN-KC7; original image ark:/61903/3:1:33S7-9RQ4-9CF5"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "log_entry_id": "log_014",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHQN-KC7",
+      "access_date": "2026-08-03",
+      "notes": "FamilySearch derivative index for Susanna Szljacsan's baptism 5 March 1850. Original image at ark:/61903/3:1:33S7-9RQ4-9CF5. Index used for person-evidence identity resolution. Tree source SG4J-XT3 covers the same ARK.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHQN-MSB : accessed 2026-08-03), entry for Susanna Janeczky, baptism 1884, Liskov\u00e1, Ru\u017eomberok, Slovakia; parents: Joannes Janeczky and Susanna Szliacsan.",
+      "citation_detail": {
+        "who": "Susanna Janeczky, child of Joannes Janeczky and Susanna Szliacsan",
+        "what": "Baptism register index entry, 'Slovakia, Church and Synagogue Books, 1592-1935', FamilySearch digital index of Roman Catholic parish register (catalog entry 764336, Cirkevn\u00e1 matrika, Liszk\u00f3falva)",
+        "when_created": "1884 (original register); FamilySearch index accessed 2026-08-03",
+        "when_accessed": "2026-08-03",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:KHQN-MSB; image at https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-94MT"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHQN-MSB",
+      "notes": "Original not examined \u2014 this is a FamilySearch digital index extracted from the Roman Catholic parish register (catalog entry 764336, Cirkevn\u00e1 matrika, Liszk\u00f3falva, 1755-1896). The original handwritten register image was not read; only the indexed transcription was accessed. The original image is available at https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-94MT but was not reviewed in this extraction. Surname variants ('Szliacsan' in index) may differ from the original register spelling.",
+      "log_entry_id": "log_015",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-94MT : accessed 3 August 2026), Liszk\u00f3falva Roman Catholic baptism register, 1884, entry no. 22, Susanna Janeczky; image of original parish register, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di.",
+      "citation_detail": {
+        "who": "Susanna Janeczky (child); Joannes Janeczky (father); Susanna Szliacsan (mother)",
+        "what": "Baptism register page image, entry no. 22, 27 April 1884",
+        "when_created": "1884 (entry); 1887 (Observatio annotation added post-hoc)",
+        "when_accessed": "3 August 2026",
+        "where": "Slovakia, Church and Synagogue Books, 1592-1935, FamilySearch; original register held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di",
+        "where_within": "Liszk\u00f3falva Roman Catholic baptism register, 1884, entry no. 22"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-94MT",
+      "access_date": "2026-08-03",
+      "notes": "Digital photographic reproduction of the original handwritten parish register. This is the best available remote access to the original content but is NOT the original manuscript. Original not examined in person \u2014 accessed as digital image only. The image source supplements and confirms the indexed record (src_003 / S3, ark:/61903/1:1:KHQN-MSB). Entry no. 22 contains an Observatio annotation 'mortua 1887 die 5\u00b0 Januarii' added post-hoc at the child's death in 1887.",
+      "log_entry_id": "log_016",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434818",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Susanna Szliacsan",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Szliacsan"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434818",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": null,
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "age 44 [image]; index previously stated birth year 1846 \u2014 superseded by primary source",
+      "date": "~1845",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated age",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Primary source (register image) records age 44 at marriage date 8 Jan 1890, implying birth ~1845\u20131846. The index had supplied birth year 1846, now superseded. Research subject LDK6-6SH has a confirmed birth date of 5 March 1850; if this bride is the same person she would have been approximately 39, not 44 \u2014 a 5-year discrepancy. This is a meaningful conflict indicator that raises genuine uncertainty about identity. Do not link this persona to LDK6-6SH without corroborating evidence resolving the discrepancy.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434818",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Josephus Karlik, 8 Jan 1890, Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g",
+      "date": "8 Jan 1890",
+      "date_certainty": "exact",
+      "place": "Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g",
+      "structured_value": {
+        "place": "Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Liszkov\u00e1, Lipt\u00f3, Hungary"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434818",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "spouse of Josephus Karlik",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434816",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Josephus Karlik",
+      "structured_value": {
+        "given": "Josephus",
+        "surname": "Karlik"
+      },
+      "information_quality": "primary",
+      "informant": "Josephus Karlik (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434816",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Josephus Karlik (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434816",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born approximately 1843 (indexed)",
+      "date": "~1843",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1843 is as indexed from the marriage register; the method of derivation (stated age, computed, or explicitly recorded year) cannot be confirmed without examining the original image.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434816",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Susanna Szliacsan, 8 Jan 1890, Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g",
+      "date": "8 Jan 1890",
+      "date_certainty": "exact",
+      "place": "Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g",
+      "structured_value": {
+        "place": "Liszkov\u00e1, Lipt\u00f3, Magyarorsz\u00e1g"
+      },
+      "information_quality": "primary",
+      "informant": "Josephus Karlik (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Liszkov\u00e1, Lipt\u00f3, Hungary"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_persona_id": "p_296011434816",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Susanna Szliacsan",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Josephus Karlik (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "age 47",
+      "structured_value": {
+        "age": "47"
+      },
+      "date": "~1843",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated age",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Age 47 at 8 Jan 1890 implies birth ~1842\u20131843. Consistent with index-supplied birth year 1843.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "viduus (widower)",
+      "structured_value": {
+        "marital_status": "widower"
+      },
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated status",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Latin 'viduus' = widower; indicates Josephus Karlik had a prior unidentified marriage before this 1890 union.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "groom",
+      "fact_type": "residence",
+      "value": "Liskova, house #65",
+      "place": "Liskova, Lipt\u00f3, Hungary",
+      "structured_value": {
+        "place": "Liskova, Lipt\u00f3, Hungary"
+      },
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated residence",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "House number 65, Liskova \u2014 recorded in the register at time of marriage.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_005",
+      "standard_place": "Liszkov\u00e1, Lipt\u00f3, Hungary"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "bride",
+      "fact_type": "residence",
+      "value": "Liskova, house #229",
+      "place": "Liskova, Lipt\u00f3, Hungary",
+      "structured_value": {
+        "place": "Liskova, Lipt\u00f3, Hungary"
+      },
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated residence",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "House number 229, Liskova \u2014 recorded in register at time of marriage. Bride's house number differs from groom's (#65), consistent with separate pre-marital households. Identity of this bride with LDK6-6SH (b.1850) is uncertain due to 5-year age discrepancy.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "log_entry_id": "log_005",
+      "standard_place": "Liszkov\u00e1, Lipt\u00f3, Hungary"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "vidua (widow)",
+      "structured_value": {
+        "marital_status": "widow"
+      },
+      "information_quality": "primary",
+      "informant": "officiating priest (plebanus Frem.) recording stated status",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Latin 'vidua' = widow; confirms Susanna Sliocsan had a prior unidentified marriage before this 1890 union. This prior marriage is not yet identified in research. Identity of this bride with LDK6-6SH (b.1850) remains uncertain \u2014 do not link without resolving the 5-year age discrepancy.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Josephus Hrnes\u00e1r",
+      "structured_value": {
+        "given": "Josephus",
+        "surname": "Hrnes\u00e1r"
+      },
+      "information_quality": "primary",
+      "informant": "Josephus Hrnes\u00e1r",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named witness to the marriage ceremony. FAN associate \u2014 may be kin or neighbor of bride or groom; relationship not stated.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6N9N-WX4H",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Ioannes J\u00falyp",
+      "structured_value": {
+        "given": "Ioannes",
+        "surname": "J\u00falyp"
+      },
+      "information_quality": "primary",
+      "informant": "Ioannes J\u00falyp",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named witness to the marriage ceremony. FAN associate \u2014 may be kin or neighbor of bride or groom; relationship not stated.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:KHQN-KC7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Susanna Szljacsan",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Szljacsan"
+      },
+      "information_quality": "primary",
+      "informant": "Joannes Szljacsan (father, presenting child for baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:KHQN-KC7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "Baptism, 5 March 1850, Liskov\u00e1, Ru\u017eomberok, Slovakia",
+      "date": "5 Mar 1850",
+      "date_certainty": "exact",
+      "place": "Liskov\u00e1, Ru\u017eomberok, Slovakia",
+      "information_quality": "primary",
+      "informant": "officiating priest, Liszkov\u00e1 Roman Catholic parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002",
+      "standard_place": "Liskov\u00e1, Ru\u017eomberok, Slovakia"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:KHQN-KC7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "officiating priest, Liszkov\u00e1 Roman Catholic parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:KHQN-KC7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "Father: Joannes Szljacsan",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_name": "Joannes Szljacsan"
+      },
+      "information_quality": "primary",
+      "informant": "Joannes Szljacsan (father, self-reporting at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:KHQN-KC7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "Mother: Maria Boron Munka",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_name": "Maria Boron Munka"
+      },
+      "information_quality": "primary",
+      "informant": "Joannes Szljacsan (father, reporting mother's name at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "child_1",
+      "record_persona_id": "p_14049072088",
+      "fact_type": "name",
+      "value": "Susanna Janeczky",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Janeczky"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Joannes Janeczky and Susanna Szliacsan)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "child_1",
+      "record_persona_id": "p_14049072088",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Joannes Janeczky and Susanna Szliacsan)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "child_1",
+      "record_persona_id": "p_14049072088",
+      "fact_type": "christening",
+      "value": "baptized 1884, Liskov\u00e1, Ru\u017eomberok, Slovakia",
+      "date": "1884",
+      "place": "Liskov\u00e1, Ru\u017eomberok, Slovakia",
+      "information_quality": "primary",
+      "informant": "parish priest/officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003",
+      "standard_place": "Liskov\u00e1, Ru\u017eomberok, Slovakia"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "child_1",
+      "record_persona_id": "p_14049072088",
+      "fact_type": "relationship",
+      "value": "child of Joannes Janeczky",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Joannes Janeczky and Susanna Szliacsan)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "child_1",
+      "record_persona_id": "p_14049072088",
+      "fact_type": "relationship",
+      "value": "child of Susanna Szliacsan",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Joannes Janeczky and Susanna Szliacsan)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "The mother's surname is indexed as 'Szliacsan', a variant transcription consistent with 'Szljacsan' (the research subject LDK6-6SH's surname) and 'Sliocsan/Szliacsan' seen in the Karlik marriage record. The indexed form may not exactly match the original register spelling \u2014 image confirmation of the original handwritten entry is needed to resolve the precise spelling and confirm identity with LDK6-6SH.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "father_1",
+      "record_persona_id": "p_14049072086",
+      "fact_type": "name",
+      "value": "Joannes Janeczky",
+      "structured_value": {
+        "given": "Joannes",
+        "surname": "Janeczky"
+      },
+      "information_quality": "primary",
+      "informant": "Joannes Janeczky (father, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "father_1",
+      "record_persona_id": "p_14049072086",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Joannes Janeczky (father, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "mother_1",
+      "record_persona_id": "p_14049072087",
+      "fact_type": "name",
+      "value": "Susanna Szliacsan",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Szliacsan"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (mother, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Surname indexed as 'Szliacsan' \u2014 a variant transcription of the research subject's surname 'Szljacsan' (LDK6-6SH). The same phonetic variant 'Sliocsan/Szliacsan' appears in the Karlik marriage record for the same research subject. The indexed form derives from a derivative (FamilySearch index), and the original register spelling has not been verified. Image confirmation of the original handwritten entry is needed to determine whether this is the same woman as LDK6-6SH (Susanna Szljacsan, born 1850, Liskov\u00e1). The surname divergence may be a transcription artifact; it may also reflect a genuinely different person.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:KHQN-MSB",
+      "record_role": "mother_1",
+      "record_persona_id": "p_14049072087",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Susanna Szliacsan (mother, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/3:1:33SQ-GRQ4-94MT",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "Baptized 27 April 1884, Liszk\u00f3falva (Liskov\u00e1)",
+      "date": "27 April 1884",
+      "date_certainty": "exact",
+      "place": "Liskov\u00e1, Ru\u017eomberok, Slovakia",
+      "structured_value": {
+        "year": "1884",
+        "place": "Liskov\u00e1, Ru\u017eomberok, Slovakia"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004",
+      "standard_place": "Liskov\u00e1, Ru\u017eomberok, Slovakia"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/3:1:33SQ-GRQ4-94MT",
+      "record_role": "child",
+      "fact_type": "death",
+      "value": "Died 5 January 1887 (from Observatio annotation in 1884 baptism register)",
+      "date": "5 January 1887",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1887"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Added as a marginal/observatio annotation to the original 1884 baptism entry; likely recorded post-hoc when the child died in 1887. The annotation reads '1887 die 5\u00b0 Januarii m. mortua' \u2014 'mortua' confirms death of the female child. The information is treated as primary because the annotation was recorded in the official parish register, presumably by a priest with knowledge of the death, though possibly from a separate death register cross-reference.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/3:1:33SQ-GRQ4-94MT",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Susanna Szliacsan",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Szliacsan"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Surname spelled 'Szliacsan' in the original register \u2014 same form as in the 1890 Karlik marriage record. This is a phonetic variant of 'Szljacsan' (the form in the subject LDK6-6SH's own 1850 baptism). The original spelling is significant: this confirms the index did not introduce a new variant; 'Szliacsan' was the form the priest actually wrote. The consistency across 1884 and 1890 records supports identification of this mother as Susanna Szljacsan (LDK6-6SH).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_018",
+      "person_id": "LDK6-6SH",
+      "confidence": "confident",
+      "rationale": "Name 'Susanna Szljacsan' is an exact match to LDK6-6SH. This FamilySearch index record (ark:/61903/1:1:KHQN-KC7, 'Slovakia, Church and Synagogue Books, 1592-1935') is the founding source for LDK6-6SH in the tree (SG4J-XT3). Record persona (Susanna Szljacsan, Female, baptized 5 March 1850, Liskov\u00e1) matches LDK6-6SH on all key attributes: name, sex, date, and place \u2014 an obvious match. No same_person score available (record_read, no staged sidecar).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_019",
+      "person_id": "LDK6-6SH",
+      "confidence": "confident",
+      "rationale": "Baptism date 5 March 1850, Liskov\u00e1 matches LDK6-6SH exactly. The 5 March 1850 Liskov\u00e1 baptism is the defining identity anchor for LDK6-6SH. Combined with name match in a_018, this is an obvious identity link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_020",
+      "person_id": "LDK6-6SH",
+      "confidence": "confident",
+      "rationale": "Sex Female consistent with LDK6-6SH. Part of the same obvious match established by a_018 and a_019.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_021",
+      "person_id": "LDK6-6SH",
+      "confidence": "confident",
+      "rationale": "Parentage assertion (father: Joannes Szljacsan) bears on the child \u2014 LDK6-6SH. The child persona in this baptism record is the same Susanna Szljacsan who is LDK6-6SH, per the obvious match established by a_018 and a_019. The father Joannes Szljacsan is LDKF-RZV (linked separately in pe_005).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_021",
+      "person_id": "LDKF-RZV",
+      "confidence": "confident",
+      "rationale": "Father name 'Joannes Szljacsan' is the Latin form of 'J\u00e1nos Szljacsan' (tree person LDKF-RZV). Latin Joannes = Hungarian J\u00e1nos \u2014 standard practice in 19th-century Slovak/Hungarian church registers. Surname 'Szljacsan' matches exactly. LDKF-RZV is already identified as Susanna's father in the tree, and this baptism register confirms that relationship. Strong match on name and family position.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_022",
+      "person_id": "LDK6-6SH",
+      "confidence": "confident",
+      "rationale": "Parentage assertion (mother: Maria Boron Munka) bears on the child \u2014 LDK6-6SH. Same child persona established by a_018\u2013a_020. The mother Maria Boron Munka is LDK6-6SZ (linked separately in pe_007).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_022",
+      "person_id": "LDK6-6SZ",
+      "confidence": "confident",
+      "rationale": "Mother name 'Maria Boron Munka' is an exact match to tree person LDK6-6SZ (Maria Boron Munka, Female). Name match is exact including the double surname element 'Boron Munka'. LDK6-6SZ is already identified in the tree as one of the mother candidates for LDK6-6SH. Strong/obvious match.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Groom name 'Josephus Karlik' is an exact match to tree person I1. I1 was created directly from this marriage record (src_001, Karlik marriage 8 Jan 1890, Liszkov\u00e1). The groom persona in this record IS I1 by definition \u2014 obvious match. No same_person score available (record_read, no sidecar).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male consistent with I1. Part of the same obvious match established by a_006.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage event (8 Jan 1890, Liszkov\u00e1) from the groom\u2019s record role \u2014 directly about I1 (Josephus Karlik). Obvious match: same record that established I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion (spouse of Susanna Szliacsan) from the groom\u2019s record role \u2014 bears on I1 as the subject of the relationship. Obvious match.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_030",
+      "person_id": "LDK6-6SH",
+      "confidence": "probable",
+      "rationale": "Mother's name 'Susanna Szliacsan' on the 1884 Liskov\u00e1 baptism is a known phonetic transcription variant of Szljacsan \u2014 the same variant appears on the Karlik marriage record (1890, Liszkov\u00e1) as 'Sliocsan/Szliacsan'. Place (Liskov\u00e1) matches exactly. No age is stated in this record so the 5-year age discrepancy from c_001 is not directly applicable here. Narrative coherence: a Janeczky wife in 1884 who was widowed by 1890 is consistent with LDK6-6SH's status as 'vidua' on the Karlik marriage. Moderate match \u2014 name variant + place + coherent narrative. Source is derivative; original image (33SQ-GRQ4-94MT) not yet verified. Autonomous mode: Moderate \u2192 probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_031",
+      "person_id": "LDK6-6SH",
+      "confidence": "probable",
+      "rationale": "Sex Female for mother persona Susanna Szliacsan (p_14049072087) matches LDK6-6SH (Female). Part of the same Moderate identity match as a_030.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_027",
+      "person_id": "LDK6-6SH",
+      "confidence": "probable",
+      "rationale": "The child Susanna Janeczky's baptism names 'Susanna Szliacsan' as her mother. This assertion bears on LDK6-6SH as the mother: same name variant (Szliacsan = Szljacsan), same place (Liskov\u00e1), narrative coherent with her known 1890 widowhood. Moderate match, autonomous mode: probable. Direct evidence that LDK6-6SH had a daughter named Susanna.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_023",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "I3 (Susanna Janeczky) was created to represent this exact record persona (p_14049072088). The baptism entry names 'Susanna Janeczky' as the principal. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_024",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex Female for the child persona matches I3. Obvious link \u2014 I3 represents this persona.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Baptism 1884, Liskov\u00e1 \u2014 directly establishes I3's christening event. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Child-to-father relationship assertion: bears on I3 as the child. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Child-to-father relationship assertion names Joannes Janeczky as the father. I2 was created to represent this persona (p_14049072086). Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Child-to-mother relationship assertion: bears on I3 as the child. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name 'Joannes Janeczky' on the father persona. I2 was created to represent this exact persona (p_14049072086). Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex Male for the father persona matches I2. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_032",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Original register image confirms Susanna Janeczky was baptized 27 April 1884 in Liskov\u00e1. I3 was created to represent this persona. Obvious link \u2014 original source corroborates derivative index.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_033",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Observatio annotation in original register records child's death on 5 January 1887. I3 is the only Susanna Janeczky in the tree. Obvious link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_034",
+      "person_id": "LDK6-6SH",
+      "confidence": "probable",
+      "rationale": "Mother's name 'Susanna Szliacsan' confirmed in the ORIGINAL register image (not merely the derivative index). This is primary-information evidence. Same phonetic variant as the Karlik marriage record (1890). Liskov\u00e1 place matches exactly. Moderate match \u2014 name variant + place + coherent narrative \u2014 original source confirmation strengthens the inference but does not eliminate the open age discrepancy in c_001. Autonomous mode: Moderate \u2192 probable.",
+      "created": "2026-08-03"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "Is the Susanna Sliocsan/Szliacsan who married Josephus Karlik on 8 January 1890 in Liszk\u00f3falva (Liszkov\u00e1 parish, Lipt\u00f3 County) the same person as the research subject LDK6-6SH (Susanna Szljacsan, born/baptized 5 March 1850, Liszkov\u00e1)? The bride\u2019s stated age 44 at marriage implies a birth year of approximately 1845\u20131846, conflicting 5 years with the subject\u2019s confirmed baptism date of 5 March 1850.",
+      "disputed_attribute": null,
+      "identity_question": "Is the Susanna Sliocsan/Szliacsan who married Josephus Karlik on 8 January 1890 in Liszkov\u00e1 the same person as research subject LDK6-6SH (Susanna Szljacsan, born 5 March 1850, Liszkov\u00e1)? The bride\u2019s stated age 44 at marriage implies b.~1845\u20131846 \u2014 a 5-year conflict with the subject\u2019s confirmed 1850 baptism.",
+      "competing_assertion_ids": [
+        "a_003",
+        "a_019"
+      ],
+      "independence_analysis": "The two sources creating this conflict are independent. The Karlik marriage register (src_001, original image, 8 Jan 1890) was created by the officiating Catholic priest (plebanus Frem.) recording the parties\u2019 ages and details at the ceremony \u2014 a distinct record-creation event from the baptism. The baptism index (src_002, derivative of the Liszkov\u00e1 parish baptism register, 5 March 1850) was created 40 years earlier by a parish priest recording the baptism. Different record types, different institutional origins, different informants (marriage: bride self-reporting or priest estimating; baptism: father Joannes Szljacsan presenting the child), and different times of creation. The two sources are fully independent for this conflict.",
+      "weighing_analysis": "Three factors are decisive. First, TEMPORAL PROXIMITY: The baptism record was created at the time of the event (1850), giving it far stronger proximity to the birth than the marriage register (1890). Age statements in marriage registers are made 40 years after the fact, and self-reported ages are subject to memory lapses, deliberate adjustments (social convention, widowhood), and clerical rounding. Second, INFORMANT RELIABILITY: In the baptism, a parish priest recorded the event from the father\u2019s direct report within days of birth. In the marriage, the age was stated by the bride or transcribed by the priest from a statement. First-report ages at birth are consistently more reliable. Third, MAGNITUDE OF DISCREPANCY: A 5-year gap is unusually large. Typical marriage-register age errors are 1\u20132 years; a 5-year error, while possible, raises the genuine possibility of a distinct person \u2014 another Susanna Szliacsan born approximately 1845 in Liszkov\u00e1. Name variants (Sliocsan = Szljacsan, standard phonetic shift) and location (same village) support identity, but cannot resolve the age conflict. The balance of evidence favors the 1850 birth date as more reliable, but no single record independently confirms whether the 1890 bride\u2019s birth year was 1846 or 1850.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "The conflict cannot be resolved with current evidence. Two interpretations are equally coherent: (1) The Karlik bride IS the research subject, and the marriage register misstated her age by 5 years \u2014 a plausible but unusually large transcription or self-reporting error. (2) The Karlik bride is a DIFFERENT Susanna Szliacsan born approximately 1845\u20131846 in Liszkov\u00e1, and the research subject\u2019s marriage remains unidentified. The baptism record (src_002) establishes only that a Susanna Szljacsan was born in Liszkov\u00e1 on 5 March 1850; it cannot speak to whether there was another same-named woman born five years earlier. Without a second source confirming the bride\u2019s specific birth year, or the bride\u2019s prior marriage record (she is listed as vidua), the conflict is unresolvable by weighing alone. Decisive record types that would resolve this: (a) The original Liszkov\u00e1 baptism image (ark:/61903/3:1:33S7-9RQ4-9CF5) \u2014 would confirm the 1850 date and any sibling entries that might show a same-named older sister; (b) The prior marriage record for Susanna Sliocsan (she was vidua in 1890) \u2014 would name her birth year or age in a second independent record; (c) MyHeritage Slovakia Church and Synagogue Books 1592\u20131910 (pli_006, deferred) \u2014 might contain an additional indexed marriage or birth record confirming her birth year; (d) A death or civil record post-1895 for Susanna Karlik n\u00e9e Szliacsan \u2014 could confirm birth year.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_001",
+        "q_002"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The 'Susanna Szliacsan' named as mother in the 1884 Liskov\u00e1 baptism of Susanna Janeczky is the same woman as the 1890 Karlik bride and therefore the research subject LDK6-6SH (Susanna Szljacsan, b. 5 March 1850). Alternative rejected: a second, different Susanna Szliacsan living in Liskov\u00e1 within the same 6-year window is possible but substantially less parsimonious given name specificity and place overlap.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_030",
+        "a_034"
+      ],
+      "contradicting_assertion_ids": [
+        "a_019"
+      ],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Two identity links sustain the q_002 'probable' conclusion: (1) 1884 mother Szliacsan = 1890 Karlik bride \u2014 supported by identical name form, identical village, widow-then-remarriage narrative; (2) 1890 Karlik bride = LDK6-6SH \u2014 blocked by c_001 (5-year age discrepancy, a_003 vs a_019). The Janeczky marriage record (unlocated) would be the decisive test: if it names a Susanna Szliacsan with a birth year near 1850, link (2) is confirmed; near 1846, the Karlik age entry is vindicated and LDK6-6SH may be a different person.",
+      "related_question_ids": [
+        "q_001",
+        "q_002"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_009",
+        "a_010",
+        "a_012",
+        "a_014",
+        "a_015",
+        "a_018",
+        "a_019"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch Slovakia Church and Synagogue Books 1592\u20131935 (collection 1554443) was searched under Szljacsan and five spelling variants (Szliacsan, Sliocsan, Sliacsan, Szlja*), yielding one candidate marriage (Karlik\u2013Sliocsan, 8 Jan 1890). The 1869 Hungarian census for Liszk\u00f3falva was searched \u2014 nil result. Full-text search with five surname variants returned nil across the FamilySearch corpus (Lipt\u00f3 County church registers are not in the FTS transcription corpus). The original Liszk\u00f3falva church register (Cirkevn\u00e1 matrika 1755\u20131896, catalog 764336, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di) is not in FamilySearch RMS and could not be browsed remotely. Neighboring parishes (pli_004) have the same access barrier. MyHeritage Slovakia Church and Synagogue Books 1592\u20131910 (pli_006) was deferred \u2014 requires interactive user capture; search URL generated (log_013) but capture not received. Research is not declared exhaustive (declared: false).",
+      "narrative_markdown": "# Possible Marriage: Susanna Szljacsan of Liszk\u00f3falva to Josephus Karlik (1890)\n\n## Conclusion\n\nSusanna Szljacsan (born/baptized 5 March 1850, Liszk\u00f3va, Lipt\u00f3 County, Kingdom of Hungary; tree id LDK6-6SH) **possibly** married Josephus Karlik on 8 January 1890 in Liszk\u00f3va, Lipt\u00f3 County. This conclusion is provisional: an unresolved 5-year discrepancy between the bride\u2019s stated age in the marriage register and the subject\u2019s confirmed baptism year prevents confident identification (conflict c_001). Research is not declared exhaustive.\n\n## Subject Identity\n\nThe research subject is established by a FamilySearch derivative index record of her baptism: \u201cSlovakia, Church and Synagogue Books, 1592\u20131935,\u201d baptism entry for Susanna Szljacsan, Matricula Baptisatorum, Liszkov\u00e1 parish, Lipt\u00f3 County, Hungary, 5 March 1850; FamilySearch index (https://www.familysearch.org/ark:/61903/1:1:KHQN-KC7 : accessed 3 August 2026); original register held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di (catalog 764336), image ark:/61903/3:1:33S7-9RQ4-9CF5. The index records her as Susanna Szljacsan, Female, daughter of Joannes Szljacsan and Maria Boron Munka.\n\n## Marriage Candidate\n\nA search of FamilySearch collection 1554443 under Szljacsan and five spelling variants produced one Szljacsan-variant marriage in Liszkov\u00e1: Josephus Karlik, widower (*viduus*), age 47, house \\#65 Liszkov\u00e1, married Susanna Sliocsan, widow (*vidua*), age 44, house \\#229 Liszkov\u00e1, on 8 January 1890. The original register image was examined, confirming the stated ages in Latin column format: \u201cSlovakia, Church and Synagogue Books, 1592\u20131935,\u201d Matricula copulatorum, Liskova parish, Lipt\u00f3 County, Hungary, Entry Nr. 1, 8 January 1890, marriage of Josephus Karlik and Susanna Sliocsan; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:33SQ-GRQ4-9W3P : accessed 3 August 2026); original register held at \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di (catalog entry 764336). Both parties were previously married; the bride\u2019s widow status indicates a prior unidentified marriage.\n\n## Identity Assessment\n\n**Supporting factors.** The surname \u201cSliocsan\u201d is a phonetic variant of \u201cSzljacsan\u201d consistent with 19th-century Slovak/Hungarian orthographic practice. The bride resided in house \\#229 Liszkov\u00e1 \u2014 the same village as the research subject. A woman born 5 March 1850 would have been approximately 39 at the January 1890 marriage, consistent with the documented widow status.\n\n**Unresolved conflict (c_001).** The register records the bride\u2019s age as 44, implying a birth year of approximately 1845\u20131846 \u2014 a 5-year discrepancy from the subject\u2019s confirmed 1850 baptism. Two interpretations remain coherent: (1) the Karlik bride IS the research subject and the register misstated her age by five years; (2) the bride is a different Susanna Szliacsan born approximately 1845 in Liszkov\u00e1. The baptism record is temporally more reliable for the birth year (created at the event in 1850 vs. a self-reported age 40 years later), but the 5-year magnitude cannot be explained away without additional corroboration. See conflict c_001 for full independence and weighing analyses.\n\n## Search Summary\n\nFamilySearch Slovakia Church and Synagogue Books 1592\u20131935 (collection 1554443) was searched under Szljacsan and five spelling variants. The 1869 Hungarian census returned nil. Full-text search with five surname variants returned nil (Lipt\u00f3 County church registers are not in the FTS corpus). The original Liszkov\u00e1 church register (catalog 764336, \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di) is not in FamilySearch RMS; neighboring parishes share the same access barrier. MyHeritage (pli_006) was deferred \u2014 requires interactive capture. Research not declared exhaustive.\n\n## Tier: Possible\n\nOne plausible candidate was identified. Evidence supports a credible hypothesis (name variant, same village, consistent widow status) but an unresolved conflict (5-year age discrepancy, c_001) prevents a higher tier. Under GPS requirements, an unresolved conflict disputing the concluded relationship caps the tier at possible.\n\n**To advance to probable:** Complete MyHeritage search (pli_006, interactive session required); examine the original baptism image (ark:/61903/3:1:33S7-9RQ4-9CF5) for sibling data; search for Susanna Sliocsan\u2019s prior marriage record (as *vidua* in 1890) \u2014 a second independent birth-year statement would be decisive."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_027",
+        "a_030",
+        "a_031",
+        "a_032",
+        "a_033",
+        "a_034"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch 'Slovakia, Church and Synagogue Books, 1592-1935' (collection 1554443) for baptisms of girls named Susanna in Liskov\u00e1 ca. 1878\u20131892 with mother Szljacsan/Szliacsan variants (pli_007, log_015): found one candidate, Susanna Janeczky (1884). Original page image read directly to verify (log_016, src_004). FTS search (pli_009) skipped \u2014 Lipt\u00f3 County registers not in FTS corpus (confirmed in prior q_001 research, log_005). MyHeritage (pli_010) and physical archive \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di (pli_011) are inaccessible in autonomous mode but are fallback repositories rendered moot by the confirmed original-image find. Exhaustiveness declared (q_002, 2026-08-03).",
+      "narrative_markdown": "## Q_002 Proof Summary\n\n**Question:** Was a daughter named Susanna baptized approximately 1884 in Liskov\u00e1 to Susanna Szljacsan?\n\n**Tier: Probable**\n\n### Conclusion\n\nA daughter named Susanna was in all probability baptized on **27 April 1884** in Liskov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County, Hungary \u2014 now Ru\u017eomberok district, Slovakia \u2014 to parents **Joannes Janeczky** and **Susanna Szliacsan**. The child was registered as Susanna Janeczky and died young, on **5 January 1887**, at approximately 2 years 8 months. The mother \"Susanna Szliacsan\" is identified at *probable* confidence as the research subject Susanna Szljacsan (LDK6-6SH), but the conclusion falls short of GPS *proved* because an unresolved 5-year age discrepancy (conflict c_001) prevents a confident identity link.\n\n### Evidence\n\nThe search of \"Slovakia, Church and Synagogue Books, 1592-1935\" (FamilySearch collection 1554443) for births in Liskov\u00e1 ca. 1878\u20131892 with a mother surnamed Szljacsan (and phonetic variants) returned exactly one candidate: **Susanna Janeczky** (src_003, log_015, pli_007). The original page image of the Liszk\u00f3falva Roman Catholic baptism register was then read directly (src_004, ark:/61903/3:1:33SQ-GRQ4-94MT, log_016). Entry no. 22 of 1884 confirms: child Susanna, legitimate, baptized 27 April 1884, father Joannes Janeczky, mother Susanna Szliacsan, house no. 115. The Observatio column records: *1887 die 5\u00b0 Januarii m. mortua* \u2014 the child died 5 January 1887. The index and image agree on all facts; the image supplies day-level precision and the death annotation.\n\n### Mother identity (Susanna Szliacsan \u2192 LDK6-6SH)\n\nThe mother's surname \"Szliacsan\" in the 1884 register is the identical spelling used in the 1890 Karlik marriage record (src_001), where the bride is \"Susanna Sliocsan/Szliacsan.\" Both records place a woman of this name in Liskov\u00e1/Liszk\u00f3falva within a 6-year window. The research subject LDK6-6SH was baptized in Liskov\u00e1 on 5 March 1850 under the spelling \"Szljacsan\" \u2014 a recognised phonetic variant. The identity link is assessed at *probable* (pe_012, pe_014, pe_025): name variant confirmed in original register, place identical, narrative coherent (a Janeczky wife in 1884 who was widowed by January 1890 when she married Karlik).\n\nThe principal obstacle to *proved* is **conflict c_001** (unresolved): the Karlik marriage record states the bride's age as 44 in January 1890 (implying b. ~1845\u20131846), conflicting with LDK6-6SH's confirmed birth date of 5 March 1850. The mother in the 1884 baptism and the Karlik bride are almost certainly the same woman (same name, same place), but whether that woman is definitively LDK6-6SH \u2014 born 1850 \u2014 cannot be established until c_001 is resolved.\n\n### Key collateral finding\n\nThe child's father being **Joannes Janeczky** establishes that (a) Susanna Szliacsan had a prior marriage to Janeczky before the 1890 Karlik marriage; and (b) Joannes Janeczky had died before January 1890, explaining the bride's *vidua* (widow) status in the Karlik record. This prior marriage (unlocated) almost certainly predates 1884.\n\n### Limitations\n\n- The index (src_003) and original image (src_004) derive from the same underlying document; they are confirmatory, not independent.\n- The physical register (\u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di, cat. 764336) was not accessed in person.\n- The child Susanna Janeczky died 5 January 1887 and did not survive to adulthood."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-03T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-08-03T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Slovakia",
+      "for_place": "Liskov\u00e1 (Liszk\u00f3falva), Ru\u017eomberok, Slovakia",
+      "time_period": "1870-1895",
+      "jurisdictions": [
+        {
+          "name": "Liszk\u00f3falva, Lipt\u00f3, Kingdom of Hungary",
+          "date_range": "pre-1918"
+        },
+        {
+          "name": "Liskov\u00e1, Ru\u017eomberok, Czechoslovakia",
+          "date_range": "1922-1960"
+        },
+        {
+          "name": "Liskov\u00e1, Liptovsk\u00fd Mikul\u00e1\u0161, Czechoslovakia",
+          "date_range": "1960-1993"
+        },
+        {
+          "name": "Liskov\u00e1, Ru\u017eomberok, Slovakia",
+          "date_range": "1993-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1554443",
+          "title": "Slovakia, Church and Synagogue Books, 1592-1935",
+          "date_range": "1592-1935"
+        },
+        {
+          "id": "1986782",
+          "title": "Slovakia Census, 1869",
+          "date_range": "1869"
+        }
+      ],
+      "quirks": [
+        "For the 1870-1895 period, Liskov\u00e1 was Liszk\u00f3falva in Lipt\u00f3 County, Kingdom of Hungary \u2014 use the Hungarian place name and FamilySearch catalog entry 764336 (Cirkevn\u00e1 matrika, 1755-1896) for browse-only images of the local church register held at the \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di.",
+        "The indexed Slovakia Church and Synagogue Books collection (1554443) should be searched first for name-based lookup; catalog entry 764336 is browse-only when the indexed collection misses a record.",
+        "Hungarian civil registration began in October 1895 \u2014 for events just before or after that date, check both church and civil registers.",
+        "Church registers are organized within collection 1554443 by district; look under Ru\u017eomberok district for Liskov\u00e1/Liszk\u00f3falva records.",
+        "Pre-1784 registers are in Latin; post-1784 registers are mainly in Hungarian. Slovak Genealogical Word List and Hungarian Genealogical Word List are essential reading aids.",
+        "Not every village had its own parish \u2014 if catalog 764336 is sparse for the target years, check neighboring Ru\u017eomberok-district parishes: Likavka (catalog 762316, 1884-1897), L\u00fa\u010dky (catalog 764524, 1790-1921), Ludrov\u00e1 (catalog 764525, 1713-1936), Liptovsk\u00e9 Rev\u00face (catalog 762810, 1787-1898), Liptovsk\u00fd Michal (catalog 762997, 1687-1901).",
+        "The surname Szljacsan is Slovak; in Hungarian-language registers it may be spelled phonetically (e.g., Szljacs\u00e1n or a variant). Try wildcard/phonetic searches and also search by given name + village + date range if surname searches fail.",
+        "The 1869 Hungarian Census (collection 1986782) is images-only and must be browsed by district \u2014 it can place a family in the village before vital events.",
+        "The Lipt\u00f3 County noblemen's genealogy (FamilySearch Catalog 215298) may be useful if the family had nobility claims."
+      ],
+      "guide_markdown": "# Locality Guide: Liskov\u00e1 (Liszk\u00f3falva), Lipt\u00f3 County \u2014 1870\u20131895\n\n## Jurisdiction overview\n- **Historical name (1870\u20131895):** Liszk\u00f3falva (also Liszk\u00f3), Lipt\u00f3 County, Kingdom of Hungary (Austro-Hungarian Empire)\n- **Modern name:** Liskov\u00e1, Ru\u017eomberok District, Slovakia\n- **Nearest town:** Ru\u017eomberok (Hungarian: R\u00f3zsahegy)\n- **Parent jurisdiction:** Lipt\u00f3 County, Kingdom of Hungary\n- **Economy:** Predominantly agricultural; V\u00e1h River valley\n- **Religious denominations:** Roman Catholic (dominant in Lipt\u00f3); Lutheran/Evangelical minority\n- **Key historical events:** Part of Austro-Hungarian Empire until 1918; Hungarian civil registration commenced October 1895\n\n## Boundary changes\n- **Pre-1918:** Liszk\u00f3falva, Lipt\u00f3 County, Kingdom of Hungary\n- **1922\u20131960:** Liskov\u00e1, Ru\u017eomberok, Czechoslovakia\n- **1960\u20131993:** Liskov\u00e1, Liptovsk\u00fd Mikul\u00e1\u0161, Czechoslovakia\n- **1993\u2013present:** Liskov\u00e1, Ru\u017eomberok District, Slovakia\n\nRecords created 1870\u20131895 were created under Hungarian authority and are now held at the **\u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di** (State Regional Archive, Byt\u010da), which holds Lipt\u00f3 County church and civil records.\n\n## Available record types\n\n### Church records \u2605 PRIMARY SOURCE for 1870\u20131895\n- **Denominations present:** Roman Catholic (primary); Lutheran minority\n- **Liszk\u00f3falva/Liskov\u00e1 local register:** *Cirkevn\u00e1 matrika, 1755\u20131896* \u2014 \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010de; **browse-only images** at FamilySearch Catalog entry 764336 (https://www.familysearch.org/en/search/catalog/764336)\n- **Slovakia Church and Synagogue Books, 1592\u20131935** (FamilySearch collection 1554443, 19M records, 60M persons, 1.6M images): **Indexed + images** \u2014 name-searchable; covers all of Slovakia including Ru\u017eomberok district records. Search here first.\n- **Neighboring Ru\u017eomberok-area parishes** (if Liskov\u00e1 records are incomplete):\n  - Likavka RC: 1884\u20131897, catalog 762316 \u2014 browse-only images\n  - L\u00fa\u010dky RC: 1790\u20131921, catalog 764524 \u2014 browse-only images\n  - Ludrov\u00e1 RC: 1713\u20131936, catalog 764525 \u2014 browse-only images\n  - Liptovsk\u00e9 Rev\u00face RC: 1787\u20131898, catalog 762810 \u2014 browse-only images\n  - Liptovsk\u00fd Michal RC: 1687\u20131901, catalog 762997 \u2014 browse-only images\n- **Record types:** Baptisms (krsty), marriages (man\u017eelstv\u00e1), deaths (\u00famrtia)\n- **Language:** Latin (earlier records), Hungarian (from ~1784 per Emperor Joseph II's decree), Slovak\n- **Also at MyHeritage:** Slovakia Church and Synagogue Books, 1592\u20131910 (subscription)\n\n### Vital records (civil registration)\n- **Start date:** October 1895\n- **Pre-registration alternatives:** Church records above\n- **Where held:** Local civil registry offices and \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di\n\n### Census records\n- **1869 Hungarian Census** (FamilySearch collection 1986782): **images only** \u2014 browse by district; can place a family in Liszk\u00f3falva before vital-record events\n\n### Military records\n- Austro-Hungarian conscript lists and service records apply to male subjects of military age\n- Resource: [Military Records in Upper Hungary](http://www.iabsi.com/gen/public/military_records_in_upper_hungar.htm)\n\n### Cemetery records\n- Virtual cemeteries: [cintoriny.sk](http://www.cintoriny.sk/src/index.php?lan=en) and [slovensk\u00e9 cintor\u00edny](https://www.slovenskecintoriny.sk/)\n- Physical burial registers held with the local parish\n\n### Immigration/emigration records\n- Hamburg Passenger Lists, 1850\u20131934 (Ancestry)\n- Emigrants from Slovakia commonly used Hamburg or Bremen\n\n## Repository guide\n\n| Repository | Collections | Access |\n|---|---|---|\n| FamilySearch | Collection 1554443 (indexed); Catalog 764336 (Liszk\u00f3falva, browse images); Catalog 762316 (Likavka, browse images); Collection 1986782 (1869 Census, images) | Free |\n| MyHeritage | Slovakia Church and Synagogue Books, 1592\u20131910 | Subscription |\n| \u0160t\u00e1tny oblastn\u00fd arch\u00edv v Byt\u010di | Original Lipt\u00f3 County church registers and civil records | In-person; digitized copies at FamilySearch |\n\n## Records NOT online\n- Civil registration 1895+ (local civil registry offices and Slovak state archives)\n- Lipt\u00f3 County estate/probate records for 1870\u20131895\n- Land deed books\n\n## Known record losses\n- Many early Slovak church books were lost during Turkish invasions and Slovak rebellions ca. 1600\u20131700; Lipt\u00f3 County is less affected than eastern Slovakia. The Liszk\u00f3falva register opens in 1755, which comfortably pre-dates the 1870\u20131895 target period.\n\n## Research tips\n1. **Search the indexed collection first:** FamilySearch collection 1554443 is name-indexed. Search for 'Szljacsan' (and variants) before browsing.\n2. **Browse catalog 764336 directly:** The Liszk\u00f3falva-specific register (1755\u20131896) is browse-only. Browse within it for marriage and baptism events in the 1870s\u20131890s.\n3. **Spelling variants matter:** 'Szljacsan' is a Slovak surname; in Latin/Hungarian registers it may be rendered as 'Szljacs\u00e1n' or phonetically. Try wildcards and also search by given name + place + date range.\n4. **District navigation:** Within collection 1554443, records are organized by district then parish. Look under Ru\u017eomberok district for Liskov\u00e1/Liszk\u00f3falva entries.\n5. **Language tools:** Use the [Slovak Genealogical Word List](https://www.familysearch.org/en/wiki/Slovakia_Genealogical_Word_List) and [Hungarian Genealogical Word List](https://www.familysearch.org/en/wiki/Hungarian_Genealogical_Word_List) to read register entries.\n6. **Check neighboring parishes:** If the Liszk\u00f3falva register is incomplete, systematically check the neighboring Ru\u017eomberok-district parishes listed above \u2014 smaller villages were often served by a nearby mother parish.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-03"
+    }
+  ]
+}

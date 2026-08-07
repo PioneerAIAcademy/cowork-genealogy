@@ -26,6 +26,7 @@ import {
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { readProjectJson } from "../utils/project-io.js";
+import { withRetry } from "../utils/place-resolver.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -38,9 +39,32 @@ export { parseUpstreamErrorBody };
 const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
 
+// Per-attempt ceiling for the FamilySearch search fetch. FS search can be slow;
+// without a timeout a stalled connection hangs until the OS/transport kills it,
+// which surfaces upstream as a dead turn mid-search rather than an actionable
+// error (issue #1316). Retried up to 3× by fetchSearchWithRetry, so worst-case
+// wall time before the terminal error is ~3×25s plus backoff.
+const SEARCH_TIMEOUT_MS = 25_000;
+
 const PAGINATION_CAP = 4999;
 /** Most jurisdiction candidates a nil marriage search will offer. See below. */
 const MAX_JURISDICTION_HINTS = 8;
+/**
+ * Emitted on every `projectPath`-carrying search that names no subject — 112 of
+ * the 171 calls (65.5%) across the six committed `jimmie-jewel-neal` runlogs, the
+ * complement of the 59 that carried `subjectId`. Kept short on purpose: at that
+ * rate its cost is paid per call while its benefit is being un-forgettable.
+ *
+ * The "omit it when" clause mirrors the tool schema's own wording rather than
+ * narrowing it. A person not yet in the tree is the second legitimate reason to
+ * omit, and since this note is re-delivered on two thirds of all searches, a
+ * narrower phrasing here is the one that would get reinforced.
+ */
+const RANKING_SKIPPED_NOTE =
+  "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
+  "not run. Pass the tree person this search is about as `subjectId` to enable " +
+  "both. Omit it only when the search is not about a specific tree person — a " +
+  "broad survey, or a person not yet in the tree.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -202,9 +226,13 @@ export function validateInput(input: RecordSearchInput): void {
     );
   }
 
+  // Object.hasOwn, not `in`: `in` walks the prototype chain, so the
+  // LLM-supplied `recordType: "constructor"` would satisfy the guard and then
+  // index out `Object` at the buildSearchUrl call below, sending
+  // `f.recordType=function%20Object()%20{...}` upstream instead of rejecting.
   if (
     input.recordType !== undefined &&
-    !(input.recordType in RECORD_TYPE_TO_INT)
+    !Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)
   ) {
     throw new Error(
       "recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."
@@ -280,7 +308,10 @@ export function buildSearchUrl(input: RecordSearchInput): string {
       `${input.recordCountry},${input.recordSubdivision}`
     );
   }
-  if (input.recordType) {
+  // hasOwn again, not just a truthiness check: buildSearchUrl is exported and
+  // reachable without validateInput, so the emit site keeps the invariant on
+  // its own rather than trusting the caller to have validated first.
+  if (input.recordType && Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)) {
     add("f.recordType", RECORD_TYPE_TO_INT[input.recordType]);
   }
   if (input.maritalStatus) add("f.maritalStatus", input.maritalStatus);
@@ -471,6 +502,39 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
   return result;
 }
 
+/**
+ * One FamilySearch search fetch with a per-attempt timeout, shaped for retry by
+ * `withRetry` (#1316). The retryable-vs-terminal decision is made by throw-vs-return,
+ * so `withRetry`'s "retry every thrown error" contract is exactly right and needs no
+ * predicate:
+ *   - THROW on transient states — 429, 5xx, and any `fetch` rejection (network error
+ *     or the AbortSignal.timeout firing) — so `withRetry` retries them.
+ *   - RETURN the response for 2xx and for permanent 4xx (400/401/403/404), so the
+ *     caller's `!response.ok` block handles them once, without retrying.
+ * A fresh `AbortSignal.timeout` is created on every call, i.e. per attempt, because
+ * `withRetry` invokes this function anew each time (an aborted signal can't be reused).
+ */
+async function fetchSearchWithRetry(
+  url: string,
+  token: string
+): Promise<Response> {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Accept-Language": "en",
+      "User-Agent": BROWSER_USER_AGENT,
+    },
+    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
+  });
+  if (response.status === 429 || response.status >= 500) {
+    throw new Error(
+      `FamilySearch search API error: ${response.status} ${response.statusText}`
+    );
+  }
+  return response;
+}
+
 export async function recordSearchTool(
   input: RecordSearchInput
 ): Promise<RecordSearchToolResponse> {
@@ -485,14 +549,28 @@ export async function recordSearchTool(
   const token = await getValidToken();
   const url = buildSearchUrl(paired);
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
-    },
-  });
+  // #1316: a timed-out or transiently-failed search must surface as an explicit,
+  // distinguishable error the agent reacts to — never as a short/empty result set
+  // that reads like an exhaustive search. A bare fetch had no timeout (a slow FS
+  // connection hung the turn) and no retry (one blip was fatal). fetchSearchWithRetry
+  // adds a per-attempt timeout and THROWS on transient states (429/5xx, network,
+  // timeout) so withRetry retries them; permanent 4xx (400/401/403) are RETURNED
+  // and handled unchanged by the `!response.ok` block below (retrying them is
+  // pointless). getValidToken() stays outside the retry so an auth failure surfaces
+  // immediately without re-authenticating per attempt.
+  let response: Response;
+  try {
+    response = await withRetry(() => fetchSearchWithRetry(url, token), {
+      attempts: 3,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `FamilySearch record search did not complete after 3 attempts ` +
+        `(network timeout or transient error): ${detail}. This is a transient ` +
+        `failure, NOT an empty result — coverage is unknown.`
+    );
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -520,6 +598,9 @@ export async function recordSearchTool(
         `FamilySearch search rejected the query (400 ${response.statusText}).`
       );
     }
+    // Only NON-retryable non-OK statuses reach here (e.g. 404). 429/5xx are
+    // intercepted and thrown inside fetchSearchWithRetry, so they are retried
+    // and, if still failing, surface via the terminal error above — never here.
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
     );
@@ -544,6 +625,38 @@ export async function recordSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // Placed before `results` because the run-log capture bounds response size
+    // and `results` is the largest field, so a trailing field is what gets
+    // dropped first. Belt and braces with the capture fix in
+    // `eval/harness/e2e/orchestrator.py`: this response has more than one
+    // consumer and only one of them is being widened here.
+    //
+    // The condition is `projectPath` present and `subjectId` absent, and NOTHING
+    // else. No tree read, no name/date matching, no attempt to judge whether the
+    // search "looked like" it was about a tree person — that test is a heuristic,
+    // and gating the signal on an unvalidated heuristic would bias the very
+    // coverage measurement the signal exists to produce. A caller running a
+    // legitimate broad survey gets one extra short field; whether an omission was
+    // legitimate is answered at analysis time from the args already in the runlog.
+    //
+    // Truthiness, not `=== undefined`, on `subjectId`, so an empty string reports
+    // the same way the ranking gate below treats it.
+    //
+    // The two conditions are NOT equivalent, in two directions, and the note's
+    // contract is the weaker of them — "absence means a subject was named", never
+    // "ranking ran":
+    //   - ranking additionally needs `out.staged`, so a nil search WITH a subject
+    //     skips ranking and correctly gets no note (4 of the 18 subject-carrying
+    //     calls in `run-2026-07-31_13-02-13`);
+    //   - and this uses `projectPath !== undefined` where ranking uses truthiness
+    //     plus successful staging, so `projectPath: ""` or a path that does not
+    //     exist emits the note while supplying `subjectId` would still enable
+    //     nothing. Both leave a `stagingError` on the response, which is the
+    //     accurate signal for that case; per #1073 this condition is the args
+    //     alone and must not start reading staging state.
+    ...(input.projectPath !== undefined && !input.subjectId
+      ? { rankingSkipped: RANKING_SKIPPED_NOTE }
+      : {}),
     results,
   };
 
@@ -551,10 +664,24 @@ export async function recordSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
+      // `rankingSkipped` is withheld from what gets staged. The staged envelope
+      // becomes `results/<logId>.json` — shared project state that moves between
+      // machines, and a record of what the upstream search RETURNED. This field
+      // is neither: it is a model-facing instruction about how to call the tool
+      // better next time, and it would otherwise be retained in 112 of 171
+      // sidecars on a real run. Same reasoning as the `projectPath`/`subjectId`
+      // strip inside `finalizeStagedResults`.
+      //
+      // Withheld HERE and not inside `stageSearchResults`, which is shared by
+      // `record_search`, `fulltext_search` and `external_links_search` and should
+      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // itself untouched, so the live response the model reads is unaffected and
+      // the key order (`rankingSkipped` before `results`) is preserved in both.
+      const { rankingSkipped: _advisory, ...persistable } = out;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",
-        response: out,
+        response: persistable,
       });
     } catch (error) {
       out.staged = null;
@@ -692,6 +819,10 @@ export async function recordSearchTool(
   if (
     isMarriageSearch &&
     foundNobody &&
+    // Explicit, rather than leaning on `isSubCountryPlace` to narrow: that
+    // predicate is intentionally not a type guard (see its comment), and this is
+    // what makes `jurisdictionHints.searchedPlace` a sound required `string`.
+    searchedPlace !== undefined &&
     isSubCountryPlace(searchedPlace) &&
     input.subjectId &&
     input.projectPath

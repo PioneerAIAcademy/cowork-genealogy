@@ -263,8 +263,8 @@ echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
     <div><span class="os win">Windows</span><pre><code>RunE2E.bat</code></pre></div>
     <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-run TEST=&lt;slug&gt;</code></pre></div>
   </div>
-  <p>When it works live, do <strong>one</strong> headless run — the honest check that <strong>blocks the tree-read tools</strong>. It writes the result + transcript + final tree to <code>eval/runlogs/e2e/&lt;slug&gt;/</code>; then <code>/interpret-e2e-result</code> for the verdict.</p>
-  <div class="card sub"><strong>If it fails</strong>, the live fix didn't hold — read <code>run-&lt;ts&gt;.transcript.md</code> (or <code>make e2e-view</code>) to see what the blocked run did, then back to live debugging. One run is noisy — re-run a borderline result before trusting it.</div>
+  <p>When it works live, do <strong>one</strong> headless run — the honest check that <strong>blocks the tree-read tools</strong>. It writes the result + final tree + final research to <code>eval/runlogs/e2e/&lt;slug&gt;/</code>; then <code>/interpret-e2e-result</code> for the verdict.</p>
+  <div class="card sub"><strong>If it fails</strong>, the live fix didn't hold — read <code>run-&lt;ts&gt;.json</code>'s <code>narration[]</code> alongside <code>tool_calls[]</code> (or <code>make e2e-view</code>) to see what the blocked run did, then back to live debugging. One run is noisy — re-run a borderline result before trusting it.</div>
 </section>
 
 <!-- 10 GRADE -->
