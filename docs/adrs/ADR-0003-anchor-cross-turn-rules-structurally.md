@@ -89,7 +89,7 @@ So the question when writing a new rule is *where it goes*:
 | **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. Worth doing for cost reasons (critique §6 lever 4), but it is not a correctness mechanism | `docs/agentic-system-critique.md` §6 |
 | **Split the rule into a dedicated per-skill write tool** so the tool name carries the doctrine | Rejected earlier and independently, for a reason that generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller | `docs/specs/guardrail-enforcement-spec.md` §9 |
 | **A read-only advisory tool** the model calls each turn to be told the next step | "Call the advisory every turn" is itself unanchored prose. Our own data disconfirms it: `project_context`, built for exactly this, is called ~3 times per run against `Read`'s ~19. It also adds a serial tool call — a turn — per routing decision | critique §3 P2 |
-| **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have three open defects and an unquantified false-positive rate | #998, #999, #1006 |
+| **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have two open defects and an unquantified false-positive rate | #999, #1006 |
 
 ## Consequences
 
@@ -128,7 +128,7 @@ still prose today, and both are computable from files `research_append` already
 loads.
 
 The one instrument that measures the *effect* is the post-run compliance
-detector, and it cannot yet give a rate at all. It is uncalibrated (#998, #999,
+detector, and it cannot yet give a rate at all. It is uncalibrated (#999,
 #1006), and separately — settled in #1176 — **no committed run resolves `pass`**:
 before #972 the violations field was written only when non-empty, so "ran clean"
 and "did not emit" are indistinguishable and every post-detector run lands on
