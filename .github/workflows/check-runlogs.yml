@@ -181,3 +181,15 @@ jobs:
       - name: Lint skill + agent frontmatter
         if: steps.scope.outputs.relevant == 'true'
         run: python eval/harness/scripts/check_skill_frontmatter.py
+
+      # A negative routing test pins one direction of an edge only, so a
+      # description edit that fixes routing A->B can silently break B->A.
+      # That is how the search-familysearch-wiki / locality-guide regression
+      # reached main and was caught by hand. Warn-only with no baseline file
+      # and no count threshold — a threshold is silently wrong (remove one
+      # edge, add another, the count holds and CI stays green), and promoting
+      # this to blocking should wait on triaging which unbacked edges are
+      # deliberate. Rationale in full: the script's docstring.
+      - name: Check negative routing reciprocity (warn-only)
+        if: steps.scope.outputs.relevant == 'true'
+        run: python eval/harness/scripts/check_negative_reciprocity.py
