@@ -51,6 +51,7 @@ from harness.skill_invocation import (
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
+    PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
 )
@@ -338,14 +339,125 @@ def person_evidence_provenance_gap(
     )
     if not unguarded:
         return None
+    return person_evidence_gap_reason(unguarded)
+
+
+def person_evidence_gap_reason(unguarded: list[str]) -> str:
+    """The operator/agent-facing text for a provenance gap, given the ids.
+
+    Split from `person_evidence_provenance_gap` so a caller that already holds
+    the flagged ids — `pretool_hook`, which needs them for the deny valve's
+    per-id-set key — can format the reason without a second
+    `same_person_scored_ids` + `unguarded_new_person_evidence_links` pass over
+    the whole `tool_calls` list on every flagged write.
+    """
     shown = ", ".join(unguarded[:_MAX_SHADOW_IDS])
     if len(unguarded) > _MAX_SHADOW_IDS:
         shown += f", +{len(unguarded) - _MAX_SHADOW_IDS} more"
+    example = unguarded[0]
     return (
         f"person_evidence link written for new tree person(s) {shown} with no "
         "prior same_person call: a brand-new identity should be scored before it "
-        "is asserted (research/SKILL.md doctrine; issue #963)."
+        "is asserted (research/SKILL.md doctrine; issue #963). "
+        # Issue #1231 prereq 2. The text above alone is unactionable — replayed
+        # over the corpus it would have denied 100 of 103 runs that link a new
+        # person, and the agent believes it DID call same_person. The cause is an
+        # id mismatch, so the reason has to name the one shape that satisfies the
+        # gate. See docs/specs/guardrail-enforcement-spec.md §4's last row.
+        f"These are LOCAL tree ids minted by tree_edit (which rejects "
+        f"caller-supplied ids), not FamilySearch ids, so score them by passing "
+        f"the TREE side as `gedcomx2` — a subset simplified-GedcomX holding the "
+        f"person plus their matching mob — with `primaryId2: \"{example}\"`, and "
+        "the record side as `gedcomx1`/`primaryId1` (person-evidence/SKILL.md, "
+        "'Score the match with same_person'). "
+        # A PreToolUse deny is all-or-nothing on the call, and the batches this
+        # fires on have a median of 17 ops (max 152), 11% of which carry ops in
+        # OTHER sections. Without this sentence the agent cannot tell what it lost.
+        "If this call was denied, the entire batch was rejected — including any "
+        "ops in other sections — and must be re-issued after the same_person "
+        "call. "
+        # The doctrine escape. Scoring applies only to record_search-sourced
+        # assertions, and a locally-minted stub returns a degenerate score that
+        # person-evidence/SKILL.md says to treat as "no score available"; without
+        # a stated way out, those legitimate writes have no satisfying move.
+        "If no score is obtainable at all — the assertion is not "
+        "record_search-sourced (null record_persona_id), or the id is an "
+        "unresolvable stub returning a degenerate score — say so in the link's "
+        "`rationale` and proceed."
     )
+
+
+# The loop valve (issue #1231 prereq 3). Two limits, because one does not bound
+# the loop:
+#   * per id set — a wedged identity stops costing wall clock after N tries;
+#   * per run — the per-key counter alone is unbounded, since a batch differing
+#     by one op, or a freshly minted I2/I3, mints a NEW key and buys another full
+#     per-key budget.
+# Past either, the write is RELEASED rather than denied again. That matters
+# mechanically: the deny returns above `tool_call_count["n"] += 1`, so a denied
+# call charges no budget, and `activity_count` increments unconditionally so the
+# no-progress watchdog reads a deny loop as progress. Releasing is the only path
+# that reaches the tool_calls cap. Spec §10 also prefers a merely-wrong run over
+# a stuck one.
+PERSON_EVIDENCE_DENY_REPEAT_LIMIT = 3
+PERSON_EVIDENCE_DENY_TOTAL_LIMIT = 10
+
+# The two run modes for the §8 provenance check. `shadow` (the default
+# everywhere) records and lets the write through; `deny` additionally returns a
+# PreToolUse deny, and is opt-in per run via --person-evidence-guard.
+PERSON_EVIDENCE_GUARD_SHADOW = "shadow"
+PERSON_EVIDENCE_GUARD_DENY = "deny"
+PERSON_EVIDENCE_GUARD_MODES = (PERSON_EVIDENCE_GUARD_SHADOW, PERSON_EVIDENCE_GUARD_DENY)
+
+
+def person_evidence_deny_decision(
+    reason: str,
+    flagged_ids: set[str] | frozenset[str],
+    *,
+    mode: str,
+    repeat_counts: dict[frozenset[str], int],
+    denied_total: dict[str, int],
+    per_key_limit: int = PERSON_EVIDENCE_DENY_REPEAT_LIMIT,
+    total_limit: int = PERSON_EVIDENCE_DENY_TOTAL_LIMIT,
+) -> tuple[str, dict[str, Any] | None]:
+    """Whether a provenance gap should be denied, and the PreToolUse payload.
+
+    Returns `(outcome, payload)` where outcome is one of `shadow` (mode is not
+    `deny` — nothing denied, no counter moved), `denied` (payload is the deny),
+    or `released` (the valve opened: a limit was reached, so the write goes
+    through even though the gap is real).
+
+    A `None` payload means the hook falls through to its normal path, which
+    already increments `tool_call_count` — so the release path charges budget for
+    free, and that is deliberate: it is the only route to the tool_calls cap.
+
+    Pure decision logic living beside `person_evidence_provenance_gap` for the
+    same reason that one was extracted — `pretool_hook` spawns the SDK and the
+    real MCP server, so a closure-local implementation would be reachable only
+    from a paid e2e run (`tests/unit/test_e2e_orchestrator.py`'s own docstring
+    says so). The two counter arguments are mutated in place, matching the
+    hook's existing `{"n": 0}` counter idiom.
+
+    An unrecognized `mode` is treated as `shadow` rather than raising: a hook
+    that raises fails a tool call the agent was entitled to make (CLAUDE.md,
+    "Plugin hooks"), so the failure direction here is always fail-open.
+    """
+    if mode != PERSON_EVIDENCE_GUARD_DENY:
+        return PERSON_EVIDENCE_GUARD_SHADOW, None
+
+    key = frozenset(flagged_ids)
+    if repeat_counts.get(key, 0) >= per_key_limit or denied_total["n"] >= total_limit:
+        return "released", None
+
+    repeat_counts[key] = repeat_counts.get(key, 0) + 1
+    denied_total["n"] += 1
+    return "denied", {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
 
 
 @dataclass
@@ -862,6 +974,7 @@ async def _run_agent(
     resume_on_stall: bool = False,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
+    person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -905,6 +1018,12 @@ async def _run_agent(
     # signal lands in one already-plumbed field; entries carry `required_skill`
     # to match that list's shape. Nothing reads this into a verdict.
     provenance_shadow: list[dict[str, Any]] = []
+    # Loop-valve state for `person_evidence_guard == "deny"` (issue #1231
+    # prereq 3). Both are inert under the default shadow mode. Per-id-set counts
+    # bound a single wedged identity; the run-global count bounds the loop the
+    # per-key counter cannot, since a batch differing by one op mints a new key.
+    pe_deny_repeat_counts: dict[frozenset[str], int] = {}
+    pe_denied_total = {"n": 0}
 
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -1163,27 +1282,69 @@ async def _run_agent(
         # research_append tool, so it's safe either way. Decision logic lives in
         # that helper so it's unit-testable without the SDK.
         if bare == "research_append" and starting_person_ids is not None:
-            provenance_gap = person_evidence_provenance_gap(
+            # Scanned ONCE. The flagged ids are needed twice — for the reason
+            # text and for the deny valve's per-id-set key — so they are computed
+            # here rather than via person_evidence_provenance_gap, which would
+            # re-walk the whole tool_calls list to rebuild the same list.
+            unguarded_ids = unguarded_new_person_evidence_links(
                 tool_name,
                 input_data.get("tool_input") or {},
-                tool_calls=tool_calls,
-                starting_person_ids=starting_person_ids,
+                scored_ids=same_person_scored_ids(tool_calls),
+                starting_ids=starting_person_ids,
             )
+            provenance_gap = person_evidence_gap_reason(unguarded_ids) if unguarded_ids else None
             if provenance_gap:
                 # Shaped to match find_unguarded_protected_writes' entries so
                 # both can share `guardrail_shadow_violations` without a reader
                 # having to branch on which source an entry came from.
                 # `detail` is the discriminator: only this source sets it.
-                provenance_shadow.append(
-                    {
-                        "index": len(tool_calls),
-                        "tool": bare,
-                        "required_skill": "person-evidence",
-                        "question_id": None,
-                        "detail": provenance_gap,
-                    }
+                entry: dict[str, Any] = {
+                    "index": len(tool_calls),
+                    "tool": bare,
+                    "required_skill": "person-evidence",
+                    "question_id": None,
+                    "detail": provenance_gap,
+                }
+                # issue #1231 prereq 3 — opt-in per run, `shadow` everywhere by
+                # default, so this is a no-op unless --person-evidence-guard deny
+                # was passed. The gap is recorded either way: what changes is
+                # whether the write is also blocked.
+                outcome, deny = person_evidence_deny_decision(
+                    provenance_gap,
+                    unguarded_ids,
+                    mode=person_evidence_guard,
+                    repeat_counts=pe_deny_repeat_counts,
+                    denied_total=pe_denied_total,
                 )
-                _emit("[guardrail-shadow] person_evidence w/o prior same_person")
+                if outcome != PERSON_EVIDENCE_GUARD_SHADOW:
+                    # Tag deny-mode entries so `guardrail_shadow_report`'s
+                    # scan_provenance can exclude them: it selects on key shape,
+                    # never on the run's mode, and the valve can record several
+                    # denials plus a release for ONE logical gap. Untagged, they
+                    # would inflate the very corpus the graduation reads.
+                    entry["kind"] = PERSON_EVIDENCE_DENY_KIND
+                    entry["valve_released"] = outcome == "released"
+                provenance_shadow.append(entry)
+                _emit(f"[guardrail-{outcome}] person_evidence w/o prior same_person")
+                if deny is not None:
+                    narration.append(
+                        {
+                            "tool_calls_before": len(tool_calls),
+                            "kind": "blocked",
+                            "text": (
+                                "`research_append` denied — a person_evidence link "
+                                "for a brand-new tree person must be scored by "
+                                "`same_person` first (#1231). The whole batch was "
+                                "rejected; re-issue it after scoring."
+                            ),
+                        }
+                    )
+                    # Returns BEFORE tool_call_count below, so a denied call
+                    # charges no budget — which is exactly why the valve above
+                    # must eventually release: releasing falls through to that
+                    # increment, and the tool_calls cap is the only bound a
+                    # wedged agent can actually reach.
+                    return deny
 
         tool_call_count["n"] += 1
         if tool_call_count["n"] > fixture.caps.tool_calls:
@@ -1741,6 +1902,7 @@ async def run_e2e_test(
     effort_level: str | None = "high",
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
+    person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -1800,6 +1962,7 @@ async def run_e2e_test(
             resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
+            person_evidence_guard=person_evidence_guard,
         )
 
         final_research = read_research_json(workspace)
@@ -1875,6 +2038,13 @@ async def run_e2e_test(
             "agent_model": agent_model or fixture.agent_model,
             "subagent_model_override": agent_model,
             "effort_level": effort_level,
+            # issue #1231. "shadow" (the default) records provenance gaps and
+            # lets the write through; "deny" also blocks it. Recorded because the
+            # two are NOT interchangeable when reading a run: under "deny" the
+            # blocked write never lands, so the post-run
+            # find_person_evidence_missing_same_person sees no person_evidence
+            # entry for that person and its compliance arm passes VACUOUSLY.
+            "person_evidence_guard": person_evidence_guard,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)

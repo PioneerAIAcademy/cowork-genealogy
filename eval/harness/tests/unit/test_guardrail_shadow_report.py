@@ -20,12 +20,14 @@ from e2e.guardrail_shadow_report import (
     format_detail,
     format_summary,
     format_provenance,
+    format_provenance_replay,
+    replay_provenance,
     scan_citation_nulling,
     scan_corpus,
     scan_provenance,
     scan_one,
 )
-from harness.skill_invocation import CITATION_NULLING_KIND
+from harness.skill_invocation import CITATION_NULLING_KIND, PERSON_EVIDENCE_DENY_KIND
 
 
 def _write_run(dir_, name, tool_calls):
@@ -262,3 +264,174 @@ def test_format_citation_nulling_counts_runs_not_just_entries(tmp_path):
     text = format_citation_nulling(scan_citation_nulling([a, b]))
     assert "3 concluded source(s)" in text
     assert "across 2 run(s)" in text
+
+
+# --- deny-mode entries must not pollute the shadow measurement (issue #1231) --
+
+
+def _deny_entry(pid="I1"):
+    """What the hook stores for a run launched with --person-evidence-guard deny."""
+    return _provenance_entry(pid) | {"kind": PERSON_EVIDENCE_DENY_KIND}
+
+
+def test_scan_provenance_excludes_deny_mode_entries(tmp_path):
+    """`scan_provenance` selects on key shape and never reads the run's mode, so
+    without a `kind` discriminator a deny-mode run lands in `SINCE=all`
+    indistinguishably from a shadow run — and inflated, since the valve permits
+    several denials plus a release for ONE logical gap. That is the number
+    prereq 1 is supposed to read."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _deny_entry()])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert "kind" not in prov[0]
+
+
+# --- replay_provenance (issue #1231: a baseline over the pre-hook corpus) -----
+# The stored entries above only exist for runs made AFTER #1178 merged. Replay
+# recomputes the same check from `tool_calls` + the fixture's committed seed
+# tree, which is what makes the 144 pre-hook runs readable at all, and what lets
+# a candidate rule variant be scored before it ships.
+
+
+def _write_replay_run(root, slug, name, tool_calls):
+    d = root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / name).write_text(json.dumps({"tool_calls": tool_calls}), encoding="utf-8")
+    return d / name
+
+
+def _write_fixture(root, slug, person_ids):
+    d = root / "eval" / "tests" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "starting-tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": p} for p in person_ids]}), encoding="utf-8"
+    )
+    return d
+
+
+def _pe_write(person_id="I1"):
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": {"section": "person_evidence", "op": "append", "entry": {"person_id": person_id}},
+    }
+
+
+def _same_person_call(pid1="p_9", pid2="I1"):
+    return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
+
+
+def test_replay_provenance_flags_unscored_new_person(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", ["KN19-Q19"]).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1
+    assert rep.violations[0]["fixture"] == "fx"
+    assert "I1" in rep.violations[0]["detail"]
+    assert rep.runs_scanned == 1
+    assert rep.runs_linking == 1
+    assert rep.skipped == []
+
+
+def test_replay_provenance_clean_when_same_person_precedes_the_link(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_same_person_call(), _pe_write("I1")])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 1  # still counts toward the denominator
+
+
+def test_replay_provenance_only_sees_calls_before_the_write(tmp_path):
+    """The live hook cannot see a `same_person` issued after the write, so the
+    replay must not either — link-then-score is a gap here and a pass for the
+    post-run detector. This is the documented divergence, not a bug."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1"), _same_person_call()])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1
+
+
+def test_replay_provenance_clean_for_seed_person_link(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", ["KN19-Q19"]).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("KN19-Q19")])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 1
+
+
+def test_replay_provenance_reports_runs_with_no_committed_seed_tree(tmp_path):
+    """One run in the corpus today (william-ferber-ancestry) has no fixture dir.
+    Dropping it silently would read as "covered everything"; it is named."""
+    fixtures = tmp_path / "eval" / "tests" / "e2e"
+    fixtures.mkdir(parents=True, exist_ok=True)
+    p = _write_replay_run(tmp_path, "gone", "run-1.json", [_pe_write("I1")])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert len(rep.skipped) == 1
+    assert "gone" in rep.skipped[0]
+    assert rep.runs_scanned == 0  # not scanned, so not in the denominator either
+
+
+def test_replay_provenance_denominator_excludes_runs_that_link_nobody(tmp_path):
+    """The fire RATE is the number the graduation decision reads, so the
+    denominator is runs that link any person_evidence — not every run."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    _write_fixture(tmp_path, "fx2", [])
+    linking = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
+    idle = _write_replay_run(tmp_path, "fx2", "run-1.json", [_same_person_call()])
+    rep = replay_provenance([linking, idle], fixtures_root=fixtures)
+    assert rep.runs_scanned == 2
+    assert rep.runs_linking == 1
+    assert len(rep.violations) == 1
+
+
+def test_replay_provenance_ignores_a_write_that_never_landed(tmp_path):
+    """A DENIED research_append still appears in `tool_calls`, with
+    `is_error: true` (e2e-test-spec §8.1.1). Counting it would double-count every
+    deny-mode gap — once for the blocked attempt and again for the retry — which
+    inflates the very fire rate the graduation decision reads. Same success-gating
+    the sibling detectors already apply, so an ordinary failed write is excluded
+    too: it linked nobody."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    denied = _pe_write("I1") | {"is_error": True}
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [denied])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
+
+
+def test_replay_provenance_counts_the_retry_after_a_denial_once(tmp_path):
+    """The deny-mode shape end to end: blocked attempt, then an unscored retry
+    that lands. Exactly one gap, not two."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(
+        tmp_path, "fx", "run-1.json", [_pe_write("I1") | {"is_error": True}, _pe_write("I1")]
+    )
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1
+    assert rep.runs_linking == 1
+
+
+def test_replay_provenance_reports_an_unreadable_run_log(tmp_path):
+    """Same contract as a missing seed tree: named in `skipped`, never silently
+    dropped. A corrupt log that only warns on stderr disappears from the printed
+    summary, which then reads as "covered everything"."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    bad = d / "run-1.json"
+    bad.write_text("{ not json", encoding="utf-8")
+    rep = replay_provenance([bad], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert len(rep.skipped) == 1
+    assert "run-1.json" in rep.skipped[0]
+    assert rep.runs_scanned == 0
+
+
+def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    a = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
+    _write_fixture(tmp_path, "fx2", [])
+    b = _write_replay_run(tmp_path, "fx2", "run-1.json", [_pe_write("I2")])
+    text = format_provenance_replay(replay_provenance([a, b], fixtures_root=fixtures))
+    assert "2 of 2" in text  # runs with >=1 gap, out of runs that link anyone
+    assert "lower bound" in text  # the same-turn caveat is stated, not implied

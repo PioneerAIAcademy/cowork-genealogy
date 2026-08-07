@@ -134,7 +134,7 @@ cannot, and none depends on another shipping first.
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
-| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** |
+| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
@@ -143,15 +143,87 @@ tool-call ledger.
 
 The last row is the live, pre-write form of a question §8 already hard-fails
 post-run, so its doctrine needs no shadow period — but its *enforcement* does.
-Replayed over the committed e2e corpus it fires in 65 of 81 fixtures (265 hits
-across 280 runs), because scoring a locally-minted tree person is not current
-agent behavior. Denying on that would intervene in four fifths of a suite
-costing $7-25 a run with no evidence for how the agent recovers, so it records
-into `guardrail_shadow_violations` and lets the write through. Graduating it to
-a deny is gated on these numbers. Note it asks a stricter question
-than its §8 counterpart: that one accepts a `same_person` anywhere in the run,
-including *after* the link, so link-then-score is a shadow hit and a post-run
-pass.
+It fires in the large majority of runs that link a person, because scoring a
+locally-minted tree person is not current agent behavior. Denying on that would
+intervene in most of a suite costing $7-25 a run with no evidence for how the
+agent recovers, so it records into `guardrail_shadow_violations` and lets the
+write through. Graduating it to a deny is gated on these numbers. Note it asks a
+stricter question than its §8 counterpart: that one accepts a `same_person`
+anywhere in the run, including *after* the link, so link-then-score is a shadow
+hit and a post-run pass.
+
+**Re-measure; do not read a count out of this page.** As with §3's table, the
+corpus only grows:
+
+```sh
+make e2e-guardrail-shadow REPLAY=1 SINCE=all
+```
+
+`REPLAY=1` recomputes the check from each run's `tool_calls` and its fixture's
+committed seed tree. That is a distinct number from the *stored* count printed
+above it, and the distinction is the thing to understand before reading either:
+
+- The **stored** count covers only runs made after the live check shipped
+  (`2026-08-04 23:45Z`). At the time of writing that is **zero of 144 committed
+  runs** — the newest committed run predates the merge by an hour — which is why
+  the graduation gate ("run a real suite and read the entries") could not be answered
+  from the corpus at all. It needs no code: the next committed e2e run produces
+  stored entries by itself.
+- The **replayed** count reads the whole pre-hook corpus: at the time of writing
+  **111 of the 137 runs that link a person have ≥1 gap (750 links, 72
+  fixtures)**, with one run skipped and named for having no committed seed tree.
+  It is a **lower bound** — the live hook may not yet see a `same_person` issued
+  in the same turn as the write, while the replay always sees the full prefix.
+  Its second job is scoring a candidate *narrowing* of the rule against history
+  before that narrowing ships.
+
+**Why a deny needs more than a number: the reason has to be satisfiable.** The
+original reason said a brand-new identity "should be scored before it is
+asserted", which the agent believes it did. The cause is an **id mismatch**, not
+laziness: `tree_edit` mints local ids (`I1`) and rejects caller-supplied ones,
+while `same_person` scores `primaryId1`/`primaryId2` *inside the caller's own
+gedcomx documents*. The one satisfying shape is to pass the tree side as
+`gedcomx2` with `primaryId2: "I1"`, which agents produced in 3 of 103 corpus
+runs. The reason text now names that shape, says the **entire batch** is
+rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
+median of 17 ops), and states the escape below.
+
+**A deny would also block writes doctrine sanctions — this is a fifth
+prerequisite the issue did not name.** `person-evidence/SKILL.md` scopes scoring
+to `record_search`-sourced assertions only ("Match scoring works **only** for
+`record_search`-sourced assertions"; FTS-, image- and PDF-sourced assertions have
+a null `record_persona_id`), and separately says a locally-minted stub returns a
+degenerate score to be treated as "no score available". Neither case can satisfy
+the gate at all. Until the check is narrowed, the reason's stated escape — record
+in the link's `rationale` that no score was obtainable, and proceed — is what
+keeps those writes from being unsatisfiable.
+
+**Trying a deny on one fixture.** `make e2e-run TEST=<slug>
+PERSON_EVIDENCE_GUARD=deny` (default `shadow`) blocks the write instead of only
+recording it, bounded by a two-limit loop valve: per id set, and per run. Past
+either the write is **released** rather than denied again, because a denied
+`research_append` returns before `tool_call_count` and so charges no budget,
+while `activity_count` increments regardless — so without the valve the only stop
+is `max_turns` / the wall clock, the §10 failure mode the deny is supposed to
+avoid. Releasing falls through to the normal path and charges budget, which is
+the only bound a wedged agent can actually reach.
+
+Two things about a deny-mode run's output:
+
+- Its provenance entries carry `kind: "person_evidence_deny"`, and
+  `guardrail_shadow_report`'s stored scan **excludes** them. Without that they
+  would land in the shadow corpus indistinguishably and inflated — the valve
+  records several denials plus a release for one logical gap — corrupting the
+  number the graduation is gated on. Those entries also carry
+  `valve_released: true|false`, which is how you tell the two apart: `false` is a
+  write the gate actually blocked, `true` is one it let through because a limit
+  was reached. **Reading a deny-mode run's fire rate means counting
+  `valve_released: false` only** — the releases are the valve working, not
+  additional violations.
+- **Its `compliance` axis is not comparable to a shadow run's.** The denied write
+  never lands, so `find_person_evidence_missing_same_person` finds no
+  `person_evidence` entry for that person and its arm passes **vacuously**. The
+  mode is recorded in the runlog's `usage` block so a reader can tell.
 
 ## 5. Write-boundary invariant
 
@@ -408,6 +480,16 @@ that outlive any one of them.
   This is the reason §7 ships in shadow and the reason `Bash` is left open in
   §6 — in both cases deliberately, in favor of the failure mode that is merely
   wrong over the one that is stuck.
+- **A gate can be unsatisfiable by doctrine, not just mistuned.** §4's live
+  provenance check asks for a `same_person` score on writes that
+  `person-evidence`'s own doctrine says cannot be scored — a non-`record_search`
+  assertion has no `record_persona_id`, and a locally-minted stub returns a
+  degenerate score to be read as "no score available". A fire-rate measurement
+  cannot distinguish this from a tuning problem: both look like "fires too
+  often". Before graduating any layer here, check the owning skill's doctrine for
+  cases where **no** call sequence satisfies the gate, and either narrow the
+  check or give the reason a stated escape. Narrowing this one to
+  `record_search`-sourced assertions is open work.
 - **`Skill`-tool content injection under compaction is unverified.** All four
   guardrail skills `Read` their own `references/*.md` on demand, in-session. If
   that read is as unreliable as #702 found the agent case to be, the failure
