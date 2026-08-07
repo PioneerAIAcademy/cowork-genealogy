@@ -28,6 +28,7 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
     passes = sum(1 for r in results if r.verdict == "pass")
     partials = sum(1 for r in results if r.verdict == "partial")
     fails = sum(1 for r in results if r.verdict == "fail")
+    ungraded = sum(1 for r in results if r.verdict == "ungraded")
     skipped = sum(1 for r in results if r.verdict == "skipped")
 
     # The recall line counts the GENEALOGICAL verdict only. It is labelled as
@@ -38,6 +39,8 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         summary += f", {partials} partial"
     if fails:
         summary += f", {fails} fail"
+    if ungraded:
+        summary += f", {ungraded} ungraded"
     if skipped:
         summary += f", {skipped} skipped"
     print(summary)
@@ -59,7 +62,7 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
 
     # By-tag breakdowns. Collect tag-dimension → tag-value → counts.
     by_dim: dict[str, dict[str, dict[str, int]]] = defaultdict(
-        lambda: defaultdict(lambda: {"pass": 0, "partial": 0, "fail": 0, "skipped": 0, "total": 0})
+        lambda: defaultdict(lambda: {"pass": 0, "partial": 0, "fail": 0, "ungraded": 0, "skipped": 0, "total": 0})
     )
     for r in results:
         for dim, value in (r.tags or {}).items():

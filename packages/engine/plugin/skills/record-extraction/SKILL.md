@@ -72,6 +72,14 @@ Record data arrives in one of four ways:
    raw image never enters your context (accumulated base64 overflows the
    transport's ~1 MiB buffer and crashes the run).
 
+   **When the user provides an image ARK or asks you to "pull it up" /
+   compare it, you MUST make the `@plugin:image-reader` delegation** — even
+   if you suspect the scan is unreachable or unreadable. Do NOT decide on
+   your own that the image can't be read and skip the call: whether the
+   scan reads is the subagent's report to make, not yours to pre-empt.
+   Reporting "image unreachable" without an actual delegation attempt is a
+   completeness failure.
+
    If the returned transcription comes back heavy with `[illegible]` marks or
    otherwise looks unreliable (faded ink, difficult handwriting,
    Kurrentschrift), a higher-accuracy but slower and far more expensive
@@ -219,8 +227,7 @@ failure — the summary is a progress marker, not a stopping point.
 **If `record_read`, `volume_search`, or `research_log_append` are not
 immediately available** (e.g., shown as deferred), call ToolSearch first.
 **Search by bare tool name, never by a fully-qualified `select:` list** —
-the MCP server prefix differs per deployment (`mcp__genealogy__…` under
-the harnesses, `mcp__remote-devices__Genealogy_Research__…` under Cowork),
+the MCP server prefix differs per deployment, and there are three of them,
 so a hardcoded qualified name resolves to nothing in some environments.
 Use one keyword search per tool, e.g. `query: "+record_read"`, which
 matches whatever prefix this session actually exposes. **Never fall

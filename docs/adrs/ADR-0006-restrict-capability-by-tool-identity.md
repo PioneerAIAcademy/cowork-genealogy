@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-05 (#1341 — the deny now carries three spellings)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -59,7 +59,7 @@ builds only the first one from tool input. The restriction is not in the payload
 so there is nothing for the model to set.
 
 The agent then holds `extraction_append` and **not** `research_append` — omitted
-from `tools:` and additionally named in `disallowedTools:` under both spellings
+from `tools:` and additionally named in `disallowedTools:` under all three spellings
 (ADR-0004), because a deny binds even under `bypassPermissions`.
 
 The general form:
@@ -115,7 +115,7 @@ change. **Do not assume this pattern generalises to that problem** — read
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` —
-> asserts `disallowedTools:` entries carry both spellings, so the deny binds
+> asserts `disallowedTools:` entries carry all three spellings, so the deny binds
 > wherever the server is registered.
 
 The structural half needs no test: dispatch builds only the first argument, so
