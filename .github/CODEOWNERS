@@ -3,3 +3,29 @@
 # write access. Enforced together with branch protection's
 # "required_approving_review_count: 2" + "require_code_owner_reviews".
 * @PioneerAIAcademy/senior-genealogists
+
+# --- Developer paths: senior-developer review required on high-blast- ---
+# --- radius surfaces only; everything else in packages/engine and     ---
+# --- apps/ falls through to peer-only review (last-match-wins means   ---
+# --- these paths get ONLY senior-developers, not senior-genealogists  ---
+# --- too — see PLAN.md / the PR description for the correction note   ---
+# --- on why the "*" rule above is deliberately left untouched).       ---
+
+# Auth/token handling — CLAUDE.md § "Auth architecture"
+/packages/engine/mcp-server/src/auth/ @PioneerAIAcademy/senior-developers
+
+# research.json / simplified-GedcomX schema — CLAUDE.md § "Researcher
+# profile in research.json"; the closed-enum and tree-shape allow-lists
+/docs/specs/schemas/ @PioneerAIAcademy/senior-developers
+/packages/schema/schemas/ @PioneerAIAcademy/senior-developers
+/packages/engine/mcp-server/src/validation/ @PioneerAIAcademy/senior-developers
+
+# Plugin agent tool bindings — CLAUDE.md § "Cowork plugin agents";
+# widening tools:/disallowedTools: is a step-4 stop-rule item
+/packages/engine/plugin/agents/ @PioneerAIAcademy/senior-developers
+
+# Plugin hooks — the only guardrail that reaches Cowork
+/packages/engine/plugin/hooks/ @PioneerAIAcademy/senior-developers
+
+# CI/workflows and branch protection itself
+/.github/ @PioneerAIAcademy/senior-developers

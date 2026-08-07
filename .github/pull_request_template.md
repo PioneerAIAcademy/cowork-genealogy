@@ -50,6 +50,12 @@
 
 ## Test plan
 
+<!-- If this PR touches a path owned in .github/CODEOWNERS by
+     @senior-developers (auth, schema, agent tool bindings, plugin hooks,
+     CI/workflows), a senior-developers approval is required by branch
+     protection — a peer approval alone will not unblock merge. This is a
+     convenience note; GitHub's merge button is the actual enforcement. -->
+
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
            paid per-skill eval run, not this gate. On Windows, say so here and

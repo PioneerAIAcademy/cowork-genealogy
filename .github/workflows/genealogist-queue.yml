@@ -4,12 +4,15 @@ name: genealogist-queue
 # CI green, an approving review from someone other than the author, and no
 # outstanding changes-requested.
 #
-# WHY. `.github/CODEOWNERS` is `* @PioneerAIAcademy/senior-genealogists`, so
-# GitHub requests the team the instant a PR opens — when CI is usually red and
-# nobody has read it. On 2026-07-29 that put all 22 open PRs in their queue,
-# including 5 with failing CI and 2 blocked on their authors. The review-request
-# is therefore accurate as "a PR exists" and useless as "this needs you". The
-# label is the signal that means the second thing:
+# WHY. `.github/CODEOWNERS`'s `* @PioneerAIAcademy/senior-genealogists` rule
+# still matches every path with no more specific rule below it (six
+# `senior-developers` paths were added below `*` later — last-match-wins
+# means only those six resolve differently), so GitHub requests the
+# genealogist team the instant a matching PR opens — when CI is usually red
+# and nobody has read it. On 2026-07-29 that put all 22 open PRs in their
+# queue, including 5 with failing CI and 2 blocked on their authors. The
+# review-request is therefore accurate as "a PR exists" and useless as "this
+# needs you". The label is the signal that means the second thing:
 #
 #   is:open is:pr label:ready-for-senior
 #

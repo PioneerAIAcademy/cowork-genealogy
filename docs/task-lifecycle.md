@@ -234,19 +234,46 @@ co-author".
 
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
-### 9. Peer review, then senior review
+### 9. Peer review, then senior review — on the paths that need it
 
-Peer review is another developer. Senior review is a senior developer or the
-lead, and it is the last gate — by then everything mechanical should be settled,
-so their time goes to whether the approach is right.
+Peer review is another developer, and it is now **sufficient to merge** on
+any path with no `senior-developers` entry in
+[`.github/CODEOWNERS`](../.github/CODEOWNERS) — most of the repo. Senior
+review is a senior developer or the lead, and branch protection requires it
+specifically on the handful of high-blast-radius paths CODEOWNERS lists
+(auth, schema, agent tool bindings, plugin hooks, CI/workflows) — by then
+everything mechanical should be settled, so their time goes to whether the
+approach is right, on the PRs where that specifically needs a senior's
+judgment.
+
+**CODEOWNERS is the source of truth for which paths need a senior, not this
+paragraph.** Read the file rather than trusting a path list here — it can
+drift out of sync with what's actually enforced and this one can't.
 
 **The senior developers are volunteers.** Their time is the scarcest thing in
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
+**A PR touching both an owned and an unowned path needs both approvals.**
+GitHub resolves CODEOWNERS per file, not per PR — a nine-file PR that
+happens to touch one line under `src/auth/` still requires a
+`senior-developers` approval for that file, on top of whatever else the
+other files need.
+
+**Peer-only merges aren't reviewed by a senior zero times — they're sampled
+after merge, not before.** `/audit-merged-prs` is the lead's weekly pass
+over recently-merged, peer-only-approved developer PRs: it samples a subset
+and runs `/review` against each merge commit to catch what peer review
+alone tends to miss — design drift, a missed multi-site edit, a check that
+cannot fail. It reports and files issues; it never reverts or re-opens a
+merged PR.
+
 **Automatic Claude review is off** (`.github/workflows/claude-code-review.yml`,
-disabled 2026-08-03). Nothing reviews your PR before a human opens it, so step 6
-is the only pass it gets — arrive with it done.
+disabled 2026-08-03) and this plan does not turn it back on. Nothing
+reviews your PR before a human opens it, so step 6 is the only pass it
+gets — arrive with it done. Peer review via `/review`, senior review on
+CODEOWNERS-listed paths, and `/audit-merged-prs`'s weekly sampling are the
+chosen replacement for the disabled bot, not another automated first pass.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
