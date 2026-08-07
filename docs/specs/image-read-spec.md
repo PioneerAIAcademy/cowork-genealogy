@@ -79,6 +79,47 @@ best-effort behavior, which may resolve to the wrong image for a
 multi-image document. The tool's `ark` description tells callers to
 pass the full URL when one is available, precisely to avoid this trap.
 
+**Is there an autonomous route to the correct page?**
+An autonomous run holds only what the tools give it for such a record —
+the `1:1:` index ARK, `record_read`'s `sources[]`, and the bare `3:1:`
+image ARK — never the browser page URL with its `i=`/`cc=`/`groupId=`.
+**Investigated live (2026-08-07); the answer is no route to the *correct*
+page, and the reason is worth recording so it is not re-investigated:**
+
+- The bare ARK resolves *deterministically to one specific image*, not to
+  nothing. `probe-image-read-ark-resolver.ts ark:/61903/3:1:9392-9ZVZ-X`
+  with `Accept: image/*` returned `200` and real `image/jpeg` bytes. (This
+  contradicts the 2026-08-03 "no document at all" observation above; the
+  same ARK also returned `200` on 08-05 — the resolver's behavior depends
+  on the `Accept` header and is not stable, which is why the fetch retries
+  a bare fallback.)
+- The *same* resolver URL with `Accept: application/json` exposes structured
+  metadata: `{"name":"004707850_00113","apid":"TH-1-18040-16514-50",
+  "link":[…{"rel":"parents"}…]}`. `name` is a clean
+  `{imageGroupNumber}_{sequence}` `imageId`, directly usable by `image_read`
+  / `image_search`. **But it is the image the waypoint ARK is already bound
+  to — the wrong page** (group `004707850`, not the target waypoint
+  `1858355`). It identifies deterministically; it does not disambiguate.
+- **No tool surfaces any of this today.** `image_read`/`arkToImageUrl`
+  request `image/*` and get bytes only, never the JSON `name`/`parents`;
+  `record_read`'s output carries no `imageGroupNumber`/`imageId`/`i=`/`cc=`/
+  `groupId` (only the bare `3:1:` ARK); `image_search` takes an
+  `imageGroupNumber` and returns *every* image in a group, with no ARK
+  lookup and no page pointer; `volume_search` maps a place to groups but
+  takes no ARK. `imageGroupNumber` is input-only on both search tools
+  (`record-search.ts`, `fulltext-search.ts`), never returned.
+
+Reaching the correct page from the exposed `imageId` means walking the
+`parents` link to the group and enumerating it — the unbounded
+volume-paging problem, which a skill must not be taught to do.
+**Bounded follow-up (a tool-contract change, not a skill edit):** have
+`record_read` (or the resolver) read the ARK's JSON and surface `name`
+plus the group/`parents` link. That converts this from "invisible to the
+agent" into a bounded enumeration a later change can scope. It changes a
+tool's output shape and the simplified-GedcomX surface, so it is a separate
+senior task. The instrument for this finding is the live API plus a human
+reviewer; no CI check can grade it (`docs/architecture.md` §9.4).
+
 Fetching requires a valid FamilySearch bearer token.
 
 ## Output
