@@ -12,22 +12,62 @@ Checks, in order:
   2. Built MCP server     — packages/engine/mcp-server/build/index.js exists
   3. Anthropic API key    — ANTHROPIC_API_KEY in env or eval/.env
   4. Harness deps synced  — claude_agent_sdk + anthropic importable
+  5. MCP server connects  — the CLI reports the genealogy server `connected`
 
-Read-only and offline — it does NOT call FamilySearch or Anthropic; it
-only checks that the pieces are in place.
+Checks 1-4 are static: they read files and import modules. **Check 5 is not**
+— it spawns a local Claude Code CLI, which spawns the MCP server, and asks the
+CLI for the live connection status. Nothing here calls FamilySearch, and
+nothing sends a prompt to a model, so check 5 costs **zero model tokens**; but
+this module is no longer "read-only and offline" as it once claimed.
+
+Check 5 exists because checks 1-4 measure the wrong thing. Issue #941:
+genealogists lost three e2e runs (60-90 min each) to a genealogy MCP server
+that did not connect *while preflight showed all systems green* — because a
+green preflight validated the configuration and never proved the connection.
 
 Usage (from eval/harness/):  uv run python -m e2e.preflight
 """
 
 from __future__ import annotations
 
+import asyncio
 import sys
+import threading
 from pathlib import Path
+from typing import Any, Callable
+
+from e2e.mcp_health import (
+    GENEALOGY_SERVER_NAME,
+    classify_server_status,
+    find_server_entry,
+    genealogy_mcp_config,
+    unavailable_cause,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FS_TOKENS = Path.home() / ".familysearch-mcp" / "tokens.json"
 MCP_BUILD = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 ENV_FILE = REPO_ROOT / "eval" / ".env"
+
+# Ceiling on the whole live connection check, CLI spawn included, because a
+# preflight that hangs is worse than one that lies: an operator can act on a
+# FAIL. Measured on a warm dev box (2026-08-04): the client spawn alone is
+# ~10-15s, a healthy genealogy server settles to `connected` (47 tools) at
+# ~25s end to end, and a server that dies at startup settles to `failed` at
+# ~4s. So failures are fast and only a pathological hang waits this out; the
+# margin above 25s is for a cold `node` start on a slower machine, where a
+# false FAIL would send someone chasing an MCP bug that isn't there.
+_MCP_CHECK_TIMEOUT_S = 90.0
+
+# How often to re-ask while the server is still connecting. See _live_mcp_status.
+_MCP_POLL_INTERVAL_S = 0.5
+
+# Extra grace for tearing the CLI down, on top of the ceiling above. The SDK's
+# own shutdown is already bounded — stdin EOF, 5s, SIGTERM, 5s, SIGKILL
+# (claude_agent_sdk/_internal/transport/subprocess_cli.py) — so ~10s covers it;
+# 15 leaves room for the loop's own async-generator and executor shutdown. See
+# _live_mcp_status for why this needs to be a separate budget.
+_MCP_TEARDOWN_GRACE_S = 15.0
 
 
 # FamilySearch refresh tokens hard-expire ~24h after login. We can't read
@@ -110,11 +150,238 @@ def _check_harness_deps() -> tuple[str, str]:
     return "OK", "Harness dependencies importable (claude_agent_sdk, anthropic)"
 
 
+class _Unprovable(Exception):
+    """A prerequisite of the live check is missing — NOT an MCP failure.
+
+    Reported as its own status rather than folded into a FAIL, because
+    misattributing an auth or dependency problem to the MCP server would
+    recreate issue #941's confusion in mirror image.
+    """
+
+
+def _run_bounded(work: Callable[[], Any], budget: float) -> Any:
+    """Run `work()` on a thread we can walk away from after `budget` seconds.
+
+    A HARD wall, and it has to live outside the event loop. `asyncio.wait_for`
+    bounds only the coroutine it wraps; `asyncio.run` then performs its own loop
+    shutdown — cancel-all-tasks, `shutdown_asyncgens`,
+    `shutdown_default_executor` — entirely OUTSIDE that budget. Measured
+    2026-08-05 against a deliberately hanging stdio MCP server (accepts the
+    connection, never speaks): the check returned the right FAIL but took 132.7s
+    against a 90s ceiling, +42.7s of it after the coroutine had already settled.
+    A ceiling a run can overshoot by half again is the "preflight that hangs"
+    `_MCP_CHECK_TIMEOUT_S` exists to prevent, and no timeout *inside* the loop
+    can fix it, because the overrun IS the loop's teardown. Wrapping
+    `asyncio.timeout` around the coroutine would miss it for the same reason.
+
+    A pathologically hung `node` child can therefore outlive the join. That is
+    the deliberate trade: the SDK's own shutdown escalates to SIGKILL
+    (`claude_agent_sdk/_internal/transport/subprocess_cli.py`), this process is
+    about to exit anyway, and a leaked child is strictly better than a preflight
+    that never returns — an operator can act on a FAIL.
+
+    Exceptions are re-raised on the caller's thread so the arms in
+    `_check_mcp_connection` still see the real type (`_Unprovable`,
+    `TimeoutError`, anything else).
+    """
+    result: list[Any] = []
+    failure: list[BaseException] = []
+
+    def _run() -> None:
+        try:
+            result.append(work())
+        except BaseException as e:  # noqa: BLE001 — re-raised on the caller's thread
+            failure.append(e)
+
+    worker = threading.Thread(target=_run, name="e2e-preflight-mcp", daemon=True)
+    worker.start()
+    worker.join(timeout=budget)
+    if worker.is_alive():
+        raise TimeoutError(
+            f"the MCP status check did not return within {budget:.0f}s"
+        )
+    if failure:
+        raise failure[0]
+    return result[0]
+
+
+def _live_mcp_status() -> Any:
+    """Ask the running CLI for live MCP status. One spawn, zero model tokens.
+
+    Uses `ClaudeSDKClient` (streaming mode) because `get_mcp_status()` is a
+    control-protocol request and the one-shot `query()` the run itself uses
+    cannot issue one. No prompt is ever sent, so no model is invoked.
+
+    **Polls until the status settles.** A single read right after `connect()`
+    is worthless: measured 2026-08-04, both a healthy server and one that dies
+    instantly report `pending` on the first call, because the CLI answers
+    control requests while its MCP connects are still in flight. Polling
+    separates them — healthy reaches `connected` (47 tools) at ~25s, a dead
+    stub reaches `failed` at ~4s with `MCP error -32000: Connection closed`.
+    Reading once would have made this check pass everything, which is the
+    failure mode #941 is about.
+
+    Every SDK/auth import is deliberately **lazy**: check 4 exists to report a
+    missing `claude_agent_sdk` as a friendly FAIL, and a module-level import
+    here would instead crash `python -m e2e.preflight` with a traceback.
+
+    The client is built from the same `genealogy_mcp_config()` **and the same
+    `env_for_sdk(resolve_auth())`** the run uses (orchestrator.py). Both halves
+    matter: preflight is standalone and never loads `eval/.env` into the
+    environment, so without the env the CLI would be spawned with credentials
+    the run would not have used — and a failure caused by that would be
+    reported as an MCP problem.
+    """
+    try:
+        from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+
+        from harness.auth import AuthError, env_for_sdk, resolve_auth
+
+        from e2e.env import load_env_file
+    except ImportError as e:  # pragma: no cover — check 4 reports this first
+        raise _Unprovable(f"harness dependency not importable: {e}") from e
+
+    load_env_file()  # the run's judge does this; the CLI needs the same key
+    try:
+        agent_env = env_for_sdk(resolve_auth())
+    except AuthError as e:
+        raise _Unprovable(f"no usable Anthropic credential: {e}") from e
+
+    options = ClaudeAgentOptions(
+        mcp_servers=genealogy_mcp_config(MCP_BUILD),
+        env=agent_env,
+        # Prove THIS config and nothing else. Without it the CLI merges
+        # file/user/local-scoped MCP config on top of the block above, and this
+        # repo's own `.mcp.json` registers a server under the same `genealogy`
+        # key — so a check that looked green could be green about a DIFFERENT
+        # server than the run spawns. That is the exact bug class this module's
+        # docstring claims to close, which makes it the one place it must not be
+        # left to chance. (`strict_mcp_config` scopes MCP resolution only; it is
+        # not a settings-source switch.)
+        strict_mcp_config=True,
+    )
+
+    async def _ask() -> Any:
+        async with ClaudeSDKClient(options=options) as client:
+            while True:
+                response = await client.get_mcp_status()
+                servers = (response or {}).get("mcpServers")
+                entry = find_server_entry(servers)
+                # A settled answer is a PRESENT entry reading something other
+                # than `pending`. An absent one is not settled: the CLI
+                # populates its server list asynchronously, so returning on the
+                # first read that lacks us races that population and FAILs a
+                # healthy server — telling the operator to rebuild something
+                # that works. Poll absence exactly like `pending`; a genuinely
+                # unregistered server still FAILs, via the ceiling below.
+                if entry is not None and entry.get("status") != "pending":
+                    return servers
+                await asyncio.sleep(_MCP_POLL_INTERVAL_S)
+
+    # Two nested budgets, and both are needed: `wait_for` is what turns a server
+    # stuck on `pending` into the FAIL an operator can act on, while the wall
+    # around it is what keeps the loop's own teardown from overrunning that
+    # ceiling. See _run_bounded for the measurement behind the outer one.
+    return _run_bounded(
+        lambda: asyncio.run(asyncio.wait_for(_ask(), timeout=_MCP_CHECK_TIMEOUT_S)),
+        _MCP_CHECK_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S,
+    )
+
+
+def _check_mcp_connection(
+    status_getter: Callable[[], Any] | None = None,
+) -> tuple[str, str]:
+    """Prove the genealogy MCP server answers, in a real CLI session.
+
+    `status_getter` is injectable so every arm below is unit-testable without
+    spawning a CLI.
+    """
+    # Prerequisites first. A CLI session needs the build, a credential and the
+    # SDK; without them this check cannot distinguish "MCP is broken" from
+    # "nothing could have run". SKIP is safe here *only* because each of these
+    # has already reported FAIL, so the exit code is already non-zero.
+    for label, check in (
+        ("Built MCP server", _check_mcp_build),
+        ("Anthropic API key", _check_api_key),
+        ("Harness deps synced", _check_harness_deps),
+    ):
+        if check()[0] == "FAIL":
+            return (
+                "SKIP",
+                f"Not attempted — the '{label}' check above failed. Fix that "
+                "first; the MCP connection cannot be proved without it.",
+            )
+
+    getter = status_getter or _live_mcp_status
+    try:
+        servers = getter()
+    except _Unprovable as e:
+        # WARN, not SKIP: nothing else failed, so a SKIP would let the run
+        # print "All checks passed" while the connection stayed unproven —
+        # which is the exact promise #941 says preflight must keep.
+        return (
+            "WARN",
+            f"Connection UNPROVEN — {e}. This is not an MCP failure; the check "
+            "could not be attempted. Green here does not mean ready.",
+        )
+    except (asyncio.TimeoutError, TimeoutError):
+        return (
+            "FAIL",
+            f"The genealogy MCP server never reported a settled status within "
+            f"{_MCP_CHECK_TIMEOUT_S:.0f}s (+{_MCP_TEARDOWN_GRACE_S:.0f}s to shut "
+            "down) — it stayed 'pending', or the CLI "
+            "never listed it at all. A server that hangs instead of failing "
+            "blocks session start: an e2e run would die on 'Control request "
+            "timeout: initialize' after ~60s. Check that "
+            f"`node {MCP_BUILD}` starts and speaks MCP on stdio.",
+        )
+    except Exception as e:  # noqa: BLE001 — a preflight must report, never crash
+        return (
+            "FAIL",
+            f"Could not ask the CLI for MCP status: {type(e).__name__}: {e}",
+        )
+
+    health = classify_server_status(servers)
+    if health == "connected":
+        entry = find_server_entry(servers) or {}
+        tools = entry.get("tools") or []
+        return (
+            "OK",
+            f"Genealogy MCP server connected ({len(tools)} tools advertised)",
+        )
+    if health == "unavailable":
+        # Quotes the server's own error text when the CLI supplied one — the
+        # whole point of asking the CLI rather than checking a file. Preflight
+        # wording, not the run's: nothing has been attempted yet, so "re-run the
+        # test" and "run make e2e-preflight" would be nonsense here.
+        return (
+            "FAIL",
+            f"{unavailable_cause(find_server_entry(servers))}. An e2e run would "
+            "have no genealogy tools at all — it would burn a live-FamilySearch "
+            "session producing nothing. Fix this before running: check that "
+            f"`node {MCP_BUILD}` starts and stays up, and rebuild with "
+            "`make engine-build` if it doesn't.",
+        )
+    # Report the status, NOT the payload. `servers` carries each connected
+    # server's full `tools` array — every name and description — so
+    # interpolating it buried the actionable sentence under ~47 tool schemas.
+    reported = (find_server_entry(servers) or {}).get("status") or "not listed"
+    return (
+        "WARN",
+        f"The {GENEALOGY_SERVER_NAME!r} MCP server is still connecting "
+        f"(status {reported!r}, not yet 'connected'). Not a failure — but the "
+        "connection is unproven, so re-run this check before a long run.",
+    )
+
+
 CHECKS = [
     ("FamilySearch login", _check_fs_token),
     ("Built MCP server", _check_mcp_build),
     ("Anthropic API key", _check_api_key),
     ("Harness deps synced", _check_harness_deps),
+    # Last: it is the only check that spawns a process, and it depends on the
+    # three above having passed.
+    ("MCP server connects", _check_mcp_connection),
 ]
 
 
