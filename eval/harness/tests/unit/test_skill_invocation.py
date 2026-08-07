@@ -13,9 +13,11 @@ import pytest
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     CONFLICT_ANALYSIS_FIELDS,
+    CONFLICT_UNPERSISTED_KIND,
     DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
     find_citation_nulling_in_conclusions,
+    find_unpersisted_conflict_resolutions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -1024,3 +1026,137 @@ def test_citation_nulling_tolerates_dangling_and_sourceless_refs():
 def test_citation_nulling_defensive_on_none_and_empty():
     assert find_citation_nulling_in_conclusions(None) == []
     assert find_citation_nulling_in_conclusions({}) == []
+
+
+# --- find_unpersisted_conflict_resolutions (issue #1317, shadow) -------------
+# The conflict-side sibling: a WRITTEN conclusion relies on a resolved conflict
+# (per its question's exhaustive_declaration.stop_criteria.conflict_resolution)
+# that no conflicts[] entry backs, so the resolution lives only in prose and the
+# viewer's Conflicts section stays blank. Gated on a proof_summaries entry.
+
+
+def _research_with_conflict_claim(*, conflict_resolution, conflicts=None, resolved_conflict_ids=None):
+    """A minimal research.json: one proof_summary on q_001 whose question carries
+    a `conflict_resolution` stop-criterion. `conflicts` / `resolved_conflict_ids`
+    default to empty (the evidenced failure shape)."""
+    return {
+        "proof_summaries": [
+            {
+                "id": "ps_001",
+                "question_id": "q_001",
+                "resolved_conflict_ids": resolved_conflict_ids or [],
+            }
+        ],
+        "questions": [
+            {
+                "id": "q_001",
+                "exhaustive_declaration": {
+                    "stop_criteria": {"conflict_resolution": conflict_resolution}
+                },
+            }
+        ],
+        "conflicts": conflicts or [],
+    }
+
+
+def test_conflict_unpersisted_fires_on_the_evidenced_shape():
+    """The john-applegarth-family case: a resolution asserted in prose, empty
+    conflicts[] and empty resolved_conflict_ids."""
+    out = find_unpersisted_conflict_resolutions(
+        _research_with_conflict_claim(
+            conflict_resolution="Ella Chase marriage conflict resolved -- a different Henry."
+        )
+    )
+    assert len(out) == 1
+    v = out[0]
+    assert v["kind"] == CONFLICT_UNPERSISTED_KIND
+    assert v["required_skill"] == "conflict-resolution"
+    assert v["question_id"] == "q_001"
+    assert "ps_001" in v["detail"]
+    # int index + string tool so the shadow report's formatters never hit None.
+    assert isinstance(v["index"], int) and isinstance(v["tool"], str)
+
+
+def test_conflict_unpersisted_silent_when_a_resolved_conflict_is_cited():
+    """Backed: resolved_conflict_ids cites a conflicts[] entry with status resolved."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="Birthplace conflict resolved per preponderance.",
+        conflicts=[{"id": "c_001", "status": "resolved"}],
+        resolved_conflict_ids=["c_001"],
+    )
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_fires_when_cited_conflict_is_unresolved():
+    """A dangling/unresolved citation is not real backing — the cited c_ is not
+    status:resolved (or does not exist), so the resolution is still unpersisted."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="Conflict resolved after weighing the records.",
+        conflicts=[{"id": "c_001", "status": "open"}],  # cited but NOT resolved
+        resolved_conflict_ids=["c_001"],
+    )
+    assert len(find_unpersisted_conflict_resolutions(research)) == 1
+
+
+def test_conflict_unpersisted_silent_on_no_conflict_phrasings():
+    """An honest 'no conflicts' stop-criterion is not an unpersisted resolution."""
+    for phrase in (
+        "No conflicts identified.",
+        "No material conflicts.",
+        "No remaining conflicts.",
+        "No discrepancies found.",
+        "None",
+        "n/a",
+        "",
+        "   ",
+    ):
+        assert (
+            find_unpersisted_conflict_resolutions(
+                _research_with_conflict_claim(conflict_resolution=phrase)
+            )
+            == []
+        ), f"should stay silent on {phrase!r}"
+
+
+def test_conflict_unpersisted_inert_without_a_proof_summary():
+    """The gate: a conflict_resolution note with no written conclusion is a
+    legitimate partial run, not a violation."""
+    research = {
+        "proof_summaries": [],
+        "questions": [
+            {
+                "id": "q_001",
+                "exhaustive_declaration": {
+                    "stop_criteria": {"conflict_resolution": "Conflict resolved."}
+                },
+            }
+        ],
+        "conflicts": [],
+    }
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_silent_without_a_reliance_signal():
+    """A conclusion with no conflict_resolution stop-criterion (and no linked
+    question) owes no conflict entry."""
+    research = {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "resolved_conflict_ids": []}
+        ],
+        "questions": [{"id": "q_001", "exhaustive_declaration": {"stop_criteria": {}}}],
+        "conflicts": [],
+    }
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_dedups_per_conclusion():
+    research = _research_with_conflict_claim(
+        conflict_resolution="Conflict resolved."
+    )
+    # one (conclusion, question) pair → one violation
+    assert len(find_unpersisted_conflict_resolutions(research)) == 1
+
+
+def test_conflict_unpersisted_defensive_on_none_and_empty():
+    assert find_unpersisted_conflict_resolutions(None) == []
+    assert find_unpersisted_conflict_resolutions({}) == []

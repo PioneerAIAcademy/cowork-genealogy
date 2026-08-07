@@ -46,6 +46,7 @@ from harness.context_policy import (
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
     find_citation_nulling_in_conclusions,
+    find_unpersisted_conflict_resolutions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -1636,6 +1637,26 @@ async def _run_agent(
         _emit(
             f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
             "with a null/empty citation string (shadow mode — not failed)"
+        )
+
+    # SHADOW MODE ONLY (issue #1317) — the conflict-side sibling of the citation
+    # detector above: a written conclusion asserts a resolved conflict (in its
+    # exhaustive_declaration.stop_criteria.conflict_resolution) that no structured
+    # conflicts[] entry backs, so the resolution lives only in prose and the
+    # viewer's Conflicts section stays blank. Same already-plumbed field,
+    # discriminated by `kind`. Logs; never fails the run. Promotion to a hard gate
+    # is gated on measuring this fire rate across the corpus.
+    conflict_unpersisted_shadow = find_unpersisted_conflict_resolutions(
+        read_research_json(workspace)
+    )
+    if conflict_unpersisted_shadow:
+        guardrail_shadow_violations = (
+            guardrail_shadow_violations + conflict_unpersisted_shadow
+        )
+        _emit(
+            f"[guardrail-shadow] {len(conflict_unpersisted_shadow)} concluded "
+            "question(s) relying on an unpersisted conflict resolution "
+            "(shadow mode — not failed)"
         )
 
     return (
