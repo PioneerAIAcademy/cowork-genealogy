@@ -801,14 +801,10 @@ def test_no_duplicate_tree_ids_flags_a_repeat():
     assert ok is not None and ok.passed
 
 
+@pytest.mark.requires_engine_build
 def test_full_validation_catches_reference_integrity():
-    # Drives the compiled TS validateParsed; skip (never fail) when build/ is
-    # absent, matching the validator's own skip-not-fail contract.
-    from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
-
+    # Drives the compiled TS validateParsed via _run_universal; the marker skips
+    # (never fails) when build/ is absent, matching the skip-not-fail contract.
     # A dangling ParentChild endpoint passes jsonschema but must fail full
     # validation (reference integrity jsonschema cannot express).
     dangling = {
@@ -822,13 +818,11 @@ def test_full_validation_catches_reference_integrity():
     assert ok is not None and ok.passed, "a clean project must pass full validation"
 
 
+@pytest.mark.requires_engine_build
 def test_full_validation_catches_cross_file_subject_person_id():
     # #987 plan §2/§6: the most likely init-project defect — subject_person_ids
     # naming a person the tree does not contain (init-project hand-writes both).
     from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
 
     research = _empty_research_state()["research_json"]
     research = {**research, "project": {**research["project"], "subject_person_ids": ["I9"]}}
@@ -837,15 +831,13 @@ def test_full_validation_catches_cross_file_subject_person_id():
     assert any("subject_person_ids" in e and "I9" in e for e in errors), errors
 
 
+@pytest.mark.requires_engine_build
 def test_validator_crash_is_not_reported_as_missing_build():
     # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
     # be reported as None ("build missing") and silently passed. A bare string in
     # persons trips a TypeError in the TS validator — exactly the malformed tree
     # this feature exists to catch.
     from harness.ts_validator import validate_parsed
-
-    if validate_parsed({}, {}) is None:
-        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
 
     research = _empty_research_state()["research_json"]
     crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
