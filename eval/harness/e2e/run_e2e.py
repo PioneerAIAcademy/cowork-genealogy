@@ -28,6 +28,7 @@ from e2e.orchestrator import (
     DEFAULT_MCP_SERVER_ENTRY,
     DEFAULT_PLUGIN_SKILLS,
     DEFAULT_RUNLOG_ROOT,
+    McpUnavailableError,
     run_e2e_test,
 )
 from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
@@ -76,7 +77,12 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
     print(f"  result: {paths['result']}")
-    if not is_committable_run(result.verdict):
+    if result.verdict == "ungraded":
+        print(
+            "  (judge failed; run committed for re-grading — "
+            "re-run the judge or /grade-e2e-run manually)"
+        )
+    elif not is_committable_run(result.verdict):
         print(
             "  (scratch run — gitignored; the judge didn't run, so there's "
             "nothing to grade or commit)"
@@ -194,6 +200,32 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
+    # Key-validity preflight. A duplicated or revoked key is truthy, so the
+    # agent run proceeds (it uses the SDK's own auth), but the judge silently
+    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
+    # spending anything. Does NOT abort on a missing key: --skip-judge already
+    # handles that (produces verdict="skipped"), and the e2e path has never
+    # blocked on absence.
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key and not args.skip_judge:
+        from e2e.judge import DEFAULT_JUDGE_MODEL
+        from harness.auth import verify_judge_key
+
+        rejected_status = verify_judge_key(api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A $7+ e2e run would complete and then silently discard the "
+                f"result because the judge can't grade it.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"\n"
+                f"Re-run with --skip-judge to proceed without grading.",
+                file=sys.stderr,
+            )
+            return 2
+
     kwargs = {
         "runlog_root": args.runlog_root,
         "mcp_server_entry": args.mcp_server_entry,
@@ -211,6 +243,15 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
         return 130
+    except McpUnavailableError as e:
+        # #941 — an environment failure, not a test result. Nothing was written
+        # (see run_e2e_test) and there is nothing to roll up: "this run never
+        # happened". Ahead of the generic handler below, which would print it as
+        # a harness ERROR and imply the run is a data point. Exit 2 matches the
+        # other "this run never happened" exits above (missing fixtures root,
+        # missing fixture) rather than 1, which means "a test failed".
+        print(f"\n{e}", file=sys.stderr)
+        return 2
     except Exception as e:  # noqa: BLE001 — report, then fall through to a nonzero exit
         print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
         return 1
@@ -222,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
     # Verified against all 122 committed runs — the gate distribution is
     # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped"})
+    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
     return 1 if failed else 0
 
 

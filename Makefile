@@ -29,8 +29,14 @@ EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
 # Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
-# manifest or lockfile changes.
-$(JS_DEPS): package.json pnpm-lock.yaml
+# root manifest, the lockfile, the member list, or ANY member's manifest
+# changes. A member's package.json is listed because it carries that member's
+# lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
+# to packages/schema and touched neither, so every existing checkout kept a
+# stamp newer than both prerequisites, never reinstalled, and never ran the
+# generator that postinstall exists to run.
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
+            $(wildcard packages/*/package.json apps/*/package.json)
 	pnpm install
 	@touch $@
 
@@ -401,7 +407,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
-e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
 	cd eval/harness && uv run python -m e2e.preflight
 
 .PHONY: e2e-login
@@ -495,6 +501,19 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-agent-tools
+e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each plugin agent that declares tool X and appears in a run, did it
+	# ever actually call X? Unions two per-agent sources already in the runlog —
+	# `subagents[].turns[].blocks` and (since #1027) `tool_calls[].agent_type` —
+	# and diffs the union against each agent's `tools:` frontmatter, bare-named.
+	# `gps-mentor`'s never-called tools are the candidates for #1084's live
+	# binding probe. Windowed to 14 days like every reader; SINCE=all for the
+	# whole corpus. A report, not a gate (see its own "Limits" footer).
+	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
 e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD
