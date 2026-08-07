@@ -186,8 +186,33 @@ not do.
 
 ### List 2 — Proposed Backlog tasks
 
-A table for the lead to approve *before* anything is filed, each row tagged with
-who should do it:
+The backlog is already deep. A row here is a claim that the lead should spend
+one of a finite number of Ready slots on this, later, in a session with none of
+today's context — not that the finding was worth noticing. Most verified
+findings fail that bar. Before a finding earns a row, it must clear both:
+
+- **Does it need a session with no context from today?** If the whole fix is
+  "close this issue," "add a comment," "update a label," or "tell so-and-so" —
+  you can do the mechanical part yourself right now (via `gh issue comment`,
+  `gh issue close`, etc. — filing is not the only write available to you) or it
+  belongs in List 1/List 4 instead. A card whose entire body would read "go do
+  the thing I already know how to do" is overhead, not delegation.
+- **Is there implementation work here that doesn't already exist?** Check
+  §3's duplicate search first. A finding that only confirms or corrects an
+  *existing* issue (a stale claim, a wrong attribution, a "this already
+  shipped") is not a new task — surface it as a comment on that issue, or in
+  List 4, not as a second card competing with the first.
+
+A finding can be real, verified, and still not worth a card. "Worth mentioning"
+(List 1, List 4, or a direct comment on an existing issue) and "worth a card"
+(List 2) are different bars, and the second is higher. When in doubt, mention
+it and don't file it — a missed mention costs a sentence next time; an
+over-filed card sits in Backlog until someone spends triage time re-discovering
+it's not actionable.
+
+What survives: implementation work, not yet tracked anywhere, that genuinely
+needs a separate session to pick up. For each surviving row, a table for the
+lead to approve *before* anything is filed, tagged with who should do it:
 
 | Owner tag | What belongs to them |
 |---|---|
@@ -208,8 +233,11 @@ Also flag, per row:
   not losing, but nothing the lead has committed to. He is approving the label,
   not just the task, and a row he waves through as "sure, someday" filed without
   it silently joins every morning's ranking.
-- **What you deliberately did NOT file, and why.** Over-filing is its own
-  failure; a Backlog nobody can read is the same as no Backlog.
+- **What you deliberately did NOT file, and where it went instead.** Over-filing
+  is its own failure; a Backlog nobody can read is the same as no Backlog. Don't
+  just say "not filing" — say whether it moved to List 1, List 4, a comment on
+  an existing issue, or was handled directly (and how). A rejected candidate
+  with nowhere named is a finding quietly dropped, not a finding triaged.
 
 ### List 3 — Problematic PRs
 

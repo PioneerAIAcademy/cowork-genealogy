@@ -126,6 +126,22 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
+- **Fold it into the current PR unless there's a real reason not to.** Finding
+  a related gap while working a PR is not by itself a reason to file a new
+  issue — it's a reason to ask "does landing *this* PR require fixing that
+  too, or can I just fix it now while I'm here?" Default to yes. A stray
+  ticket is easy to create and easy to forget; a PR that actually closes the
+  gap it found needs nothing else to remember it. File a new issue instead
+  only when at least one of these is true, and say which when you file:
+  the fix needs a different reviewer or skill (a code fix surfaced during a
+  genealogist's fixture work, or vice versa); it would blow the PR's own
+  scope enough to slow its review meaningfully; it depends on something not
+  yet decided (a Gate-2 question only the lead can answer); or it's a
+  genuinely separate skill-eval slot (§ "Gate 4" in `/fill-ready`) that would
+  force a second paid run if bundled. "I noticed this in passing" and "I'm
+  not sure if this is in scope" are not reasons — they're the two most common
+  ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
+  ask rather than defaulting to filing.
 - **Deferring work creates an issue, not a file entry.** In the same PR that
   defers something, file it — one command, no board write:
 
@@ -222,33 +238,44 @@ the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
 
-**Dual-spelled tool names.** In `tools:` — and in `disallowedTools:` —
-every MCP tool **must** be listed twice, once under each server spelling:
+**Dual-spelled tool names.** (Heading kept as a stable anchor —
+`docs/architecture.md` §5.2 and ADR-0004 both cite it by name — though the rule now
+names three spellings.) In `tools:` — and in `disallowedTools:` —
+every MCP tool **must** be listed **three times**, once under each server
+spelling:
 
-    - mcp__genealogy__record_read
-    - mcp__remote-devices__Genealogy_Research__record_read
+    - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
+    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
+    - mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
 
 Bare names do not work (they leave the subagent toolless in the
 unit-harness SDK path), but neither does a single qualified name. The MCP
 server's name is chosen by whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both
 harnesses, and the hosted web control plane register it under the key
-`genealogy`; Cowork reaches the host-installed `.mcpb` through a
-remote-device bridge that namespaces it by `manifest.json`'s
-`display_name`. No single spelling resolves everywhere.
+`genealogy`. Cowork uses `manifest.json`'s `display_name` both times, but
+namespaces it under `remote-devices` only when the task runs **in the
+cloud** and reaches the host through the device bridge; a task running **on
+the user's own computer** reaches the `.mcpb` directly and gets the bare
+`display_name` segment. **Run mode is a per-task setting nothing in the
+plugin can see.** No single spelling resolves everywhere.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
 When every `tools:` entry misses, the runtime refuses to spawn the agent at
 all ("would be spawned with zero tools — refusing"). That is how #650/#698
 broke all three agents in Cowork while CI stayed green: they were qualified
 against the *harness's* arbitrary dict key rather than the product's name.
-Listing both spellings is safe because unrecognized entries are ignored so
+**The on-computer registrar repeated the shape** — that spelling
+was missing, `record-extractor` was refused outright, and the lint stayed green because
+it derived its expected prefixes from the two registrars we knew about.
+Listing every spelling is safe because unrecognized entries are ignored so
 long as at least one resolves.
 
 `disallowedTools:` matters more, not less. A deny binds even under
 `bypassPermissions` (the hosted path, issue #695), so it is the last line
 of defence keeping `record-extractor` off the broad `research_append` — and
-a deny naming one spelling silently fails to bind under the other.
+a deny naming one spelling silently fails to bind under the others. Unlike a
+missing grant, **a missing deny fails open and silently.**
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
@@ -292,10 +319,15 @@ the host.
 
 Built-in Cowork tools that are not MCP tools — `Read` — stay bare. Skills'
 `allowed-tools` frontmatter also stays **bare** (it is not an exact-match
-spawn filter); only agent `tools:`/`disallowedTools:` are dual-spelled.
-Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
-bridge prefix from `display_name` so renaming the extension fails loudly in
-CI instead of silently in production.
+spawn filter); only agent `tools:`/`disallowedTools:` carry every spelling.
+Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives both
+`display_name`-based prefixes from the manifest so renaming the extension fails
+loudly in CI instead of silently in production, and throws on an unrecognized
+prefix rather than slicing it against another prefix's length.
+
+**No CI job can verify that a granted tool actually binds.** Only a
+live Cowork session can, and only in the run mode being tested — a cloud-mode
+check would have passed while on-computer was broken.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
 genealogy tool schemas above a size threshold and offers no control over it, so

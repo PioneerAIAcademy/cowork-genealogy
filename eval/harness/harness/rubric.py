@@ -41,6 +41,16 @@ class Rubric:
     content_hash: str
     raw: str = field(repr=False, default="")
 
+    def dimension_names(self) -> frozenset[str]:
+        """The authoritative, case-sensitive set of this rubric's dimension
+        names — every `##` heading in `rubric.md`, exactly as written.
+
+        This is what a judge-returned `source: "rubric"` dimension name
+        must match to be accepted. Comparison against this set is
+        case-sensitive by design: a re-cased variant of a real name is not
+        the same name (see judge._extract_dimensions, #1361)."""
+        return frozenset(d.name for d in self.dimensions)
+
 
 _H1 = re.compile(r"^# +(.+?)\s*$", re.MULTILINE)
 _H2 = re.compile(r"^## +(.+?)\s*$", re.MULTILINE)
