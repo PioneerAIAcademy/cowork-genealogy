@@ -514,6 +514,34 @@ describe("research_append (Phase 2)", () => {
     expect(typeof created).toBe("string");
   });
 
+  /**
+   * `question_status` has no retire value, so there is no way to close a
+   * question by status other than the two transitions the schema spec assigns
+   * to research-exhaustiveness (`exhaustive_declared`) and proof-conclusion
+   * (`resolved`).
+   *
+   * This is pinned because `question-selection/SKILL.md` instructed exactly
+   * these two values — "to retire one, `op: 'update'` its `status`
+   * (`superseded` / `answered`)" — in three separate places until #1135. The
+   * write was rejected every time an agent followed it, and nothing recorded
+   * that the values were illegal in the first place.
+   */
+  it("rejects retiring a question with a status outside question_status", async () => {
+    await writeProject();
+    for (const status of ["superseded", "answered"]) {
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status },
+      });
+      expect(r.ok, `status '${status}' must be rejected`).toBe(false);
+    }
+    // Nothing was written on either attempt.
+    expect((await readResearch()).questions[0].status).toBe("open");
+  });
+
   it("appends a plan, then rejects a second active plan for the same question", async () => {
     await writeProject();
     const { id: _o, ...plan } = validPlan("x", "q_001", "active");
