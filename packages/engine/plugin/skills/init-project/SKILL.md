@@ -100,6 +100,35 @@ Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsu
 
 **Family knowledge counts as a holding too.** When the user states something from family memory (a maiden name, who married whom), record it as `oral_knowledge` *in addition* to using it in the tree. The two are not mutually exclusive: "Mary Donovan" both creates Mary's stub and is itself oral knowledge worth surveying. Do not let "I used it in the tree" drop it from `known_holdings`. (Only facts from family/personal knowledge, not the bare research target.)
 
+## Setting up a forget-and-rederive test
+
+Sometimes the researcher seeds a project **specifically to test you** — "start a
+project for this person but omit his parents, I want to see whether you can find
+them again," or "leave his death out so I can check you re-derive it." Your job
+here is unchanged: **build the complete tree and stop.** Never hand-omit anything
+at construction time, and never perform the forgetting yourself.
+
+Build the tree exactly as you normally would — every person, relationship, and
+documentary fact the survey turns up, *including the very slice they asked you to
+leave out*. Then finish init-project normally and tell the researcher the tree is
+complete and that forgetting is a **separate next step** they run with the
+**forget-and-rederive** skill. In this skill you do **not**:
+
+- strip, omit, or leave out the fact or relationship under test;
+- write a `.tree-before-forget…` restore file or any partial tree;
+- call `tree_forget` or `project_context`, or otherwise begin forget-and-rederive
+  in this turn — you don't have those tools, and the forgetting is not your step.
+
+Why the strip belongs to `tree_forget`, not a hand-omit: a conclusion is recorded
+in two places at once — as structure (a ParentChild or Couple relationship) *and*
+as a documentary fact on the subject's own record (a `Parents` or `Marriage` fact
+whose value names the relatives). Omit at build time and you drop the structure
+but keep the fact, so the answer survives. `tree_forget` removes both, writes a
+restore file so the researcher can undo it, and reports counts-only so the answer
+never re-enters context. A partial hand-build has none of that — which is why the
+**complete** tree, not a stripped one, is what init-project delivers. Do not treat
+"omit X" as an instruction to skip X during construction.
+
 ## Steps
 
 > These steps run ONLY for a brand-new project. If `research.json` exists, you stopped at the guard clause.
