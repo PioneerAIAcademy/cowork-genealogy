@@ -70,10 +70,18 @@ const repoRoot = join(mcpRoot, "..", "..", "..");
 // would break because a key moved out from under correctly-qualified agents.
 //
 // Grepping source for a dict key is brittle by nature. It is the pragmatic
-// option because the five sites span TypeScript, JSON and Python and share no
-// importable constant; the robust fix is a single shared MCP_SERVER_KEY that
-// all five read. If these patterns start missing, fix the pattern — do not
+// option because these sites span TypeScript, JSON and Python and mostly share
+// no importable constant; the robust fix is a single shared MCP_SERVER_KEY that
+// all of them read. If these patterns start missing, fix the pattern — do not
 // delete the assertion.
+//
+// The e2e site is the one that now has that constant. Since #941 the e2e
+// harness registers via `genealogy_mcp_config()` in eval/harness/e2e/
+// mcp_health.py — shared by orchestrator.py and preflight.py precisely so a
+// preflight cannot prove a different config than the run uses — so the key is a
+// named constant there rather than a literal inside a `mcp_servers={...}`
+// block, and this site reads the constant. That is the shape the paragraph
+// above recommends; the remaining sites still inline it.
 const SERVER_KEY_SITES: { file: string; pattern: RegExp; what: string }[] = [
   { file: ".mcp.json", pattern: /"mcpServers"\s*:\s*\{\s*"([^"]+)"/, what: "Claude Code project config" },
   {
@@ -82,8 +90,8 @@ const SERVER_KEY_SITES: { file: string; pattern: RegExp; what: string }[] = [
     what: "hosted web control plane",
   },
   {
-    file: "eval/harness/e2e/orchestrator.py",
-    pattern: /mcp_servers\s*=\s*\{\s*"([^"]+)"/,
+    file: "eval/harness/e2e/mcp_health.py",
+    pattern: /GENEALOGY_SERVER_NAME\s*=\s*"([^"]+)"/,
     what: "e2e harness",
   },
   {

@@ -126,6 +126,22 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
+- **Fold it into the current PR unless there's a real reason not to.** Finding
+  a related gap while working a PR is not by itself a reason to file a new
+  issue — it's a reason to ask "does landing *this* PR require fixing that
+  too, or can I just fix it now while I'm here?" Default to yes. A stray
+  ticket is easy to create and easy to forget; a PR that actually closes the
+  gap it found needs nothing else to remember it. File a new issue instead
+  only when at least one of these is true, and say which when you file:
+  the fix needs a different reviewer or skill (a code fix surfaced during a
+  genealogist's fixture work, or vice versa); it would blow the PR's own
+  scope enough to slow its review meaningfully; it depends on something not
+  yet decided (a Gate-2 question only the lead can answer); or it's a
+  genuinely separate skill-eval slot (§ "Gate 4" in `/fill-ready`) that would
+  force a second paid run if bundled. "I noticed this in passing" and "I'm
+  not sure if this is in scope" are not reasons — they're the two most common
+  ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
+  ask rather than defaulting to filing.
 - **Deferring work creates an issue, not a file entry.** In the same PR that
   defers something, file it — one command, no board write:
 
