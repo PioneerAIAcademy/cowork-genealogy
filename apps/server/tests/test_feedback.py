@@ -256,3 +256,89 @@ def test_unparseable_tree_passes_through_rather_than_failing_the_send():
     out, count = fb._redact_living([("tree.gedcomx.json", b"not json")])
     assert dict(out)["tree.gedcomx.json"] == b"not json"
     assert count == 0
+
+
+# --- feedback_secret token in envelope -----------------------------------
+
+def test_envelope_includes_token_when_feedback_secret_is_set(monkeypatch):
+    """When FEEDBACK_SECRET is configured, the POST envelope carries a `token`
+    field so the Apps Script endpoint can authenticate the caller."""
+    captured: dict = {}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            captured["envelope"] = json
+            return _FakeResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "feedback_secret", "test-secret-value")
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
+            },
+        )
+        assert r.status_code == 200
+        assert captured["envelope"]["token"] == "test-secret-value"
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_envelope_omits_token_when_feedback_secret_is_none(monkeypatch):
+    """When FEEDBACK_SECRET is not set (None), no `token` key appears in the
+    envelope — the Apps Script backward-compat path accepts without checking."""
+    captured: dict = {}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            captured["envelope"] = json
+            return _FakeResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "feedback_secret", None)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
+            },
+        )
+        assert r.status_code == 200
+        assert "token" not in captured["envelope"]
+
+        client.delete(f"/api/sessions/{sid}")

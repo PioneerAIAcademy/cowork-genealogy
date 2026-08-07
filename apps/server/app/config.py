@@ -70,6 +70,11 @@ class Settings(BaseSettings):
         "https://script.google.com/macros/s/"
         "AKfycbxcMvfhpCqLzSa5sZBrssr48QfqrpFhW9DMRkxG8RYQfGGJIXoCEzbyPHrpT1XWZzcs/exec"
     )
+    # Shared secret sent in the POST body to the Apps Script feedback endpoint.
+    # When set, the endpoint rejects payloads whose `token` field doesn't match
+    # its `FEEDBACK_TOKEN` Script Property. None → omit from the envelope (local
+    # dev; the endpoint's backward-compat path accepts without checking).
+    feedback_secret: str | None = None
     # Comma-separated email allowlist (app access gate). Matched against the
     # **FamilySearch-account** email returned by /users/current at login — which
     # may differ from a person's Google/contact email. Dallan only for now;

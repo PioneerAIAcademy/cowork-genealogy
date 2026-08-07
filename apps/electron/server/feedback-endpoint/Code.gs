@@ -28,7 +28,7 @@ var NOTIFICATION_EMAIL = '';
 // Bump this when you paste a new Code.gs into the console. doGet() returns it,
 // so `curl <exec-url>` says which version is actually deployed — otherwise an
 // unpublished edit is indistinguishable from a working one.
-var SCRIPT_VERSION = '2026-08-04';
+var SCRIPT_VERSION = '2026-08-06';
 
 // Labels applied to every feedback issue, in the same POST that creates it.
 // `genealogist` puts it in that pool and counts it; `feedback` is what
@@ -43,6 +43,25 @@ function doPost(e) {
 
     if (!payload.zipBase64 || !payload.filename) {
       throw new Error('Missing zipBase64 or filename');
+    }
+
+    // ── Token check ──────────────────────────────────────────────
+    // When the FEEDBACK_TOKEN Script Property is set and non-empty,
+    // reject any request whose `token` field doesn't match. When the
+    // property is absent or empty, accept unconditionally — backward
+    // compatibility during rollout (the Electron client has no way to
+    // deliver a secret to installed users).
+    var expectedToken = PropertiesService.getScriptProperties()
+                          .getProperty('FEEDBACK_TOKEN');
+    if (expectedToken) {
+      // Apps Script has no crypto.timingSafeEqual; the multi-hundred-ms
+      // network round-trip through Google's infrastructure makes a
+      // timing side-channel impractical here.
+      if (payload.token !== expectedToken) {
+        return ContentService
+          .createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
     }
 
     var folder = DriveApp.getFolderById(FOLDER_ID);
