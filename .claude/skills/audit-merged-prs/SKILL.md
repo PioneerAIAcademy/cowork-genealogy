@@ -11,13 +11,17 @@ allowed-tools:
 # Audit merged PRs
 
 `docs/task-lifecycle.md` step 9 requires a `senior-developers` approval only
-on the paths `.github/CODEOWNERS` lists as high blast-radius. Everything
-else merges on a peer approval alone — which is the point, since one senior
-cannot review every PR for 10+ developers and also do strategic work. But a
-peer approval is not a senior's judgment, and CODEOWNERS only routes a
-senior to paths flagged high-risk *in advance*. It cannot catch a wrong
-abstraction, an architectural drift, or a "peer approved it without reading
-it closely" pattern on a path nobody flagged.
+on code/infrastructure file types — `.github/CODEOWNERS` routes
+`.ts`/`.js`/`.py`/`.json`/`.yml` and similar to `senior-developers`
+repo-wide, carving genealogist-authored content (plugin skills, plugin
+agents, eval fixtures/tests, run logs, docs) back out even where it's one
+of those extensions. Everything without a `senior-developers` match merges
+on a peer approval alone — which is the point, since one senior cannot
+review every PR for 10+ developers and also do strategic work. But a peer
+approval is not a senior's judgment, and CODEOWNERS only routes by file
+type *in advance*. It cannot catch a wrong abstraction, an architectural
+drift, or a "peer approved it without reading it closely" pattern in code
+a senior never saw.
 
 This skill is that compensating control: the senior's one weekly touchpoint
 on the PRs they did not personally gate. Sampling **after** merge, not
@@ -143,8 +147,11 @@ This is what separates the skill from running `/review` N times by hand.
 After all sampled PRs are reviewed, look across them:
 
 - **Do two or more sampled PRs miss the same class of thing?** That is the
-  signal the CODEOWNERS path list is incomplete — propose the specific
-  path to add, with the evidence (which PRs, which files).
+  signal CODEOWNERS' extension/carve-out rules are incomplete — propose the
+  specific fix, with the evidence (which PRs, which files): a missing file
+  extension in the developer-owned list, a directory that needs a
+  genealogist carve-out it doesn't have, or a carve-out that's too broad
+  and is hiding real code from senior review.
 - **Does `/review`'s own checklist need a new category?** If a real bug
   slipped through that `.claude/skills/review/SKILL.md` § "What to look
   for" does not name, propose the addition there — quoting the finding
