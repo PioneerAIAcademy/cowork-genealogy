@@ -19,9 +19,8 @@ _SPEC = importlib.util.spec_from_file_location(
 check_runlogs = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_runlogs)
 
-# check_runlogs puts the harness dir on sys.path, so this import must follow it.
-from harness.snapshot import build_snapshot  # noqa: E402
-
+# check_runlogs' import inserts the harness dir on sys.path, so these resolve.
+from harness.snapshot import build_snapshot, normalize  # noqa: E402
 
 
 def _log_with_one_dimension() -> dict:
@@ -331,6 +330,165 @@ def test_touched_agent_without_references_gates_nothing(monkeypatch, capsys, tmp
     rc = check_runlogs.main()
     assert rc == 0
     assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+# --- Shared-fixture → referencing-skill mapping (#1094) ---------------------
+
+
+def _make_tests_tree(tmp_path):
+    """Two skills' unit-test dirs: one references a scenario + an mcp fixture,
+    one references neither."""
+    tests = tmp_path / "tests"
+    a = tests / "uses-fixture"
+    a.mkdir(parents=True)
+    (a / "t.json").write_text(
+        json.dumps(
+            {
+                "test": {"id": "ut_uf_001"},
+                "input": {"scenario": "shared-scn"},
+                "mcp_fixtures": ["shared-mcp"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    b = tests / "no-fixture"
+    b.mkdir(parents=True)
+    (b / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_nf_001"}, "input": {}, "mcp_fixtures": []}),
+        encoding="utf-8",
+    )
+    return tests
+
+
+def test_skills_referencing_fixtures_maps_by_ref(tmp_path):
+    """A scenario resolves by directory name; an mcp fixture resolves by bare
+    name (no `.json`) — the two traps the resolution must get right."""
+    tests = _make_tests_tree(tmp_path)
+    mapping = check_runlogs.skills_referencing_fixtures(tests)
+    assert mapping == {
+        ("scenarios", "shared-scn"): {"uses-fixture"},
+        ("mcp", "shared-mcp"): {"uses-fixture"},
+    }
+
+
+_SCN_REL = "eval/fixtures/scenarios/shared-scn/research.json"
+_MCP_REL = "eval/fixtures/mcp/shared-mcp.json"
+
+
+def _setup_repo(tmp_path, monkeypatch, *, runlog_matches_disk, with_runlog=True):
+    """Build a tmp repo — the `uses-fixture` skill's tests reference a scenario
+    and an mcp fixture, both present on disk, and (when `with_runlog`) a
+    full-skill run log whose snapshot embeds BOTH — and point check_runlogs'
+    globals at it. `runlog_matches_disk` controls whether the embedded copies
+    equal the on-disk fixtures (active → silent) or differ (stale → warn).
+
+    This drives the real `rule2_fixture_touched` snapshot diff, unlike a setup
+    that leaves RUNLOGS_DIR on the real repo (which would pass via the
+    unrelated 'no run logs' branch without ever exercising the arm)."""
+    repo = tmp_path / "repo"
+    for rel, blob in (
+        ("eval/tests/unit/uses-fixture/t.json",
+         {"test": {"id": "ut_uf_001"},
+          "input": {"scenario": "shared-scn"},
+          "mcp_fixtures": ["shared-mcp"]}),
+        ("eval/tests/unit/no-fixture/t.json",
+         {"test": {"id": "ut_nf_001"}, "input": {}, "mcp_fixtures": []}),
+    ):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(json.dumps(blob), encoding="utf-8")
+
+    for rel in (_SCN_REL, _MCP_REL):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text('{"disk": true}', encoding="utf-8")
+
+    runlogs_unit = repo / "eval/runlogs/unit"
+    runlogs_unit.mkdir(parents=True, exist_ok=True)
+    if with_runlog:
+        def _snap(rel):
+            disk = (repo / rel).read_bytes()
+            return normalize(rel, disk if runlog_matches_disk else b'{"embedded": "old"}')
+
+        rl_dir = runlogs_unit / "uses-fixture"
+        rl_dir.mkdir()
+        (rl_dir / "v1.json").write_text(
+            json.dumps({"snapshot": {_SCN_REL: _snap(_SCN_REL), _MCP_REL: _snap(_MCP_REL)}}),
+            encoding="utf-8",
+        )
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs_unit)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", repo / "eval/tests/unit")
+    return repo
+
+
+def test_touched_scenario_warns_when_runlog_stale(monkeypatch, capsys, tmp_path):
+    """Editing eval/fixtures/scenarios/<name>/ warns for every skill whose tests
+    reference <name> and whose run log embeds a now-stale copy — WARN-ONLY
+    (rc 0), unlike a skill/agent edit which blocks. Named acceptance test: it
+    fails today because the fixture arm does not exist."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0  # warn-only: never blocks
+    assert "::warning::" in out
+    assert "uses-fixture" in out  # referencing skill surfaced
+    assert "v1.json" in out  # exercised rule2_fixture_touched, not the no-runlog branch
+    assert _SCN_REL in out  # the changed fixture is named
+    assert "no-fixture" not in out  # non-referencing skill untouched
+    assert _MCP_REL not in out  # scoping: the un-changed (but also stale) fixture is NOT attributed
+
+
+def test_touched_mcp_fixture_warns_when_runlog_stale(monkeypatch, capsys, tmp_path):
+    """Same via eval/fixtures/mcp/<name>.json — the bare-name (`.json`-stripped)
+    reference must resolve, and only the changed fixture is attributed."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, [_MCP_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out
+    assert "v1.json" in out
+    assert _MCP_REL in out
+    assert _SCN_REL not in out  # scoping: scenario not attributed to an mcp edit
+    assert "no-fixture" not in out
+
+
+def test_touched_fixture_active_runlog_no_warning(monkeypatch, capsys, tmp_path):
+    """When the run log already matches the changed fixture (active), the arm
+    stays silent — guards against inverting `if not fixture_diffs: return`."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=True)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "uses-fixture" not in out
+    assert "All runlog rules satisfied" in out
+
+
+def test_touched_fixture_missing_runlog_warns(monkeypatch, capsys, tmp_path):
+    """A referenced fixture whose skill has no run log still warns (nothing to
+    re-diff), and stays warn-only (rc 0)."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False, with_runlog=False)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out
+    assert "no run logs" in out
+
+
+def test_touched_fixture_without_references_warns_nobody(monkeypatch, capsys, tmp_path):
+    """A changed fixture no test references surfaces no skill and stays green."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, ["eval/fixtures/mcp/nobody-references-this.json"])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "uses-fixture" not in out
+    assert "All runlog rules satisfied" in out
 
 
 # --- git_diff_touched_paths uses a 3-dot (merge-base) diff -----------------

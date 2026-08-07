@@ -1154,7 +1154,9 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and three **warn-only** lints
+§3 — plus a **warn-only** arm that maps a changed shared fixture
+(`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
+and warns when their run logs go stale), and three **warn-only** lints
 worth knowing because they fire right after the three most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
@@ -1208,6 +1210,7 @@ taught a reader nothing.
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. |
 | **Nothing proves the production boot refusal is reachable or legible.** `test_prod_preflight.py` asserts `assert_production_config` and its lifespan wiring offline; no check runs against a real `fly deploy`. | A gate that never fires, or fires with an unreadable message, looks identical to a correctly configured deploy. |
 | **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. |
+| **A shared-fixture edit that leaves a skill's run log stale still exits 0 green.** `check_runlogs.py`'s fixture arm now maps the fixture to its referencing skills, but only **warns** — no blocking check catches it. | The staleness is surfaced as a warning, not caught as a failure, so a green run can still ship a stale run log. |
 
 ### If you're asked to…
 
