@@ -26,7 +26,9 @@
   "mcp_fixtures": [
     "record-search-purnell-1821-decoy",
     "rank-search-matches-purnell-1821-decoy",
-    "record-read-job-purnell-6dsr-xd6y"
+    "record-read-job-purnell-6dsr-xd6y",
+    "record-search-purnell-any-variant-no-results",
+    "record-search-parnell-any-variant-no-results"
   ],
   "judge_context": [
     "Tool Arguments: score 3 if record_search was called with projectPath, subjectId I1, and parameters appropriate to a Job Purnell baptism/church search in Trowbridge/Wiltshire. A validate_research_schema call with a project path is acceptable and expected — do not penalize it. Score 2 only if record_search was skipped, had clearly wrong arguments, or omitted subjectId. Do NOT expect a separate rank_search_matches call.",
