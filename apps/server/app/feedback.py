@@ -461,8 +461,10 @@ async def submit_feedback(
         "filename": filename,
         "zipBase64": base64.b64encode(buf.getvalue()).decode("ascii"),
     }
+    if settings.feedback_secret is not None:
+        envelope["token"] = settings.feedback_secret
 
-    url = get_settings().feedback_url
+    url = settings.feedback_url
     try:
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             res = await client.post(url, json=envelope)
