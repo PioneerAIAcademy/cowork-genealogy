@@ -257,20 +257,6 @@ old per-result `same_person` loop and the separate `source_attachments` call bot
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
-- **If you anchored the search on a relative's name, read `relativeTerms` before
-  you write anything about that relationship.** FamilySearch keeps records that
-  do not *contradict* the relative you named, not only records that carry them —
-  so a search with `fatherGivenName: "William"` returns hits that name no father
-  at all, and they look identical to the ones that name him. Each result says
-  which: `present` (the record names one — the name is right there, compare it
-  yourself), `absent` (it names none), `unknown` (could not be determined).
-  On `absent` or `unknown`, the record is **consistent with** that relative and
-  is not evidence *for* them. Write "consistent with", never "confirming her
-  father William". The match score cannot catch this for you — it measures name,
-  date and place agreement and never looks at the relationship, so an `absent`
-  record can outrank one that names him. `rank_search_matches` returns a
-  `relativeTermNote` when any returned match is `absent`; if you see it, the
-  ranking is telling you its own top hits do not carry the relative.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
@@ -331,6 +317,17 @@ candidates; you still confirm the top ones:
   caveat. Report the record, the conflict, and what would settle it. The
   people in it belong to whoever that record is actually about, and until
   the cross-check clears you do not know that it is your subject.
+- **A relative-anchored hit may not name that relative. Read `relativeTerms`
+  before you write about the relationship.** FamilySearch keeps records that do
+  not *contradict* the name you supplied, so `fatherGivenName: "William"`
+  returns hits naming no father at all, indistinguishable from ones that name
+  him. Each result says which: `present` (the name is there — compare it
+  yourself), `absent`, `unknown`. On `absent`/`unknown` write "consistent with",
+  never "confirming her father William". This is a wording rule, not a
+  disqualifier: an `absent` record is still a candidate, and this is never on
+  its own a reason to stop searching or escalate elsewhere. `matchScore` never
+  looks at relationships, so an `absent` record can outrank one that names him;
+  `rank_search_matches` says so with `relativeTermNote`.
 - **Pre-1880 US censuses have no relationship column.** 1850/1860/1870 list
   name, age, sex, birthplace, occupation in household order — "relationship to
   head" is **1880-onward**. So any "head"/"wife"/"son" read off a pre-1880
