@@ -136,7 +136,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
+| `surname` | tree.gedcomx.json person name | Try the spelling the tree holds first, then variant spellings as separate searches. Anchor — required if `recordCountry` is absent. |
 | `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name a source actually used tends to surface the target as a clear top-scoring outlier. Truncate to first-name-only as a **lever** if it nils (see `references/search-strategy-levers.md`), not as the default starting query. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
@@ -150,7 +150,7 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 **Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check `references/collection-quirks.md` for an entry on it and apply its guidance exactly.** This is a required check, not an optional pointer — the reference documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) that the general name-variant strategy above will not surface on its own. If an entry says two fields must be varied together (for example, a given name and a surname abbreviation), trying only one field is not sufficient — vary the fields the reference specifies, together, in the same call, before concluding a plan item is exhausted.
 
-**Name variant strategy:** If the exact name returns few results, try:
+**Name variant strategy:** If the name as spelled in the tree returns few results, try:
 - Phonetic variants (Flynn → Flyn, Flinn)
 - Spelling variants (Patrick → Patric, Paddy, Pat)
 - Abbreviations (William → Wm, Thomas → Thos)

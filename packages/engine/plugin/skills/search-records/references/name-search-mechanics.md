@@ -1,7 +1,25 @@
 # Name Search Mechanics — FamilySearch Records API
 
 Reference for constructing name parameters in `record_search` queries.
-All examples use API query parameters (`q.*`).
+Examples are written in the upstream API's own `q.*` syntax; the tool
+takes **camelCase** parameters. Crosswalk:
+
+| API syntax | `record_search` parameter |
+|---|---|
+| `q.surname` / `q.givenName` | `surname` / `givenName` |
+| `q.surname.1` / `q.givenName.1` | `surnameAlt` / `givenNameAlt` |
+| `q.surname.exact=on` | `surnameExact: true` |
+| `q.givenName.exact=on` | `givenNameExact: true` |
+| `q.surname.exact.1=on` | covered by `surnameExact` when `surnameAlt` is set |
+| `q.<relative>GivenName` / `q.<relative>Surname` | `<relative>GivenName` / `<relative>Surname` — `spouse`, `father`, `mother`, `parent`, `other` |
+| `q.sex` | `sex` |
+
+**`surnameExact` and `givenNameExact` are narrower than they sound and
+are usually the wrong reach** — they change how many results come back,
+not which ones rank first, and on a misspelled index they can drop the
+target outright. See "Default fuzzy matching" below and
+`docs/specs/record-search-tool-spec-v2.md` § "What `.exact=on` actually
+does".
 
 ## Wildcards
 
@@ -28,14 +46,28 @@ Without `.exact=on`, the API auto-applies:
   "O'Hara" = "OHara"
 - **Standardized given-name variants:** Wm→William, Margt→Margaret,
   Eliz→Elizabeth, Robt→Robert, Geo→George, Jno→John, Thos→Thomas
-- **Common nicknames:** Peggy↔Margaret, Polly↔Mary, Dick↔Richard,
-  Jack↔John, Bill↔William
-- **Phonetic/edit-distance spelling variants** (algorithm unpublished)
+- **Some common nicknames:** Peggy↔Margaret, Polly↔Mary, Dick↔Richard,
+  Jack↔John, Bill↔William. **Coverage here is partial and not
+  inspectable** — measured 2026-08-04, fuzzy `Elizabeth` reached `Eliza`
+  and `Betsy` but not `Betty`, which had 105 records in the same result
+  window. Treat the nickname table further down as a list of names to
+  *search*, not a list fuzzy has already covered for you.
+- **Phonetic/edit-distance spelling variants** (algorithm unpublished).
+  This is the mechanism that bridges an index misspelling — `Neal` finds
+  a record indexed `Neill` — and it is the main reason a surname search
+  should stay fuzzy.
 - **Soundex** is part of default fuzzy (no separate toggle)
 
 Adding `.exact=on` to a name parameter disables all of the above for
 that parameter. Each parameter can be set to exact independently
-(e.g., exact surname with fuzzy given name).
+(e.g., exact surname with fuzzy given name). **Disabling it is rarely
+what you want:** it narrows the count without changing which records
+rank first, so it cannot surface a buried record — and it switches off
+the misspelling bridge above. On one measured case, `surname: "Neal"`
+with `surnameExact` returned **0** where the fuzzy search returned the
+target. Reach for it only when you have confirmed how the index spells
+the name, or when you need a defensible count for an exhaustiveness
+claim.
 
 ## Surname-only and given-name-only
 
@@ -97,8 +129,34 @@ Use wildcards to compensate.
 
 ## Common nickname equivalences
 
-Auto-applied in fuzzy search but may fail on partial standardizations.
-Try formal names explicitly when fuzzy doesn't produce results.
+**Fuzzy matching covers some of this table, not all of it, and you
+cannot tell which from the outside.** Measured 2026-08-04: a top-100
+sample of fuzzy `givenName: Elizabeth` returned `Elizabeth:72 Eliza:14
+Betsy:10` — two of the nicknames below — and **no `Betty`**, while a
+search for `Betty` surfaced 105 such records in the same window. Fuzzy
+matching does reliably bridge standardized *abbreviations* (`Wm` →
+`William`, `Eliz` → `Elizabeth`; see the default-fuzzy list above), so
+the gap is specifically in nickname coverage.
+
+**Search the other name as its own `givenName` value.** Nothing you can
+set widens the expansion — `givenNameExact` only narrows it further —
+so a nickname the index used and fuzzy did not reach is only reachable
+by asking for it directly.
+
+**Mind the direction.** Your tree usually holds the **formal** name
+while the record may be indexed under the **nickname**, so the move that
+recovers the record is normally formal → nickname: search `Betty` when
+the tree says `Elizabeth`. (An earlier revision of this file advised the
+reverse — "try formal names explicitly when fuzzy doesn't produce
+results" — which restates the search you have already run. The reverse
+case is real but rarer: a source gave you a familiar name and the record
+indexed the formal one.)
+
+A christening or baptism is among the entries *least* likely to use the
+familiar form: the register records the formal baptismal name, often
+Latinised. Familiar forms surface later — in censuses, which recorded
+whatever the household said aloud, and in civil registration, wills and
+gravestones.
 
 | Formal | Nicknames seen in records |
 |---|---|

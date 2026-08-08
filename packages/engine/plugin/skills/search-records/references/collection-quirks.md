@@ -3,6 +3,14 @@
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
+Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
+`record_search` takes **camelCase**: `q.surname` → `surname`,
+`q.fatherSurname` → `fatherSurname`, `q.fatherGivenName` →
+`fatherGivenName`, `q.motherGivenName` / `q.motherSurname` →
+`motherGivenName` / `motherSurname`, `f.collectionId` → `collectionId`.
+One construct named below — `q.batchNumber` — has **no `record_search`
+parameter at all**; see the England parish registers section.
+
 ## US Federal Censuses (1790–1940)
 
 - Indexed by community volunteers; mostly accurate but cursive
@@ -19,14 +27,22 @@ Quirks affect how queries should be constructed for that collection.
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation:** Search by IGI batch number (`q.batchNumber`)
-  to enumerate a parish exhaustively; cross-check with FreeREG and
-  FindMyPast
-- Batch number format: letter prefix + exactly 6 digits (e.g.,
-  `C050761`). Left-pad with zeros if needed.
-- Submitting batch number alone (no name) returns all extracted
-  records in alphabetical order — canonical way to enumerate every
-  christening or marriage from a single parish
+- **Compensation upstream is the IGI batch number — which
+  `record_search` cannot send.** The API's `q.batchNumber` enumerates a
+  parish exhaustively and is a very strong filter (adding one cut a
+  251,867-hit search to 3; a nonsense batch returns 0 rather than being
+  ignored), but the tool exposes no batch parameter, so **none of the
+  batch strategy below is executable from this skill.** What you can do
+  instead: scope with `collectionId` plus place and a wide date range,
+  and cross-check with FreeREG and FindMyPast via
+  `search-external-sites`.
+- Batch number format, for reference: a letter prefix followed by digits.
+  Both `C050761` (letter + 6 digits) and `M17288-6` (letter + digits +
+  dash + digit) are accepted — an earlier revision of this file said
+  "exactly 6 digits", which the second form contradicts.
+- Submitting a batch number alone (no name) returns all extracted
+  records in alphabetical order — upstream, the canonical way to
+  enumerate a single parish. *Not reachable through `record_search`.*
 
 ## Mexico Civil Registration
 
