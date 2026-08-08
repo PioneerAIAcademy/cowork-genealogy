@@ -5,7 +5,13 @@
     "name": "Don't stop to ask 'start executing?' when the message already authorized it",
     "type": "positive",
     "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and then attempt to proceed toward execution in the same turn, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. Uses execution.stub_skills for Skill('search-records') -- the same documented pattern ut_search_records_018 uses for Skill('search-external-sites') -- since compute_allowed_tools does not extend a callee skill's own MCP tools into this test's session, so running search-records for real would fail on a harness artifact unrelated to what this test checks.",
-    "tags": ["planning", "control-flow", "continuation", "from-cowork", "plan-continue-authorized-in-message"]
+    "tags": [
+      "planning",
+      "control-flow",
+      "continuation",
+      "from-cowork",
+      "plan-continue-authorized-in-message"
+    ]
   },
   "input": {
     "user_message": "Create the research plan for q_001 -- who were Bridget's other children with John Doyle -- and go ahead and start executing it as soon as it's ready. I want this to be exhaustive, so don't stop to check in with me first.",
