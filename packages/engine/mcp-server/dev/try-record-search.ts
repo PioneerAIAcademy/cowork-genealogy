@@ -85,7 +85,12 @@ function parseArgs(argv: string[]): { input: RecordSearchInput; termsOnly: boole
         input.recordSubdivision = argv[++i];
         break;
       case "--collection":
-        input.collectionId = parseInt(argv[++i], 10);
+        // Stays a string: `collectionId` is `string` on RecordSearchInput, and
+        // FS collection ids are opaque identifiers, not quantities. The sibling
+        // parseInt calls below are correct because those fields really are
+        // numbers. Nothing typechecks this file (tsconfig `include` is
+        // `src/**/*`), so the mismatch went unnoticed.
+        input.collectionId = argv[++i];
         break;
       case "--birth-year": {
         const y = parseInt(argv[++i], 10);
