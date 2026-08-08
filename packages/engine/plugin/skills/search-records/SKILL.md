@@ -317,6 +317,17 @@ candidates; you still confirm the top ones:
   caveat. Report the record, the conflict, and what would settle it. The
   people in it belong to whoever that record is actually about, and until
   the cross-check clears you do not know that it is your subject.
+- **A relative-anchored hit may not name that relative. Read `relativeTerms`
+  before you write about the relationship.** FamilySearch keeps records that do
+  not *contradict* the name you supplied, so `fatherGivenName: "William"`
+  returns hits naming no father at all, indistinguishable from ones that name
+  him. Each result says which: `present` (the name is there — compare it
+  yourself), `absent`, `unknown`. On `absent`/`unknown` write "consistent with",
+  never "confirming her father William". This is a wording rule, not a
+  disqualifier: an `absent` record is still a candidate, and this is never on
+  its own a reason to stop searching or escalate elsewhere. `matchScore` never
+  looks at relationships, so an `absent` record can outrank one that names him;
+  `rank_search_matches` says so with `relativeTermNote`.
 - **Pre-1880 US censuses have no relationship column.** 1850/1860/1870 list
   name, age, sex, birthplace, occupation in household order — "relationship to
   head" is **1880-onward**. So any "head"/"wife"/"son" read off a pre-1880

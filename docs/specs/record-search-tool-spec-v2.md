@@ -593,10 +593,132 @@ Each `RecordSearchResult`:
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
 | `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
+| `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
 inputs are year-only.
+
+### `relativeTerms` — whether the relative you anchored on is actually there
+
+A relative-name term is sent with `m.queryRequireDefault=on`, which FamilySearch
+reads as **must not contradict**, not *must carry*. A record that names no
+father at all therefore survives a father-anchored search. That is correct —
+absence in an index is not disconfirming, and sparse entries routinely omit
+parents — but it means a hit can be *consistent with* William while saying
+nothing about him, and nothing in the response used to distinguish the two. The
+write-up then reads "confirming her father William" on a record that never
+mentions him: false, and filed as though well-sourced. `relativeTerms` carries
+the distinction as data.
+
+Emitted only for prefixes the caller supplied a **name** for, and omitted
+entirely when none were. The `*Exact` booleans do not count — `fatherGivenNameExact`
+with no `fatherGivenName` sends no father constraint, so there is nothing to
+report on.
+
+```jsonc
+"relativeTerms": {
+  "father": { "status": "present", "name": "Wm. Neal" },
+  "mother": { "status": "absent" }
+}
+```
+
+| Status | Meaning |
+|---|---|
+| `present` | The record names a relative in this role. `name` carries theirs. |
+| `absent` | The record names no such relative. **The case this field exists for.** |
+| `unknown` | Could not be determined. Never guessed. |
+
+**`present` is not a match verdict.** The tool does not re-run FamilySearch's
+fuzzy matcher and must not claim to have. It reports that a relative in this
+role exists and gives the name, so `Wm.` against a query of `William` is visible
+and checkable by the caller. A status word asserting a match the tool never
+performed would recreate this field's own failure mode one layer up.
+
+**`unknown` beats a wrong `absent`, always.** A wrongly denied relative reads as
+*disconfirming* evidence, which is worse than silence. Four situations return
+`unknown`:
+
+1. The persona could not be identified inside the graph (no `primaryId`).
+2. The persona was matched by the `principal === true` fallback rather than by
+   ARK. A live probe showed this anchor turns a silent record into an
+   apparently contradicting one when the search matched the relative themselves:
+   resolving "the father of the principal" returns the searched person.
+3. The entry carries no relationship graph — `gedcomx` absent, `relationships`
+   absent, **or** `relationships: []`. An empty array is not "resolves cleanly
+   and yields nobody"; it cannot be told apart from relationships never being
+   returned.
+4. A parent exists whose sex is not provably `Male` or `Female` — see below.
+
+**Resolution rules**, all anchored on the matched persona:
+
+| Prefix | Rule |
+|---|---|
+| `father` | ParentChild parent whose `gender` is exactly `"Male"` |
+| `mother` | ParentChild parent whose `gender` is exactly `"Female"` |
+| `parent` | Any ParentChild parent, regardless of sex — mirrors `q.parentGivenName` |
+| `spouse` | The **other** endpoint of a Couple row in which the persona is an endpoint |
+| `other` | Any co-person whose **name** matches the query — no relationship role exists to resolve against |
+
+`father` and `mother` are **sex-derived**, and resolve in three ordered
+branches: `present` if a parent of that sex is on the record; else `unknown` if
+any parent's sex is indeterminate (`gender` absent, the literal `"Unknown"` that
+`simplifyGender` emits for a non-Male/Female URI, or an endpoint id naming
+nobody in `persons[]`); else `absent`.
+
+The order is the safety property, and both halves of it are load-bearing.
+Checking indeterminacy *before* absence means "we could not establish the sex"
+never becomes a denial. But `absent` must stay reachable: **a record naming only
+the mother genuinely is evidence that no father was indexed**, and that is the
+signal this field exists to surface. Collapsing the rule to a single "not
+provably Male → unknown" predicate destroys it on exactly the records carrying
+the most information — 20 of 384 surveyed real results sit in that cell.
+
+For `parent` and `spouse`, an endpoint that is missing or resolves to no entry
+in `persons[]` yields `unknown`, not `absent`.
+
+`spouse` reports the endpoint that is **not** the persona; a Couple row is
+symmetric and the persona may be either `person1` or `person2`, so reading a
+fixed side would report the searched person as their own spouse. When both
+endpoints are the persona, the answer is `unknown`. When two rows qualify, the
+first in document order wins — `name` is one name, not a list.
+
+`name` is joined from `names[0]`'s `given` and `surname` (`simplifyName` writes
+no `fullText`, so the parts must be joined) and tolerates a missing half. If the
+join yields nothing the status is still `present` **without** a `name`: presence
+is established by the relationship, not by the name.
+
+**`other` is the exception to all of the above, and its status vocabulary is
+genuinely narrower.** `q.otherGivenName` names a co-occurring person of
+*unspecified* relationship, so there is no relationship role to resolve against
+and the only available question is whether some co-person's **name** answers the
+query. Names are compared exactly, ignoring case and punctuation (`Wm.` matches
+` wm `, but not `William`).
+
+That asymmetry is deliberate. "Some other person is on this record" would be a
+useless rule — every one of the 384 surveyed real results is multi-person, since
+search entries carry the whole household — and would make `other` a constant
+`present` naming an arbitrary bystander.
+
+| Status | When |
+|---|---|
+| `present` | A co-person's name matches. A real positive; `name` says who. |
+| `unknown` | Co-people exist, none matches by name. |
+| `absent` | The record carries **no** co-person at all. Rare, but legal. |
+
+A name miss is `unknown`, never `absent`: we compare exactly while FamilySearch
+matched fuzzily, so a `Wm.`-vs-`William` miss means "could not confirm", not
+"not on this record". The `absent` that *is* reachable for `father`/`mother`/
+`spouse` rests on the record positively naming someone else in that role, and no
+such evidence exists here — so no such denial is offered.
+
+`other` reads `persons[]` rather than the relationship graph, so `unknown`
+trigger 3 (no graph) does not apply to it: a record with no `relationships` can
+still answer an `other` term.
+
+**Survives staging.** Resolved inside `mapEntry` before the staged slim block
+deletes `gedcomx`, so it reaches both the inline stub and the sidecar payload.
+`rank_search_matches` carries it onto the ranked stub verbatim.
 
 Each `Event`:
 
@@ -1100,6 +1222,14 @@ API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 `TreeMatch`, `RecordSearchToolResponse`).
 
+### `packages/engine/mcp-server/src/types/relative-terms.ts`
+
+`KinPrefix`, `KinTerm`, `RelativeTermStatus`,
+`RelativeTermFinding`, `RelativeTerms`. A third module rather than either
+tool's own types file: `types/record-search.ts` already imports from
+`types/rank-search-matches.ts`, which imports nothing, so declaring these in
+either and importing from the other would make the two mutually importing.
+
 ### `packages/engine/mcp-server/src/tools/record-search.ts`
 
 - `recordSearchToolSchema` — MCP tool schema (the JSON above).
@@ -1113,11 +1243,19 @@ types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 - `buildSearchUrl(input)` — query-parameter builder. Maps each
   input field to its `q.*` / `f.*` parameter, applies `.exact`
   modifiers, encodes values, applies the default `m.*` flags.
-- `mapEntry(entry)` — `FSSearchEntry → RecordSearchResult` mapping (the
-  11-step procedure above).
+- `mapEntry(entry, prefixes?)` — `FSSearchEntry → RecordSearchResult` mapping
+  (the 11-step procedure above). `prefixes` is the relative-name prefix list
+  from `suppliedKinTerms`; omitted, no `relativeTerms` is emitted.
 - `extractEvent(fact)` — `FSFact → RecordSearchEvent`.
-- `findRepresentedPerson(entry)` — the persona-by-ark match used in
-  step 1 of mapping.
+- `findRepresentedPerson(entry)` — the persona match used in step 1 of mapping.
+  Returns `{ person, anchor }`, where `anchor` is `"ark"` for a positive
+  identification and `"principal"` for the fallback guess. `relativeTerms`
+  refuses to resolve on a `"principal"` anchor.
+- `suppliedKinTerms(input)` — which relative terms the caller supplied a *name*
+  for, and the names. Ignores the `*Exact` booleans. `other` needs the names
+  themselves; the four role-based prefixes ignore them.
+- `resolveRelativeTerms(gedcomx, primaryId, terms, anchor)` — pure resolver
+  over the simplified doc. See the `relativeTerms` section above.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
 
@@ -1169,6 +1307,30 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
 | 31 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
+| 35 | `father: absent` when the record names only the mother | **The issue's case.** `absent` must stay reachable |
+| 36 | `father: absent` when the record names no parents at all | The other route to `absent` |
+| 37 | `father: present` with the parent's name | Positive path |
+| 38 | `unknown`, not `absent`, when the parent carries no `gender` key | False-denial guard (shape 1) |
+| 39 | `unknown`, not `absent`, when `gender` is the literal `"Unknown"` | False-denial guard (shape 2) |
+| 40 | The sex gate does not leak into the sex-agnostic `parent` prefix | Prefix isolation |
+| 41 | `unknown` for every prefix when the persona has no id | `unknown` trigger 1 |
+| 42 | `unknown` for every prefix on the `principal` anchor fallback | `unknown` trigger 2 |
+| 43 | `unknown` when `relationships` is missing **or** `[]` | `unknown` trigger 3 |
+| 44 | `mother` is not satisfied by a male parent | Sex discrimination |
+| 45 | `spouse` reports the *other* Couple endpoint, not the persona | Couple symmetry |
+| 46 | `spouse: unknown` when both endpoints are the persona | Degenerate Couple row |
+| 47 | `spouse: absent` when there is no Couple row | Negative path |
+| 48 | `name` joins given + surname and tolerates a missing surname | Name derivation |
+| 49 | `relativeTerms` emitted only when a relative *name* was supplied | `*Exact` alone does not count |
+| 50 | `other` resolves by name match against co-people | No relationship role exists |
+| 51 | `other` is `unknown`, not `absent`, when no co-person name matches | Exact compare vs FS's fuzzy one |
+| 52 | `other` matches across case and punctuation | `Wm.` vs ` wm ` |
+| 53 | `other` is `absent` only when the record has no co-person | The one reachable denial |
+| 54 | `other` still answers when the relationship graph is missing | It reads `persons[]`, not the graph |
+| 55 | Survives the staged slim block, inline **and** in the sidecar on disk | The integration the design turns on |
+
+Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
+after this table was last extended. Cases 35–55 cover `relativeTerms`.
 
 ### Smoke-test script
 
