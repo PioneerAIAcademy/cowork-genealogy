@@ -133,7 +133,22 @@ did these jobs until 2026-08-02, when all three were deleted as stale — see
 ### Follow-on work you find along the way
 
 Implementing one task almost always turns up others — a stale doc, a missing
-test, a defect you're not fixing here. **File each one as a GitHub issue in the
+test, a defect you're not fixing here. The rest of this section is about
+filing what you *defer* — it assumes you've already decided not to fix it now.
+Make that decision first, and default toward not deferring:
+
+**Fold it into the current PR unless there's a real reason not to.** A stray
+issue is easy to create and easy to forget; a PR that closes the gap it found
+needs nothing else to remember it. File a new issue instead of fixing it here
+only when at least one of these holds, and say which in the PR description:
+the fix needs a different reviewer or skill (a code fix found during fixture
+work, or vice versa); it would blow this PR's own scope enough to slow its
+review meaningfully; it depends on a decision only the lead can make; or it's
+a different skill's eval slot and bundling it would force a second paid run.
+"I noticed it in passing" is not one of these — on its own it's a reason to
+fix it now, not to file it.
+
+For whatever you do decide to defer: **file each one as a GitHub issue in the
 same PR that defers it.** Ask Claude to do it; it is one command and needs no
 board access:
 
@@ -486,9 +501,16 @@ built web client from a single origin. Full procedure in
 [`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
 
 ```bash
-# Secrets — NOT in fly.toml (they carry credentials):
+# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
+# and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app refuses to boot
+# if DATABASE_URL is unset or either secret is still at its development default
+# (config.assert_production_config). Not a silent downgrade: the process exits at
+# startup naming the offending setting. (A blank-but-set secret still boots — #1367.)
+# DATABASE_URL takes the Neon DIRECT (non-pooler) URL. Keep every comment ABOVE this
+# command: a trailing `\  # …` is an escaped space plus a comment, which silently
+# truncates the command and drops every argument after it.
 fly secrets set \
-  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
+  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —

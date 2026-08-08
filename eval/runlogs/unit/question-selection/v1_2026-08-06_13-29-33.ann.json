@@ -1,35 +1,11 @@
 {
-  "run_log": "v1_2026-06-26_09-02-54.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-08-06_13-29-33.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
       "test_id": "ut_question_selection_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_002",
       "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
+      "dimension_name": "Dependency awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -45,7 +21,31 @@
     {
       "test_id": "ut_question_selection_002",
       "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
+      "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -77,14 +77,6 @@
     {
       "test_id": "ut_question_selection_001",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_001",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -92,16 +84,8 @@
     },
     {
       "test_id": "ut_question_selection_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_001",
       "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
+      "dimension_name": "Dependency awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -117,13 +101,21 @@
     {
       "test_id": "ut_question_selection_001",
       "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
+      "dimension_name": "Prioritization logic",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_003",
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -142,14 +134,22 @@
       "test_id": "ut_question_selection_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_question_selection_003",
       "dimension_source": "rubric",
       "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Dependency awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -164,8 +164,8 @@
     },
     {
       "test_id": "ut_question_selection_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -190,8 +190,8 @@
       "test_id": "ut_question_selection_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -220,8 +220,32 @@
     },
     {
       "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Dependency awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -237,29 +261,13 @@
     {
       "test_id": "ut_question_selection_006",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_006",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "rubric",
       "dimension_name": "Dependency awareness",
       "llm_score": 3,
@@ -268,8 +276,24 @@
     },
     {
       "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -284,38 +308,6 @@
     },
     {
       "test_id": "ut_question_selection_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Did: The AI wrote \"Who was Patrick Flynn's mother?\" which names the right person and targets the right fact but includes no record type, time period, or place. \nShould: The question should include testable scope so a researcher knows what records to search, as required by the question formulation reference file. \nGap: The question formulation reference file states that a question must have testable scope meaning you can determine what records to search and when the question is answered."
-    },
-    {
-      "test_id": "ut_question_selection_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -333,9 +325,17 @@
     {
       "test_id": "ut_question_selection_008",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -365,9 +365,9 @@
     {
       "test_id": "ut_question_selection_009",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -381,26 +381,10 @@
     {
       "test_id": "ut_question_selection_009",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_010",
-      "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The skill correctly called research-exhaustiveness and did not activate the question-selection skill"
-    },
-    {
-      "test_id": "ut_question_selection_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly called research-exhaustiveness and did not activate the question-selection skill"
+      "comment": null
     },
     {
       "test_id": "ut_question_selection_010",
@@ -411,7 +395,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_011",
+      "test_id": "ut_question_selection_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -419,7 +403,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_011",
+      "test_id": "ut_question_selection_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -432,6 +416,22 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {

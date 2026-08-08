@@ -146,7 +146,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
 | `known_holdings` | init-project (survey at creation); record-extraction, citation (`promoted` flag when an item is turned into a real source) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete |
-| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete, supersede with status |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
@@ -156,9 +156,27 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
-| `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; supersede-not-delete. Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+| `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 
-**General rule:** Append-only sections (`log`) are never rewritten. All other sections allow field updates but skills must preserve IDs and never delete entries — supersede with a status field instead. This lets you reconstruct project history from the file alone.
+**General rule:** Append-only sections (`log`) are never rewritten. All other sections
+allow field updates but skills must preserve IDs and never delete entries. This lets you
+reconstruct project history from the file alone.
+
+**How an entry is retired depends on the section, and most sections have no supersede
+mechanism at all** — so do not reach for one generically. There are exactly three:
+
+| Mechanism | Where it exists | How |
+|---|---|---|
+| A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
+| A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+
+Writing a status value the section's enum does not define is rejected by
+`validate_research_schema`, so an instruction to "supersede with status" on a section in
+the third row is not a style preference — it is a write that cannot succeed. Skill prose
+has told an agent to do exactly that: `question-selection` carried three instructions to
+retire a question with `superseded` / `answered`, values `question_status` has never
+defined, and every such write was rejected on validation.
 
 ### Ownership for `tree.gedcomx.json`
 

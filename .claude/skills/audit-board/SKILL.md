@@ -97,9 +97,25 @@ grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|ts
 ```
 
 Any file with three or more issues converging on it is either a batch or a
-collision, and the bodies rarely say which. Cross-check it against open PRs on the
-same file — a file with four issues *and* five PRs is a rebase queue nobody is
-sequencing:
+collision, and the bodies rarely say which. **Produce the count, don't eyeball
+it** — run the fallback grep above through a tally and report every file at or
+above the threshold, even ones that "feel" unrelated by title:
+
+```sh
+grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
+  /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 >= 3'
+```
+
+Same-file convergence is a strong batch signal on its own — verify it, don't
+wave it through. Same-*topic* convergence across different files is a weaker
+one and is usually not a batch: two issues that both say "the judge fabricated
+something" can be unrelated defects on different tests (this happened —
+issues #1330 and #1332 read alike by topic and turned out to be distinct
+fabrications on different runs). Don't merge on topic resemblance alone; open
+the files both cite and confirm they want the same edit.
+
+Cross-check the file-convergence list against open PRs on the same files — a
+file with four issues *and* five PRs is a rebase queue nobody is sequencing:
 
 ```sh
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
@@ -199,6 +215,20 @@ An owner with no forcing function is how #911 sat uncalibrated for weeks while
 anyway — three issues, one task, no one sequencing. A name on a cluster is
 unfalsifiable; it reads identically in six weeks.
 
+That sequence — #911, #980, #1231 — is also a *merge* miss, not only a
+staleness one: three issues each re-derived the same undone calibration
+instead of one issue tracking it once. Check every cluster for the same
+shape before writing its Since date: **has this cluster's decision been
+independently re-filed more than once?** If a second or third issue exists
+whose body restates "we need to measure/decide X before graduating" for a
+decision an earlier issue in the same cluster already owns, that is not
+three parallel tasks — merge them into the one that's furthest along and
+close the rest as duplicates-of-the-decision (§1's Duplicate verdict), even
+if their bodies aren't about the same file. The tell is the *sentence*, not
+the file: "before graduating," "before hard-denying," "measure first" said
+more than once in one cluster is the same missing mechanism asking to be
+merged, not scheduled harder.
+
 Instead every cluster carries, and this skill re-checks weekly:
 
 | | |
@@ -274,6 +304,28 @@ Progress or Review at a time.** The rest wait in Backlog.
 definition; this pass is the weekly audit of the result — which slots are held,
 which holders have gone quiet, and which queues have grown long enough that the
 answer is to merge issues rather than to wait.
+
+**Check open PRs against the snapshot set too, not just issue columns.** A PR
+can hold a skill's slot without the issue that spawned it ever needing to sit
+in Ready/In Progress/Review as a separate card — the PR's own file list is the
+thing that actually collides. Two live violations existed simultaneously this
+way: `record-extraction` had PR #1441 and PR #1294 both open against
+`record-extractor.md` at once, and `search-records` had #1319 (an in-progress
+issue) *and* PR #1328 open against `search-records/SKILL.md` at the same
+time — neither caught by an issue-column-only read, because the second
+occupant in each pair was a PR, not a competing issue.
+
+```sh
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
+  --json number,files,title \
+  --jq '.[] | select(.files[].path | test("packages/engine/plugin/skills/<skill>/|eval/tests/unit/<skill>/")) | "\(.number) \(.title)"'
+```
+
+Run this per skill with anything in the paid-run tax table. Two PRs (or a
+PR plus an issue) against one slot is the same "who rebases last" problem
+as §1's file-convergence check — report it as a reconciliation finding, not
+a new merge, since the fix is usually sequencing the two PRs, not combining
+their issues.
 
 This is a *collision* rule, not a cost rule, and the distinction matters when
 reporting on it. It stops two people editing one SKILL.md at once and invalidating
