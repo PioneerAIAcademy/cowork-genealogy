@@ -1,11 +1,6 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/search-records/v1_2026-08-07_02-05-05.ann.json
   "run_log": "v1_2026-08-07_02-05-05.json",
   "annotator": "chesworthrm@familysearch.org",
-========
-  "run_log": "v1_2026-08-06_01-03-04.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
->>>>>>>> origin/main:eval/runlogs/unit/search-records/v1_2026-08-06_01-03-04.ann.json
   "corrections": [
     {
       "test_id": "ut_search_records_025",
@@ -274,7 +269,7 @@
     {
       "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -282,7 +277,7 @@
     {
       "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Nil escalation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -611,8 +606,8 @@
       "test_id": "ut_search_records_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -699,16 +694,16 @@
       "test_id": "ut_search_records_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_search_records_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
