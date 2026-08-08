@@ -152,8 +152,11 @@ results" — which restates the search you have already run. The reverse
 case is real but rarer: a source gave you a familiar name and the record
 indexed the formal one.)
 
-A christening or baptism is the entry most likely to use the familiar
-form, because it recorded what the family called the child.
+A christening or baptism is among the entries *least* likely to use the
+familiar form: the register records the formal baptismal name, often
+Latinised. Familiar forms surface later — in censuses, which recorded
+whatever the household said aloud, and in civil registration, wills and
+gravestones.
 
 | Formal | Nicknames seen in records |
 |---|---|
