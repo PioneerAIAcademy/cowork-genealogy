@@ -469,10 +469,10 @@ describe("docs/ cite symbols, not line numbers", () => {
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
   "docs/architecture.md": 27,
-  "docs/specs/e2e-test-spec.md": 17,
+  "docs/specs/e2e-test-spec.md": 12,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
-  "docs/specs/guardrail-enforcement-spec.md": 17,
+  "docs/specs/guardrail-enforcement-spec.md": 16,
   "docs/specs/hosted-web-workbench-spec.md": 4,
   "docs/specs/image-reader-agent-spec.md": 3,
   "docs/specs/image-reader-opus-agent-spec.md": 1,
