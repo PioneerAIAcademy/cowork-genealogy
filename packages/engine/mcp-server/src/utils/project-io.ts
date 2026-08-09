@@ -47,9 +47,22 @@ function serialize(obj: unknown): string {
  * messages every writer tool phrases identically. Throws a plain Error; the
  * caller maps it onto its own `{ ok: false, errors }` shape.
  *
- * Five tools predate this and carry their own private copy (consolidating them
- * is issue #1158, which also has to identify which five — this comment never
- * named them); new callers use this one.
+ * New callers use this one. **Six** tools predate it and carry a private copy,
+ * each re-throwing the same `not found in projectPath` message through its own
+ * error class:
+ *
+ *   research-append.ts · tree-edit.ts · research-query.ts
+ *   project-context.ts · materialize-facts.ts · research-log-append.ts
+ *
+ * `tools/merge-shared.ts` is a seventh site but a different case — it exports
+ * its own `readProjectJson`, so it is a *second shared* implementation rather
+ * than a private copy. Consolidating means first deciding which of the two is
+ * canonical; that decision is the reason this has not simply been swept.
+ *
+ * Consolidation is tracked by issue #988. It is **not** #1158: that issue was
+ * closed `completed` while every copy above was still in place, so following it
+ * lands on a closed ticket and an unsolved problem. Earlier counts said five —
+ * `research-query.ts` was missed by all of them.
  */
 export async function readProjectJson(projectPath: string, filename: string): Promise<any> {
   let text: string;
