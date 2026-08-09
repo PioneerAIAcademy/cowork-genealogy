@@ -29,6 +29,8 @@ from e2e.orchestrator import (
     DEFAULT_PLUGIN_SKILLS,
     DEFAULT_RUNLOG_ROOT,
     McpUnavailableError,
+    PERSON_EVIDENCE_GUARD_MODES,
+    PERSON_EVIDENCE_GUARD_SHADOW,
     run_e2e_test,
 )
 from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
@@ -188,6 +190,23 @@ def main(argv: list[str] | None = None) -> int:
             "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
         ),
     )
+    parser.add_argument(
+        "--person-evidence-guard",
+        choices=list(PERSON_EVIDENCE_GUARD_MODES),
+        default=PERSON_EVIDENCE_GUARD_SHADOW,
+        help=(
+            "How the §8 same_person provenance check behaves when a research_append "
+            "links a brand-new tree person nothing has scored (issue #1231). "
+            "'shadow' (default) records the gap and lets the write through — the "
+            "posture everywhere. 'deny' also blocks the call, bounded by a loop "
+            "valve, and is for GATHERING RECOVERY EVIDENCE on one fixture: replayed "
+            "over the corpus this fires in ~80%% of runs that link a person, so a "
+            "suite-wide deny would wall nearly every run to max_turns. NOTE a "
+            "deny-mode run's `compliance` axis is not comparable to a shadow run's "
+            "— the blocked write never lands, so the post-run check passes "
+            "vacuously. Recorded in the runlog's usage block."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -235,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
+        "person_evidence_guard": args.person_evidence_guard,
     }
 
     results: list[E2eResult] = []

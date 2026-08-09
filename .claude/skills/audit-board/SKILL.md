@@ -1,6 +1,6 @@
 ---
 name: audit-board
-description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "what should be merged", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and BEFORE /fill-ready, since filers are told to file freely and let this pass judge fit. Reads every open issue in Backlog, Ready, In Progress and Review and answers four questions across the pool: which issues should be merged or closed into each other, which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
+description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "what should be merged", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and BEFORE /fill-ready, since filers search once and then file, leaving this pass to judge fit across the pool. Sets its own merge-or-close target from the week's inflow and reports the gap when it falls short. Reads every open issue in Backlog, Ready, In Progress and Review and answers four questions across the pool: which issues should be merged or closed into each other, which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -17,11 +17,10 @@ the rot, the clusters, and the handling that no single body can propose because
 no single body can see the others.
 
 **Run it weekly, and run it before `/fill-ready`.** That ordering is the point:
-filers are told explicitly not to worry about how their issue fits the ~180
-already open, because that judgement needs the whole pool and cannot be made from
-inside one PR. This pass is where duplicates get merged, premises get corrected
-and dead items get dropped. `/fill-ready` then ranks a deduped Backlog. Run it the
-other way round and it ranks duplicates.
+filers search once and then file, because judging fit needs the whole pool and
+cannot be made from inside one PR. This pass is where duplicates get merged,
+premises get corrected and dead items get dropped. `/fill-ready` then ranks a
+deduped Backlog. Run it the other way round and it ranks duplicates.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
 You have no `Edit` or `Write` tool on purpose.
@@ -52,10 +51,32 @@ most of them `Done`. A limit that clips the tail drops real Backlog and Ready
 items and every count downstream is wrong with no error. Confirm the returned
 count is below the limit you asked for before trusting anything.
 
-Join the two and keep only `Backlog`, `Ready`, `In Progress`, `Review`. Expect
-~180 items and ~430 KB of bodies. Read all of them — the whole yield of this
+Join the two and keep only `Backlog`, `Ready`, `In Progress`, `Review`. Take the
+size from what you pulled — `jq length /tmp/issues.json` — never from a number
+quoted here or in a body. Read all of them — the whole yield of this
 skill is in what one body says about another, and `updatedAt` does not tell you
 which pairs collide.
+
+### The week's arithmetic sets this run's target
+
+Compute inflow and closure for the last seven days before reading any body:
+
+```sh
+d=$(date -v-7d +%Y-%m-%d)
+echo "filed:  $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all \
+  --limit 500 --search "created:>=$d" --json number -q 'length')"
+echo "closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
+  --limit 500 --search "closed:>=$d" --json number -q 'length')"
+```
+
+**This run's merge-or-close target is at least the week's inflow** — merges,
+absorbs, closes and obsoletes combined.
+
+If you cannot reach it, **say so at the top of the output**: the number you
+propose, the target, and the gap. Four merges against a week of two hundred
+filings is not a successful audit; the shortfall is the finding, and burying it
+under the merges you did find misreports the week. The lead still approves every
+item — the target binds what you propose, not what he accepts.
 
 ## 1. Merges
 
@@ -82,14 +103,18 @@ unassignable. Say "same week, two people" and leave both open.
 Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
 
+**Two issues wanting different lines in the same file default to one issue.**
+Keeping them apart needs a stated reason — different lane, different reviewer, or
+a paid-run slot they cannot share. Absent one, merge.
+
 Bodies filed from 2026-08-04 open with a `**Touches:**` line — the instruction
 lives in `CLAUDE.md`'s `gh issue create` recipe, and essentially every issue in
 this repo is filed by Claude reading that file, so coverage on new issues should
 be high. Read it first.
 
-Still treat a missing line as **unknown**, never as "touches nothing": ~180 issues
-predate the convention, and a `CLAUDE.md` rule can be evicted from context late in
-a long session. The fallback grep is what carries the older half of the pool:
+Still treat a missing line as **unknown**, never as "touches nothing": much of the
+pool predates the convention, and a `CLAUDE.md` rule can be evicted from context
+late in a long session. The fallback grep carries the older half of the pool:
 
 ```sh
 grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
@@ -97,9 +122,43 @@ grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|ts
 ```
 
 Any file with three or more issues converging on it is either a batch or a
-collision, and the bodies rarely say which. Cross-check it against open PRs on the
-same file — a file with four issues *and* five PRs is a rebase queue nobody is
-sequencing:
+collision, and the bodies rarely say which. **Produce the count, don't eyeball
+it** — run the fallback grep above through a tally and report every file at or
+above the threshold, even ones that "feel" unrelated by title:
+
+```sh
+grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
+  /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 >= 3'
+```
+
+**The `>= 3` line is a triage cutoff, not an exclusion filter.** It orders where
+to spend attention first on a large pool — it is not a claim that a 2-hit file
+never hides a real duplicate. A pair of issues filed close together, before
+either has accumulated other unrelated citations, is exactly the shape most
+likely to sit at count 2 and be skipped by a skim. Run the 2-hit tier too
+(same command, `awk '$1 == 2'`) and give it the same close read — #1395 and
+#1396 cited the identical two lines (`research/SKILL.md:147`,
+`research-exhaustiveness/SKILL.md:113-116`) and were a clean absorb, but sat
+at count 2 in a large pool and were missed on a first pass that only read the
+`>= 3` tier. On a small pool, or when re-checking a single
+column against itself, drop the threshold to 2 outright rather than reporting
+only the head of the tally.
+
+```sh
+grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
+  /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 == 2'
+```
+
+Same-file convergence is a strong batch signal on its own — verify it, don't
+wave it through. Same-*topic* convergence across different files is a weaker
+one and is usually not a batch: two issues that both say "the judge fabricated
+something" can be unrelated defects on different tests (this happened —
+issues #1330 and #1332 read alike by topic and turned out to be distinct
+fabrications on different runs). Don't merge on topic resemblance alone; open
+the files both cite and confirm they want the same edit.
+
+Cross-check the file-convergence list against open PRs on the same files — a
+file with four issues *and* five PRs is a rebase queue nobody is sequencing:
 
 ```sh
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
@@ -199,6 +258,20 @@ An owner with no forcing function is how #911 sat uncalibrated for weeks while
 anyway — three issues, one task, no one sequencing. A name on a cluster is
 unfalsifiable; it reads identically in six weeks.
 
+That sequence — #911, #980, #1231 — is also a *merge* miss, not only a
+staleness one: three issues each re-derived the same undone calibration
+instead of one issue tracking it once. Check every cluster for the same
+shape before writing its Since date: **has this cluster's decision been
+independently re-filed more than once?** If a second or third issue exists
+whose body restates "we need to measure/decide X before graduating" for a
+decision an earlier issue in the same cluster already owns, that is not
+three parallel tasks — merge them into the one that's furthest along and
+close the rest as duplicates-of-the-decision (§1's Duplicate verdict), even
+if their bodies aren't about the same file. The tell is the *sentence*, not
+the file: "before graduating," "before hard-denying," "measure first" said
+more than once in one cluster is the same missing mechanism asking to be
+merged, not scheduled harder.
+
 Instead every cluster carries, and this skill re-checks weekly:
 
 | | |
@@ -274,6 +347,28 @@ Progress or Review at a time.** The rest wait in Backlog.
 definition; this pass is the weekly audit of the result — which slots are held,
 which holders have gone quiet, and which queues have grown long enough that the
 answer is to merge issues rather than to wait.
+
+**Check open PRs against the snapshot set too, not just issue columns.** A PR
+can hold a skill's slot without the issue that spawned it ever needing to sit
+in Ready/In Progress/Review as a separate card — the PR's own file list is the
+thing that actually collides. Two live violations existed simultaneously this
+way: `record-extraction` had PR #1441 and PR #1294 both open against
+`record-extractor.md` at once, and `search-records` had #1319 (an in-progress
+issue) *and* PR #1328 open against `search-records/SKILL.md` at the same
+time — neither caught by an issue-column-only read, because the second
+occupant in each pair was a PR, not a competing issue.
+
+```sh
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
+  --json number,files,title \
+  --jq '.[] | select(.files[].path | test("packages/engine/plugin/skills/<skill>/|eval/tests/unit/<skill>/")) | "\(.number) \(.title)"'
+```
+
+Run this per skill with anything in the paid-run tax table. Two PRs (or a
+PR plus an issue) against one slot is the same "who rebases last" problem
+as §1's file-convergence check — report it as a reconciliation finding, not
+a new merge, since the fix is usually sequencing the two PRs, not combining
+their issues.
 
 This is a *collision* rule, not a cost rule, and the distinction matters when
 reporting on it. It stops two people editing one SKILL.md at once and invalidating
@@ -435,7 +530,9 @@ confidence.
 
 ## Output shape
 
-Lead with the two or three things that change what happens this week. Then:
+Open with the week's arithmetic (§0) — filed, closed, and whether this run's
+proposals meet the target, naming the gap when they do not. Then the two or three
+things that change what happens this week. Then:
 
 1. **Merge and close** — the duplicates and absorbs, with the evidence for each
    and the exact `gh` command. Then the batch-together and schedule-together
