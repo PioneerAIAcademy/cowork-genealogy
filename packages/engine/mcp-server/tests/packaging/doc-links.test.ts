@@ -306,12 +306,7 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "research-query.ts:29",
     "skill_runner.py:57",
   ],
-  "docs/architecture.md": [
-    "apps/server/app/agent/real_agent.py:130",
-    "eval/harness/e2e/orchestrator.py:175",
-    "packages/engine/plugin/hooks/guard_project_files.py:36",
-    "src/index.ts:736",
-  ],
+  "docs/architecture.md": ["src/index.ts:736"],
   "docs/realtime-architecture.md": [
     "apps/server/app/models.py:45",
     "local.py:195",

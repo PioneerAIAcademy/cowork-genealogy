@@ -212,12 +212,13 @@ also loads the plugin — but "the plugin loader does what you'd expect in the
 hosted path" is exactly the assumption issue #939 disproved for agents. Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
 same reason, so the redundancy is harmless. Deleting the SDK copy was declined
-(issue #1129, closed not-planned) — all three stay. **No test asserts the three
-agree**, so a future addition to `PROTECTED_PROJECT_FILES` can silently lag in
-two of them; that gap is `docs/architecture.md` §9.4's, and the three copies are
+(issue #1129, closed not-planned) — all three stay. The three copies are
 `packages/engine/plugin/hooks/guard_project_files.py`,
 `apps/server/app/agent/real_agent.py`, and
-`eval/harness/e2e/orchestrator.py`.
+`eval/harness/e2e/orchestrator.py`, and
+`eval/harness/tests/unit/test_write_lockdown_parity.py` runs all three against
+one vector set, so an addition to `PROTECTED_PROJECT_FILES` that lands in only
+some of them fails `make harness-test`.
 
 **Deliberate gaps.**
 
@@ -253,9 +254,11 @@ two of them; that gap is `docs/architecture.md` §9.4's, and the three copies ar
 
 Each copy is tested independently (`tests/packaging/plugin-hooks.test.ts` runs
 the real script; `apps/server/tests/test_write_lockdown.py`;
-`eval/harness/tests/unit/test_e2e_tree_block.py`) and **no test asserts the
-three agree** — a known divergence risk when `PROTECTED_PROJECT_FILES` next
-changes.
+`eval/harness/tests/unit/test_e2e_tree_block.py`), and
+`eval/harness/tests/unit/test_write_lockdown_parity.py` asserts the three
+**agree** — extracting each copy's constant and predicate with `ast` and running
+them against one vector set, so the next `PROTECTED_PROJECT_FILES` change cannot
+land in one copy only.
 
 ## 7. Caller-attributed recency check (shadow mode)
 

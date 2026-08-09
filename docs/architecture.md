@@ -31,7 +31,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
-> Fourteen things in this system have no automated guard, and several of them
+> Nineteen things in this system have no automated guard, and several of them
 > fail *silently* in production while CI stays green.
 
 ---
@@ -725,12 +725,22 @@ Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
 which runs the real script.
 
-**Three sibling implementations exist**, and **no test asserts they agree:**
+**Three sibling implementations exist**, in three packages that cannot import
+each other:
 
 - `packages/engine/plugin/hooks/guard_project_files.py` — ships in the VM
   (Cowork + hosted)
 - `apps/server/app/agent/real_agent.py` — the hosted SDK hook
 - `eval/harness/e2e/orchestrator.py` — the e2e harness's own hook
+
+**A parity test holds them to the same behavior:**
+`eval/harness/tests/unit/test_write_lockdown_parity.py` lifts each copy's
+constant and predicate out with `ast` and runs all three against one vector set,
+so a change landing in one and not the others fails `make harness-test`. It is
+vector-driven rather than a string diff, because the three are textually
+different by design (the predicate is `protected_target` in one and
+`direct_project_file_write` in the other two). It also fails on an
+*unregistered* fourth copy, so adding one means adding it to the test.
 
 The unit harness stages **no** plugin hooks at all.
 
@@ -777,10 +787,11 @@ instrument and its enforcing-vs-shadow status in
 `guardrail-enforcement-spec.md` **§4**.
 
 **Change `PROTECTED_PROJECT_FILES`.** Change **all three**:
-`packages/engine/plugin/hooks/guard_project_files.py:36`,
-`apps/server/app/agent/real_agent.py:130`, and
-`eval/harness/e2e/orchestrator.py:175`. **No test will tell you that you missed
-one.**
+`packages/engine/plugin/hooks/guard_project_files.py`,
+`apps/server/app/agent/real_agent.py`, and
+`eval/harness/e2e/orchestrator.py`. `make harness-test` fails if you miss one
+(`eval/harness/tests/unit/test_write_lockdown_parity.py`) — and fails again if
+you add a fourth copy without registering it there.
 
 **Add a hook.** Register the matcher in `packages/engine/plugin/hooks/hooks.json`
 — that is the step that matters. (`INCLUDE` in `package-plugin.mjs` already
@@ -794,8 +805,8 @@ runs the real script.
 > All three of the unit harness, the e2e harness, and the hosted control plane
 > pass their *own* `hooks=` — and the unit harness's carries no protected-file
 > rule at all. If the guardrail must hold in an e2e run or in production, port it
-> there too, and expect the same three-copy divergence problem flagged above for
-> `PROTECTED_PROJECT_FILES`.
+> there too — and give the copies a parity test, the way
+> `PROTECTED_PROJECT_FILES` has one. Only that rule is covered today.
 
 ---
 
@@ -909,7 +920,7 @@ duplicated and the *value* it reads is centralized in project state.
 ### If you're asked to…
 
 **Add a field or section to `research.json`.** Ten sites in the shipping product
-— and **four of them are checked by nothing.** *(Unprefixed paths are under
+— and **two of them are checked by nothing.** *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
 viewer, `eval/app/components/scenario/`, that a field change also touches; it is
 outside this list and outside every check.)*
@@ -920,9 +931,9 @@ outside this list and outside every check.)*
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
 | 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
-| 5 | `packages/schema/src/index.ts` — the TS `interface` | **nothing — and it has already drifted** (`Assertion` is missing `standard_place`) |
+| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names** only, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); the *types* — optionality, `\| null`, a closed enum typed as `string` — are still unchecked |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
-| 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | **nothing** |
+| 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
 | 9 | *(required only)* `eval/fixtures/scenarios/*/research.json` + the eval Python stubs | eval suites fail until backfilled |
 | 10 | *(required only)* `packages/viewer-ui/src/lib/__fixtures__/` | `make typecheck` |
@@ -931,9 +942,9 @@ Two things the site list alone won't tell you:
 
 - **Sites 6, 7, and 8 are the "did this field ever become real" set** — 6 teaches
   the model the shape, 8 tells a skill to write it, 7 shows it to the researcher
-  in both the Electron viewer and the web workbench. Only site 6 is checked at
-  all, and only for round-trip validity — **nothing checks that 7 or 8 exist.** A
-  change touching only 1–5 is a schema change, not a feature.
+  in both the Electron viewer and the web workbench. 6 is checked for round-trip
+  validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
+  A change touching only 1–5 is a schema change, not a feature.
 - **Run `make engine-test`, `make harness-test`, *and* `make typecheck`.** Only
   the second catches the `packages/schema` mirror, and only the third catches the
   viewer — and §9.1 files both under other headings, so they are easy to skip.
@@ -1192,7 +1203,7 @@ taught a reader nothing.
 | **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) |
 | **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
 | **Nothing checks that a new `research.json` field is *written*** (site 8 in §6), and only partly that it is *taught* (site 6). Rendering (site 7) is guarded by `field-render-drift.test.ts`; `research-append-examples.test.ts` covers site 6 for schema-`required` fields only. | An optional field can be legal and rendered while no worked example teaches its shape and no skill emits it. |
-| **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. |
+| **A deploy can ship green on a stale sandbox image.** `make server-e2b` and `make deploy` do not rebuild the `genealogy-agent` E2B image that prod actually runs the agent on, and both guards over it are advisory: `deploy-preflight` prints a warning and never blocks, and the commit it compares against is a **gitignored local stamp** (`apps/server/sandbox/.last-image-build`), so a second developer only ever gets its "no record on this machine" branch. | Production can run weeks-old skills, agents, and MCP tools while CI, the deploy, and `/api/health` all look correct. Nothing surfaces the baked commit. |
 | **Nothing enforces that a negative routing pair is pinned from *both* directions.** `check_negative_reciprocity.py` reports one-directional edges but never blocks, by design — 45 of the corpus's 79 routing edges have no reciprocal. | A description edit can fix routing `A → B` and break `B → A` with the suite green. The warnings land in the step log and compete for GitHub's per-step annotation-rendering cap (10 at time of writing) against the sibling lints' 73 and 68, so the edge a PR *adds* is not distinguishable from the standing backlog. |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. |
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
