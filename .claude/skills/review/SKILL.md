@@ -86,10 +86,14 @@ unresolved, **stop**. Report which, and that the PR is not ready for another
 review. Reviewing anyway produces a second copy of findings the author has not
 answered yet, and spends the scarcer reviewer to do it.
 
-Two things this is not. It is not a merge gate — unresolved threads do not block
-merge in this repo, which is exactly why a reader has to look. And it does not
-apply when you *are* the first review: no prior standing, nothing to wait on,
-carry on.
+Unresolved threads block merge here too (ruleset `protect-main`,
+`required_review_thread_resolution: true`), so stopping is not what keeps a
+half-answered PR out of `main` — it is what keeps the second reviewer from
+spending a pass on findings nobody has answered. An outstanding
+`CHANGES_REQUESTED` blocks neither, which is why you check both.
+
+This does not apply when you *are* the first review: no prior standing, nothing
+to wait on, carry on.
 
 These two queries return review **states and counts, never bodies**. That is
 deliberate — knowing a round is open costs you nothing, whereas reading what the
