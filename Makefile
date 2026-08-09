@@ -446,10 +446,16 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
+	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
+	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
+	# new person instead of only recording it. For gathering recovery evidence on
+	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
+	# run's `compliance` is not comparable to a shadow run's (the blocked write
+	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -522,12 +528,17 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD
+e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
 	# Also pure analysis, no API. Existed with no make target until #972.
 	# Windowed to 14 days like every other reader. #911 step 1 wants a
 	# maximum-sample replay — pass SINCE=all for it; step 4 answers the
 	# staleness that motivates the window with *new* runs anyway.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),)
+	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
+	# from tool_calls + each fixture's committed seed tree (issue #1231). The
+	# stored-entry count above only covers runs made after #1178 merged; the
+	# replay is what makes the pre-hook corpus readable, and what lets a
+	# candidate narrowing of the rule be scored before it ships.
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
