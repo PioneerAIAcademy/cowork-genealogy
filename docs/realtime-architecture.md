@@ -172,12 +172,34 @@ Hobby caps continuous session length at 1 hour; you can extend the timeout only
 *up to* that ceiling, never past it. So even a continuously-active session is
 force-paused at ~1 h, then resumed. With `onTimeout:'pause'`, that ceiling
 **pauses** (state preserved) rather than kills, and the next action resumes in
-~1 s — a sub-second blip. **Tell alpha users sessions cap at 1 h.**
+~1 s — a sub-second blip.
+
+**Measured against the live API 2026-08-09**, three things this section implied
+but did not say:
+
+- **The window resets on resume.** Create → `endAt` is `startedAt + 1 h`; pause
+  and resume, and `endAt` moves out a fresh hour from the new start. So only
+  *uninterrupted* runtime is capped — **total session wall-clock is unbounded on
+  Hobby.** Do not tell alpha users "sessions cap at 1 h"; they cap at an hour of
+  continuous running, which is a different and much weaker statement. Both "there
+  is a 1 h cap" and "I have seen sandboxes run for hours" are true at once.
+- **An over-ceiling `set_timeout` returns `204` and silently does nothing.** It
+  never errors. That silence is why this went unexamined for months.
+- **`_RUNNING_TIMEOUT_S = 3600` is the maximum E2B permits on this tier, not a
+  chosen backstop.** `POST /sandboxes {timeout: 7200}` fails
+  `400 "Timeout cannot be greater than 1 hours"`. On Pro it must become `86400`.
 
 - *Optional, alpha-skippable:* the sandbox server pauses proactively **between
   turns** near ~55 min so the forced pause never lands mid-turn. Resume restores
-  processes but **not** their open sockets, so a mid-turn pause drops the agent's
-  Anthropic-API and MCP connections and breaks that turn.
+  processes but — *this part is asserted, never measured* — possibly **not** their
+  open sockets, in which case a mid-turn pause drops the agent's Anthropic-API and
+  MCP connections and breaks that turn.
+
+  **Measure this before acting on it.** It is the only thing that sets the real
+  cost of staying on Hobby: if a forced pause does not break the turn, the cap is
+  a non-event; if it does, proactive between-turn pausing is worth building — and
+  that is the same work as pausing idle sandboxes, which is wanted anyway on cost
+  grounds. Nothing in the tier upgrade fixes it either way.
 - **Hobby → Pro later = a plan upgrade + a one-line timeout bump (1h → 24h), zero
   rework.** Auto-pause-on-idle and reconnect-on-resume are wanted on Pro too; only
   the cap number changes.
@@ -303,9 +325,19 @@ endpoint covers cleanup; paused sandboxes are cheap for a few testers); defer
 `interrupt`; skip active per-activity `set_timeout` extension in favor of one
 generous idle timeout (~30 min, under the 1 h Hobby cap).
 
+> **What actually shipped differs from that last clause** (checked 2026-08-09).
+> There is no idle timeout of any length: `E2BProvider.suspend()` has no caller
+> outside tests, and the only thing that ever pauses a sandbox is E2B's own
+> `on_timeout` at `_RUNNING_TIMEOUT_S = 3600` — the tier maximum, not a chosen
+> ~30 min. So an abandoned session holds a **running** microVM for up to an hour
+> rather than pausing after thirty minutes, and the deferred delete-janitor never
+> reclaims the paused ones. Both halves are the live cost leak.
+
 **Not spiked (rely on E2B docs / smoke later):** the real relay+`agent_runner`
 streaming (the echo server stood in for it); a multi-minute *no-ping* idle; the
-1 h continuous cap; the real `genealogy-agent` image (ran on `base`).
+real `genealogy-agent` image (ran on `base`). ~~the 1 h continuous cap~~ —
+**measured 2026-08-09 against the live API; see §5.** The vendor docs were right
+about the cap and incomplete about the reset.
 
 **Conclusion: the Ably parachute can be dropped** once the sandbox-WS path lands.
 

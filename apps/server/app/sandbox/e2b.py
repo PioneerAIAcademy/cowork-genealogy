@@ -53,6 +53,12 @@ from .base import (
 # Nothing else suspends a sandbox: `SandboxProvider.suspend()` has no route and
 # no background task behind it (only LocalProvider.delete() and the tests call
 # it). A session therefore ends by aging out here, not by being reaped.
+#
+# 3600 is E2B's Hobby-tier MAXIMUM, not a value we picked: create with 7200 fails
+# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09). Raising it
+# here without a tier upgrade breaks create() outright. On Pro it becomes 86400.
+# Note set_timeout past the ceiling returns 204 and silently no-ops, so an
+# over-large value fails loudly at create and silently everywhere else.
 _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
