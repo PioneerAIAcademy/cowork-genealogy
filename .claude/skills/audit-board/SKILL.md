@@ -57,6 +57,30 @@ quoted here or in a body. Read all of them — the whole yield of this
 skill is in what one body says about another, and `updatedAt` does not tell you
 which pairs collide.
 
+### Reading the pool without silently sampling it
+
+§1 and §3 need every body in one head — that is where collisions and clusters
+come from, and it is why you read them all. **§2 does not.** Its checks are
+per-issue and mechanical, and running seven of them across ~220 bodies will not
+fit alongside everything else. A pass that quietly does forty and reports as
+though it did all of them is worse than one that states its sample.
+
+So split the work: read the whole pool yourself for §1 and §3, and **fan §2 out**.
+Partition the issue numbers into batches of ~25–30 and give each batch an
+explicit, non-overlapping list, so nothing is checked twice and nothing is
+missed. Generate the partition — do not eyeball it.
+
+Give each batch the four verdicts rather than a summary instruction: **FIXED**
+(name the commit or PR), **STILL BROKEN** (quote the evidence), **PARTLY**
+(which half survives), **PREMISE FALSE** (and where the code actually lives).
+Seed each with what is already known about its issues — which got substantive
+comments this week, which are `icebox`, which pairs are known not to be
+duplicates — or they will re-derive it and contradict it.
+
+Report coverage as a number and a rule: how many you checked and how they were
+chosen. If a batch fails, say which issues went unchecked rather than reporting
+the remainder as a complete pass.
+
 ### The week's arithmetic sets this run's target
 
 Compute inflow and closure for the last seven days before reading any body:
@@ -168,7 +192,7 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
 
 ## 2. Obsolete and out of date
 
-An issue body is a claim written on a particular day. Six checks, cheapest first.
+An issue body is a claim written on a particular day. Seven checks, cheapest first.
 
 **The PR already merged.** Look for a merged PR naming the issue number in its
 title or body, then confirm the artifact exists on disk.
@@ -223,6 +247,33 @@ number ships a wrong constant.
 may have already disproved the reasoning. Bodies that were reviewed carry
 `> **Reviewed <date>**` headers; those are trustworthy. Bodies without one are
 as old as their `createdAt`.
+
+**The code exists — on a branch.** The costliest miss in this section, because
+every other check reads as *confirmed*. A body says a function shipped. It did —
+on a branch that never merged. The merged-PR check above passes it by (there is
+no merged PR), and a `grep` of `main` finds nothing, so the natural conclusion is
+"the premise is false" when the truth is "the premise is true somewhere nobody
+else can see." Test the sha, never the PR state:
+
+```sh
+git merge-base --is-ancestor <sha> HEAD && echo "on main" || echo "NOT on main"
+git log --all --oneline -S '<symbol or string>'   # which branch, if any, carries it
+```
+
+When a body quotes a symbol, test id or string you cannot find, **search every
+branch before calling it invented.** The two outcomes need opposite handling:
+
+| `git log --all -S` finds | Means | Do |
+|---|---|---|
+| nothing | It never existed anywhere | The body is wrong. Correct it and ask the filer what they meant — do not close, their concern may survive a wrong citation |
+| a commit not on `main` | The body describes a branch | The issue is **blocked on that branch merging**. Name the branch and the sha in a comment |
+
+Both showed up in one 22-issue sample: an issue asserting a function had shipped
+warn-only when it sat on `origin/<feature-branch>`, with two follow-up comments
+written against code `main` does not contain; and a cluster of four issues citing
+test ids from an auditor's working tree, one of which had never existed in any
+branch. **Whole clusters can be filed from a tree that is not `main`** — when one
+issue in a group fails this check, check its siblings before trusting any of them.
 
 ## 3. Clusters — find them, then manage them
 
@@ -538,7 +589,9 @@ things that change what happens this week. Then:
    and the exact `gh` command. Then the batch-together and schedule-together
    pairs, kept separate from real merges.
 2. **Obsolete** — what to close outright, and what needs a body correction rather
-   than a close. One line of evidence each.
+   than a close. One line of evidence each. Keep **blocked on an unmerged branch**
+   as its own group: those are not obsolete, they are unbuildable, and the fix is
+   naming the branch rather than closing the issue.
 3. **Clusters** — one block each: members, what binds them, decision pending, next
    action, doer, and **Since**. Lead with any next action that has not moved since
    a previous audit.
