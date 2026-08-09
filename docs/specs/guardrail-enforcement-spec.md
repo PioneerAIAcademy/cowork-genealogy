@@ -226,9 +226,37 @@ two of them; that gap is `docs/architecture.md` §9.4's, and the three copies ar
   their stdlib-only scripts through `Bash` so it cannot be revoked, and matching
   command text would deny a legitimate `python script.py research.json > out`
   while still missing a variable-built path. A false deny is the worse failure
-  mode: it turns a silent quality bug into a loud availability regression. No
-  bypass in the corpus has used the shell; close this if one appears in a runlog
-  or a feedback case.
+  mode: it turns a silent quality bug into a loud availability regression.
+
+  Close this if a bypass appears in a runlog or a feedback case — and that
+  condition is now **watched rather than asserted**. `make e2e-corpus` prints a
+  `bash protected-file access:` census (`eval/harness/e2e/corpus_report.py`)
+  over every committed e2e runlog: the total `Bash` calls naming a protected
+  file, and the write-shaped subset named individually. It prints at zero too,
+  so "nobody has touched these from the shell" cannot be confused with "the
+  counter stopped running".
+
+  **Measured 2026-08-09, whole corpus (`--since all`, 145 runs): 36 accesses,
+  34 of them reads, 2 write-shaped — and both of those were refused before they
+  ran.** The reads are `cat`, `wc -l`, `grep`, and `python3 -c json.load`
+  inspecting the working files, which is the traffic §6 declines to pattern-match
+  against. The two write-shaped calls are
+  `victor-spenard-parents/run-2026-07-08_12-31-17.json` and
+  `zuniga-rojas-parents/run-2026-07-09_19-45-45.json`, both a
+  `cat > …/tree.gedcomx.json << 'EOF'` heredoc seeding a starting tree, and both
+  answered `Permission to use Bash has been denied because Claude Code is
+  running in don't ask mode`. So the corpus still holds **zero successful shell
+  writes** to a protected file — but the earlier reading, that the shell route
+  is never *attempted*, does not survive the measurement. The agent reaches for
+  it; only the harness's permission mode stopped it, and that is not one of the
+  three guard copies. Cowork runs `permission_mode: "default"` and the hosted
+  path runs `bypassPermissions`, so neither environment has the thing that
+  refused these two.
+
+  This does not by itself close the gap — the false-deny argument above is
+  unchanged, and no *landed* shell write has been observed. It does move the
+  question from "has this ever happened" to "what stops it where the permission
+  prompt does not", which is the form the next decision has to take.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
