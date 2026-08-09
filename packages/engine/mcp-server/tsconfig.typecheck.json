@@ -1,0 +1,23 @@
+{
+  // Typecheck-only config. `tsconfig.json` exists to BUILD, so its `include`
+  // is `src/**/*` and its `rootDir` is `./src` — widening either would emit
+  // dev scripts and tests into `build/` and ship them in the .mcpb. So the
+  // check that covers them has to be a separate project with `noEmit`.
+  //
+  // Why this exists: nothing typechecked `dev/` or `tests/`, and that had a
+  // demonstrated cost, not a hypothetical one. Widening
+  // `findRepresentedPerson`'s return type broke a test at runtime while
+  // `tsc` stayed green, because the test was never in scope. Run via
+  // `npm run typecheck`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "declaration": false
+  },
+  "include": ["src/**/*", "dev/**/*", "tests/**/*"]
+
+  // No `exclude`, deliberately. This landed with 13 files carved out carrying
+  // 126 pre-existing errors; all 126 were fixed and the list is gone. Do not
+  // reintroduce one to get a red check green — fix the types.
+}

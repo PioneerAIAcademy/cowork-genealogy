@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "pretest": "npm run build",
+    "typecheck": "tsc --project tsconfig.typecheck.json",
+    "pretest": "npm run build && npm run typecheck",
     "test": "vitest run",
     "test:watch": "vitest"
   },
