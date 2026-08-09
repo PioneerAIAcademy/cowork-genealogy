@@ -1,6 +1,5 @@
 ---
 name: search-records
-model: claude-sonnet-4-6
 description: Executes searches against FamilySearch historical records per
   the research plan. Routes to the correct MCP search tool based on record
   type, triages results using match scoring, logs every search including nil
