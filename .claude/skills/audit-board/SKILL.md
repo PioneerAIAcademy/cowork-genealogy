@@ -61,7 +61,7 @@ which pairs collide.
 
 §1 and §3 need every body in one head — that is where collisions and clusters
 come from, and it is why you read them all. **§2 does not.** Its checks are
-per-issue and mechanical, and running seven of them across ~220 bodies will not
+per-issue and mechanical, and running eight of them across ~220 bodies will not
 fit alongside everything else. A pass that quietly does forty and reports as
 though it did all of them is worse than one that states its sample.
 
@@ -192,7 +192,7 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
 
 ## 2. Obsolete and out of date
 
-An issue body is a claim written on a particular day. Seven checks, cheapest first.
+An issue body is a claim written on a particular day. Eight checks, cheapest first.
 
 **The PR already merged.** Look for a merged PR naming the issue number in its
 title or body, then confirm the artifact exists on disk.
@@ -236,6 +236,22 @@ measurement it rests on, or the convention it protects.
 on #N", "gated on the #N probe", "land after PR #N". Extract every one and
 resolve it. A closed blocker on an issue still marked blocked is the highest-value
 find in this section, because nothing else in the workflow notices.
+
+**The closed issue it points at never shipped.** The inverse of the check above,
+and it fails in the direction nobody looks. `closed` reads as done, so a body or
+a code comment that names a closed issue as its tracker is trusted on sight. Do
+not trust it — an issue can be closed `completed` with the work never landed.
+
+Resolve every closed issue cited **as a tracker**, in a body or in the code
+(`grep -rn '#<N>' packages/ apps/ eval/`), by checking the artifact, not the
+state. One case: a consolidation issue closed `completed` while all five copies
+it was meant to remove are still on `main` — with a source comment pointing
+readers at it. Anyone following that pointer lands on a closed ticket and an
+unsolved problem.
+
+Where the work did not land, say so on the closed issue and name what actually
+owns the scope. Reopening is usually wrong: the right survivor is often a
+different, open issue, and reopening a stale one just adds a second.
 
 **The measurement drifted.** Counts, sizes, line numbers and percentages age
 badly here. Re-run any figure an issue's decision rests on. Report the delta
