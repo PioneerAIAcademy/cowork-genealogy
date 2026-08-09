@@ -89,7 +89,10 @@ FIXTURE_PATH_RE = re.compile(r"^eval/fixtures/(scenarios|mcp)/([^/]+?)(?:/.*|\.j
 #     (don't re-read the forgotten facts off the tree) that a unit transcript
 #     can't observe. Permanent, not a stopgap — confirmed by Dallan 2026-07-18.
 #
-# Adding a unit suite for such a skill later means removing it from this set.
+# The gate consults this set only for skills that still have no
+# eval/tests/unit/<skill>/ dir (see the `exempt_suiteless` filter in main), so
+# adding a unit suite later auto-arms the gate — you need not also remove the
+# skill from this set, though pruning a now-suited entry keeps it tidy.
 # Otherwise keep this set minimal: it is the only way to edit a skill body
 # without eval discipline, so every addition needs the "no unit suite by design"
 # rationale above, not just "the gate is inconvenient right now."
@@ -579,13 +582,19 @@ def main() -> int:
         fixture_referencing = skills_referencing_fixtures(TESTS_UNIT_DIR)
         for key in sorted(touched_fixtures):
             fixture_touched_skills |= fixture_referencing.get(key, set())
-    fixture_touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
+    # Exempt only the orchestrator skills that still have NO unit suite — keyed
+    # on directory existence, not name, so adding eval/tests/unit/<skill>/ later
+    # auto-arms the gate instead of silently staying exempt until someone also
+    # remembers to edit RUNLOG_GATE_EXEMPT_SKILLS (#1094 review). No-op today:
+    # neither exempt skill has a unit-test dir. A skill-body edit to such a
+    # suiteless skill would otherwise hard-fail the per-skill rules with no way
+    # to clear them (it has a plugin dir but no run logs).
+    exempt_suiteless = {
+        s for s in RUNLOG_GATE_EXEMPT_SKILLS if not (TESTS_UNIT_DIR / s).is_dir()
+    }
+    fixture_touched_skills -= exempt_suiteless
     fixture_touched_skills -= touched_skills
-
-    # Drop orchestrator skills with no unit suite by design (see
-    # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
-    # per-skill rules with no way to clear them.
-    touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
+    touched_skills -= exempt_suiteless
 
     # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
     # AND its unit-test dir are both absent from the working tree — there is

@@ -491,6 +491,42 @@ def test_touched_fixture_without_references_warns_nobody(monkeypatch, capsys, tm
     assert "All runlog rules satisfied" in out
 
 
+def test_exempt_skill_with_unit_suite_is_not_suppressed(monkeypatch, capsys, tmp_path):
+    """The exemption is keyed on directory existence, not name (#1094 review):
+    a skill in RUNLOG_GATE_EXEMPT_SKILLS that HAS gained an eval/tests/unit/
+    dir is no longer exempt, so a fixture edit still warns for it. Guards
+    against regressing to the name-keyed `-= RUNLOG_GATE_EXEMPT_SKILLS`."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    # `uses-fixture` has a unit-test dir in the tmp repo; naming it exempt must
+    # NOT silence it, because the exemption only applies to suiteless skills.
+    monkeypatch.setattr(
+        check_runlogs, "RUNLOG_GATE_EXEMPT_SKILLS", frozenset({"uses-fixture"})
+    )
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out  # suited exempt skill is still warned
+
+
+def test_exempt_suiteless_skill_is_dropped(monkeypatch, capsys, tmp_path):
+    """The converse: a truly suiteless exempt skill contributes no unit-test
+    references (skills_referencing_fixtures never sees it) and never warns —
+    the exemption's intended case still holds."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    monkeypatch.setattr(
+        check_runlogs, "RUNLOG_GATE_EXEMPT_SKILLS", frozenset({"no-such-suiteless"})
+    )
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "no-such-suiteless" not in out
+    # `uses-fixture` is not exempt here, so it still warns as usual.
+    assert "uses-fixture" in out
+
+
 # --- git_diff_touched_paths uses a 3-dot (merge-base) diff -----------------
 
 
