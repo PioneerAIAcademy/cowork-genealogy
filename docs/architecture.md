@@ -295,19 +295,22 @@ turns from the right skill.
   have sat over the cap for months, and a proposal to widen the lint to them was
   closed invalid for exactly that reason. **They are not evidence about the SDK
   path in either direction; do not cite them as such.**
-  **Treat 1024 as hard — the mechanism is unproven and three sources disagree.**
-  The PR that added the lint (2026-07-18) trimmed `proof-conclusion` from 1,220
-  characters after an observed failure, with eleven other descriptions within
-  ~25 of the cap; the
-  vendored `improve_description.py` says an over-length description is
-  *truncated*, not dropped; and a 2026-08-09 probe against CLI 2.1.226 saw 1,105
-  and 2,000 characters register **intact** under both load paths. Those three
-  cannot all be right, and no one has reconciled them — the SDK's behaviour may
-  simply have changed since July. Cowork's own install-time validator is
-  untested by all three. **Keep the lint regardless**: truncated-vs-dropped
-  changes what an over-cap description does to triggering, nobody knows which it
-  is, and 1024 characters is enough — a description is resident in the
-  orchestrator's context on every turn.
+  **1024 is a hard limit, not a house style. Over it, the entry fails to load —
+  silently.** The PR that added the lint (2026-07-18) is where it bit:
+  `proof-conclusion`'s description had drifted to 1,220 characters, with eleven
+  others sitting within ~25 of the cap. Do not relax it, and do not treat a
+  description near the cap as safe because it currently works.
+
+  A 2026-08-09 probe saw 1,105- and 2,000-character descriptions *register*
+  intact under both load paths on one CLI build. **That does not license going
+  over.** Registering is not the same as loading correctly, the SDK's behaviour
+  is not ours to pin, and the vendored `improve_description.py` describes
+  over-length descriptions as *truncated* — a failure that would look like a
+  triggering regression rather than an error. Cowork's own install-time
+  validator is untested by any of it.
+
+  Stay well under regardless: a description is resident in the orchestrator's
+  context on every turn.
 - **Descriptions are tuned empirically, not by taste.** `eval/triggering/` holds
   the vendored description optimizer; `docs/skill-lifecycle.md` owns the
   workflow.
