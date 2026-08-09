@@ -20,10 +20,15 @@ said otherwise.
 `Senior` column marks GitHub team membership, which is what `.github/CODEOWNERS`
 routes review authority by: `senior-genealogists` owns skills, agents, eval
 fixtures/tests/runlogs and `docs/`; `senior-developers` owns the code and
-infrastructure paths. Every developer not marked senior is **junior**, working
-with Claude Code. Everyone in this table is expected to post a standup update,
-seniors included — the two who are not are listed under "Does not post standup"
-below. Seniority set by the lead 2026-08-09.
+infrastructure paths.
+
+**It is review authority only — never an assignment tier.** A senior developer
+still takes work from the junior pool and works with Claude Code. The lead is
+the only person `fill-ready` assigns senior-required *work* to.
+
+Everyone in this table is expected to post a standup update, seniors included —
+the two who are not are listed under "Does not post standup" below. Seniority
+set by the lead 2026-08-09.
 
 | Key | Posts as | GitHub | Role | Senior | Confidence |
 |---|---|---|---|---|---|
@@ -31,7 +36,7 @@ below. Seniority set by the lead 2026-08-09.
 | mercy | Mercy Okum | `mercyokum` | genealogist | | confirmed |
 | israel | Israel, Israel Ayomikun Asimi | `Asimi1234` | developer | | confirmed |
 | florence | Florence Taburu | `florencemashipei` | genealogist | **senior** | confirmed — authored PR #928 |
-| tife | Tife | `T-FEH` | developer | | confirmed |
+| tife | Tife | `T-FEH` | developer | **senior** | confirmed |
 | isaac | Isaac Boateng | `Paaboat` | genealogist | | confirmed |
 | jude | Ebigide Jude | `jud-sdev` | developer | | confirmed |
 | collins | Cia, Collins | `Cia-3` | genealogist | | confirmed |
@@ -43,9 +48,9 @@ below. Seniority set by the lead 2026-08-09.
 | ruth | Ruth Williams | `Emruthwill` | genealogist | | confirmed |
 | adedotun | Adedotun Taiwo | `taiwo-stack` | developer | | confirmed |
 | john | John Mark Peter-Brown | `johnmarkpeterbrown` | genealogist | **senior** | confirmed |
-| promise | Promise_emmanuel, Promise Nwabueze Igbojionu | `promise-emmanuel` | developer | | confirmed |
+| promise | Promise_emmanuel, Promise Nwabueze Igbojionu | `promise-emmanuel` | developer | **senior** | confirmed |
 | ikennaya | Ikennaya Mbadiwe | `Ikennaya1` | genealogist | | confirmed |
-| precious | Precious Onotu | `clack391` | developer | | confirmed |
+| precious | Precious Onotu | `clack391` | developer | **senior** | confirmed |
 | edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** | confirmed |
 | pascal | Pascal Okezie | `Gennecis` | developer | | confirmed |
 | marc | Marc Mangum | `MMagnum` | developer | | confirmed by the lead 2026-08-05 |
@@ -92,9 +97,9 @@ review" is the fact that should shape what issue #970 becomes.
 - **Ernest** commits as `ernestjacob789@gmail.com` while his GitHub account is
   `aghadiayeamayanvboernest`. Any roll call derived from git activity rather than
   from this roster will count him twice, as two different people.
-- **Richard** (`chesworthrm`) had not posted a standup as of 2026-08-05 while
-  holding PR #1328 and five open `record_search` issues. He is a full roster
-  member, so report him missing on days he does not post.
+- **Richard** (`chesworthrm`) works part-time and covers for the lead when he is
+  away. He is a full roster member, so report him missing on days he does not
+  post.
 - **Christopher** (`chrisedeson`) is not an org member and contributes by fork.
   That is deliberate, not lapsed access — do not report it as an anomaly.
 - **Assigning below `triage` fails silently.** A collaborator at `read` is under
