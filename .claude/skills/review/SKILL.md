@@ -66,9 +66,13 @@ ones are `pytest`, `runlogs`, `e2e-fixtures`, `vitest`, `lockfile-drift`, `scan`
 Report any that failed, and any that never ran on the current head — a check that
 did not run is not a check that passed.
 
-**Say who still has to approve.** `reviewRequests` lists the code-owner teams
-GitHub is still waiting on, and `.github/CODEOWNERS` is the source of truth for
-which paths need which team — read the file, don't trust a path list. Your
+**Say who still has to approve — and work it out from the paths, not from
+`reviewRequests`.** That field is computed when the PR is opened or pushed to,
+not read live, so it lags every CODEOWNERS change: 16 open PRs touching `.ts`
+and `.py` showed only `senior-genealogists` for as long as the
+`senior-developers` team did not resolve, and kept showing it afterwards until
+someone pushed. Read `.github/CODEOWNERS`, match it against the changed paths
+(last rule wins), and treat `reviewRequests` as a hint that may be stale. Your
 approval may not be the one that unblocks merge, and saying so is part of the
 review. Confirm the owners actually resolve:
 
