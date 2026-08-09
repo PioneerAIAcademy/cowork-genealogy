@@ -270,10 +270,16 @@ turns from the right skill.
   `eval/harness/scripts/check_skill_frontmatter.py` (CI **and** the plugin
   packaging script, checking the *folded* value so a long multi-line description
   cannot escape to install time) and
-  `tests/packaging/skill-description-length.test.ts`. The two sites disagree
-  about *why* 1024 — the vitest comment calls it a runtime cap, the Python
-  checker calls it "a self-imposed standard, not a Cowork limit." **Nobody has
-  reconciled them; treat 1024 as hard either way.**
+  `tests/packaging/skill-description-length.test.ts`. **1024 is a house
+  standard, not a runtime limit.** Measured 2026-08-09 against CLI 2.1.226:
+  descriptions of 1,105 and 2,000 characters register intact — full text, no
+  truncation, no error — under **both** load paths, `setting_sources=["project"]`
+  (what both harnesses stage into) and `plugins=[{"type": "local", …}]` (what the
+  hosted control plane passes). The repo corroborates it: five `.claude/skills/`
+  descriptions run 1028–1197 characters and load every session. Only Cowork's
+  own install-time validator is untested, and it is the reason to keep the cap —
+  that plus attention: every description is resident in the orchestrator's
+  context on every turn. **Keep the lint. Do not restate it as an SDK limit.**
 - **Descriptions are tuned empirically, not by taste.** `eval/triggering/` holds
   the vendored description optimizer; `docs/skill-lifecycle.md` owns the
   workflow.
@@ -387,12 +393,15 @@ Architecturally:
   have a live spec, and the spec is what the implementation gets checked
   against. Copy `src/tools/wikipedia.ts` and its sibling four files as the
   template.
-- **Four sites — but the drift test catches only one kind of miss.**
+- **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`. **It does not check the dispatch.** Forget the
-  `if (request.params.name === "…")` block in `src/index.ts` and CI stays green,
-  the tool is advertised to the model, and the first real call throws
-  `Unknown tool: …` (`src/index.ts:736`).
+  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
+  all fail. Forgetting the `if (request.params.name === "…")` block used to ship
+  a tool that threw `Unknown tool: …` (`src/index.ts:736`) on its first real
+  call with CI green; that is now a CI failure. A commented-out `case` does not
+  count as live, and if dispatch is ever refactored to a lookup map the
+  extraction guard fails rather than silently passing.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
@@ -653,10 +662,12 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > described the opposite and were corrected in #1173 and its follow-up** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
 > test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix (#1110). The
-> repo's own data corroborates: ToolSearch is **~11% of all tool calls** (387
-> across 28 runs) *while the flag is set to `true`*. This does not change the
-> bare-name rule above, which is correct either way. See critique §3 P1 and #1110.
+> has to re-measure the tool mix, and **no open issue tracks that flip** — the
+> one that settled the polarity closed on the polarity question alone (§10). The
+> repo's own data corroborates the flag being live: ToolSearch is **8.5% of all
+> tool calls** (2,023 of 23,798 across the 145 committed e2e runs) *while the flag
+> is set to `true`*. This does not change the bare-name rule above, which is
+> correct either way.
 
 ### 5.3 Capability restriction by tool identity
 
@@ -680,14 +691,19 @@ extractor past its prose lane and it fabricated a match score. The analysis:
 
 Full rationale and error contract: `research-append-tool-spec.md` §11.
 
-> **Open, and do not guess at it.** The same reasoning is wanted for identity
-> scoring — a run should not be able to attach a persona from a new record to an
-> existing tree person without a `same_person` attestation. The *direction* is
-> settled (enforce structurally at the write boundary, not by post-run
-> detection); the *mechanism* is not. **Three candidate discriminators have
-> failed adversarial review.** The next deliverable is a gate spec satisfying
-> five named design constraints, not a code change. **Read critique §3 P0 and §9
-> before proposing a fourth.**
+> **Open — but the open question has moved.** The same reasoning is wanted for
+> identity scoring: a run should not be able to attach a persona from a new
+> record to an existing tree person without a `same_person` attestation. Three
+> candidate discriminators failed adversarial review, and a **fourth now ships,
+> in shadow** — the live pre-write provenance check in
+> `guardrail-enforcement-spec.md` **§4**'s last row and **§8**, which fires in the
+> e2e harness's `pretool_hook`, records into `guardrail_shadow_violations`, and
+> lets the write through. So the deliverable is no longer *deriving* a
+> discriminator; it is **graduating this one to a deny**, which is gated on its
+> replay numbers (65 of 81 fixtures, 265 hits across 280 runs — denying on that
+> intervenes in four fifths of a suite costing $7–25 a run). **Read critique §3 P0
+> and §9 before proposing a fifth**, and satisfy its named constraints —
+> including satisfiability, which the shadow replay is the standing evidence for.
 
 ### 5.4 The write-lockdown hook
 
@@ -748,11 +764,16 @@ The unit harness stages **no** plugin hooks at all.
 is the table of every guardrail's instrument, binding environment, and
 enforcing-vs-shadow status.
 
-> **Direction (#911).** Discriminating by *caller* is a hook's job, and the hook
-> layer already does it once: `eval/harness/harness/context_policy.py` denies
+> **Direction.** Discriminating by *caller* is a hook's job, and the hook layer
+> already does it once: `eval/harness/harness/context_policy.py` denies
 > `image_read` when `agent_id` is absent. **The per-context policy design exists —
-> don't re-derive it.** What is missing is a production port, gated on
-> calibrating the shadow window first.
+> don't re-derive it.** What is missing is a production port of it into the
+> shipped `packages/engine/plugin/hooks/` hook. **That port is no longer gated on
+> calibrating the shadow window** — the issue that owned the calibration closed
+> `not planned` on 2026-08-09, so anything still naming it as a prerequisite is
+> naming a dead gate. What the port needs first is the one live Cowork run that
+> settles whether the *router* holds `image_read` at all
+> (`gh issue list --search "does the router hold image_read"`).
 
 ### If you're asked to…
 
@@ -945,16 +966,28 @@ Two things the site list alone won't tell you:
   in both the Electron viewer and the web workbench. 6 is checked for round-trip
   validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
-- **Run `make engine-test`, `make harness-test`, *and* `make typecheck`.** Only
-  the second catches the `packages/schema` mirror, and only the third catches the
-  viewer — and §9.1 files both under other headings, so they are easy to skip.
+- **Run `make test-all`.** A schema field lands in four different suites —
+  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror,
+  site 4), `test-js` (the TS-interface mirror, site 5) and `typecheck` (site 10)
+  — and no shorter target reaches all four. Naming them individually is how the
+  last one gets skipped.
 
 **Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
-only `$ref`s it). Edit `enums.schema.json` in **both** schema trees, the TS union
-in `packages/schema/src/index.ts`, `CLOSED_ENUMS` in `validator.ts`, and the
-prose tables. `tests/packaging/enum-drift.test.ts` checks prose against the
-schema.
+only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
+`CLOSED_ENUMS` in `validator.ts`, and the prose tables.
+`tests/packaging/enum-drift.test.ts` checks prose against the schema.
+
+**Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
+is emitted from that package's own `schemas/enums.schema.json` by
+`scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
+(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. The exception is
+the **five unions defined inline in `research.schema.json`** rather than in
+`enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
+`EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
+cannot see and which are therefore hand-written in `src/index.ts` until they move
+(#1015). If your value belongs to one of those five, edit `src/index.ts`;
+otherwise regeneration is automatic and typing it by hand creates a sixth copy.
 
 > **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
@@ -982,7 +1015,7 @@ workbench locally"); this section is the shape.
 | Package | What |
 |---|---|
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
-| `packages/viewer-ui` | the extracted renderer — App, **14 sections**, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
+| `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
@@ -993,10 +1026,12 @@ lets the same viewer run in Electron and in the browser. **Build shared workspac
 features in `packages/viewer-ui`;** only chat and session-management chrome stays
 in `apps/web`.
 
-> The count is **13**. `CLAUDE.md` said 11 until 2026-08-02, when it was
-> corrected; `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
-> still carry 11 in places, but only where it is the historically correct count
-> for the date they describe, and each says so at the site.
+> **Don't restate the section count as a literal anywhere.** It has been written
+> as 11, 13 and 14 in four documents at once. `ls
+> packages/viewer-ui/src/components/sections/*.tsx` is the answer, and it cannot
+> go stale. `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
+> still carry 11, but only where it is the historically correct count for the
+> date they describe, and each says so at the site.
 
 ### 7.2 The sandbox is the per-session server
 
@@ -1037,9 +1072,13 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
 
 **Known gaps**, from `docs/realtime-rearch-status.md`:
 
-- FamilySearch tokens are not auto-injected into E2B — dev/real connect writes them.
-- `wiki_read` / `wiki_place_page` need the pre-crawled markdown corpus baked into
-  the image; it is not baked, so those two tools error there.
+- FamilySearch tokens **are** injected: `sessions.sync_fs_token` writes the
+  user's token into the sandbox's `~/.familysearch-mcp/tokens.json` on session
+  create *and* again on every `/connect`, and returns a `familysearch` state so
+  the client can prompt on expiry. The open gap is a different one — the
+  `familysearch_tokens` access and refresh values are stored **unencrypted at
+  rest** in the control plane's database, which has to change before a real-PII
+  alpha (`gh issue list --search "Encrypt familysearch_tokens"`).
 - E2B Hobby has a **1-hour hard continuous-session cap** that force-pauses even
   an active session (resume ~1s; a mid-turn pause breaks that turn).
 - The **delete-janitor** for abandoned sandboxes is unimplemented — paused
@@ -1057,9 +1096,12 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
 > `**Branch:** hosted-web-workbench` line (the code is on `main`), and the status
 > doc used to list the "C5 cleanup" (Ably backends, the old relay, the
 > idle-suspend loop) as **still present** when it was already done. Both now say
-> so. The one real remnant: `ably>=3.1.2` is still a declared dependency in
-> `apps/server/pyproject.toml` with nothing importing it. **Still read those two
-> docs for the reasoning, not as the current-state reference — this guide is.**
+> so. The last remnant is gone too: `ably` is no longer declared in
+> `apps/server/pyproject.toml`. **Still read those two docs for the reasoning,
+> not as the current-state reference — this guide is**, and the status doc's own
+> "deferred / known gaps" list is the stalest part of it: it still names the
+> `ably` dependency and the FamilySearch-token injection above, both closed, and
+> already marks the wiki-corpus bake obsolete rather than pending.
 
 ### If you're asked to…
 
@@ -1131,10 +1173,11 @@ skips silently**, which looks identical to passing.
 | Command | Covers | **Does not cover** |
 |---|---|---|
 | **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
-| `make test` | JS workspace + server tests | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage |
+| `make test` | `test-js` + `server-test` | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage, and this is **not** the eval-harness gate despite what `CLAUDE.md` and `DEVELOPMENT.md` imply |
+| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace) |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
-| `make harness-test` | `eval/harness` (pytest) — **the sole gate on the `packages/schema` mirror** | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug |
-| `make typecheck` | the whole JS workspace (turbo) — the only gate on viewer code | Python |
+| `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
+| `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
@@ -1156,6 +1199,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
 | `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
+| `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
+| `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` skill, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 | `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails** (§9.4). Its unit half does assert, over the delta arithmetic only |
@@ -1172,8 +1217,21 @@ what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
 tools — what happens after you grant one), and `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description). And
-`eval/harness/tests/unit/test_schema_mirrors.py` for the `packages/schema` mirror.
+after you widen a description).
+
+**Three more live outside `tests/packaging/`, and the inventory above will not
+lead you to them:**
+
+- `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts` —
+  diffs `tree-shape.ts`'s closed per-object field allow-lists against
+  `tree-gedcomx.schema.json`. Runs under `make engine-test`.
+- `eval/harness/tests/unit/test_schema_mirrors.py` — the two schema trees stay
+  byte-identical. `eval/harness/tests/unit/test_write_lockdown_parity.py` — the
+  three write-lockdown copies agree. Both run under `make harness-test`.
+- `eval/harness/scripts/check_e2e_fixtures.py` — **blocking**, from its own
+  workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
+  `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
+  so a fixture change can pass locally and fail in CI.
 
 ### 9.3 The two eval tiers
 
@@ -1243,7 +1301,7 @@ actually called across those runs, and the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
 a sub-skill regression rather than a routing one.
 
-**Add or change a unit eval test.** `docs/specs/unit-test-spec-v2.md` is the
+**Add or change a unit eval test.** `docs/specs/unit-test-spec.md` is the
 format; `eval/README.md` is the workflow; `eval/tests/unit/<skill>/` is where it
 lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
@@ -1269,9 +1327,10 @@ cannot be cited against the code. Copy the shape of a recent one
 
 Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 
-1. **The `same_person` write-boundary gate** — direction settled, mechanism not;
-   three discriminators have failed review. Details and the "don't re-derive"
-   ledger: §5.3, and critique §3 P0 + §9.
+1. **The `same_person` write-boundary gate** — direction settled; three
+   discriminators failed review and a fourth now runs in **shadow**, so what is
+   open is its **graduation to a deny**, not its derivation. Details and the
+   "don't re-derive" ledger: §5.3, and critique §3 P0 + §9.
 2. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
    "true or false positive" has no ground truth at all (critique §3 P0).
@@ -1280,12 +1339,15 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
    counts rather than a percentage. The gate-reach figure (≤9 of 25, stated
    against critique §9's narrow window) is a count of violations one arm
    produced, not a rate.
-3. **Why the 1024-character description cap exists** — two lint sites give
-   contradictory reasons (§3.2). Treat it as hard either way.
-4. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
+3. **`ENABLE_TOOL_SEARCH`** — the polarity is settled as of 2026-08-02
    (§5.2) and all five inverted comments have been corrected. What remains is
    the **flip itself**, which changes behavior in both harnesses and the hosted
-   path and requires re-measuring the tool mix before and after.
+   path and requires re-measuring the tool mix before and after. The issue that
+   settled the polarity closed on that question alone; **nothing tracks the flip
+   today.** Search the board before assuming otherwise
+   (`gh issue list --search "ENABLE_TOOL_SEARCH"`), and note that
+   `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
+   being on, so the flip is no longer a one-line experiment.
 
 *(`research_query` pagination past 50 items — #1031 — has left this list: the
 API shape is settled and the tool half shipped `offset`; the remaining skill
@@ -1311,7 +1373,7 @@ adoption is tracked work, #1183, not an open question. See §6.3.)*
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
 | Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md), [`image-reader-opus-agent-spec.md`](specs/image-reader-opus-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
-| The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
+| The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |

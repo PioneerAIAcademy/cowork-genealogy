@@ -78,10 +78,15 @@ control plane only does auth + `/connect` + file reads (`/state`, `/status`,
 sidecar, feedback) — never the stream.
 
 ## Deferred / known gaps (none block the live-test)
-- **`ably>=3.1.2` is still declared** in `apps/server/pyproject.toml` even though
-  the C5 cleanup removed every import. Dead weight in the image, not a behavior
-  gap.
-- **FamilySearch token** is not auto-injected into E2B — dev/real connect writes it.
+- ~~**`ably>=3.1.2` is still declared** in `apps/server/pyproject.toml`.~~
+  **Closed (verified 2026-08-09):** the dependency is gone from
+  `pyproject.toml`.
+- ~~**FamilySearch token** is not auto-injected into E2B.~~ **Closed (verified
+  2026-08-09):** `sessions.sync_fs_token` writes the token into the sandbox on
+  session create and on every `/connect`, and reports a `familysearch` state
+  back to the client. What is still open is a different thing — the stored
+  access/refresh values are **unencrypted at rest** in the control plane's
+  database.
 - ~~**Wiki tools** need the pre-crawled markdown corpus baked into the image
   (`wikiMarkdownDir`).~~ **Obsolete, not pending (verified 2026-08-02).**
   `wiki_read` and `wiki_place_page` are now HTTP clients against the hosted

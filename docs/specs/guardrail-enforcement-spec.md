@@ -233,7 +233,8 @@ some of them fails `make harness-test`.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and caps at 50 items with no pagination. For
+  `localities`) and pages at 50 items per call — `offset` reaches items 51+,
+  and `truncated` says when to use it. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
   *open* the file: `project_context` (its `readJson` of `research.json` in

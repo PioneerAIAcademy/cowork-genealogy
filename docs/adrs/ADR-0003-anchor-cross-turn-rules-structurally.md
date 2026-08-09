@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-27 (on the §5.3 rule audit)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-09 (the ranking fold *is* pinned by a test)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -94,9 +94,12 @@ So the question when writing a new rule is *where it goes*:
 ## Consequences
 
 **Gains.** Two rules were converted on the strength of this — the `count: 50`
-default and the ranking fold, both now in `record-search.ts`. (The critique
-reports the fold "verified 7/7"; the *conversions* are verifiable in the code,
-the 7/7 result is not recorded in any test or runlog here.) Every invariant moved
+default and the ranking fold, both now in `record-search.ts`, and both pinned by
+`packages/engine/mcp-server/tests/tools/record-search.test.ts` (a `subjectId`
+requests the deep pool and returns `ranked`; without one, `count` stays at 20).
+The committed e2e corpus agrees: 21 of the 22 searches eligible to be ranked — a
+`subjectId` given *and* at least one match — came back with a `ranked` block.
+Every invariant moved
 into `research_append` holds regardless of context
 state, model, or how long the session has run — and holds identically in Cowork,
 the hosted path, and both harnesses, which prose never does.

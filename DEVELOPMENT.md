@@ -193,9 +193,12 @@ since mid-2026 was verified without one. Verification is automated:
    fastest way to debug a tool in isolation.
 2. **MCP Inspector** — verifies the tool registers and behaves with
    no/dummy/real input.
-3. **The eval harness** (`make test`, `eval/tests/e2e/`) — verifies the
-   tool description is good enough that the LLM picks it from natural
-   language, and that the skills using it still pass.
+3. **The eval harness** (`make harness-test` for the harness's own suite,
+   `make eval-skill SKILL=<name>` and `eval/tests/e2e/` for behaviour) —
+   verifies the tool description is good enough that the LLM picks it from
+   natural language, and that the skills using it still pass. **Not `make
+   test`**, which is `test-js` + `server-test` and reaches neither the
+   harness nor the engine.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
