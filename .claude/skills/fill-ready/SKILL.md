@@ -674,6 +674,10 @@ verdict, not a promotion.
 Same read, nearly free. Cap it at about **eight** proposals — a grooming list
 longer than the promotion list means the day's output was grooming.
 
+**The cap lifts when §1's "Arrival vs. closure" shows arrival leading for three
+consecutive weeks.** Then grooming *is* the day's output: propose as many closes
+and merges as the read supports, and say that is what you did.
+
 Candidates: empty-bodied issues months old; issues superseded by a newer, better
 one; issues whose premise the team has since abandoned; duplicates. Give one
 line of reasoning each, and a verdict — **close / rewrite / delete / leave**.
