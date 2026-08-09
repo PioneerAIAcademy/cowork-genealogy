@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer but the lead takes from the junior pool, so senior-required work goes to the lead — `senior-developers` membership is review authority, not an assignment tier. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -165,7 +165,10 @@ returns it.
 ### Seniority routes the item before priority does
 
 **Anything that needs a senior developer goes to the lead — never into the
-unassigned pool.** The team's developers are juniors working with Claude Code.
+unassigned pool.** Every other developer takes from the junior pool and works
+with Claude Code. The roster's `Senior` column is **review authority, not an
+assignment tier**: it says whose approval can unblock a code PR, not who can be
+handed senior work.
 The unassigned `developer` pool is therefore a **junior** pool by definition, and
 a senior-required item sitting in it is worse than one sitting in Backlog: it
 looks pickable, and whoever picks it produces a green, plausible, wrong change.
@@ -574,8 +577,10 @@ architecture spanning several subsystems, doctrine calls, spend decisions,
 anything overriding someone else's work, security triage, and the Gate-2
 decisions from §3.
 
-**He is also the only senior developer**, so §1's seniority test routes here:
-every senior-required item is his or it is nobody's. That produces far more
+**He is the only one who takes senior developer work**, so §1's seniority test
+routes here: every senior-required item is his or it is nobody's. Others on the
+`senior-developers` team hold review authority, not an assignment slot. That
+produces far more
 senior work than two slots hold — which is fine, and is the point. Senior work
 **waits in Backlog**; what it must never do is sit unassigned in Ready looking
 pickable.
