@@ -3,12 +3,10 @@ cd %~dp0
 
 echo === Cowork Genealogy - Install shared git hooks ===
 echo.
-echo The Windows counterpart to 'make install-hooks'. Installs two hooks into
+echo The Windows counterpart to 'make install-hooks'. Installs one hook into
 echo this clone's shared .git\hooks, covering every worktree of the clone:
 echo.
 echo   post-checkout - auto-links shared dev files into a newly-added worktree
-echo   commit-msg    - warns (never blocks) when a commit records no human
-echo                   Co-authored-by trailer
 echo.
 echo Opt-in and per-clone. Touches only local .git state, never core.hooksPath,
 echo so it cannot disable husky or other hook tooling, and is invisible to
@@ -42,7 +40,7 @@ if not exist "%SHIM%" (
 
 if not exist "%COMMON%\hooks" mkdir "%COMMON%\hooks"
 
-for %%h in (post-checkout commit-msg) do (
+for %%h in (post-checkout) do (
     call :install "%%h"
     if errorlevel 1 goto :failed
 )

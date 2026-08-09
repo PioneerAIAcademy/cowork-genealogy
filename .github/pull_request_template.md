@@ -38,9 +38,8 @@
      "Nothing" is the common answer. PLAN.md is gitignored, so this line is
      the only way a deviation reaches your reviewer.
 
-     Hit the step-4 stop rule (schema, auth, plugin-agent binding, an ADR
-     reversal, anything hard to undo)? Say so here and name the message
-     where you raised it. -->
+     Hit the step-4 stop rule (schema, auth, an ADR reversal, anything hard
+     to undo)? Say so here and name the message where you raised it. -->
 
 **Didn't change:**
 
