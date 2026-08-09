@@ -258,6 +258,24 @@ def test_has_usable_fingerprint_ignores_builtins():
     assert has_usable_fingerprint(stats, ("person-evidence",)) == []
 
 
+def test_has_usable_fingerprint_returns_a_stable_order():
+    """Insertion order comes from a set comprehension in `accumulate`, so it
+    varies between processes on byte-identical input (PYTHONHASHSEED).
+
+    One tool per episode is what keeps this construction deterministic: each
+    episode's set is a singleton, so the Counter's key order is the ledger's.
+    Both tools in one episode and the assertion becomes a coin flip.
+    """
+    stats = _stats(
+        [_skill("person-evidence"), _call("zzz_tool")],
+        [_skill("person-evidence"), _call("aaa_tool")],
+    )
+    assert has_usable_fingerprint(stats, ("person-evidence",)) == [
+        "person-evidence/aaa_tool",
+        "person-evidence/zzz_tool",
+    ]
+
+
 # --- scan_corpus -------------------------------------------------------------
 
 
@@ -307,11 +325,13 @@ def test_format_report_states_the_finding_when_no_fingerprint_exists():
         [_skill("person-evidence"), _call("research_append")],
         [_skill("search-records"), _call("research_append")],
     )
-    assert "no non-circular completion fingerprint exists" in format_report(stats, skills=("person-evidence",))
+    assert "no non-circular completion fingerprint exists" in format_report(
+        stats, skills=("person-evidence",), episode_floor=1
+    )
 
 
 def test_format_report_flags_a_fingerprint_that_would_contradict_the_premise():
-    out = format_report(_one_specific_tool_corpus(), skills=("person-evidence",))
+    out = format_report(_one_specific_tool_corpus(), skills=("person-evidence",), episode_floor=1)
     assert "USABLE FINGERPRINT FOUND" in out
     assert "issue #1463" in out
 
@@ -333,7 +353,7 @@ def test_the_verdict_is_scoped_to_guardrail_skills_even_in_all_skills_mode():
         [_skill("locality-guide"), _call("wiki_read")],
         [_skill("locality-guide"), _call("wiki_read")],
     )
-    out = format_report(stats, skills=("person-evidence", "locality-guide"))
+    out = format_report(stats, skills=("person-evidence", "locality-guide"), episode_floor=1)
     assert "no non-circular completion fingerprint exists" in out
     assert "USABLE FINGERPRINT FOUND" not in out
     # Still surfaced, but as contrast rather than as the verdict.
@@ -344,10 +364,38 @@ def test_a_guardrail_fingerprint_still_flips_the_verdict_in_all_skills_mode():
     """The scoping must not make the banner unreachable — it has to still fire
     when a GUARDRAIL skill is the one clearing the target."""
     out = format_report(
-        _one_specific_tool_corpus(), skills=("person-evidence", "search-records")
+        _one_specific_tool_corpus(), skills=("person-evidence", "search-records"), episode_floor=1
     )
     assert "USABLE FINGERPRINT FOUND for a GUARDRAIL skill" in out
     assert "issue #1463" in out
+
+
+def test_the_verdict_is_withheld_below_the_episode_floor():
+    """`--test <slug>` narrows the corpus to one fixture, where two episodes read
+    precision 1.00 and the banner announced the finding refuted. Neither verdict
+    is available on a sample this size — including the finding itself."""
+    stats = _stats(
+        [_skill("person-evidence"), _call("merge_warnings")],
+        [_skill("person-evidence"), _call("merge_warnings")],
+    )
+    out = format_report(stats, skills=("person-evidence",))
+    assert "USABLE FINGERPRINT FOUND" not in out
+    assert "no non-circular completion fingerprint exists" not in out
+    assert "Sample too small to decide" in out
+
+
+def test_the_verdict_names_the_skills_it_withheld():
+    """The mixed case. Saying "all four GUARDRAIL skills" while the floor dropped
+    one is the same over-claim the floor exists to remove, one level down."""
+    stats = _stats(
+        *([_skill("person-evidence"), _call("research_append")] for _ in range(20)),
+        *([_skill("search-records"), _call("research_append")] for _ in range(20)),
+        [_skill("conflict-resolution"), _call("merge_warnings")],
+    )
+    out = format_report(stats, skills=("person-evidence", "conflict-resolution"))
+    assert "no non-circular completion fingerprint exists" in out
+    assert "1 GUARDRAIL skill(s) with >= 20 episodes (person-evidence)" in out
+    assert "Withheld below the 20-episode floor: conflict-resolution (1 episode)." in out
 
 
 def test_all_skills_row_order_breaks_ties_by_name():

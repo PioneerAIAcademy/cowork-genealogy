@@ -691,7 +691,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     Note what the two layers do and do not compose to. The main-thread half is
     DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
     not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated (#911). So a `general-purpose` delegate's `extraction_append`
+    calibrated. So a `general-purpose` delegate's `extraction_append`
     still succeeds today; what this detector buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a

@@ -55,7 +55,8 @@ conclusion.
   per-call `agent_type` (post-PR #1027), so this cannot be filtered corpus-wide
   today; it inflates recall slightly and does not move the conclusion.
 - **Small denominators.** `conflict-resolution` has single-digit episodes. Read
-  its row as directional.
+  its row as directional — and below `EPISODE_FLOOR` a skill is dropped from the
+  verdict entirely, so its row informs nothing but itself.
 - **The corpus only grows.** Absolute counts here are a point-in-time replay.
   The shape is what reproduces — see `docs/specs/guardrail-enforcement-spec.md`
   §3, which documents the same trap for the sibling report.
@@ -117,6 +118,13 @@ PRECISION_FLOOR = 0.30
 # `tests/unit/test_skill_episode_report.py` and the §3 acceptance check in
 # PLAN.md refer to the same number.
 FINGERPRINT_PRECISION_TARGET = 0.90
+
+# Below this many episodes a precision of 1.00 is one or two runs agreeing by
+# chance, so the verdict is withheld rather than announcing a refutation. It
+# gates only the verdict, not the table: `--test <slug>` narrows the corpus to a
+# single fixture, where two episodes are enough to read 1.00 and claim the
+# finding refuted.
+EPISODE_FLOOR = 20
 
 
 class EpisodeStats:
@@ -260,15 +268,22 @@ def has_usable_fingerprint(stats: EpisodeStats, skills: tuple[str, ...]) -> list
                 and stats.precision(skill, tool) >= FINGERPRINT_PRECISION_TARGET
             ):
                 found.append(f"{skill}/{tool}")
-    return found
+    # Sorted, not insertion-ordered: `accumulate` builds each episode's tool set
+    # with a set comprehension, and per-process string-hash randomization makes
+    # that set's iteration order — and so this Counter's key order — differ
+    # between two runs over byte-identical input.
+    return sorted(found)
 
 
-def format_report(stats: EpisodeStats, *, skills: tuple[str, ...]) -> str:
+def format_report(
+    stats: EpisodeStats, *, skills: tuple[str, ...], episode_floor: int = EPISODE_FLOOR
+) -> str:
     lines = [
         f"Episodes: {stats.total_episodes} across all skills; "
         f"{sum(stats.episodes[s] for s in skills)} for the skills below.",
         f"Precision denominator: all {stats.total_episodes} Skill episodes. "
-        f"Floors: recall >= {RECALL_FLOOR:.2f}, precision >= {PRECISION_FLOOR:.2f}.",
+        f"Floors: recall >= {RECALL_FLOOR:.2f}, precision >= {PRECISION_FLOOR:.2f}, "
+        f"verdict withheld below {episode_floor} episodes.",
         "",
         f"{'skill':26} {'episodes':>8} {'empty':>6}  {'highest-recall tool':<34} most specific tool",
     ]
@@ -299,8 +314,20 @@ def format_report(stats: EpisodeStats, *, skills: tuple[str, ...]) -> str:
     # `check-warnings` do clear the target — they have genuinely specific tools —
     # and reporting that as "contradicts the premise of #1463" told a reader the
     # finding was refuted while the guardrail rows in the same table read `none`.
-    usable = has_usable_fingerprint(stats, GUARDRAIL_SKILLS)
-    if usable:
+    # ...and it is scoped again to the guardrail skills clearing `episode_floor`.
+    # Saying "all four" while the floor silently dropped one is the same
+    # over-claim one level down.
+    evaluated = [s for s in GUARDRAIL_SKILLS if stats.episodes[s] >= episode_floor]
+    withheld = [s for s in GUARDRAIL_SKILLS if 0 < stats.episodes[s] < episode_floor]
+    usable = has_usable_fingerprint(stats, tuple(evaluated))
+    if not evaluated:
+        lines += [
+            "",
+            f"Sample too small to decide: no GUARDRAIL skill has >= {episode_floor} "
+            "episodes. This is NOT the no-fingerprint finding — on a corpus this "
+            "narrow, claiming it confirmed is the opposite error.",
+        ]
+    elif usable:
         lines += [
             "",
             f"USABLE FINGERPRINT FOUND for a GUARDRAIL skill (recall >= {RECALL_FLOOR:.2f}, "
@@ -311,9 +338,19 @@ def format_report(stats: EpisodeStats, *, skills: tuple[str, ...]) -> str:
         lines += [
             "",
             f"No tool clears recall >= {RECALL_FLOOR:.2f} with precision >= "
-            f"{FINGERPRINT_PRECISION_TARGET:.2f} for any of the four GUARDRAIL skills:",
+            f"{FINGERPRINT_PRECISION_TARGET:.2f} for the {len(evaluated)} GUARDRAIL "
+            f"skill(s) with >= {episode_floor} episodes ({', '.join(evaluated)}):",
             "no non-circular completion fingerprint exists.",
         ]
+    if withheld:
+        lines.append(
+            f"Withheld below the {episode_floor}-episode floor: "
+            + ", ".join(
+                f"{s} ({stats.episodes[s]} episode{'' if stats.episodes[s] == 1 else 's'})"
+                for s in withheld
+            )
+            + "."
+        )
 
     # Non-guardrail skills are reported as context, never as the verdict: several
     # of them DO have a usable fingerprint, which is why the scoping above matters.
