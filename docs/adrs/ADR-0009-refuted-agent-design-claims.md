@@ -129,20 +129,24 @@ a graduation, must satisfy all six:
    would have caught this, because all five reason about what the gate *checks*
    and none about what a compliant run *looks like*.
 
-   The shipped shadow check is the standing evidence. `same_person`'s contract
-   takes **two record GedcomX documents plus their `primaryId`s** — it compares
-   two records. A tree person minted in-run by `tree_edit`'s `add_person` gets a
-   **local id** (`I1`, `I2`, …) that is not a shape `same_person` accepts on
-   either side at all. So the call the gate demands has no well-formed spelling
-   for the case the gate fires on. Measured over the 145 committed e2e runs:
-   **63 runs mint a tree person with `add_person` and then write
-   `person_evidence` links**, and in **2** does any `same_person` call so much as
-   name a local `I<n>` id — and `same_person` was called only 77 times in the
-   whole corpus. The spec's own replay of the shadow check agrees from the other
-   direction: it fires in **65 of 81 fixtures (265 hits across 280 runs)**,
-   "because scoring a locally-minted tree person is not current agent behavior."
-   Graduating it to a deny without first shipping a satisfying call shape would
-   deny four fifths of a suite costing $7–25 a run.
+   The shipped shadow check is the worked case, and
+   `docs/specs/guardrail-enforcement-spec.md` §4 owns it — read it there rather
+   than re-deriving it, and re-measure rather than quoting a count off a page.
+   In outline: `tree_edit` mints local ids (`I1`) and rejects caller-supplied
+   ones, while `same_person` scores `primaryId1`/`primaryId2` *inside the
+   caller's own gedcomx documents*, so the one satisfying shape is to pass the
+   tree side as `gedcomx2` with `primaryId2: "I1"` — **which agents produced in 3
+   of 103 corpus runs.** A deny shipped on the fire rate alone would therefore
+   have rejected essentially every run that links a new person, at $7–25 a run.
+
+   **What makes this a constraint and not just a bug:** the gate is *achievable*
+   — a live probe scored a minted, ARK-less tree person at 0.9999484 against a
+   0.999967 control — so the fire rate was measuring an agent that did not know
+   the call shape, not a gate that could not be met. A fire-rate number
+   distinguishes none of that. An impossible gate, a mistuned one, and an
+   achievable one the agent has been told to skip all look identical from the
+   count, which is precisely why the satisfying shape has to be stated up front
+   rather than inferred afterwards.
 
 ## Alternatives considered
 

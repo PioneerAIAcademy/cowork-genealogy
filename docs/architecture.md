@@ -737,13 +737,14 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 > in shadow** — the live pre-write provenance check in
 > `guardrail-enforcement-spec.md` **§4**'s last row and **§8**, which fires in the
 > e2e harness's `pretool_hook`, records into `guardrail_shadow_violations`, and
-> lets the write through. So the deliverable is no longer *deriving* a
-> discriminator; it is **graduating this one to a deny**, which is gated on its
-> replay numbers (65 of 81 fixtures, 265 hits across 280 runs — denying on that
-> intervenes in four fifths of a suite costing $7–25 a run). **Read
+> lets the write through, with an opt-in per-run `deny`. So the deliverable is no
+> longer *deriving* a discriminator; it is **graduating this one to a deny**,
+> which is gated on a replay number that must be re-measured rather than read off
+> a page (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`) *and* on the satisfying
+> call shape being one agents actually produce — they produced it in 3 of 103
+> corpus runs. **Read
 > [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before proposing a
-> fifth**, and satisfy its six named constraints — including **satisfiability**,
-> for which that shadow replay is the standing evidence.
+> fifth**, and satisfy its six named constraints, including **satisfiability**.
 
 ### 5.4 The write-lockdown hook
 
