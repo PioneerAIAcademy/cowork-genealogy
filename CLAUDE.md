@@ -191,8 +191,10 @@ mocks (no E2B/Anthropic/OAuth needed).
   `TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
   "Follow-on work you find along the way", which owns these rules.
 - **Verification is automated, not a manual playbook.** New tools are
-  verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
-  and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
+  verified by the eval harness (`eval/`, `make harness-test`,
+  `make eval-skill SKILL=<name>`, `eval/tests/e2e/` — **not** `make test`,
+  which is `test-js` + `server-test` and reaches neither the harness nor
+  the engine) and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
   by writing a per-tool testing guide. The three surviving guides in
   `docs/testing-guides/` cover setup paths the harness can't
   (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
@@ -320,8 +322,10 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port, and it is gated on
-calibrating the shadow window first — the raw-write half has shipped.
+design; it exists. What is missing is a production port into the shipped
+`hooks/` hook — the raw-write half has shipped. That port is **not** gated on
+calibrating the shadow window; the issue that owned the calibration closed
+`not planned` on 2026-08-09.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -442,9 +446,16 @@ change, with different (and easy-to-undercount) site lists:
 - **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
-  and `packages/schema/schemas/`), the matching TS union in
-  `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
-  prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
+  and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
+  prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
+  union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
+  own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
+  exception is the five unions defined inline in `research.schema.json` rather
+  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
+  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
+  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
+  they move. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
   the `evidence_type` row.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree

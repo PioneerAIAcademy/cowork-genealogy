@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Last updated:** 2026-08-05 (#1341 — the deny now carries three spellings)
+- **Last updated:** 2026-08-09 (the refutation ledger moved to ADR-0009)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -107,10 +107,11 @@ mechanism, the second function parameter that dispatch cannot populate.
 **Risks.** Nothing verifies the deny actually binds at runtime — the lint checks
 spelling only (#1084/#1085, ADR-0004). And the same reasoning is wanted for
 identity scoring (`same_person`), where it has **not** been made to work: three
-candidate discriminators have now failed adversarial review, and the next
-deliverable there is a gate spec with five named design constraints, not a code
-change. **Do not assume this pattern generalises to that problem** — read
-`docs/agentic-system-critique.md` §3 P0 and §9 before proposing a fourth.
+candidate discriminators failed adversarial review and a fourth now runs only in
+**shadow**, so what is open there is graduating that check to a deny, against six
+named design constraints — not a code change. **Do not assume this pattern
+generalises to that problem** — read
+`docs/adrs/ADR-0009-refuted-agent-design-claims.md` before proposing a fifth.
 
 ## Enforcement
 
