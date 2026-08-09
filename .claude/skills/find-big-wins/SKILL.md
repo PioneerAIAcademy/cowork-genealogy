@@ -1,6 +1,6 @@
 ---
 name: find-big-wins
-description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the architecture guide's what-nothing-checks list, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Also carries the senior-required backlog, which is no longer assigned to anyone and is converted here into issues a junior can take. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
+description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the architecture guide's what-nothing-checks list, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Also works the `needs-decision` queue — items blocked on one answer from the lead, which this skill converts into issues a junior can take. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
 allowed-tools:
   - Read
   - Edit
@@ -28,11 +28,11 @@ the team is *permitted* to do are all in scope.
 **Subtractions count, and are usually cheaper than additions.** Retiring a
 mechanism, dropping a guarantee, deleting a lane. Hunt them (§4).
 
-**You also carry the senior backlog.** The lead assigns himself no issues — his
-job is coaching juniors into seniors — so work that used to land in his personal
-pool now has no assignee at all. It comes here instead, and the deep dive
-converts it into something a junior can take with Claude Code (§1, "The senior
-backlog is now your input queue").
+**You also clear the decision queue.** The lead assigns himself no issues — his
+job is coaching juniors into seniors — so items blocked on one answer from him
+pile up under the `needs-decision` label with no assignee. Working them into a
+question, options and a recommendation is this skill's other job, and on most
+weeks it is the larger half (§1, "The decision queue is your input queue").
 
 **You propose, then apply what is approved.** No branches, no PRs, no code
 changes, no eval runs, and **never the plan** — the person assigned the issue
@@ -113,7 +113,7 @@ visible; an intention is not.
 **Do not mine the board for ideas.** It is the output of the hill-climb, so
 every idea already on it is by construction inside the current basin. Reading it
 for proposals is how a run produces twelve incremental suggestions with the word
-"structural" in front of them. The one exception is the senior queue at the end
+"structural" in front of them. The one exception is the decision queue at the end
 of this section, which is not an idea source either — it is a work queue that was
 handed to you.
 
@@ -174,44 +174,49 @@ source, and the three levers that skill names — raise throughput, cut mileston
 scope, stop the stream — are all *within* the design. The fourth lever, changing
 what generates the stream, is this skill's.
 
-### The senior backlog is now your input queue
+### The decision queue is your input queue
 
 This part is not a symptom read — it is work handed to you, and it is the one
 place you legitimately take items *from* the board.
 
 **The lead assigns himself no issues.** His job is coaching juniors into seniors,
-so his personal pool is 0 and `/fill-ready` no longer routes anything to him. But
-its seniority test still fires, and a senior-required item still must never sit
-unassigned in the junior pool looking pickable — so those items accumulate in
-Backlog with a `senior` label and **no assignee anywhere.** That queue is yours.
+so his personal pool is 0. What used to land there now sits in Backlog in one of
+two labelled states, and **only one of them is yours** (`/fill-ready` § "Above the
+junior pools" owns the split):
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
-  --label senior --json number,title,updatedAt,assignees,labels \
-  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.assignees | length)\t\(.title)"' | sort
+  --label needs-decision --json number,title,updatedAt,labels \
+  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
 ```
 
-For each one, the question is **not** "should we do this" — `/fill-ready` already
-ranked it. It is: **what would make this assignable to a junior working with
-Claude Code?** Usually one of four things, and naming which is most of the work:
+**`needs-decision` is the queue you work.** Each item is blocked on one answer
+from the lead, and the work behind it is frequently junior. The question is
+**not** "should we do this" — `/fill-ready` already ranked it. It is: **what
+exactly is the question, what are the options, and which do you recommend?**
+Usually one of four shapes:
 
-- a doctrine call only the lead can make, after which the rest is mechanical;
+- a doctrine call, after which the rest is mechanical;
 - a spec that has to exist before the code does;
-- a design fork left open in the body, closed by a cheap probe;
-- a blast radius nobody has written down, which is the `senior` trigger that
-  most often survives being written down.
+- a design fork left open in the body, closable by a cheap probe;
+- a blast radius nobody has written down — the trigger that most often
+  disappears once it is written down.
 
-An item that clears one of those becomes a normal issue in the junior pool and
-leaves the senior queue. An item that cannot — because it genuinely inverts a
-mechanism, or spans subsystems that cannot be tested together — is a candidate
-for the deep dive and a `cross-cutting` issue.
+Work these the same way you work a proposal: bring the evidence, the options, the
+recommendation and the counter-argument, so he can answer in a sitting. An
+answered item drops the label and ranks in a junior pool. An item whose answer
+turns out to be "this is genuinely hard either way" moves to `senior`.
 
-**Two numbers to report every run**, because nothing else on the board tracks
-them now that the lead's pool is gone: how many senior items are open, and how
-many left the queue since the last run. If the queue is growing, the conversion
-rate is the finding, and it outranks the proposals — a senior backlog nobody
-converts is the same failure as the old two-slot pool, just without the slots to
-make it visible.
+**`senior` is not your queue.** Those are hard regardless of any open question,
+and the lead assigns them to a senior in the matching lane. You touch one only
+when a *structural* proposal would eliminate it — which is a proposal, not a
+conversion.
+
+**Two numbers to report every run**, because nothing else tracks them: how many
+`needs-decision` items are open, and how many were answered since the last run.
+If that queue is growing, the conversion rate is the finding and it outranks the
+proposals — a decision backlog nobody clears is the same failure as the old
+two-slot pool, just without the slots to make it visible.
 
 ## 2. Layer 2 — internal evidence
 
@@ -621,9 +626,11 @@ Four rules:
 5. **Outside evidence** — what §3's sweep turned up, each with a dated primary
    source. If a platform constraint was checked and still holds, say so: that is
    a real result and it stops the next run re-checking it.
-6. **The senior queue** — how many senior items are open, how many left since the
-   last run, and the two or three whose conversion blocker you can name (§1). If
-   the queue grew, that line moves to the top of the report.
+6. **The decision queue** — how many `needs-decision` items are open, how many
+   were answered since the last run, and the two or three you worked into a
+   question this run (§1). If the queue grew, that line moves to the top of the
+   report. Note separately any item you would move from `needs-decision` to
+   `senior` because the answer turned out to be "hard either way".
 
 Then stop and wait. He decides one idea at a time; you write a ledger row for
 each decision, including `deferred` for everything he did not reach. Do not begin

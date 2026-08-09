@@ -41,8 +41,8 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 |---|---|---|
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
-| `needs-a-decision` | An open fork only the lead can settle | Splice the chosen option's pre-written body text; `reviewed`. |
-| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo | Label `senior` and `reviewed`; **no assignee** — the lead takes no issues, so it waits in Backlog as input to `/find-big-wins`' conversion queue. Report to `fill-ready` for the swap out of the junior pool. |
+| `needs-a-decision` | An open fork only the lead can settle | Label `needs-decision` and `reviewed`; **no assignee**, and never alongside `senior`. Splice the chosen option's pre-written body text once he answers. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
+| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and assigns seniors himself. Report to `fill-ready` for the swap out of the junior pool. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
 
