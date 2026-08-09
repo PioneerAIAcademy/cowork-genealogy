@@ -39,6 +39,16 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 REPO_ROOT = HARNESS_DIR.parents[1]
 
+# Explicit rather than relying on the implicit script-directory entry: CI runs
+# this as `python eval/harness/scripts/<script>.py` (which does add HERE to
+# sys.path), but the unit tests load it through
+# `importlib.util.spec_from_file_location`, which does NOT. Without this line
+# the sibling import below resolves in CI and fails under pytest.
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from gh_annotations import gh_warning, write_step_summary  # noqa: E402
+
 SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 FIXTURES_DIR = REPO_ROOT / "eval" / "fixtures" / "mcp"
@@ -87,12 +97,6 @@ EXEMPT_TOOLS: dict[str, str] = {
         "is always available."
     ),
 }
-
-
-def gh_warning(message: str, *, file: str | None = None) -> None:
-    """Emit a GitHub warning annotation (visible on the PR; non-blocking)."""
-    prefix = f"::warning file={file}::" if file else "::warning::"
-    print(f"{prefix}{message}")
 
 
 def declared_tools(skill_md: Path) -> list[str]:
@@ -237,6 +241,14 @@ def main() -> int:
         print("\nCoverage-exempt tools (structurally untestable, never flagged):")
         for tool, reason in sorted(EXEMPT_TOOLS.items()):
             print(f"  - {tool}: {reason}")
+
+    write_step_summary(
+        "Skill tool-coverage drift (warn-only)",
+        footer=(
+            "Warn-only: this check does not block the build. "
+            f"Coverage-exempt tools: {', '.join(sorted(EXEMPT_TOOLS)) or 'none'}."
+        ),
+    )
     return 0
 
 
