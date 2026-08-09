@@ -1,6 +1,5 @@
 ---
 name: tree-edit
-model: claude-sonnet-4-6
 description: Direct edits to tree.gedcomx.json — add fact, correct value,
   create person, add relationship, merge two persons (confirmed
   identical via proof-conclusion), verify the tree already reflects a
