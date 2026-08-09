@@ -25,31 +25,31 @@ the only person `fill-ready` assigns senior-required *work* to.
 Everyone in this table is expected to post a standup update, seniors included —
 the two who are not are listed under "Does not post standup" below.
 
-| Key | Posts as | GitHub | Role | Senior | Confidence |
-|---|---|---|---|---|---|
-| christopher | Christopher Edeson | `chrisedeson` | developer | | confirmed |
-| mercy | Mercy Okum | `mercyokum` | genealogist | | confirmed |
-| israel | Israel, Israel Ayomikun Asimi | `Asimi1234` | developer | | confirmed |
-| florence | Florence Taburu | `florencemashipei` | genealogist | **senior** | confirmed |
-| tife | Tife | `T-FEH` | developer | **senior** | confirmed |
-| isaac | Isaac Boateng | `Paaboat` | genealogist | | confirmed |
-| jude | Ebigide Jude | `jud-sdev` | developer | | confirmed |
-| collins | Cia, Collins | `Cia-3` | genealogist | | confirmed |
-| ernest | Ernest Jacob, Ernest | `aghadiayeamayanvboernest` | developer | | confirmed |
-| solomon | Solomon Baidoo | `kofiatinka12` | genealogist | | confirmed |
-| francis | Francis Happy | `francis-2008-happy` | developer | | confirmed |
-| benter | Benter, Benter Oyiembo | `benter-070` | genealogist | | confirmed |
-| adeyinka | Adeyinka | `yinkid28` | developer | | confirmed |
-| ruth | Ruth Williams | `Emruthwill` | genealogist | | confirmed |
-| adedotun | Adedotun Taiwo | `taiwo-stack` | developer | | confirmed |
-| john | John Mark Peter-Brown | `johnmarkpeterbrown` | genealogist | **senior** | confirmed |
-| promise | Promise_emmanuel, Promise Nwabueze Igbojionu | `promise-emmanuel` | developer | **senior** | confirmed |
-| ikennaya | Ikennaya Mbadiwe | `Ikennaya1` | genealogist | | confirmed |
-| precious | Precious Onotu | `clack391` | developer | **senior** | confirmed |
-| edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** | confirmed |
-| pascal | Pascal Okezie | `Gennecis` | developer | | confirmed |
-| marc | Marc Mangum | `MMagnum` | developer | | confirmed |
-| richard | Richard | `chesworthrm` | developer | **senior** | confirmed |
+| Key | Posts as | GitHub | Role | Senior |
+|---|---|---|---|---|
+| christopher | Christopher Edeson | `chrisedeson` | developer | |
+| mercy | Mercy Okum | `mercyokum` | genealogist | |
+| israel | Israel, Israel Ayomikun Asimi | `Asimi1234` | developer | |
+| florence | Florence Taburu | `florencemashipei` | genealogist | **senior** |
+| tife | Tife | `T-FEH` | developer | **senior** |
+| isaac | Isaac Boateng | `Paaboat` | genealogist | |
+| jude | Ebigide Jude | `jud-sdev` | developer | |
+| collins | Cia, Collins | `Cia-3` | genealogist | |
+| ernest | Ernest Jacob, Ernest | `aghadiayeamayanvboernest` | developer | |
+| solomon | Solomon Baidoo | `kofiatinka12` | genealogist | |
+| francis | Francis Happy | `francis-2008-happy` | developer | |
+| benter | Benter, Benter Oyiembo | `benter-070` | genealogist | |
+| adeyinka | Adeyinka | `yinkid28` | developer | |
+| ruth | Ruth Williams | `Emruthwill` | genealogist | |
+| adedotun | Adedotun Taiwo | `taiwo-stack` | developer | |
+| john | John Mark Peter-Brown | `johnmarkpeterbrown` | genealogist | **senior** |
+| promise | Promise_emmanuel, Promise Nwabueze Igbojionu | `promise-emmanuel` | developer | **senior** |
+| ikennaya | Ikennaya Mbadiwe | `Ikennaya1` | genealogist | |
+| precious | Precious Onotu | `clack391` | developer | **senior** |
+| edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** |
+| pascal | Pascal Okezie | `Gennecis` | developer | |
+| marc | Marc Mangum | `MMagnum` | developer | |
+| richard | Richard | `chesworthrm` | developer | **senior** |
 
 Two handles are not guessable from the name: **Pascal Okezie is `Gennecis`**,
 and **Precious Onotu is `clack391`**. Attributing their PRs by guessing at the
