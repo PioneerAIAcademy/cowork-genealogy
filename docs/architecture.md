@@ -363,14 +363,15 @@ Per-step model routing exists **only through plugin agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor` + `image-reader` → `claude-sonnet-4-6` |
-| **Skill `model:`** | **the unit eval harness only** | 26 of 27 skills pin `claude-sonnet-4-6` — which *is* the harness default |
+| **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
 
-> **Direction.** The 26 skill `model:` pins are **dead
-> lines**, not a fidelity gap: they pin the value that is already the default, and
-> only the unit harness reads them. They are slated for deletion because they make
-> per-step routing look like it exists. **Do not add a `model:` pin to a new
-> skill.** To route a step to a different model, delegate it to a plugin agent.
+> **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
+> unit harness (`harness/orchestrator.py` honours the field, falling back to
+> `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
+> the harness default — and were deleted, because a pin that changes nothing
+> makes per-step routing look like it exists. To route a step to a different
+> model, delegate it to a plugin agent.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share

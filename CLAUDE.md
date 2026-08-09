@@ -142,8 +142,18 @@ mocks (no E2B/Anthropic/OAuth needed).
   not sure if this is in scope" are not reasons — they're the two most common
   ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
   ask rather than defaulting to filing.
-- **Deferring work creates an issue, not a file entry.** In the same PR that
-  defers something, file it — one command, no board write:
+- **Deferring work creates an issue, not a file entry.** Filing is the last
+  resort, not the default. Stop at the first of these that fits:
+
+  1. **Fold it into the current PR** — the rule above. Default.
+  2. **Comment on an existing issue that covers it.** Search before filing:
+     `gh issue list --state open --search "<path or symbol>"`, and grep the
+     `**Touches:**` lines. Adding to the issue that already owns the file beats
+     opening a second one against it.
+  3. **File with `--label icebox`** when no decision sits behind it.
+  4. **File as normal work.**
+
+  When you do file — in the same PR that defers it — one command, no board write:
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
@@ -156,8 +166,9 @@ mocks (no E2B/Anthropic/OAuth needed).
   change, when you know them. Overlap between issues here is almost never
   same-title — it is two issues wanting different lines in one file — and that
   line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
-  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
-  fit against ~180 open issues is that pass's job, not the filer's.
+  pass reads it, no gate does. One search is the whole obligation — do not agonise
+  past it. `/audit-board` judges fit across the whole open pool, which is the only
+  vantage point that sees every collision.
 
   | Label | Use for |
   |---|---|
