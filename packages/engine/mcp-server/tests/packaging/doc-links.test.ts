@@ -295,23 +295,7 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "packages/schema/src/index.ts:269",
     "scripts/build-mcpb.mjs:26-27",
   ],
-  "docs/agentic-system-critique.md": [
-    "allowed_tools.py:59",
-    "allowed_tools.py:61-68",
-    "allowed_tools.py:98-103",
-    "harness/orchestrator.py:206",
-    "real_agent.py:132-139",
-    "research-append.ts:622",
-    "research-query.ts:243-244",
-    "research-query.ts:29",
-    "skill_runner.py:57",
-  ],
-  "docs/architecture.md": [
-    "apps/server/app/agent/real_agent.py:130",
-    "eval/harness/e2e/orchestrator.py:175",
-    "packages/engine/plugin/hooks/guard_project_files.py:36",
-    "src/index.ts:736",
-  ],
+  "docs/architecture.md": ["src/index.ts:736"],
   "docs/realtime-architecture.md": [
     "apps/server/app/models.py:45",
     "local.py:195",
@@ -468,7 +452,7 @@ describe("docs/ cite symbols, not line numbers", () => {
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
-  "docs/architecture.md": 27,
+  "docs/architecture.md": 24,
   "docs/specs/e2e-test-spec.md": 12,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,

@@ -277,9 +277,12 @@ milestone's own question:
   defense (issue #847, unstarted), the production tool-call ledger (issue
   #1054), and judge calibration (issue #1090).
 
-`docs/agentic-system-critique.md` §3 is the current map of this work and its
-sequencing; read it before ranking, and treat its own claims per §8 — it is a
-document, not repo state.
+There is no standing "what to do next" document to rank from — the one that
+existed was retired 2026-08-09 because its priorities went stale faster than
+anyone re-read them. Rank from repo state instead: the board itself,
+`docs/architecture.md` §9.4 (what nothing checks) and §10 (open questions), and
+`docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells you which
+proposals have already been argued and disproved.
 
 **Instrument before fix.** An item that restores a broken measurement outranks
 the fixes that measurement is supposed to evaluate — that is already heuristic 2
@@ -673,6 +676,10 @@ verdict, not a promotion.
 
 Same read, nearly free. Cap it at about **eight** proposals — a grooming list
 longer than the promotion list means the day's output was grooming.
+
+**The cap lifts when §1's "Arrival vs. closure" shows arrival leading for three
+consecutive weeks.** Then grooming *is* the day's output: propose as many closes
+and merges as the read supports, and say that is what you did.
 
 Candidates: empty-bodied issues months old; issues superseded by a newer, better
 one; issues whose premise the team has since abandoned; duplicates. Give one

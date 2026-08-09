@@ -165,12 +165,18 @@ gh issue create --label developer --title "…" --body "…"
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
-**File it even if you think it might be a duplicate.** Deciding how a new issue
-fits against the ~180 already open is not your job and cannot be done well from
-inside one PR — the overlap is usually at a line number, not a title. File it;
-the lead's weekly `/audit-board` pass merges, rewrites and drops issues across the
-whole pool, which is the only vantage point from which duplicates are visible. A
-duplicate costs one comment to close. An unfiled finding costs a rediscovery.
+**Search once before you file, then stop.** Filing is the last resort in a
+four-step order: fold it into this PR; comment on an existing issue that covers
+it; file with `--label icebox` when no decision sits behind it; file as normal
+work. The search is one command — `gh issue list --state open --search "<path or
+symbol>"`, plus a grep of the `**Touches:**` lines — because the overlap is
+usually at a line number, not a title, and a comment on the issue that already
+owns the file beats a second issue against it.
+
+Do not agonise past that one search. `/audit-board` merges, rewrites and drops
+issues across the whole pool weekly, which is the only vantage point from which
+every duplicate is visible. A duplicate costs one comment to close; an unfiled
+finding costs a rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an
@@ -193,9 +199,12 @@ since mid-2026 was verified without one. Verification is automated:
    fastest way to debug a tool in isolation.
 2. **MCP Inspector** — verifies the tool registers and behaves with
    no/dummy/real input.
-3. **The eval harness** (`make test`, `eval/tests/e2e/`) — verifies the
-   tool description is good enough that the LLM picks it from natural
-   language, and that the skills using it still pass.
+3. **The eval harness** (`make harness-test` for the harness's own suite,
+   `make eval-skill SKILL=<name>` and `eval/tests/e2e/` for behaviour) —
+   verifies the tool description is good enough that the LLM picks it from
+   natural language, and that the skills using it still pass. **Not `make
+   test`**, which is `test-js` + `server-test` and reaches neither the
+   harness nor the engine.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a

@@ -316,6 +316,18 @@ returns as an input to your review, never as your review.
    lists, your approval doesn't unblock merge. Say which is still owed rather
    than leaving the author to discover it at the merge button.
 
+### "It says approved, but it won't merge"
+
+Three rules can each hold a green, approved PR. Check them in this order:
+
+- **Someone pushed after the approvals.** At least one approval has to land
+  *after* the most recent push. The old approvals are not cancelled — they still
+  count toward the two — so you need one fresh approval, not two.
+- **An unresolved conversation.** Every review thread must be marked resolved.
+  Resolve the ones you answered; the reviewer resolves the ones they raised.
+- **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team
+  is required per path. Four approvals from the wrong team is still zero.
+
 ---
 
 ## Tagging `@claude` on an issue or PR

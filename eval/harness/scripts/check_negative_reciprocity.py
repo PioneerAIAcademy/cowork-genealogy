@@ -106,6 +106,13 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 REPO_ROOT = HARNESS_DIR.parents[1]
 
+# See the same block in check_tool_coverage.py: CI's `python <script>.py` adds
+# HERE to sys.path, the unit tests' `spec_from_file_location` does not.
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from gh_annotations import gh_warning, write_step_summary  # noqa: E402
+
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 
 # Quoted rather than cited by line number: the line moves on the next edit
@@ -115,11 +122,6 @@ RULE_CITATION = (
     'docs/specs/unit-test-spec.md § 6 "Boundary testing pattern": '
     '"For each confusable pair, create tests from both directions."'
 )
-
-
-def gh_warning(message: str) -> None:
-    """Emit a GitHub warning annotation (visible on the PR; non-blocking)."""
-    print(f"::warning::{message}")
 
 
 def suite_skills(tests_dir: Path) -> set[str]:
@@ -254,6 +256,16 @@ def main(tests_dir: Path = TESTS_DIR) -> int:
     else:
         print("Every routing edge is pinned from both directions.")
 
+    write_step_summary(
+        "Negative routing reciprocity (warn-only)",
+        footer=(
+            "Warn-only: this check does not block the build, and there is "
+            "deliberately no baseline file and no count threshold (see the "
+            "script's docstring). Unlike its sibling lints these warnings carry "
+            "no `file=` annotation — the offence is the ABSENCE of a file in the "
+            "target skill's directory."
+        ),
+    )
     return 0
 
 

@@ -13,9 +13,10 @@ name: senior-queue
 #
 # The senior review is the SECOND review, and it happens only after the first
 # round has been answered. That is what the changes-requested and unresolved-
-# thread rules are for: neither blocks merge on its own
-# (`required_review_thread_resolution` is false in the ruleset), so without them
-# a PR reaches the senior queue with round one still open.
+# thread rules are for. The ruleset blocks merge on an unresolved thread
+# (`required_review_thread_resolution: true`) but not on an outstanding
+# changes-requested, and neither of them keeps a PR out of a review QUEUE —
+# so without these two rules a PR is surfaced to a senior with round one open.
 #
 # WHY A LABEL AND NOT THE REVIEW REQUEST. CODEOWNERS makes GitHub request the
 # owning team the instant a matching PR opens, when CI is usually red and nobody
@@ -253,10 +254,9 @@ jobs:
                 github.paginate(github.rest.pulls.listFiles,
                   { owner, repo, pull_number: number, per_page: 100 }),
                 // Unresolved review comments mean round one is still open. Only
-                // GraphQL exposes resolution state, and nothing else here sees it:
-                // `required_review_thread_resolution` is false in the ruleset, so an
-                // unresolved thread blocks neither merge nor a CHANGES_REQUESTED-free
-                // approval.
+                // GraphQL exposes resolution state. The ruleset blocks MERGE on an
+                // unresolved thread, but nothing stops such a PR being surfaced to a
+                // senior as ready — which is what this check is for.
                 github.graphql(`
                   query($owner:String!, $repo:String!, $number:Int!) {
                     repository(owner:$owner, name:$repo) {
