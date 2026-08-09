@@ -297,7 +297,14 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	# query, so it costs nothing but a CLI process start. The key comes from
 	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
 	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	#
+	# AGENT_SMOKE=1 is what turns the live test's skips into hard errors. The
+	# test skips by design under a plain `make server-test`, so a contributor
+	# with no key still gets a green suite — but it made THIS target report
+	# "passed, 1 skipped" and read as if the check had run. Only the caller
+	# knows which of the two it is, so the caller says.
 	cd apps/server && \
+	  AGENT_SMOKE=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
