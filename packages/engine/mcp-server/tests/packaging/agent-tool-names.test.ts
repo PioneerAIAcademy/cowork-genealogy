@@ -345,3 +345,105 @@ describe("plugin agent/skill bodies", () => {
     expect(offenders, offenders.join("\n")).toEqual([]);
   });
 });
+
+// A plugin agent's permission surface is frozen here, per agent, as the set of
+// BARE tool names it grants and denies.
+//
+// The assertions above check the SHAPE of each entry — that it names a real
+// tool under all three server spellings. Nothing checked the CONTENT: adding a
+// tool to `tools:`, or dropping one from `disallowedTools:`, was green. That is
+// the change most worth seeing, because no CI job can verify what a grant
+// actually binds to at runtime (only a live Cowork session can, in the run mode
+// being tested), and a missing deny fails OPEN — record-extractor silently
+// regains the broad `research_append` rather than erroring.
+//
+// This does not judge whether a permission is correct. It makes a change to one
+// impossible to land invisibly: the snapshot below has to be edited in the same
+// commit, where a reviewer sees it as a diff instead of as one more line in a
+// 50-line frontmatter block.
+//
+// Built-in tools that are not MCP tools (`Read`) stay bare and are pinned here
+// too — a widening to `Bash` or `Write` would otherwise slip past the
+// `mcp__`-only filter the assertions above use.
+//
+// Widening one of these is ordinary work. Editing the snapshot is how you say
+// you meant it.
+const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> = {
+  "gps-mentor.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "place_distance",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_query",
+      "validate_research_schema",
+      "wiki_place_page",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+  "image-reader-opus.md": { tools: ["image_read"], denies: [] },
+  "image-reader.md": { tools: ["image_transcribe"], denies: [] },
+  "record-extractor.md": {
+    tools: [
+      "extraction_append",
+      "place_search",
+      "place_search_all",
+      "project_context",
+      "record_person_matches",
+      "record_read",
+      "record_record_matches",
+      "research_log_append",
+    ],
+    denies: ["research_append"],
+  },
+};
+
+/** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
+function bareOrBuiltin(entry: string): string {
+  return entry.startsWith("mcp__") ? bareName(entry) : entry;
+}
+
+describe("plugin agent permission surface", () => {
+  it("pins every agent that ships", () => {
+    // Without this, adding a NEW agent — the easiest way to introduce a broad
+    // grant — adds no snapshot and the per-agent loop below simply never runs
+    // for it.
+    expect(
+      Object.keys(AGENT_PERMISSIONS).sort(),
+      "an agent was added or removed: update AGENT_PERMISSIONS to match",
+    ).toEqual([...agentFiles].sort());
+  });
+
+  for (const file of agentFiles) {
+    const expected = AGENT_PERMISSIONS[file];
+    if (!expected) continue; // reported by the test above
+
+    describe(file, () => {
+      const text = readFileSync(join(agentsDir, file), "utf8");
+      const granted = [...new Set(extractList(text, "tools").map(bareOrBuiltin))].sort();
+      const denied = [...new Set(extractList(text, "disallowedTools").map(bareOrBuiltin))].sort();
+
+      it("grants exactly the pinned tools", () => {
+        expect(
+          granted,
+          `${file}'s tools: no longer matches AGENT_PERMISSIONS. If you meant to widen ` +
+            `what this agent can call, update the snapshot in the same commit so the ` +
+            `change is reviewable as a diff.`,
+        ).toEqual([...expected.tools].sort());
+      });
+
+      it("denies exactly the pinned tools", () => {
+        expect(
+          denied,
+          `${file}'s disallowedTools: no longer matches AGENT_PERMISSIONS. A deny removed ` +
+            `here fails OPEN and silently — the agent regains the tool with no error ` +
+            `anywhere. Update the snapshot only if that is what you intend.`,
+        ).toEqual([...expected.denies].sort());
+      });
+    });
+  }
+});

@@ -226,9 +226,6 @@ what tells a reviewer, human or model, which few lines carry the decision among
 the ones that carry the mechanics. Write it for someone who has not seen your
 branch.
 
-Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
-co-author".
-
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
 ### 9. Peer review, then senior review — on the paths that need it
