@@ -66,6 +66,36 @@ ones are `pytest`, `runlogs`, `e2e-fixtures`, `vitest`, `lockfile-drift`, `scan`
 Report any that failed, and any that never ran on the current head — a check that
 did not run is not a check that passed.
 
+**Then check whether a review round is already open, and stop if it is.** A
+second review is for a PR whose first round has been answered — not a second
+opinion delivered on top of an unaddressed one.
+
+```sh
+gh api repos/$R/pulls/$PR/reviews \
+  --jq '[.[] | select(.state != "COMMENTED")] | group_by(.user.login) | map(last)
+        | .[] | "\(.user.login) \(.state)"'
+gh api graphql -F owner=PioneerAIAcademy -F name=cowork-genealogy -F number=$PR -f query='
+query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){ pullRequest(number:$number){
+    reviewThreads(first:100){ pageInfo{hasNextPage} nodes{ isResolved } } } } }' \
+  --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false)] | length'
+```
+
+If any reviewer's latest standing is `CHANGES_REQUESTED`, or any review thread is
+unresolved, **stop**. Report which, and that the PR is not ready for another
+review. Reviewing anyway produces a second copy of findings the author has not
+answered yet, and spends the scarcer reviewer to do it.
+
+Two things this is not. It is not a merge gate — unresolved threads do not block
+merge in this repo, which is exactly why a reader has to look. And it does not
+apply when you *are* the first review: no prior standing, nothing to wait on,
+carry on.
+
+These two queries return review **states and counts, never bodies**. That is
+deliberate — knowing a round is open costs you nothing, whereas reading what the
+last reviewer concluded before forming your own view is the anchoring problem
+above. The bodies wait until §7.
+
 **Say who still has to approve — and work it out from the paths, not from
 `reviewRequests`.** That field is computed when the PR is opened or pushed to,
 not read live, so it lags any CODEOWNERS change until someone pushes again.
@@ -290,12 +320,19 @@ Every existing note gets one of: **still stands** (fold into your findings),
 **already resolved** (say by which commit), or **no longer applies** (say what
 changed). Never silently drop one.
 
-A review's `commit_id` is the commit it read. **Compare it to `headRefOid`.**
-Approvals here are **not** dismissed when the author pushes (ruleset
-`protect-main`, `dismiss_stale_reviews_on_push: false`), so an approval given on
-an earlier commit still counts toward the two required and nothing will
-re-request review for you. If they differ, say which commit the approval read
-and re-check each note against the code as it stands now.
+A review's `commit_id` is the commit it read. **Compare it to `headRefOid`.** If
+they differ, say which commit the approval read and re-check each note against
+the code as it stands now.
+
+Two ruleset settings decide what a stale approval is worth here, and they pull
+in opposite directions. `dismiss_stale_reviews_on_push: false` means a push does
+**not** clear existing approvals — they keep counting toward the two required,
+and nothing re-requests review. But `require_last_push_approval: true` means at
+least one approval must land **after** the most recent push. So an old approval
+is neither void nor sufficient: a PR approved twice and then pushed to still
+needs a fresh approval, while both old ones still count. Do not tell an author
+their approvals were reset, and do not treat a pre-push approval as clearing the
+gate.
 
 ## 8. Write the edits — don't make them
 
@@ -349,6 +386,17 @@ Existing reviews: <who, state, @commit> — <stands / resolved / no longer appli
 [CRITICAL] (N/10) path:line — problem
   You wrote:    <the quoted line>
   Change it to: <the replacement>
+```
+
+When §1's gate stopped you, the whole report is four lines — do not pad it out
+with a review you were told not to do:
+
+```
+Review: PR #N — not ready for a second review.
+
+Open round: <reviewer> requested changes @<commit> / <N> unresolved threads
+Waiting on: the author
+Re-run this once they have answered it.
 ```
 
 End with what you did not check and why — a short pass, a skipped suite, a fork
