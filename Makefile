@@ -528,17 +528,28 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
-	# Also pure analysis, no API. Existed with no make target until #972.
-	# Windowed to 14 days like every other reader. #911 step 1 wants a
-	# maximum-sample replay — pass SINCE=all for it; step 4 answers the
-	# staleness that motivates the window with *new* runs anyway.
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 stored shadow families over committed runs: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# SINCE=all for a maximum-sample replay.
+	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
+	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
+	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
+	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
 	# from tool_calls + each fixture's committed seed tree (issue #1231). The
 	# stored-entry count above only covers runs made after #1178 merged; the
 	# replay is what makes the pre-hook corpus readable, and what lets a
 	# candidate narrowing of the rule be scored before it ships.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
+
+.PHONY: e2e-skill-episodes
+e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue #1463): make e2e-skill-episodes | TEST=<slug> | ALL_SKILLS=1 | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API. Answers whether a skill's LAUNCH can be told from
+	# its COMPLETION in the ledger — i.e. whether §7's success gate is fixable.
+	# It cannot: the highest-recall in-episode tool is the protected write
+	# itself. SINCE=all for the maximum-sample replay; absolute counts are a
+	# point-in-time record, the shape is what reproduces.
+	cd eval/harness && uv run python -m e2e.skill_episode_report $(if $(TEST),--test $(TEST),) $(if $(ALL_SKILLS),--all-skills,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD

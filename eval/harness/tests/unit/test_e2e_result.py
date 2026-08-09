@@ -464,9 +464,11 @@ def test_the_fingerprint_field_still_exists_on_the_dataclass():
     `usage.cli_version` is absent or null in every committed run, and nothing
     records a git sha.
 
-    That field is documented as SHADOW MODE ONLY and is expected to be retired
-    when §4.1 graduates (issue #911). This asserts the removal is a loud
-    failure rather than a silent reclassification of every pre-v1 log.
+    That field is documented as SHADOW MODE ONLY, and nothing is expected to
+    retire it: §7 is shadow-only permanently unless a guardrail skill gains a
+    completion signal, and the list is shared with the §8 and §7.5 stored
+    families besides. This asserts the removal is a loud failure rather than a
+    silent reclassification of every pre-v1 log.
     """
     names = {f.name for f in dataclasses.fields(E2eResult)}
     assert "guardrail_shadow_violations" in names, (
