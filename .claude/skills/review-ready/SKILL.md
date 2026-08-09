@@ -145,10 +145,10 @@ gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body 
 # edit body.md, then:
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 
-# senior — the lead's, per fill-ready §6. The label already exists and is in use;
-# it is what makes the routing visible on the board rather than only in your report.
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --add-label senior --add-assignee DallanQ
+# senior — label only, no assignee. The lead takes no issues (fill-ready §6), so
+# the item waits in Backlog as input to /find-big-wins' conversion queue. The
+# label is now the ONLY thing marking it as senior — do not add an assignee.
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior
 
 # close
 gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy \
@@ -204,9 +204,10 @@ Five rules on the writes:
   comment at the constraining site. It is part of the task, not a nicety;
   `CLAUDE.md` keeps settled tradeoffs out of issue bodies for a reason.
 - **Board moves are `fill-ready`'s.** On the normal path a `senior` verdict comes
-  back before promotion, so there is nothing to move — you label and assign, and
-  `fill-ready` ranks it into the lead's pool instead of the junior one. On a
-  standing-pool run the item is already in Ready; report it for the swap.
+  back before promotion, so there is nothing to move — you label it and it stays
+  in Backlog, out of the junior pool, as input to `/find-big-wins`' conversion
+  queue. On a standing-pool run the item is already in Ready; report it for the
+  swap.
 
 Deleting an issue needs the lead to say so for that specific issue. Never batch
 a delete under a general approval.

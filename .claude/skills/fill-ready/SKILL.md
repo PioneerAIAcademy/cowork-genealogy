@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer but the lead takes from the junior pool, so senior-required work goes to the lead — `senior-developers` membership is review authority, not an assignment tier. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and senior-required work is assigned to nobody — the lead takes no issues, so a senior item waits in Backlog under the `senior` label until /find-big-wins converts it into something a junior can take. `senior-developers` membership is review authority, not an assignment tier. The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -80,9 +80,10 @@ touches Python, and its description still reads "Touches Python — needs a
 developer's review." That is fine on PRs and slightly wrong on issues. Don't
 re-litigate it; just know the label is doing two jobs.
 
-**Label only. Never set an assignee on a team member.** People self-serve from
-Ready and the lead hands work out at standup. The only assignee this skill ever
-*adds* is `DallanQ` (§6).
+**Label only. Never set an assignee — on anyone, including the lead.** People
+self-serve from Ready and the lead hands work out at standup. This skill adds no
+assignee at all; the only pre-assigned items on the board are `cross-cutting`
+ones, and `/find-big-wins` assigns those at filing time (§1).
 
 One exception, and it runs the other way: **remove an assignee whose role does
 not match the label.** `.claude/skills/triage-standup/references/roster.md`
@@ -96,14 +97,13 @@ assigned the Python fix, and only he had the broken-key window.)
 ## 1. Measure Ready depth before you rank anything
 
 Ready is a **self-serve menu held at a fixed depth**, not a queue sized to who
-happens to be free today. Developers and genealogists pick from it; the lead
-picks his own work from it too. Three pools, three standing targets:
+happens to be free today. Developers and genealogists pick from it. Two pools,
+two standing targets:
 
 | Pool | Target |
 |---|---|
 | Unassigned **`developer`** items in Ready | **~10** |
 | Unassigned **`genealogist`** items in Ready | **~10** |
-| Items assigned to **`DallanQ`** in Ready | **1–2** (§6) |
 
 ```sh
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
@@ -111,8 +111,15 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 
 Count each pool **separately** — an item's label decides which target it counts
 against, and a pool at 16 while the other sits at 8 is invisible in a combined
-total. Assigned items do not count toward the two unassigned targets; someone is
-already on them.
+total. Assigned items do not count toward either target; someone is already on
+them.
+
+**There is no third pool for the lead.** He takes no issues — his job is coaching
+juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
+covers him. What used to go there now goes to `/find-big-wins` (§6).
+
+**`cross-cutting` items are outside both targets** — see "Cross-cutting items are
+the lead's direct assignments" below. Subtract them before you compute a pool.
 
 **Do not size promotions to free people.** An earlier version of this skill
 targeted "free people plus a buffer" and concluded that 19-of-21 busy meant
@@ -164,17 +171,25 @@ returns it.
 
 ### Seniority routes the item before priority does
 
-**Anything that needs a senior developer goes to the lead — never into the
-unassigned pool.** Every other developer takes from the junior pool and works
-with Claude Code. The roster's `Senior` column is **review authority, not an
-assignment tier**: it says whose approval can unblock a code PR, not who can be
-handed senior work.
+**Anything that needs a senior developer is assigned to nobody and stays in
+Backlog under the `senior` label — never into the unassigned pool.** Every
+developer takes from the junior pool and works with Claude Code. The roster's
+`Senior` column is **review authority, not an assignment tier**: it says whose
+approval can unblock a code PR, not who can be handed senior work.
 The unassigned `developer` pool is therefore a **junior** pool by definition, and
 a senior-required item sitting in it is worse than one sitting in Backlog: it
 looks pickable, and whoever picks it produces a green, plausible, wrong change.
 
+**The lead is not the fallback.** He takes no issues, so "route it to him" is no
+longer an option and a senior item has no assignee anywhere. It waits in Backlog
+until `/find-big-wins` converts it — into a junior-safe issue once a doctrine
+call, a spec, a design fork or a written-down blast radius removes the senior
+trigger, or into an assigned `cross-cutting` item when it genuinely cannot be.
+§6 is that queue, and reporting its size is this skill's job.
+
 Decide seniority **first**, then rank. A high-priority senior item does not win a
-place in the unassigned pool by being important; it wins a place in the lead's.
+place in the unassigned pool by being important; being important is what moves it
+up the conversion queue.
 
 **Junior-safe with Claude Code** — all of these, not most:
 
@@ -201,9 +216,11 @@ place in the unassigned pool by being important; it wins a place in the lead's.
   measurement says so — someone has to design past it.
 
 That list is the repo's existing **`senior` label** description. Apply the label
-when you route an item here, so the routing is visible on the board and not only
-in your report. `task-reviewer`'s `senior` verdict is the authoritative version of
-this same test — yours is the cheap pre-filter that decides what reaches it.
+whenever an item fails the junior test — the label is now the *only* thing
+marking it, since there is no longer an assignee to make the routing visible, and
+an unlabelled senior item is indistinguishable from a junior one that nobody has
+picked. `task-reviewer`'s `senior` verdict is the authoritative version of this
+same test — yours is the cheap pre-filter that decides what reaches it.
 
 **Report the mix every time.** Count the Backlog's developer-oriented issues into
 *junior-safe and unblocked*, *junior-safe but blocked*, *junior after one decision
@@ -212,6 +229,41 @@ when the unblocked-junior count is smaller than what the team burns in a week, t
 pool is about to run dry, and the cheapest fix is usually the lead answering the
 Gate-2 questions that convert senior items into junior ones. Say that in the
 report — it is more actionable than the promotion list.
+
+### Cross-cutting items are the lead's direct assignments
+
+An issue labelled **`cross-cutting`** comes out of `/find-big-wins` — a
+structural bet the lead has already decided on, researched with Claude, and
+handed to a named person. It is the one thing on this board that arrives
+pre-assigned, and it exists because a structural bet is senior by definition and
+there is now no senior pool for it to sit in.
+
+```sh
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 100 \
+  --label cross-cutting --json number,title,assignees,updatedAt \
+  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.assignees[0].login // "UNASSIGNED")\t\(.title)"' | sort
+```
+
+Four rules:
+
+- **Assigned `cross-cutting` items skip the seniority routing entirely.** The
+  lead chose the person, having done the research himself. Do not re-run the
+  junior-safe / senior-required test on one, and never move one into an
+  unassigned pool — an unassigned structural bet is the worst possible board
+  object, since it looks pickable and is not.
+- **They count toward no target.** Someone is already on it, and its multi-week
+  shape would distort a menu meant to be picked from daily.
+- **One active `cross-cutting` item per person, not one per week.** These are
+  multi-week structural projects. If a second is assigned to someone who already
+  holds an active one, that is a finding for the report, not a promotion
+  decision — name both and let the lead pick which is active.
+- **An *unassigned* `cross-cutting` item is a mis-file, not a pool member.**
+  Report it and leave it in Backlog. `/find-big-wins` assigns at filing time, so
+  an unassigned one means the assignment step was skipped.
+
+Report the active ones every run as their own line: who holds each, and how long
+since it last moved. Nothing else on the board makes a multi-week project
+visible, and an idle one is the most expensive stalled card there is.
 
 ### Arrival vs. closure — the trend that outranks the day's move
 
@@ -325,9 +377,10 @@ report says which higher-ranked item it displaced.
 standing example is prompt-injection defense (issue #847): it gates the public
 rollout, not beta, so it loses every impact ranking today — and its junior half
 cannot begin until a senior settles the doctrine, which means an item that
-"isn't due until March" has to enter the lead's pool in the fall or it will not
-land at all. A pure impact-ranker promotes it the week it is already too late.
-When you find one of these, say so in the escalation line, not in a footnote.
+"isn't due until March" has to be converted out of the senior queue (§6) in the
+fall or it will not land at all. A pure impact-ranker promotes it the week it is
+already too late. When you find one of these, say so in the escalation line, not
+in a footnote.
 
 **Cheapness is a tiebreaker, not a rank.** An issue that names the file, the
 line and the change is worth more than its size suggests — *between two items of
@@ -390,9 +443,12 @@ An issue that ends with "open sub-questions for whoever takes it", or offers two
 designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
-These are not blocked on a task — they are blocked on the lead. Route them to
-§6 as a decision, and note that answering unblocks a Ready-able task. That pairing
-is often the strongest argument for the lead's own queue.
+These are not blocked on a task — they are blocked on a decision only the lead
+can make. Label them `senior` and leave them in Backlog for §6's conversion
+queue, naming in your report the decision and the Ready-able task it unblocks.
+That pairing is the strongest kind of conversion candidate there is: one answer
+turns a stuck item into a junior task, which is exactly what the queue exists to
+produce.
 
 ### Gate 3 — soft collision (does *not* disqualify)
 
@@ -564,113 +620,77 @@ code, the architecture guide's site list, and §9.4's what-nothing-checks list �
 which is where a "junior-safe" item turns out to hide an open API decision.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
-`needs-a-decision` verdict is a §1 miss caught in time: route it to the lead's
-pool (§6) instead, and it never enters the junior pool at all. Running the gate
-after promotion instead works, but pays for the same deep read twice — see
-`docs/specs/task-review-spec.md` §2.
+`needs-a-decision` verdict is a §1 miss caught in time: it stays in Backlog under
+the `senior` label as conversion input (§6) and never enters the junior pool at
+all. Running the gate after promotion instead works, but pays for the same deep
+read twice — see `docs/specs/task-review-spec.md` §2.
 
-## 6. The lead's pool — 1–2 assigned, in Ready
+## 6. The senior queue — assigned to nobody, and your job is to report it
 
-His pool is the third target from §1, and it works exactly like the other two:
-hold it at **1–2**, and add only by swapping.
+**The lead takes no issues.** His job is coaching juniors into seniors, so there
+is no pool assigned to him, nothing here ever adds `DallanQ` as an assignee, and
+"route it to the lead" is not an available move.
 
-What qualifies is **cross-cutting development work that is unblocked** and
-either high-priority in its own right or unblocking other high-priority issues:
-architecture spanning several subsystems, doctrine calls, spend decisions,
-anything overriding someone else's work, security triage, and the Gate-2
-decisions from §3.
+What used to go there — architecture spanning several subsystems, doctrine calls,
+spend decisions, security triage, and the Gate-2 decisions from §3 — now
+accumulates in **Backlog under the `senior` label, assigned to nobody.** That
+queue is the input to `/find-big-wins`, which works each item with the lead and
+turns it into one of two things:
 
-**He is the only one who takes senior developer work**, so §1's seniority test
-routes here: every senior-required item is his or it is nobody's. Others on the
-`senior-developers` team hold review authority, not an assignment slot. That
-produces far more
-senior work than two slots hold — which is fine, and is the point. Senior work
-**waits in Backlog**; what it must never do is sit unassigned in Ready looking
-pickable.
+- **a junior-safe issue**, once whatever made it senior is removed — a doctrine
+  call answered, a spec written, a design fork closed, a blast radius written
+  down. It then ranks here normally;
+- **an assigned `cross-cutting` issue**, when it genuinely cannot be — it inverts
+  a mechanism, or spans subsystems that cannot be tested together.
 
-Because the pool is two, **the queue behind it is where most senior work lives,
-and reporting it is not optional.** Whenever his pool is full, name the senior
-items queued behind it and the order you would take them in. At three pools
-totalling ~22, his is the one whose backlog is invisible unless you say it out
-loud — a junior pool running dry announces itself; his does not.
-
-Prefer, among equally-ranked candidates, the ones that **convert senior work into
-junior work** — a Gate-2 decision that unblocks a well-specified task is worth
-more than a bigger item that unblocks nothing, because it feeds the pool the rest
-of the team picks from.
-
-### Reserve at least half his pool for the milestones
-
-**This pool, not the two junior pools, is what decides whether the dates are
-met.** Nearly every milestone-gating item is senior-class by §1's test — a
-doctrine call, a gate that is worse wrong than absent, a design spanning harness
-and hosted server — so it is his or it is nobody's, while the junior pools do
-alpha content work that cannot stop and does not burn these down.
-
-So: **at least 1 of the 1–2 is milestone-gating** — for the nearest milestone,
-or a long-lead item for the one after it — and at 2, prefer both gating. Below
-that, propose a swap that restores it and say which non-gating item you are
-returning.
-
-At this depth a single non-gating item is half the pool, so the bar for one is
-higher than it reads: it has to be something that cannot wait a week, not merely
-something worth doing.
-
-Two failure modes to name out loud when you see them:
-
-- **A pool full of interesting architecture that gates no date.** Every item
-  defensible on its own merits, no date moved. This is the likeliest way the
-  fall is lost, because nothing about it looks like a problem week to week.
-- **The critical path not moving.** If no milestone-gating item has entered *or
-  left* his pool across two consecutive fills, that is the loudest line in the
-  report — ahead of the promotion table. Say which item has been sitting, for how
-  long, and what it is waiting on.
-
-When he is at 2 with both gating, that is the right shape; say so and
-propose zero.
-
-Rank by **how much each unblocks, not by its own size.** An issue that gates
-three others outranks a larger one that gates nothing. That is usually the whole
-argument — make it explicitly:
-
-> #972 — splitting the verdict axes. Unblocks reading #963, #913 and #911;
-> until it lands nobody can read a pass count.
-
-Count what he already holds in Ready before proposing anything:
+**Your job is the arithmetic, not the routing.** Report, every run:
 
 ```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --assignee DallanQ \
-  --state open --limit 100 --json number,title
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --label senior --json number,title,updatedAt,assignees,labels \
+  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
 ```
 
-At 2, propose a **swap** with the reason, never a silent addition:
+- **the queue's size, and whether it grew or shrank since the last fill.** If it
+  is growing, conversion is not keeping up, and that line goes at the top of the
+  report — ahead of the promotion table. Nothing else on the board tracks it now
+  that there is no pool to be visibly full;
+- **the oldest three, with their idle days.** A senior item is not stalled the
+  way an In-Progress card is; it has no owner to chase, so age is the only signal
+  it emits;
+- **which of them gate a milestone**, and how long they have sat. That is the
+  critical-path line — see below.
 
-> You hold 2. I'd return #987 to Backlog (waits on a decision in #976 anyway)
-> for #940 — a production path is shipping wrong conclusions with no signal today.
+You do not rank this queue and you do not assign from it. Say what is in it and
+how it is trending.
 
-The swap is the same shape as §1's: the loser goes **back to Backlog**, and it
-stays assigned to him unless it is no longer his to make. Below 1, top it up
-from Backlog best-first. If nothing new outranks what he holds and he is inside
-1–2, propose **zero**.
+### The milestones now depend on conversion rate, not on a pool
 
-For each one, give the dependency chain: what must land first, and what it
-unblocks. His items are allowed to have blockers — that is often the point of
-them — but he should never be surprised by one.
+**Nearly every milestone-gating item is senior-class by §1's test** — a doctrine
+call, a gate that is worse wrong than absent, a design spanning harness and
+hosted server — while the junior pools do alpha content work that cannot stop and
+does not burn these down. So the dates are decided by how fast the senior queue
+is converted into work someone can actually do.
 
-**Assign and move to Ready** — both, in that order. He picks his own work off
-Ready like everyone else; the assignment is what keeps it out of the unassigned
-pools and what carries it into a session that has none of today's conversation.
+Three failure modes to name out loud when you see them:
 
-```sh
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-assignee DallanQ
-gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
-  --field-id "$STATUS_FIELD" --single-select-option-id "f75ad846"
-```
+- **No milestone-gating item has left the senior queue across two consecutive
+  fills.** That is the loudest line in the report. Say which item has been
+  sitting, for how long, and what its conversion is waiting on — usually one
+  decision.
+- **A long-lead item inside its lead time and not converted.** Prompt-injection
+  defense (issue #847) is the standing example: it gates the public rollout, so
+  it loses every impact ranking today, and its junior half cannot begin until the
+  doctrine is settled. An item that "isn't due until March" has to be converted in
+  the fall or it will not land at all.
+- **The queue growing while the junior pool runs dry.** Both numbers are in your
+  report already; the pairing is the finding, and the cheapest fix is conversion
+  rather than promotion.
 
-One thing that does **not** belong in his pool: an issue with an empty or
-one-line body. It is unactionable in a fresh session no matter who owns it.
-Leave it in Backlog and ask him for a scope line — that is §7's `rewrite`
-verdict, not a promotion.
+One thing that does **not** belong in the senior queue: an issue with an empty or
+one-line body. It is unactionable in a fresh session no matter who owns it, and
+labelling it `senior` makes it look researched. Leave it in Backlog and ask for a
+scope line — that is §7's `rewrite` verdict.
 
 ## 7. Grooming
 
@@ -716,9 +736,9 @@ of code has changed since the issues were originally written. They are likely
 based on old assumptions or code."*
 
 That is a real cost, so spend it where it changes an answer: the promotion
-candidates, the lead's pool, and **any issue you are about to recommend a
-disposition for** (split, consolidate, close, or route to the lead). Skimming a
-title is never enough to close or consolidate.
+candidates, and **any issue you are about to recommend a disposition for**
+(split, consolidate, close, or label `senior`). Skimming a title is never enough
+to close or consolidate.
 
 ```sh
 grep -n "<the symbol or line the issue cites>" <path>   # does the cited code still exist?
@@ -765,12 +785,12 @@ list it does not appear in. Add state when it matters.
 ## Output shape
 
 0. **Milestone standing** — first, and short. Slack to each date in weeks; which
-   gating items are in flight, which are queued behind the lead's pool, and
-   whether the critical path moved since the last fill. If it did not move for a
-   second consecutive fill, or a long-lead item is inside its lead time and not
-   started, that sentence goes here and nowhere else — it is the reason the
-   report exists on a week when the promotions are routine.
-1. **Ready depth** — the three pools against their targets, and the net move for
+   gating items are in flight, which are still sitting unconverted in the senior
+   queue, and whether the critical path moved since the last fill. If it did not
+   move for a second consecutive fill, or a long-lead item is inside its lead time
+   and not converted, that sentence goes here and nowhere else — it is the reason
+   the report exists on a week when the promotions are routine.
+1. **Ready depth** — the two pools against their targets, and the net move for
    each. Show the arithmetic.
 1b. **Seniority mix** — the Backlog's developer issues split junior-unblocked /
    junior-blocked / junior-after-a-decision / senior, and whether the junior pool
@@ -785,12 +805,14 @@ list it does not appear in. Add state when it matters.
    consequential first — and if any row's impact clause reduces to "small and
    unblocked", it is the one cheap slot, or it should not be in the table.
 4. **Return to Backlog** — what lost each swap, with the one-line reason.
-5. **Yours** — the 1–2 pool: what to add, what to return, each with what it
-   unblocks and its own dependency chain, how many of the 1–2 are
-   milestone-gating (§6 wants at least 1), and — whenever the pool is full —
-   the senior items queued behind it, in the order you would take them.
+5. **The senior queue** — its size, whether it grew or shrank since the last
+   fill, the oldest three with idle days, and which of them gate a milestone
+   (§6). A growing queue moves to section 0. You do not rank or assign from it.
 6. **Held back, and why** — the items that failed a gate, named with the gate.
    This is the section that stops the lead re-asking about them tomorrow.
+6a. **Cross-cutting** — one line per active `cross-cutting` item: who holds it,
+   days since it last moved, and any person holding two. Flag any unassigned one
+   as a mis-file. Skip the heading when there are none.
 6b. **Skill slots** — one line per skill with anything in flight: the holder, its
    idle days, and how many are queued behind it. Flag a holder idle ~10 days as a
    reclaim proposal, and a queue three or more deep as a merge candidate for

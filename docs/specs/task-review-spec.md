@@ -42,7 +42,7 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
 | `needs-a-decision` | An open fork only the lead can settle | Splice the chosen option's pre-written body text; `reviewed`. |
-| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo | Assign `DallanQ`; `reviewed`. Report to `fill-ready` for the swap out of the junior pool. |
+| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo | Label `senior` and `reviewed`; **no assignee** — the lead takes no issues, so it waits in Backlog as input to `/find-big-wins`' conversion queue. Report to `fill-ready` for the swap out of the junior pool. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
 
