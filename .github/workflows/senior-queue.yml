@@ -2,13 +2,20 @@ name: senior-queue
 
 # Labels a PR once it is actually ready for senior review — CI green, an
 # approving review from someone other than the author, no outstanding
-# changes-requested — with the label for the team that owns its changed paths:
+# changes-requested, and no unresolved review threads — with the label for the
+# team that owns its changed paths:
 #
 #   is:open is:pr label:ready-for-senior-genealogist
 #   is:open is:pr label:ready-for-senior-developer
 #
 # A PR whose files span both teams gets both labels; both approvals are
 # required, so both queues need to see it.
+#
+# The senior review is the SECOND review, and it happens only after the first
+# round has been answered. That is what the changes-requested and unresolved-
+# thread rules are for: neither blocks merge on its own
+# (`required_review_thread_resolution` is false in the ruleset), so without them
+# a PR reaches the senior queue with round one still open.
 #
 # WHY A LABEL AND NOT THE REVIEW REQUEST. CODEOWNERS makes GitHub request the
 # owning team the instant a matching PR opens, when CI is usually red and nobody
@@ -239,12 +246,26 @@ jobs:
               }
               const standings = [...latest.values()];
 
-              const [checks, status, files] = await Promise.all([
+              const [checks, status, files, threads] = await Promise.all([
                 github.paginate(github.rest.checks.listForRef,
                   { owner, repo, ref: pr.head.sha, per_page: 100 }),
                 github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha }),
                 github.paginate(github.rest.pulls.listFiles,
                   { owner, repo, pull_number: number, per_page: 100 }),
+                // Unresolved review comments mean round one is still open. Only
+                // GraphQL exposes resolution state, and nothing else here sees it:
+                // `required_review_thread_resolution` is false in the ruleset, so an
+                // unresolved thread blocks neither merge nor a CHANGES_REQUESTED-free
+                // approval.
+                github.graphql(`
+                  query($owner:String!, $repo:String!, $number:Int!) {
+                    repository(owner:$owner, name:$repo) {
+                      pullRequest(number:$number) {
+                        reviewThreads(first:100) {
+                          pageInfo { hasNextPage }
+                          nodes { isResolved }
+                        } } } }`,
+                  { owner, repo, number }),
               ]);
 
               // Drop this workflow's own check runs. Two mechanisms, both load-
@@ -267,9 +288,17 @@ jobs:
               }
               const wanted = [...owning].map(t => TEAMS[t].label);
 
+              // A page-2 unresolved thread would otherwise read as "all resolved",
+              // so an un-walked page is reported rather than assumed clean.
+              const rt = threads.repository.pullRequest.reviewThreads;
+              const unresolved = rt.nodes.filter(t => !t.isResolved).length;
+
               const reasons = [];
               if (!standings.includes('APPROVED'))         reasons.push('no peer approval');
               if (standings.includes('CHANGES_REQUESTED')) reasons.push('changes requested');
+              if (unresolved)                              reasons.push(`${unresolved} unresolved review thread(s)`);
+              if (!unresolved && rt.pageInfo.hasNextPage)
+                reasons.push('more than 100 review threads — resolution not fully evaluated');
               if (failed.length)       reasons.push(`CI failing: ${failed.map(c => c.name).join(', ')}`);
               if (statusFailed.length) reasons.push(`status failing: ${statusFailed.map(s => s.context).join(', ')}`);
               if (running.length)      reasons.push(`CI still running (${running.length})`);
