@@ -365,6 +365,14 @@ Per-step model routing exists **only through plugin agents.**
 > only the unit harness reads them. They are slated for deletion because they make
 > per-step routing look like it exists. **Do not add a `model:` pin to a new
 > skill.** To route a step to a different model, delegate it to a plugin agent.
+>
+> **And know the ceiling before you plan around it.** Because agents are the only
+> surface, the share of work that *can* be routed to another model is the share
+> that runs inside one: `Agent` is **3.8% of all tool calls** across the 145
+> committed e2e runs, and **5.2%** in the 14 runs since 2026-07-31. A model swap
+> on an agent moves a few percent of the session, not the session. Anything that
+> needs to move the bulk of the work has to change what the *main thread* runs on,
+> which no per-step mechanism in this repo can do.
 
 ### 3.6 The lane rule — classify a finding before you edit prose
 
@@ -483,21 +491,37 @@ There **is** an orchestrator, and it is a skill:
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
 2. **A 17-row routing table maps state → next sub-skill**
-   (`research/SKILL.md:128-146`). The table is the source of truth and is not
-   duplicated here. Its `Invoke` column is **prose instruction**, not a literal
-   tool call. Agents *are* delegated as `Task` calls using the bare
-   `@plugin:<name>` form.
+   (`research/SKILL.md:135-153`). The table is the source of truth and is not
+   duplicated here. Since PR #1029 its `Invoke` column is a **literal `Skill`
+   tool call** — "writing `proceed to research-exhaustiveness` and then
+   hand-authoring the fields that skill would have written is not invoking it."
+   Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
+   **The table is not the only routing surface in the file.** "Direct user
+   requests name a destination, not a shortcut" (`research/SKILL.md:68-82`)
+   overrides a direct request for a downstream skill and sends the router back
+   through the table; a change to routing behaviour that edits only the table
+   can be reversed by that section.
 3. **Two modes.** Interactive surfaces meaningful decisions to the user.
-   `--autonomous` runs the loop in one continuous turn: no clarifying questions,
-   decisions logged to the audit-trail fields, and an explicit rule that
-   **yielding the turn to announce a next step is a failure.**
-4. **Completion is gated twice.** Before writing `project.status = "completed"`
-   (its one direct write, via `research_append`): the **tree-encoding gate** —
-   every tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and
-   the **mentor gate** — every `ps_id` a resolved question references must carry
-   a `focus: "proof-critique"` verdict in `evaluations[]`, written by
+   `--autonomous` runs the loop in one continuous turn: no clarifying questions
+   and decisions logged to the audit-trail fields. Whether the router may ever
+   yield mid-loop is **not settled**: autonomous mode says yielding the turn to
+   announce a next step is a failure, while the interactive `address_first`
+   verdict row (`research/SKILL.md:372`) tells it to end its turn — and a second,
+   unheaded verdict table at `:396` says the opposite again ("do not block").
+   Treat the sanctioned-yield question as open until the lead rules on which
+   verdict table is doctrine; do not write a test or a gate that assumes either.
+4. **Completion is gated twice.** Before `project.status = "completed"` is
+   written via `research_append`: the **tree-encoding gate** — every
+   tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and the
+   **mentor gate** — every `ps_id` a resolved question references must carry a
+   `focus: "proof-critique"` verdict in `evaluations[]`, written by
    `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework.
+   recommendation stays advisory and never forces rework. **Who owns that write
+   is an open question**, not a settled "one direct write": the routing table's
+   last-but-one row has the orchestrator write it, while the same file's
+   "Re-invocation behavior" section says the router writes "nothing directly."
+   The lead has to pick one; until then, do not build a check that assumes
+   either.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
@@ -506,10 +530,6 @@ There **is** an orchestrator, and it is a skill:
 through `record-extraction`, which delegates one `record-extractor` agent per
 record), and it never writes identity links or eliminations inline
 (`person-evidence`, `conflict-resolution`, `hypothesis-tracking` own those).
-
-> **Direction (PR #1029, open).** That PR rewrites the routing table so every
-> `Invoke` entry is a literal `Skill` tool call rather than prose. If it merges
-> before you touch the table, expect the shape to differ.
 
 > **Direction (critique §0.1, §3 P2).** Only **6 of the 17 rows are mechanically
 > computable**, and those six were never the ones failing — the other 11 need
@@ -525,16 +545,20 @@ record), and it never writes identity links or eliminations inline
 > router suite is planned, with two prerequisites: settling the router's
 > `allowed-tools` and the agent-union semantics, and reconciling the two
 > contradictory `address_first` verdict tables in the body
-> (`research/SKILL.md:343-348` vs `:368-372`), which currently cannot tell a test
-> which behavior is correct. One design hazard on top: #1012 — a `Skill()` callee
-> can bind toolless in the unit path, so callee binding must be made real before
+> (`research/SKILL.md:372` vs `:396`), which currently cannot tell a test which
+> behavior is correct. One design hazard on top: #1012 — a `Skill()` callee can
+> bind toolless in the unit path, so callee binding must be made real before
 > routing can be graded.
 
 ### If you're asked to…
 
-**Change routing.** Edit the table at `research/SKILL.md:128-146` — the source of
-truth. There is **no unit suite** to catch you; the only instrument is a live e2e
-run. Name the fixture you ran in the PR, or say you ran none.
+**Change routing.** Edit the table at `research/SKILL.md:135-153` — the source of
+truth — **and check whether "Direct user requests name a destination, not a
+shortcut" (`:68-82`) contradicts your change.** That section is a second routing
+surface: it takes a user asking for a named downstream skill and sends the router
+back through the table anyway. There is **no unit suite** to catch you; the only
+instrument is a live e2e run. Name the fixture you ran in the PR, or say you ran
+none.
 
 The runlog CI gate does **not** apply here: `research` and `forget-and-rederive`
 are in `RUNLOG_GATE_EXEMPT_SKILLS` (`eval/harness/scripts/check_runlogs.py`),
@@ -542,14 +566,21 @@ precisely because neither has a unit suite. The frontmatter lint still runs.
 
 **Add a sub-skill to the loop.** It needs a routing row *and* a `description`
 that doesn't collide with an existing skill's (§3.2). Check the negative routing
-tests in the unit corpus.
+tests in the unit corpus — but know what they pin. **A negative test pins
+*triggering*: "utterance U must land on skill B, not skill A."** It says nothing
+about the routing table, which runs *after* `/research` has already been
+selected. And `check_negative_reciprocity.py` skips any edge whose target has no
+`eval/tests/unit/<target>/` directory, so — `research` having no suite —
+**routing *into* `research` is unpinnable by construction**, not merely
+unpinned.
 
 **Fix a skill that isn't triggering.** First work out **which binding missed** —
 they have different fixes, and only one of them is a description problem.
 
 1. **Did the user go through `/research`?** Then the **routing table decides
-   first** (`research/SKILL.md:128-146`) — check whether any row's state condition
-   matches, and whether an earlier row shadows it. No unit suite covers this; a
+   first** (`research/SKILL.md:135-153`) — check whether any row's state condition
+   matches, whether an earlier row shadows it, and whether `:68-82` re-routed a
+   direct request. No unit suite covers this; a
    live `make e2e-run` is the only instrument. The sub-skill's `description` is
    still in play as the *tiebreaker*: the table explicitly says to "defer to each
    sub-skill's own 'Use when' guidance when state is ambiguous," and that text
@@ -891,8 +922,15 @@ edit and re-emit.**
 > `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
-> `research_query` gives one over `research.json` — which is why `Read` is not
-> revoked.
+> `research_query` gives one over `research.json`.
+>
+> **That gap is not why `Read` cannot be revoked, and the arithmetic matters
+> before anyone builds a `tree_query` to close it.** Across the 8 e2e runs since
+> 2026-08-01, `Read` was called 154 times: **62** of those read a skill's own
+> `references/*.md`, which *no* projection tool replaces; 46 read `research.json`;
+> and **36 — 23% — read `tree.gedcomx.json`**. A tree projection surface reclaims
+> that 23%, not "most of it," and `Read` stays regardless because skills read
+> their own reference files through it.
 > **Direction (#1031, critique §2.9, §3 P2).** The tool half shipped: `offset`
 > makes items 51+ reachable, closing the "no way to fetch past 50" correctness bug
 > at the tool. What remains is the **skill half (#1183)** — the consumers must
@@ -900,8 +938,11 @@ edit and re-emit.**
 > guessing," so its "collect every assertion" gate can under-read (it once saw 50
 > of 57) until that line is rewritten. **If you consume `research_query`, check the
 > `truncated` flag and page with `offset`** — a skill already ignored truncation
-> once. `Read` is still the most-called tool in the system (544 calls across 28
-> runs, against 246 `research_query` + 91 `project_context`).
+> once. The projection tools *are* being adopted: over the whole 145-run corpus
+> `Read` still leads (4,730 calls against 637 `research_query` + 450
+> `project_context`), but in the 8 runs since 2026-08-01 **`research_query` (213)
+> has overtaken `Read` (154)**. Eight runs is thin — do not quote it as a trend —
+> but "`Read` is the most-called tool" is no longer safe to state flatly.
 
 ### 6.4 The casing seam
 
@@ -1127,13 +1168,19 @@ path.
 
 Four environments run the engine, and they load the plugin differently.
 
-| Environment | Skills | Agents | Hooks | MCP server |
-|---|---|---|---|---|
-| **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | host `.mcpb` via the remote-device bridge |
-| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
-| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | own stdio registration under `genealogy` |
-| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | mock server under `genealogy` |
-| **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | live server under `genealogy` |
+| Environment | Skills | Agents | Hooks | Permission mode | MCP server |
+|---|---|---|---|---|---|
+| **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
+| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
+| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
+| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` precisely so declared `Write`/`Edit` still work, while out-of-allowlist MCP tools stay blocked | mock server under `genealogy` |
+| **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
+
+**The permission-mode column is not a footnote.** It is why the e2e tier and the
+unit tier disagree about raw writes for reasons that have nothing to do with the
+guardrails: e2e gets a `Write` deny from the *mode*, the unit tier does not, and
+the hosted path is restrained by hooks and denies alone. A guardrail proved in
+one tier is not thereby proved in another.
 
 **The hosted path does both** plugin-loading and agent-staging, and that is not
 redundancy. SDK plugin loading registers agents **only** under the namespaced
@@ -1147,9 +1194,8 @@ Both harnesses load the staged files via `setting_sources=["project"]`.
 
 Other environment differences that bite:
 
-- **Permission mode.** Cowork runs `permission_mode: "default"`; the hosted path
-  runs `bypassPermissions` — which is why denies and hooks matter more than
-  allow-lists (§5).
+- **Permission mode.** See the column above; `bypassPermissions` on the hosted
+  path is why denies and hooks matter more than allow-lists (§5).
 - **The unit harness's baseline grants `Write`/`Edit` to every skill**, and while
   it does install its own `PreToolUse` hook (`Skill` tracking, the `image_read`
   context policy, call limits), that hook carries **no protected-file rule** — so
