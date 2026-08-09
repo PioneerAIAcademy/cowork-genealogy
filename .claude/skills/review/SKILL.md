@@ -68,13 +68,11 @@ did not run is not a check that passed.
 
 **Say who still has to approve — and work it out from the paths, not from
 `reviewRequests`.** That field is computed when the PR is opened or pushed to,
-not read live, so it lags every CODEOWNERS change: 16 open PRs touching `.ts`
-and `.py` showed only `senior-genealogists` for as long as the
-`senior-developers` team did not resolve, and kept showing it afterwards until
-someone pushed. Read `.github/CODEOWNERS`, match it against the changed paths
-(last rule wins), and treat `reviewRequests` as a hint that may be stale. Your
-approval may not be the one that unblocks merge, and saying so is part of the
-review. Confirm the owners actually resolve:
+not read live, so it lags any CODEOWNERS change until someone pushes again.
+Read `.github/CODEOWNERS`, match it against the changed paths (last rule wins),
+and treat `reviewRequests` as a hint that may be stale. Your approval may not be
+the one that unblocks merge, and saying so is part of the review. Confirm the
+owners actually resolve:
 
 ```sh
 gh api repos/$R/codeowners/errors --jq '.errors[] | "line \(.line): \(.kind) — \(.source)"'
