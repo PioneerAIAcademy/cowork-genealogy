@@ -276,16 +276,29 @@ turns from the right skill.
   `eval/harness/scripts/check_skill_frontmatter.py` (CI **and** the plugin
   packaging script, checking the *folded* value so a long multi-line description
   cannot escape to install time) and
-  `tests/packaging/skill-description-length.test.ts`. **1024 is a house
-  standard, not a runtime limit.** Measured 2026-08-09 against CLI 2.1.226:
-  descriptions of 1,105 and 2,000 characters register intact — full text, no
-  truncation, no error — under **both** load paths, `setting_sources=["project"]`
-  (what both harnesses stage into) and `plugins=[{"type": "local", …}]` (what the
-  hosted control plane passes). The repo corroborates it: five `.claude/skills/`
-  descriptions run 1028–1197 characters and load every session. Only Cowork's
-  own install-time validator is untested, and it is the reason to keep the cap —
-  that plus attention: every description is resident in the orchestrator's
-  context on every turn. **Keep the lint. Do not restate it as an SDK limit.**
+  `tests/packaging/skill-description-length.test.ts`.
+  **The cap binds where the Agent SDK loads the file** —
+  `packages/engine/plugin/skills/*/SKILL.md` and
+  `packages/engine/plugin/agents/*.md` (both harnesses stage them, the hosted
+  control plane passes `plugins=[{"type": "local", …}]`, Cowork loads the
+  plugin). It does **not** apply to this repo's own `.claude/skills/`, which a
+  Claude Code session reads directly and nothing stages into an SDK run — two
+  have sat over the cap for months, and a proposal to widen the lint to them was
+  closed invalid for exactly that reason. **They are not evidence about the SDK
+  path in either direction; do not cite them as such.**
+  **Treat 1024 as hard — the mechanism is unproven and three sources disagree.**
+  The PR that added the lint (2026-07-18) trimmed `proof-conclusion` from 1,220
+  characters after an observed failure, with eleven other descriptions within
+  ~25 of the cap; the
+  vendored `improve_description.py` says an over-length description is
+  *truncated*, not dropped; and a 2026-08-09 probe against CLI 2.1.226 saw 1,105
+  and 2,000 characters register **intact** under both load paths. Those three
+  cannot all be right, and no one has reconciled them — the SDK's behaviour may
+  simply have changed since July. Cowork's own install-time validator is
+  untested by all three. **Keep the lint regardless**: truncated-vs-dropped
+  changes what an over-cap description does to triggering, nobody knows which it
+  is, and 1024 characters is enough — a description is resident in the
+  orchestrator's context on every turn.
 - **Descriptions are tuned empirically, not by taste.** `eval/triggering/` holds
   the vendored description optimizer; `docs/skill-lifecycle.md` owns the
   workflow.
