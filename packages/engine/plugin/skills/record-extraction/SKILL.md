@@ -1,6 +1,5 @@
 ---
 name: record-extraction
-model: claude-sonnet-4-6
 description: >-
   Extracts GPS-conformant assertions from genealogical records and owns
   their evidence classifications. Acquires and triages the record (search
