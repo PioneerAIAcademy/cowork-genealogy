@@ -47,7 +47,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    stale half is usually the part the recommendation rests on.
 2. **Already refuted.** Three ledgers record things that were argued and
    disproved — check all three before agreeing the work is a good idea:
-   - `docs/agentic-system-critique.md` §9 "Refuted in review — do not re-derive"
+   - `docs/adrs/ADR-0009-refuted-agent-design-claims.md` — the refutation ledger
    - each ADR's `Alternatives considered`
    - `docs/specs/guardrail-enforcement-spec.md` §9 "Options set aside"
 

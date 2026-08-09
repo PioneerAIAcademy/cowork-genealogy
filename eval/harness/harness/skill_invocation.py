@@ -790,6 +790,17 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
 # #963 person_evidence-provenance gaps (both carry a `detail`).
 CITATION_NULLING_KIND = "citation_nulling"
 
+# Marks a #963 provenance entry recorded by a run launched in DENY mode
+# (`--person-evidence-guard deny`, issue #1231). Same list, same `detail` shape,
+# but a different meaning: the write was blocked and retried rather than landing,
+# and the loop valve can record several denials plus a release for one logical
+# gap. `scan_provenance` excludes it so the shadow fire rate the graduation
+# decision reads is not inflated by deny-mode runs. Lives here beside its sibling
+# rather than in `e2e/orchestrator.py` — which sets it — so that
+# `guardrail_shadow_report.py` can read it without importing the orchestrator
+# (and with it the Claude Agent SDK) just to learn one string.
+PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
+
 
 def find_citation_nulling_in_conclusions(
     research: dict[str, Any] | None,

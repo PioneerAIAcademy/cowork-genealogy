@@ -182,3 +182,17 @@ def test_content_hash_changes_when_text_changes():
     r1 = parse_rubric(MINIMAL_RUBRIC)
     r2 = parse_rubric(MINIMAL_RUBRIC.replace("A is good", "A is great"))
     assert r1.content_hash != r2.content_hash
+
+
+def test_dimension_names_returns_case_sensitive_set():
+    r = parse_rubric(THREE_DIM_RUBRIC)
+    assert r.dimension_names() == frozenset({"Alpha", "Beta", "Gamma"})
+    # A re-cased variant is not a member — judge._extract_dimensions relies
+    # on this to reject re-cased names rather than silently accept them (#1361).
+    assert "alpha" not in r.dimension_names()
+    assert "ALPHA" not in r.dimension_names()
+
+
+def test_dimension_names_empty_for_empty_rubric():
+    r = empty_rubric("my-skill")
+    assert r.dimension_names() == frozenset()

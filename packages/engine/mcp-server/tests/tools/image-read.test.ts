@@ -195,6 +195,44 @@ describe("imageReadTool — ark input", () => {
     expect(fetchedUrl).toBe(url);
   });
 
+  it("forwards i/cc/groupId from a full page URL, and recovers via the fallback when that URL isn't an image", async () => {
+    // Wiring test: the URL-computation logic itself (forwarding params,
+    // dropping irrelevant ones, offering a fallback) is covered directly
+    // against resolveFsImageInput in tests/utils/fs-image-fetch.test.ts.
+    // This confirms imageReadTool actually threads url + fallbackUrl through
+    // to fetchFsImageBytes end to end — the regression from unconditionally
+    // forwarding i=/cc=/groupId= (#1203 review) was exactly a wiring gap: a
+    // non-image response with no fallback attempted.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === "content-type" ? "text/html" : null,
+      },
+      arrayBuffer: async () => new ArrayBuffer(0),
+    });
+    mockImageResponse();
+    const url =
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=999&cc=1858355&groupId=1858355";
+
+    const result = await imageReadTool({ ark: url });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=999&cc=1858355&groupId=1858355"
+    );
+    expect(mockFetch.mock.calls[1][0]).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
+    );
+    expect(result.metadata.mimeType).toBe("image/jpeg");
+    // metadata.url reports the URL that actually worked, not the failed primary.
+    expect(result.metadata.url).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
+    );
+  });
+
   it("rejects an unrecognized ark value without fetching", async () => {
     await expect(imageReadTool({ ark: "not-an-ark" })).rejects.toThrow(
       /Unrecognized ark/i
