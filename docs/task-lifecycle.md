@@ -128,9 +128,6 @@ to do any of these:
   value on a closed enum, or a tree-shape change. Site lists:
   [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
-- Widens what a Cowork plugin agent is allowed to call — the `tools:` or
-  `disallowedTools:` lists in `packages/engine/plugin/agents/`. Editing an
-  agent's prompt is ordinary work; changing its permissions is not.
 - Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
 - Is hard to undo: a data migration, a write to user state, anything
   user-facing or talking to an external service.
@@ -229,9 +226,6 @@ what tells a reviewer, human or model, which few lines carry the decision among
 the ones that carry the mechanics. Write it for someone who has not seen your
 branch.
 
-Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
-co-author".
-
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
 ### 9. Peer review, then senior review — on the paths that need it
@@ -316,6 +310,11 @@ returns as an input to your review, never as your review.
    set out to do. Give Claude those, the issue, and the relevant spec, then ask
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
+4. **Two things aren't yours to approve.** A diff that hits step 4's stop rule —
+   schema, credentials, an ADR reversal, anything hard to undo — needs the lead,
+   whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
+   lists, your approval doesn't unblock merge. Say which is still owed rather
+   than leaving the author to discover it at the merge button.
 
 ---
 

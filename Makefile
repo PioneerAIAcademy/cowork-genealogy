@@ -137,11 +137,10 @@ worktree-link: ## Link shared gitignored files (secrets, engine node_modules) fr
 	@scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
-# of this clone): post-checkout auto-links shared files into new worktrees;
-# commit-msg warns when a commit has no human Co-authored-by trailer. Opt-in and
-# per-clone: it touches only local .git state, never core.hooksPath, so it can't
-# disable husky/other hook tooling and is invisible to teammates who don't run
-# it. Refuses to clobber a hook that isn't ours.
+# of this clone): post-checkout auto-links shared files into new worktrees.
+# Opt-in and per-clone: it touches only local .git state, never core.hooksPath,
+# so it can't disable husky/other hook tooling and is invisible to teammates who
+# don't run it. Refuses to clobber a hook that isn't ours.
 #
 # We copy scripts/git-hooks/shim.sh (a stub that re-execs the tracked hook)
 # rather than symlink the hook itself, so InstallHooks.bat can do the identical
@@ -152,13 +151,13 @@ worktree-link: ## Link shared gitignored files (secrets, engine node_modules) fr
 # symlink install, `cp` would follow the symlink and write the shim straight into
 # the tracked scripts/git-hooks/<hook> it points at.
 .PHONY: install-hooks
-install-hooks: ## Install shared git hooks (post-checkout, commit-msg) — opt-in, per-clone
+install-hooks: ## Install shared git hooks (post-checkout) — opt-in, per-clone
 	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	 main=$$(dirname "$$common"); \
 	 shim="$$main/scripts/git-hooks/shim.sh"; \
 	 [ -f "$$shim" ] || { echo "install-hooks: $$shim not found — check out a branch that has it." >&2; exit 1; }; \
 	 mkdir -p "$$common/hooks"; \
-	 for hook in post-checkout commit-msg; do \
+	 for hook in post-checkout; do \
 	   dst="$$common/hooks/$$hook"; \
 	   if [ -e "$$dst" ] || [ -L "$$dst" ]; then \
 	     if [ ! -L "$$dst" ] && ! grep -q 'cowork-genealogy managed hook shim' "$$dst" 2>/dev/null; then \
