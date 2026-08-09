@@ -85,3 +85,5 @@
 ## Follow-on issues
 
 <!-- Numbers filed for work you deferred. DEVELOPMENT.md § "Follow-on work". -->
+
+**Folded in / filed instead:** <!-- Follow-on work found during this PR: what you folded in, and for anything filed rather than folded, which of the four reasons applied. -->

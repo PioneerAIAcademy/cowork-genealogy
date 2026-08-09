@@ -62,6 +62,13 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 REPO_ROOT = HARNESS_DIR.parents[1]
 
+# See the same block in check_tool_coverage.py: CI's `python <script>.py` adds
+# HERE to sys.path, the unit tests' `spec_from_file_location` does not.
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from gh_annotations import gh_warning, write_step_summary  # noqa: E402
+
 SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 AGENTS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
@@ -83,12 +90,6 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 }
 
 _PLUGIN_DELEGATION_RE = re.compile(r"@plugin:([a-z0-9-]+)")
-
-
-def gh_warning(message: str, *, file: str | None = None) -> None:
-    """Emit a GitHub warning annotation (visible on the PR; non-blocking)."""
-    prefix = f"::warning file={file}::" if file else "::warning::"
-    print(f"{prefix}{message}")
 
 
 def load_manifest_tools(manifest: Path) -> set[str] | None:
@@ -333,6 +334,15 @@ def main() -> int:
     for tool, reason in sorted(COMMON_WORD_EXEMPTIONS.items()):
         print(f"  - {tool}: {reason}")
 
+    write_step_summary(
+        "Rubric / judge_context / agent tool-mention drift (warn-only)",
+        footer=(
+            "Warn-only: this check does not block the build. Roughly 20% of these "
+            "are genuine drift — read them, do not assume noise (see eval/CLAUDE.md "
+            "and issue #1003). Never scanned for: "
+            f"{', '.join(sorted(COMMON_WORD_EXEMPTIONS))}."
+        ),
+    )
     return 0
 
 
