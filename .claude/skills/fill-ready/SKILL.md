@@ -277,9 +277,12 @@ milestone's own question:
   defense (issue #847, unstarted), the production tool-call ledger (issue
   #1054), and judge calibration (issue #1090).
 
-`docs/agentic-system-critique.md` §3 is the current map of this work and its
-sequencing; read it before ranking, and treat its own claims per §8 — it is a
-document, not repo state.
+There is no standing "what to do next" document to rank from — the one that
+existed was retired 2026-08-09 because its priorities went stale faster than
+anyone re-read them. Rank from repo state instead: the board itself,
+`docs/architecture.md` §9.4 (what nothing checks) and §10 (open questions), and
+`docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells you which
+proposals have already been argued and disproved.
 
 **Instrument before fix.** An item that restores a broken measurement outranks
 the fixes that measurement is supposed to evaluate — that is already heuristic 2

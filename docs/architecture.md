@@ -105,9 +105,14 @@ carry an explicit callout:
 > **Direction:** where it is going, with the issue, plus the one instruction
 > that keeps your change from making the move harder.
 
-The analysis behind every `Direction` note is
-[`docs/agentic-system-critique.md`](agentic-system-critique.md). This guide
-carries the instruction, not the reasoning.
+A `Direction` note carries the instruction, not the reasoning. Where the
+reasoning is a decision, it is an [ADR](adrs/); where it is a measurement, it is
+the run-log corpus (`make e2e-corpus`); where it is a claim that was argued and
+**disproved**, it is
+[ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md), the refutation ledger.
+There is no longer a standing critique document — it was retired 2026-08-09
+because everything in it except that ledger was a status snapshot that went stale
+faster than its readers noticed.
 
 ### ADR index
 
@@ -126,6 +131,7 @@ routing surface — find your task, then open that ADR.
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
 | [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
 | [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
+| [0009](adrs/ADR-0009-refuted-agent-design-claims.md) | Keep a standing ledger of refuted agent-design claims | propose a `same_person` write-boundary discriminator · propose "routing as a tool" as the fix for a routing failure · quote a compliance rate, violation count or cost figure from an older write-up · vet an issue whose premise is one of those rows |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -250,7 +256,7 @@ how to word it:
 | for one delegated agent | **that agent's `tools:` / `disallowedTools:`**, or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction (critique §3, P0).** Two gates are still prose that this same law
+> **Direction.** Two gates are still prose that this same law
 > says will decay — the **tree-encoding gate** and the **mentor gate** (§4). Both
 > are computable from files `research_append` already loads and are being moved
 > into the tool. **If you are adding a new cross-turn invariant, do not add it as
@@ -322,7 +328,7 @@ check — a regression inside it passes silently.
 > **Today:** editing a duplicated reference means editing every copy by hand and
 > knowing which divergences are deliberate. For `validation-protocol.md` and
 > `research-log-protocol.md`, **nothing records which is which.**
-> **Direction (#1112, critique §5.7):** either lint a shared core plus a
+> **Direction (#1112):** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
@@ -360,7 +366,7 @@ Per-step model routing exists **only through plugin agents.**
 | **Skill `model:`** | **the unit eval harness only** | 26 of 27 skills pin `claude-sonnet-4-6` — which *is* the harness default |
 | **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
 
-> **Direction (critique §2.4, §5.3).** The 26 skill `model:` pins are **dead
+> **Direction.** The 26 skill `model:` pins are **dead
 > lines**, not a fidelity gap: they pin the value that is already the default, and
 > only the unit harness reads them. They are slated for deletion because they make
 > per-step routing look like it exists. **Do not add a `model:` pin to a new
@@ -531,16 +537,17 @@ through `record-extraction`, which delegates one `record-extractor` agent per
 record), and it never writes identity links or eliminations inline
 (`person-evidence`, `conflict-resolution`, `hypothesis-tracking` own those).
 
-> **Direction (critique §0.1, §3 P2).** Only **6 of the 17 rows are mechanically
+> **Direction.** Only **6 of the 17 rows are mechanically
 > computable**, and those six were never the ones failing — the other 11 need
 > judgment and belong in prose. So the routing table is **not** moving into a
 > tool wholesale. The cheap 80% is folding `logIndex.hasLinkedAssertion` into
 > `project_context`, which covers three rows with no new tool and no new prose
 > rule to remember. **Don't propose "routing as a tool" as a fix for a routing
-> failure without reading critique §3 P2 first** — it was the rev. 1 headline and
-> was demoted after measurement.
+> failure without reading the first row of
+> [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md)** — it was the rev. 1
+> headline and was demoted after measurement.
 
-> **Direction (critique §3 P1).** There is **no `eval/tests/unit/research/`
+> **Direction.** There is **no `eval/tests/unit/research/`
 > suite.** The component that fails most is exercised only by live e2e runs. A
 > router suite is planned, with two prerequisites: settling the router's
 > `allowed-tools` and the agent-union semantics, and reconciling the two
@@ -732,9 +739,10 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 > lets the write through. So the deliverable is no longer *deriving* a
 > discriminator; it is **graduating this one to a deny**, which is gated on its
 > replay numbers (65 of 81 fixtures, 265 hits across 280 runs — denying on that
-> intervenes in four fifths of a suite costing $7–25 a run). **Read critique §3 P0
-> and §9 before proposing a fifth**, and satisfy its named constraints —
-> including satisfiability, which the shadow replay is the standing evidence for.
+> intervenes in four fifths of a suite costing $7–25 a run). **Read
+> [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before proposing a
+> fifth**, and satisfy its six named constraints — including **satisfiability**,
+> for which that shadow replay is the standing evidence.
 
 ### 5.4 The write-lockdown hook
 
@@ -931,7 +939,7 @@ edit and re-emit.**
 > and **36 — 23% — read `tree.gedcomx.json`**. A tree projection surface reclaims
 > that 23%, not "most of it," and `Read` stays regardless because skills read
 > their own reference files through it.
-> **Direction (#1031, critique §2.9, §3 P2).** The tool half shipped: `offset`
+> **Direction (#1031).** The tool half shipped: `offset`
 > makes items 51+ reachable, closing the "no way to fetch past 50" correctness bug
 > at the tool. What remains is the **skill half (#1183)** — the consumers must
 > actually page. `proof-conclusion/SKILL.md` still says "no offset/pagination
@@ -1383,14 +1391,16 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 1. **The `same_person` write-boundary gate** — direction settled; three
    discriminators failed review and a fourth now runs in **shadow**, so what is
    open is its **graduation to a deny**, not its derivation. Details and the
-   "don't re-derive" ledger: §5.3, and critique §3 P0 + §9.
+   "don't re-derive" ledger: §5.3, and
+   [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md).
 2. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
-   "true or false positive" has no ground truth at all (critique §3 P0).
+   "true or false positive" has no ground truth at all.
    Separately, **no violation *rate* is measurable yet** —
    `make e2e-corpus` is the only figure to quote, and it deliberately prints
    counts rather than a percentage. The gate-reach figure (≤9 of 25, stated
-   against critique §9's narrow window) is a count of violations one arm
+   against the narrow window ADR-0009's rev. 3 table records) is a count of
+   violations one arm
    produced, not a rate.
 3. **`ENABLE_TOOL_SEARCH`** — the polarity is settled as of 2026-08-02
    (§5.2) and all five inverted comments have been corrected. What remains is
@@ -1418,8 +1428,9 @@ adoption is tracked work, #1183, not an open question. See §6.3.)*
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
-| Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec or [`docs/agentic-system-critique.md`](agentic-system-critique.md). |
-| What is wrong with it, and what's next? | [`docs/agentic-system-critique.md`](agentic-system-critique.md) |
+| Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
+| Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records |
+| What is wrong with it, and what's next? | §9.4 (what nothing checks) and §10 (open questions) here, plus the **Backlog column** on the project board. There is no standing critique document; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |
 | Every guardrail, its instrument, its status | [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) |
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |

@@ -295,17 +295,6 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "packages/schema/src/index.ts:269",
     "scripts/build-mcpb.mjs:26-27",
   ],
-  "docs/agentic-system-critique.md": [
-    "allowed_tools.py:59",
-    "allowed_tools.py:61-68",
-    "allowed_tools.py:98-103",
-    "harness/orchestrator.py:206",
-    "real_agent.py:132-139",
-    "research-append.ts:622",
-    "research-query.ts:243-244",
-    "research-query.ts:29",
-    "skill_runner.py:57",
-  ],
   "docs/architecture.md": ["src/index.ts:736"],
   "docs/realtime-architecture.md": [
     "apps/server/app/models.py:45",
