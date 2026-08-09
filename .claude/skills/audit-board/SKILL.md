@@ -106,6 +106,24 @@ grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|ts
   /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 >= 3'
 ```
 
+**The `>= 3` line is a triage cutoff, not an exclusion filter.** It orders where
+to spend attention first on a large pool — it is not a claim that a 2-hit file
+never hides a real duplicate. A pair of issues filed close together, before
+either has accumulated other unrelated citations, is exactly the shape most
+likely to sit at count 2 and be skipped by a skim. Run the 2-hit tier too
+(same command, `awk '$1 == 2'`) and give it the same close read — #1395 and
+#1396 cited the identical two lines (`research/SKILL.md:147`,
+`research-exhaustiveness/SKILL.md:113-116`) and were a clean absorb, but sat
+at count 2 in a large pool and were missed on a first pass that only read the
+`>= 3` tier. On a small pool, or when re-checking a single
+column against itself, drop the threshold to 2 outright rather than reporting
+only the head of the tally.
+
+```sh
+grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
+  /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 == 2'
+```
+
 Same-file convergence is a strong batch signal on its own — verify it, don't
 wave it through. Same-*topic* convergence across different files is a weaker
 one and is usually not a batch: two issues that both say "the judge fabricated

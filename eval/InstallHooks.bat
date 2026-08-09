@@ -11,11 +11,9 @@ cd %~dp0
 
 echo === Cowork Genealogy - Install shared git hooks ===
 echo.
-echo Installs two hooks into this clone:
+echo Installs one hook into this clone:
 echo   post-checkout  auto-links shared files ^(node_modules, .env^) into new
 echo                  worktrees, so they can build and run tests immediately
-echo   commit-msg     warns -- never blocks -- when a commit is missing a
-echo                  human Co-authored-by: trailer
 echo.
 echo Safe to re-run. It refuses rather than clobbering a hook it did not write.
 echo.
@@ -51,7 +49,7 @@ if not exist "%SHIM%" (
 
 if not exist "%COMMON%\hooks" mkdir "%COMMON%\hooks"
 
-for %%H in (post-checkout commit-msg) do call :install %%H
+for %%H in (post-checkout) do call :install %%H
 if errorlevel 1 (
   pause
   exit /b 1
