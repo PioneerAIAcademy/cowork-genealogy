@@ -29,8 +29,11 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    shape to a section. Read **that section's "If you're asked to…" block only** —
    not the whole guide. It names the sites a change touches and which of them
    nothing checks.
-3. **`docs/architecture.md` §9.4** — "What nothing checks." Always. It is short
-   and it is the list of ways a green CI run is a lie.
+3. **`docs/architecture.md` §9.4** — "What nothing checks." Always. It is short:
+   three gaps whose consequence changes how a change is made, plus the
+   `gh issue list --state open --search "nothing checks"` query that returns the
+   rest. Run that query when the issue's subject sounds like a missing guard —
+   the enumeration lives on the board, not in the file.
 4. **The ADR**, if one matches. The index is `docs/architecture.md` §0; the
    **"Read before you…"** column is the routing surface. Read `Context`,
    `Decision`, and especially **`Alternatives considered`**.
