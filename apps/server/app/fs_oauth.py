@@ -167,17 +167,34 @@ async def write_tokens(
     )
 
 
-def hosted_config(openrouter_api_key: str | None) -> dict:
+def hosted_config(
+    openrouter_api_key: str | None,
+    wiki_api_url: str | None = None,
+    pop_stats_url: str | None = None,
+) -> dict:
     """The ~/.familysearch-mcp/config.json body for a hosted sandbox.
 
     `hosted: true` marks the in-VM MCP server so its `login` tool refuses the
     desktop loopback OAuth flow (which cannot complete on a headless VM — the
     redirect targets 127.0.0.1:1837 on the *user's* laptop, not the sandbox) and
     instead tells the agent to have the user click "Reconnect FamilySearch" in
-    the web app. The OpenRouter key rides the same document when present."""
+    the web app. The OpenRouter key rides the same document when present.
+
+    `wikiApiUrl` / `popStatsUrl` are the operator's override for the two
+    sidecar services (issue #290). The engine falls back to
+    `DEFAULT_WIKI_API_URL` / `DEFAULT_POP_STATS_URL` when they are absent, and
+    those defaults currently name one developer's tailnet host — so without
+    this, redirecting hosted traffic to a real deployment needs an engine
+    rebuild and a re-release, not a config change. Omitted entirely when unset,
+    which keeps the fallback intact and this document unchanged for anyone who
+    has not configured them."""
     config: dict = {"hosted": True}
     if openrouter_api_key:
         config["openRouterApiKey"] = openrouter_api_key
+    if wiki_api_url:
+        config["wikiApiUrl"] = wiki_api_url
+    if pop_stats_url:
+        config["popStatsUrl"] = pop_stats_url
     return config
 
 

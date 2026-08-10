@@ -206,7 +206,14 @@ async def create_project(
     # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
     # Always written (not just when a key exists), because that marker is what
     # keeps the login tool from claiming a browser tab opened on a headless VM.
-    await fs_oauth.write_config(sandbox, fs_oauth.hosted_config(settings.openrouter_api_key))
+    await fs_oauth.write_config(
+        sandbox,
+        fs_oauth.hosted_config(
+            settings.openrouter_api_key,
+            settings.wiki_api_url,
+            settings.pop_stats_url,
+        ),
+    )
     # The Anthropic key the Agent SDK runs on. Written here AND on every connect
     # (the env copy injected at create() can never be updated afterwards, so it
     # goes stale the moment the key is rotated). See app/agent_secrets.py.
