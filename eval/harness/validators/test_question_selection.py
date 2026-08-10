@@ -23,6 +23,8 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from validators_lib import assert_no_section_deletions
@@ -50,6 +52,96 @@ def _new_questions(before: dict, after: dict) -> list[dict]:
         for q in (after.get("questions") or [])
         if q.get("id") and q.get("id") not in before_ids
     ]
+
+
+# --- Tag-gated: the new question's scope matches the objective's -------
+
+# A research question names the FACT sought; which record set carries that
+# fact is research-plan's decision (SKILL.md Step 1c). These patterns match
+# record nouns that betray a plan item wearing a question's clothing — the
+# defect behind "showed me a question specific to the 1900 census" when the
+# user asked for a person's parents. `will` is matched only with a preceding
+# article/possessive so the modal verb ("who will…") can't false-positive.
+_RECORD_SCOPED_PATTERNS = (
+    r"\bcensus\b",
+    r"\bcertificates?\b",
+    r"\bregisters?\b",
+    r"\b(?:a|the|his|her|their)\s+will\b",
+    r"\bprobate\b",
+    r"\bdeeds?\b",
+    r"\bmuster\s+roll\b",
+    r"\blægdsrulle\w*\b",
+    r"\blaegdsrulle\w*\b",
+)
+
+
+def test_new_question_not_record_scoped(before_state, after_state, test):
+    """Tag-gated: a new question must name the fact sought, not the record
+    that might carry it. "Where was Reuben in the 1900 census?" is a plan
+    item, not a research question — it narrows the user's objective to one
+    source before anyone has asked whether that source is the best one.
+
+    Gated on the `objective-scope-match` tag because it is legitimately
+    inapplicable to objectives that are *about* a document (e.g. an
+    illegible surname on a specific marriage certificate)."""
+    if "objective-scope-match" not in test.get("tags", []):
+        pytest.skip("not an objective-scope-match scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders: list[str] = []
+    for q in _new_questions(before, after):
+        text = q.get("question") or ""
+        for pattern in _RECORD_SCOPED_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                offenders.append(
+                    f"{q.get('id')}: {text!r} names a record "
+                    f"(matched /{pattern}/)"
+                )
+                break
+    assert not offenders, (
+        "question(s) scoped to a record rather than the fact sought — "
+        "record choice belongs to research-plan:\n  - "
+        + "\n  - ".join(offenders)
+    )
+
+
+def test_new_question_excludes_out_of_scope_persons(before_state, after_state, test):
+    """Tag-gated by one or more `scope-excludes-<slugified-name>` tags: the
+    new question must not target a person the objective does not cover.
+
+    A person's presence in the tree does not put them in scope — on an
+    objective of "identify the parents of X", X's own spouse and children
+    are a *different* objective (SKILL.md Step 1c). Only the question text
+    is checked, not the rationale: naming a relative as a *source* of
+    evidence about the subject is legitimate FAN reasoning, whereas making
+    them the question's subject is the defect."""
+    excluded = [
+        t[len("scope-excludes-"):]
+        for t in test.get("tags", [])
+        if t.startswith("scope-excludes-")
+    ]
+    if not excluded:
+        pytest.skip("no scope-excludes-<name> tags on this test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders: list[str] = []
+    for q in _new_questions(before, after):
+        text = q.get("question") or ""
+        norm = re.sub(r"[^a-z0-9]+", "-", text.lower())
+        for slug in excluded:
+            if slug and slug in norm:
+                offenders.append(
+                    f"{q.get('id')}: {text!r} targets out-of-scope person "
+                    f"'{slug}'"
+                )
+    assert not offenders, (
+        "question(s) targeting a person outside the objective's scope:\n  - "
+        + "\n  - ".join(offenders)
+    )
 
 
 # --- Tag-gated: no new question added ---------------------------------
