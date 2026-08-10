@@ -53,7 +53,19 @@ The MCP code is HTTP-only for all of these — it does not import or
 depend on any Python code from those services. The base URL for the
 wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
-instance); end users do not need to set this for normal operation.
+instance).
+
+**There is no public deployment yet, so the defaults are a developer's
+personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
+`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
+one machine's tailnet, and the hosted path gives an operator no way to
+override them — `hosted_config()` does not write either key, so
+redirecting hosted traffic needs an engine rebuild. Measured over the
+committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
+calls fail, across 17 distinct days. The agent gets an actionable error
+and then quietly ships a thinner answer, so the user sees nothing. Do not
+write "end users do not need to set this" — that was true only in the
+sense that they cannot.
 
 ## Repository layout
 
