@@ -31,7 +31,7 @@ You have no `Edit` or `Write` tool on purpose.
 job and never yours.
 
 The one exception is **hygiene**: a closed issue stranded in an active column, an
-open issue sitting in `Done`, an issue on no column at all. Those are corrections,
+open issue sitting in `Done` or `Not planned`, an issue on no column at all. Those are corrections,
 not ranking, and fixing them needs `gh project item-edit` with the Status field id
 (`gh project field-list 1 --owner PioneerAIAcademy --format json`). Check the
 token first — `gh auth status` must list the `project` scope, or the write fails
@@ -580,7 +580,8 @@ for it in board['items']:
 print('closed but in an active column:',
       [n for n,s in onboard.items() if s in cols and n not in issues])
 print('open but on no column:', sorted(set(issues)-set(onboard)))
-print('open but in Done:', [n for n,s in onboard.items() if s=='Done' and n in issues])
+print('open but in a terminal column:',
+      [(n,s) for n,s in onboard.items() if s in ('Done','Not planned') and n in issues])
 print('unlabeled:', [n for n,s in onboard.items() if s in cols and n in issues
                      and not issues[n]['labels']])
 print('unassigned in Ready/In Progress/Review:',
