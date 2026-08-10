@@ -82,8 +82,12 @@ def test_new_question_not_record_scoped(before_state, after_state, test):
     source before anyone has asked whether that source is the best one.
 
     Gated on the `objective-scope-match` tag because it is legitimately
-    inapplicable to objectives that are *about* a document (e.g. an
-    illegible surname on a specific marriage certificate)."""
+    inapplicable in two cases: an objective that is *about* a document (an
+    illegible surname on a specific marriage certificate), and a
+    sub-question written beneath an already-open objective-scope question,
+    where naming a record is correct (SKILL.md Step 1c, "once a question at
+    the objective's scope exists"). Do not tag such tests with
+    `objective-scope-match`."""
     if "objective-scope-match" not in test.get("tags", []):
         pytest.skip("not an objective-scope-match scenario")
     before = before_state.get("research_json")

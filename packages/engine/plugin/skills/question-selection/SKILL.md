@@ -108,9 +108,11 @@ The question is the framing the user is asked to confirm, so it must be
 recognizable as what they asked for. Screen every candidate for both scope
 errors below before Step 2.
 
-**Not narrower — a record is not a question.** Which record set answers a
-question is `research-plan`'s call, not yours. "Where was Reuben Smith in the
-1900 census?" is a plan item in a question's clothing: it commits the project
+**Not narrower — a record is not a question, where the question stands in for
+the objective.** When nothing in `questions[]` covers the objective yet, the
+question you write *is* the user's framing, and which record set answers it is
+`research-plan`'s call, not yours. "Where was Reuben Smith in the 1900
+census?" is then a plan item in a question's clothing: it commits the project
 to one census before anyone has asked whether the census is the best source,
 and a question scoped to one record invites a search scoped to one record.
 Name the fact sought — "Who were the parents of Reuben Smith, b. ~1850,
@@ -124,6 +126,19 @@ single fact ("Identify the parents of Patrick Flynn, born ca. 1845 in
 Pennsylvania"), that objective **is** the first question: restate it with the
 identifying detail the three criteria require and stop. Decompose only an
 objective that genuinely holds more than one independent fact.
+
+**Once a question at the objective's scope exists, narrower is correct.** The
+two rules above govern only the question that stands in for the objective;
+they do not freeze the project there. When `questions[]` already holds an open
+question at the objective's scope, your job is the next **sub-question beneath
+it**, and that one is legitimately narrower — a premise to verify (Step 3 and
+the "Sound basis required" rule), a specific source to test, a decomposed
+part. Naming a record is right there: "What does Patrick Flynn's 1908 death
+certificate say about his parents?" *tests* a premise and does not replace the
+objective, because the objective-level question already holds that ground.
+"A question at the objective's scope already exists" is **not** a reason to
+add nothing — the only stop condition is Step 1b's answered-at-a-defensible-
+tier test.
 
 **Not wider — appearing in the tree does not put a person in scope.** On
 "identify the parents of X", X's spouse and children are out of scope: their
