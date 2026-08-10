@@ -928,6 +928,22 @@ _NO_CONFLICT_SUBSTRINGS = (
 # a real resolution sentence that merely contains those letters.
 _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 
+# `stop_criteria.conflict_resolution` is a REQUIRED field on every declared
+# exhaustive_declaration (research.schema.json), so it is always populated —
+# "doesn't match the negative list" therefore defaults to FIRE, which over-fires
+# badly on the real corpus (senior review of PR #1438: 18 of 38 firing strings
+# explicitly negated a resolution — "UNRESOLVED.", "Not met —", …). So the check
+# requires POSITIVE resolution language rather than the mere ABSENCE of negative
+# language: an opener that negates a resolution is skipped, and a field with no
+# resolution marker at all is skipped. The `\b` on the marker is what stops
+# `resolved` matching inside `unresolved`.
+_RESOLUTION_MARKER_RE = re.compile(
+    r"\b(resolved|resolution|reconciled|outweighs?|preferred assertion)\b", re.I
+)
+_NON_RESOLUTION_OPENER_RE = re.compile(
+    r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
+)
+
 
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
@@ -977,11 +993,24 @@ def find_unpersisted_conflict_resolutions(
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict)}
+    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict) and q.get("id")}
     resolved_conflict_ids = {
         c.get("id")
         for c in conflicts
         if isinstance(c, dict) and c.get("status") == "resolved" and c.get("id")
+    }
+    # A resolved conflict can back a question WITHOUT being cited on the
+    # proof_summary's resolved_conflict_ids — via its own schema field
+    # conflicts[].blocks_question_ids. Reading only resolved_conflict_ids (senior
+    # review of PR #1438) fired on runs that had correctly written the resolved
+    # conflict[] entry — the viewer's Conflicts section populated, exactly what
+    # #1317 asks for — and then emitted a factually false "no resolved entry backs
+    # it". So a question blocked by a resolved conflict counts as backed too.
+    resolved_blocked_qids = {
+        q
+        for c in conflicts
+        if isinstance(c, dict) and c.get("status") == "resolved"
+        for q in (c.get("blocks_question_ids") or [])
     }
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
@@ -1000,6 +1029,10 @@ def find_unpersisted_conflict_resolutions(
             return None
         if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):
             return None
+        if _NON_RESOLUTION_OPENER_RE.match(crl):
+            return None  # text opens by negating a resolution ("UNRESOLVED.", "Not met —")
+        if not _RESOLUTION_MARKER_RE.search(crl):
+            return None  # no positive resolution language — not a resolution claim
         return cr
 
     violations: list[dict[str, Any]] = []
@@ -1014,7 +1047,7 @@ def find_unpersisted_conflict_resolutions(
             if isinstance(ps.get("resolved_conflict_ids"), list)
             else []
         )
-        if any(rc in resolved_conflict_ids for rc in rcids):
+        if any(rc in resolved_conflict_ids for rc in rcids) or qid in resolved_blocked_qids:
             continue  # backed by a real resolved conflicts[] entry — fine
         question = questions_by_id.get(qid)
         if not isinstance(question, dict):
@@ -1035,8 +1068,9 @@ def find_unpersisted_conflict_resolutions(
                 "detail": (
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
                     "conflict per its exhaustive_declaration.stop_criteria."
-                    "conflict_resolution, but no resolved conflicts[] entry backs it "
-                    "and resolved_conflict_ids is empty"
+                    "conflict_resolution, but no resolved conflicts[] entry is linked "
+                    "to it (resolved_conflict_ids cites none, and no resolved conflict "
+                    "blocks this question)"
                 ),
             }
         )

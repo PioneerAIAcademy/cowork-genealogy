@@ -182,6 +182,8 @@ def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
     `kind == CONFLICT_UNPERSISTED_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CONFLICT_UNPERSISTED_KIND)
+
+
 @dataclass
 class ProvenanceReplay:
     """What `replay_provenance` recovers from a corpus of committed runs.
@@ -379,7 +381,7 @@ def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
     graduation decision (shadow → hard gate) is gated on for issue #1317."""
     affected = len({v["file"] for v in violations})
     return (
-        "\nconflict-unpersisted check (issue #1317, shadow): "
+        "\n§7.5 conflict-unpersisted check (issue #1317, shadow): "
         f"{len(violations)} concluded question(s) relying on an unpersisted "
         f"conflict resolution, across {affected} run(s)."
     )

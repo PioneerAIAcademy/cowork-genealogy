@@ -17,12 +17,12 @@ from harness.skill_invocation import (
     DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
     find_citation_nulling_in_conclusions,
-    find_unpersisted_conflict_resolutions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
+    find_unpersisted_conflict_resolutions,
     owning_skills,
     recently_succeeded,
     same_person_scored_ids,
@@ -1153,8 +1153,66 @@ def test_conflict_unpersisted_dedups_per_conclusion():
     research = _research_with_conflict_claim(
         conflict_resolution="Conflict resolved."
     )
-    # one (conclusion, question) pair → one violation
+    # the SAME (conclusion, question) listed twice must still yield one violation
+    # — exercises the `seen` guard, which a single-proof_summary fixture never hits
+    research["proof_summaries"].append(dict(research["proof_summaries"][0]))
     assert len(find_unpersisted_conflict_resolutions(research)) == 1
+
+
+def test_conflict_unpersisted_silent_when_resolved_conflict_blocks_the_question():
+    """Senior-review fix 1: a resolved conflicts[] entry can back a question via
+    its own blocks_question_ids WITHOUT being cited on resolved_conflict_ids. That
+    is a correctly-persisted conflict (viewer's Conflicts section populated) and
+    must not fire — reading only resolved_conflict_ids fired on it and emitted a
+    factually false 'no resolved entry backs it'."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="Ella Chase marriage conflict resolved.",
+        conflicts=[{"id": "c_001", "status": "resolved", "blocks_question_ids": ["q_001"]}],
+        resolved_conflict_ids=[],  # NOT cited on the proof_summary
+    )
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_silent_on_text_that_negates_a_resolution():
+    """Senior-review fix 2: conflict_resolution is a REQUIRED field, so 'absence of
+    negative words' defaulted to fire. Text that explicitly says the conflict is
+    unresolved / not met / partial is the CORRECT persistence for an unresolved
+    conflict and must stay silent."""
+    for phrase in (
+        "UNRESOLVED. Conflict c_001 cannot be resolved with the available records.",
+        "NOT MET.",
+        "PARTIAL.",
+        "Partially met.",
+        "Not met -- one identity thread remains open.",
+        "One unresolved conflict exists (c_001).",
+    ):
+        research = _research_with_conflict_claim(
+            conflict_resolution=phrase,
+            conflicts=[{"id": "c_001", "status": "unresolved"}],
+            resolved_conflict_ids=[],
+        )
+        assert find_unpersisted_conflict_resolutions(research) == [], (
+            f"should stay silent on negating text {phrase!r}"
+        )
+
+
+def test_conflict_unpersisted_silent_on_more_no_conflict_phrasings():
+    """Senior-review fix 3: honest 'no conflict' phrasings the exact/substring
+    lists miss are caught by requiring positive resolution language."""
+    for phrase in (
+        "N/A -- no evidence to conflict.",
+        "No active conflicts on q_001.",
+        "Yes -- no substantive conflicts identified.",
+        "Yes -- no genuine conflicts identified.",
+        "Yes.",
+        "All records agree.",
+    ):
+        assert (
+            find_unpersisted_conflict_resolutions(
+                _research_with_conflict_claim(conflict_resolution=phrase)
+            )
+            == []
+        ), f"should stay silent on {phrase!r}"
 
 
 def test_conflict_unpersisted_defensive_on_none_and_empty():
