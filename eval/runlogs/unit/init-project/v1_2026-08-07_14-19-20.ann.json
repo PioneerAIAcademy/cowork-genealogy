@@ -1,11 +1,6 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v1_2026-08-07_14-19-20.ann.json
   "run_log": "v1_2026-08-07_14-19-20.json",
   "annotator": "solomonbaidoo54@gmail.com",
-========
-  "run_log": "v1_2026-08-06_00-34-08.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v1_2026-08-06_00-34-08.ann.json
   "corrections": [
     {
       "test_id": "ut_init_project_010",
@@ -91,8 +86,8 @@
       "test_id": "ut_init_project_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
