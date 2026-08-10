@@ -14,6 +14,12 @@ const FS_COLLECTIONS_URL =
   "https://www.familysearch.org/service/search/hr/v2/collections";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
+// One un-retried request for the whole catalog (count=5000), so the budget
+// covers a large body streaming in full. Cold calls have been measured at 33s
+// and 36s, above the 30s default — those are slow successes today and a hard
+// failure at the default, with no second attempt behind them.
+const COLLECTIONS_TIMEOUT_MS = 60_000;
+
 // Module-level cache for the full collections response
 let cache: {
   token: string;
@@ -100,13 +106,17 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetchWithTimeout(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "User-Agent": BROWSER_USER_AGENT,
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-  });
+    COLLECTIONS_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error(

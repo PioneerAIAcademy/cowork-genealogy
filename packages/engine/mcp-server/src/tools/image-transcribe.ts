@@ -13,9 +13,13 @@ import type {
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// VLM OCR on a full page scan can legitimately take longer than a typical
-// JSON API call — give it more headroom than the default fetch timeout.
-const OCR_TIMEOUT_MS = 90_000;
+// VLM OCR on a full page scan is the slowest call this server makes, and the
+// budget has to clear a slow-but-genuine read without waiting out a hung one.
+// Across the committed e2e corpus a healthy transcription runs p90 79s / p95
+// 98s with a 167s maximum, and the image download it follows adds ~7s — so
+// 180s clears every real read with margin while still cutting the 190–316s
+// calls of the one run that hung. Sized in the spec, not guessed.
+const OCR_TIMEOUT_MS = 180_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
