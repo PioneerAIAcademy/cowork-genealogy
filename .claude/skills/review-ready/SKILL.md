@@ -215,6 +215,12 @@ Five rules on the writes:
   `needs-a-decision` verdict comes back before promotion, so there is nothing to
   move — you label it and it stays in Backlog, out of the junior pool. On a
   standing-pool run the item is already in Ready; report it for the swap.
+- **If he answers a fork while you have him, post it before applying labels.**
+  A ruling is an issue comment opening `**Ruling:**` — `/fill-ready` reads that
+  marker to separate answered items from waiting ones, and `/find-big-wins`
+  splices it into the body and drops the label. You put these questions to him
+  via `AskUserQuestion`, so you are the most likely place an answer is spoken
+  and then lost. Record it, then label.
 - **Never apply both `senior` and `needs-decision`.** They are different states
   with different remedies (`fill-ready` §6): one wants a person, the other wants
   an answer. An item carrying both tells the board neither.

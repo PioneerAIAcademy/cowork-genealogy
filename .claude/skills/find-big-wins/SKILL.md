@@ -78,6 +78,25 @@ If the lead has this week's output to hand, take the table from it. If not, do
 your report that the tax table was not re-derived and which numbers are
 therefore unavailable.
 
+## How this run is scoped
+
+Two invocations, because the two jobs have different cadences and should not bid
+against each other for the lead's attention.
+
+| Invocation | Does | When |
+|---|---|---|
+| `/find-big-wins` | Everything: §0, all three evidence layers, the subtraction hunt, the proposals | Weekly, after `/audit-board` |
+| `/find-big-wins decisions` | **§0 and the decision queue only** (§1's last section). No evidence layers, no subtraction hunt, no proposals | Midweek, or any time the queue has grown |
+
+The `decisions` run is the cheap one and should stay cheap — it prepares
+questions and closes out answered ones. If you find yourself sweeping the corpus
+or reading ADRs on a `decisions` run, you have drifted into the full pass.
+
+**Producers outnumber the consumer four to one.** `triage-standup`,
+`fill-ready` and `review-ready` all apply `needs-decision`, and they run daily;
+this skill is the only thing that removes it. A queue that only drains weekly
+grows by construction, which is what the `decisions` invocation exists to fix.
+
 ## 0. Carry forward before you look at anything new
 
 The ledger is `docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md`. Read
@@ -203,10 +222,41 @@ Usually one of four shapes:
   disappears once it is written down.
 
 Work these the same way you work a proposal: bring the evidence, the options, the
-recommendation and the counter-argument, so he can answer in a sitting. An
-answered item is yours to close out: splice his answer into the body, then drop
-the label so it ranks in a junior pool like anything else. Nothing else removes
-it, and both numbers below are wrong if you skip this.
+recommendation and the counter-argument, so he can answer in a sitting.
+
+### The answer lives on the issue, not in a conversation
+
+**A ruling is recorded as an issue comment opening `**Ruling:**`.** Whoever hears
+it writes it — if he answers in chat, in this session or any other, post it
+before doing anything else. An answer that exists only in a transcript is lost
+to every future run, including yours.
+
+That convention is also what makes the queue's true state readable, and it
+splits into two numbers with opposite remedies. **Split the queue before you
+work it:**
+
+```sh
+# waiting on him — no ruling recorded. These are yours to prepare.
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --label needs-decision --json number,title,comments \
+  -q '.[] | select([.comments[].body | startswith("**Ruling:**")] | any | not)
+      | "#\(.number)  \(.title)"'
+
+# answered, waiting on close-out. These are yours to finish, and they come first.
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --label needs-decision --json number,title,comments \
+  -q '.[] | select([.comments[].body | startswith("**Ruling:**")] | any)
+      | "#\(.number)  \(.title)"'
+```
+
+"Ten waiting on him" and "ten answered but unapplied" are opposite problems —
+one is his attention, the other is this skill not finishing its job — and
+without the marker they are the same number.
+
+**Close out every answered item before preparing a single new question.** Splice
+the ruling into the body so the next reader gets the decision rather than the
+open fork, then drop the label so it ranks in a junior pool like anything else.
+Nothing else removes it, and both numbers above are wrong if you skip this.
 
 ```sh
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \

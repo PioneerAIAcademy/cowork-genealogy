@@ -327,6 +327,17 @@ gh issue create --label developer|genealogist [--label icebox] \
 ```
 
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
+
+**And if he answers one in the room, post the answer before you move on.**
+Standup is where rulings get spoken and lost. A ruling is an issue comment
+opening `**Ruling:**` — that marker is what lets `/fill-ready` tell an
+answered item from a waiting one, and what lets `/find-big-wins` close it
+out. An answer that exists only in the standup thread reaches nobody.
+
+```sh
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --body "**Ruling:** <his answer, in his words>"
+```
 He takes no issues; the label is the routing. Reach for `senior` instead only
 when the item would still be hard after he answers.
 

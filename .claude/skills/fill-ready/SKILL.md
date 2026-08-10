@@ -683,9 +683,13 @@ report; the genealogist one is newer and easier to forget.
 ### Reporting — your job is the arithmetic, not the routing
 
 ```sh
+# `needs-decision`, split by whether a ruling has been recorded. A ruling is an
+# issue comment opening `**Ruling:**` (the convention `/find-big-wins` owns).
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
-  --label needs-decision --json number,title,updatedAt,labels \
-  -q '.[] | "\(.updatedAt[0:10])\tDECISION\t#\(.number)\t\(.title)"' | sort
+  --label needs-decision --json number,title,updatedAt,comments \
+  -q '.[] | (if ([.comments[].body | startswith("**Ruling:**")] | any)
+             then "ANSWERED" else "WAITING" end) as $s
+      | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label senior --json number,title,updatedAt,assignees,labels \
   -q '.[] | "\(.updatedAt[0:10])\tSENIOR\t\(.assignees|length)\t#\(.number)\t\(.title)"' | sort
@@ -693,9 +697,13 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
 
 Report each separately — they have different remedies:
 
-- **`needs-decision` size and trend.** This queue is answered, not worked. If it
-  is growing, the lead is the bottleneck and no amount of assigning helps. That
-  line goes at the top of the report.
+- **`needs-decision`, split `WAITING` / `ANSWERED`.** These are opposite
+  problems and the single total hides both. A growing **`WAITING`** count means
+  the lead is the bottleneck and no amount of assigning helps — that line goes
+  at the top of the report. A non-zero **`ANSWERED`** count means something
+  else: he already ruled and `/find-big-wins` has not closed the item out, so
+  the work is unblocked and nobody knows. Name those issues explicitly; they are
+  the cheapest thing on the whole board to unstick.
 - **`senior` size, trend, and how many are unassigned.** This queue is worked. A
   growing `senior` queue with seniors idle is a routing problem; a growing one
   with every senior busy is a capacity problem. Say which.
