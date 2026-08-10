@@ -1,6 +1,5 @@
 ---
 name: record-extraction
-model: claude-sonnet-4-6
 description: >-
   Extracts GPS-conformant assertions from genealogical records and owns
   their evidence classifications. Acquires and triages the record (search
@@ -221,6 +220,11 @@ next skill in the workflow (check-warnings for new tree persons, then
 person-evidence) or return to the orchestrator that invoked you.
 Presenting a summary and yielding with records still unextracted is a
 failure — the summary is a progress marker, not a stopping point.
+
+**Exception — a `record-extractor` spawn failure:** report it and stop;
+do not extract the record yourself or retry another way. This rule assumes
+the agent ran, so a failed spawn is the one case where a still-unextracted
+record is not a reason to keep going.
 
 ## Tool availability
 
