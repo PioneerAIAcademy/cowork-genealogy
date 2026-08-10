@@ -6,7 +6,14 @@
 
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "./http.js";
 import { toArk, arkToUrl } from "./ark.js";
+
+// fetchWithTimeout's budget covers headers and body together, and a full-size
+// page scan at typical throughput needs more than the 30s default to finish
+// streaming. Give it the same 90s as the OCR call it feeds
+// (image-transcribe.ts's OCR_TIMEOUT_MS).
+const IMAGE_FETCH_TIMEOUT_MS = 90_000;
 
 // An imageId is a digitized-image identifier of the form NUMBER_NUMBER
 // (an image group number, an underscore, and an image sequence number,
@@ -147,13 +154,17 @@ async function attemptFsImageFetch(
   url: string,
   token: string
 ): Promise<FetchAttempt> {
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "image/*,*/*",
-      "User-Agent": BROWSER_USER_AGENT,
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "image/*,*/*",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-  });
+    IMAGE_FETCH_TIMEOUT_MS
+  );
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
@@ -166,6 +177,8 @@ async function attemptFsImageFetch(
       nonImageContentType: rawContentType,
     };
   }
+  // A mid-stream abort is translated by fetchWithTimeout itself — it wraps the
+  // body readers, not just the fetch — so this needs no local handling.
   const buffer = await response.arrayBuffer();
   return {
     ok: true,

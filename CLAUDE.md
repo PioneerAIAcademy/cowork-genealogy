@@ -53,7 +53,19 @@ The MCP code is HTTP-only for all of these — it does not import or
 depend on any Python code from those services. The base URL for the
 wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
-instance); end users do not need to set this for normal operation.
+instance).
+
+**There is no public deployment yet, so the defaults are a developer's
+personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
+`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
+one machine's tailnet, and the hosted path gives an operator no way to
+override them — `hosted_config()` does not write either key, so
+redirecting hosted traffic needs an engine rebuild. Measured over the
+committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
+calls fail, across 17 distinct days. The agent gets an actionable error
+and then quietly ships a thinner answer, so the user sees nothing. Do not
+write "end users do not need to set this" — that was true only in the
+sense that they cannot.
 
 ## Repository layout
 
@@ -524,7 +536,9 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
+| `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
+| `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
@@ -658,6 +672,19 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
+- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
+  an external service. Node's global `fetch` never times out on its own; a
+  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
+  sidecar, OpenRouter) hangs the call forever otherwise — confirmed live when
+  `volume_search` hung for 236 minutes. Every tool that touches
+  the network calls this instead of the global `fetch` directly; it is the
+  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+  Default timeout 30s; pass a longer one as the third argument (90s for
+  `image_transcribe`'s OCR call and `fs-image-fetch.ts`'s multi-MB scan). The
+  budget covers headers **and** body — size it for the whole transfer, not the
+  round-trip to first byte. A body still streaming when the clock fires is
+  aborted mid-read, and the wrapper turns that into the same readable error,
+  so call sites never handle it themselves.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`

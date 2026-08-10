@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   WikipediaAPIResponse,
   WikipediaSearchResult,
@@ -14,7 +15,7 @@ export async function wikipediaSearch(
 ): Promise<WikipediaSearchResult> {
   const url = `${WIKIPEDIA_API_BASE}/${encodeURIComponent(input.query)}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "genealogy-mcp-server/0.0.1",
     },

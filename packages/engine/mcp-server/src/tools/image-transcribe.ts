@@ -4,6 +4,7 @@ import {
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
 import { saveSourceImage } from "../utils/image-store.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -11,6 +12,10 @@ import type {
 } from "../types/image-transcribe.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+// VLM OCR on a full page scan can legitimately take longer than a typical
+// JSON API call — give it more headroom than the default fetch timeout.
+const OCR_TIMEOUT_MS = 90_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
@@ -81,31 +86,35 @@ export async function imageTranscribeTool(
 
   let response: Response;
   try {
-    response = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": APP_REFERER,
-        "X-Title": APP_TITLE,
+    response = await fetchWithTimeout(
+      OPENROUTER_URL,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": APP_REFERER,
+          "X-Title": APP_TITLE,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          // Privacy: FamilySearch scans are PII — do not let the provider
+          // retain prompts for training. See spec §11.
+          provider: { data_collection: "deny" },
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+        }),
       },
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        // Privacy: FamilySearch scans are PII — do not let the provider
-        // retain prompts for training. See spec §11.
-        provider: { data_collection: "deny" },
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-      }),
-    });
+      OCR_TIMEOUT_MS
+    );
   } catch (error) {
     const cause = error instanceof Error ? error.message : String(error);
     throw new Error(`Could not reach OpenRouter. (${cause})`);
