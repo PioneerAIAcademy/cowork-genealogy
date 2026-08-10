@@ -92,8 +92,10 @@ sidecar, feedback) — never the stream.
   `wiki_read` and `wiki_place_page` are now HTTP clients against the hosted
   `wiki-query-api`, the same as `wiki_search` — there is no corpus to bake and no
   `wikiMarkdownDir`. All three work in the sandbox wherever the API is reachable.
-- **1h Hobby cap:** a continuously-active session force-pauses at ~1h (resumes in
-  ~1s; a mid-turn pause breaks that turn). Proactive between-turn pause deferred.
+- **1h Hobby cap:** a session force-pauses after ~1h of *continuous running*, and
+  the window resets on resume, so total session wall-clock is unbounded (measured
+  2026-08-09). Resume takes ~1s. Whether a mid-turn pause breaks the turn is
+  asserted, not measured. Proactive between-turn pause deferred.
 - **Delete-janitor** (abandoned-sandbox GC) deferred — use the explicit DELETE.
 - `ws_signing_key` defaults to a dev value. Since issue #1123 this is enforced rather
   than documented: an https `PUBLIC_URL` plus a default `ws_signing_key` (or

@@ -131,10 +131,13 @@ today); reconnect re-syncs via `GET /state`.
 
 ## 3. Lifecycle — two separated timers, no reaper
 
-- **idle → pause** (compute billing stops): E2B `lifecycle:{ onTimeout:'pause' }`
-  at create. No control-plane sweep, cron, or advisory lock. This replaces the
-  `_idle_suspend_loop` (`main.py`) and the scheduled-reaper idea outright — the
-  platform does it.
+- **running-timeout → pause** (compute billing stops): E2B
+  `lifecycle:{ onTimeout:'pause' }` at create. No control-plane sweep, cron, or
+  advisory lock. This replaces the `_idle_suspend_loop` (`main.py`) and the
+  scheduled-reaper idea outright. **It fires on continuous runtime, not on
+  idleness** — E2B has no idle timer, so an abandoned session keeps a *running*
+  microVM until its window expires. Pausing on idle would need a control-plane
+  job, and we did not build one.
 - **abandoned → delete** (storage reclaimed): a low-frequency janitor —
   `SELECT Project WHERE last_active < now − retention_days → provider.delete(sandbox_id)
   → mark deleted`. Keyed on the DB timestamp the schema already has
@@ -188,6 +191,8 @@ but did not say:
 - **`_RUNNING_TIMEOUT_S = 3600` is the maximum E2B permits on this tier, not a
   chosen backstop.** `POST /sandboxes {timeout: 7200}` fails
   `400 "Timeout cannot be greater than 1 hours"`. On Pro it must become `86400`.
+
+**What to do about it:**
 
 - *Optional, alpha-skippable:* the sandbox server pauses proactively **between
   turns** near ~55 min so the forced pause never lands mid-turn. Resume restores
@@ -331,13 +336,14 @@ generous idle timeout (~30 min, under the 1 h Hobby cap).
 > `on_timeout` at `_RUNNING_TIMEOUT_S = 3600` — the tier maximum, not a chosen
 > ~30 min. So an abandoned session holds a **running** microVM for up to an hour
 > rather than pausing after thirty minutes, and the deferred delete-janitor never
-> reclaims the paused ones. Both halves are the live cost leak.
+> reclaims the paused ones. Both halves are the live cost leak (issue #1120).
 
 **Not spiked (rely on E2B docs / smoke later):** the real relay+`agent_runner`
 streaming (the echo server stood in for it); a multi-minute *no-ping* idle; the
-real `genealogy-agent` image (ran on `base`). ~~the 1 h continuous cap~~ —
-**measured 2026-08-09 against the live API; see §5.** The vendor docs were right
-about the cap and incomplete about the reset.
+real `genealogy-agent` image (ran on `base`). The 1 h continuous cap is no longer
+on this list: it was measured against the live API on 2026-08-09 — see "The Hobby
+1-hour cap" above. The vendor docs were right about the cap and incomplete about
+the reset.
 
 **Conclusion: the Ably parachute can be dropped** once the sandbox-WS path lands.
 

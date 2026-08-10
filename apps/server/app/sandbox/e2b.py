@@ -268,7 +268,8 @@ class E2BProvider(SandboxProvider):
             return E2BSandbox(None, sandbox_id=sandbox_id, state=SandboxState.MISSING)
         # Give the session a fresh window on each /connect so a long turn isn't
         # paused mid-flight (connect() can reset the VM timeout to a short
-        # default). on_timeout=pause is still the idle backstop. Best-effort.
+        # default). on_timeout=pause is still the backstop — but it fires on
+        # continuous runtime, not on idleness. Best-effort.
         try:
             await sb.set_timeout(_RUNNING_TIMEOUT_S)
         except Exception:
