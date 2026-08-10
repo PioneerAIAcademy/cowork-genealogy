@@ -3,8 +3,8 @@
 #
 # `make install-hooks` / InstallHooks.bat copies this stub to .git/hooks/<name>
 # for each hook we ship. It dispatches on its own filename, so one file serves
-# every hook: installed as .git/hooks/commit-msg it runs the tracked
-# scripts/git-hooks/commit-msg.
+# every hook: installed as .git/hooks/post-checkout it runs the tracked
+# scripts/git-hooks/post-checkout.
 #
 # Why a copied stub rather than a symlink to the real hook: Windows file
 # symlinks need admin rights or Developer Mode (`mklink /J` junctions sidestep

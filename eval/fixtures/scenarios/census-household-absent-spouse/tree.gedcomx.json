@@ -1,0 +1,39 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "George", "surname": "Ackerman", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "primary": true, "date": "~1818", "place": "Pennsylvania" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Catherine", "surname": "Ackerman", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "primary": true, "date": "~1822", "place": "Pennsylvania" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        { "ref": "S2", "page": "Marriage record — George Ackerman & Catherine Reis, 12 Apr 1845, Berks County, PA", "quality": 3 }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1860 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "Pennsylvania, County Marriages", "author": "Berks County Clerk of the Orphans' Court" }
+  ]
+}

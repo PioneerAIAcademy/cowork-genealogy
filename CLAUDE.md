@@ -6,7 +6,7 @@ For developer-facing build, test, and feature-addition recipes, see
 [DEVELOPMENT.md](./DEVELOPMENT.md). For how the system fits together and
 which sites a given change touches, see
 [docs/architecture.md](./docs/architecture.md) — its "If you're asked to…"
-blocks are the map, and its §9.4 lists what nothing checks. This file
+blocks are the map, and its §9.4 points at what nothing checks. This file
 covers architecture, conventions, and rules — what Claude needs to know to
 make correct changes; on conflict, this file wins.
 
@@ -126,11 +126,38 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
-- **Deferring work creates an issue, not a file entry.** In the same PR that
-  defers something, file it — one command, no board write:
+- **Fold it into the current PR unless there's a real reason not to.** Finding
+  a related gap while working a PR is not by itself a reason to file a new
+  issue — it's a reason to ask "does landing *this* PR require fixing that
+  too, or can I just fix it now while I'm here?" Default to yes. A stray
+  ticket is easy to create and easy to forget; a PR that actually closes the
+  gap it found needs nothing else to remember it. File a new issue instead
+  only when at least one of these is true, and say which when you file:
+  the fix needs a different reviewer or skill (a code fix surfaced during a
+  genealogist's fixture work, or vice versa); it would blow the PR's own
+  scope enough to slow its review meaningfully; it depends on something not
+  yet decided (a Gate-2 question only the lead can answer); or it's a
+  genuinely separate skill-eval slot (§ "Gate 4" in `/fill-ready`) that would
+  force a second paid run if bundled. "I noticed this in passing" and "I'm
+  not sure if this is in scope" are not reasons — they're the two most common
+  ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
+  ask rather than defaulting to filing.
+- **Deferring work creates an issue, not a file entry.** Filing is the last
+  resort, not the default. Stop at the first of these that fits:
+
+  1. **Fold it into the current PR** — the rule above. Default.
+  2. **Comment on an existing issue that covers it.** Search before filing:
+     `gh issue list --state open --search "<path or symbol>"`, and grep the
+     `**Touches:**` lines. Adding to the issue that already owns the file beats
+     opening a second one against it.
+  3. **File with `--label icebox`** when no decision sits behind it.
+  4. **File as normal work.**
+
+  When you do file — in the same PR that defers it — one command, no board write:
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
+    [--label nothing-checks] \
     --title "…" --body "**Touches:** path/one.ts, path/two.py
 
   …"
@@ -140,14 +167,16 @@ mocks (no E2B/Anthropic/OAuth needed).
   change, when you know them. Overlap between issues here is almost never
   same-title — it is two issues wanting different lines in one file — and that
   line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
-  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
-  fit against ~180 open issues is that pass's job, not the filer's.
+  pass reads it, no gate does. One search is the whole obligation — do not agonise
+  past it. `/audit-board` judges fit across the whole open pool, which is the only
+  vantage point that sees every collision.
 
   | Label | Use for |
   |---|---|
   | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
   | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
   | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+  | `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
 
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
@@ -164,8 +193,10 @@ mocks (no E2B/Anthropic/OAuth needed).
   `TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
   "Follow-on work you find along the way", which owns these rules.
 - **Verification is automated, not a manual playbook.** New tools are
-  verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
-  and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
+  verified by the eval harness (`eval/`, `make harness-test`,
+  `make eval-skill SKILL=<name>`, `eval/tests/e2e/` — **not** `make test`,
+  which is `test-js` + `server-test` and reaches neither the harness nor
+  the engine) and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
   by writing a per-tool testing guide. The three surviving guides in
   `docs/testing-guides/` cover setup paths the harness can't
   (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
@@ -293,8 +324,10 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port, and it is gated on
-calibrating the shadow window first — the raw-write half has shipped.
+design; it exists. What is missing is a production port into the shipped
+`hooks/` hook — the raw-write half has shipped. That port is **not** gated on
+calibrating the shadow window; the issue that owned the calibration closed
+`not planned` on 2026-08-09.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -415,9 +448,16 @@ change, with different (and easy-to-undercount) site lists:
 - **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
-  and `packages/schema/schemas/`), the matching TS union in
-  `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
-  prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
+  and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
+  prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
+  union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
+  own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
+  exception is the five unions defined inline in `research.schema.json` rather
+  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
+  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
+  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
+  they move. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
   the `evidence_type` row.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree

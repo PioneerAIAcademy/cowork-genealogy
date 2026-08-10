@@ -5,7 +5,14 @@
     "name": "Extract assertions from 1850 census household (record-in-user-message)",
     "type": "positive",
     "description": "Extract assertions from a 1850 census household provided in the user message. The 1850 census does NOT have a relationship column — relationships must be inferred from household position, making them indirect evidence. Tests assertion atomicity (one fact per assertion), informant identification (the household member who answered, not the enumerator), and evidence type accuracy (indirect for inferred relationships).",
-    "tags": ["census", "1850", "extraction", "indirect-evidence", "household", "relationship-inferred"]
+    "tags": [
+      "census",
+      "1850",
+      "extraction",
+      "indirect-evidence",
+      "household",
+      "relationship-inferred"
+    ]
   },
   "input": {
     "user_message": "Extract assertions from this 1850 census record for the Thomas Flynn household in Schuylkill County: Thomas Flynn, age 32, male, born Ireland, miner; Mary Flynn, age 28, female, born Ireland; Patrick Flynn, age 5, male, born Ireland.",
@@ -22,5 +29,73 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "miner",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "age",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "age",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "evidence_type": "indirect",
+      "optional": true
+    }
+  ]
 }
