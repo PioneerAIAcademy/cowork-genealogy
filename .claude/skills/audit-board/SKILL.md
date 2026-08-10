@@ -282,8 +282,8 @@ git log --all --oneline -S '<symbol or string>'          # only if main came bac
 
 Name `origin/main` explicitly. `HEAD` is whichever branch you are standing on,
 and a worktree is the normal place to run this from — testing against it answers
-a different question than the one you are asking. Do not test a sha with
-`merge-base --is-ancestor` either: this repo squash-merges, so a merged branch's
+a different question than the one you are asking. Do not test whether the sha is
+an ancestor of `main` either: this repo squash-merges, so a merged branch's
 commits are never ancestors of `main`, and every shipped PR reads as unmerged.
 
 When a body quotes a symbol, test id or string you cannot find on `main`,
