@@ -158,8 +158,12 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     return _scan_stored(
         paths,
         lambda v: "detail" in v
-        and v.get("kind") not in (CITATION_NULLING_KIND, CONFLICT_UNPERSISTED_KIND),
-        and v.get("kind") not in (CITATION_NULLING_KIND, PERSON_EVIDENCE_DENY_KIND),
+        and v.get("kind")
+        not in (
+            CITATION_NULLING_KIND,
+            CONFLICT_UNPERSISTED_KIND,
+            PERSON_EVIDENCE_DENY_KIND,
+        ),
     )
 
 
