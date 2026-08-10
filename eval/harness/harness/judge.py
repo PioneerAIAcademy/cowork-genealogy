@@ -281,9 +281,21 @@ def render_prompt_parts(
 
     template = judge_prompt_template()
     # The template has a clear boundary after the rubric section, before
-    # the per-test context — see judge/prompt.md. Split there so the
+    # the first per-test slot — see judge/prompt.md. Split there so the
     # stable prefix can be cached.
-    split_marker = "# Per-test context"
+    #
+    # This marker must name the first heading whose section contains a
+    # VARYING slot, and nothing above it may contain one. Everything
+    # before the marker is substituted from `stable_slots` ({rubric}
+    # only) and everything after from `varying_slots`; an unmatched slot
+    # is passed through verbatim by the `m.group(0)` fallback below. So a
+    # marker set too late silently ships a prompt containing the literal
+    # text "{user_message}" and puts cache_control on per-test content.
+    # It was "# Per-test context" until that section moved down beside
+    # "How to report" (#1403), which left "# Before-state" first.
+    # Pinned by test_render_prompt_parts_splits_at_context_boundary and
+    # test_render_prompt_parts_leaves_no_unsubstituted_slot.
+    split_marker = "# Before-state"
     if split_marker not in template:
         # Defensive fallback: if the template structure changes, render
         # everything as one big varying slot. Loses caching but stays
@@ -445,7 +457,9 @@ def grade(
                 "Bump max_tokens (currently 4096) or shorten rubric/criteria."
             )
         try:
-            dimensions, extraction_warnings = _extract_dimensions(response, rubric)
+            dimensions, extraction_warnings = _extract_dimensions(
+                response, rubric, tool_calls=tool_calls
+            )
             break
         except JudgeError as e:
             last_parse_error = e
@@ -565,14 +579,21 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
 
 
 def _extract_dimensions(
-    response, rubric: Rubric
+    response, rubric: Rubric, *, tool_calls: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Parse and validate the judge's submit_grading tool_use.
 
     `rubric` supplies the authoritative set of valid `source: "rubric"`
     dimension names for this skill (#1361) — every call site already holds
     one (`grade()` takes it as a parameter), so this is a threading change,
-    not new plumbing.
+    not new plumbing. `tool_calls` is the run's MCP call list, threaded the
+    same way for the Tool Arguments N/A rule below (#1406).
+
+    `tool_calls` is deliberately a REQUIRED keyword argument with no
+    default. A default of `[]` would read as "this run made zero MCP tool
+    calls" at every call site that had not been updated — silently firing
+    the N/A coercion across the whole corpus, including the replay test
+    that exists to measure it.
 
     Returns `(dimensions, warnings)`. Two different failure shapes here,
     by design (#1361):
@@ -743,6 +764,62 @@ def _extract_dimensions(
             continue
         kept.append(d)
     dims = kept
+
+    # Enforce the Tool Arguments N/A rule instead of asking for it (#1406).
+    #
+    # judge/prompt.md states it as an instruction: "the test made zero MCP
+    # tool calls. Report `score: null`." The caller already knows the
+    # answer — `grade()` takes `tool_calls` and renders it into the very
+    # prompt that asks the question — so a run that made no MCP calls has
+    # no arguments to grade and `null` is the only truthful value. The
+    # judge ignores the rule some fraction of the time: measured over the
+    # 43 search-records run logs that were ever in main's own tree, 4
+    # entries scored an integer with zero tool calls (`ut_search_records_003`
+    # in v1_2026-08-01_13-11-14 and v1_2026-08-06_01-03-04, `_005` in
+    # v1_2026-06-23_07-06-12 and v1_2026-07-23_08-43-26).
+    #
+    # Coerce with a warning, never raise — the shape #1361 settled on. A
+    # raise enters grade()'s 3-attempt resample loop, attempt 0 is
+    # temperature-pinned so the model repeats a prompt-correlated mistake,
+    # and a judge that never produces dimensions sets judge_skipped=True,
+    # which _compute_outcome turns into a hard `fail`. Coerce rather than
+    # drop, because annotations key on (test_id, dimension_source,
+    # dimension_name) and dropping the entry would fork that join key.
+    #
+    # KNOWN CONSEQUENCE, deliberate: _compute_outcome has two `1 in scores`
+    # gates — orchestrator.py's positive-test gate, and the out-of-scope
+    # negative gate for `correct_skill: []` tests, where the judge's base
+    # dimensions are the only outcome signal. Coercing a 1 to null on
+    # either shape turns a recorded `fail` into `pass`. That is intended:
+    # a Tool Arguments score on a run with no tool calls grades something
+    # that does not exist, and "the skill did work it should not have" or
+    # "a required action never happened" belong on Correctness/Completeness
+    # per prompt.md's negative-test and Correctness sections. Pinned by
+    # test_na_rule_coerces_on_positive_test and
+    # test_na_rule_coerces_on_out_of_scope_negative.
+    if not tool_calls:
+        for d in dims:
+            if (
+                d.get("source") == "base"
+                and d.get("name") == "Tool Arguments"
+                and d.get("score") is not None
+            ):
+                warnings.append({
+                    "kind": "coerced_tool_arguments_to_na",
+                    "advisory": (
+                        f"judge scored Tool Arguments {d['score']!r} on a run "
+                        f"that made zero MCP tool calls; coerced to null per "
+                        f"the N/A rule in judge/prompt.md"
+                    ),
+                    "name": d["name"],
+                    # The score the judge tried to emit, and its reasoning —
+                    # preserved for the same reason #1361 preserves a dropped
+                    # dimension's: a silently-vanished 1 or 2 is exactly what
+                    # makes this class of defect untrendable.
+                    "score": d.get("score"),
+                    "rationale": d.get("rationale"),
+                })
+                d["score"] = None
 
     # Enforce per-base-dimension null policy. The grading-tool schema
     # accepts null on every score; that flexibility exists for Tool

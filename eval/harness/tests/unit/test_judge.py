@@ -44,6 +44,19 @@ def record_extraction_rubric():
 # rubric-name validation has nothing to check against.
 _NO_RUBRIC = empty_rubric("test-skill")
 
+# A run that made at least one MCP call. `_extract_dimensions` takes
+# `tool_calls` as a required keyword argument (#1406) and coerces Tool
+# Arguments to null when it is empty, so every test that is NOT about the
+# N/A rule passes this and keeps its pre-#1406 meaning exactly. Tests that
+# ARE about the rule pass `[]` explicitly.
+_SOME_TOOL_CALLS = [
+    {
+        "tool": "mcp__genealogy__record_search",
+        "args": {"surname": "Flynn"},
+        "matched": {"kind": "fixture", "name": "record-search-flynn"},
+    }
+]
+
 
 def test_prompt_hash_is_sha256_hex():
     h = judge.judge_prompt_hash()
@@ -113,7 +126,7 @@ def test_extract_dimensions_happy_path():
         input={"dimensions": _base_dims_with_tool_arguments_null()},
     )
     response = SimpleNamespace(content=[tool_block])
-    dims, warnings = judge._extract_dimensions(response, _NO_RUBRIC)
+    dims, warnings = judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
     names = [d["name"] for d in dims]
     assert names == ["Correctness", "Completeness", "Tool Arguments"]
     assert warnings == []
@@ -133,7 +146,7 @@ def test_extract_dimensions_strips_unknown_fields():
         type="tool_use", name="submit_grading", input={"dimensions": dims},
     )
     response = SimpleNamespace(content=[tool_block])
-    out, warnings = judge._extract_dimensions(response, _NO_RUBRIC)
+    out, warnings = judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
     for d in out:
         assert set(d) <= {"source", "name", "score", "rationale"}, d
     assert [d["name"] for d in out] == [
@@ -151,7 +164,7 @@ def test_extract_dimensions_rejects_missing_tool_arguments():
     )
     response = SimpleNamespace(content=[tool_block])
     with pytest.raises(judge.JudgeError, match="Tool Arguments"):
-        judge._extract_dimensions(response, _NO_RUBRIC)
+        judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
 
 
 def test_extract_dimensions_rejects_null_score_on_correctness():
@@ -164,7 +177,7 @@ def test_extract_dimensions_rejects_null_score_on_correctness():
     )
     response = SimpleNamespace(content=[tool_block])
     with pytest.raises(judge.JudgeError, match="null"):
-        judge._extract_dimensions(response, _NO_RUBRIC)
+        judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
 
 
 def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
@@ -177,30 +190,158 @@ def test_extract_dimensions_accepts_integer_score_on_tool_arguments():
         type="tool_use", name="submit_grading", input={"dimensions": dims},
     )
     response = SimpleNamespace(content=[tool_block])
-    out, warnings = judge._extract_dimensions(response, _NO_RUBRIC)
+    out, warnings = judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
     ta = next(d for d in out if d["name"] == "Tool Arguments")
     assert ta["score"] == 2
     assert warnings == []
 
 
+# --- #1406: Tool Arguments N/A rule, enforced rather than requested -------
+#
+# judge/prompt.md asks the judge to report `null` when a run made zero MCP
+# tool calls. It complies most of the time and not always. `_extract_dimensions`
+# now settles it from the caller's own `tool_calls` list. The four cells of
+# (zero calls?) x (null score?) are pinned below, plus both outcome gates.
+
+
+def _na_case(score, *, tool_calls):
+    """Run one (tool_calls, Tool Arguments score) combination through
+    extraction. Returns (tool_arguments_dimension, warnings)."""
+    dims = _base_dims_with_tool_arguments_null()
+    dims[2]["score"] = score
+    dims[2]["rationale"] = "judge's own account of the tool arguments"
+    response = SimpleNamespace(content=[SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )])
+    out, warnings = judge._extract_dimensions(
+        response, _NO_RUBRIC, tool_calls=tool_calls
+    )
+    return next(d for d in out if d["name"] == "Tool Arguments"), warnings
+
+
+def test_na_rule_coerces_integer_score_when_no_tool_calls():
+    """The defect #1406 was filed for: zero MCP calls, judge reports 3."""
+    ta, warnings = _na_case(3, tool_calls=[])
+    assert ta["score"] is None
+    assert len(warnings) == 1
+    w = warnings[0]
+    assert w["kind"] == "coerced_tool_arguments_to_na"
+    assert w["name"] == "Tool Arguments"
+    # The discarded draw is preserved, or the defect stays untrendable —
+    # the same reason #1361 preserves a dropped dimension's score.
+    assert w["score"] == 3
+    assert w["rationale"] == "judge's own account of the tool arguments"
+
+
+def test_na_rule_silent_when_judge_already_reported_null():
+    """The overwhelmingly common path — 652 of 1853 committed draws made
+    zero tool calls. A warning here would be noise on every one of them."""
+    ta, warnings = _na_case(None, tool_calls=[])
+    assert ta["score"] is None
+    assert warnings == []
+
+
+def test_na_rule_leaves_integer_score_alone_when_tool_calls_happened():
+    """The fail-open direction. A coercion that fired whenever the list
+    merely looked empty would null out real gradings across the corpus."""
+    ta, warnings = _na_case(2, tool_calls=_SOME_TOOL_CALLS)
+    assert ta["score"] == 2
+    assert warnings == []
+
+
+def test_na_rule_leaves_null_alone_when_tool_calls_happened():
+    """Null with calls present is odd but permitted today, and #1406 does
+    not change that. Pinned so the change stays visibly scoped."""
+    ta, warnings = _na_case(None, tool_calls=_SOME_TOOL_CALLS)
+    assert ta["score"] is None
+    assert warnings == []
+
+
+def test_na_rule_coercion_flips_a_positive_test_outcome():
+    """DELIBERATE consequence, pinned so it reads as a decision.
+
+    orchestrator._compute_outcome fails a positive test the moment any
+    dimension scores 1. Coercing a zero-tool-call Tool Arguments 1 to null
+    removes it from that list, so `fail` becomes `pass`. That is intended:
+    there are no arguments to grade on a run that called no tool, and "a
+    required action never happened" belongs on Correctness/Completeness
+    per judge/prompt.md's Correctness section.
+    """
+    from harness.orchestrator import _compute_outcome
+    from harness.loader import TestSpec
+
+    ta, warnings = _na_case(1, tool_calls=[])
+    assert ta["score"] is None
+    assert warnings[0]["score"] == 1
+
+    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    before = _compute_outcome(
+        spec=spec, validators_passed=True, aborted_reason=None, activated=True,
+        skills_invoked=["citation"],
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": 1}],
+    )
+    after = _compute_outcome(
+        spec=spec, validators_passed=True, aborted_reason=None, activated=True,
+        skills_invoked=["citation"],
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": None}],
+    )
+    assert before == "fail"
+    assert after == "pass"
+    assert TestSpec is not None  # import guard: the spec shape is real
+
+
+def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
+    """The second outcome gate, and the shape most exposed to it.
+
+    _compute_outcome has TWO `1 in scores` gates. The other one governs
+    out-of-scope negatives (`correct_skill: []`), where the judge's base
+    dimensions are the ONLY outcome signal because "no skill fired" holds
+    whether the model declined cleanly or answered the request itself.
+
+    ut_search_wikipedia_008 is the corpus's only such test, and passing
+    means no skill acted — so making zero MCP tool calls is its correct
+    behaviour, and it has made zero in all 8 of its historical run logs.
+    Tool Arguments drew null in every one, so this flip has no instances;
+    it is pinned because a single 1 there would silently turn `fail` into
+    `pass` on the one test whose job is catching a skill that answered
+    something it should have ignored.
+    """
+    from harness.orchestrator import _compute_outcome
+
+    spec = SimpleNamespace(
+        type="negative", skill="search-wikipedia",
+        negative={"correct_skill": []},
+    )
+    kw = dict(
+        spec=spec, validators_passed=True, aborted_reason=None,
+        activated=False, skills_invoked=[],
+    )
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": 1}], **kw
+    ) == "fail"
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": None}], **kw
+    ) == "pass"
+
+
 def test_extract_dimensions_rejects_zero_tool_uses():
     response = SimpleNamespace(content=[SimpleNamespace(type="text", text="foo")])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response, _NO_RUBRIC)
+        judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
 
 
 def test_extract_dimensions_rejects_multiple_tool_uses():
     tu = SimpleNamespace(type="tool_use", name="submit_grading", input={"dimensions": []})
     response = SimpleNamespace(content=[tu, tu])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response, _NO_RUBRIC)
+        judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
 
 
 def test_extract_dimensions_rejects_wrong_tool_name():
     bad = SimpleNamespace(type="tool_use", name="other_tool", input={})
     response = SimpleNamespace(content=[bad])
     with pytest.raises(judge.JudgeError):
-        judge._extract_dimensions(response, _NO_RUBRIC)
+        judge._extract_dimensions(response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS)
 
 
 # --- #1361: rubric dimension name validation ----------------------------
@@ -288,7 +429,8 @@ def test_extract_dimensions_accepts_correctly_cased_rubric_dimensions(
          "rationale": "correct casing, matches the rubric.md heading"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     rubric_names = [d["name"] for d in out if d["source"] == "rubric"]
     assert rubric_names == [
@@ -314,7 +456,8 @@ def test_extract_dimensions_drops_all_recased_rubric_dimensions_ut014_shape(
          "rationale": "title-cased, position 3 of 3"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     # Only the 3 base dims survive — none of the 3 mis-cased rubric names do.
     assert [d["name"] for d in out] == ["Correctness", "Completeness", "Tool Arguments"]
@@ -346,7 +489,8 @@ def test_extract_dimensions_drops_invented_dimension_after_valid_ones_ut016_shap
          "score": 3, "rationale": "invented — no matching rubric.md heading"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     rubric_names = [d["name"] for d in out if d["source"] == "rubric"]
     assert rubric_names == [
@@ -382,7 +526,8 @@ def test_extract_dimensions_dropped_dimension_preserves_score_and_rationale(
          "rationale": "duplicate, partial score that must not vanish either"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     assert len(warnings) == 2
     by_kind = {w["kind"]: w for w in warnings}
@@ -407,7 +552,8 @@ def test_extract_dimensions_drops_rubric_dimension_under_empty_rubric():
          "rationale": "looks like a real heading, but this test's rubric is empty"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), empty_rubric("record-extraction")
+        _tool_use_response(dims), empty_rubric("record-extraction"),
+        tool_calls=_SOME_TOOL_CALLS,
     )
     assert [d["name"] for d in out] == ["Correctness", "Completeness", "Tool Arguments"]
     assert [w["kind"] for w in warnings] == ["dropped_unknown_rubric_dimension"]
@@ -441,7 +587,9 @@ def test_extract_dimensions_dedup_key_is_source_and_name_not_name_alone():
         {"source": "rubric", "name": "Correctness", "score": 2,
          "rationale": "the rubric's own Correctness dimension, distinct from base"},
     ]
-    out, warnings = judge._extract_dimensions(_tool_use_response(dims), rubric)
+    out, warnings = judge._extract_dimensions(
+        _tool_use_response(dims), rubric, tool_calls=_SOME_TOOL_CALLS
+    )
     keys = [(d["source"], d["name"]) for d in out]
     assert ("base", "Correctness") in keys
     assert ("rubric", "Correctness") in keys
@@ -467,7 +615,8 @@ def test_extract_dimensions_drops_duplicate_rubric_dimension_ut018_shape(
          "rationale": "duplicate occurrence, same score as the first"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     rubric_names = [d["name"] for d in out if d["source"] == "rubric"]
     assert rubric_names == [
@@ -497,7 +646,8 @@ def test_extract_dimensions_drops_duplicate_not_at_list_boundary(
          "rationale": "after the duplicate pair"},
     ]
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     rubric_names = [d["name"] for d in out if d["source"] == "rubric"]
     assert rubric_names == [
@@ -515,7 +665,8 @@ def test_extract_dimensions_drops_duplicate_base_dimension(record_extraction_rub
     dims = _record_extraction_base_dims()
     dims.append(dict(dims[0]))  # duplicate the first base dimension verbatim
     out, warnings = judge._extract_dimensions(
-        _tool_use_response(dims), record_extraction_rubric
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=_SOME_TOOL_CALLS,
     )
     assert [d["name"] for d in out] == ["Correctness", "Completeness", "Tool Arguments"]
     assert [w["kind"] for w in warnings] == ["dropped_duplicate_dimension"]
@@ -548,7 +699,10 @@ def test_extract_dimensions_rejects_invalid_source_value(
          "rationale": "y" * 25},
     ]
     with pytest.raises(judge.JudgeError, match="invalid source"):
-        judge._extract_dimensions(_tool_use_response(dims), record_extraction_rubric)
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=_SOME_TOOL_CALLS,
+        )
 
 
 def test_extract_dimensions_rejects_missing_source(record_extraction_rubric):
@@ -556,7 +710,10 @@ def test_extract_dimensions_rejects_missing_source(record_extraction_rubric):
         {"name": "Assertion atomicity", "score": 3, "rationale": "y" * 25},
     ]
     with pytest.raises(judge.JudgeError, match="invalid source"):
-        judge._extract_dimensions(_tool_use_response(dims), record_extraction_rubric)
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=_SOME_TOOL_CALLS,
+        )
 
 
 @pytest.mark.parametrize(
@@ -572,7 +729,10 @@ def test_extract_dimensions_rejects_non_string_name(bad_name, record_extraction_
         {"source": "rubric", "name": bad_name, "score": 3, "rationale": "y" * 25},
     ]
     with pytest.raises(judge.JudgeError, match="non-string name"):
-        judge._extract_dimensions(_tool_use_response(dims), record_extraction_rubric)
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=_SOME_TOOL_CALLS,
+        )
 
 
 def test_extract_dimensions_rejects_missing_name(record_extraction_rubric):
@@ -580,7 +740,10 @@ def test_extract_dimensions_rejects_missing_name(record_extraction_rubric):
         {"source": "rubric", "score": 3, "rationale": "y" * 25},
     ]
     with pytest.raises(judge.JudgeError, match="non-string name"):
-        judge._extract_dimensions(_tool_use_response(dims), record_extraction_rubric)
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=_SOME_TOOL_CALLS,
+        )
 
 
 # --- #1361: enum steering on the per-call tool schema --------------------
@@ -699,6 +862,9 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     total_draws = 0
     dropped_total = 0
     unexpected_raises: list[str] = []
+    zero_call_draws = 0
+    na_coerced: set[tuple[str, str]] = set()
+    na_leaked: list[str] = []
 
     for p in log_paths:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -721,11 +887,31 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 if not dims:
                     continue
                 total_draws += 1
+                # The run's OWN tool calls, never a stand-in: the #1406
+                # N/A rule keys on this list being empty, so substituting
+                # a placeholder here would measure the placeholder.
+                run_tool_calls = (r.get("output") or {}).get("tool_calls") or []
+                if not run_tool_calls:
+                    zero_call_draws += 1
                 try:
-                    _, warns = judge._extract_dimensions(
-                        _tool_use_response(dims), rub
+                    out, warns = judge._extract_dimensions(
+                        _tool_use_response(dims), rub,
+                        tool_calls=run_tool_calls,
                     )
                     dropped_total += len(warns)
+                    if any(
+                        w["kind"] == "coerced_tool_arguments_to_na" for w in warns
+                    ):
+                        na_coerced.add((t.get("test_id"), p.name))
+                    if not run_tool_calls:
+                        ta = next(
+                            (x for x in out if x["name"] == "Tool Arguments"), None
+                        )
+                        if ta is not None and ta["score"] is not None:
+                            na_leaked.append(
+                                f"{p.relative_to(REPO_ROOT)}::{t.get('test_id')} "
+                                f"= {ta['score']!r}"
+                            )
                 except judge.JudgeError as e:
                     unexpected_raises.append(
                         f"{p.relative_to(REPO_ROOT)}::{t.get('test_id')}: {e}"
@@ -758,6 +944,52 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
         f"{len(unexpected_raises)} historical judge draw(s) newly raise JudgeError "
         f"under the drop-with-warning redesign — should only be structural "
         f"garbage, never observed historically: {unexpected_raises[:5]}"
+    )
+
+    # --- #1406: the Tool Arguments N/A rule, three ways -----------------
+    #
+    # An earlier draft of this pinned `len(na_coerced) == 3`. That number
+    # was wrong twice over: it counted a run log that made a tool call (so
+    # its integer score was an ordinary grade, not an N/A violation), and
+    # it counted a pruned blob this rglob cannot see. Assert the property,
+    # the non-vacuity, and the drift bound instead of a census.
+    print(
+        f"corpus replay (#1406): {zero_call_draws} zero-tool-call draws, "
+        f"{len(na_coerced)} coerced to N/A -> {sorted(na_coerced)}"
+    )
+
+    # 1. PROPERTY — holds for every entry, under pruning and for run logs
+    #    not yet written. This is the invariant the change installs.
+    assert na_leaked == [], (
+        f"{len(na_leaked)} zero-tool-call draw(s) kept a non-null Tool "
+        f"Arguments score after extraction: {na_leaked[:5]}"
+    )
+
+    # 2. NON-VACUITY — without this the property above passes with the
+    #    coercion deleted, since the historical corpus is overwhelmingly
+    #    already-null. A skipped check is a passing check.
+    assert zero_call_draws > 100, (
+        f"only {zero_call_draws} zero-tool-call draws replayed — the N/A "
+        f"assertions below are near-vacuous; is output.tool_calls being read?"
+    )
+    assert na_coerced, (
+        "the N/A coercion never fired across the whole corpus — it is "
+        "known to fire on ut_search_records_003; a value of zero here means "
+        "the coercion is not running, not that the corpus is clean"
+    )
+
+    # 3. NO NEW DRIFT — subset, not equality: retention prunes to the
+    #    newest 5 candidates per skill, so these two will age out and an
+    #    equality assertion would then fail for the wrong reason. A *new*
+    #    violation appearing still fails, which is the direction worth
+    #    catching.
+    known = {
+        ("ut_search_records_003", "v1_2026-08-01_13-11-14.json"),
+        ("ut_search_records_003", "v1_2026-08-06_01-03-04.json"),
+    }
+    assert na_coerced <= known, (
+        f"a judge draw outside the known set ignored the Tool Arguments "
+        f"N/A rule: {sorted(na_coerced - known)}"
     )
 
 
@@ -900,10 +1132,8 @@ def test_tool_calls_empty_returns_none_marker():
     assert judge._render_tool_calls_with_size_guard([]) == "(none)"
 
 
-def test_render_prompt_parts_splits_at_context_boundary(sample_rubric):
-    """The stable prefix ends at the per-test context boundary so the
-    rubric (constant per skill) is cacheable."""
-    prefix, suffix = judge.render_prompt_parts(
+def _prompt_parts_kwargs(sample_rubric):
+    return dict(
         rubric=sample_rubric,
         judge_context=["save to file"],
         scenario_readme="readme",
@@ -913,13 +1143,70 @@ def test_render_prompt_parts_splits_at_context_boundary(sample_rubric):
         file_changes_summary="changes",
         tool_calls=[],
     )
+
+
+def test_render_prompt_parts_splits_at_context_boundary(sample_rubric):
+    """The stable prefix ends at the first VARYING section so the rubric
+    (constant per skill) is cacheable.
+
+    The boundary was `# Per-test context` until that section moved down
+    beside `How to report` (#1403), leaving `# Before-state` first. The
+    marker has to track that move: everything before it is substituted
+    from `stable_slots`, which holds only `{rubric}`.
+    """
+    prefix, suffix = judge.render_prompt_parts(**_prompt_parts_kwargs(sample_rubric))
     # Prefix must contain rubric (stable) but NOT the per-test context (varying).
     assert "Evidence Explained compliance" in prefix  # rubric content
     assert "save to file" not in prefix
-    # Suffix has the per-test content and starts at the context boundary.
-    assert suffix.startswith("# Per-test context")
+    # Suffix has the per-test content and starts at the boundary.
+    assert suffix.startswith("# Before-state")
     assert "save to file" in suffix
     assert "look up X" in suffix
+
+
+def test_render_prompt_parts_leaves_no_unsubstituted_slot(sample_rubric):
+    """No `{slot}` may survive rendering, in either half.
+
+    This is the assertion that catches a split marker set too late.
+    `render_prompt_parts` substitutes the prefix from `stable_slots` and
+    the suffix from `varying_slots`, passing anything unmatched through
+    verbatim — so moving the marker below a varying slot ships a prompt
+    containing the literal text "{user_message}" and the judge grades
+    nothing. Every heading-order assertion in this file still passes in
+    that state, because the headings are all still there; only the slots
+    go dead. Guards every future edit to prompt.md, not just this one.
+    """
+    prefix, suffix = judge.render_prompt_parts(**_prompt_parts_kwargs(sample_rubric))
+    leftovers = judge._SLOT_RE.findall(prefix + suffix)
+    assert leftovers == [], (
+        f"unsubstituted slot(s) survived rendering: {leftovers} — is the "
+        f"split_marker in render_prompt_parts below one of them?"
+    )
+
+
+def test_render_prompt_puts_per_test_context_last(sample_rubric):
+    """The per-test override renders AFTER the transcript it applies to
+    and immediately before the reporting instruction it modifies (#1403).
+
+    Asserted on ORDER, not presence: a presence check passes with the
+    section back in its old position two thousand tokens earlier, which
+    is the arrangement this change exists to undo.
+    """
+    prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
+    tool_calls_at = prompt.index("## MCP tool calls")
+    context_at = prompt.index("# Per-test context")
+    override_at = prompt.index("save to file")
+    report_at = prompt.index("# How to report")
+    assert tool_calls_at < context_at < override_at < report_at
+
+    # The two sentences the move must not destroy. Both are load-bearing:
+    # the first is #1401's only prose defence against invented dimensions,
+    # the second is the rule #1406 now enforces in the harness.
+    assert "**Do not emit separate dimensions for them.**" in prompt
+    assert "the test made zero MCP tool calls. Report" in prompt
+    # And the precedence block the override rule now leans on.
+    assert "# Which rule wins" in prompt
+    assert prompt.index("# Which rule wins") < context_at
 
 
 def test_render_prompt_concatenation_matches_parts(sample_rubric):
