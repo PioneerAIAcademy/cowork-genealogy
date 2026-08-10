@@ -665,9 +665,12 @@ Where to look first:
   `volume_search` hung for 236 minutes. Every tool that touches
   the network calls this instead of the global `fetch` directly; it is the
   only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
-  Default timeout 30s; pass a longer one (e.g. `image_transcribe`'s OCR call,
-  `fs-image-fetch.ts`'s multi-MB body read) as the third argument when 30s
-  doesn't fit the call's own budget.
+  Default timeout 30s; pass a longer one as the third argument (90s for
+  `image_transcribe`'s OCR call and `fs-image-fetch.ts`'s multi-MB scan). The
+  budget covers headers **and** body — size it for the whole transfer, not the
+  round-trip to first byte. A body still streaming when the clock fires is
+  aborted mid-read, and the wrapper turns that into the same readable error,
+  so call sites never handle it themselves.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
