@@ -224,44 +224,58 @@ Usually one of four shapes:
 Work these the same way you work a proposal: bring the evidence, the options, the
 recommendation and the counter-argument, so he can answer in a sitting.
 
-### The answer lives on the issue, not in a conversation
+### You asked, he answered — close it out in the same turn
 
-**A ruling is recorded as an issue comment opening `**Ruling:**`.** Whoever hears
-it writes it — if he answers in chat, in this session or any other, post it
-before doing anything else. An answer that exists only in a transcript is lost
-to every future run, including yours.
-
-That convention is also what makes the queue's true state readable, and it
-splits into two numbers with opposite remedies. **Split the queue before you
-work it:**
+**The moment he decides, apply it. Do not carry it to a later run, a later
+section of your report, or a "to write up" list.** Three writes, in this order,
+before you move to the next item:
 
 ```sh
-# waiting on him — no ruling recorded. These are yours to prepare.
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
-  --label needs-decision --json number,title,comments \
-  -q '.[] | select([.comments[].body | startswith("**Ruling:**")] | any | not)
-      | "#\(.number)  \(.title)"'
+# 1. the durable record — his answer, in his words, on the issue
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
 
-# answered, waiting on close-out. These are yours to finish, and they come first.
+# 2. splice it into the body, so the next reader gets the decision and not the
+#    open fork. gh issue view --json body -q .body > body.md, edit, then:
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
+
+# 3. the label comes off, and the item ranks in a junior pool like anything else
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --remove-label needs-decision
+```
+
+An answer you heard and did not apply is worse than one you never asked for: the
+issue still reads as blocked, he sees it on the waiting list next run, and the
+work sits unblocked with nobody knowing. **This is the same failure as leaving a
+commit unpushed** — the thinking is done and the value is held hostage to a step
+nobody can see.
+
+**The `**Ruling:**` comment is the record, not a queue.** It exists so the next
+reader — a junior picking the issue up, a later run of this skill, `/audit-board`
+— sees the decision and its reasoning. It is not a signal for someone else to
+finish your job.
+
+### The residual: an answer given where nothing could act on it
+
+It still happens — he rules at standup, or in a session with no tools, or types
+a comment without the marker. Those are the only items that should ever need
+finding, and finding them is the *first* thing a `decisions` run does:
+
+```sh
+# answered, never closed out. Should be EMPTY. Anything here is a session that
+# heard an answer and walked away — fix it now, before preparing new questions.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,comments \
   -q '.[] | select([.comments[].body | startswith("**Ruling:**")] | any)
       | "#\(.number)  \(.title)"'
 ```
 
-"Ten waiting on him" and "ten answered but unapplied" are opposite problems —
-one is his attention, the other is this skill not finishing its job — and
-without the marker they are the same number.
+**A non-zero result is a defect, not a workload.** Report the count as one — "N
+items were answered and left labelled" — because the fix is upstream in whichever
+skill dropped it, not in draining the list faster.
 
-**Close out every answered item before preparing a single new question.** Splice
-the ruling into the body so the next reader gets the decision rather than the
-open fork, then drop the label so it ranks in a junior pool like anything else.
-Nothing else removes it, and both numbers above are wrong if you skip this.
-
-```sh
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --remove-label needs-decision
-```
+Everything else under `needs-decision` is genuinely waiting on him, and is what
+you prepare.
 
 An item whose answer turns out to be "this is genuinely hard either way" moves to
 `senior` instead — swap the labels, never carry both.

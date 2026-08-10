@@ -328,11 +328,12 @@ gh issue create --label developer|genealogist [--label icebox] \
 
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
 
-**And if he answers one in the room, post the answer before you move on.**
-Standup is where rulings get spoken and lost. A ruling is an issue comment
-opening `**Ruling:**` — that marker is what lets `/fill-ready` tell an
-answered item from a waiting one, and what lets `/find-big-wins` close it
-out. An answer that exists only in the standup thread reaches nobody.
+**And if he answers one in the room, close it out before you move on — do not
+just record it.** Standup is where rulings get spoken and lost. Post the answer
+as a comment opening `**Ruling:**`, splice it into the body, and remove
+`needs-decision`. All three, in that turn. Recording without removing the label
+leaves the issue reading as blocked, so he sees it on the waiting list again
+next run and the work sits unblocked with nobody knowing.
 
 ```sh
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \

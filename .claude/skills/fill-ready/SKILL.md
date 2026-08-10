@@ -698,13 +698,16 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
 
 Report each separately — they have different remedies:
 
-- **`needs-decision`, split `WAITING` / `ANSWERED`.** These are opposite
-  problems and the single total hides both. A growing **`WAITING`** count means
-  the lead is the bottleneck and no amount of assigning helps — that line goes
-  at the top of the report. A non-zero **`ANSWERED`** count means something
-  else: he already ruled and `/find-big-wins` has not closed the item out, so
-  the work is unblocked and nobody knows. Name those issues explicitly; they are
-  the cheapest thing on the whole board to unstick.
+- **`needs-decision`, split `WAITING` / `ANSWERED`.** A growing **`WAITING`**
+  count means the lead is the bottleneck and no amount of assigning helps — that
+  line goes at the top of the report.
+
+  **`ANSWERED` should always be zero.** Whichever session puts a decision to him
+  closes it out in the same turn — comment, splice, drop the label. So a
+  non-zero count is not a workload, it is **a defect**: a session heard an answer
+  and walked away, and the work has been sitting unblocked with nobody knowing.
+  Name the issues, and say plainly that they were dropped rather than queued —
+  the fix is upstream in whichever skill let go of them, not in draining a list.
 - **`senior` size, trend, and how many are unassigned.** This queue is worked. A
   growing `senior` queue with seniors idle is a routing problem; a growing one
   with every senior busy is a capacity problem. Say which.
