@@ -432,9 +432,14 @@ done: closed **and** the work reachable on main.
 ```sh
 gh issue view <blocker> --repo PioneerAIAcademy/cowork-genealogy \
   --json number,state,stateReason,closedAt
-git merge-base --is-ancestor <sha> origin/main   # a PR merged into a feature
-                                                 # branch is closed and still unshipped
+gh pr view <N> --json state,mergedAt,baseRefName          # merged — but into what?
+git log origin/main --oneline -S '<a string the work added>'
 ```
+
+A PR merged into a feature branch is closed and still unshipped, so `state`
+alone clears nothing. Do **not** test whether the sha is an ancestor of `main`:
+this repo squash-merges, so a merged branch's commits never are, and that test
+holds every cleared blocker shut.
 
 Also check *why* it closed. One issue was closed in a sweep as "low value,
 nobody has hit it since July" while a newer issue documented the same root cause

@@ -101,11 +101,23 @@ sentence and move on. Silent correction is how the wrong number survives.
 The weakest triage confirms that a thing exists and stops. Each of these found
 something a "does it exist?" pass missed:
 
-- **Reachability.** For every PR or branch reported as done, confirm the commit
-  is actually on main: `git merge-base --is-ancestor <sha> origin/main`. A PR
-  merged into a feature branch *after* that branch already reached main is real,
-  green, closed — and will never ship. Nobody notices, because every surface says
-  "merged".
+- **Reachability.** For every PR or branch reported as done, ask what it merged
+  *into*, then confirm the content arrived:
+
+  ```sh
+  gh pr view <N> --json state,mergedAt,baseRefName   # merged — but into what?
+  git log origin/main --oneline -S '<a string the PR added>'
+  ```
+
+  A PR merged into a feature branch *after* that branch already reached main is
+  real, green, closed — and will never ship. Nobody notices, because every
+  surface says "merged". This is live right now: one merged PR sits on a feature
+  branch whose own PR is still open.
+
+  Do **not** test whether the sha is an ancestor of `main`. This repo
+  squash-merges, so a merged branch's commits never are — that test calls every
+  shipped PR unshipped, and accuses the reporter of claiming work they did not
+  land.
 - **Where the irreplaceable artifact lives.** When someone reports a baseline, a
   goldset, or a corpus of annotations, ask whether it is in version control. That
   data is accumulated human judgment; it is the one thing in a repo that cannot
