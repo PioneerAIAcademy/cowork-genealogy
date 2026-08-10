@@ -34,5 +34,8 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "expected_classifications": [
+    { "record_role": "father", "fact_type": "name", "evidence_type": "direct" }
+  ]
 }
