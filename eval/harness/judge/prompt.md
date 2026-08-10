@@ -195,17 +195,28 @@ semantically.
 {rubric}
 
 ────────────────────────────────────────
-# Per-test context
+# Which rule wins
 
-The notes below describe what the test author expected the skill to do.
-Use them as background to ground your rationales for the base and
-rubric dimensions. **Do not emit separate dimensions for them.**
-Deterministic checks (filename format, schema validity, exact tool
-call counts) are verified separately by validators — focus your
-grading on the narrative quality the base + rubric dimensions
-measure.
+Three kinds of instruction reach you, and they are not equal. When two
+of them disagree about one dimension, the later one in this list wins:
 
-{judge_context}
+1. **A base rule** in this prompt — the default for every skill.
+2. **A skill rubric's claim on an axis.** A rubric may state that one of
+   its dimensions owns a particular judgement. When it does, that
+   judgement is graded in that dimension and **nowhere else** — do not
+   also reflect it in Correctness or Completeness. Grading one fault
+   twice is itself an error, not thoroughness.
+3. **A per-test override in the Per-test context section.** This is the
+   narrowest instruction you receive and it wins outright.
+
+An override is **binding, not advisory**. If it tells you not to score a
+dimension low for a named pattern, then observing that pattern is not a
+deduction of any size — not a 1, and not a 2 either. Splitting the
+difference is the most common way this goes wrong: "do not score below
+3" means 3, not "one band down from where I was going to land."
+
+If an override seems wrong to you, follow it and say so in your
+rationale. The rationale is where disagreement belongs; the score is not.
 
 ────────────────────────────────────────
 # Before-state — source entries on file BEFORE this skill ran
@@ -252,6 +263,29 @@ skill was invoked but it skipped the citation step.")
 ## MCP tool calls
 
 {tool_calls}
+
+────────────────────────────────────────
+# Per-test context
+
+The notes below describe what the test author expected the skill to do.
+Use them as background to ground your rationales for the base and
+rubric dimensions. **Do not emit separate dimensions for them.**
+Deterministic checks (filename format, schema validity, exact tool
+call counts) are verified separately by validators — focus your
+grading on the narrative quality the base + rubric dimensions
+measure.
+
+A note here may be written as a bulleted list of requirements — "the
+plan **must** include…", "each item's rationale **must**…". That is
+still background. It reads like a rubric and is not one: grade what it
+describes inside the dimensions you were given, and **never add a
+dimension named after one of these bullets.** The dimension list is
+fixed by the "How to report" section below.
+
+Where a note overrides a rule stated earlier in this prompt, the note
+wins — see "Which rule wins" above.
+
+{judge_context}
 
 ────────────────────────────────────────
 # How to report

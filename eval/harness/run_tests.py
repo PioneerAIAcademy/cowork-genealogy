@@ -402,6 +402,35 @@ def _print_summary(rows: list[dict]) -> None:
             f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10}"
         )
     print()
+    _print_judge_warnings(rows)
+
+
+def _print_judge_warnings(rows: list[dict]) -> None:
+    """Tally the judge's own rule violations, per kind, per test.
+
+    These reach `output.warnings` in the run log and, until now, nowhere a
+    human looks — which makes them useless for exactly the purpose they
+    were added for. #1401's complaint is that an invented dimension cannot
+    be trended; a warning nobody reads does not fix that, and #1406 adds a
+    second kind with the same problem. Print them at the end of a run,
+    next to the outcomes, so a judge that stops following its own prompt
+    is visible without opening a 1 MB JSON file.
+    """
+    by_kind: dict[str, list[str]] = {}
+    for row in rows:
+        for kind in row.get("judge_warning_kinds") or []:
+            by_kind.setdefault(kind, []).append(row["test_id"])
+    if not by_kind:
+        return
+    total = sum(len(v) for v in by_kind.values())
+    print(f"Judge rule violations ({total} across {len(by_kind)} kind(s)):")
+    for kind in sorted(by_kind):
+        tests = by_kind[kind]
+        shown = ", ".join(sorted(set(tests))[:6])
+        more = len(set(tests)) - 6
+        print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
+    print("  Full advisories are in each run log's output.warnings.")
+    print()
 
 
 def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
@@ -864,6 +893,15 @@ def main(argv: list[str] | None = None) -> int:
                 "test_id": spec.id,
                 "skill": spec.skill,
                 "outcome": entry["outcome"],
+                # Judge-rule violations for _print_judge_warnings. The
+                # advisories themselves stay in the run log; the summary
+                # only needs to say which kinds fired and where.
+                "judge_warning_kinds": [
+                    w.get("kind")
+                    for r in entry.get("runs") or []
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    if w.get("kind")
+                ],
             }
         )
 
