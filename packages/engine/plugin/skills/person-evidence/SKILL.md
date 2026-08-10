@@ -1,6 +1,5 @@
 ---
 name: person-evidence
-model: claude-sonnet-4-6
 description: >-
   Links assertions to GedcomX persons — identity resolution. Evaluates whether
   a record's person matches a tree person, creates person_evidence entries with

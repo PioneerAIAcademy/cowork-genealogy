@@ -1,6 +1,7 @@
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
   AncestorPerson,
@@ -112,7 +113,7 @@ function validateInput(input: PersonAncestorsInput): void {
 // Inline here for the single caller; promote to src/auth/ if a second tool
 // needs it.
 async function getCurrentUserPersonId(token: string): Promise<string> {
-  const res = await fetch(FS_CURRENT_USER_URL, {
+  const res = await fetchWithTimeout(FS_CURRENT_USER_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
@@ -150,7 +151,7 @@ async function fetchAndMap(
   redirectsFollowed: number,
 ): Promise<PersonAncestorsResult> {
   const url = buildUrl(input, pid);
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,

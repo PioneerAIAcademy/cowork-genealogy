@@ -29,8 +29,11 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    shape to a section. Read **that section's "If you're asked to…" block only** —
    not the whole guide. It names the sites a change touches and which of them
    nothing checks.
-3. **`docs/architecture.md` §9.4** — "What nothing checks." Always. It is short
-   and it is the list of ways a green CI run is a lie.
+3. **`docs/architecture.md` §9.4** — "What nothing checks." Always. It is short:
+   three gaps whose consequence changes how a change is made, plus the
+   `gh issue list --state open --label nothing-checks` register that holds the
+   rest. Run that query when the issue's subject sounds like a missing guard —
+   the enumeration lives on the board, not in the file.
 4. **The ADR**, if one matches. The index is `docs/architecture.md` §0; the
    **"Read before you…"** column is the routing surface. Read `Context`,
    `Decision`, and especially **`Alternatives considered`**.
@@ -47,7 +50,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    stale half is usually the part the recommendation rests on.
 2. **Already refuted.** Three ledgers record things that were argued and
    disproved — check all three before agreeing the work is a good idea:
-   - `docs/agentic-system-critique.md` §9 "Refuted in review — do not re-derive"
+   - `docs/adrs/ADR-0009-refuted-agent-design-claims.md` — the refutation ledger
    - each ADR's `Alternatives considered`
    - `docs/specs/guardrail-enforcement-spec.md` §9 "Options set aside"
 
@@ -118,8 +121,8 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 |---|---|
 | `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …", and — when there is one — the part most likely to send them to a senior. |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
-| `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. |
-| `senior` | Any of the triggers below. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
+| `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. Applied as the **`needs-decision`** label — a distinct state from `senior`, never both: the work behind the fork is frequently junior, so this asks for one answer rather than a scarce person. |
+| `senior` | Any of the triggers below, **and the item would still be hard once every open question is answered**. Label it `senior`, keep its `developer`/`genealogist` label (that picks the lane, and `.github/CODEOWNERS` routes the review the same way), and leave it in Backlog assigned to nobody — never the unassigned Ready pool. The lead takes no issues; he assigns seniors himself. If one answer from him would make the work junior, the verdict is `needs-a-decision` instead — check that first, because it is the more common case and the two have opposite remedies. This is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
 | `stale-rewrite` | The premise moved, so the ask itself is now wrong. Say what is false and supply the text that **replaces** the ask — not an addition to it. |
 | `close` | No longer needed, already done, or refuted. Give the reason and the evidence. |
 
