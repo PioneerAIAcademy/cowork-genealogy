@@ -110,10 +110,12 @@ Read every report. Then, in your own voice:
   neither could see. Say so.
 - **Do not re-argue a verdict you have not checked.** If one looks wrong, spend
   the two minutes to verify it and say what you found — do not soften it.
-- **Count the routing damage.** How many unassigned `developer` items in Ready
-  turned out to be `senior` or `needs-a-decision`? That number is the report's
-  headline: it is how much of the junior pool was not actually pickable, and it
-  is the argument for whatever `fill-ready` does next week.
+- **Count the routing damage, split by remedy.** How many unassigned `developer`
+  items in Ready turned out to be `senior`, and how many `needs-a-decision`? That
+  pair is the report's headline: it is how much of the junior pool was not
+  actually pickable, and the split says whether the fix is people or answers. A
+  pool that is mostly `needs-a-decision` is cheap to unblock and is the strongest
+  thing you can put in front of the lead.
 
 ## 4. Put the decisions to the lead
 
@@ -145,10 +147,16 @@ gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body 
 # edit body.md, then:
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 
-# senior — the lead's, per fill-ready §6. The label already exists and is in use;
-# it is what makes the routing visible on the board rather than only in your report.
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --add-label senior --add-assignee DallanQ
+# senior — hard regardless of any open question. Label only, no assignee: the
+# lead takes no issues (fill-ready §6), and he assigns seniors in their lane
+# himself. Keep the developer/genealogist label on it — that is what picks the
+# lane, and CODEOWNERS routes the review the same way.
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior
+
+# needs-a-decision — NOT senior. One answer from the lead unblocks it, and the
+# work behind it is frequently junior. Labelling this `senior` is the common
+# mistake: it sends a sentence looking for a scarce person.
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label needs-decision
 
 # close
 gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy \
@@ -203,10 +211,13 @@ Five rules on the writes:
 - **Carry the rationale to the destination the agent named** — a spec section, a
   comment at the constraining site. It is part of the task, not a nicety;
   `CLAUDE.md` keeps settled tradeoffs out of issue bodies for a reason.
-- **Board moves are `fill-ready`'s.** On the normal path a `senior` verdict comes
-  back before promotion, so there is nothing to move — you label and assign, and
-  `fill-ready` ranks it into the lead's pool instead of the junior one. On a
+- **Board moves are `fill-ready`'s.** On the normal path a `senior` or
+  `needs-a-decision` verdict comes back before promotion, so there is nothing to
+  move — you label it and it stays in Backlog, out of the junior pool. On a
   standing-pool run the item is already in Ready; report it for the swap.
+- **Never apply both `senior` and `needs-decision`.** They are different states
+  with different remedies (`fill-ready` §6): one wants a person, the other wants
+  an answer. An item carrying both tells the board neither.
 
 Deleting an issue needs the lead to say so for that specific issue. Never batch
 a delete under a general approval.

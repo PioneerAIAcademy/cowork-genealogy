@@ -141,6 +141,7 @@ routing surface — find your task, then open that ADR.
 | [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
 | [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
 | [0009](adrs/ADR-0009-refuted-agent-design-claims.md) | Keep a standing ledger of refuted agent-design claims | propose a `same_person` write-boundary discriminator · propose "routing as a tool" as the fix for a routing failure · quote a compliance rate, violation count or cost figure from an older write-up · vet an issue whose premise is one of those rows |
+| [0010](adrs/ADR-0010-record-structural-bets-in-a-ledger.md) | Record every structural bet in one ledger table, as a record and not a bar | run `/find-big-wins` · wonder what happened to a structural idea that was proposed and never filed · want a `docs/ideas/` folder or anywhere else to park ideas · cite a "set aside" row against a new proposal |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -1463,8 +1464,12 @@ file, and a list that lags is worse than no list, because it invites re-arguing
 something already decided. The live register is the board:
 
 ```sh
-gh issue list --state open --label senior   # the pool that needs the lead's call
+gh issue list --state open --label needs-decision   # blocked on one answer from the lead
 ```
+
+That label — not `senior`, which is work that stays hard after every question is
+answered — is where an unsettled question waits. `/fill-ready` § "Above the junior
+pools" owns the split, and `/find-big-wins` works the `needs-decision` queue.
 
 Two are stated **where they bind**, because each one will stop a change you might
 otherwise make:
@@ -1496,7 +1501,7 @@ questions that only look open.
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
-| Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records |
+| Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |
 | What is wrong with it, and what's next? | The **project board** — it is the register, and §9.4 and §10 here deliberately point at it rather than copy it. Read them for the handful of gaps whose *consequence* changes how you build, not for a list. There is no standing critique document either; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |
 | Every guardrail, its instrument, its status | [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) |
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |

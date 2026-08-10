@@ -121,8 +121,8 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 |---|---|
 | `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …", and — when there is one — the part most likely to send them to a senior. |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
-| `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. |
-| `senior` | Any of the triggers below. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
+| `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. Applied as the **`needs-decision`** label — a distinct state from `senior`, never both: the work behind the fork is frequently junior, so this asks for one answer rather than a scarce person. |
+| `senior` | Any of the triggers below, **and the item would still be hard once every open question is answered**. Label it `senior`, keep its `developer`/`genealogist` label (that picks the lane, and `.github/CODEOWNERS` routes the review the same way), and leave it in Backlog assigned to nobody — never the unassigned Ready pool. The lead takes no issues; he assigns seniors himself. If one answer from him would make the work junior, the verdict is `needs-a-decision` instead — check that first, because it is the more common case and the two have opposite remedies. This is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
 | `stale-rewrite` | The premise moved, so the ask itself is now wrong. Say what is false and supply the text that **replaces** the ask — not an addition to it. |
 | `close` | No longer needed, already done, or refuted. Give the reason and the evidence. |
 
