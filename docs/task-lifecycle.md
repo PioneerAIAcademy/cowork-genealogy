@@ -45,13 +45,17 @@ Two things worth knowing:
 
 ## The commands in this document
 
-Every slash command below ships with Claude Code, except `/critique-plan` and
-`/check-drift`, which live in this repo at
-[`.claude/commands/`](../.claude/commands/). Nothing here needs a plugin you
-have to install.
+Two of them ship with Claude Code: `/code-review` and `/security-review`. The
+other four ship with this repo, so cloning is the whole install —
+`/critique-plan` and `/check-drift` in
+[`.claude/commands/`](../.claude/commands/), `/review` and `/audit-merged-prs`
+in [`.claude/skills/`](../.claude/skills/). Nothing here needs a plugin you have
+to install.
 
-If you have a personal plugin that defines one of these names, **yours wins** —
-which is worth knowing before you wonder why `/review` did something else.
+If you have a personal plugin that defines one of these names, **yours wins**.
+That matters most for `/review`: another toolchain's version reads neither this
+repo's test suites nor the human reviews on the PR, and your teammates don't
+have it. Make sure the one you run is the repo's.
 
 ---
 
