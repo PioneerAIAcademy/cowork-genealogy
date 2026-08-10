@@ -627,6 +627,21 @@ across the whole suite to serve the one test that wants it. A callee that is
 neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
 this field existed — it runs without its own tools.
 
+**The two fields are mutually exclusive for the same callee, and naming one in
+both is refused before the run starts.** The runnability gate
+(`eval/harness/harness/runnability.py`) rejects the test at load time rather
+than letting it start, because the combination is worse than either field
+alone: `run_skills` grants the callee's tools *and* obliges the test to stock a
+fixture for each, while `stub_skills` waives that fixture preflight
+(`uncovered_callee_fixtures` skips a stubbed callee) and then denies the launch.
+Declaring both grants the tools and waives the check, so the session ends up
+holding tools nothing backs and nothing warned about — and the *main thread*
+calling one trips `unmatched_tool_call` and aborts the caller, which is exactly
+what the preflight exists to prevent. That is the silent fourth state the
+three-state table above would otherwise admit; the gate is what keeps the
+states at three. Keep whichever field you meant — `run_skills` to execute the
+callee, `stub_skills` to deny it.
+
 > **Correction (2026-07-31).** This section previously described
 > stubbing as trading away integration coverage at the caller/callee seam.
 > There was no such coverage to trade: until `run_skills` existed, a callee had
