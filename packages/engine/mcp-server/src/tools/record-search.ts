@@ -27,6 +27,7 @@ import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -511,22 +512,26 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
  *     or the AbortSignal.timeout firing) — so `withRetry` retries them.
  *   - RETURN the response for 2xx and for permanent 4xx (400/401/403/404), so the
  *     caller's `!response.ok` block handles them once, without retrying.
- * A fresh `AbortSignal.timeout` is created on every call, i.e. per attempt, because
- * `withRetry` invokes this function anew each time (an aborted signal can't be reused).
+ * `fetchWithTimeout` creates a fresh `AbortSignal.timeout` on every call, i.e. per
+ * attempt, because `withRetry` invokes this function anew each time (an aborted
+ * signal can't be reused).
  */
 async function fetchSearchWithRetry(
   url: string,
   token: string
 ): Promise<Response> {
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-  });
+    SEARCH_TIMEOUT_MS
+  );
   if (response.status === 429 || response.status >= 500) {
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
@@ -963,7 +968,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Omit `projectPath` for an exploratory search you do not intend to log (results come back inline at full fidelity)." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },
     },
   },
 };

@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -86,7 +87,7 @@ async function fetchAndConvert(
   redirectsFollowed: number,
 ): Promise<PersonReadResult> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,

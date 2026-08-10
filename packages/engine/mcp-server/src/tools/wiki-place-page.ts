@@ -1,6 +1,7 @@
 import { getPlaceCandidateNames } from "./place-search.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import { getWikiApiUrl } from "../auth/config.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   WikiPlacePageInput,
   WikiPlacePageResult,
@@ -55,7 +56,7 @@ async function fetchPage(
 ): Promise<PageApiResponse | null> {
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}/page/${slug}`, {
+    response = await fetchWithTimeout(`${baseUrl}/page/${slug}`, {
       method: "GET",
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });

@@ -29,6 +29,11 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 
+// Tools that can stage their raw response host-side (search-result-staging-spec.md).
+// Keep in sync with the `stageSearchResults` callers: record-search.ts,
+// fulltext-search.ts, external-links-search.ts.
+const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
+
 export interface ResearchLogAppendExternalSite {
   site: string;
   urlGenerated: string;
@@ -166,6 +171,7 @@ async function applyLogAppendOp(
   op: ResearchLogAppendOp,
   projectPath: string,
   sidecarsCreated: string[],
+  warnings: string[],
 ): Promise<ResearchLogAppendOpResult> {
   // 0. Coerce object-typed args a model may have stringified. Some models
   //    emit `externalSite` / `query` as a JSON string instead of a nested
@@ -285,6 +291,35 @@ async function applyLogAppendOp(
     }
   }
 
+  // 3b. A staging-capable search that HAD results and retained none leaves a log
+  //     entry pointing at nothing. The raw response is then gone for good: it
+  //     never reaches disk, and the model does not re-serialize it. Downstream
+  //     that costs the record-extraction resultsRef path, match re-ranking, and
+  //     — because results/ is the only verbatim record of what a search returned
+  //     — the ability to tell a skill fault from a tool fault when triaging a
+  //     feedback case (docs/alpha-feedback-guide.md step 4).
+  //
+  //     Warn rather than fail. A nil search correctly retains nothing, and
+  //     `resultsAvailable` is what separates the two: 0/absent means there was
+  //     nothing to keep, >0 means results existed and were discarded. Failing
+  //     would also reject entries whose search genuinely ran without a
+  //     projectPath, turning a lossy log into no log at all.
+  if (
+    STAGING_CAPABLE_TOOLS.has(op.tool) &&
+    (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
+    typeof op.resultsAvailable === "number" &&
+    op.resultsAvailable > 0
+  ) {
+    warnings.push(
+      `${logId}: ${op.tool} reported ${op.resultsAvailable} available result(s) but ` +
+        `retained none — no results/${logId}.json sidecar was written, and the raw ` +
+        `response is unrecoverable. Pass \`projectPath\` to ${op.tool} so it stages ` +
+        `its response, then hand the returned \`staged.resultsRef\` back here as ` +
+        `\`stagedResultsRef\`. Omit \`projectPath\` only for an exploratory search ` +
+        `you do not intend to log.`,
+    );
+  }
+
   // Every persisted entry carries a `query` object (research.schema.json). If
   // the caller omitted it and no staged payload supplied one, that is an input
   // error — fail loudly here rather than writing an entry the validator will
@@ -323,6 +358,8 @@ export async function researchLogAppend(
       await readProjectJson(projectPath, "tree.gedcomx.json"),
     );
     const sidecarsCreated: string[] = [];
+    // Tool-level warnings (retention gaps), merged with the validator's on success.
+    const opWarnings: string[] = [];
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
@@ -332,7 +369,9 @@ export async function researchLogAppend(
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
-          results.push(await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated));
+          results.push(
+            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings),
+          );
         } catch (e) {
           await cleanupSidecars(projectPath, sidecarsCreated);
           if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
@@ -350,7 +389,7 @@ export async function researchLogAppend(
         ok: true,
         results,
         filesWritten: ["research.json", ...sidecarsCreated],
-        validation: { valid: true, warnings: formatIssues(validation.warnings) },
+        validation: { valid: true, warnings: [...opWarnings, ...formatIssues(validation.warnings)] },
       };
     }
 
@@ -379,6 +418,7 @@ export async function researchLogAppend(
         },
         projectPath,
         sidecarsCreated,
+        opWarnings,
       );
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
@@ -396,7 +436,7 @@ export async function researchLogAppend(
       ok: true,
       ...result,
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
-      validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      validation: { valid: true, warnings: [...opWarnings, ...formatIssues(validation.warnings)] },
     };
   } catch (e) {
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };

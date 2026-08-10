@@ -101,11 +101,23 @@ sentence and move on. Silent correction is how the wrong number survives.
 The weakest triage confirms that a thing exists and stops. Each of these found
 something a "does it exist?" pass missed:
 
-- **Reachability.** For every PR or branch reported as done, confirm the commit
-  is actually on main: `git merge-base --is-ancestor <sha> origin/main`. A PR
-  merged into a feature branch *after* that branch already reached main is real,
-  green, closed — and will never ship. Nobody notices, because every surface says
-  "merged".
+- **Reachability.** For every PR or branch reported as done, ask what it merged
+  *into*, then confirm the content arrived:
+
+  ```sh
+  gh pr view <N> --json state,mergedAt,baseRefName   # merged — but into what?
+  git log origin/main --oneline -S '<a string the PR added>'
+  ```
+
+  A PR merged into a feature branch *after* that branch already reached main is
+  real, green, closed — and will never ship. Nobody notices, because every
+  surface says "merged". This is live right now: one merged PR sits on a feature
+  branch whose own PR is still open.
+
+  Do **not** test whether the sha is an ancestor of `main`. This repo
+  squash-merges, so a merged branch's commits never are — that test calls every
+  shipped PR unshipped, and accuses the reporter of claiming work they did not
+  land.
 - **Where the irreplaceable artifact lives.** When someone reports a baseline, a
   goldset, or a corpus of annotations, ask whether it is in version control. That
   data is accumulated human judgment; it is the one thing in a repo that cannot
@@ -216,7 +228,7 @@ lead to approve *before* anything is filed, tagged with who should do it:
 
 | Owner tag | What belongs to them |
 |---|---|
-| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority |
+| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label needs-decision` and **no assignee**, and wait in Backlog for `/find-big-wins` to work them into a question he can answer in a sitting (`.claude/skills/fill-ready/SKILL.md` §6). Use `--label senior` instead only when the work would still be hard after he answers |
 | **Junior genealogist** | Fixture adjudication, run-log annotation, record research, and doctrine *questions* you have prepared for them (see below) |
 | **Junior developer** | Lints, CI, validators, refactors, test fixes, tooling bugs, anything with a mechanical pass/fail |
 
@@ -313,6 +325,22 @@ Only after the lead approves List 2.
 gh issue create --label developer|genealogist [--label icebox] \
   --assignee <login> --title "..." --body "..."
 ```
+
+**A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
+
+**And if he answers one in the room, close it out before you move on — do not
+just record it.** Standup is where rulings get spoken and lost. Post the answer
+as a comment opening `**Ruling:**`, splice it into the body, and remove
+`needs-decision`. All three, in that turn. Recording without removing the label
+leaves the issue reading as blocked, so he sees it on the waiting list again
+next run and the work sits unblocked with nobody knowing.
+
+```sh
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --body "**Ruling:** <his answer, in his words>"
+```
+He takes no issues; the label is the routing. Reach for `senior` instead only
+when the item would still be hard after he answers.
 
 Add `--label icebox` to every row the lead approved as a candidate. That label is
 the only thing separating a task from an idea once both are cards in Backlog:

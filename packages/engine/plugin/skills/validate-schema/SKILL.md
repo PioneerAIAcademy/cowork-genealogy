@@ -1,6 +1,5 @@
 ---
 name: validate-schema
-model: claude-sonnet-4-6
 allowed-tools:
   - validate_research_schema
 description: Validates genealogy project files (research.json and
