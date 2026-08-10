@@ -741,6 +741,37 @@ def _extract_dimensions(
     # enum toward the valid set, but that's unenforced steering (tool_use
     # input isn't schema-validated without strict mode) — this drop is the
     # actual guarantee.
+    # The same drop for an invented `source: "base"` name. The rubric pass
+    # below only inspects source=="rubric", and the required-base check
+    # further down only verifies the three ARE PRESENT — it never rejects a
+    # fourth. So a judge that emits {"source": "base", "name":
+    # "Thoroughness", "score": 1} sails through, and that 1 reaches
+    # _compute_outcome's fail gate.
+    #
+    # This has never happened: across the committed corpus's 5418
+    # base-sourced dimensions, zero carry a name outside the required three.
+    # It is a floor, not a fix for something observed — added because the
+    # asymmetry is not defensible once noticed, and because the invented-name
+    # guarantee this module advertises was only ever true of rubric names.
+    kept_base: list[dict[str, Any]] = []
+    for d in dims:
+        if d["source"] == "base" and d["name"] not in _REQUIRED_BASE_DIMENSIONS:
+            warnings.append({
+                "kind": "dropped_unknown_base_dimension",
+                "advisory": (
+                    f"judge emitted base dimension {d['name']!r}, which is not "
+                    f"one of the required base dimensions; dropped it. Valid "
+                    f"base dimensions: {sorted(_REQUIRED_BASE_DIMENSIONS)}"
+                ),
+                "name": d["name"],
+                "valid_names": sorted(_REQUIRED_BASE_DIMENSIONS),
+                "score": d.get("score"),
+                "rationale": d.get("rationale"),
+            })
+            continue
+        kept_base.append(d)
+    dims = kept_base
+
     valid_rubric_names = rubric.dimension_names()
     kept: list[dict[str, Any]] = []
     for d in dims:
@@ -794,9 +825,15 @@ def _extract_dimensions(
     # a Tool Arguments score on a run with no tool calls grades something
     # that does not exist, and "the skill did work it should not have" or
     # "a required action never happened" belong on Correctness/Completeness
-    # per prompt.md's negative-test and Correctness sections. Pinned by
-    # test_na_rule_coerces_on_positive_test and
-    # test_na_rule_coerces_on_out_of_scope_negative.
+    # per prompt.md's negative-test and Correctness sections.
+    #
+    # It applies to a 2 as well as a 1, so it can also turn `partial` into
+    # `pass` via _compute_outcome's `if 2 in scores` gate. Same reasoning,
+    # same intent — there is nothing to deduct for on a run with no tool
+    # calls, at any band. Pinned by
+    # test_na_rule_coercion_flips_a_positive_test_outcome,
+    # test_na_rule_coercion_flips_a_positive_test_from_partial and
+    # test_na_rule_coercion_flips_an_out_of_scope_negative_outcome.
     if not tool_calls:
         for d in dims:
             if (
@@ -819,6 +856,20 @@ def _extract_dimensions(
                     "score": d.get("score"),
                     "rationale": d.get("rationale"),
                 })
+                # Rewrite the rationale too, following
+                # orchestrator.apply_deterministic_deference — the established
+                # pattern here for overriding a judge score after the fact.
+                # A null score sitting next to a rationale still arguing about
+                # specific tool arguments reads as a harness bug to whoever
+                # opens the run log, and the CRUD UI never surfaces
+                # output.warnings, so the annotator correcting this dimension
+                # would otherwise see only the stale text.
+                orig = d.get("rationale") or ""
+                d["rationale"] = (
+                    f"[coerced-to-na] the run made zero MCP tool calls, so "
+                    f"Tool Arguments is N/A; the judge's {d['score']!r} was "
+                    f"coerced to null. Original judge rationale: {orig}"
+                )
                 d["score"] = None
 
     # Enforce per-base-dimension null policy. The grading-tool schema

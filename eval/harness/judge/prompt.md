@@ -285,6 +285,15 @@ fixed by the "How to report" section below.
 Where a note overrides a rule stated earlier in this prompt, the note
 wins — see "Which rule wins" above.
 
+**If a note below says this is a NEGATIVE test, re-read "Critical:
+Negative tests" before you score anything.** You have just read a full
+transcript, and on a negative test the correct behaviour is the skill
+*not* doing its own task — so a transcript that looks thin, or that
+shows another skill doing the work, is the pass condition and not a
+deduction. Grade Correctness and Completeness against that expected
+behaviour, never against the quality of task output that happens to
+appear.
+
 {judge_context}
 
 ────────────────────────────────────────

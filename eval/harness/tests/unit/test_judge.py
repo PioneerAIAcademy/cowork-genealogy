@@ -12,6 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from harness import judge
+from harness.versioning import classify
 from harness.rubric import (
     InvalidRubricError,
     empty_rubric,
@@ -53,7 +54,7 @@ _SOME_TOOL_CALLS = [
     {
         "tool": "mcp__genealogy__record_search",
         "args": {"surname": "Flynn"},
-        "matched": {"kind": "fixture", "name": "record-search-flynn"},
+        "matched": {"kind": "predicate", "index": None},
     }
 ]
 
@@ -329,6 +330,79 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert _compute_outcome(
         judge_dimensions=[{"score": 3}, {"score": 3}, {"score": None}], **kw
     ) == "pass"
+
+
+def test_na_rule_coercion_flips_a_positive_test_from_partial():
+    """The coercion guard is `is not None`, so it nulls a 2 as well as a 1
+    and can turn `partial` into `pass` through the second gate.
+
+    Same intent as the fail case: there is nothing to deduct for on a run
+    that called no tool, at any band. Pinned separately because a reader
+    checking only the fail case would reasonably assume a 2 survives.
+    """
+    from harness.orchestrator import _compute_outcome
+
+    ta, warnings = _na_case(2, tool_calls=[])
+    assert ta["score"] is None
+    assert warnings[0]["score"] == 2
+
+    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    kw = dict(
+        spec=spec, validators_passed=True, aborted_reason=None,
+        activated=True, skills_invoked=["citation"],
+    )
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": 2}], **kw
+    ) == "partial"
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 3}, {"score": 3}, {"score": None}], **kw
+    ) == "pass"
+
+
+def test_na_rule_rewrites_the_now_stale_rationale():
+    """A null score beside a rationale still arguing about specific tool
+    arguments reads as a harness bug to whoever opens the run log, and the
+    CRUD UI never surfaces output.warnings — so an annotator correcting
+    this dimension would see only the stale text with no sign it was
+    overridden. Follows orchestrator.apply_deterministic_deference, which
+    is this codebase's established shape for overriding a judge score.
+    """
+    ta, warnings = _na_case(3, tool_calls=[])
+    assert ta["rationale"].startswith("[coerced-to-na]")
+    # The judge's own words survive inside the rewrite, not replaced by it.
+    assert "judge's own account of the tool arguments" in ta["rationale"]
+    # And the warning still carries the original untouched, for trending.
+    assert warnings[0]["rationale"] == "judge's own account of the tool arguments"
+
+
+def test_extract_dimensions_drops_an_invented_base_dimension():
+    """The rubric-name drop only inspects source=="rubric", and the
+    required-base check only verifies the three are PRESENT — it never
+    rejects a fourth. Without this, {"source": "base", "name":
+    "Thoroughness", "score": 1} reaches _compute_outcome's fail gate.
+
+    Never observed: zero of the committed corpus's 5418 base-sourced
+    dimensions carry a name outside the required three. A floor, not a fix.
+    """
+    dims = _base_dims_with_tool_arguments_null()
+    dims.append({"source": "base", "name": "Thoroughness", "score": 1,
+                 "rationale": "invented out of nowhere by the judge"})
+    response = SimpleNamespace(content=[SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )])
+    out, warnings = judge._extract_dimensions(
+        response, _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS
+    )
+    assert [d["name"] for d in out] == [
+        "Correctness", "Completeness", "Tool Arguments"
+    ]
+    assert 1 not in [d["score"] for d in out]
+    assert len(warnings) == 1
+    assert warnings[0]["kind"] == "dropped_unknown_base_dimension"
+    assert warnings[0]["name"] == "Thoroughness"
+    # The dropped draw's score is preserved, so a dropped fail cannot
+    # vanish from the outcome computation without a trace.
+    assert warnings[0]["score"] == 1
 
 
 def test_extract_dimensions_rejects_zero_tool_uses():
@@ -848,8 +922,16 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     orchestrator._run_judge's actual behavior.
     """
     runlogs_dir = REPO_ROOT / "eval/runlogs/unit"
+    # Classify rather than glob `v1_*.json`. That literal matches neither a
+    # RELEASED `v{N}.json` nor any v2+ candidate, so the first time any of the
+    # 25+ skills is released — a normal step in the documented per-PR workflow,
+    # not an edge case — this corpus would quietly shrink and the test would go
+    # on passing over whatever was left. Nothing in the corpus is released
+    # today, which is exactly why it has not been noticed.
     log_paths = sorted(
-        p for p in runlogs_dir.rglob("v1_*.json") if not p.name.endswith(".ann.json")
+        p for p in runlogs_dir.rglob("v*.json")
+        if not p.name.endswith(".ann.json")
+        and classify(p.name).kind in ("released", "candidate")
     )
     assert len(log_paths) > 50, (
         f"sanity check: expected a substantial committed run-log corpus, "
@@ -914,10 +996,14 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                         ta = next(
                             (x for x in out if x["name"] == "Tool Arguments"), None
                         )
-                        if ta is not None and ta["score"] is not None:
+                        # .get(), not [...]: a judge draw missing "score"
+                        # entirely is a real historical shape, and a raw
+                        # KeyError here escapes the JudgeError guard above and
+                        # crashes the test instead of reporting its diagnostic.
+                        if ta is not None and ta.get("score") is not None:
                             na_leaked.append(
                                 f"{p.relative_to(REPO_ROOT)}::{t.get('test_id')} "
-                                f"= {ta['score']!r}"
+                                f"= {ta.get('score')!r}"
                             )
                 except judge.JudgeError as e:
                     unexpected_raises.append(

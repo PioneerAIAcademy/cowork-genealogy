@@ -1284,7 +1284,7 @@ def test_summary_tallies_judge_warnings(capsys):
         _row("ut_a_004"),
     ])
     out = capsys.readouterr().out
-    assert "Judge rule violations (3 across 2 kind(s)):" in out
+    assert "Judge rule violations (3 test-kind pair(s), 2 kind(s)):" in out
     assert "dropped_unknown_rubric_dimension: 2 — ut_a_001, ut_a_003" in out
     assert "coerced_tool_arguments_to_na: 1 — ut_a_002" in out
     # The clean test must not appear in the tally section.
@@ -1353,5 +1353,43 @@ def test_summary_reads_warnings_off_the_real_entry(tmp_path, monkeypatch, capsys
 
     out = capsys.readouterr().out
     assert rc == 0
-    assert "Judge rule violations (1 across 1 kind(s)):" in out
+    assert "Judge rule violations (1 test-kind pair(s), 1 kind(s)):" in out
     assert "coerced_tool_arguments_to_na: 1 — ut_a_000" in out
+
+
+def test_summary_ignores_non_judge_warning_kinds():
+    """`output.warnings` is a shared list. orchestrator._build_warnings also
+    puts `unread_skill_call`, `missing_tool_usage_dimension` and
+    `uncovered_tool_call` in it — none of which is the judge misbehaving.
+    Tallying those under a "Judge rule violations" header would report a
+    routine unmatched tool call as a judge fault."""
+    assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
+    assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
+    assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
+    # And every kind judge.py actually emits IS in the set, or it prints
+    # nowhere — which is the state this whole section exists to end.
+    from pathlib import Path as _P
+    src = (_P(__file__).resolve().parents[2] / "harness/judge.py").read_text(
+        encoding="utf-8"
+    )
+    import re as _re
+    emitted = set(_re.findall(r'"kind": "([a-z_]+)"', src))
+    assert emitted <= run_tests._JUDGE_WARNING_KINDS, (
+        f"judge.py emits warning kind(s) the summary will never print: "
+        f"{sorted(emitted - run_tests._JUDGE_WARNING_KINDS)}"
+    )
+
+
+def test_summary_count_matches_the_names_it_shows(capsys):
+    """One test tripping the same kind twice is one test, not two. The
+    headline counted occurrences while the list deduped, so it read as two
+    and showed one name, with no '+N more' to explain the gap."""
+    run_tests._print_summary([
+        {"test_id": "ut_x_001", "skill": "s", "outcome": "pass",
+         "judge_warning_kinds": ["dropped_unknown_rubric_dimension"] * 2},
+    ])
+    out = capsys.readouterr().out
+    line = next(l for l in out.splitlines() if "dropped_unknown" in l)
+    count = int(line.split(":")[1].split("—")[0].strip())
+    names = [n.strip() for n in line.split("—")[1].split("(+")[0].split(",")]
+    assert count == len(names) == 1, line
