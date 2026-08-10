@@ -10,6 +10,7 @@ import type {
   FSPlaceDescriptionResponse,
 } from "../types/place.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "./http.js";
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
 // FamilySearch's place service (the one the research-places website uses). It
@@ -72,7 +73,7 @@ export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
   // entries rank first. See tests/utils/place-api.test.ts.
   const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${name}"`)}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/x-gedcomx-atom+json",
     },
@@ -117,7 +118,7 @@ export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
 export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
   const url = `${FS_API_BASE}/${primaryId}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/json",
     },
@@ -159,7 +160,7 @@ export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceRe
 export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
   const url = `${FS_API_BASE}/description/${id}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/json",
     },
@@ -217,7 +218,7 @@ export async function getPlaceWikipediaUrl(repId: string): Promise<string | null
   const url = `${FS_PLACE_WS_UI_BASE}/${encodeURIComponent(repId)}/attributes/`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json",
         "User-Agent": BROWSER_USER_AGENT,
@@ -245,7 +246,7 @@ type PrimaryIdResponse = {
 
 async function fetchPrimaryIdResponse(primaryId: string): Promise<PrimaryIdResponse> {
   const url = `${FS_API_BASE}/${primaryId}`;
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const response = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
   if (!response.ok) {
     if (response.status === 404) return {};
     throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
@@ -293,7 +294,7 @@ export async function getPlaceCandidateNames(primaryId: string): Promise<string[
 export async function getPlaceRepIds(pid: string): Promise<string[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
 
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const response = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
   if (!response.ok) {
     if (response.status === 404) return [];
     throw new Error(

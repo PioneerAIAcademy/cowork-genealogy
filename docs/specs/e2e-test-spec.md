@@ -539,9 +539,10 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
-   is already spent. All **five** `cost_cap` runs in the corpus ended with the
+   is already spent. All **nine** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
-   to **$15.86–$20.84** against a $15 cap. Two things block real enforcement, so
+   to **$15.86–$21.50** (median $17.12) against a $15 cap. Two things block real
+   enforcement, so
    it was left as-is rather than half-built: there is no per-model price table
    for agent models (`judge.py::JUDGE_PRICING` covers judge models only, and a
    run spans the parent plus each subagent on its own `.md` pin), and subagent
@@ -1024,7 +1025,12 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Grading is
+edited after grading) is a hard error: re-grade or delete it. A grade whose
+**fixture was retired** is the same hard error with the same
+remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
+split changes the researcher question and the starting tree, so the run was
+never executed against the fixture it would then be graded under — and leave
+the run log itself; the corpus readers still count it. Grading is
 **same-PR**: every committed run is graded in the PR that commits it (all
 gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
 `check-e2e-fixtures`
@@ -1089,6 +1095,19 @@ checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
+**Check 3 has a live pre-write sibling, and one run mode makes check 3 itself
+vacuous.** The sibling runs in `pretool_hook` and asks the stricter question —
+was the identity scored *before* the link, not anywhere in the run — recording
+into `guardrail_shadow_violations` without denying. It can be switched to a real
+deny for **one** fixture with `make e2e-run TEST=<slug>
+PERSON_EVIDENCE_GUARD=deny` (default `shadow`), which is how the recovery
+evidence its graduation needs gets gathered; it fires in roughly 80% of runs that
+link a person, so this is not a suite-wide setting. **Under `deny`, check 3
+passes vacuously**: the blocked write never lands, so there is no
+`person_evidence` entry left for it to read. `usage.person_evidence_guard`
+records the mode — read it before comparing a run's `compliance` to another's.
+Design, limits, and the loop valve: `docs/specs/guardrail-enforcement-spec.md` §4.
+
 **A fourth check runs in shadow mode only: citation-string
 nulling.** `find_citation_nulling_in_conclusions` (in
 `harness/skill_invocation.py`) reads the final `research.json` and flags a
@@ -1107,8 +1126,11 @@ the judge.
 
 Unlike the three hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
-repository's shadow → measure → graduate posture (same as §7's recency check
-and the `same_person` provenance check). The gate on a `proof_summaries` entry is
+repository's shadow → measure → graduate posture (same as the `same_person`
+provenance check). **Not** the same as §7's recency check, which shares the
+posture but not the prospects: its measure step has no instrument, so it is
+shadow permanently rather than pending — `guardrail-enforcement-spec.md` §7,
+"What the success gate can and cannot see." The gate on a `proof_summaries` entry is
 deliberate: tree citations are populated by `proof-conclusion` at *upload*
 time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
@@ -1123,8 +1145,11 @@ never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
 `not_checked` rather than `pass`, distinguishing pre-detector code by the
 presence of the `guardrail_shadow_violations` key (the two shipped in the same
-commit). Retroactively scoring the corpus is tracked as issue #913, and needs
-the checks replayed at a pinned version to be meaningful.
+commit). **Retroactively scoring the corpus is not currently possible in a way
+worth trusting**, and `not_checked` is the honest label rather than a placeholder
+for work in progress: a replay only means something if the checks are pinned to
+the version each run actually executed, and nothing records that version per run.
+Recording it is the prerequisite for any corpus-wide compliance number.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
@@ -1160,15 +1185,16 @@ until this bump lands, so a run made in it would.
 key at all, at `3` exactly as at `2`.
 
 **Measured blast radius, so nobody over-corrects for this.** Replaying the
-committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
-result, across 66 of the 555 runs — but **none is a `same_person`,
+committed corpus at the time this was taken: 164 of 23,056 `tool_calls` entries
+carry an error-shaped result, across 66 of the 145 runs — but **none is a `same_person`,
 `research_append`, or `extraction_append`**. They are `record_search` (68),
 `external_links_search` (24), `fulltext_search` (20), `Glob`, `Grep`, `Bash` —
 tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
-is a correctness statement, not a warning of a large shift: the numbers issues
-#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
+is a correctness statement, not a warning of a large shift: every shadow-window
+and provenance number on this page moves by ~1 entry across the whole corpus.
+`is_error` is also
 blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
 a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
 is why the shift is this small.
@@ -1176,8 +1202,9 @@ is why the shift is this small.
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
 that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
-calibration itself is #911's.
+visible) or the corpus accumulates errored `same_person`/`Skill` calls. Window
+calibration is not a pending task at all — see
+`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
@@ -1222,6 +1249,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `effort_level` | Pinned via a project setting; default `high`. |
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
+| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
@@ -1229,7 +1257,9 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
-alone.
+alone. `person_evidence_guard` is a sixth self-describing field but not a
+reasoning knob — it records an enforcement posture, and is the one field here
+that changes what a *verdict* means rather than what produced it.
 
 #### 8.1.1 `tool_calls[]` — the joined keys
 
@@ -1243,6 +1273,16 @@ A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
 is the parallel structured record, not the only one — which is why an
 `is_error: true` entry is not automatically an upstream failure (§15).
+
+**One denial is deliberately absent from both `blocked_*` lists.** The
+`person_evidence_guard: "deny"` denial records only into
+`guardrail_shadow_violations`, tagged `kind: "person_evidence_deny"`. Neither
+list's meaning fits it — `blocked_tree_reads` is the answer-integrity block
+(§6.1) and `blocked_context_calls` is the per-context tool policy — and its own
+list is where the fire-rate measurement is read from, so a second copy would
+have to be excluded from every count anyway. A reader looking for it should
+filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
+lists.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
