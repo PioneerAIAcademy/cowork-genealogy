@@ -87,15 +87,28 @@ guardrail skill run this session" misses every case we have evidence for.
 | `hole-parents-negative` (2026-07-22) | **pass** | ran proof-conclusion *and* research-exhaustiveness, then wrote conflict-resolution's output itself |
 | `eulogia-gatica-burial` (2026-07-28) | pass → failed by §8 | 83 calls, 6 skills invoked, 17 direct `research_append`; stamped `proved` over an unresolved 1862/1865 birth-year conflict |
 
-`bagley-father-1884` (2026-07-27) is the case that shaped §8's third check: at
-call 86 the router wrote a 26-op batch creating a new tree person and linking 13
-assertions to him, `person-evidence` having been read off disk at call 77 and
-not invoked until call 138 — for a different record. `same_person` was called
-**zero** times in the whole run. The whole-run "was it invoked" check passed;
-only the windowed check caught it. A blind human annotation independently
-downgraded the run for the same underlying defect (the person was never pinned
-to an identity), which is content-level corroboration that a skipped gate has
-genealogical consequences, not just procedural ones.
+`bagley-father-1884` (2026-07-27) is the case that shaped §8's third check.
+Verified against `run-2026-07-27_20-01-40.json`:
+
+- **call 85** — `materialize_facts`, 7 ops, mints the new tree person `I1` and
+  attaches sourced refs, including onto the *existing* `MJDL-Q8B` / `LVDV-6MK`.
+- **call 86** — a **30-op** `person_evidence` batch across **three** persons:
+  `MJDL-Q8B` 12, `I1` 11, `LVDV-6MK` 7.
+- **call 141** — `I1`'s remaining 2 links; final count 32.
+
+`person-evidence` had been read off disk at call 77 and was not invoked until
+call 138 — for a different record. `same_person` was called **zero** times in the
+whole 174-call run. The whole-run "was it invoked" check passed; only the
+windowed check caught it. A blind human annotation independently downgraded the
+run for the same underlying defect (the person was never pinned to an identity),
+which is content-level corroboration that a skipped gate has genealogical
+consequences, not just procedural ones.
+
+**The sequence sets the enforcement point, and it is not the `person_evidence`
+append.** The unscored identity claim commits at call 85's tree write, one call
+*before* any `person_evidence` entry exists to gate. A gate binding only on the
+pe append cannot catch the failure this example is the reference case for; a
+design has to span `materialize_facts`'s create-and-enrich path too.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
@@ -132,7 +145,7 @@ cannot, and none depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
-| §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only** |
+| §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 
@@ -140,6 +153,13 @@ Read the status column literally. Only §5 and §6 restrain a real user's sessio
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
 until something is retained to detect against — the hosted path persists no
 tool-call ledger.
+
+**§7's status is a finding, not a queue position.** Its graduation was gated on a
+false-positive rate that cannot be measured while its success gate reads `Skill`
+launch acknowledgements — and no instrument available to the harness observes
+skill *completion* (§7, "What the success gate can and cannot see"). Treat that
+row as settled unless one of the four skills becomes something that emits a
+completion signal; do not re-open it as a calibration task.
 
 The last row is the live, pre-write form of a question §8 already hard-fails
 post-run, so its doctrine needs no shadow period — but its *enforcement* does.
@@ -423,9 +443,6 @@ Design points that were paid for and should not be re-derived:
   `find_person_evidence_missing_same_person`, and
   `find_protected_writes_by_unnamed_delegate`.
 
-  **There is no `PostToolUse` hook** anywhere in `eval/harness/`, and nothing
-  here should be built on one existing.
-
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:
 
@@ -433,9 +450,8 @@ Design points that were paid for and should not be re-derived:
     launch acknowledgement (`Launching skill: <name>`); the skill's work happens
     in later turns of the same session. So `is_error` on a `Skill` entry catches
     an unknown-skill-name launch failure and nothing else. **The
-    invoke-then-let-it-fail evasion named at the top of this bullet is still
-    open** — closing it needs an instrument that observes skill *completion*,
-    which `ToolResultBlock` is not.
+    invoke-then-let-it-fail evasion named at the top of this bullet stays open**,
+    and the next block explains why it cannot be closed from here.
   - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
     from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
     without throwing, so a rejected write still records `is_error: false`
@@ -461,11 +477,44 @@ Design points that were paid for and should not be re-derived:
   writes (`primary: true`, `ParentChild`/`Couple`). A check watching only
   `research.json` misses both.
 
-**Why it is still shadow.** The window is a recency heuristic, not a guarantee,
-and its default was a first-cut guess. Graduating it to deny requires knowing
-the false-positive rate, because a mistuned window hard-denies legitimate writes
-and can produce a stuck loop against the harness's own stall/budget machinery.
-**Measure the false-positive rate first. Do not graduate it on intuition.**
+### What the success gate can and cannot see
+
+This layer is shadow-only **permanently**, and the reason is not that nobody has
+got round to the calibration. It is that the calibration has no instrument.
+
+Graduating §7 was gated on a false-positive rate. That rate is not obtainable
+while "did the skill succeed" is read off `Skill` entries, because those entries
+carry launch acknowledgements — a census of the committed corpus returns 18
+distinct values across 1,242 entries, all of the form `Launching skill: <name>`
+plus one unknown-skill error. Three candidate instruments were checked and none
+observes completion:
+
+- **Trace-based** — between a launch and the next one, did the skill's own tool
+  sequence appear? Measured over 358 guardrail-skill episodes
+  (`make e2e-skill-episodes SINCE=all`): the highest-recall in-episode tool for
+  **all four** skills is `research_append` — the protected write itself. A gate
+  built on it would credit a skill for the very write §7 exists to gate. Nothing
+  reaches recall ≥ 0.30 with precision ≥ 0.90; the best is `materialize_facts`
+  for `person-evidence` at 0.84. And "launched, did nothing" has no ledger shape:
+  empty episodes are 4 of 358, while the failure mode is an episode whose only
+  event *is* the inline write, which is indistinguishable from success.
+- **A `PostToolUse` hook** — the SDK does expose one (along with
+  `SubagentStart`/`SubagentStop`), though `eval/harness/` registers only
+  `PreToolUse` and `Stop`. It does not help: on a `Skill` call it fires at
+  launch-ack, reporting exactly what `ToolResultBlock` already does.
+  `SubagentStop` fires only for Task-spawned agents, and a `Skill` runs inline in
+  the same session with no `agent_id` (§2).
+- **A skill-side completion marker** — self-attestation, refused by the
+  `match_score` precedent at the top of this section.
+
+**What would change the answer:** giving a guardrail skill an identity that emits
+a completion signal — i.e. converting it to an agent, which §9 costs out. Absent
+that, do not re-open this as a tuning task; the window is not the variable. The
+count barely moves from window 10 to 150 (§3), which was the early tell.
+
+The window itself stays at 40 and the layer stays instrumented, because the
+shadow signal is still worth having as measurement. What is retired is the
+expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
@@ -501,10 +550,16 @@ this section before reopening one.
   agent as unreliable *and silent* — read on some tests, ignored on others,
   over-applied on others; 6/19 against a 12–14/19 baseline. The only sanctioned
   fix is full inlining (`CLAUDE.md`, "No playbook/reference files for agents"),
-  and inlined, `person-evidence` (941 lines) and `conflict-resolution` (1006)
-  would each set a new high-water mark for a plugin agent body.
-  `research-exhaustiveness` (413) and `proof-conclusion` (509) are the cheap
-  candidates if this is revisited.
+  and inlined, `person-evidence` (974 lines) and `conflict-resolution` (1007)
+  would each set a new high-water mark for a plugin agent body — against
+  `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
+  `proof-conclusion` (519) are the cheap candidates if this is revisited.
+
+  **This is the only route that reopens §7.** An agent is the one form a
+  guardrail skill can take that emits a completion signal (`SubagentStop`) and
+  carries an `agent_id`, which is what §7's success gate has never had. Weigh
+  that against #702 before dismissing it as attribution-only plumbing — but weigh
+  #702 seriously too: it is a measured regression, not a theoretical risk.
 - **A thin agent whose only action is `Skill('<name>')`** — keeps SKILL.md as
   the single source of truth while buying a real `agent_id`. Plausible, because
   #702's failure was a *conditional, secondary* fetch whereas this would be
@@ -579,8 +634,16 @@ that outlive any one of them.
 
 ## 11. Caller-attributed protected writes (shadow mode)
 
-**Status:** shadow only. Instrumented, never denied. Graduating it is gated on
-the same calibration as §7.
+**Status:** shadow only. Instrumented, never denied.
+
+**Its gate is its own false-positive rate, not §7's.** This layer needs no
+completion instrument — it keys on the caller's `agent_id`/`agent_type`, a fact
+the PreToolUse hook stamps per call ("Why this needs no window", below). So the
+finding that closes §7's graduation says nothing about this one. What it does
+need is a sample, and the sample is thin: attribution rides only on runs made
+after PR #1027, which is 6 of 145 committed runs, one of them carrying any
+violation at all. Graduate on an accumulated count decided in advance — not on a
+date, and not on that single run.
 
 ### The rule
 
@@ -668,9 +731,7 @@ move the `compliance` axis until its false-positive rate is measured. Detector:
 - `docs/specs/research-append-tool-spec.md` §5, §11 — the write-boundary
   invariant and the `extraction_append` lane-gating precedent this extends
 - `docs/architecture.md` §5 — the three capability-binding surfaces and which
-  of them bind in production; §9.4 lists what nothing checks
+  of them bind in production; §9.4 points at what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
-- Issues #911 (calibrate §7), #913 (what past verdicts are worth), #1054
-  (retain a hosted ledger, then port §8), #998 (closed — §8 check 1's
-  proof-conclusion arm now takes the `starting_tree` baseline),
-  #940 (closed — the production port of §6)
+- Issue #1054 — retain a hosted tool-call ledger, then port §8. The one open
+  dependency named on this page; §8 cannot reach production without it.

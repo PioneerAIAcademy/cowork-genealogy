@@ -295,7 +295,6 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "packages/schema/src/index.ts:269",
     "scripts/build-mcpb.mjs:26-27",
   ],
-  "docs/architecture.md": ["src/index.ts:736"],
   "docs/realtime-architecture.md": [
     "apps/server/app/models.py:45",
     "local.py:195",
@@ -440,8 +439,10 @@ describe("docs/ cite symbols, not line numbers", () => {
  * purely because a ticket closed, while the gap it describes never moved, and
  * not one of §9.4's six consumers (`task-reviewer`, `review-ready`,
  * `fill-ready`, `CLAUDE.md`, and two in-file pointers) reads a ticket number —
- * they all ask for the gap and its consequence. The `Tracking` column is gone
- * and the file is in scope like any other.
+ * they all ask for the gap and its consequence. The `Tracking` column went
+ * first; on 2026-08-09 the §9.4 gap table and the §10 open-questions list went
+ * too, both replaced by a live `gh issue list` query, which is what took this
+ * file from 24 refs to 20. It is in scope like any other.
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
@@ -452,11 +453,11 @@ describe("docs/ cite symbols, not line numbers", () => {
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
-  "docs/architecture.md": 24,
-  "docs/specs/e2e-test-spec.md": 17,
+  "docs/architecture.md": 20,
+  "docs/specs/e2e-test-spec.md": 12,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
-  "docs/specs/guardrail-enforcement-spec.md": 17,
+  "docs/specs/guardrail-enforcement-spec.md": 16,
   "docs/specs/hosted-web-workbench-spec.md": 4,
   "docs/specs/image-reader-agent-spec.md": 3,
   "docs/specs/image-reader-opus-agent-spec.md": 1,

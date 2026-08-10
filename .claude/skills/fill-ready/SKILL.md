@@ -279,10 +279,11 @@ milestone's own question:
 
 There is no standing "what to do next" document to rank from — the one that
 existed was retired 2026-08-09 because its priorities went stale faster than
-anyone re-read them. Rank from repo state instead: the board itself,
-`docs/architecture.md` §9.4 (what nothing checks) and §10 (open questions), and
-`docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells you which
-proposals have already been argued and disproved.
+anyone re-read them. Rank from repo state instead: the board itself — which is
+now also where the what-nothing-checks and open-questions registers live, since
+`docs/architecture.md` §9.4 and §10 were reduced to pointers into it on
+2026-08-09 — and `docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells
+you which proposals have already been argued and disproved.
 
 **Instrument before fix.** An item that restores a broken measurement outranks
 the fixes that measurement is supposed to evaluate — that is already heuristic 2
@@ -565,7 +566,8 @@ workflow files directly into Ready and which you never move at all.)
 **Gate the unassigned `developer` shortlist through `/review-ready` before you
 promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
 that skill fans out one agent per item to check the same call against the cited
-code, the architecture guide's site list, and §9.4's what-nothing-checks list —
+code, the architecture guide's site list, and the board's what-nothing-checks
+issues —
 which is where a "junior-safe" item turns out to hide an open API decision.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
