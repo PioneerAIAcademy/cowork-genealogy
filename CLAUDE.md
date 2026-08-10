@@ -472,8 +472,8 @@ change, with different (and easy-to-undercount) site lists:
   `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
   cannot see and which stay hand-written in `packages/schema/src/index.ts` until
   they move. Worked blast-radius and
-  rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
-  the `evidence_type` row.
+  rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note in
+  the enum section.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
   persons, names, facts, relationships, or sources: in addition to the spec
   (`docs/specs/simplified-gedcomx-spec.md`) and the schema mirrors above, the
