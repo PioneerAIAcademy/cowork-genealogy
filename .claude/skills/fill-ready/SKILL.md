@@ -329,14 +329,6 @@ milestone's own question:
   (issues #998 / #999 / #1006), halt-on-tool-layer-loss (issue #941), and the
   wiki/pop-stats deployment (issue #290 — the defaults are one developer's
   tailnet and 28–35% of those calls fail, silently thinning locality guidance).
-
-  The Electron release blocker (issue #1070) **was** on this list and came off
-  it 2026-08-09: beta names no surface, the hosted guide is a browser app with
-  no install, and the Cowork guide runs the viewer from a clone
-  (`pnpm --filter @genealogy/electron dev`), never a packaged build. It gates
-  the *option* of a desktop-installer beta, which is a product call. Kept here
-  as a worked example of why this section says to re-derive membership rather
-  than trust a list of numbers.
 - **Public-launch gate** — *does a stranger's use, at volume and unsupervised,
   break the product or us?* That covers untrusted input reaching a
   write-capable agent, seeing quality for real users rather than fixtures, the
