@@ -234,8 +234,9 @@ def test_na_rule_coerces_integer_score_when_no_tool_calls():
 
 
 def test_na_rule_silent_when_judge_already_reported_null():
-    """The overwhelmingly common path — 652 of 1853 committed draws made
-    zero tool calls. A warning here would be noise on every one of them."""
+    """The overwhelmingly common path — 646 of the 1806 judge draws in the
+    committed corpus made zero tool calls. A warning here would be noise on
+    every one of them."""
     ta, warnings = _na_case(None, tool_calls=[])
     assert ta["score"] is None
     assert warnings == []
@@ -307,6 +308,12 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     something it should have ignored.
     """
     from harness.orchestrator import _compute_outcome
+
+    # The coercion half, so this test covers the same hop test 5 does
+    # rather than only the gate below it.
+    ta, warnings = _na_case(1, tool_calls=[])
+    assert ta["score"] is None
+    assert warnings[0]["score"] == 1
 
     spec = SimpleNamespace(
         type="negative", skill="search-wikipedia",
