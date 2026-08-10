@@ -45,6 +45,16 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 }
 ```
 
+**All three keys must be present, and no fourth key is permitted.** An empty
+array is written as `[]`, never omitted. Every object in the file is likewise
+closed: the field tables in Section 4 are exhaustive, and a field not listed
+there is rejected rather than ignored — by the JSON Schema
+(`additionalProperties: false` throughout) and by the runtime validator, which
+enforces the same per-object field lists. Adding a field to the tree means
+changing the schema and the validator, not just writing it. (One narrow
+exception, for documents written before a field set was closed: see "Legacy
+documents are healed at read" in Section 4.3.)
+
 ---
 
 ## 2. Simplification Rules
@@ -165,6 +175,12 @@ Array of relationship objects.
 | `notes` | string[] | no | Free-text notes attached to this relationship. Each entry is the text of one note |
 | `sources` | object[] | no | Source references |
 
+A ParentChild relationship has **no `facts` array** in this format — only
+Couple does. An adoption or a guardianship is carried by `subtype` instead
+(conversion re-expands it into a relationship fact on the full-GedcomX side,
+see Section 5), and a dated event that merely involves a parent and a child —
+a christening, say — is a fact on the *person*.
+
 **Couple:**
 
 | Field | Type | Required | Description |
@@ -230,7 +246,7 @@ link an assertion to a source description with a locator.
 |-------|------|----------|-------------|
 | `ref` | string | yes | The `id` of a source in the top-level `sources` array |
 | `page` | string | no | Specific locator within the source (page, entry, certificate number, dwelling number). Corresponds to Evidence Explained's "where-within" |
-| `quality` | number | no | Source quality score mimicking GEDCOM's QUAY: `0` = unreliable, `1` = questionable, `2` = secondary evidence, `3` = direct and primary evidence. See design decision below for usage guidance |
+| `quality` | integer | no | Source quality score mimicking GEDCOM's QUAY, and the only numeric field in the format: `0` = unreliable, `1` = questionable, `2` = secondary evidence, `3` = direct and primary evidence. Whole numbers 0–3 only — `2.5` is rejected, and there is no value for "better than 3". See design decision below for usage guidance |
 
 ### 4.5 Date Strings
 
@@ -283,20 +299,34 @@ round-trip. See §7 below.
 
 ## 5. Enums
 
+These are the tree's own controlled vocabularies. They are **not** the ones in
+`research-schema-spec.md` Section 2, even where a name looks the same: the
+tree's fact types are PascalCase (`Birth`), `research.json`'s are
+lowercase_with_underscores (`birth`). See "Casing convention" below.
+
 ### Closed enums
 
-| Enum | Values | Used by |
-|------|--------|---------|
-| `gender` | `Male`, `Female`, `Unknown` | persons |
-| `relationship_type` | `ParentChild`, `Couple` | relationships |
+| Enum | Schema name | Values | Used by |
+|------|-------------|--------|---------|
+| `gender` | `gender` | `Male`, `Female`, `Unknown` | persons |
+| `relationship_type` | `relationship_type` | `ParentChild`, `Couple` | relationships |
 
 ### Open enums (recommended values)
 
-| Enum | Recommended values | Used by |
-|------|-------------------|---------|
-| `fact_type` | See table below | person facts, relationship facts |
-| `name_type` | `BirthName`, `MarriedName`, `AlsoKnownAs`, `Nickname`, `Formal`, `Religious` | names |
-| `parent_subtype` | `Biological`, `Adoptive`, `Step`, `Foster`, `Guardian` | ParentChild relationships |
+An open enum accepts values beyond those listed; the recommended set is what
+tools emit and what skills should prefer. `fact_type` carries one hard
+constraint anyway — see the casing note below.
+
+| Enum | Schema name | Recommended values | Used by |
+|------|-------------|-------------------|---------|
+| `fact_type` | `gedcomx_fact_type_recommended` | See table below | person facts, relationship facts |
+| `name_type` | `gedcomx_name_type_recommended` | `BirthName`, `MarriedName`, `AlsoKnownAs`, `Nickname`, `Formal`, `Religious` | names |
+| `parent_subtype` | `parent_subtype_recommended` | `Biological`, `Adoptive`, `Step`, `Foster`, `Guardian` | ParentChild relationships |
+
+The "Schema name" column is the `$defs` key in
+[`schemas/enums.schema.json`](schemas/enums.schema.json), where all five are
+defined; the short names are what this document and the field tables in
+Section 4 call them.
 
 **Parent subtype values and GedcomX compatibility:**
 
@@ -334,6 +364,15 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Probate` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
 
 **Casing convention:** Fact and name types use PascalCase (matching GedcomX conventions with URI prefixes dropped). This contrasts with `research.json` which uses lowercase_with_underscores. When mapping between the two files, convert case: `birth` ↔ `Birth`, `military_service` ↔ `Military`, `residence` ↔ `Residence`. The research.json types `name`, `relationship`, and `other` are research-only and do not appear as GedcomX fact types.
+
+**The initial capital on a fact type is enforced, and it is the one part of an
+open enum that is.** A fact `type` must begin with an uppercase letter; the
+rest of the value is unconstrained, so a type outside the table above is
+accepted so long as it is capitalized. This exists because the failure it
+catches is otherwise invisible: a lowercase `birth` copied across from
+`research.json` looks like a plausible value, passes every enum check that
+treats the list as open, and then hard-fails `tree_edit` mid-run. Name types
+carry no such constraint, but should follow the same PascalCase convention.
 
 ---
 
