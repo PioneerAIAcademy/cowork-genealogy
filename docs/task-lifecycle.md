@@ -45,13 +45,16 @@ Two things worth knowing:
 
 ## The commands in this document
 
-Every slash command below ships with Claude Code, except `/critique-plan` and
-`/check-drift`, which live in this repo at
-[`.claude/commands/`](../.claude/commands/). Nothing here needs a plugin you
-have to install.
+Two of them ship with Claude Code: `/code-review` and `/security-review`. The
+other four ship with this repo, so cloning is the whole install —
+`/critique-plan` and `/check-drift` in
+[`.claude/commands/`](../.claude/commands/), `/review` and `/audit-merged-prs`
+in [`.claude/skills/`](../.claude/skills/). Nothing here needs a plugin you have
+to install.
 
-If you have a personal plugin that defines one of these names, **yours wins** —
-which is worth knowing before you wonder why `/review` did something else.
+If you have a personal plugin that defines one of these names, yours wins. Most
+people don't — but if `/review` ever behaves unlike what's described here,
+that's the first thing to check.
 
 ---
 
@@ -128,9 +131,6 @@ to do any of these:
   value on a closed enum, or a tree-shape change. Site lists:
   [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
-- Widens what a Cowork plugin agent is allowed to call — the `tools:` or
-  `disallowedTools:` lists in `packages/engine/plugin/agents/`. Editing an
-  agent's prompt is ordinary work; changing its permissions is not.
 - Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
 - Is hard to undo: a data migration, a write to user state, anything
   user-facing or talking to an external service.
@@ -229,24 +229,53 @@ what tells a reviewer, human or model, which few lines carry the decision among
 the ones that carry the mechanics. Write it for someone who has not seen your
 branch.
 
-Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
-co-author".
-
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
-### 9. Peer review, then senior review
+### 9. Peer review, then senior review — on the paths that need it
 
-Peer review is another developer. Senior review is a senior developer or the
-lead, and it is the last gate — by then everything mechanical should be settled,
-so their time goes to whether the approach is right.
+Peer review is another developer, and it is now **sufficient to merge** on
+files with no `senior-developers` entry in
+[`.github/CODEOWNERS`](../.github/CODEOWNERS). Senior review is a senior
+developer or the lead, and branch protection requires it specifically on
+code and infrastructure file types — `.ts`/`.tsx`/`.js`/`.mjs`/`.cjs`/`.py`/
+`.json`/`.yml`/`.yaml`, repo-wide — with an explicit carve-out putting
+genealogist-authored content (plugin skills, plugin agents, eval fixtures
+and tests, run logs, and `docs/` prose) back under `senior-genealogists`
+even where it happens to be `.py`, `.json`, or otherwise one of those
+extensions. The split is **genealogists review skills and runlogs;
+developers review infrastructure** — by the time a senior developer looks
+at a PR, everything mechanical should be settled, so their time goes to
+whether the approach is right, on the PRs where that specifically needs a
+senior's judgment.
+
+**CODEOWNERS is the source of truth for which paths need a senior, not this
+paragraph.** Read the file rather than trusting a path list here — it can
+drift out of sync with what's actually enforced and this one can't.
 
 **The senior developers are volunteers.** Their time is the scarcest thing in
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
+**A PR touching both kinds of file needs both approvals.** GitHub resolves
+CODEOWNERS per file, not per PR — a PR that changes a `.ts` tool
+implementation alongside a `SKILL.md` still requires a `senior-developers`
+approval for the `.ts` file and a `senior-genealogists` approval for the
+`SKILL.md`, on top of whatever else the other files need.
+
+**Peer-only merges aren't reviewed by a senior zero times — they're sampled
+after merge, not before.** `/audit-merged-prs` is the lead's weekly pass
+over recently-merged, peer-only-approved developer PRs: it samples a subset
+and runs `/review` against each merge commit to catch what peer review
+alone tends to miss — design drift, a missed multi-site edit, a check that
+cannot fail. It reports and files issues; it never reverts or re-opens a
+merged PR.
+
 **Automatic Claude review is off** (`.github/workflows/claude-code-review.yml`,
-disabled 2026-08-03). Nothing reviews your PR before a human opens it, so step 6
-is the only pass it gets — arrive with it done.
+disabled 2026-08-03) and this plan does not turn it back on. Nothing
+reviews your PR before a human opens it, so step 6 is the only pass it
+gets — arrive with it done. Peer review via `/review`, senior review on
+CODEOWNERS-listed paths, and `/audit-merged-prs`'s weekly sampling are the
+chosen replacement for the disabled bot, not another automated first pass.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -284,6 +313,23 @@ returns as an input to your review, never as your review.
    set out to do. Give Claude those, the issue, and the relevant spec, then ask
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
+4. **Two things aren't yours to approve.** A diff that hits step 4's stop rule —
+   schema, credentials, an ADR reversal, anything hard to undo — needs the lead,
+   whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
+   lists, your approval doesn't unblock merge. Say which is still owed rather
+   than leaving the author to discover it at the merge button.
+
+### "It says approved, but it won't merge"
+
+Three rules can each hold a green, approved PR. Check them in this order:
+
+- **Someone pushed after the approvals.** At least one approval has to land
+  *after* the most recent push. The old approvals are not cancelled — they still
+  count toward the two — so you need one fresh approval, not two.
+- **An unresolved conversation.** Every review thread must be marked resolved.
+  Resolve the ones you answered; the reviewer resolves the ones they raised.
+- **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team
+  is required per path. Four approvals from the wrong team is still zero.
 
 ---
 

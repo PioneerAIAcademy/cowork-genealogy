@@ -691,7 +691,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     Note what the two layers do and do not compose to. The main-thread half is
     DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
     not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated (#911). So a `general-purpose` delegate's `extraction_append`
+    calibrated. So a `general-purpose` delegate's `extraction_append`
     still succeeds today; what this detector buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
@@ -789,6 +789,17 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
 # count this failure class in its own bucket instead of lumping it with the
 # #963 person_evidence-provenance gaps (both carry a `detail`).
 CITATION_NULLING_KIND = "citation_nulling"
+
+# Marks a #963 provenance entry recorded by a run launched in DENY mode
+# (`--person-evidence-guard deny`, issue #1231). Same list, same `detail` shape,
+# but a different meaning: the write was blocked and retried rather than landing,
+# and the loop valve can record several denials plus a release for one logical
+# gap. `scan_provenance` excludes it so the shadow fire rate the graduation
+# decision reads is not inflated by deny-mode runs. Lives here beside its sibling
+# rather than in `e2e/orchestrator.py` — which sets it — so that
+# `guardrail_shadow_report.py` can read it without importing the orchestrator
+# (and with it the Claude Agent SDK) just to learn one string.
+PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
 
 def find_citation_nulling_in_conclusions(

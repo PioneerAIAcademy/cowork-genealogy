@@ -45,7 +45,9 @@ of the streaming path (affinity-free).
 Prereqs in `apps/server/.env`: `E2B_API_KEY`, `E2B_ACCESS_TOKEN`,
 `ANTHROPIC_API_KEY`, `FAMILYSEARCH_WEB_ENABLED=true`, a stable `SESSION_SECRET`,
 and — for anything but local dev — a real `WS_SIGNING_KEY`. The
-`genealogy-agent` image built (C2).
+`genealogy-agent` image built (C2). A real `WS_SIGNING_KEY` is only optional here
+because `PUBLIC_URL` is http locally; on an https host the app refuses to boot
+without it (`config.assert_production_config`, issue #1123).
 
 1. **Terminal A:** `make server-e2b`  (control plane on `127.0.0.1:1837`,
    `SANDBOX_PROVIDER=e2b`, `AGENT_MODE=real`).
@@ -76,19 +78,28 @@ control plane only does auth + `/connect` + file reads (`/state`, `/status`,
 sidecar, feedback) — never the stream.
 
 ## Deferred / known gaps (none block the live-test)
-- **`ably>=3.1.2` is still declared** in `apps/server/pyproject.toml` even though
-  the C5 cleanup removed every import. Dead weight in the image, not a behavior
-  gap.
-- **FamilySearch token** is not auto-injected into E2B — dev/real connect writes it.
+- ~~**`ably>=3.1.2` is still declared** in `apps/server/pyproject.toml`.~~
+  **Closed (verified 2026-08-09):** the dependency is gone from
+  `pyproject.toml`.
+- ~~**FamilySearch token** is not auto-injected into E2B.~~ **Closed (verified
+  2026-08-09):** `sessions.sync_fs_token` writes the token into the sandbox on
+  session create and on every `/connect`, and reports a `familysearch` state
+  back to the client. What is still open is a different thing — the stored
+  access/refresh values are **unencrypted at rest** in the control plane's
+  database.
 - ~~**Wiki tools** need the pre-crawled markdown corpus baked into the image
   (`wikiMarkdownDir`).~~ **Obsolete, not pending (verified 2026-08-02).**
   `wiki_read` and `wiki_place_page` are now HTTP clients against the hosted
   `wiki-query-api`, the same as `wiki_search` — there is no corpus to bake and no
   `wikiMarkdownDir`. All three work in the sandbox wherever the API is reachable.
-- **1h Hobby cap:** a continuously-active session force-pauses at ~1h (resumes in
-  ~1s; a mid-turn pause breaks that turn). Proactive between-turn pause deferred.
+- **1h Hobby cap:** a session force-pauses after ~1h of *continuous running*, and
+  the window resets on resume, so total session wall-clock is unbounded (measured
+  2026-08-09). Resume takes ~1s. Whether a mid-turn pause breaks the turn is
+  asserted, not measured. Proactive between-turn pause deferred.
 - **Delete-janitor** (abandoned-sandbox GC) deferred — use the explicit DELETE.
-- `ws_signing_key` defaults to a dev value; set a real one for prod.
+- `ws_signing_key` defaults to a dev value. Since issue #1123 this is enforced rather
+  than documented: an https `PUBLIC_URL` plus a default `ws_signing_key` (or
+  `session_secret`, or an unset `DATABASE_URL`) is a boot refusal.
 
 ## Rebuilding the image
 `cd <repo> && E2B_API_KEY=… E2B_ACCESS_TOKEN=… bash apps/server/sandbox/build-image.sh`

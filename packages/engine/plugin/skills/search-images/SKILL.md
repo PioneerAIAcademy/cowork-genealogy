@@ -1,6 +1,5 @@
 ---
 name: search-images
-model: claude-sonnet-4-6
 description: Invoke for browsing FamilySearch digitized image volumes
   page-by-page — immediately when the user says "browse the images", "browse
   a volume", "page through", "look through the film/roll", "go through the

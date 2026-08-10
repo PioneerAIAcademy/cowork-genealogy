@@ -21,7 +21,8 @@
   "judge_context": [
     "Should confirm pli_006 (probate, in_progress) is the right next step: probate records may name Patrick as son of Thomas, providing direct positive evidence for parentage that the census records currently establish only indirectly",
     "Should consult the collections-search-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
-    "Should mention what would follow probate: post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood and establish residence continuity"
+    "Should say what comes after probate, concretely and with a reason — post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood, or the marriage of the candidate parents to each other for the mother's maiden name, are both good answers. Which records it picks is the skill's call; what fails is a review that stops at pli_006 with no forward path. Do not require one specific record type here",
+    "Scope: research-plan PLANS. Retrieving, reading and extracting a record belong to search-records and record-extraction. A source may sit in `sources` with `log_entry_id: null` and no extracted assertions — that is a normal mid-research state, not a defect. Observing that such a source is on file but not yet logged, and making 'log it and record what it says' the next action, is exactly right. Do not deduct for the review declining to state a document's contents, and do not read 'the source is on file' as a claim to have read it"
   ],
   "judge_reads_files": true,
   "execution": {

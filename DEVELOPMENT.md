@@ -35,42 +35,21 @@ ls releases/
 ## Git hooks
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
-double-click **`eval\InstallHooks.bat`**. Both install the same two hooks:
-`post-checkout` sets up new worktrees — links the shared files, installs the
-pnpm workspace — and `commit-msg` warns (never blocks) when a commit lacks a
-**human** `Co-authored-by:` trailer.
+double-click **`eval\InstallHooks.bat`**. Both install `post-checkout`, which
+sets up new worktrees: it links the shared files and installs the pnpm
+workspace.
 
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
 installer only when a *new* hook is added to the list.
 
-### Crediting a co-author
-
-Nearly every PR here is paired work, but the co-author usually goes unrecorded —
-that's what the `commit-msg` hook is there to catch. We squash-merge, and GitHub
-folds the `Co-authored-by:` trailers from a PR's commits into the squash commit,
-so your local commits are the only place that credit can come from. When you
-pair, add the other contributor's **GitHub username** as the last line of the
-commit message:
-
-```
-Co-authored-by: their-github-username
-```
-
-The bare username is deliberate: it's the key our contribution-evaluation agents
-read out of `git log`, and it keeps personal email addresses out of the repo.
-Don't "fix" it by adding an address. Claude/AI co-authors don't satisfy the
-check — the whole point is recording the human you worked with.
-
-The local hook fires at commit time on stderr, which is easy to miss (and
-invisible when commits are made through a wrapper). So a CI counterpart,
-`.github/workflows/check-coauthor.yml`, re-emits the same nudge as a **warning
-annotation on the PR** when *none* of the PR's commits carry a human
-`Co-authored-by:` trailer. It uses the identical "human" definition and, like
-the hook, only warns — it never blocks merge. It's a per-PR check (not
-per-commit) because the squash-merge folds every commit's trailers together, so
-credit survives as long as one commit records it.
+The one thing the hook does **not** set up is the compiled engine
+(`packages/engine/mcp-server/build/`). Run the Python suites through
+`make harness-test`, which builds the engine first; a bare `pytest` in a fresh
+worktree fails on the missing build and looks like a regression. Do not symlink
+`build/` into a worktree — a worktree on an engine branch would then silently
+test `main`'s compiled output.
 
 ## Smoke-test tools against live APIs
 
@@ -133,7 +112,22 @@ did these jobs until 2026-08-02, when all three were deleted as stale — see
 ### Follow-on work you find along the way
 
 Implementing one task almost always turns up others — a stale doc, a missing
-test, a defect you're not fixing here. **File each one as a GitHub issue in the
+test, a defect you're not fixing here. The rest of this section is about
+filing what you *defer* — it assumes you've already decided not to fix it now.
+Make that decision first, and default toward not deferring:
+
+**Fold it into the current PR unless there's a real reason not to.** A stray
+issue is easy to create and easy to forget; a PR that closes the gap it found
+needs nothing else to remember it. File a new issue instead of fixing it here
+only when at least one of these holds, and say which in the PR description:
+the fix needs a different reviewer or skill (a code fix found during fixture
+work, or vice versa); it would blow this PR's own scope enough to slow its
+review meaningfully; it depends on a decision only the lead can make; or it's
+a different skill's eval slot and bundling it would force a second paid run.
+"I noticed it in passing" is not one of these — on its own it's a reason to
+fix it now, not to file it.
+
+For whatever you do decide to defer: **file each one as a GitHub issue in the
 same PR that defers it.** Ask Claude to do it; it is one command and needs no
 board access:
 
@@ -178,12 +172,18 @@ gh issue create --label developer --title "…" --body "…"
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
-**File it even if you think it might be a duplicate.** Deciding how a new issue
-fits against the ~180 already open is not your job and cannot be done well from
-inside one PR — the overlap is usually at a line number, not a title. File it;
-the lead's weekly `/audit-board` pass merges, rewrites and drops issues across the
-whole pool, which is the only vantage point from which duplicates are visible. A
-duplicate costs one comment to close. An unfiled finding costs a rediscovery.
+**Search once before you file, then stop.** Filing is the last resort in a
+four-step order: fold it into this PR; comment on an existing issue that covers
+it; file with `--label icebox` when no decision sits behind it; file as normal
+work. The search is one command — `gh issue list --state open --search "<path or
+symbol>"`, plus a grep of the `**Touches:**` lines — because the overlap is
+usually at a line number, not a title, and a comment on the issue that already
+owns the file beats a second issue against it.
+
+Do not agonise past that one search. `/audit-board` merges, rewrites and drops
+issues across the whole pool weekly, which is the only vantage point from which
+every duplicate is visible. A duplicate costs one comment to close; an unfiled
+finding costs a rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an
@@ -206,9 +206,12 @@ since mid-2026 was verified without one. Verification is automated:
    fastest way to debug a tool in isolation.
 2. **MCP Inspector** — verifies the tool registers and behaves with
    no/dummy/real input.
-3. **The eval harness** (`make test`, `eval/tests/e2e/`) — verifies the
-   tool description is good enough that the LLM picks it from natural
-   language, and that the skills using it still pass.
+3. **The eval harness** (`make harness-test` for the harness's own suite,
+   `make eval-skill SKILL=<name>` and `eval/tests/e2e/` for behaviour) —
+   verifies the tool description is good enough that the LLM picks it from
+   natural language, and that the skills using it still pass. **Not `make
+   test`**, which is `test-js` + `server-test` and reaches neither the
+   harness nor the engine.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
@@ -486,9 +489,16 @@ built web client from a single origin. Full procedure in
 [`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
 
 ```bash
-# Secrets — NOT in fly.toml (they carry credentials):
+# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
+# and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app refuses to boot
+# if DATABASE_URL is unset or either secret is still at its development default
+# (config.assert_production_config). Not a silent downgrade: the process exits at
+# startup naming the offending setting. (A blank-but-set secret still boots — #1367.)
+# DATABASE_URL takes the Neon DIRECT (non-pooler) URL. Keep every comment ABOVE this
+# command: a trailing `\  # …` is an escaped space plus a comment, which silently
+# truncates the command and drops every argument after it.
 fly secrets set \
-  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \  # direct, non-pooler
+  DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
   E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
@@ -506,7 +516,15 @@ fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon depl
 On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
 config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
 `FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
-`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+`DATA_DIR` once the DB is on Neon.
+
+`WIKI_API_URL` and `POP_STATS_URL` belong in that `[env]` block too. They point
+hosted sessions at the wiki-query and Pop Stats services; leave them unset and
+the engine uses its compiled-in defaults, which name one developer's tailnet
+host. Changing one reaches existing sessions on their next connect — no need to
+recreate a project.
+
+The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a

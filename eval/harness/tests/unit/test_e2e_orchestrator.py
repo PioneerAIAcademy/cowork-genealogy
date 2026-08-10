@@ -28,6 +28,9 @@ from e2e.orchestrator import (
     build_workspace,
     load_fixture,
     load_seed_person_ids,
+    PERSON_EVIDENCE_DENY_REPEAT_LIMIT,
+    PERSON_EVIDENCE_DENY_TOTAL_LIMIT,
+    person_evidence_deny_decision,
     person_evidence_provenance_gap,
     provided_documents,
 )
@@ -823,6 +826,157 @@ def test_provenance_gap_caps_id_list_with_plus_more():
     assert "I14" not in reason  # the tail is elided, not listed
 
 
+def test_provenance_gap_reason_names_the_satisfiable_call_shape():
+    """Issue #1231 prereq 2. The pre-#1231 text said the identity "should be
+    scored before it is asserted", which the agent believes it did — 100 of 103
+    corpus runs that link a new person would have been denied by a reason they
+    could not act on. The cause is an id mismatch: `tree_edit` mints local ids
+    (`I1`) and rejects caller-supplied ones, while `same_person` scores
+    `primaryId1`/`primaryId2` inside the caller's own gedcomx documents. So the
+    reason has to name the one call shape that satisfies the gate, and — because
+    a PreToolUse deny is all-or-nothing on a batch whose median is 17 ops — say
+    that the whole batch was rejected."""
+    reason = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert reason is not None
+    # the satisfiable shape, named explicitly
+    assert "gedcomx2" in reason
+    assert "primaryId2" in reason
+    # the whole batch is lost, not just the flagged op
+    assert "entire batch" in reason
+    # the documented escape when no score is obtainable at all
+    assert "rationale" in reason
+
+
+def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
+    """The reason must NOT tell the agent a locally-minted id is unscorable.
+
+    person-evidence/SKILL.md says such an id returns a degenerate score to treat
+    as "no score available" (2026-07-02). That is stale: the match-engine
+    mint-hardening (2026-07-07) made an ARK-less focus person score on document
+    content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
+    with its ARK removed scores 0.9999484 against a 0.999967 control, identical
+    across two runs despite a fresh random mint each call.
+
+    So an escape for that case would hand the agent a documented reason to skip
+    the one call this gate exists to require. The only escape offered is the real
+    one: no record persona to compare against."""
+    reason = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append("I1"),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert reason is not None
+    assert "degenerate" not in reason.lower()
+    assert "unresolvable stub" not in reason.lower()
+    # the surviving escape is still stated
+    assert "record_persona_id" in reason
+
+
+# --- person_evidence_deny_decision (issue #1231 prereq 3: deny + loop valve) --
+
+
+def _deny_state():
+    """Fresh per-run valve state, in the hook's own mutable-counter idiom."""
+    return {}, {"n": 0}
+
+
+def test_deny_decision_is_inert_in_shadow_mode():
+    """The default. Nothing is denied and neither counter moves, so a shadow run
+    behaves exactly as it did before #1231."""
+    repeat_counts, denied_total = _deny_state()
+    outcome, payload = person_evidence_deny_decision(
+        "reason text",
+        {"I1"},
+        mode="shadow",
+        repeat_counts=repeat_counts,
+        denied_total=denied_total,
+    )
+    assert outcome == "shadow"
+    assert payload is None
+    assert repeat_counts == {}
+    assert denied_total["n"] == 0
+
+
+def test_deny_decision_denies_in_deny_mode_carrying_the_reason():
+    repeat_counts, denied_total = _deny_state()
+    outcome, payload = person_evidence_deny_decision(
+        "score I1 first",
+        {"I1"},
+        mode="deny",
+        repeat_counts=repeat_counts,
+        denied_total=denied_total,
+    )
+    assert outcome == "denied"
+    hook_out = payload["hookSpecificOutput"]
+    assert hook_out["hookEventName"] == "PreToolUse"
+    assert hook_out["permissionDecision"] == "deny"
+    assert "score I1 first" in hook_out["permissionDecisionReason"]
+    assert denied_total["n"] == 1
+
+
+def test_deny_decision_releases_after_the_per_key_limit():
+    """The valve. A denied research_append costs no budget (the deny returns
+    above `tool_call_count`), and `activity_count` increments unconditionally so
+    the no-progress watchdog reads a deny loop as progress — so without this the
+    only stop is max_turns / the 2h wall clock, which is the failure mode prereq
+    3 exists to prevent. Releasing hands termination back to the tool_calls cap."""
+    repeat_counts, denied_total = _deny_state()
+    outcomes = [
+        person_evidence_deny_decision(
+            "r", {"I1"}, mode="deny", repeat_counts=repeat_counts, denied_total=denied_total
+        )[0]
+        for _ in range(PERSON_EVIDENCE_DENY_REPEAT_LIMIT + 1)
+    ]
+    assert outcomes[:-1] == ["denied"] * PERSON_EVIDENCE_DENY_REPEAT_LIMIT
+    assert outcomes[-1] == "released"
+
+
+def test_deny_decision_per_key_limit_is_per_id_set():
+    """A different id set gets its own budget — otherwise one wedged person
+    would suppress a genuine gate on an unrelated one."""
+    repeat_counts, denied_total = _deny_state()
+    for _ in range(PERSON_EVIDENCE_DENY_REPEAT_LIMIT + 1):
+        person_evidence_deny_decision(
+            "r", {"I1"}, mode="deny", repeat_counts=repeat_counts, denied_total=denied_total
+        )
+    outcome, _ = person_evidence_deny_decision(
+        "r", {"I2"}, mode="deny", repeat_counts=repeat_counts, denied_total=denied_total
+    )
+    assert outcome == "denied"
+
+
+def test_deny_decision_releases_at_the_run_total_limit():
+    """The per-key counter alone is unbounded: a batch differing by one op, or a
+    freshly minted I2/I3, mints a new key and buys another full per-key budget.
+    The run-global cap is what actually bounds the free denials."""
+    repeat_counts, denied_total = _deny_state()
+    outcomes = [
+        person_evidence_deny_decision(
+            "r", {f"I{i}"}, mode="deny", repeat_counts=repeat_counts, denied_total=denied_total
+        )[0]
+        for i in range(PERSON_EVIDENCE_DENY_TOTAL_LIMIT + 1)
+    ]
+    assert outcomes.count("denied") == PERSON_EVIDENCE_DENY_TOTAL_LIMIT
+    assert outcomes[-1] == "released"
+
+
+def test_deny_decision_treats_an_unknown_mode_as_shadow():
+    """A hook must never raise — an exception here fails a tool call the agent
+    was entitled to make (CLAUDE.md, "Plugin hooks"). Fail open."""
+    repeat_counts, denied_total = _deny_state()
+    outcome, payload = person_evidence_deny_decision(
+        "r", {"I1"}, mode="typo", repeat_counts=repeat_counts, denied_total=denied_total
+    )
+    assert outcome == "shadow"
+    assert payload is None
+
+
 # --- apply_tool_result (the #999 producer fix) -------------------------------
 # Before #999 the orchestrator set only `response_summary` on a `tool_calls`
 # entry and never `is_error`, so skill_invocation.py's
@@ -854,3 +1008,36 @@ def test_apply_tool_result_false_stays_false():
     block = ToolResultBlock(tool_use_id="tu_1", content="ok", is_error=False)
     apply_tool_result(entry, block, "ok")
     assert entry["is_error"] is False
+# --- #941: the mcp_unavailable abort contract -------------------------
+#
+# `_run_agent`'s detectors are not reachable from a unit test (see this file's
+# module docstring — that path needs a live SDK), which is why the decision
+# logic lives in pure functions in e2e.mcp_health and is tested in
+# test_e2e_mcp_health.py. What IS testable here is the contract between the
+# orchestrator and run_e2e: the exception type they agree on.
+
+
+def test_mcp_unavailable_error_is_exported_and_is_a_runtime_error():
+    from e2e.orchestrator import McpUnavailableError
+
+    assert issubclass(McpUnavailableError, RuntimeError)
+
+
+def test_run_e2e_imports_the_same_exception_class():
+    """run_e2e's handler must catch the class the orchestrator raises — if these
+    ever diverge, an environment failure would fall through to the generic
+    handler and be reported as a harness ERROR."""
+    from e2e.orchestrator import McpUnavailableError
+    from e2e.run_e2e import McpUnavailableError as ImportedByRunner
+
+    assert ImportedByRunner is McpUnavailableError
+
+
+def test_mcp_unavailable_error_carries_the_operator_message():
+    """run_e2e prints the exception verbatim, so the guidance must live in it."""
+    from e2e.mcp_health import unavailable_message
+    from e2e.orchestrator import McpUnavailableError
+
+    text = str(McpUnavailableError(unavailable_message(None)))
+    assert "RE-RUN" in text
+    assert "re-research" in text

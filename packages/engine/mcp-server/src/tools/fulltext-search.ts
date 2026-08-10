@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
 import type {
   FulltextSearchInput,
@@ -168,7 +169,7 @@ export async function fulltextSearchTool(
     headers["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
   }
 
-  const response = await fetch(url, { headers });
+  const response = await fetchWithTimeout(url, { headers });
 
   if (!response.ok) {
     if (response.status === 401) {
