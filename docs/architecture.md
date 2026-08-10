@@ -1366,11 +1366,16 @@ here and could not be kept honest: a `Tracking` column was deleted 2026-08-05
 because it was edited every time an issue closed, and the rows themselves went
 the same way — one described a lint as existence-only for weeks after it was
 hash-pinned. Query the board instead, and record a new gap by filing the issue
-(`CLAUDE.md` § "Deferring work creates an issue") rather than adding a row:
+(`CLAUDE.md` § "Deferring work creates an issue") rather than adding a row.
+
+**Search the mechanism you are touching, not the phrase.** Issue titles say what
+the missing guard is about, so a mechanism term finds the right issue as the top
+hit; a title-phrase search finds only about half of them and returns confident
+near-misses for the rest:
 
 ```sh
-gh issue list --state open --search "nothing checks"
-gh issue list --state open --search "<the mechanism you are changing>"
+gh issue list --state open --search "<the mechanism you are changing>"   # start here
+gh issue list --state open --search "nothing checks"                     # partial — a sample, not the register
 ```
 
 Three of these gaps are **architecture rather than backlog**, because each one
@@ -1393,9 +1398,14 @@ changes how a correct change is made:
    ledger. Every compliance rate, cost figure, and guardrail measurement here is
    computed over `eval/runlogs/`, so none of them answers "is this getting better
    for a real user?" **Do not quote a violation rate** and do not graduate a gate
-   on one — the detectors are uncalibrated and `make e2e-corpus` deliberately
-   reports counts, refusing a percentage whose denominator would be doing the
-   work. Read its `concentration:` block before quoting even a count.
+   on one. The detectors are uncalibrated, and one of their two blind spots is now
+   measured as **unclosable rather than merely unclosed**: nothing available to the
+   harness observes skill *completion*, so the caller-attributed recency check is
+   shadow-only permanently, not pending calibration — do not plan a calibration
+   pass for it (`make e2e-skill-episodes`; `guardrail-enforcement-spec.md`, "What
+   the success gate can and cannot see"). `make e2e-corpus` deliberately reports
+   counts, refusing a percentage whose denominator would be doing the work. Read
+   its `concentration:` block before quoting even a count.
 
 ### If you're asked to…
 

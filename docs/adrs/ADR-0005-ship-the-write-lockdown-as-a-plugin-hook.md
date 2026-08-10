@@ -11,7 +11,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/plugin/hooks`, `apps/server/app/agent/real_agent.py`, `eval/harness/e2e/orchestrator.py`
-- **Related:** ADR-0003, ADR-0006, `docs/specs/guardrail-enforcement-spec.md` §6, issues #941, #984, #989, #911, #1160
+- **Related:** ADR-0003, ADR-0006, `docs/specs/guardrail-enforcement-spec.md` §6, issues #941, #984, #989, #1160
 
 ## Context
 
@@ -143,5 +143,5 @@ environment, and enforcing-vs-shadow status.
 A bypass is observed using the shell route — at which point the false-deny
 calculus changes and `Bash` matching becomes worth its cost. Or a skill ships a
 `scripts/` folder, which would finally make the hypothetical half of the
-rationale real. Or the per-context policy is ported to production (#911), which
+rationale real. Or the per-context policy is ported to production, which
 would give the hook layer a caller dimension it does not have today.

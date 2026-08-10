@@ -561,7 +561,8 @@ workflow files directly into Ready and which you never move at all.)
 **Gate the unassigned `developer` shortlist through `/review-ready` before you
 promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
 that skill fans out one agent per item to check the same call against the cited
-code, the architecture guide's site list, and §9.4's what-nothing-checks list —
+code, the architecture guide's site list, and the board's what-nothing-checks
+issues —
 which is where a "junior-safe" item turns out to hide an open API decision.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
