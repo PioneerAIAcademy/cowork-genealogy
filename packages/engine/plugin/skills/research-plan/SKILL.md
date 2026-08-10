@@ -228,8 +228,14 @@ table and contextual factors checklist.
   a patronymic-era Scandinavian parentage plan they rank alongside the
   baptism and the parents' marriage. See
   `references/record-type-guide.md` ("sons in conscription countries").
-- Include the FAN cluster (relatives, neighbors, associates) — their
-  records may contain evidence about the subject.
+- Include the FAN cluster (relatives, neighbors, associates) **when their
+  records may contain evidence about the question's subject** — that purpose
+  is the test, not the relative's presence in the tree. A FAN item earns its
+  place by what it reveals about the subject; an item whose deliverable is a
+  relative's *own* missing facts (the spouse's birth date, a child's baptism,
+  "restore the wife's records") serves a different objective and does not
+  belong in this plan. If those gaps look worth pursuing, say so and let the
+  user change the objective — don't plan them under this one.
 - Consider occupation-specific, institutional, and organizational
   records when relevant to the subject's life.
 - Cover both FamilySearch and external/paid repositories (Ancestry,
@@ -250,8 +256,12 @@ Order items for efficient discovery (BCG Standard 15):
 4. **Narrow before broad** — specific county before adjacent counties
 5. **Include contingencies** — use `fallback_for` to link alternate
    sources when a primary may fail
-6. **Include FAN items** — at least one search targeting records of
-   relatives, neighbors, or associates
+6. **Include FAN items where they earn their place** — a search targeting
+   records of relatives, neighbors, or associates whose content would bear on
+   the subject. **Not a quota:** if no FAN record could speak to this
+   question, do not manufacture one to fill the slot (breadth is disciplined,
+   not speculative — Step 3). State in the item's `rationale` what it would
+   reveal *about the subject*
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is

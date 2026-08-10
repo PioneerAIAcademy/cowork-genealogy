@@ -199,8 +199,18 @@ Analyze imported data before presenting results:
 - **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings
 - Known holdings recorded (if any) and what each contributes
-- What's missing (informs first research question)
-- Suggest next step: "Would you like me to select the first research question?"
+- What's missing (informs first research question) — report gaps as
+  **observations, not a work list**. Gaps on people the objective does not
+  cover (a spouse's missing dates, a child's missing baptism) are context
+  only: note them, don't propose research on them, and don't imply the project
+  will pursue them.
+- Suggest the next step as a plain-language offer, **defining the vocabulary
+  the first time it appears.** The user has not heard these terms and cannot
+  act on a skill name — never phrase it as "use question-selection to…". For
+  example: "Your *objective* is the overall goal for this project —
+  <restate it>. The next step is to settle the first *research question*: the
+  single fact we go after first, which for an objective this focused may be
+  the objective itself. Would you like me to do that now?"
 
 ## Example
 
@@ -211,7 +221,10 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
 4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
 5. Write `research.json` with project section, profile, holdings, empty arrays.
-6. Pedigree analysis + summary. Suggest first research question.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — the objective is Patrick's parents, so their own gaps are noted, not
+   queued as research. Offer the first research question in plain language,
+   defining "objective" and "research question" as you go.
 
 ## Important rules
 

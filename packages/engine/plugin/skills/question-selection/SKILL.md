@@ -41,13 +41,17 @@ can't be silently stale. Re-read `research.json` (and persons in
 sub-skill or the user changed the file in a way you don't already have.
 Either way, identify:
 
-- **Objective** — the overarching goal; every question must trace back to it.
+- **Objective** — the overarching goal, and the **scope boundary**. Every
+  question must trace back to it and none may reach outside it (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
   (`plan_items[].status == "in_progress"` on an open question — in-flight
   research the user has already committed to).
 - **Resolved questions** — what has been answered.
 - **Pedigree gaps** — individuals missing a name, specific date, or
-  county/parish-level locality (see `references/pedigree-analysis.md`).
+  county/parish-level locality (see `references/pedigree-analysis.md`). That
+  reference sweeps the **whole tree**, so its output is a candidate list, not
+  a work list: discard every gap outside the objective's scope before it
+  reaches Step 2 (Step 1c).
 - **Timeline gaps**, **unresolved conflicts** (especially those blocking
   downstream questions), **active hypotheses**, **log coverage**, and the
   current **assertion** landscape.
@@ -98,6 +102,38 @@ step, not tier-chasing. The line: any *unanswered* objective fact → select the
 appropriate question (decompose, or FAN-pivot when direct evidence is spent);
 another source for a fact *already concluded* at a defensible tier → stop.
 
+### 1c. Match the question's scope to the objective's — neither narrower nor wider
+
+The question is the framing the user is asked to confirm, so it must be
+recognizable as what they asked for. Screen every candidate for both scope
+errors below before Step 2.
+
+**Not narrower — a record is not a question.** Which record set answers a
+question is `research-plan`'s call, not yours. "Where was Reuben Smith in the
+1900 census?" is a plan item in a question's clothing: it commits the project
+to one census before anyone has asked whether the census is the best source,
+and a question scoped to one record invites a search scoped to one record.
+Name the fact sought — "Who were the parents of Reuben Smith, b. ~1850,
+Ohio?" — and let the plan name the census.
+
+**Scope is not granularity.** "Never write an objective as a question" (see
+Rules) forbids restating a **multi-fact** objective ("Reconstruct the Flynn
+family"), which names no single testable fact. It does *not* require the first
+question to be narrower than the objective. When the objective is already a
+single fact ("Identify the parents of Patrick Flynn, born ca. 1845 in
+Pennsylvania"), that objective **is** the first question: restate it with the
+identifying detail the three criteria require and stop. Decompose only an
+objective that genuinely holds more than one independent fact.
+
+**Not wider — appearing in the tree does not put a person in scope.** On
+"identify the parents of X", X's spouse and children are out of scope: their
+own missing dates, marriages, and records are a *different* objective, however
+incomplete the pedigree sweep makes them look. Select a question about a
+relative only when its answer is evidence about **the objective's subject**
+(Priority 6 FAN pivot, under its exhaustion gate) — never to complete that
+relative's own record. If the tree convinces you the objective should be wider,
+say so and ask the user to change it; don't widen it yourself.
+
 ## 2. Identify the highest-value question
 
 Apply these priorities in order. When multiple candidates exist at the same
@@ -109,31 +145,54 @@ priority level, prefer the one that unblocks the most downstream questions.
 | 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies | `objective_decomposition` |
+| 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** | `objective_decomposition` |
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
 **Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
 timeline gaps do not trigger it.
 
-**Priority 4 detail:** Each sub-question targets a single fact (one identity,
-relationship, or event). Example decomposition of "Identify the parents of
-Patrick Flynn": "Where was Patrick Flynn in the 1850 census?" / "What does
-his death certificate say about his parents?" / "Did Thomas Flynn leave a
-will naming his children?"
+**Priority 4 detail:** This priority still fires for the first question on a
+single-fact objective, and `objective_decomposition` remains the correct
+`selection_basis` — but there the "decomposition" is **one** question at the
+objective's own scope, not a narrower one (Step 1c). Split into several
+sub-questions only when the objective holds more than one independent fact.
+Each sub-question targets a single fact (one identity, relationship, or event)
+and names **that fact, never the record that might carry it**. Example
+decomposition of the multi-fact
+objective "Reconstruct the family of Thomas Flynn of Schuylkill County":
+"Whom did Thomas Flynn marry?" / "Which children were born to Thomas Flynn
+and his wife?" / "When and where did Thomas Flynn die?" The record choices
+for each ("the 1850 census", "his death certificate", "a will") belong in
+that question's plan, not in the question.
+
+**Priority 5 detail:** The sweep in `references/pedigree-analysis.md` covers
+the whole tree, so filter its output through Step 1c before acting on it — a
+gap on the subject's spouse or child is not a Priority 5 signal. This
+priority's `selection_basis` is `objective_decomposition`, which is only
+honest if the gap you selected actually decomposes the objective.
 
 **Priority 6 detail:** Don't pivot to FAN just because one search returned
 nil — pivot only when all planned direct searches are complete and
 unresolved. If the primary question's `exhaustive_declaration.declared` is
 `true`, the researcher has declared direct evidence exhausted: take that as
-the FAN signal and do NOT propose additional direct-evidence paths. FAN
-examples: "Who witnessed Thomas Flynn's land deeds?" / "Who were his
-neighbors in the 1850 census?"
+the FAN signal and do NOT propose additional direct-evidence paths. A FAN
+question still obeys Step 1c — name the cluster by person, place, and period,
+and its answer must be evidence about the objective's subject. Examples: "Who
+witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who were
+Thomas Flynn's neighbors in Schuylkill County in 1850?" (the deeds and the
+census are how the *plan* answers these).
 
 ## 3. Formulate the question
 
 See `references/question-formulation.md` for the three criteria (one
 objective, named individual, testable scope) and examples.
+
+Apply Step 1c as you write. Some examples in that reference are phrased
+record-first ("What does John Smith's 1870 death certificate say about his
+parents?") — that is a **plan item**, not a question. Use the reference for its
+three criteria and Common Failures table, but phrase the question around the
+fact: "Who were the parents of John Smith, b. ~1820, Greene County, Ohio?"
 
 Before formulating, verify the starting-point information is sound. Do not
 build a question on unverified claims from compiled sources (online trees,
@@ -187,10 +246,22 @@ plan items complete.
 
 ## 5. Present
 
-- The question selected and why (the rationale).
-- What it depends on and what it unblocks.
-- Suggest next step: "Would you like me to plan the research for this
-  question?" (research-plan).
+**Never report only the id** — "q_001 written." has no referent for a user who
+cannot see `research.json`. Always give:
+
+- **The question in full, quoted as written.** This is the wording the user is
+  confirming, and the one thing they can check against what they asked for.
+- **Its id, glossed on first use** — "saved as `q_001` (this project's label
+  for it, so we can refer back)".
+- **What a research question is, the first time one is created in a project** —
+  one sentence against the objective: the objective is the project's overall
+  goal; the question is the single fact pursued next, which may be the
+  objective itself when that is already one fact (Step 1c).
+- Why this question now (the rationale), and what it depends on / unblocks —
+  naming any other `q_` by its question text, not by id alone.
+- **Next step in plain language, as an offer:** "Would you like me to work out
+  which records to search for this?" Name what happens, not the skill that does
+  it — a first-time user has never heard of `research-plan`.
 
 ## Rules
 
@@ -199,8 +270,14 @@ plan items complete.
   question's plan items are `in_progress` (see Step 1a).
 - **Sound basis required.** Don't build questions on unsound assumptions —
   if the premise is unverified, verify it first.
-- **Objectives vs. questions.** Never write an objective as a question;
-  questions are narrow, single-fact, testable sub-problems.
+- **Objectives vs. questions.** Never write a **multi-fact** objective as a
+  question — questions are single-fact and testable. But a single-fact
+  objective already *is* one: restate it, don't narrow it, and never narrow it
+  to a record. See Step 1c.
+- **Stay inside the objective's scope.** No question about a person the
+  objective does not cover — a spouse's or child's own missing facts are a
+  different objective — except a Priority 6 FAN pivot whose answer is evidence
+  about the objective's subject. See Step 1c.
 - **Don't declare exhaustiveness here.** Closing questions is the
   `research-exhaustiveness` skill's job — this skill only creates them.
 - **Never delete a question, and never change an existing question's `status`
@@ -215,8 +292,10 @@ plan items complete.
 
 ## Edge cases
 
-- **Fresh project, no clear gaps:** default to Priority 4 (decompose the
-  objective into sub-questions).
+- **Fresh project, no clear gaps:** default to Priority 4. If the objective
+  holds several independent facts, decompose it into sub-questions; if it is
+  already a single fact, the first question is that objective restated with
+  identifying detail — not a narrower record-scoped one (Step 1c).
 - **All questions blocked:** identify the root blocker and formulate a
   question to resolve it — even if that means a conflict with no formal
   `conflicts[]` entry yet.
