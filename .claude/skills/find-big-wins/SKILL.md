@@ -40,9 +40,9 @@ writes that (`docs/task-lifecycle.md`, ADR-0007).
 
 You hold **`Edit` for exactly one file**: the ledger table in
 `docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md`. That is the whole
-grant. You have no `Write`, so you cannot create files, and editing anything else
+grant. `Bash` can write any file, so it does not widen it — editing anything else
 — a skill, a spec, an issue body on disk, another ADR — is outside it even though
-the tool would let you. Nothing mechanical enforces this; it is on you.
+the tools would let you. Nothing mechanical enforces this; it is on you.
 
 ## The boundary against `/audit-board`
 
@@ -204,8 +204,17 @@ Usually one of four shapes:
 
 Work these the same way you work a proposal: bring the evidence, the options, the
 recommendation and the counter-argument, so he can answer in a sitting. An
-answered item drops the label and ranks in a junior pool. An item whose answer
-turns out to be "this is genuinely hard either way" moves to `senior`.
+answered item is yours to close out: splice his answer into the body, then drop
+the label so it ranks in a junior pool like anything else. Nothing else removes
+it, and both numbers below are wrong if you skip this.
+
+```sh
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --remove-label needs-decision
+```
+
+An item whose answer turns out to be "this is genuinely hard either way" moves to
+`senior` instead — swap the labels, never carry both.
 
 **`senior` is not your queue.** Those are hard regardless of any open question,
 and the lead assigns them to a senior in the matching lane. You touch one only

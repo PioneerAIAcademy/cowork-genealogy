@@ -216,7 +216,7 @@ lead to approve *before* anything is filed, tagged with who should do it:
 
 | Owner tag | What belongs to them |
 |---|---|
-| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label senior` and **no assignee**, and wait in Backlog for `/find-big-wins` to convert them (`.claude/skills/fill-ready/SKILL.md` §6) |
+| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label needs-decision` and **no assignee**, and wait in Backlog for `/find-big-wins` to work them into a question he can answer in a sitting (`.claude/skills/fill-ready/SKILL.md` §6). Use `--label senior` instead only when the work would still be hard after he answers |
 | **Junior genealogist** | Fixture adjudication, run-log annotation, record research, and doctrine *questions* you have prepared for them (see below) |
 | **Junior developer** | Lints, CI, validators, refactors, test fixes, tooling bugs, anything with a mechanical pass/fail |
 
@@ -314,8 +314,9 @@ gh issue create --label developer|genealogist [--label icebox] \
   --assignee <login> --title "..." --body "..."
 ```
 
-**A `Lead`-tagged row files with `--label senior` and no `--assignee`.** He takes
-no issues; the label is the routing.
+**A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
+He takes no issues; the label is the routing. Reach for `senior` instead only
+when the item would still be hard after he answers.
 
 Add `--label icebox` to every row the lead approved as a candidate. That label is
 the only thing separating a task from an idea once both are cards in Backlog:

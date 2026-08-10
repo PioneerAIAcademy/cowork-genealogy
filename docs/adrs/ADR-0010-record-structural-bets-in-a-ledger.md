@@ -130,10 +130,10 @@ Three rules keep the table from becoming the thing it replaces:
 the lead decides; its first-proposed date is not.
 
 **`/find-big-wins` writes its own rows.** The skill holds `Edit` for this file
-and nothing else — it has no `Write`, so it cannot create files, and its own body
-scopes the grant to this table. The alternative was a paste-ready row the lead
-applied by hand, which makes the ledger's completeness depend on a manual step at
-the end of a long session.
+and nothing else. It also holds `Bash`, so nothing mechanical keeps it inside
+that grant — the scoping is prose in the skill's own body. The alternative was a
+paste-ready row the lead applied by hand, which makes the ledger's completeness
+depend on a manual step at the end of a long session.
 
 ### The ledger
 
