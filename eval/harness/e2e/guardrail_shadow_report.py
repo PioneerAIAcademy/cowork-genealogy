@@ -1,11 +1,18 @@
-"""Retroactive calibration tool for the §7 shadow-mode recency window.
+"""Replay of the §7 shadow-mode recency window over committed e2e runs.
 
-docs/specs/guardrail-enforcement-spec.md §7, GitHub issue #911 — the
-window (`GUARDRAIL_SHADOW_WINDOW` in `e2e/orchestrator.py`) is a first-cut
-default, not yet tuned. Every committed e2e runlog already persists its full
-`tool_calls` list, so `harness.skill_invocation.find_unguarded_protected_writes`
-can be replayed against the whole historical corpus for free — no new API
-spend — rather than waiting on new live runs to accumulate a sample.
+docs/specs/guardrail-enforcement-spec.md §7. Every committed e2e runlog persists
+its full `tool_calls` list, so
+`harness.skill_invocation.find_unguarded_protected_writes` can be replayed
+against the whole historical corpus for free — no new API spend.
+
+**This is no longer a calibration tool, and `GUARDRAIL_SHADOW_WINDOW` is not a
+knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads
+`Skill` entries, which carry launch acknowledgements, and no instrument available
+to the harness observes skill *completion* (spec §7, "What the success gate can
+and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
+barely changes the count from 10 to 150, which was the early tell. What this
+report is still for: reading the shadow signal as measurement, and the §8/§7.5
+stored families below, whose graduations are live questions.
 
 This module adds NO instrumentation to a run (same posture as
 `latency_report.py`); it's pure analysis over already-committed data.
@@ -354,7 +361,9 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Retroactive §7 shadow-window calibration (issue #911).")
+    ap = argparse.ArgumentParser(
+        description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
+    )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
     ap.add_argument(
         "--windows",

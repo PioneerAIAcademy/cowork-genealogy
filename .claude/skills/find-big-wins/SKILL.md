@@ -1,6 +1,6 @@
 ---
 name: find-big-wins
-description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the architecture guide's what-nothing-checks list, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Also works the `needs-decision` queue — items blocked on one answer from the lead, which this skill converts into issues a junior can take. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
+description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Also works the `needs-decision` queue — items blocked on one answer from the lead, which this skill converts into issues a junior can take. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
 allowed-tools:
   - Read
   - Edit
@@ -251,12 +251,16 @@ and read the report's concentration block before quoting any total.
 
 **The standing lists of known holes.**
 
-- `docs/architecture.md` §9.4 — what nothing checks. Nineteen rows, each a gap
-  and its consequence. **This is the single densest input to this skill.** Read
-  it asking *which of these are one mechanism*, not *which should we fix*: four
-  rows that all say "no production telemetry exists in any form" are one bet,
-  not four issues.
-- `docs/architecture.md` §10 — open questions.
+- **The `nothing-checks` register** — every known way CI can be green while the
+  thing is broken. **This is the single densest input to this skill.** It is a
+  label on the board, not a table in a file: `gh issue list --state open --label
+  nothing-checks`. Read it asking *which of these are one mechanism*, not *which
+  should we fix*: four issues that all say "no production telemetry exists in any
+  form" are one bet, not four issues. `docs/architecture.md` §9.4 keeps only the
+  three gaps that change how a correct change is made — read those too, then the
+  register for the rest.
+- `gh issue list --state open --label needs-decision` — the open questions, which
+  §10 also points at. §10 itself keeps two, stated where they bind.
 - `docs/adrs/` — every decision, with what it costs. §3 below is how to read
   these for *expiry* rather than for compliance.
 - `docs/specs/guardrail-enforcement-spec.md` § "Options set aside" — a second
@@ -374,9 +378,10 @@ Four shapes, each greppable:
   other. `docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md`
   is the worked precedent — its first option is *eliminate the copy*, and only
   then generate or lint it.
-- **A warn-only check nobody reads.** `docs/architecture.md` §9.4 records that
-  three warn-only lints compete for GitHub's per-step annotation cap, so their
-  output is not distinguishable from the standing backlog. A check whose output
+- **A warn-only check nobody reads.** `docs/architecture.md` §9.2 names three
+  lints that never fail, and their warnings compete for GitHub's per-step
+  annotation cap against a standing backlog in the dozens — so the edge a PR
+  *adds* is not distinguishable from the ones already there. A check whose output
   nobody can read is cost with no signal — either it blocks or it goes.
 - **A guarantee nothing consumes.** A held invariant, a preserved field, a
   supported path with no caller. Dropping it can retire a whole validation
