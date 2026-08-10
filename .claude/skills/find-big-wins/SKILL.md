@@ -264,9 +264,11 @@ finding, and finding them is the *first* thing a `decisions` run does:
 ```sh
 # answered, never closed out. Should be EMPTY. Anything here is a session that
 # heard an answer and walked away — fix it now, before preparing new questions.
+# `test` and not `startswith`: a real ruling comment carries a heading above the
+# marker and a number after it, so an exact-prefix match reports zero forever.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,comments \
-  -q '.[] | select([.comments[].body | startswith("**Ruling:**")] | any)
+  -q '.[] | select([.comments[].body | test("\\*\\*Ruling")] | any)
       | "#\(.number)  \(.title)"'
 ```
 

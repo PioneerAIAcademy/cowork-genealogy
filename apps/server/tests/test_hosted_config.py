@@ -18,14 +18,16 @@ def test_marks_the_sandbox_hosted_with_no_overrides_configured():
     assert hosted_config(None) == {"hosted": True}
 
 
-def test_omits_each_override_when_unset_rather_than_writing_null():
-    """An explicit null would override the engine's fallback with nothing.
+def test_omits_each_override_when_unset_rather_than_writing_the_key_empty():
+    """Writing the key with a falsy value is what breaks the fallback.
 
     `getWikiApiUrl()` does `config.wikiApiUrl?.trim() || DEFAULT_WIKI_API_URL`,
-    so an absent key falls back and a present-but-empty one also falls back —
-    but `place-population.ts` uses `config.popStatsUrl ?? DEFAULT_POP_STATS_URL`,
-    where a null key is NOT the same as an absent one. Omitting is the only
-    shape that is correct for both.
+    which falls back on absent, null AND empty. `place-population.ts` uses
+    `config.popStatsUrl ?? DEFAULT_POP_STATS_URL`, which falls back on absent
+    and null but NOT on "" — nullish coalescing passes an empty string straight
+    through, so `popStatsUrl: ""` becomes the base URL and every request goes
+    to a relative path. Writing nothing at all is the one shape correct for
+    both engines.
     """
     config = hosted_config("sk-or-key")
     assert "wikiApiUrl" not in config
@@ -55,5 +57,9 @@ def test_one_override_set_does_not_imply_the_other():
 
 
 def test_empty_string_is_treated_as_unset():
-    """`WIKI_API_URL=` in an env file arrives as "", not None."""
+    """`WIKI_API_URL=` in an env file arrives as "", not None.
+
+    This is the case that actually bites: `popStatsUrl: ""` survives the
+    engine's `??` and silently becomes the base URL.
+    """
     assert hosted_config(None, wiki_api_url="", pop_stats_url="") == {"hosted": True}

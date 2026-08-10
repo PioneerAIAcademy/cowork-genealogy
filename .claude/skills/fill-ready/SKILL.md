@@ -685,10 +685,13 @@ report; the genealogist one is newer and easier to forget.
 
 ```sh
 # `needs-decision`, split by whether a ruling has been recorded. A ruling is an
-# issue comment opening `**Ruling:**` (the convention `/find-big-wins` owns).
+# issue comment carrying a bold `**Ruling` marker (the convention
+# `/find-big-wins` owns). Match the marker anywhere in the body, not just at
+# character zero: real ruling comments put a heading above it and number it
+# (`## Lead rulings` … `**Ruling 1 — …`), which an exact-prefix test misses.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,updatedAt,comments \
-  -q '.[] | (if ([.comments[].body | startswith("**Ruling:**")] | any)
+  -q '.[] | (if ([.comments[].body | test("\\*\\*Ruling")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \

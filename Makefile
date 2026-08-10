@@ -551,7 +551,7 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 	# point-in-time record, the shape is what reproduces.
 	cd eval/harness && uv run python -m e2e.skill_episode_report $(if $(TEST),--test $(TEST),) $(if $(ALL_SKILLS),--all-skills,) $(if $(SINCE),--since $(SINCE),)
 
-.PHONY: e2e-latency
+.PHONY: e2e-nudges
 e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs and their .transcript.md
 	# siblings. Reports each continue-nudge with the seam it sits on and whether
@@ -563,6 +563,7 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the

@@ -38,6 +38,18 @@ writing it covers **2 of 145** committed runs while the transcripts carry **20
 nudge events across 7 runs** — so a reader that only understands `narration`
 reports 3 events and misses the finding entirely. That asymmetry is the whole
 reason for the fallback, and it inverts as the corpus turns over: keep both.
+
+## Both sources together still see about a tenth of the nudges
+
+Neither source is retained for most runs. `usage.continue_nudges` records **224
+nudges in 98 of 145 committed runs**; only 9 of those 98 carry a narration nudge
+or a `.transcript.md` sibling, because transcripts stopped being written and
+`narration` started too recently. So the seam histogram is a sample — drawn
+overwhelmingly from the corpus's oldest week — and never a census.
+
+`counter_totals()` reads that counter so every report states the gap, and so the
+no-results branch cannot claim a clean loop over runs it simply could not read.
+Widening coverage means retaining a source, not parsing harder.
 """
 
 from __future__ import annotations
@@ -220,8 +232,39 @@ def scan(paths: list[Path]) -> list[Nudge]:
     return found
 
 
-def format_report(nudges: list[Nudge], n_runs: int) -> str:
+def counter_totals(paths: list[Path]) -> tuple[int, int]:
+    """(events, runs) from `usage.continue_nudges` — the orchestrator's own tally.
+
+    Every nudge lands there whether or not a narration entry or a transcript
+    survives to say WHERE it happened, and across the committed corpus most do
+    not: 91 of the 98 nudged runs carry neither source. That makes this the
+    denominator the seam histogram is a sample of. Without it an unreadable run
+    is indistinguishable from a clean one, and the report says "every run
+    completed its loop" over a fixture that nudged sixteen times.
+    """
+    events = runs = 0
+    for p in paths:
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        n = (doc.get("usage") or {}).get("continue_nudges") or 0
+        if n:
+            events += n
+            runs += 1
+    return events, runs
+
+
+def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = (0, 0)) -> str:
+    rec_events, rec_runs = recorded
     if not nudges:
+        if rec_events:
+            return (
+                f"{rec_events} nudge(s) in {rec_runs} of {n_runs} run(s) per\n"
+                "usage.continue_nudges, and NOT ONE is attributable: no run in this\n"
+                "window carries a narration nudge or a .transcript.md sibling, so\n"
+                "this report can say nothing about where they happened."
+            )
         return (
             "No continue-nudges found in the selected runs.\n"
             "That is a real result, not an empty one: it means every run in the\n"
@@ -237,6 +280,10 @@ def format_report(nudges: list[Nudge], n_runs: int) -> str:
     lines = [
         f"{len(nudges)} nudge(s) across {len(runs_hit)} of {n_runs} run(s)"
         f"   sources: " + ", ".join(f"{k}={v}" for k, v in sorted(by_source.items())),
+        f"ATTRIBUTED {len(nudges)} of the {rec_events} that usage.continue_nudges"
+        f" recorded; {rec_runs - len(runs_hit)} nudged run(s) carry neither a"
+        " narration nudge nor a transcript, so every count below is a sample and"
+        " not the population.",
         f"worst single run reached nudge {worst}"
         + (f" against a cap of {sorted(caps)[0]}" if len(caps) == 1 else ""),
         "",
@@ -278,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
 
     nudges = scan(paths)
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
-    print(format_report(nudges, n_runs=len(paths)))
+    print(format_report(nudges, n_runs=len(paths), recorded=counter_totals(paths)))
     return 0
 
 

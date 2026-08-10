@@ -187,7 +187,17 @@ def hosted_config(
     this, redirecting hosted traffic to a real deployment needs an engine
     rebuild and a re-release, not a config change. Omitted entirely when unset,
     which keeps the fallback intact and this document unchanged for anyone who
-    has not configured them."""
+    has not configured them.
+
+    **Applies to projects created after the setting.** This document is written
+    once, at `sessions.create_project`, and sandboxes here are persistent — so
+    changing `WIKI_API_URL` does not reach an existing session, which keeps the
+    compiled-in default until its project is recreated. Unlike the Anthropic key
+    (`agent_secrets.write_secrets`, refreshed on every connect), it cannot
+    simply be rewritten on connect: `configure_openrouter` lets the agent write
+    this same file from inside the VM, and `write_config` replaces it wholesale
+    rather than merging, so a per-connect rewrite would discard the user's own
+    key. Making it live needs a merging write, not another call site."""
     config: dict = {"hosted": True}
     if openrouter_api_key:
         config["openRouterApiKey"] = openrouter_api_key

@@ -12,20 +12,21 @@ from __future__ import annotations
 
 import json
 
-from e2e.nudge_report import classify, format_report, scan
+from e2e.nudge_report import classify, counter_totals, format_report, scan
 
 NUDGE = "continue-nudge 1/20: agent yielded before project.status=='completed'; instructing it to resume the loop."
 
 
-def _write_run(tmp_path, *, narration=None, tool_calls=None, transcript=None):
+def _write_run(tmp_path, *, narration=None, tool_calls=None, transcript=None,
+               continue_nudges=None, stem="run-2026-08-09_00-00-00"):
     """A committed-run pair on disk: `<slug>/run-<ts>.json` (+ optional transcript)."""
     slug = tmp_path / "some-fixture"
     slug.mkdir(parents=True, exist_ok=True)
-    result = slug / "run-2026-08-09_00-00-00.json"
-    result.write_text(
-        json.dumps({"narration": narration or [], "tool_calls": tool_calls or []}),
-        encoding="utf-8",
-    )
+    result = slug / f"{stem}.json"
+    doc = {"narration": narration or [], "tool_calls": tool_calls or []}
+    if continue_nudges is not None:
+        doc["usage"] = {"continue_nudges": continue_nudges}
+    result.write_text(json.dumps(doc), encoding="utf-8")
     if transcript is not None:
         result.with_suffix(".transcript.md").write_text(transcript, encoding="utf-8")
     return result
@@ -107,3 +108,47 @@ def test_empty_corpus_reports_a_result_rather_than_looking_broken():
     out = format_report([], n_runs=12)
     assert "No continue-nudges" in out
     assert "real result" in out
+
+
+def test_unreadable_nudges_are_never_reported_as_a_clean_loop(tmp_path):
+    """The bug this exists to stop: 91 of 98 nudged runs keep neither source.
+
+    A run whose only record of the yield is `usage.continue_nudges` used to
+    print "every run in the window completed its loop without the Stop hook
+    re-instructing it" — the exact opposite of what happened. Live example:
+    `make e2e-nudges TEST=william-ferber-origins`, whose five committed runs
+    recorded sixteen nudges and none of which has a transcript.
+    """
+    p = _write_run(tmp_path, continue_nudges=9)
+    assert scan([p]) == []
+    assert counter_totals([p]) == (9, 1)
+
+    out = format_report([], n_runs=1, recorded=counter_totals([p]))
+    assert "9 nudge(s) in 1 of 1 run(s)" in out
+    assert "NOT ONE is attributable" in out
+    assert "completed its loop" not in out
+
+
+def test_the_attributed_count_names_the_runs_it_could_not_read(tmp_path):
+    """The headline is a sample, and has to say by how much."""
+    readable = _write_run(
+        tmp_path,
+        narration=[
+            {"kind": "assistant", "text": "Plan written."},
+            {"kind": "harness", "text": NUDGE, "tool_calls_before": 1},
+        ],
+        tool_calls=[{"tool": "mcp__genealogy__research_append"}],
+        continue_nudges=1,
+    )
+    blind = _write_run(tmp_path, continue_nudges=7, stem="run-2026-08-09_11-11-11")
+
+    paths = [readable, blind]
+    out = format_report(scan(paths), n_runs=2, recorded=counter_totals(paths))
+    assert "ATTRIBUTED 1 of the 8" in out
+    assert "1 nudged run(s) carry neither" in out
+
+
+def test_counter_totals_ignores_runs_that_never_nudged(tmp_path):
+    clean = _write_run(tmp_path, continue_nudges=0)
+    unstamped = _write_run(tmp_path, stem="run-2026-08-09_22-22-22")
+    assert counter_totals([clean, unstamped]) == (0, 0)
