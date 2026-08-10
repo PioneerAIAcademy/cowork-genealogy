@@ -215,6 +215,13 @@ Five rules on the writes:
   `needs-a-decision` verdict comes back before promotion, so there is nothing to
   move — you label it and it stays in Backlog, out of the junior pool. On a
   standing-pool run the item is already in Ready; report it for the swap.
+- **If he answers a fork while you have him, that item never gets the label.**
+  You put these questions to him via `AskUserQuestion`, so you are the most
+  likely place an answer is spoken and then dropped. When he answers: post it as
+  a comment opening `**Ruling:**`, splice the chosen option's pre-written body
+  text in, and apply `reviewed` — **not** `needs-decision`. That label is for
+  forks he has *not* answered. Handing him an answered item on tomorrow's
+  waiting list is the failure.
 - **Never apply both `senior` and `needs-decision`.** They are different states
   with different remedies (`fill-ready` §6): one wants a person, the other wants
   an answer. An item carrying both tells the board neither.

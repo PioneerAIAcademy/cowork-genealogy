@@ -58,9 +58,11 @@ instance).
 **There is no public deployment yet, so the defaults are a developer's
 personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
 `DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
-one machine's tailnet, and the hosted path gives an operator no way to
-override them — `hosted_config()` does not write either key, so
-redirecting hosted traffic needs an engine rebuild. Measured over the
+one machine's tailnet. The hosted path can now be redirected without an
+engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
+plane and `hosted_config()` writes them into the sandbox's config — but
+the compiled-in defaults still apply everywhere else, including every
+installed `.mcpb`. Measured over the
 committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
 calls fail, across 17 distinct days. The agent gets an actionable error
 and then quietly ships a thinner answer, so the user sees nothing. Do not

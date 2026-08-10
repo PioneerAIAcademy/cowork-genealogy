@@ -78,6 +78,25 @@ If the lead has this week's output to hand, take the table from it. If not, do
 your report that the tax table was not re-derived and which numbers are
 therefore unavailable.
 
+## How this run is scoped
+
+Two invocations, because the two jobs have different cadences and should not bid
+against each other for the lead's attention.
+
+| Invocation | Does | When |
+|---|---|---|
+| `/find-big-wins` | Everything: §0, all three evidence layers, the subtraction hunt, the proposals | Weekly, after `/audit-board` |
+| `/find-big-wins decisions` | **§0 and the decision queue only** (§1's last section). No evidence layers, no subtraction hunt, no proposals | Midweek, or any time the queue has grown |
+
+The `decisions` run is the cheap one and should stay cheap — it prepares
+questions and closes out answered ones. If you find yourself sweeping the corpus
+or reading ADRs on a `decisions` run, you have drifted into the full pass.
+
+**Producers outnumber the consumer four to one.** `triage-standup`,
+`fill-ready` and `review-ready` all apply `needs-decision`, and they run daily;
+this skill is the only thing that removes it. A queue that only drains weekly
+grows by construction, which is what the `decisions` invocation exists to fix.
+
 ## 0. Carry forward before you look at anything new
 
 The ledger is `docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md`. Read
@@ -203,15 +222,62 @@ Usually one of four shapes:
   disappears once it is written down.
 
 Work these the same way you work a proposal: bring the evidence, the options, the
-recommendation and the counter-argument, so he can answer in a sitting. An
-answered item is yours to close out: splice his answer into the body, then drop
-the label so it ranks in a junior pool like anything else. Nothing else removes
-it, and both numbers below are wrong if you skip this.
+recommendation and the counter-argument, so he can answer in a sitting.
+
+### You asked, he answered — close it out in the same turn
+
+**The moment he decides, apply it. Do not carry it to a later run, a later
+section of your report, or a "to write up" list.** Three writes, in this order,
+before you move to the next item:
 
 ```sh
+# 1. the durable record — his answer, in his words, on the issue
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
+
+# 2. splice it into the body, so the next reader gets the decision and not the
+#    open fork. gh issue view --json body -q .body > body.md, edit, then:
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
+
+# 3. the label comes off, and the item ranks in a junior pool like anything else
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
   --remove-label needs-decision
 ```
+
+An answer you heard and did not apply is worse than one you never asked for: the
+issue still reads as blocked, he sees it on the waiting list next run, and the
+work sits unblocked with nobody knowing. **This is the same failure as leaving a
+commit unpushed** — the thinking is done and the value is held hostage to a step
+nobody can see.
+
+**The `**Ruling:**` comment is the record, not a queue.** It exists so the next
+reader — a junior picking the issue up, a later run of this skill, `/audit-board`
+— sees the decision and its reasoning. It is not a signal for someone else to
+finish your job.
+
+### The residual: an answer given where nothing could act on it
+
+It still happens — he rules at standup, or in a session with no tools, or types
+a comment without the marker. Those are the only items that should ever need
+finding, and finding them is the *first* thing a `decisions` run does:
+
+```sh
+# answered, never closed out. Should be EMPTY. Anything here is a session that
+# heard an answer and walked away — fix it now, before preparing new questions.
+# `test` and not `startswith`: a real ruling comment carries a heading above the
+# marker and a number after it, so an exact-prefix match reports zero forever.
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --label needs-decision --json number,title,comments \
+  -q '.[] | select([.comments[].body | test("\\*\\*Ruling")] | any)
+      | "#\(.number)  \(.title)"'
+```
+
+**A non-zero result is a defect, not a workload.** Report the count as one — "N
+items were answered and left labelled" — because the fix is upstream in whichever
+skill dropped it, not in draining the list faster.
+
+Everything else under `needs-decision` is genuinely waiting on him, and is what
+you prepare.
 
 An item whose answer turns out to be "this is genuinely hard either way" moves to
 `senior` instead — swap the labels, never carry both.

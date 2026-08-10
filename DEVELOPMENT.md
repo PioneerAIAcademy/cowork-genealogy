@@ -516,7 +516,15 @@ fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon depl
 On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
 config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
 `FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
-`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+`DATA_DIR` once the DB is on Neon.
+
+`WIKI_API_URL` and `POP_STATS_URL` belong in that `[env]` block too. They point
+hosted sessions at the wiki-query and Pop Stats services; leave them unset and
+the engine uses its compiled-in defaults, which name one developer's tailnet
+host. Changing one reaches existing sessions on their next connect — no need to
+recreate a project.
+
+The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
