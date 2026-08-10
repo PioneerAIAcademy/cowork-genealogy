@@ -211,9 +211,19 @@ def skill_refs_for_skill(skill_md: Path) -> list[str]:
     """Sorted unique sub-skill names a SKILL.md delegates to via
     `Skill("<name>")`. Empty for a missing file.
 
-    A skill naming *itself* is filtered out: several SKILL.md bodies quote
-    their own invocation when describing how a caller reaches them, and
-    self-inclusion would be a no-op that muddies the union's intent.
+    A skill naming *itself* is filtered out. This is **defensive — no body
+    does this today**. Every `Skill("<name>")` literal in the plugin (ten of
+    them, all in `search-records/SKILL.md`) names some other skill, and this
+    docstring previously claimed that "several SKILL.md bodies quote their own
+    invocation", which was never true of any body (#1225 review).
+
+    The filter is kept rather than deleted because a self-reference is cheap
+    to guard and unpleasant to inherit: the caller's tools are already in the
+    allowlist, so re-unioning them is a no-op that muddies the union's intent,
+    and it would make a callee's tool set depend on whether its own body
+    happens to quote itself in prose. `test_self_reference_is_dropped`
+    exercises it directly — before that test the branch was unreachable from
+    the suite, and deleting it left every test green.
     """
     if not skill_md.exists():
         return []

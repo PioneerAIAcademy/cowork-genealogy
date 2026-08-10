@@ -171,7 +171,14 @@ def test_skill_refs_finds_every_declared_callee():
     ]
 
 
-def test_skill_refs_accepts_both_quote_styles_and_drops_self():
+def test_skill_refs_accepts_both_quote_styles():
+    """Extraction only — `skill_refs_in_text` has no self-filter to exercise.
+
+    Named `..._and_drops_self` until 2026-08-09, which claimed coverage it did
+    not have: the self-filter lives in `skill_refs_for_skill`, one level up,
+    and deleting it left this test green. `test_self_reference_is_dropped`
+    below is the one that actually covers it.
+    """
     from harness.allowed_tools import skill_refs_in_text
 
     assert skill_refs_in_text('call Skill("a-skill") then Skill(\'b-skill\')') == [
@@ -180,6 +187,36 @@ def test_skill_refs_accepts_both_quote_styles_and_drops_self():
     ]
     assert skill_refs_in_text("Skill( \"spaced\" )") == ["spaced"]
     assert skill_refs_in_text("prose about Skill and skills") == []
+
+
+def test_self_reference_is_dropped(tmp_path):
+    """`skill_refs_for_skill` drops a skill naming itself, and keeps the rest.
+
+    No plugin body does this today, so the filter can only be covered by a
+    constructed file — which is precisely why it went untested. The name comes
+    from the parent directory, so the fixture has to be a real directory.
+    """
+    from harness.allowed_tools import skill_refs_for_skill
+
+    skill = tmp_path / "search-records"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        '---\nname: search-records\n---\n'
+        'Reachable via Skill("search-records") from the router.\n'
+        'Hands off with Skill("record-extraction") and Skill("research-plan").\n',
+        encoding="utf-8",
+    )
+
+    assert skill_refs_for_skill(skill / "SKILL.md") == [
+        "record-extraction",
+        "research-plan",
+    ]
+
+
+def test_skill_refs_for_missing_file_is_empty(tmp_path):
+    from harness.allowed_tools import skill_refs_for_skill
+
+    assert skill_refs_for_skill(tmp_path / "absent" / "SKILL.md") == []
 
 
 def test_callee_tools_absent_until_the_test_opts_in():
