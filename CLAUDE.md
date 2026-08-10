@@ -6,7 +6,7 @@ For developer-facing build, test, and feature-addition recipes, see
 [DEVELOPMENT.md](./DEVELOPMENT.md). For how the system fits together and
 which sites a given change touches, see
 [docs/architecture.md](./docs/architecture.md) — its "If you're asked to…"
-blocks are the map, and its §9.4 lists what nothing checks. This file
+blocks are the map, and its §9.4 points at what nothing checks. This file
 covers architecture, conventions, and rules — what Claude needs to know to
 make correct changes; on conflict, this file wins.
 
@@ -53,7 +53,21 @@ The MCP code is HTTP-only for all of these — it does not import or
 depend on any Python code from those services. The base URL for the
 wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
-instance); end users do not need to set this for normal operation.
+instance).
+
+**There is no public deployment yet, so the defaults are a developer's
+personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
+`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
+one machine's tailnet. The hosted path can now be redirected without an
+engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
+plane and `hosted_config()` writes them into the sandbox's config — but
+the compiled-in defaults still apply everywhere else, including every
+installed `.mcpb`. Measured over the
+committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
+calls fail, across 17 distinct days. The agent gets an actionable error
+and then quietly ships a thinner answer, so the user sees nothing. Do not
+write "end users do not need to set this" — that was true only in the
+sense that they cannot.
 
 ## Repository layout
 
@@ -142,11 +156,22 @@ mocks (no E2B/Anthropic/OAuth needed).
   not sure if this is in scope" are not reasons — they're the two most common
   ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
   ask rather than defaulting to filing.
-- **Deferring work creates an issue, not a file entry.** In the same PR that
-  defers something, file it — one command, no board write:
+- **Deferring work creates an issue, not a file entry.** Filing is the last
+  resort, not the default. Stop at the first of these that fits:
+
+  1. **Fold it into the current PR** — the rule above. Default.
+  2. **Comment on an existing issue that covers it.** Search before filing:
+     `gh issue list --state open --search "<path or symbol>"`, and grep the
+     `**Touches:**` lines. Adding to the issue that already owns the file beats
+     opening a second one against it.
+  3. **File with `--label icebox`** when no decision sits behind it.
+  4. **File as normal work.**
+
+  When you do file — in the same PR that defers it — one command, no board write:
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
+    [--label nothing-checks] \
     --title "…" --body "**Touches:** path/one.ts, path/two.py
 
   …"
@@ -156,14 +181,16 @@ mocks (no E2B/Anthropic/OAuth needed).
   change, when you know them. Overlap between issues here is almost never
   same-title — it is two issues wanting different lines in one file — and that
   line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
-  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
-  fit against ~180 open issues is that pass's job, not the filer's.
+  pass reads it, no gate does. One search is the whole obligation — do not agonise
+  past it. `/audit-board` judges fit across the whole open pool, which is the only
+  vantage point that sees every collision.
 
   | Label | Use for |
   |---|---|
   | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
   | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
   | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+  | `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
 
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
@@ -180,8 +207,10 @@ mocks (no E2B/Anthropic/OAuth needed).
   `TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
   "Follow-on work you find along the way", which owns these rules.
 - **Verification is automated, not a manual playbook.** New tools are
-  verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
-  and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
+  verified by the eval harness (`eval/`, `make harness-test`,
+  `make eval-skill SKILL=<name>`, `eval/tests/e2e/` — **not** `make test`,
+  which is `test-js` + `server-test` and reaches neither the harness nor
+  the engine) and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
   by writing a per-tool testing guide. The three surviving guides in
   `docs/testing-guides/` cover setup paths the harness can't
   (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
@@ -309,8 +338,10 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port, and it is gated on
-calibrating the shadow window first — the raw-write half has shipped.
+design; it exists. What is missing is a production port into the shipped
+`hooks/` hook — the raw-write half has shipped. That port is **not** gated on
+calibrating the shadow window; the issue that owned the calibration closed
+`not planned` on 2026-08-09.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -431,9 +462,16 @@ change, with different (and easy-to-undercount) site lists:
 - **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
-  and `packages/schema/schemas/`), the matching TS union in
-  `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
-  prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
+  and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
+  prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
+  union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
+  own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
+  exception is the five unions defined inline in `research.schema.json` rather
+  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
+  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
+  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
+  they move. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
   the `evidence_type` row.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
@@ -500,7 +538,9 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
+| `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
+| `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
@@ -576,6 +616,11 @@ The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
 
+**No explanatory prose in a `SKILL.md` or an agent `.md`.** Every line in those
+files is a billed prompt token on every invocation. No comments, no rationale,
+no note of what was tried before. Write the instruction; the reasoning behind it
+goes in the skill's spec or its rubric.
+
 **Lane rule for skill findings.** Before editing any SKILL.md (or plugin
 agent body) to fix an e2e/eval/user finding, classify the finding:
 (1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
@@ -584,6 +629,14 @@ playbook/table; (4) core doctrine → the stewarded prose edit, gated by
 the unit suite. Most findings are lanes 1–2; prose edits never
 compensate for a tool or eval bug. Full version:
 `docs/skill-lifecycle.md` §5.
+
+### A new lint must be proven to fail
+
+Before committing a lint, validator, or CI check, break the repo so the check
+fires and watch it fail. A check that cannot fail reads as coverage and is worse
+than no check at all. The three ways one silently passes here: a grep whose
+pattern excludes its own tree, a `git grep` that skips untracked files, and a
+field-name match that collides with an unrelated key.
 
 ### Python file I/O: always pass `encoding="utf-8"`
 
@@ -634,6 +687,22 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
+- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
+  an external service. Node's global `fetch` never times out on its own; a
+  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
+  sidecar, OpenRouter) hangs the call forever otherwise — confirmed live when
+  `volume_search` hung for 236 minutes. Every tool that touches
+  the network calls this instead of the global `fetch` directly; it is the
+  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+  Default timeout 30s; pass a longer one as the third argument (180s for
+  `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
+  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  raise from the measured e2e corpus, not by guessing — the worked method is in
+  `docs/specs/image-transcribe-tool-spec.md`. The
+  budget covers headers **and** body — size it for the whole transfer, not the
+  round-trip to first byte. A body still streaming when the clock fires is
+  aborted mid-read, and the wrapper turns that into the same readable error,
+  so call sites never handle it themselves.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`

@@ -1,6 +1,5 @@
 ---
 name: timeline
-model: claude-sonnet-4-6
 description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps,
   and supports identity-testing by checking whether records cohere into one
   life. Logical-impossibility checks (events after death, impossible ages)
