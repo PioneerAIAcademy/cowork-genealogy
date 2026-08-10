@@ -126,6 +126,40 @@ valuable. See §4.
 different labor — a `developer` lint and a `genealogist` audit. Merging makes it
 unassignable. Say "same week, two people" and leave both open.
 
+### Never replace N issues with one issue holding N rows
+
+There is no fifth verdict. Do **not** close a set of issues into a "batch
+tracker", "umbrella", or "index" issue whose body is a table of the work — one
+row per item, each with a **Who** column to claim. It reads like tidying and it
+destroys the thing the board is for.
+
+A row cannot be assigned, cannot sit in a column, cannot be closed, and does not
+appear in anyone's queue. One card that is done when twenty independent
+adjudications are done is a card nobody can finish, and the twenty become
+invisible the moment the tracker scrolls.
+
+**The merge test is whether the WORK is the same, never whether the TEXT is.**
+Ask: does one person, doing this once, finish all of it? If no, they are
+separate issues no matter how alike the bodies read.
+
+Template-filled bodies are the trap, because a fleet of them looks like mass
+duplication at a glance. This happened, and cost real data: on 2026-08-04 this
+skill closed twenty `test <slug>` record-hint adjudications into one tracker,
+justifying it as "byte-identical bodies differing only in a name and two URLs".
+They were not duplicates in any sense — twenty different people, twenty
+different records, four different countries — and the shared text was the
+`/resolve-record-hint` boilerplate every one of them carries. The tracker then
+asserted three things that were false within days: that eighteen fixtures were
+still draft (ten were), that the unlisted ones had no card (three did, all
+assigned), and it dropped one fixture's hint ark entirely, pointing at a README
+that did not contain it. All four were reopened 2026-08-10 and the tracker
+deleted.
+
+If a set genuinely wants shared coordination, the tools for that are the
+`cluster:*` label and §4's batching, which keep every issue open and assignable.
+A standing `next run:` issue is the one legitimate umbrella, and it schedules
+work rather than containing it.
+
 Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
 
@@ -495,6 +529,16 @@ Merge when the issues share a lane — the same doctrine question, the same test
 files, the same agent body. Do not merge across lanes to save a run: a
 `developer` harness fix and a `genealogist` fixture adjudication in one issue is
 unassignable, which costs more than the run saved.
+
+**Sharing a lane is necessary and not sufficient.** The run being paid once is
+what makes a merge pay, so this only applies where a single run covers the
+merged work — one snapshot, one suite, one annotation pass. It does **not**
+apply to N independent pieces of research that merely happen to be filed by the
+same lane against the same directory. Twenty record-hint adjudications are
+twenty separate investigations of twenty different people; merging them buys no
+run at all, because each still costs its own. Same-lane plus same-directory is
+where this rule has misfired — apply the "does one person finish all of it in
+one sitting?" test from §1 before merging on lane alone.
 
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
