@@ -1365,18 +1365,20 @@ Much of this system has no automated guard, and several of those gaps fail
 here and could not be kept honest: a `Tracking` column was deleted 2026-08-05
 because it was edited every time an issue closed, and the rows themselves went
 the same way — one described a lint as existence-only for weeks after it was
-hash-pinned. Query the board instead, and record a new gap by filing the issue
-(`CLAUDE.md` § "Deferring work creates an issue") rather than adding a row.
-
-**Search the mechanism you are touching, not the phrase.** Issue titles say what
-the missing guard is about, so a mechanism term finds the right issue as the top
-hit; a title-phrase search finds only about half of them and returns confident
-near-misses for the rest:
+hash-pinned. The register is the `nothing-checks` label — every gap this table
+held carries it, and an issue leaves the register by closing rather than by
+someone remembering to delete a row:
 
 ```sh
-gh issue list --state open --search "<the mechanism you are changing>"   # start here
-gh issue list --state open --search "nothing checks"                     # partial — a sample, not the register
+gh issue list --state open --label nothing-checks                       # the whole register
+gh issue list --state open --label nothing-checks --search "<mechanism>"  # just yours
 ```
+
+**A new gap is a labelled issue, not a row here.** File it
+(`CLAUDE.md` § "Deferring work creates an issue") with `--label nothing-checks`.
+Do not search for the phrase instead of the label: issue titles name the
+mechanism, not the shape, so a text search finds about half of them and returns
+confident near-misses for the rest.
 
 Three of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:

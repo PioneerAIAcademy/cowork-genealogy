@@ -31,7 +31,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
    nothing checks.
 3. **`docs/architecture.md` §9.4** — "What nothing checks." Always. It is short:
    three gaps whose consequence changes how a change is made, plus the
-   `gh issue list --state open --search "nothing checks"` query that returns the
+   `gh issue list --state open --label nothing-checks` register that holds the
    rest. Run that query when the issue's subject sounds like a missing guard —
    the enumeration lives on the board, not in the file.
 4. **The ADR**, if one matches. The index is `docs/architecture.md` §0; the

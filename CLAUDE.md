@@ -157,6 +157,7 @@ mocks (no E2B/Anthropic/OAuth needed).
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
+    [--label nothing-checks] \
     --title "…" --body "**Touches:** path/one.ts, path/two.py
 
   …"
@@ -175,6 +176,7 @@ mocks (no E2B/Anthropic/OAuth needed).
   | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
   | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
   | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+  | `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
 
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
