@@ -5,11 +5,14 @@
       "type": "relationship",
       "description": "Anna Marie Findejsová and Maxmilián Michl had a daughter, Agnes, baptized 1 March 1818 in Svitavy, Moravská Třebová, in addition to their daughter Anna Michlová (b. 1823, d. 1833).",
       "details": {
-        "subject_person": "Anna Marie Findejsová (P915-7QP)",
+        "subject_person": {
+          "name": "Anna Marie Findejsová",
+          "pid": "P915-7QP"
+        },
         "relation": "child",
         "target_person": {
           "name": "Agnes Michl",
-          "birth": "1 March 1818, Bohemia (baptized Svitavy, Moravská Třebová)"
+          "birth": "1 March 1818, Moravia (baptized Svitavy, Moravská Třebová)"
         }
       },
       "supporting_sources": [
