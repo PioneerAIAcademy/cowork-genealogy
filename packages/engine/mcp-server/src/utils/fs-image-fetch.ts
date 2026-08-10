@@ -9,11 +9,10 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
 import { toArk, arkToUrl } from "./ark.js";
 
-// fetchWithTimeout's default (30s) budgets the request/response headers, not
-// the body — AbortSignal.timeout is absolute from creation and keeps running
-// while the multi-MB body streams in below. A full-size page scan at typical
-// throughput needs more than 30s end-to-end, so this fetch gets the same 90s
-// budget as the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
+// fetchWithTimeout's budget covers headers and body together, and a full-size
+// page scan at typical throughput needs more than the 30s default to finish
+// streaming. Give it the same 90s as the OCR call it feeds
+// (image-transcribe.ts's OCR_TIMEOUT_MS).
 const IMAGE_FETCH_TIMEOUT_MS = 90_000;
 
 // An imageId is a digitized-image identifier of the form NUMBER_NUMBER
@@ -178,20 +177,9 @@ async function attemptFsImageFetch(
       nonImageContentType: rawContentType,
     };
   }
-  // The body read happens outside fetchWithTimeout's own try/catch, so a
-  // mid-stream abort (same IMAGE_FETCH_TIMEOUT_MS clock, still running) would
-  // otherwise surface as a raw TimeoutError instead of a readable message.
-  let buffer: ArrayBuffer;
-  try {
-    buffer = await response.arrayBuffer();
-  } catch (err) {
-    if (err instanceof Error && err.name === "TimeoutError") {
-      throw new Error(
-        `FamilySearch image fetch timed out after ${IMAGE_FETCH_TIMEOUT_MS}ms while reading the response body.`
-      );
-    }
-    throw err;
-  }
+  // A mid-stream abort is translated by fetchWithTimeout itself — it wraps the
+  // body readers, not just the fetch — so this needs no local handling.
+  const buffer = await response.arrayBuffer();
   return {
     ok: true,
     status: response.status,
