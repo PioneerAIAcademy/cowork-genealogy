@@ -52,10 +52,9 @@ other four ship with this repo, so cloning is the whole install —
 in [`.claude/skills/`](../.claude/skills/). Nothing here needs a plugin you have
 to install.
 
-If you have a personal plugin that defines one of these names, **yours wins**.
-That matters most for `/review`: another toolchain's version reads neither this
-repo's test suites nor the human reviews on the PR, and your teammates don't
-have it. Make sure the one you run is the repo's.
+If you have a personal plugin that defines one of these names, yours wins. Most
+people don't — but if `/review` ever behaves unlike what's described here,
+that's the first thing to check.
 
 ---
 
