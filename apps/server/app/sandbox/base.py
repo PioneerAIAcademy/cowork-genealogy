@@ -46,7 +46,6 @@ class SandboxSpec:
     template: str
     labels: dict[str, str] = field(default_factory=dict)  # user_id, etc.
     env: dict[str, str] = field(default_factory=dict)  # boot-time, non-secret
-    auto_suspend_seconds: int = 900
     model: str = "claude-sonnet-4-6"
 
 

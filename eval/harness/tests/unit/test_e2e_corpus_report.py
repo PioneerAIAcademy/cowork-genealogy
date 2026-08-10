@@ -45,7 +45,7 @@ def test_tally_counts_each_axis_independently(tmp_path: Path):
         # Pre-detector run: never checked.
         _write(tmp_path, "run-3.json", {"verdict": "partial"}),
     ]
-    recall, compliance, gate, problems, _arms, _fix = tally(paths)
+    recall, compliance, gate, problems, _arms, _fix, _bash = tally(paths)
 
     assert recall == {"pass": 2, "partial": 1}
     assert compliance == {"fail": 1, "pass": 1, "not_checked": 1}
@@ -60,7 +60,7 @@ def test_not_checked_is_never_folded_into_the_gate_pass_count(tmp_path: Path):
     paths = [
         _write(tmp_path, f"run-{i}.json", {"verdict": "pass"}) for i in range(3)
     ]
-    recall, compliance, gate, _, _arms, _fix = tally(paths)
+    recall, compliance, gate, _, _arms, _fix, _bash = tally(paths)
 
     assert compliance == {"not_checked": 3}
     assert compliance.get("pass", 0) == 0, "unchecked must not read as clean"
@@ -75,7 +75,7 @@ def test_tally_reports_unreadable_files_instead_of_crashing(tmp_path: Path):
     bad = tmp_path / "run-2.json"
     bad.write_text("{not json", encoding="utf-8")
 
-    recall, _compliance, _gate, problems, _arms, _fix = tally([good, bad])
+    recall, _compliance, _gate, problems, _arms, _fix, _bash = tally([good, bad])
     assert recall == {"pass": 1}
     assert len(problems) == 1
     assert "run-2.json" in problems[0]
@@ -88,7 +88,7 @@ def test_format_report_omits_the_note_when_everything_was_checked(tmp_path: Path
             "verdict": "pass", "compliance": "pass", "outcome": "pass",
         })
     ]
-    recall, compliance, gate, _, _arms, _fix = tally(paths)
+    recall, compliance, gate, _, _arms, _fix, _bash = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=1)
     assert "unknown compliance" not in out
     assert "1 pass" in out
@@ -215,7 +215,7 @@ def test_tally_counts_violations_by_arm_and_by_fixture(tmp_path: Path):
             ]},
         }),
     ]
-    _, _, _, _, arms, per_fixture = tally(paths)
+    _, _, _, _, arms, per_fixture, _bash = tally(paths)
     assert arms == {"same_person (per person)": 2, "proof-conclusion": 1,
                     "conflict-resolution": 1}
     assert per_fixture == {"loud-fixture": 3, "quiet-fixture": 1}
@@ -224,7 +224,7 @@ def test_tally_counts_violations_by_arm_and_by_fixture(tmp_path: Path):
 def test_report_refuses_a_rate_when_nothing_is_decidable(tmp_path: Path):
     """The corpus today. A percentage here would assert 17 unknowns ran clean."""
     paths = [_write(tmp_path, f"run-{i}.json", {"verdict": "pass"}) for i in range(3)]
-    recall, compliance, gate, _, arms, fix = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=3, arms=arms, per_fixture=fix)
     assert "NOT MEASURABLE" in out
     assert "%" not in out.split("runs w/ >=1 violation:")[1]
@@ -241,7 +241,7 @@ def test_report_calls_an_all_fail_decidable_set_a_floor_not_a_rate(tmp_path: Pat
                              "guardrail_bypass_violations": ["'same_person' missing"]},
         })
     ]
-    recall, compliance, gate, _, arms, fix = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=1, arms=arms, per_fixture=fix)
     assert "floor on incidence, not a rate" in out
 
@@ -262,7 +262,7 @@ def test_report_flags_a_dominant_fixture_so_the_next_outlier_self_discloses(
                                      "verdict": "pass", "outcome": "fail",
                                      "guardrail_bypass_violations": ["'same_person' x"]}),
     ]
-    recall, compliance, gate, _, arms, fix = tally(paths)
+    recall, compliance, gate, _, arms, fix, _bash = tally(paths)
     out = format_report(recall, compliance, gate, n_runs=2, arms=arms, per_fixture=fix)
     assert "concentration:" in out
     assert "hog" in out
@@ -282,7 +282,7 @@ def test_concentration_names_what_the_top_n_cap_withheld(tmp_path: Path):
             "verdict": "pass", "outcome": "fail",
             "guardrail_bypass_violations": ["'same_person' x"] * n,
         }))
-    _, compliance, gate, _, arms, fix = tally(paths)
+    _, compliance, gate, _, arms, fix, _bash = tally(paths)
     out = format_report(Counter(), compliance, gate, n_runs=5, arms=arms, per_fixture=fix)
 
     assert "fx0" in out and "fx1" in out and "fx2" in out
@@ -303,7 +303,7 @@ def test_concentration_is_silent_when_nothing_was_withheld(tmp_path: Path):
             "verdict": "pass", "outcome": "fail",
             "guardrail_bypass_violations": ["'same_person' x"] * n,
         }))
-    _, compliance, gate, _, arms, fix = tally(paths)
+    _, compliance, gate, _, arms, fix, _bash = tally(paths)
     out = format_report(Counter(), compliance, gate, n_runs=2, arms=arms, per_fixture=fix)
     assert "not shown" not in out
 
@@ -469,6 +469,107 @@ def test_a_violation_free_corpus_produces_empty_counters(tmp_path: Path):
     counts = tally(paths)
     assert counts.arms == {}
     assert counts.per_fixture == {}
+
+
+# ── §6's Bash gap: the close-condition nothing used to watch ─────────────────
+
+
+def test_the_census_watches_the_files_the_lockdown_protects():
+    """`WATCHED_PROJECT_FILES` is deliberately not spelled
+    `PROTECTED_PROJECT_FILES` — that name belongs to the three enforcement
+    copies `test_write_lockdown_parity.py` compares, and this module has no
+    predicate to compare. The cost of the different name is that a third
+    protected file could be added there and silently not counted here, which is
+    the one drift that would make this census quietly under-report. So it is
+    pinned to a registered copy instead.
+    """
+    from e2e.corpus_report import WATCHED_PROJECT_FILES
+    from e2e.orchestrator import PROTECTED_PROJECT_FILES
+
+    assert set(WATCHED_PROJECT_FILES) == set(PROTECTED_PROJECT_FILES)
+
+
+def _bash_run(dir_: Path, name: str, *commands: str) -> Path:
+    return _write(dir_, name, {
+        "harness_schema_version": 1, "verdict": "pass",
+        "compliance": "pass", "outcome": "pass",
+        "guardrail_bypass_violations": [],
+        "tool_calls": [
+            {"tool": "Bash", "args": {"command": c}, "response_summary": ""}
+            for c in commands
+        ],
+    })
+
+
+def test_bash_hits_are_split_into_reads_and_write_shapes(tmp_path: Path):
+    """The count alone cannot answer §6's close-condition. `cat file` and
+    `cat > file` both name a protected path; only the second is the thing the
+    spec says to close the gap on."""
+    fixture = tmp_path / "some-fixture"
+    fixture.mkdir()
+    paths = [_bash_run(
+        fixture, "run-1.json",
+        "cat /tmp/wk/research.json",                       # read
+        "grep '\"id\"' /tmp/wk/tree.gedcomx.json | head",  # read, has a pipe
+        "ls -la /tmp/wk 2>/dev/null && cat /tmp/wk/research.json",  # read, has a `>`
+        "cat > /tmp/wk/tree.gedcomx.json << 'EOF'\n{}\nEOF",        # WRITE
+        "echo hello",                                      # names nothing
+    )]
+    counts = tally(paths)
+
+    assert len(counts.bash) == 4, "every Bash call naming a protected file counts"
+    writes = [h for h in counts.bash if h.shape]
+    assert [h.shape for h in writes] == ["redirect"]
+    assert writes[0].fixture == "some-fixture"
+    assert writes[0].runlog == "run-1.json"
+
+
+def test_a_2_dev_null_redirect_is_not_read_as_a_write(tmp_path: Path):
+    """The redirect shape must key on the protected path being the TARGET.
+    Nearly every read in the corpus carries `2>/dev/null`, so a bare `>` probe
+    would report the whole read population as writes and be ignored."""
+    from e2e.corpus_report import write_shape
+
+    assert write_shape("cat /tmp/wk/research.json 2>/dev/null") is None
+    assert write_shape("wc -l /tmp/wk/research.json") is None
+    assert write_shape("python3 -c \"import json; json.load(open('/w/research.json'))\"") is None
+    assert write_shape("cat > /w/research.json << 'EOF'") == "redirect"
+    assert write_shape("tee /w/tree.gedcomx.json") == "tee"
+    assert write_shape("mv /tmp/x.json /w/research.json") == "mv/cp"
+    assert write_shape("sed -i 's/a/b/' /w/research.json") == "sed -i"
+    assert write_shape("python3 -c \"json.dump(d, open('/w/research.json','w'))\"") == "python write"
+
+
+def test_the_bash_census_prints_even_when_nothing_was_found(tmp_path: Path):
+    """A close-condition that prints nothing when clean is indistinguishable
+    from a counter that stopped running — the state this counter replaced."""
+    out = format_report(Counter({"pass": 1}), Counter({"pass": 1}), Counter({"pass": 1}),
+                        n_runs=1, bash=[])
+    assert "bash protected-file access: 0 call(s)" in out
+    assert "write-shaped: none" in out
+
+
+def test_a_write_shaped_hit_is_named_in_the_report(tmp_path: Path):
+    fixture = tmp_path / "victor-spenard-parents"
+    fixture.mkdir()
+    counts = tally([_bash_run(fixture, "run-9.json", "cat > /w/tree.gedcomx.json << 'EOF'")])
+    out = format_report(counts.recall, counts.compliance, counts.gate,
+                        n_runs=1, bash=counts.bash)
+
+    assert "write-shaped: 1" in out
+    assert "victor-spenard-parents/run-9.json" in out
+    assert "[redirect]" in out
+
+
+def test_a_runlog_without_tool_calls_contributes_nothing(tmp_path: Path):
+    """A crash before the first turn has no `tool_calls`. That is an absence,
+    not a parse problem — it must not land in `problems` and shrink the run
+    count the other axes are printed over."""
+    fixture = tmp_path / "crashed"
+    fixture.mkdir()
+    counts = tally([_write(fixture, "run-1.json", {"verdict": "fail"})])
+    assert counts.bash == []
+    assert counts.problems == []
 
 
 # ── --since (issue #1176): the window must not move on a typo ────────────────

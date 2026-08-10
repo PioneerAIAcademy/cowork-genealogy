@@ -15,6 +15,7 @@
 // Spec: docs/specs/rank-search-matches-tool-spec.md (Files §).
 
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
 import { toArk } from "./ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -46,7 +47,7 @@ export async function scorePair(
 
   let response: Response;
   try {
-    response = await fetch(URL, {
+    response = await fetchWithTimeout(URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

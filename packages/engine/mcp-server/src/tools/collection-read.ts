@@ -1,6 +1,7 @@
 import TurndownService from "turndown";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   FSCollectionDetailResponse,
   CollectionDetailResult,
@@ -36,7 +37,7 @@ export async function fetchCollectionDetail(
   id: string
 ): Promise<FSCollectionDetailResponse> {
   const url = `${FS_COLLECTIONS_URL}/${encodeURIComponent(id)}?embedWikiAboutCollection=true`;
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
