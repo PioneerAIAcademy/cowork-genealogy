@@ -61,4 +61,24 @@ describe('foldChatEvent', () => {
     expect(before).toHaveLength(0)
     expect(after).toHaveLength(1)
   })
+
+  it('joins two consecutive thinking events with a paragraph break (#1312)', () => {
+    // real_agent emits one event per ThinkingBlock, so two thinking blocks in a
+    // turn glued the same way text did. .thinkingBody is pre-wrap, so the blank
+    // line renders directly.
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'thinking', { kind: 'thinking', text: 'First thought.' })
+    msgs = foldChatEvent(msgs, 'thinking', { kind: 'thinking', text: 'Second thought.' })
+    expect(msgs[0].thinking).toBe('First thought.\n\nSecond thought.')
+    expect(msgs[0].thinking).not.toBe('First thought.Second thought.')
+  })
+
+  it('separates a trailing error from a completed answer (#1312)', () => {
+    // The reconnect-exhausted path fires an error event after real answer text;
+    // it must not glue onto the last sentence.
+    let msgs = foldChatEvent([], 'text', textEvent('Here are the results.'))
+    msgs = foldChatEvent(msgs, 'error', { kind: 'error', text: 'Chat unavailable: unknown error' })
+    expect(msgs[0].text).toBe('Here are the results.\n\nChat unavailable: unknown error')
+    expect(msgs[0].error).toBe(true)
+  })
 })

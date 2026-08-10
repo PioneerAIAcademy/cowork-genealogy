@@ -63,12 +63,18 @@ export function foldChatEvent(
   } else if (kind === 'text_delta') {
     last.streamText = (last.streamText ?? '') + text
   } else if (kind === 'thinking') {
-    last.thinking = (last.thinking ?? '') + text
+    // real_agent emits one event per ThinkingBlock, same as per TextBlock, so
+    // two thinking blocks in one turn need the same paragraph break as text
+    // (#1312). .thinkingBody is pre-wrap, so the blank line renders as-is.
+    last.thinking = joinTextBlocks(last.thinking ?? '', text)
     last.streamThinking = ''
   } else if (kind === 'thinking_delta') {
     last.streamThinking = (last.streamThinking ?? '') + text
   } else if (kind === 'error') {
-    last.text += (ev.text as string) ?? 'Error'
+    // An error can land after a completed answer (the reconnect-exhausted path
+    // in ChatPane), so it needs the same break rather than gluing onto the last
+    // sentence (#1312).
+    last.text = joinTextBlocks(last.text, (ev.text as string) ?? 'Error')
     last.error = true
   } else if (kind === 'tool_use') {
     last.tools.push({

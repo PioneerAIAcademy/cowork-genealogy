@@ -602,6 +602,14 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
+/* Restore paragraph spacing the global reset (viewer-ui global.css) zeroes.
+   Without this, two text blocks joined with a blank line render on consecutive
+   lines with no gap — the paragraph break #1312 requires never reaches the
+   screen. The first/last-child rules below then trim the outer margins so the
+   bubble keeps tight top/bottom padding. */
+.msgText p {
+  margin: 0.6em 0;
+}
 .msgText :first-child {
   margin-top: 0;
 }
@@ -619,7 +627,7 @@ button {
 .thinkingBlock {
   margin: 4px 0;
   padding: 6px 10px;
-  background: var(--bg);
+  background: var(--accent-gold-soft);
   border: 1px dashed var(--accent-soft);
   border-left-width: 3px;
   border-radius: 6px;
