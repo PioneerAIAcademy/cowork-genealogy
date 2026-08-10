@@ -614,6 +614,11 @@ The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
 
+**No explanatory prose in a `SKILL.md` or an agent `.md`.** Every line in those
+files is a billed prompt token on every invocation. No comments, no rationale,
+no note of what was tried before. Write the instruction; the reasoning behind it
+goes in the skill's spec or its rubric.
+
 **Lane rule for skill findings.** Before editing any SKILL.md (or plugin
 agent body) to fix an e2e/eval/user finding, classify the finding:
 (1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
@@ -622,6 +627,14 @@ playbook/table; (4) core doctrine → the stewarded prose edit, gated by
 the unit suite. Most findings are lanes 1–2; prose edits never
 compensate for a tool or eval bug. Full version:
 `docs/skill-lifecycle.md` §5.
+
+### A new lint must be proven to fail
+
+Before committing a lint, validator, or CI check, break the repo so the check
+fires and watch it fail. A check that cannot fail reads as coverage and is worse
+than no check at all. The three ways one silently passes here: a grep whose
+pattern excludes its own tree, a `git grep` that skips untracked files, and a
+field-name match that collides with an unrelated key.
 
 ### Python file I/O: always pass `encoding="utf-8"`
 

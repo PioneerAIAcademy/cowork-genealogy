@@ -44,6 +44,13 @@ that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
 installer only when a *new* hook is added to the list.
 
+The one thing the hook does **not** set up is the compiled engine
+(`packages/engine/mcp-server/build/`). Run the Python suites through
+`make harness-test`, which builds the engine first; a bare `pytest` in a fresh
+worktree fails on the missing build and looks like a regression. Do not symlink
+`build/` into a worktree — a worktree on an engine branch would then silently
+test `main`'s compiled output.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
