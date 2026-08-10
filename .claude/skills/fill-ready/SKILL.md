@@ -26,7 +26,8 @@ Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 ```sh
 PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
-# Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86 / Done 98236657
+# Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
+# Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 ```
 
