@@ -2,6 +2,7 @@
 name: audit-board
 description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "what should be merged", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and BEFORE /fill-ready, since filers search once and then file, leaving this pass to judge fit across the pool. Sets its own merge-or-close target from the week's inflow and reports the gap when it falls short. Reads every open issue in Backlog, Ready, In Progress and Review and answers four questions across the pool: which issues should be merged or closed into each other, which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
 allowed-tools:
+  - Agent
   - Read
   - Bash
   - Glob
@@ -70,9 +71,10 @@ Partition the issue numbers into batches of ~25–30 and give each batch an
 explicit, non-overlapping list, so nothing is checked twice and nothing is
 missed. Generate the partition — do not eyeball it.
 
-Give each batch the four verdicts rather than a summary instruction: **FIXED**
+Give each batch the five verdicts rather than a summary instruction: **FIXED**
 (name the commit or PR), **STILL BROKEN** (quote the evidence), **PARTLY**
-(which half survives), **PREMISE FALSE** (and where the code actually lives).
+(which half survives), **PREMISE FALSE** (nothing anywhere carries it),
+**ON A BRANCH** (name the branch and sha — not obsolete, unbuildable).
 Seed each with what is already known about its issues — which got substantive
 comments this week, which are `icebox`, which pairs are known not to be
 duplicates — or they will re-derive it and contradict it.
@@ -243,7 +245,8 @@ a code comment that names a closed issue as its tracker is trusted on sight. Do
 not trust it — an issue can be closed `completed` with the work never landed.
 
 Resolve every closed issue cited **as a tracker**, in a body or in the code
-(`grep -rn '#<N>' packages/ apps/ eval/`), by checking the artifact, not the
+(`grep -rn '#<N>' packages/ apps/ eval/ docs/ scripts/ CLAUDE.md`), by checking
+the artifact, not the
 state. One case: a consolidation issue closed `completed` while all five copies
 it was meant to remove are still on `main` — with a source comment pointing
 readers at it. Anyone following that pointer lands on a closed ticket and an
@@ -269,20 +272,33 @@ every other check reads as *confirmed*. A body says a function shipped. It did �
 on a branch that never merged. The merged-PR check above passes it by (there is
 no merged PR), and a `grep` of `main` finds nothing, so the natural conclusion is
 "the premise is false" when the truth is "the premise is true somewhere nobody
-else can see." Test the sha, never the PR state:
+else can see." Search for the **content**, and ask `origin/main` first:
 
 ```sh
-git merge-base --is-ancestor <sha> HEAD && echo "on main" || echo "NOT on main"
-git log --all --oneline -S '<symbol or string>'   # which branch, if any, carries it
+git fetch --all --prune --quiet                          # --all sees only what you fetched
+git log origin/main --oneline -S '<symbol or string>'    # did it ship? ask this first
+git log --all --oneline -S '<symbol or string>'          # only if main came back empty
 ```
 
-When a body quotes a symbol, test id or string you cannot find, **search every
-branch before calling it invented.** The two outcomes need opposite handling:
+Name `origin/main` explicitly. `HEAD` is whichever branch you are standing on,
+and a worktree is the normal place to run this from — testing against it answers
+a different question than the one you are asking. Do not test a sha with
+`merge-base --is-ancestor` either: this repo squash-merges, so a merged branch's
+commits are never ancestors of `main`, and every shipped PR reads as unmerged.
 
-| `git log --all -S` finds | Means | Do |
+When a body quotes a symbol, test id or string you cannot find on `main`,
+**search every branch before calling it invented.** The outcomes need opposite
+handling:
+
+| Result | Means | Do |
 |---|---|---|
-| nothing | It never existed anywhere | The body is wrong. Correct it and ask the filer what they meant — do not close, their concern may survive a wrong citation |
-| a commit not on `main` | The body describes a branch | The issue is **blocked on that branch merging**. Name the branch and the sha in a comment |
+| `origin/main` finds it | It shipped | The body is current. Nothing to do here — the second command is not needed |
+| `origin/main` empty, `--all` empty | It never existed anywhere | The body is wrong. Correct it and ask the filer what they meant — do not close, their concern may survive a wrong citation |
+| `origin/main` empty, `--all` finds a commit | The body describes a branch | The issue is **blocked on that branch merging**. Name the branch and the sha in a comment |
+
+The `--all` search reads local refs, so a branch nobody fetched looks identical
+to a branch that never existed — hence the `fetch --prune` first, which also
+drops refs for branches deleted after merging.
 
 Both showed up in one 22-issue sample: an issue asserting a function had shipped
 warn-only when it sat on `origin/<feature-branch>`, with two follow-up comments
