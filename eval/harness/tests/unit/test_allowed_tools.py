@@ -219,6 +219,71 @@ def test_skill_refs_for_missing_file_is_empty(tmp_path):
     assert skill_refs_for_skill(tmp_path / "absent" / "SKILL.md") == []
 
 
+def test_run_skills_callee_brings_its_own_agents_tools():
+    """The union follows the AGENT axis one level down, not just the skill's.
+
+    `record-extraction` delegates to `@plugin:record-extractor`. Union only its
+    `allowed-tools` and the callee runs holding eight fewer tools than it does
+    standalone — and the failure is silent improvisation, not an error, which
+    is the whole bug #1012 closed one level up (#1225 review).
+
+    Asserted against the real plugin rather than a synthetic pair: the gap was
+    between two real files, and a constructed fixture would have passed while
+    production drifted.
+    """
+    as_callee = set(
+        compute_allowed_tools(
+            "search-records", PLUGIN_SKILLS, run_skills={"record-extraction"}
+        )
+    )
+    standalone = set(compute_allowed_tools("record-extraction", PLUGIN_SKILLS))
+
+    assert "mcp__genealogy__extraction_append" in as_callee
+    assert not (standalone - as_callee), (
+        "a run_skills callee must hold every tool it holds standalone; "
+        f"missing: {sorted(t.split('__')[-1] for t in standalone - as_callee)}"
+    )
+
+
+def test_uncovered_callee_fixtures_sees_the_callees_agent_tools(tmp_path):
+    """Grant and preflight must widen by the same rule.
+
+    Granting a tool the fixture check never looks at recreates "permission is
+    not existence": the call resolves to nothing and aborts the CALLER twenty
+    turns in, naming the wrong skill.
+    """
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    caller = tmp_path / "caller"
+    caller.mkdir()
+    (caller / "SKILL.md").write_text(
+        '---\nname: caller\nallowed-tools: []\n---\nHands off via Skill("callee").\n',
+        encoding="utf-8",
+    )
+    callee = tmp_path / "callee"
+    callee.mkdir()
+    (callee / "SKILL.md").write_text(
+        "---\nname: callee\nallowed-tools: [own_tool]\n---\n"
+        "Delegates to @plugin:helper for the heavy lifting.\n",
+        encoding="utf-8",
+    )
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "helper.md").write_text(
+        "---\nname: helper\ntools:\n  - agent_only_tool\n---\nHelper.\n",
+        encoding="utf-8",
+    )
+
+    missing = uncovered_callee_fixtures(
+        "caller",
+        tmp_path,
+        stubbed_skills=set(),
+        registered_tools={"own_tool"},
+        agents_dir=agents,
+    )
+    assert missing == [("callee", "agent_only_tool")]
+
+
 def test_callee_tools_absent_until_the_test_opts_in():
     """Opt-in, not automatic: every test that does not declare `run_skills`
     keeps the allowlist it had before #1012.

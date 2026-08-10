@@ -145,8 +145,25 @@ def compute_allowed_tools(
                 f"skill cannot perform would grant tools nothing will use. "
                 f"Callees found: {sorted(declarable) or 'none'}"
             )
-        callee_fm = load_skill_frontmatter(skills_dir / callee / "SKILL.md")
+        callee_md = skills_dir / callee / "SKILL.md"
+        callee_fm = load_skill_frontmatter(callee_md)
         declared.extend(callee_fm.get("allowed-tools", []) or [])
+        # ...and the tools of the agents THAT callee delegates to. Without
+        # this the fix above stops one hop short and reproduces its own bug
+        # one level down: `record-extraction` as a callee would lose all of
+        # extraction_append, image_read, image_transcribe, place_search,
+        # place_search_all, project_context, record_person_matches and
+        # record_record_matches — eight tools it holds when run standalone —
+        # and the observed failure is silence, not an error (#1225 review).
+        #
+        # Note this is the AGENT axis, not a second Skill() hop. The
+        # ONE HOP ONLY note above still holds: no callee delegates to another
+        # skill. An agent runs in its own context but its MCP calls are
+        # checked against this same session allowlist, which is why its tools
+        # have to be here at all.
+        for agent in agent_refs_for_skill(callee_md):
+            agent_fm = load_skill_frontmatter(Path(agents_dir) / f"{agent}.md")
+            declared.extend(agent_fm.get("tools", []) or [])
 
     tools: list[str] = list(baseline)
     for entry in declared:
@@ -238,6 +255,7 @@ def uncovered_callee_fixtures(
     *,
     stubbed_skills: set[str],
     registered_tools: set[str],
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
 ) -> list[tuple[str, str]]:
     """Tools an un-stubbed callee will need that no fixture registered.
 
@@ -272,8 +290,19 @@ def uncovered_callee_fixtures(
     for callee in skill_refs_for_skill(skills_dir / skill_name / "SKILL.md"):
         if callee in stubbed_skills:
             continue
-        callee_fm = load_skill_frontmatter(skills_dir / callee / "SKILL.md")
-        for entry in callee_fm.get("allowed-tools", []) or []:
+        callee_md = skills_dir / callee / "SKILL.md"
+        callee_fm = load_skill_frontmatter(callee_md)
+        # The callee's own tools, plus those of the agents it delegates to.
+        # This list must stay identical to what compute_allowed_tools grants
+        # for the same callee: granting a tool without checking a fixture
+        # backs it is exactly the "permission is not existence" gap this
+        # function exists to close, and it would surface as the caller's test
+        # aborting ~20 turns in, naming the wrong skill.
+        entries = list(callee_fm.get("allowed-tools", []) or [])
+        for agent in agent_refs_for_skill(callee_md):
+            agent_fm = load_skill_frontmatter(Path(agents_dir) / f"{agent}.md")
+            entries.extend(agent_fm.get("tools", []) or [])
+        for entry in entries:
             bare = entry.rsplit("__", 1)[-1] if "__" in entry else entry
             if bare[:1].isupper():
                 continue  # built-in (Read, Write); not fixture-backed
