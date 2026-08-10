@@ -6,12 +6,12 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-30 (#989; Windows path fix #984)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-09 (the write-lockdown parity test shipped)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/plugin/hooks`, `apps/server/app/agent/real_agent.py`, `eval/harness/e2e/orchestrator.py`
-- **Related:** ADR-0003, ADR-0006, `docs/specs/guardrail-enforcement-spec.md` §6, issues #941, #984, #989, #911, #1160
+- **Related:** ADR-0003, ADR-0006, `docs/specs/guardrail-enforcement-spec.md` §6, issues #941, #984, #989, #1160
 
 ## Context
 
@@ -94,9 +94,12 @@ scenario flails against denied writes rather than producing an unvalidated file
    §6 ("`Bash` is not covered"), to be revisited only if a bypass ever actually
    uses the shell.
 2. **Three sibling implementations exist** — the plugin hook, the hosted SDK
-   hook, and the e2e harness's own — and no test asserts they agree. They are
-   behaviourally identical today but are not textual copies, so a same-behavior
-   test has to be vector-driven rather than a string diff.
+   hook, and the e2e harness's own. They are behaviourally identical but are not
+   textual copies, so the same-behavior test had to be vector-driven rather than
+   a string diff; that test now exists
+   (`eval/harness/tests/unit/test_write_lockdown_parity.py`). The cost that
+   remains is the three copies themselves, and the standing obligation to
+   register any fourth one with the parity test.
 3. **The guard is silent about *why* the writer tool was missing.** It denies the
    symptom. Nothing treats "the writer tools are absent" as a halt condition, so
    a run in the ferber situation now burns its full budget producing nothing at
@@ -122,10 +125,14 @@ is not hypothetical, it has already produced one silent no-op.
 > directory never ships, which looks identical to the runtime refusing to load
 > it) and **runs the real guard script** against vectors.
 
+> `eval/harness/tests/unit/test_write_lockdown_parity.py` — asserts the three
+> sibling implementations agree, by lifting each one's `PROTECTED_PROJECT_FILES`
+> and predicate out with `ast` and running them against one vector set. It also
+> fails on an unregistered fourth copy.
+
 What it does **not** catch: that the hook **binds as a runtime hook** — only the
-script's decisions are exercised (#1160); that the three implementations agree
-(tracked only as critique §3 P3 — no issue number of its own);
-or the `Bash` route, which is out of scope by design.
+script's decisions are exercised (#1160); or the `Bash` route, which is out of
+scope by design.
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding
@@ -136,5 +143,5 @@ environment, and enforcing-vs-shadow status.
 A bypass is observed using the shell route — at which point the false-deny
 calculus changes and `Bash` matching becomes worth its cost. Or a skill ships a
 `scripts/` folder, which would finally make the hypothetical half of the
-rationale real. Or the per-context policy is ported to production (#911), which
+rationale real. Or the per-context policy is ported to production, which
 would give the hook layer a caller dimension it does not have today.

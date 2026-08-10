@@ -101,11 +101,23 @@ sentence and move on. Silent correction is how the wrong number survives.
 The weakest triage confirms that a thing exists and stops. Each of these found
 something a "does it exist?" pass missed:
 
-- **Reachability.** For every PR or branch reported as done, confirm the commit
-  is actually on main: `git merge-base --is-ancestor <sha> origin/main`. A PR
-  merged into a feature branch *after* that branch already reached main is real,
-  green, closed — and will never ship. Nobody notices, because every surface says
-  "merged".
+- **Reachability.** For every PR or branch reported as done, ask what it merged
+  *into*, then confirm the content arrived:
+
+  ```sh
+  gh pr view <N> --json state,mergedAt,baseRefName   # merged — but into what?
+  git log origin/main --oneline -S '<a string the PR added>'
+  ```
+
+  A PR merged into a feature branch *after* that branch already reached main is
+  real, green, closed — and will never ship. Nobody notices, because every
+  surface says "merged". This is live right now: one merged PR sits on a feature
+  branch whose own PR is still open.
+
+  Do **not** test whether the sha is an ancestor of `main`. This repo
+  squash-merges, so a merged branch's commits never are — that test calls every
+  shipped PR unshipped, and accuses the reporter of claiming work they did not
+  land.
 - **Where the irreplaceable artifact lives.** When someone reports a baseline, a
   goldset, or a corpus of annotations, ask whether it is in version control. That
   data is accumulated human judgment; it is the one thing in a repo that cannot
@@ -186,12 +198,37 @@ not do.
 
 ### List 2 — Proposed Backlog tasks
 
-A table for the lead to approve *before* anything is filed, each row tagged with
-who should do it:
+The backlog is already deep. A row here is a claim that the lead should spend
+one of a finite number of Ready slots on this, later, in a session with none of
+today's context — not that the finding was worth noticing. Most verified
+findings fail that bar. Before a finding earns a row, it must clear both:
+
+- **Does it need a session with no context from today?** If the whole fix is
+  "close this issue," "add a comment," "update a label," or "tell so-and-so" —
+  you can do the mechanical part yourself right now (via `gh issue comment`,
+  `gh issue close`, etc. — filing is not the only write available to you) or it
+  belongs in List 1/List 4 instead. A card whose entire body would read "go do
+  the thing I already know how to do" is overhead, not delegation.
+- **Is there implementation work here that doesn't already exist?** Check
+  §3's duplicate search first. A finding that only confirms or corrects an
+  *existing* issue (a stale claim, a wrong attribution, a "this already
+  shipped") is not a new task — surface it as a comment on that issue, or in
+  List 4, not as a second card competing with the first.
+
+A finding can be real, verified, and still not worth a card. "Worth mentioning"
+(List 1, List 4, or a direct comment on an existing issue) and "worth a card"
+(List 2) are different bars, and the second is higher. When in doubt, mention
+it and don't file it — a missed mention costs a sentence next time; an
+over-filed card sits in Backlog until someone spends triage time re-discovering
+it's not actionable.
+
+What survives: implementation work, not yet tracked anywhere, that genuinely
+needs a separate session to pick up. For each surviving row, a table for the
+lead to approve *before* anything is filed, tagged with who should do it:
 
 | Owner tag | What belongs to them |
 |---|---|
-| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority |
+| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label needs-decision` and **no assignee**, and wait in Backlog for `/find-big-wins` to work them into a question he can answer in a sitting (`.claude/skills/fill-ready/SKILL.md` §6). Use `--label senior` instead only when the work would still be hard after he answers |
 | **Junior genealogist** | Fixture adjudication, run-log annotation, record research, and doctrine *questions* you have prepared for them (see below) |
 | **Junior developer** | Lints, CI, validators, refactors, test fixes, tooling bugs, anything with a mechanical pass/fail |
 
@@ -208,8 +245,11 @@ Also flag, per row:
   not losing, but nothing the lead has committed to. He is approving the label,
   not just the task, and a row he waves through as "sure, someday" filed without
   it silently joins every morning's ranking.
-- **What you deliberately did NOT file, and why.** Over-filing is its own
-  failure; a Backlog nobody can read is the same as no Backlog.
+- **What you deliberately did NOT file, and where it went instead.** Over-filing
+  is its own failure; a Backlog nobody can read is the same as no Backlog. Don't
+  just say "not filing" — say whether it moved to List 1, List 4, a comment on
+  an existing issue, or was handled directly (and how). A rejected candidate
+  with nowhere named is a finding quietly dropped, not a finding triaged.
 
 ### List 3 — Problematic PRs
 
@@ -285,6 +325,22 @@ Only after the lead approves List 2.
 gh issue create --label developer|genealogist [--label icebox] \
   --assignee <login> --title "..." --body "..."
 ```
+
+**A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
+
+**And if he answers one in the room, close it out before you move on — do not
+just record it.** Standup is where rulings get spoken and lost. Post the answer
+as a comment opening `**Ruling:**`, splice it into the body, and remove
+`needs-decision`. All three, in that turn. Recording without removing the label
+leaves the issue reading as blocked, so he sees it on the waiting list again
+next run and the work sits unblocked with nobody knowing.
+
+```sh
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --body "**Ruling:** <his answer, in his words>"
+```
+He takes no issues; the label is the routing. Reach for `senior` instead only
+when the item would still be hard after he answers.
 
 Add `--label icebox` to every row the lead approved as a candidate. That label is
 the only thing separating a task from an idea once both are cards in Backlog:

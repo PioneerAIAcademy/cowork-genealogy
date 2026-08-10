@@ -1,5 +1,58 @@
+# A rule naming a team that does not exist is SILENTLY DROPPED: the file still
+# parses, and reviews for those paths route to nobody. Reading the file cannot
+# show this — after every edit here, check
+# `gh api /repos/{owner}/{repo}/codeowners/errors`.
+#
 # Every PR needs one approval from a senior genealogist (this team),
 # in addition to at least one more approval from anyone else with
 # write access. Enforced together with branch protection's
 # "required_approving_review_count: 2" + "require_code_owner_reviews".
 * @PioneerAIAcademy/senior-genealogists
+
+# --- Developer infrastructure: senior-developer review required on code ---
+# --- and infra file types, repo-wide (last-match-wins means these       ---
+# --- extensions get ONLY senior-developers, not senior-genealogists     ---
+# --- too — see the carve-out block below for the exception).           ---
+# --- Intent: genealogists review skills and runlogs; developers review ---
+# --- infrastructure. CODEOWNERS has no concept of PR labels, so this   ---
+# --- is scoped by file type/path, not by the "developer" label.        ---
+
+*.ts @PioneerAIAcademy/senior-developers
+*.tsx @PioneerAIAcademy/senior-developers
+*.js @PioneerAIAcademy/senior-developers
+*.mjs @PioneerAIAcademy/senior-developers
+*.cjs @PioneerAIAcademy/senior-developers
+*.py @PioneerAIAcademy/senior-developers
+*.json @PioneerAIAcademy/senior-developers
+*.yml @PioneerAIAcademy/senior-developers
+*.yaml @PioneerAIAcademy/senior-developers
+
+# --- Carve-out: genealogist-authored content that happens to live in   ---
+# --- .py/.json/.md files, re-asserted below the extension rules above  ---
+# --- so it stays senior-genealogists (last-match-wins). ---
+
+# Cowork plugin skills — SKILL.md prose, templates, references, and their
+# stdlib-only Python scripts (CLAUDE.md § "Skills") are genealogist-
+# reviewed content, not developer infrastructure, even though scripts/
+# holds .py files.
+/packages/engine/plugin/skills/ @PioneerAIAcademy/senior-genealogists
+
+# Cowork plugin agents — agent .md bodies are genealogist/doctrine prose.
+/packages/engine/plugin/agents/ @PioneerAIAcademy/senior-genealogists
+
+# Eval fixtures and tests — genealogist-adjudicated scenario/expected-
+# findings JSON and e2e/unit test fixtures (docs/skill-lifecycle.md: these
+# are one co-edited unit with the skills they test).
+/eval/fixtures/ @PioneerAIAcademy/senior-genealogists
+/eval/tests/ @PioneerAIAcademy/senior-genealogists
+
+# Run logs and their .ann.json calibration annotations.
+/eval/runlogs/ @PioneerAIAcademy/senior-genealogists
+
+# docs/ prose, including specs — narrative and doctrine content. Schema
+# JSON Schema files under docs/specs/schemas/ are the one exception: they
+# are a code contract (validator.ts is generated/checked against them),
+# so they are deliberately NOT carved out here and stay under the *.json
+# rule above (senior-developers).
+/docs/ @PioneerAIAcademy/senior-genealogists
+/docs/specs/schemas/ @PioneerAIAcademy/senior-developers

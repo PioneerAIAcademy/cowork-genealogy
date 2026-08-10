@@ -1,8 +1,14 @@
 import { getWikiApiUrl } from "../auth/config.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
 } from "../types/wiki-search.js";
+
+// One un-retried RAG request against the sidecar, and retrieval over the wiki
+// corpus is slower than a plain JSON read: calls have been measured up to 56s,
+// with 5 of 47 above the 30s default. Nothing retries behind this one.
+const WIKI_SEARCH_TIMEOUT_MS = 60_000;
 
 export interface WikiSearchInput {
   query: string;
@@ -16,14 +22,18 @@ export async function wikiSearch(
 
   let response: Response;
   try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "genealogy-mcp-server/0.0.1",
+    response = await fetchWithTimeout(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "genealogy-mcp-server/0.0.1",
+        },
+        body: JSON.stringify({ query: input.query }),
       },
-      body: JSON.stringify({ query: input.query }),
-    });
+      WIKI_SEARCH_TIMEOUT_MS
+    );
   } catch (error) {
     const cause = error instanceof Error ? error.message : String(error);
     throw new Error(
