@@ -362,10 +362,17 @@ held. Place every finding first:
 2. **Grading defect** (the skill did the right thing and got dinged) → fix the
    grading, not the skill. **This is yours** — see below.
 3. **Record-type craft gap** (a death-certificate, probate or church-record
-   nuance) → that record type's reference document, not new global prose. These
-   live in the skill's own `references/` directory (e.g.
+   nuance) → that record type's reference document, not new global prose. **Where
+   it goes depends on whose gap it is.** A *skill* finding goes to that skill's
+   own `references/` directory (e.g.
    `citation/references/gps-citation-standards.md`), which the skill loads on
-   demand — keeping the main body short.
+   demand — keeping the main body short. A *plugin agent* finding goes **inline,
+   into the table for that record type inside the agent body** (e.g. the census
+   informant table in `packages/engine/plugin/agents/record-extractor.md`):
+   agents carry no sibling reference files, by decision, because on-demand
+   `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
+   agent finding to a `references/` file creates a file the agent will never
+   read.
 4. **Core doctrine** (a genuine cross-record-type behavior change) → a
    SKILL.md edit, gated by the unit suite.
 

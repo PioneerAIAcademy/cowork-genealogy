@@ -575,4 +575,142 @@ describe("research_log_append", () => {
     if (result.ok) return;
     expect(result.errors.join(" ")).toMatch(/non-empty/);
   });
+
+  // Retention gap: a staging-capable search that HAD results and kept none.
+  // Observed across 10 alpha feedback bundles (2026-08-05..08-07): 16 of 32
+  // logged record_search entries had results_available > 0 and results_ref null,
+  // so the verbatim response was unrecoverable at triage time.
+  describe("unretained-results warning", () => {
+    const warnOf = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "");
+
+    it("warns when a search reports available results but retains none", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Ward" },
+        outcome: "positive",
+        resultsExamined: 5,
+        resultsAvailable: 42,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).toMatch(/retained none/);
+      expect(warnOf(result)).toMatch(/log_001/);
+      // The entry is still written — the warning must not cost the log line.
+      const research = await readJson("research.json");
+      expect(research.log).toHaveLength(1);
+      expect(research.log[0].results_ref).toBeNull();
+    });
+
+    it("stays silent for a nil search — nothing was available to retain", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Nobody" },
+        outcome: "negative",
+        resultsExamined: 0,
+        resultsAvailable: 0,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent when resultsAvailable is absent", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Unknown" },
+        outcome: "negative",
+        resultsExamined: 0,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent when the results were staged and retained", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Ward" }, results: [{ recordId: "A" }] },
+      });
+
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 42,
+        planItemId: null,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent for a non-staging tool", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_read",
+        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 1,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("(batch) surfaces one warning per offending op", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          {
+            tool: "record_search",
+            query: { surname: "A" },
+            outcome: "positive",
+            resultsExamined: 2,
+            resultsAvailable: 10,
+            planItemId: null,
+          },
+          {
+            tool: "fulltext_search",
+            query: { text: "B" },
+            outcome: "positive",
+            resultsExamined: 3,
+            resultsAvailable: 7,
+            planItemId: null,
+          },
+          {
+            tool: "record_search",
+            query: { surname: "C" },
+            outcome: "negative",
+            resultsExamined: 0,
+            resultsAvailable: 0,
+            planItemId: null,
+          },
+        ],
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const retention = result.validation.warnings.filter((w) => /retained none/.test(w));
+      expect(retention).toHaveLength(2);
+      expect(retention[0]).toMatch(/log_001/);
+      expect(retention[1]).toMatch(/log_002/);
+    });
+  });
 });
