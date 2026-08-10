@@ -27,6 +27,7 @@ import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -511,22 +512,26 @@ export function mapEntry(entry: FSSearchEntry): RecordSearchResult | null {
  *     or the AbortSignal.timeout firing) — so `withRetry` retries them.
  *   - RETURN the response for 2xx and for permanent 4xx (400/401/403/404), so the
  *     caller's `!response.ok` block handles them once, without retrying.
- * A fresh `AbortSignal.timeout` is created on every call, i.e. per attempt, because
- * `withRetry` invokes this function anew each time (an aborted signal can't be reused).
+ * `fetchWithTimeout` creates a fresh `AbortSignal.timeout` on every call, i.e. per
+ * attempt, because `withRetry` invokes this function anew each time (an aborted
+ * signal can't be reused).
  */
 async function fetchSearchWithRetry(
   url: string,
   token: string
 ): Promise<Response> {
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-  });
+    SEARCH_TIMEOUT_MS
+  );
   if (response.status === 429 || response.status >= 500) {
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`

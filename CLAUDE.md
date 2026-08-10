@@ -658,6 +658,16 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
+- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
+  an external service. Node's global `fetch` never times out on its own; a
+  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
+  sidecar, OpenRouter) hangs the call forever otherwise — confirmed live when
+  `volume_search` hung for 236 minutes. Every tool that touches
+  the network calls this instead of the global `fetch` directly; it is the
+  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+  Default timeout 30s; pass a longer one (e.g. `image_transcribe`'s OCR call,
+  `fs-image-fetch.ts`'s multi-MB body read) as the third argument when 30s
+  doesn't fit the call's own budget.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
