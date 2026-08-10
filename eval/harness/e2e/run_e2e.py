@@ -160,9 +160,11 @@ def main(argv: list[str] | None = None) -> int:
             "Pin the run's reasoning effort via a project-level setting "
             "(.claude/settings.json effortLevel). Session-wide. Default: high "
             "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
-            "the sole working effort lever. Vary it to test whether a runaway-"
-            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
+            "not the only lever — ClaudeAgentOptions.effort also works — but it "
+            "is the one proven to reach subagents. Vary it to test whether a "
+            "runaway-thinking subagent freeze clears (see "
+            "subagents[].runaway_thinking)."
         ),
     )
     parser.add_argument(
@@ -184,10 +186,11 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Override the model for BOTH the parent agent and every staged "
             "subagent (rewrites each agent's `.md` model pin). Default: unset = "
-            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
-            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
-            "run the whole flow under Cowork's model and test whether the "
-            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own "
+            "pin, which for record-extractor is also claude-sonnet-4-6 since "
+            "#725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
+            "Set e.g. claude-sonnet-5 to check whether that freeze reproduces. "
+            "Recorded in the runlog."
         ),
     )
     parser.add_argument(

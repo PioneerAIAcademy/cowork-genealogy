@@ -689,8 +689,14 @@ def build_workspace(
 
     # Optionally pin the run's reasoning effort via a PROJECT-level setting.
     # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
-    # NOT (it's output-only — verified). This is the only working effort lever
-    # from the harness. Session-wide (parent + every subagent). Left unset, the
+    # NOT (it's output-only — verified). This is *a* working effort lever, not
+    # the only one: `ClaudeAgentOptions.effort` also works and always has —
+    # the SDK's subprocess transport emits `--effort` unconditionally when the
+    # option is set, at every version this repo has pinned. The settings-file
+    # route is kept because it is the one that provably reaches subagents; the
+    # SDK option's subagent propagation is unverified. Do not restate this as
+    # "the only lever" — that claim shaped a spend decision before it was
+    # checked. Session-wide (parent + every subagent). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
