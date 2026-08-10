@@ -189,15 +189,11 @@ def hosted_config(
     which keeps the fallback intact and this document unchanged for anyone who
     has not configured them.
 
-    **Applies to projects created after the setting.** This document is written
-    once, at `sessions.create_project`, and sandboxes here are persistent — so
-    changing `WIKI_API_URL` does not reach an existing session, which keeps the
-    compiled-in default until its project is recreated. Unlike the Anthropic key
-    (`agent_secrets.write_secrets`, refreshed on every connect), it cannot
-    simply be rewritten on connect: `configure_openrouter` lets the agent write
-    this same file from inside the VM, and `write_config` replaces it wholesale
-    rather than merging, so a per-connect rewrite would discard the user's own
-    key. Making it live needs a merging write, not another call site."""
+    Refreshed on every connect via `merge_config`, so changing an override on
+    the control plane reaches sandboxes provisioned under the old value — the
+    same reasoning as `agent_secrets.write_secrets` and the Anthropic key.
+    Sandboxes here are persistent, so a create-time-only write would leave every
+    existing session on the compiled-in default forever."""
     config: dict = {"hosted": True}
     if openrouter_api_key:
         config["openRouterApiKey"] = openrouter_api_key
@@ -213,6 +209,41 @@ async def write_config(sandbox, config: dict) -> None:
     sandbox at CONFIG_PATH — the file channel the engine reads config-only for
     the OpenRouter key (image-transcribe-tool-spec.md §6.5), the wiki URL, etc.
     Sibling of write_tokens: the control plane owns provisioning this file, the
-    same way it provisions tokens.json. Writes the whole document (it is the
-    only writer today)."""
+    same way it provisions tokens.json.
+
+    Replaces the whole document. The control plane is not the only writer —
+    `configure_openrouter` writes this same file from inside the VM — so prefer
+    `merge_config` for any write after the sandbox has run."""
     await sandbox.write_file(CONFIG_PATH, json.dumps(config, indent=2).encode())
+
+
+async def read_config(sandbox) -> dict:
+    """Whatever the sandbox currently has at CONFIG_PATH, or `{}`.
+
+    Never raises: a missing file, unreadable bytes and a non-object body all
+    read as "nothing configured yet", because the caller's job is to overlay
+    operator keys and a provisioning path must not fail on a corrupt document
+    it is about to overwrite anyway."""
+    raw = await sandbox.read_file(CONFIG_PATH)
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+async def merge_config(sandbox, updates: dict) -> None:
+    """Overlay operator-owned keys without discarding what the sandbox wrote.
+
+    The engine's own `saveConfig` merges (`{...existing, ...patch}` in
+    src/auth/config.ts), so this is its counterpart on the control plane and
+    the two writers no longer clobber each other. Without it a per-connect
+    refresh would drop an `openRouterApiKey` the agent set via
+    `configure_openrouter` from inside the VM.
+
+    Operator keys win on conflict, matching `agent_secrets.write_secrets`: a
+    rotated credential has to be able to reach a sandbox provisioned under the
+    old one, which is the entire reason this runs on connect."""
+    await write_config(sandbox, {**await read_config(sandbox), **updates})

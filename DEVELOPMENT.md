@@ -514,8 +514,8 @@ config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=
 `WIKI_API_URL` and `POP_STATS_URL` belong in that `[env]` block too. They point
 hosted sessions at the wiki-query and Pop Stats services; leave them unset and
 the engine uses its compiled-in defaults, which name one developer's tailnet
-host. They take effect for projects created **after** you set them — an existing
-session keeps whatever it was given at create.
+host. Changing one reaches existing sessions on their next connect — no need to
+recreate a project.
 
 The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
