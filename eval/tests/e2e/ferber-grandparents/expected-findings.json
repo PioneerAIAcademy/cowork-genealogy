@@ -62,19 +62,19 @@
     {
       "id": "f4",
       "type": "relationship",
-      "description": "Mary Kramer was the maternal grandmother of Charles Hubert Ferber — that is, the mother of Emma Becker and wife of John Becker. Mary was born in Ohio (date not established in the compiled tree).",
+      "description": "Anna Kramer was the maternal grandmother of Charles Hubert Ferber — that is, the mother of Emma Becker and wife of John Becker. Anna was born in 1845 in Darmstadt, Hesse, Germany.",
       "details": {
         "subject_person": {
           "name": "Charles Hubert Ferber"
         },
         "relation": "maternal_grandmother",
         "target_person": {
-          "name": "Mary Kramer",
-          "birth": "Ohio (date unknown)"
+          "name": "Anna Kramer",
+          "birth": "1845, Darmstadt, Hesse, Germany"
         }
       },
       "supporting_sources": [
-        "FamilySearch Family Tree compiled profile for Emma Becker, listing Mary Kramer as mother."
+        "FamilySearch Family Tree compiled profile for Emma Becker, listing Anna Kramer as mother."
       ],
       "required": true
     }
