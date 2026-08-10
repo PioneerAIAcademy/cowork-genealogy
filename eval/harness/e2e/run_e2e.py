@@ -188,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             "subagent (rewrites each agent's `.md` model pin). Default: unset = "
             "fixture default parent (claude-sonnet-4-6) + each subagent's own "
             "pin, which for record-extractor is also claude-sonnet-4-6 since "
-            "#725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
+            "PR #725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
             "Set e.g. claude-sonnet-5 to check whether that freeze reproduces. "
             "Recorded in the runlog."
         ),
