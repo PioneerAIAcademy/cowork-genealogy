@@ -1,8 +1,17 @@
 # Architecture
 
-**Status:** As built, verified against the repo 2026-08-02, then adversarially
-fact-checked twice. Every count and file reference below was confirmed at a
-source site. Where a claim could not be verified, it says so.
+**Status:** As built, verified against the repo 2026-08-09. Every count and file
+reference below was confirmed at a source site; where a claim could not be
+verified, it says so.
+
+**This file is meant to stay true without maintenance.** Two shapes are
+therefore banned in it, and both were swept out on 2026-08-09: a **line-number
+citation** (cite the heading, symbol, or a distinctive quotable string instead —
+`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs` ones, and the `.md` ones it
+cannot yet see went stale within the hour twice), and a **register** — a list of
+open gaps, open questions, or issue numbers that GitHub already owns and that
+goes stale without telling anyone. Where you need a number that moves, name the
+command that recomputes it.
 
 **Who this is for.** Two readers, and the doc is written for the first one:
 
@@ -31,8 +40,8 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
-> Nineteen things in this system have no automated guard, and several of them
-> fail *silently* in production while CI stays green.
+> Much of this system has no automated guard, and several of those gaps fail
+> *silently* in production while CI stays green.
 
 ---
 
@@ -286,19 +295,22 @@ turns from the right skill.
   have sat over the cap for months, and a proposal to widen the lint to them was
   closed invalid for exactly that reason. **They are not evidence about the SDK
   path in either direction; do not cite them as such.**
-  **Treat 1024 as hard — the mechanism is unproven and three sources disagree.**
-  The PR that added the lint (2026-07-18) trimmed `proof-conclusion` from 1,220
-  characters after an observed failure, with eleven other descriptions within
-  ~25 of the cap; the
-  vendored `improve_description.py` says an over-length description is
-  *truncated*, not dropped; and a 2026-08-09 probe against CLI 2.1.226 saw 1,105
-  and 2,000 characters register **intact** under both load paths. Those three
-  cannot all be right, and no one has reconciled them — the SDK's behaviour may
-  simply have changed since July. Cowork's own install-time validator is
-  untested by all three. **Keep the lint regardless**: truncated-vs-dropped
-  changes what an over-cap description does to triggering, nobody knows which it
-  is, and 1024 characters is enough — a description is resident in the
-  orchestrator's context on every turn.
+  **1024 is a hard limit, not a house style. Over it, the entry fails to load —
+  silently.** The PR that added the lint (2026-07-18) is where it bit:
+  `proof-conclusion`'s description had drifted to 1,220 characters, with eleven
+  others sitting within ~25 of the cap. Do not relax it, and do not treat a
+  description near the cap as safe because it currently works.
+
+  A 2026-08-09 probe saw 1,105- and 2,000-character descriptions *register*
+  intact under both load paths on one CLI build. **That does not license going
+  over.** Registering is not the same as loading correctly, the SDK's behaviour
+  is not ours to pin, and the vendored `improve_description.py` describes
+  over-length descriptions as *truncated* — a failure that would look like a
+  triggering regression rather than an error. Cowork's own install-time
+  validator is untested by any of it.
+
+  Stay well under regardless: a description is resident in the orchestrator's
+  context on every turn.
 - **Descriptions are tuned empirically, not by taste.** `eval/triggering/` holds
   the vendored description optimizer; `docs/skill-lifecycle.md` owns the
   workflow.
@@ -335,8 +347,11 @@ The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 build-time anchor that never ships into the VM. The 9th copy belongs to
 `research-plan`, which had three place tools dropped from its `allowed-tools`
 in 8bf43be2 (and never held a fourth), so the canonical text would name tools it
-cannot call. It is exempted **by name** and gets only an exists-and-non-empty
-check — a regression inside it passes silently.
+cannot call. It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY` — but
+pinned to a **sha256 of its own content**, so an edit inside it fails CI until
+the hash moves in the same diff. **Copy that shape, not a bare exemption**, when
+a fourth family gets a lint: every skill must land in exactly one of the two
+lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
 > knowing which divergences are deliberate. For `validation-protocol.md` and
@@ -426,7 +441,8 @@ Architecturally:
   `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
-  a tool that threw `Unknown tool: …` (`src/index.ts:736`) on its first real
+  a tool that fell through to the `Unknown tool: …` throw closing
+  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
   call with CI green; that is now a CI failure. A commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
@@ -446,9 +462,11 @@ Architecturally:
   FS sits behind Imperva and **403s non-browser UAs**.
 - **Parameters are camelCase** (§6.4). Generic tools with a provider parameter,
   **not one tool per provider** — tool count is context budget in every session.
-- If it ingests untrusted external text (OCR, full-text, record contents), see
-  the prompt-injection gap in §9.4 — there is no doctrine to follow yet, so say
-  what you did in the PR.
+- If it ingests untrusted external text (OCR, full-text, record contents), know
+  that **this repo has no prompt-injection doctrine at all** — a grep of the
+  whole plugin and MCP source returns zero hits, while that text reaches an agent
+  holding `research_append`. There is nothing to follow, so say what you did in
+  the PR (`gh issue list --state open --search "prompt injection"`).
 - **Nothing sees the new tool until you rebuild, and each environment differs.**
   Claude Code: `make engine-build`, then **start a fresh session** — `.mcp.json`
   points at the compiled `build/`, and a live session holds the old catalog. The
@@ -510,14 +528,15 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 17-row routing table maps state → next sub-skill**
-   (`research/SKILL.md:135-153`). The table is the source of truth and is not
-   duplicated here. Since PR #1029 its `Invoke` column is a **literal `Skill`
-   tool call** — "writing `proceed to research-exhaustiveness` and then
+2. **A 17-row routing table maps state → next sub-skill** — in
+   `research/SKILL.md` under `## What to do`, the table whose header row reads
+   `| If research.json has... | Invoke |`. The table is the source of truth and
+   is not duplicated here. Since PR #1029 its `Invoke` column is a **literal
+   `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
    hand-authoring the fields that skill would have written is not invoking it."
    Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
-   **The table is not the only routing surface in the file.** "Direct user
-   requests name a destination, not a shortcut" (`research/SKILL.md:68-82`)
+   **The table is not the only routing surface in the file.** The section headed
+   `## Direct user requests name a destination, not a shortcut`
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
@@ -525,9 +544,11 @@ There **is** an orchestrator, and it is a skill:
    `--autonomous` runs the loop in one continuous turn: no clarifying questions
    and decisions logged to the audit-trail fields. Whether the router may ever
    yield mid-loop is **not settled**: autonomous mode says yielding the turn to
-   announce a next step is a failure, while the interactive `address_first`
-   verdict row (`research/SKILL.md:372`) tells it to end its turn — and a second,
-   unheaded verdict table at `:396` says the opposite again ("do not block").
+   announce a next step is a failure, while the `address_first` row of the
+   verdict table under `### Verdict handling protocol` tells it to
+   `Then end your turn — no further tool calls` — and a second, unheaded verdict
+   table (`| Verdict | Action |`) later in the same file says the opposite again
+   (`Do not block, re-open the resolved question, or force a remediation skill`).
    Treat the sanctioned-yield question as open until the lead rules on which
    verdict table is doctrine; do not write a test or a gate that assumes either.
 4. **Completion is gated twice.** Before `project.status = "completed"` is
@@ -565,17 +586,17 @@ record), and it never writes identity links or eliminations inline
 > suite.** The component that fails most is exercised only by live e2e runs. A
 > router suite is planned, with two prerequisites: settling the router's
 > `allowed-tools` and the agent-union semantics, and reconciling the two
-> contradictory `address_first` verdict tables in the body
-> (`research/SKILL.md:372` vs `:396`), which currently cannot tell a test which
-> behavior is correct. One design hazard on top: #1012 — a `Skill()` callee can
-> bind toolless in the unit path, so callee binding must be made real before
-> routing can be graded.
+> contradictory `address_first` verdict tables in the body (item 3 above), which
+> currently cannot tell a test which behavior is correct. One design hazard on
+> top: #1012 — a `Skill()` callee can bind toolless in the unit path, so callee
+> binding must be made real before routing can be graded.
 
 ### If you're asked to…
 
-**Change routing.** Edit the table at `research/SKILL.md:135-153` — the source of
-truth — **and check whether "Direct user requests name a destination, not a
-shortcut" (`:68-82`) contradicts your change.** That section is a second routing
+**Change routing.** Edit the `| If research.json has... | Invoke |` table in
+`research/SKILL.md` — the source of truth — **and check whether the
+`## Direct user requests name a destination, not a shortcut` section contradicts
+your change.** That section is a second routing
 surface: it takes a user asking for a named downstream skill and sends the router
 back through the table anyway. There is **no unit suite** to catch you; the only
 instrument is a live e2e run. Name the fixture you ran in the PR, or say you ran
@@ -599,8 +620,9 @@ unpinned.
 they have different fixes, and only one of them is a description problem.
 
 1. **Did the user go through `/research`?** Then the **routing table decides
-   first** (`research/SKILL.md:135-153`) — check whether any row's state condition
-   matches, whether an earlier row shadows it, and whether `:68-82` re-routed a
+   first** (`| If research.json has... | Invoke |`) — check whether any row's
+   state condition matches, whether an earlier row shadows it, and whether
+   `## Direct user requests name a destination, not a shortcut` re-routed a
    direct request. No unit suite covers this; a
    live `make e2e-run` is the only instrument. The sub-skill's `description` is
    still in play as the *tiebreaker*: the table explicitly says to "defer to each
@@ -714,11 +736,13 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > described the opposite and were corrected in #1173 and its follow-up** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
 > test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix, and **no open issue tracks that flip** — the
-> one that settled the polarity closed on the polarity question alone (§10). The
-> repo's own data corroborates the flag being live: ToolSearch is **8.5% of all
-> tool calls** (2,023 of 23,798 across the 145 committed e2e runs) *while the flag
-> is set to `true`*. This does not change the bare-name rule above, which is
+> has to re-measure the tool mix before and after, and
+> `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
+> being on, so it is no longer a one-line experiment
+> (`gh issue list --state open --search "ENABLE_TOOL_SEARCH"`). The
+> repo's own data corroborates the flag being live: ToolSearch is a steady few
+> percent of all tool calls across the committed e2e corpus *while the flag is
+> set to `true`*. This does not change the bare-name rule above, which is
 > correct either way.
 
 ### 5.3 Capability restriction by tool identity
@@ -1144,8 +1168,16 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
   `familysearch_tokens` access and refresh values are stored **unencrypted at
   rest** in the control plane's database, which has to change before a real-PII
   alpha (`gh issue list --search "Encrypt familysearch_tokens"`).
-- E2B Hobby has a **1-hour hard continuous-session cap** that force-pauses even
-  an active session (resume ~1s; a mid-turn pause breaks that turn).
+- **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
+  length.** The cap is real, measured from `startedAt`, and is the maximum the
+  tier permits rather than a backstop we chose: a larger create timeout is
+  rejected outright. But **the window resets on pause/resume**, and the sandbox
+  is created with `on_timeout: pause` + `auto_resume`, so reaching the cap pauses
+  the sandbox and the next request resumes it (~1s). A session therefore runs for
+  as many hours as it needs; the only cost is that a pause landing mid-turn
+  breaks that turn. Verified against the live API 2026-08-09. **Do not read the
+  cap as a session-length limit** — both "there is a 1-hour cap" and "sessions
+  run for hours" are true at once.
 - The **delete-janitor** for abandoned sandboxes is unimplemented — paused
   sandboxes are never reclaimed. *Compute* is gated: `WsSessionConnection`
   suspends reconnects while the tab is hidden, precisely so a backgrounded tab
@@ -1251,7 +1283,7 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
-| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Across the 122 costed runs of the 145 committed: **$7.32 median, $0.06–$25.24**, 20–180 min (the sub-$3 tail is runs that died early) | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and the 23 runs with no recorded cost are mostly that tail, so any total is a floor. Don't restate these as literals elsewhere: `make e2e-corpus` recomputes them, and the `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
+| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus` reports recall, compliance and violations, not spend — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer
 
@@ -1263,7 +1295,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
-| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
+| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
@@ -1273,7 +1305,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` skill, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
-| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails** (§9.4). Its unit half does assert, over the delta arithmetic only |
+| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails**. Nothing sets a ceiling, so prompt bodies grow unopposed: the two largest are `search-records/SKILL.md` and `agents/record-extractor.md`, both around 50 KB. Its unit half does assert, over the delta arithmetic only |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1326,33 +1358,56 @@ lead you to them:**
 
 **Read this before you trust a green CI run.**
 
-Each row is a gap and what it costs you — not a ticket. To act on one, search
-the board for its wording (`gh issue list --search "<gap>"`); to record a new
-one, file the issue and add the row. A `Tracking` column lived here until
-2026-08-05 and was edited every time an issue closed, which is upkeep that
-taught a reader nothing.
+Much of this system has no automated guard, and several of those gaps fail
+*silently* in production while CI stays green.
 
-| Gap | Consequence |
-|---|---|
-| **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) |
-| **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
-| **Nothing checks that a new `research.json` field is *written*** (site 8 in §6), and only partly that it is *taught* (site 6). Rendering (site 7) is guarded by `field-render-drift.test.ts`; `research-append-examples.test.ts` covers site 6 for schema-`required` fields only. | An optional field can be legal and rendered while no worked example teaches its shape and no skill emits it. |
-| **A deploy can ship green on a stale sandbox image.** `make server-e2b` and `make deploy` do not rebuild the `genealogy-agent` E2B image that prod actually runs the agent on, and both guards over it are advisory: `deploy-preflight` prints a warning and never blocks, and the commit it compares against is a **gitignored local stamp** (`apps/server/sandbox/.last-image-build`), so a second developer only ever gets its "no record on this machine" branch. | Production can run weeks-old skills, agents, and MCP tools while CI, the deploy, and `/api/health` all look correct. Nothing surfaces the baked commit. |
-| **Nothing enforces that a negative routing pair is pinned from *both* directions.** `check_negative_reciprocity.py` reports one-directional edges but never blocks, by design — 45 of the corpus's 79 routing edges have no reciprocal. | A description edit can fix routing `A → B` and break `B → A` with the suite green. The warnings land in the step log and compete for GitHub's per-step annotation-rendering cap (10 at time of writing) against the sibling lints' 73 and 68, so the edge a PR *adds* is not distinguishable from the standing backlog. |
-| **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. |
-| **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
-| **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. |
-| **The `places-guidance.md` exemption is existence-only.** | A regression inside `research-plan`'s copy passes silently. |
-| **Nothing blocks prompt-body growth.** `prompt-budget.test.ts` reports the per-file byte delta on every `SKILL.md` and agent body and always passes; the deltas live only in each PR's `vitest` job log, so there is no history to set a ceiling from. | A PR can add 7 KB to the largest prompt in the repo with CI green, which is how `search-records/SKILL.md` reached 51 KB and `agents/record-extractor.md` 53 KB unnoticed. |
-| **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. |
-| **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" |
-| **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Two unnamed false-positive classes, plus a false-negative blind spot: before the three-axis split the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable and **no post-detector run resolves `pass`** — every one is `fail` or `not_checked`. Separately, `is_error` is populated, but it only observes *tool-level* failure: a `Skill` result is a launch acknowledgement (`Launching skill: <name>`), so "invoke the skill, let it fail, finish the write inline" still reads as a success, and a writer tool that returns `{ok:false}` without throwing does too. | **Do not quote a violation rate**, and do not graduate a gate on one. Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — read the report's `concentration:` block before quoting any total. |
-| **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. |
-| **No automated check exercises the absent-MCP-surface halt condition.** The halt itself now exists — an e2e run aborts `mcp_unavailable` when the CLI's init message reports the genealogy server unavailable, or when the mid-run `ToolSearch` backstop fires (`eval/harness/e2e/mcp_health.py`). But `make harness-test` covers only its **pure** functions; no job spawns a session, so a break in either `orchestrator.py` call site would stay green. | The live arm is proved by hand with `run_e2e --mcp-server-entry <dead stub>`, and preflight's spawn by `make e2e-preflight`. Neither runs in CI. Was: three runs made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget — raw writes closed since #984/#989, and the silent failure is closed by the halt described here. |
-| **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. |
-| **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. |
-| **Nothing proves the production boot refusal is reachable or legible.** `test_prod_preflight.py` asserts `assert_production_config` and its lifespan wiring offline; no check runs against a real `fly deploy`. | A gate that never fires, or fires with an unreadable message, looks identical to a correctly configured deploy. |
-| **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. |
+**The enumeration is the board's job, not this file's.** A table of them lived
+here and could not be kept honest: a `Tracking` column was deleted 2026-08-05
+because it was edited every time an issue closed, and the rows themselves went
+the same way — one described a lint as existence-only for weeks after it was
+hash-pinned. The register is the `nothing-checks` label — every gap this table
+held carries it, and an issue leaves the register by closing rather than by
+someone remembering to delete a row:
+
+```sh
+gh issue list --state open --label nothing-checks                       # the whole register
+gh issue list --state open --label nothing-checks --search "<mechanism>"  # just yours
+```
+
+**A new gap is a labelled issue, not a row here.** File it
+(`CLAUDE.md` § "Deferring work creates an issue") with `--label nothing-checks`.
+Do not search for the phrase instead of the label: issue titles name the
+mechanism, not the shape, so a text search finds about half of them and returns
+confident near-misses for the rest.
+
+Three of these gaps are **architecture rather than backlog**, because each one
+changes how a correct change is made:
+
+1. **Spelling is not binding.** Nothing proves a declared agent tool actually
+   *binds* at runtime — every lint stops at the name, and the SDK handshake
+   exposes only name/description/model. `make agent-smoke` reads what the runtime
+   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
+   says nothing about whether an agent can call what you granted it; only a live
+   session in the run mode you care about does (§5.2, §8).
+2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
+   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
+   both guards over it are advisory. Production can run weeks-old skills, agents,
+   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
+   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+3. **Every measurement in this repo describes the eval corpus, not production.**
+   There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
+   logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
+   ledger. Every compliance rate, cost figure, and guardrail measurement here is
+   computed over `eval/runlogs/`, so none of them answers "is this getting better
+   for a real user?" **Do not quote a violation rate** and do not graduate a gate
+   on one. The detectors are uncalibrated, and one of their two blind spots is now
+   measured as **unclosable rather than merely unclosed**: nothing available to the
+   harness observes skill *completion*, so the caller-attributed recency check is
+   shadow-only permanently, not pending calibration — do not plan a calibration
+   pass for it (`make e2e-skill-episodes`; `guardrail-enforcement-spec.md`, "What
+   the success gate can and cannot see"). `make e2e-corpus` deliberately reports
+   counts, refusing a percentage whose denominator would be doing the work. Read
+   its `concentration:` block before quoting even a count.
 
 ### If you're asked to…
 
@@ -1361,8 +1416,9 @@ plus `dev/try-<tool>.ts` against the live API; a schema field → `make engine-t
 `make harness-test`, **and** `make typecheck`; a skill body → `make eval-skill`
 plus the annotation gate (§3); routing or anything cross-skill → a live
 `make e2e-run`, named in the PR; hosted agent config → `make agent-smoke`. Then
-run `make test-all`, which the PR template requires. **If the thing you changed
-appears in §9.4, say so in the PR** rather than implying CI covered you.
+run `make test-all`, which the PR template requires. **If you cannot name the
+check that would have caught your change, say so in the PR** rather than implying
+CI covered you (§9.4).
 
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
@@ -1401,35 +1457,31 @@ cannot be cited against the code. Copy the shape of a recent one
 
 ## 10. Open questions
 
-Things that are genuinely unsettled, as distinct from §9.4's missing guards.
+**Unsettled questions are tracked as issues, not enumerated here** — the same
+reason §9.4 no longer carries a table. A question settles without telling this
+file, and a list that lags is worse than no list, because it invites re-arguing
+something already decided. The live register is the board:
 
-1. **The `same_person` write-boundary gate** — direction settled; three
-   discriminators failed review and a fourth now runs in **shadow**, so what is
-   open is its **graduation to a deny**, not its derivation. Details and the
-   "don't re-derive" ledger: §5.3, and
-   [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md).
-2. **Whether the compliance-detector doctrine should follow the router's
-   paraphrase or the owning skill's contract** (#1006). Until that is decided,
-   "true or false positive" has no ground truth at all.
-   Separately, **no violation *rate* is measurable yet** —
-   `make e2e-corpus` is the only figure to quote, and it deliberately prints
-   counts rather than a percentage. The gate-reach figure (≤9 of 25, stated
-   against the narrow window ADR-0009's rev. 3 table records) is a count of
-   violations one arm
-   produced, not a rate.
-3. **`ENABLE_TOOL_SEARCH`** — the polarity is settled as of 2026-08-02
-   (§5.2) and all five inverted comments have been corrected. What remains is
-   the **flip itself**, which changes behavior in both harnesses and the hosted
-   path and requires re-measuring the tool mix before and after. The issue that
-   settled the polarity closed on that question alone; **nothing tracks the flip
-   today.** Search the board before assuming otherwise
-   (`gh issue list --search "ENABLE_TOOL_SEARCH"`), and note that
-   `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
-   being on, so the flip is no longer a one-line experiment.
+```sh
+gh issue list --state open --label senior   # the pool that needs the lead's call
+```
 
-*(`research_query` pagination past 50 items — #1031 — has left this list: the
-API shape is settled and the tool half shipped `offset`; the remaining skill
-adoption is tracked work, #1183, not an open question. See §6.3.)*
+Two are stated **where they bind**, because each one will stop a change you might
+otherwise make:
+
+- **The `same_person` write boundary** (§5.3). The direction is settled and a
+  fourth discriminator ships in shadow; what is open is its graduation to a deny.
+  **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before
+  proposing a fifth** — three failed adversarial review and the ledger names the
+  six constraints a candidate has to satisfy.
+- **Whether a compliance detector follows the router's paraphrase or the owning
+  skill's contract.** Until that is decided "true or false positive" has no
+  ground truth, which is why §9.4 says not to quote a violation rate. ADR-0009
+  records the worked case: the owning skill exempts FTS-, image- and PDF-sourced
+  links that the detector's broader paraphrase flags anyway.
+
+Before adding a third, check it is not already refuted — ADR-0009 is a ledger of
+questions that only look open.
 
 ---
 
@@ -1445,7 +1497,7 @@ adoption is tracked work, #1183, not an open question. See §6.3.)*
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records |
-| What is wrong with it, and what's next? | §9.4 (what nothing checks) and §10 (open questions) here, plus the **Backlog column** on the project board. There is no standing critique document; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |
+| What is wrong with it, and what's next? | The **project board** — it is the register, and §9.4 and §10 here deliberately point at it rather than copy it. Read them for the handful of gaps whose *consequence* changes how you build, not for a list. There is no standing critique document either; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |
 | Every guardrail, its instrument, its status | [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) |
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
