@@ -404,7 +404,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_record_matches",
       "research_log_append",
     ],
-    denies: ["research_append", "tree_edit"],
+    denies: ["materialize_facts", "research_append", "tree_edit"],
   },
 };
 

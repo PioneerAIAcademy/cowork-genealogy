@@ -66,6 +66,9 @@ disallowedTools:
   - mcp__genealogy__tree_edit
   - mcp__remote-devices__Genealogy_Research__tree_edit
   - mcp__Genealogy_Research__tree_edit
+  - mcp__genealogy__materialize_facts
+  - mcp__remote-devices__Genealogy_Research__materialize_facts
+  - mcp__Genealogy_Research__materialize_facts
 ---
 
 # Record Extractor

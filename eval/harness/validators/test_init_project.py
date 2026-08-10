@@ -44,6 +44,24 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create tree.gedcomx.json"
 
 
+# --- No premature write (tag-gated) -------------------------------------
+
+def test_no_premature_write(after_state, test):
+    """Tag-gated, paired with the no-premature-write skip above: tests
+    tagged `no-premature-write` must positively assert neither project
+    file exists. Skipping the file-existence check without asserting its
+    opposite leaves nothing to catch a run that writes anyway — this is
+    the invariant `ut_init_project_010` actually leans on."""
+    if "no-premature-write" not in test.get("tags", []):
+        pytest.skip("not a no-premature-write scenario")
+    assert after_state.get("research_json") is None, (
+        "init-project wrote research.json before the objective was captured"
+    )
+    assert after_state.get("tree_gedcomx_json") is None, (
+        "init-project wrote tree.gedcomx.json before the objective was captured"
+    )
+
+
 # --- Empty-section enforcement at init time (tag-gated) ----------------
 
 # Per init-project's bootstrap rule, research.json at creation has empty

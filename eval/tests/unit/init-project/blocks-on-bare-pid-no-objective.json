@@ -11,7 +11,7 @@
     "user_message": "Start a new research project. FamilySearch person ID LZNY-BRF.",
     "scenario": null
   },
-  "mcp_fixtures": [],
+  "mcp_fixtures": ["person-read-flynn"],
   "judge_context": [
     "Should ask the user what they want to research (the objective) before doing anything else — a bare PID with no stated goal is not enough to proceed past Step 1.",
     "Should NOT call person_read, person_search, or place_search — the objective must be captured before the tree is fetched. Tool Arguments should be N/A since no tools should be called.",
