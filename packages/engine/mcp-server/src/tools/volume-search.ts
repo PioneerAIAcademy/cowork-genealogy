@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
 import type {
   VolumeSearchInput,
@@ -55,7 +56,7 @@ async function callGroupSearch(
 ): Promise<MetadataRmsSearchResponse> {
   let response: Response;
   try {
-    response = await fetch(RMS_SEARCH_URL, {
+    response = await fetchWithTimeout(RMS_SEARCH_URL, {
       method: "PUT",
       headers: rmsHeaders(token),
       body: JSON.stringify(body),
@@ -93,7 +94,7 @@ async function fetchFulltextSearchable(
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(url, { headers: rmsHeaders(token) });
+      const response = await fetchWithTimeout(url, { headers: rmsHeaders(token) });
       if (!response.ok) {
         if (attempt === 2) return null;
         continue;

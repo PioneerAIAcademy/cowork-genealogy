@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
 import type {
   MatchApiEntry,
@@ -54,7 +55,7 @@ async function matchById(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithTimeout(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",

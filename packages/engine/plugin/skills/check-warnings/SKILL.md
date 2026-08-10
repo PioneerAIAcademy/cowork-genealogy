@@ -1,6 +1,5 @@
 ---
 name: check-warnings
-model: claude-sonnet-4-6
 description: Genealogical data integrity guardrail — catches logical
   impossibilities in a person's data (impossible lifespans, events after death,
   child born after parent died, burial before death) and retrieves

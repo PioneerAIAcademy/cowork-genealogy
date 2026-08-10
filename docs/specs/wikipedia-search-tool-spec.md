@@ -45,6 +45,15 @@ Example:
 | Article not found (404) | Throw error: `"No Wikipedia article found for '{query}'"` |
 | Other API errors | Throw error: `"Wikipedia API error: {status}"` |
 
+### Timeout
+
+`WIKIPEDIA_TIMEOUT_MS` = **60s**, passed as `fetchWithTimeout`'s third
+argument, rather than the shared 30s default. This is a single un-retried
+summary fetch, so a slow success becomes a hard failure at the default with
+nothing behind it. Across the committed e2e run logs, 2 of 19 calls ran past
+30s, at 33.7s and 35.2s. Re-measure rather than re-guess; the method is in
+`image-transcribe-tool-spec.md`'s timeout-budget section.
+
 ---
 
 ## Wikipedia API Reference
