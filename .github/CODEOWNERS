@@ -1,3 +1,8 @@
+# A rule naming a team that does not exist is SILENTLY DROPPED: the file still
+# parses, and reviews for those paths route to nobody. Reading the file cannot
+# show this — after every edit here, check
+# `gh api /repos/{owner}/{repo}/codeowners/errors`.
+#
 # Every PR needs one approval from a senior genealogist (this team),
 # in addition to at least one more approval from anyone else with
 # write access. Enforced together with branch protection's
