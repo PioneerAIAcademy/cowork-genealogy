@@ -327,7 +327,8 @@ milestone's own question:
   modes, guardrail holes reachable without expertise, and the delivery vehicle
   actually shipping. Today that is the compliance-detector calibration
   (issues #998 / #999 / #1006), halt-on-tool-layer-loss (issue #941), and the
-  Electron release blocker (issue #1070).
+  wiki/pop-stats deployment (issue #290 — the defaults are one developer's
+  tailnet and 28–35% of those calls fail, silently thinning locality guidance).
 - **Public-launch gate** — *does a stranger's use, at volume and unsupervised,
   break the product or us?* That covers untrusted input reaching a
   write-capable agent, seeing quality for real users rather than fixtures, the

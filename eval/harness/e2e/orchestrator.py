@@ -628,10 +628,10 @@ def provided_documents(fixture: Fixture) -> list[Path]:
 def _override_agent_model(md_text: str, model: str) -> str:
     """Rewrite a staged subagent's ``model:`` frontmatter to ``model``.
 
-    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-5``)
+    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-4-6``)
     so an e2e run can be executed against a different model — e.g. to test
-    whether the sonnet-5 record-extractor freeze reproduces under sonnet-4-6,
-    the model Cowork uses. Inserts a ``model:`` line if the agent has none.
+    whether the sonnet-5 record-extractor freeze still reproduces. Inserts a
+    ``model:`` line if the agent has none.
     """
     if re.search(r"(?m)^model:[ \t]*.*$", md_text):
         return re.sub(r"(?m)^model:[ \t]*.*$", f"model: {model}", md_text, count=1)
@@ -689,8 +689,14 @@ def build_workspace(
 
     # Optionally pin the run's reasoning effort via a PROJECT-level setting.
     # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
-    # NOT (it's output-only — verified). This is the only working effort lever
-    # from the harness. Session-wide (parent + every subagent). Left unset, the
+    # NOT (it's output-only — verified). This is *a* working effort lever, not
+    # the only one: `ClaudeAgentOptions.effort` also works and always has —
+    # the SDK's subprocess transport emits `--effort` unconditionally when the
+    # option is set, at every version this repo has pinned. The settings-file
+    # route is kept because it is the one that provably reaches subagents; the
+    # SDK option's subagent propagation is unverified. Do not restate this as
+    # "the only lever" — that claim shaped a spend decision before it was
+    # checked. Session-wide (parent + every subagent). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
@@ -2135,8 +2141,8 @@ async def run_e2e_test(
     sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
     fixture default for the parent + each subagent's own `.md` pin) overrides the
     model for BOTH the parent and every staged subagent — e.g. run the whole flow
-    under claude-sonnet-4-6 to test whether the sonnet-5 record-extractor freeze
-    reproduces under Cowork's model. All are logged.
+    under claude-sonnet-5 to test whether the record-extractor freeze that PR #725
+    pinned it off still reproduces. All are logged.
     """
     fixture = load_fixture(fixture_dir)
     if not mcp_server_entry.exists():
@@ -2274,7 +2280,7 @@ async def run_e2e_test(
             # output-budget × model vs subagents[] behavior. `agent_model` is the
             # effective PARENT model. `subagent_model_override` is non-null only
             # when --agent-model forced every staged subagent off its own `.md`
-            # pin (record-extractor's default is sonnet-5); null means each
+            # pin (record-extractor's default is sonnet-4-6); null means each
             # subagent used its pin. `max_output_tokens` / `cli_version` come from
             # _run_agent.
             "agent_model": agent_model or fixture.agent_model,
