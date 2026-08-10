@@ -489,17 +489,19 @@ built web client from a single origin. Full procedure in
 [`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
 
 ```bash
-# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
-# and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app refuses to boot
-# if DATABASE_URL is unset or either secret is still at its development default
-# (config.assert_production_config). Not a silent downgrade: the process exits at
-# startup naming the offending setting. (A blank-but-set secret still boots — #1367.)
+# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY,
+# FS_TOKEN_ENC_KEY and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app
+# refuses to boot if DATABASE_URL is unset or any of those secrets is still at its
+# development default (config.assert_production_config). Not a silent downgrade: the
+# process exits at startup naming the offending setting. (A blank-but-set secret still
+# boots — #1367.) FS_TOKEN_ENC_KEY encrypts the FamilySearch tokens at rest (#1128);
+# rotating it makes stored tokens undecryptable, so users just reconnect once.
 # DATABASE_URL takes the Neon DIRECT (non-pooler) URL. Keep every comment ABOVE this
 # command: a trailing `\  # …` is an escaped space plus a comment, which silently
 # truncates the command and drops every argument after it.
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
-  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
+  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… FS_TOKEN_ENC_KEY=… \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).
