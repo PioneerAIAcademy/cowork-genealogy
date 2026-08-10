@@ -564,3 +564,35 @@ describe("README catalogs what ships", () => {
     expect(stated("shipped skills"), "README's skill count").toBe(skills.length);
   });
 });
+
+/**
+ * `git merge-base --is-ancestor <sha> main` is the obvious way to ask "did this
+ * ship", and it is wrong in this repo: PRs land as squash commits, so a merged
+ * branch's commits are never ancestors of `main`. The test answers "unshipped"
+ * for every PR that shipped. It reached three skills before anyone ran it —
+ * `audit-board` routed shipped work to "blocked on a branch", `triage-standup`
+ * accused reporters of not landing work they landed, and `fill-ready` held
+ * cleared blockers shut. Ask `gh pr view --json baseRefName` what a PR merged
+ * into, and `git log origin/main -S` whether the content arrived.
+ */
+describe("prose does not test shipped-ness with commit ancestry", () => {
+  it("bans merge-base --is-ancestor across the linted corpus", () => {
+    const corpus = [...new Set([...lintedFiles(), ...docsMarkdown(projectRoot)])];
+    const offenders: string[] = [];
+    for (const rel of corpus) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) continue;
+      readFileSync(full, "utf8")
+        .split("\n")
+        .forEach((line, i) => {
+          if (line.includes("--is-ancestor")) offenders.push(`${rel}:${i + 1} — ${line.trim()}`);
+        });
+    }
+    expect(
+      offenders,
+      "This repo squash-merges: a merged branch's commits are never ancestors of main, " +
+        "so --is-ancestor calls every shipped PR unshipped. Ask `gh pr view --json baseRefName` " +
+        "what it merged into, and `git log origin/main -S '<string>'` whether the content landed.",
+    ).toEqual([]);
+  });
+});
