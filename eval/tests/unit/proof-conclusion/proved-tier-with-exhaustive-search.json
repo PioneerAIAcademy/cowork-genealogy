@@ -1,35 +1,27 @@
 {
-    "test":  {
-                 "id":  "ut_proof_conclusion_002",
-                 "skill":  "proof-conclusion",
-                 "name":  "Write a proved-tier proof for the completed father-identification research",
-                 "type":  "positive",
-                 "description":  "The flynn-research-complete-no-proof scenario has all planned searches completed including a negative probate result. The skill should produce a `proved` tier proof â€” research is reasonably exhaustive (per the populated stop_criteria in q_001) and five independent original sources converge, with TWO of them providing primary information on the father-child relationship: the 1845 Irish Catholic baptism and the contemporaneous family Bible birth entry. The 1850/1860 censuses provide corroborating indirect evidence (household position, no explicit relationship column until 1880) and the 1908 death certificate is direct from a secondary informant. This two-primary-source basis is what clears the skill\u0027s own \u0027proved = 2+ independent original sources with primary information\u0027 bar; tests the high-confidence tier path, distinct from the `probable` tier the seed test covers.",
-                 "tags":  [
-                              "proof",
-                              "parentage",
-                              "proved",
-                              "exhaustive-search",
-                              "completed-project",
-                              "tier-proved-q001",
-                              "tree-write-expected"
-                          ],
-                 "holdout":  true
-             },
-    "input":  {
-                  "user_message":  "Write the final proof conclusion for Patrick Flynn\u0027s parentage.",
-                  "scenario":  "flynn-research-complete-no-proof"
-              },
-    "judge_context":  [
-                          "Should select the `proved` tier and justify it: the search is reasonably exhaustive (q_001\u0027s `exhaustive_declaration` is populated with stop_criteria, all planned searches including the negative probate complete) and TWO independent original sources provide primary information on the parent-child relationship â€” the 1845 Irish baptism (a_014) and the contemporaneous family Bible birth entry (a_015) â€” meeting the \u0027proved = 2+ independent original sources with primary information\u0027 bar, corroborated by the 1850/1860 census co-residence and the 1908 death certificate",
-                          "Should incorporate the negative probate result (log_006) into the narrative â€” exhaustive search includes documenting what was searched and didn\u0027t turn up, not just what did",
-                          "Should cite the resolved birthplace conflict c_001 within the narrative â€” proof conclusions don\u0027t omit resolved conflicts; they\u0027re part of the GPS audit trail showing the analytical work",
-                          "The proof presented in the reply should cite the supporting sources with their classifications â€” the 1850 census, 1860 census, 1908 death certificate, 1845 baptism, and the family Bible â€” such that a reader without research.json can follow it"
-                      ],
-    "judge_reads_files":  true,
-    "execution":  {
-                      "max_turns":  30,
-                      "max_wall_clock_seconds":  600,
-                      "sdk_message_silence_seconds":  300
-                  }
+  "test": {
+    "id": "ut_proof_conclusion_002",
+    "skill": "proof-conclusion",
+    "name": "Write a proved-tier proof for the completed father-identification research",
+    "type": "positive",
+    "description": "The flynn-research-complete-no-proof scenario has all planned searches completed including a negative probate result. The skill should produce a `proved` tier proof — research is reasonably exhaustive (per the populated stop_criteria in q_001) and five independent original sources converge, with TWO of them providing primary information on the father-child relationship: the 1845 Irish Catholic baptism and the contemporaneous family Bible birth entry. The 1850/1860 censuses provide corroborating indirect evidence (household position, no explicit relationship column until 1880) and the 1908 death certificate is direct from a secondary informant. This two-primary-source basis is what clears the skill's own 'proved = 2+ independent original sources with primary information' bar; tests the high-confidence tier path, distinct from the `probable` tier the seed test covers.",
+    "tags": ["proof", "parentage", "proved", "exhaustive-search", "completed-project", "tier-proved-q001", "tree-write-expected"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Write the final proof conclusion for Patrick Flynn's parentage.",
+    "scenario": "flynn-research-complete-no-proof"
+  },
+  "judge_context": [
+    "Should select the `proved` tier and justify it: the search is reasonably exhaustive (q_001's `exhaustive_declaration` is populated with stop_criteria, all planned searches including the negative probate complete) and TWO independent original sources provide primary information on the parent-child relationship — the 1845 Irish baptism (a_014) and the contemporaneous family Bible birth entry (a_015) — meeting the 'proved = 2+ independent original sources with primary information' bar, corroborated by the 1850/1860 census co-residence and the 1908 death certificate",
+    "Should incorporate the negative probate result (log_006) into the narrative — exhaustive search includes documenting what was searched and didn't turn up, not just what did",
+    "Should cite the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the GPS audit trail showing the analytical work",
+    "The proof presented in the reply should cite the supporting sources with their classifications — the 1850 census, 1860 census, 1908 death certificate, 1845 baptism, and the family Bible — such that a reader without research.json can follow it"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
 }
