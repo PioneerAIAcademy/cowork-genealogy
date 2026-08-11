@@ -1,4 +1,4 @@
-{
+﻿{
   "findings": [
     {
       "id": "f1",
@@ -62,7 +62,7 @@
     {
       "id": "f4",
       "type": "relationship",
-      "description": "Anna Kramer was the maternal grandmother of Charles Hubert Ferber — that is, the mother of Emma Becker and wife of John Becker. Anna was born in 1845 in Darmstadt, Hesse, Germany.",
+      "description": "Anna Kramer was likely the maternal grandmother of Charles Hubert Ferber — that is, the mother of Emma Becker and wife of John Becker. Anna was born in 1845 in Darmstadt, Hesse, Germany. Probable, not Proved; no single document names both identities together.",
       "details": {
         "subject_person": {
           "name": "Charles Hubert Ferber"
