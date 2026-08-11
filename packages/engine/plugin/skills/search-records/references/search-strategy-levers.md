@@ -13,6 +13,7 @@ through these levers. Levers below are expressed in the upstream API's
 | `q.anyDate` / `q.anyPlace` | `anyYearFrom`/`To`, `anyPlace` |
 | `<term>.exact=on` | `<term>Exact: true` — see the qualifier table at the end |
 | `f.collectionId` | `collectionId` |
+| `q.batchNumber` | `batchNumber` |
 | `q.sex` | `sex` |
 | `q.recordCountry` / `q.recordSubcountry` | `recordCountry` / `recordSubdivision` |
 
@@ -84,7 +85,7 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Restrict to collection | Add `f.collectionId={id}` | Strong match expected in one collection |
-| Drop all filters, single identifier | Search an uncommon spouse name alone. (`q.batchNumber` alone is the other half of this lever upstream, but is *not reachable through `record_search`* — the tool has no batch parameter, so a batch-scoped search cannot be issued from here at all.) | Brick wall; brute-force exhaustive |
+| Drop all filters, single identifier | Search an uncommon spouse name alone, or a `batchNumber` alone to enumerate one parish's extraction | Brick wall; brute-force exhaustive |
 
 ## Cluster / FAN club levers
 

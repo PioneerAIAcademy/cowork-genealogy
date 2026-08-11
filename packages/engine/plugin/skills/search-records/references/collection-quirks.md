@@ -8,8 +8,7 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
 `q.fatherSurname` → `fatherSurname`, `q.fatherGivenName` →
 `fatherGivenName`, `q.motherGivenName` / `q.motherSurname` →
 `motherGivenName` / `motherSurname`, `f.collectionId` → `collectionId`.
-One construct named below — `q.batchNumber` — has **no `record_search`
-parameter at all**; see the England parish registers section.
+`q.batchNumber` → `batchNumber`.
 
 ## US Federal Censuses (1790–1940)
 
@@ -27,24 +26,19 @@ parameter at all**; see the England parish registers section.
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation upstream is the IGI batch number — which `record_search`
-  cannot send.** The API's `q.batchNumber` enumerates a parish exhaustively
-  and is a very strong filter (adding one cut a quarter-million-hit search to
-  single digits; a nonsense batch returns 0 rather than being ignored —
-  figures from the original probe session, not reproducible from
-  the repo's qualifier probe (host-side), which has no batch section, though
-  the behaviour was re-confirmed live), but the tool exposes no batch
-  parameter, so **none of the batch strategy below is executable from this
-  skill.** What you can do instead: scope with `collectionId` plus place and a
-  wide date range, and cross-check with FreeREG and FindMyPast via
-  `search-external-sites`.
-- Batch number format, for reference: a letter prefix followed by digits.
-  Both `C050761` (letter + 6 digits) and `M17288-6` (letter + digits +
-  dash + digit) are accepted — an earlier revision of this file said
-  "exactly 6 digits", which the second form contradicts.
-- Submitting a batch number alone (no name) returns all extracted
-  records in alphabetical order — upstream, the canonical way to
-  enumerate a single parish. *Not reachable through `record_search`.*
+- **Compensation: the IGI batch number, via `batchNumber`.** It enumerates a
+  parish exhaustively and is a very strong filter. Verified live: a batch alone
+  returned about five thousand records, the same batch plus a surname returned
+  79, and a nonexistent batch returns **0** rather than being ignored — so a nil
+  under it means the batch is wrong, not that the parish is empty.
+- Batch number format: a letter prefix followed by digits. Both `C050761`
+  (letter + 6 digits) and `M01048-5` (letter + digits + dash + digit) are
+  accepted — an earlier revision of this file said "exactly 6 digits", which the
+  second form contradicts.
+- Submitting a batch number alone (no name) returns that batch's extracted
+  records — the canonical way to enumerate a single parish. Combine with a
+  surname to search within one parish's extraction.
+- Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ## Mexico Civil Registration
 

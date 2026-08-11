@@ -302,6 +302,14 @@ export function buildSearchUrl(input: RecordSearchInput): string {
 
   if (input.collectionId !== undefined) add("f.collectionId", input.collectionId);
   if (input.imageGroupNumber) add("q.filmNumber", input.imageGroupNumber);
+  // Verified live 2026-08-11: `q.batchNumber=M01048-5` returns several thousand
+  // records, a nonsense batch returns 0 rather than being ignored, and it
+  // combines with a surname to search within one batch. Totals are not quoted:
+  // no committed probe section produces them, so a figure here would trace to
+  // nothing. The parameter existed upstream all along; the tool simply
+  // never exposed it, so the parish-enumeration strategy the collection-quirks
+  // reference documents was unexecutable from this skill.
+  if (input.batchNumber) add("q.batchNumber", input.batchNumber);
   if (input.recordCountry) add("q.recordCountry", input.recordCountry);
   if (input.recordSubdivision && input.recordCountry) {
     add(
@@ -967,6 +975,7 @@ export const recordSearchToolSchema = {
       otherSurnameExact: { type: "boolean", description: "When `true`, requires the co-occurring family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
 
       collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
+      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish exhaustively: alone it returns that batch's records, and it combines with a name to search within the batch. A nonexistent batch returns 0 rather than being ignored. Formats seen: letter + 6 digits (`C050761`) and letter + digits + dash + digit (`M01048-5`)." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
