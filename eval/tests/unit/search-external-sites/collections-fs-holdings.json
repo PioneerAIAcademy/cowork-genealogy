@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_fhk",
+    "skill": "search-external-sites",
+    "name": "Note FamilySearch's own holding when an external result duplicates an FS collection",
+    "type": "positive",
+    "description": "The user runs a MyHeritage search for the 1855 Massachusetts State Census — a collection FamilySearch also holds (FS collection 1459985). The skill should still build the chosen MyHeritage URL, but note that FamilySearch holds the same census and offer the FS copy via search-records. The failure (issue #1313) is presenting the external site as the sole source for a collection FS holds, and asserting record availability from memory rather than a tool result.",
+    "tags": ["external-vs-familysearch", "fs-holdings", "census", "myheritage", "collections-cross-check", "issue-1313"]
+  },
+  "input": {
+    "user_message": "Generate a MyHeritage search URL to look for Josiah Barnes in the 1855 Massachusetts State Census.",
+    "scenario": "ma-state-census-external"
+  },
+  "mcp_fixtures": [
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census"
+  ],
+  "judge_context": [
+    "FamilySearch holds its own Massachusetts, State Census, 1855 (collection 1459985). When an external-site result (here the MyHeritage 1855 Massachusetts State Census link) duplicates a collection FamilySearch holds, the skill should surface that FamilySearch holding, not present the external site as the sole place the record lives.",
+    "Still building the MyHeritage search URL the user asked for is correct — this skill executes the chosen search and does not override it. The expected behavior is to ALSO note that FamilySearch holds the same 1855 census and offer the FamilySearch copy (e.g. via search-records) as an alternative or cross-check.",
+    "Statements about which collections or census schedules exist should be grounded in a tool result (e.g. collections_search), not asserted from memory. Inventing a schedule that a tool did not return, or declaring one unavailable without checking, is a failure.",
+    "Grade the reasoning, not a preferred phrasing. A response that generates the MyHeritage URL but never mentions that FamilySearch also holds the 1855 Massachusetts State Census fails; one that notes the FamilySearch holding (however worded) passes, whether or not it cites the collection id."
+  ]
+}
