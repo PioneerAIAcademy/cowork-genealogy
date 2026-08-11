@@ -149,7 +149,10 @@ spouse families; other fields follow the same pattern.
 
 - **Never set one to find a record you could not otherwise find.** An exact
   search can only take records away, never surface one that was buried — though
-  it does re-shuffle the ones it keeps. If a search is not surfacing the target,
+  it does re-shuffle the ones it keeps. (Measured on `surnameExact` in marriage
+  records: every record the exact search returned was already in the fuzzy one's
+  results. The other `*Exact` fields are assumed to behave the same way, not
+  measured.) If a search is not surfacing the target,
   the levers are a different name spelling, a broader place level, or dropping a
   filter — not exactness. (`references/search-strategy-levers.md`.)
 - **`surnameExact` is usually the wrong reach.** Fuzzy matching is what bridges

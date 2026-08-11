@@ -381,28 +381,28 @@
     },
     "verdict:? is a wildcard, not a literal": "CONFIRMED",
     "minLettersTwo": {
-      "total": 86627170,
+      "total": 86626453,
       "error": null
     },
     "minLettersThree": {
-      "total": 75629244,
+      "total": 75628695,
       "error": null
     },
     "leadingStar": {
-      "total": 306201,
+      "total": 305945,
       "error": null
     },
     "fourStars": {
-      "total": 74638917,
+      "total": 74638269,
       "error": null
     },
     "fiveStars": {
-      "total": 996796,
+      "total": 996793,
       "error": null
     },
     "verdict:minimum 3 non-wildcard letters": "NOT ENFORCED — a 2-letter stem expanded MORE broadly than a 3-letter one",
     "verdict:four-star maximum": "NOT ENFORCED — a 5th star changed the count, so it was honoured",
-    "measured_at": "2026-08-10T16:32:44.647Z"
+    "measured_at": "2026-08-11T19:19:43.865Z"
   },
   "R": {
     "rows": [

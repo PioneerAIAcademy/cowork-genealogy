@@ -4623,15 +4623,22 @@ async function sectionW(): Promise<void> {
     ["Sm?th, fuzzy", "Sm%3Fth", "wildFuzzy"],
     ["Sm?th, .exact=on", "Sm%3Fth", "wildExact"],
   ];
-  const seen: Record<string, { smith: boolean; smyth: boolean; total: number | null }> = {};
+  const seen: Record<string, { smith: boolean | null; smyth: boolean | null; total: number | null }> = {};
   for (const [label, value, key] of cases) {
     const exact = key.endsWith("Exact") ? "&q.surname.exact=on" : "";
     const r = await search(
       `q.surname=${value}${exact}${scope}&count=${SAMPLE}&${REQUIRE_SWITCH}`
     );
     const entry = {
-      smith: errored(r) ? false : hasSurnameForm(r, "smith"),
-      smyth: errored(r) ? false : hasSurnameForm(r, "smyth"),
+      // `null`, NOT `false`. `false` means "the sample did not contain this
+      // form"; a failed request means we do not know. Collapsing the two let a
+      // 400 or an unparseable body publish
+      // `verdict:top-N sampling = PRODUCES A FALSE NEGATIVE` from a request that
+      // never ran — the file's own `errored()` docblock forbids exactly this
+      // ("a measurement that cannot be taken must say NOT MEASURED, never the
+      // opposite"), and every other section guards it.
+      smith: errored(r) ? null : hasSurnameForm(r, "smith"),
+      smyth: errored(r) ? null : hasSurnameForm(r, "smyth"),
       total: errored(r) ? null : r.total,
     };
     seen[key] = entry;
@@ -4725,7 +4732,8 @@ async function sectionW(): Promise<void> {
   record("W", "samplingCheck", {
     sampleSize: SAMPLE,
     poolScanned: wildExactScan.ids.size,
-    smythFoundBySample: seen.wildExact?.smyth === true ? "yes" : "no",
+    smythFoundBySample:
+      seen.wildExact?.smyth === true ? "yes" : seen.wildExact?.smyth === false ? "no" : "errored",
     smythFoundByFullScan: inWildExact,
   });
   record(
@@ -4733,9 +4741,11 @@ async function sectionW(): Promise<void> {
     "verdict:top-N sampling on this question",
     !scansComplete || smythCount === 0
       ? "NOT MEASURED"
-      : sampleSaidAbsent && inWildExact > 0
-        ? "PRODUCES A FALSE NEGATIVE — sample found none, full scan found them all"
-        : "AGREED WITH THE FULL SCAN"
+      : seen.wildExact?.smyth === null || seen.wildExact?.smyth === undefined
+        ? "NOT MEASURED — the sampled page errored, so it cannot be compared with the full scan"
+        : sampleSaidAbsent && inWildExact > 0
+          ? "PRODUCES A FALSE NEGATIVE — sample found none, full scan found them all"
+          : "AGREED WITH THE FULL SCAN"
   );
 
   if (!scansComplete || smythCount === 0) {
