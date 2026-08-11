@@ -513,12 +513,10 @@ Once per clone (not once per branch), run:
 make install-hooks          # Windows: double-click eval\InstallHooks.bat
 ```
 
-This installs two hooks: `post-checkout` makes a new worktree usable — it links
-the shared gitignored files (`eval/.env`, `apps/server/.env`, the engine's
-`node_modules`) and installs the pnpm workspace there — and
-`commit-msg` warns — never blocks — when a commit is missing a human
-`Co-authored-by:` trailer. It's safe to re-run, and refuses rather than
-clobbering a hook it didn't write. Details in
+This installs `post-checkout`, which makes a new worktree usable — it links the
+shared gitignored files (`eval/.env`, `apps/server/.env`, the engine's
+`node_modules`) and installs the pnpm workspace there. It's safe to re-run, and
+refuses rather than clobbering a hook it didn't write. Details in
 [DEVELOPMENT.md → Git hooks](./DEVELOPMENT.md#git-hooks).
 
 

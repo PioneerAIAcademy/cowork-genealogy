@@ -1,0 +1,62 @@
+name: workflow-logic-tests
+
+# Runs the pure-logic tests for the repo-governance files that route work:
+# which board column a card lands in, and which team reviews a path.
+#
+# WHY. Both decide something where a wrong answer is still a VALID answer, so
+# nothing downstream complains. project-status-sync.yml picks a column and a
+# wrong column is still a column; senior-queue.yml picks a review queue off
+# CODEOWNERS, and a pattern its parser cannot read routes the PR to the wrong
+# team while the merge gate still enforces correctly. The run goes green, the
+# board or the review queue is quietly wrong, and the only detector is a human
+# noticing weeks later. Nothing else in CI reads either file — the JS suite
+# (`make test-js`) covers web, electron, viewer-ui and schema, and neither a
+# workflow branch table nor a CODEOWNERS resolution belongs in any of those
+# packages.
+#
+# WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
+# says nothing about whether the App token can still write the board, whether
+# the column names still exist on the live project, or whether the workflow wins
+# its race with the built-in "Item closed" automation. Those are only observable
+# from a live run — see the ORDERING note in project-status-sync.yml. Do not
+# read this job as end-to-end coverage of the board automation.
+#
+# No install step and no dependencies on purpose: the test extracts the script
+# block from the raw YAML itself, so this job is `checkout` + `node`.
+
+on:
+  pull_request:
+    paths: &paths
+      - '.github/CODEOWNERS'
+      - '.github/workflows/project-status-sync.yml'
+      - '.github/workflows/senior-queue.yml'
+      - '.github/workflows/workflow-logic-tests.yml'
+      - '.github/tests/**'
+  push:
+    branches: [main]
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  routing:
+    name: project-status-sync routing table
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/project-status-sync-routing.test.mjs
+
+  codeowners:
+    name: CODEOWNERS review routing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/codeowners-routing.test.mjs

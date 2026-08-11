@@ -29,6 +29,8 @@ from e2e.orchestrator import (
     DEFAULT_PLUGIN_SKILLS,
     DEFAULT_RUNLOG_ROOT,
     McpUnavailableError,
+    PERSON_EVIDENCE_GUARD_MODES,
+    PERSON_EVIDENCE_GUARD_SHADOW,
     run_e2e_test,
 )
 from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
@@ -158,9 +160,11 @@ def main(argv: list[str] | None = None) -> int:
             "Pin the run's reasoning effort via a project-level setting "
             "(.claude/settings.json effortLevel). Session-wide. Default: high "
             "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
-            "the sole working effort lever. Vary it to test whether a runaway-"
-            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
+            "not the only lever — ClaudeAgentOptions.effort also works — but it "
+            "is the one proven to reach subagents. Vary it to test whether a "
+            "runaway-thinking subagent freeze clears (see "
+            "subagents[].runaway_thinking)."
         ),
     )
     parser.add_argument(
@@ -182,10 +186,28 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Override the model for BOTH the parent agent and every staged "
             "subagent (rewrites each agent's `.md` model pin). Default: unset = "
-            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
-            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
-            "run the whole flow under Cowork's model and test whether the "
-            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own "
+            "pin, which for record-extractor is also claude-sonnet-4-6 since "
+            "PR #725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
+            "Set e.g. claude-sonnet-5 to check whether that freeze reproduces. "
+            "Recorded in the runlog."
+        ),
+    )
+    parser.add_argument(
+        "--person-evidence-guard",
+        choices=list(PERSON_EVIDENCE_GUARD_MODES),
+        default=PERSON_EVIDENCE_GUARD_SHADOW,
+        help=(
+            "How the §8 same_person provenance check behaves when a research_append "
+            "links a brand-new tree person nothing has scored (issue #1231). "
+            "'shadow' (default) records the gap and lets the write through — the "
+            "posture everywhere. 'deny' also blocks the call, bounded by a loop "
+            "valve, and is for GATHERING RECOVERY EVIDENCE on one fixture: replayed "
+            "over the corpus this fires in ~80%% of runs that link a person, so a "
+            "suite-wide deny would wall nearly every run to max_turns. NOTE a "
+            "deny-mode run's `compliance` axis is not comparable to a shadow run's "
+            "— the blocked write never lands, so the post-run check passes "
+            "vacuously. Recorded in the runlog's usage block."
         ),
     )
     args = parser.parse_args(argv)
@@ -235,6 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
+        "person_evidence_guard": args.person_evidence_guard,
     }
 
     results: list[E2eResult] = []

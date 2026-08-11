@@ -38,9 +38,8 @@
      "Nothing" is the common answer. PLAN.md is gitignored, so this line is
      the only way a deviation reaches your reviewer.
 
-     Hit the step-4 stop rule (schema, auth, plugin-agent binding, an ADR
-     reversal, anything hard to undo)? Say so here and name the message
-     where you raised it. -->
+     Hit the step-4 stop rule (schema, auth, an ADR reversal, anything hard
+     to undo)? Say so here and name the message where you raised it. -->
 
 **Didn't change:**
 
@@ -51,12 +50,14 @@
 ## Test plan
 
 <!-- If this PR touches a code/infra file (.ts/.tsx/.js/.mjs/.cjs/.py/.json/
-     .yml/.yaml) outside packages/engine/plugin/skills/, packages/engine/
-     plugin/agents/, eval/fixtures/, eval/tests/, eval/runlogs/, or docs/,
-     a senior-developers approval is required by branch protection — see
-     .github/CODEOWNERS for the exact rule. Peer approval alone will not
-     unblock merge. This is a convenience note; GitHub's merge button is
-     the actual enforcement. -->
+     .yml/.yaml/.toml/.bat, Makefile, .gitattributes) outside
+     packages/engine/plugin/skills/, packages/engine/plugin/agents/,
+     eval/fixtures/, eval/tests/, or eval/runlogs/, a senior-developers
+     approval is required by branch protection — see .github/CODEOWNERS for
+     the exact rule. Peer approval alone will not unblock merge. Note that
+     docs/ is no longer an exclusion: prose there needs no senior, but a
+     schema or other code file under it does. This is a convenience note;
+     GitHub's merge button is the actual enforcement. -->
 
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
@@ -86,3 +87,5 @@
 ## Follow-on issues
 
 <!-- Numbers filed for work you deferred. DEVELOPMENT.md § "Follow-on work". -->
+
+**Folded in / filed instead:** <!-- Follow-on work found during this PR: what you folded in, and for anything filed rather than folded, which of the four reasons applied. -->

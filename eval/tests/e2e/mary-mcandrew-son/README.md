@@ -38,30 +38,38 @@ children begin only in 1876.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples.csv` row 2, flag `adds_son`, confidence 3)
-in which roughly half the hint records are **false matches**, and the
-authors do not know which. `expected-findings.json` was transcribed
-from the hint record — Michigan, Births and Christenings, 1775-1995:
-John A Morgan, born 6 March 1873, Detroit, parents John Morgan and
-Mary Morgan. The genealogist + developer teams must decide:
+**Resolved: FALSE MATCH (outcome c).** The hinted record — Michigan,
+Births and Christenings, 1775-1995: John A Morgan, born 6 March 1873,
+Detroit, parents John Morgan and Mary Morgan
+([ark:/61903/1:1:F4RF-FV9](https://www.familysearch.org/ark:/61903/1:1:F4RF-FV9)) —
+is **not** a child of Mary E. McAndrew (G13G-P68) and John Mogan. The
+research found positive contradicting evidence, not merely an empty
+search:
 
-- **(a) true match** — keep the findings as written;
-- **(b) different answer** — other additional children are documented
-  instead: edit `expected-findings.json` accordingly;
-- **(c) no findable answer** — the 1873 birth belongs to a different
-  Morgan family: replace the findings with a `"polarity": "avoid"`
-  guard naming the 1873 John A Morgan birth (spec §3.4.1 — the harness
-  mechanically fails a run whose final tree contains the avoided claim)
-  plus a `required` finding that the agent's report documents that no
-  additional children could be established and why the hint record was
-  rejected.
+- **The 1873 birth already belongs to a different family.** John A
+  Morgan (PID `9NJ7-Z6L`) is attributed in the FamilySearch tree to a
+  separate couple — John Morgan (`9NJ7-Z6R`, born Ireland) and Mary
+  Morgan (`9NJ7-Z61`). That couple's *only* source is the birth record
+  itself, the signature of an auto-generated parent stub created when
+  the record was first attached.
+- **The record is too sparse to override the established family.** It
+  names the parents only as "John Morgan" and "Mary Morgan" — no maiden
+  name, age, birthplace, or address. John/Mary Morgan were extremely
+  common names in 1870s Detroit, and nothing on the record ties it to
+  the Mogan/McAndrew household.
+- **The child is absent from Mary's documented family.** Mary's 24
+  attached sources consistently name her husband as John Mogan and
+  document the five known children (Thomas Frank 1876, John Vincent
+  1879, Anna Irene 1884, Edward Lawrence 1885, Mary L. 1888). John A
+  Morgan (b. 1873) appears in none of them, including the family's 1880
+  and 1900 census households.
 
-Points a reviewer should weigh: the tree already has a son **John
-Vincent Mogan, b. 12 May 1879** — if the hint is a true match the
-family would have two sons named John (or the 1873 record is an
-early/conflicting record for the same son, which would make this
-`adds_son` hint itself questionable); Mary's marriage to John Mogan has
-no date in the tree, so whether the couple was married by 1873 is
-unestablished; the couple's residence trail (Detroit from 1870) is at
-least consistent with an 1873 Detroit birth.
+Because the false match is grounded in another couple's record rather
+than a same-named coincidence, the earlier ambiguity — two sons named
+John, or an early/conflicting record for John Vincent (b. 1879) — does
+not arise: the 1873 birth is simply a different family's son.
+`expected-findings.json` accordingly carries a `"polarity": "avoid"`
+guard naming the 1873 John A Morgan birth (spec §3.4.1 — the harness
+mechanically fails a run whose final tree contains the avoided claim)
+paired with a `required` negative-conclusion finding: no sixth child of
+Mary and John Mogan can be established, and the hint record was rejected.

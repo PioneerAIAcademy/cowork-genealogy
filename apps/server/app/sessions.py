@@ -206,7 +206,14 @@ async def create_project(
     # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
     # Always written (not just when a key exists), because that marker is what
     # keeps the login tool from claiming a browser tab opened on a headless VM.
-    await fs_oauth.write_config(sandbox, fs_oauth.hosted_config(settings.openrouter_api_key))
+    await fs_oauth.merge_config(
+        sandbox,
+        fs_oauth.hosted_config(
+            settings.openrouter_api_key,
+            settings.wiki_api_url,
+            settings.pop_stats_url,
+        ),
+    )
     # The Anthropic key the Agent SDK runs on. Written here AND on every connect
     # (the env copy injected at create() can never be updated afterwards, so it
     # goes stale the moment the key is rotated). See app/agent_secrets.py.
@@ -455,6 +462,19 @@ async def connect_session(
     # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
     # rotated Anthropic key reaches sandboxes created under the old one.
     await agent_secrets.write_secrets(sandbox)
+    # Same reasoning for the engine's config document: sandboxes are persistent,
+    # so a create-time-only write leaves every existing session on whatever the
+    # sidecar URLs and OpenRouter key were then. merge_config, not write_config —
+    # configure_openrouter writes this same file from inside the VM.
+    settings = get_settings()
+    await fs_oauth.merge_config(
+        sandbox,
+        fs_oauth.hosted_config(
+            settings.openrouter_api_key,
+            settings.wiki_api_url,
+            settings.pop_stats_url,
+        ),
+    )
     # Same reasoning for the user's FamilySearch grant, which expires far faster
     # (24h absolute) than the 30-day app session cookie — so the app looks
     # signed in long after FamilySearch has stopped answering. `familysearch`

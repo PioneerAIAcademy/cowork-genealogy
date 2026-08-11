@@ -1,7 +1,8 @@
 ---
 name: audit-board
-description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "what should be merged", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and BEFORE /fill-ready, since filers are told to file freely and let this pass judge fit. Reads every open issue in Backlog, Ready, In Progress and Review and answers four questions across the pool: which issues should be merged or closed into each other, which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
+description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "what should be merged", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and BEFORE /fill-ready, since filers search once and then file, leaving this pass to judge fit across the pool. Sets its own merge-or-close target from the week's inflow and reports the gap when it falls short. Reads every open issue in Backlog, Ready, In Progress and Review and answers four questions across the pool: which issues should be merged or closed into each other, which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
 allowed-tools:
+  - Agent
   - Read
   - Bash
   - Glob
@@ -17,11 +18,10 @@ the rot, the clusters, and the handling that no single body can propose because
 no single body can see the others.
 
 **Run it weekly, and run it before `/fill-ready`.** That ordering is the point:
-filers are told explicitly not to worry about how their issue fits the ~180
-already open, because that judgement needs the whole pool and cannot be made from
-inside one PR. This pass is where duplicates get merged, premises get corrected
-and dead items get dropped. `/fill-ready` then ranks a deduped Backlog. Run it the
-other way round and it ranks duplicates.
+filers search once and then file, because judging fit needs the whole pool and
+cannot be made from inside one PR. This pass is where duplicates get merged,
+premises get corrected and dead items get dropped. `/fill-ready` then ranks a
+deduped Backlog. Run it the other way round and it ranks duplicates.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
 You have no `Edit` or `Write` tool on purpose.
@@ -31,7 +31,7 @@ You have no `Edit` or `Write` tool on purpose.
 job and never yours.
 
 The one exception is **hygiene**: a closed issue stranded in an active column, an
-open issue sitting in `Done`, an issue on no column at all. Those are corrections,
+open issue sitting in `Done` or `Not planned`, an issue on no column at all. Those are corrections,
 not ranking, and fixing them needs `gh project item-edit` with the Status field id
 (`gh project field-list 1 --owner PioneerAIAcademy --format json`). Check the
 token first — `gh auth status` must list the `project` scope, or the write fails
@@ -52,10 +52,79 @@ most of them `Done`. A limit that clips the tail drops real Backlog and Ready
 items and every count downstream is wrong with no error. Confirm the returned
 count is below the limit you asked for before trusting anything.
 
-Join the two and keep only `Backlog`, `Ready`, `In Progress`, `Review`. Expect
-~180 items and ~430 KB of bodies. Read all of them — the whole yield of this
+Join the two and keep only `Backlog`, `Ready`, `In Progress`, `Review`. Take the
+size from what you pulled — `jq length /tmp/issues.json` — never from a number
+quoted here or in a body. Read all of them — the whole yield of this
 skill is in what one body says about another, and `updatedAt` does not tell you
 which pairs collide.
+
+### Reading the pool without silently sampling it
+
+§1 and §3 need every body in one head — that is where collisions and clusters
+come from, and it is why you read them all. **§2 does not.** Its checks are
+per-issue and mechanical, and running eight of them across ~220 bodies will not
+fit alongside everything else. A pass that quietly does forty and reports as
+though it did all of them is worse than one that states its sample.
+
+So split the work: read the whole pool yourself for §1 and §3, and **fan §2 out**.
+Partition the issue numbers into batches of ~25–30 and give each batch an
+explicit, non-overlapping list, so nothing is checked twice and nothing is
+missed. Generate the partition — do not eyeball it.
+
+Give each batch the five verdicts rather than a summary instruction: **FIXED**
+(name the commit or PR), **STILL BROKEN** (quote the evidence), **PARTLY**
+(which half survives), **PREMISE FALSE** (nothing anywhere carries it),
+**ON A BRANCH** (name the branch and sha — not obsolete, unbuildable).
+Seed each with what is already known about its issues — which got substantive
+comments this week, which are `icebox`, which pairs are known not to be
+duplicates — or they will re-derive it and contradict it.
+
+Report coverage as a number and a rule: how many you checked and how they were
+chosen. If a batch fails, say which issues went unchecked rather than reporting
+the remainder as a complete pass.
+
+### The week's arithmetic sets this run's target
+
+Compute inflow and closure for the last seven days before reading any body:
+
+```sh
+d=$(date -v-7d +%Y-%m-%d)
+echo "filed:  $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all \
+  --limit 500 --search "created:>=$d" --json number -q 'length')"
+echo "closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
+  --limit 500 --search "closed:>=$d" --json number -q 'length')"
+```
+
+**This run's merge-or-close target is at least the week's inflow** — merges,
+absorbs, closes and obsoletes combined.
+
+**Count what `/merge-recent-issues` already did toward it.** That skill runs daily
+against the last two days' inflow, so by the time this pass runs, the
+new-issue-versus-existing-issue merges should mostly be done:
+
+```sh
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
+  --limit 200 --search "closed:>=$d \"Merged into issue\"" \
+  --json number,title
+```
+
+Subtract those from the gap before reporting a shortfall, and **do not re-litigate
+a pair that pass judged independent** — read its reasoning in the issue comments
+first and only overturn it with something it could not see, which is usually the
+whole-pool view.
+
+That division is the point of running this weekly rather than daily: the daily
+pass catches a new issue landing on top of an existing one, which is the case that
+decays fastest. What only this pass can catch is **two old issues colliding** —
+neither filed recently, both quietly wanting the same lines — plus obsolescence,
+clusters, eval-slot queues and board hygiene. None of those change materially in a
+day, and all of them need every body in one head.
+
+If you cannot reach the target, **say so at the top of the output**: the number you
+propose, the target, and the gap. Four merges against a week of two hundred
+filings is not a successful audit; the shortfall is the finding, and burying it
+under the merges you did find misreports the week. The lead still approves every
+item — the target binds what you propose, not what he accepts.
 
 ## 1. Merges
 
@@ -75,21 +144,80 @@ so exactly one owns the scope.
 **Batch — separate issues, one paid run.** This is the most common and the most
 valuable. See §4.
 
-**Schedule together, do not merge.** Two halves that need each other but are
-different labor — a `developer` lint and a `genealogist` audit. Merging makes it
-unassignable. Say "same week, two people" and leave both open.
+**Split the lanes — only when the split is clean.** Two halves that are different
+labor — a `developer` lint and a `genealogist` audit — can stay apart, because one
+card spanning two lanes has no single assignee. That holds **only if neither half
+needs the other to land**. Test it: can each be finished, reviewed and merged
+without waiting on the other? If yes, split at the lane boundary and move the
+content, so neither issue is left pointing at the other for something it needs,
+and give each its own acceptance.
+
+If no — merge, and let the card carry both labels. A card with two labels is
+assignable; two cards that each need the other are not.
+
+**"Schedule together, leave both open" is not a verdict.** The lead ruled it out
+on 2026-08-11: *"Anything that should be done together sounds like a reason to
+merge. Otherwise we have to cross-reference the issues and rely on people
+remembering to assign both issues to themselves, which they have forgotten
+several times."* Same decision, same files, same paid run, same reviewer, or
+class-and-instance — all merge. Splitting on *mechanism purity* (two tools, two
+matchers, two code paths) is an author's aesthetic, not a work boundary.
+
+The one legitimate not-a-merge is a **one-way mechanical dependency**: issue B
+only needs to *apply* something issue A defines. Then edit B's body so it reads as
+an instruction ("apply the convention issue #A defines") rather than a
+coordination requirement — nobody needs both assignments, which is the whole
+objection.
+
+### Never replace N issues with one issue holding N rows
+
+There is no fifth verdict. Do **not** close a set of issues into a "batch
+tracker", "umbrella", or "index" issue whose body is a table of the work — one
+row per item, each with a **Who** column to claim. It reads like tidying and it
+destroys the thing the board is for.
+
+A row cannot be assigned, cannot sit in a column, cannot be closed, and does not
+appear in anyone's queue. One card that is done when twenty independent
+adjudications are done is a card nobody can finish, and the twenty become
+invisible the moment the tracker scrolls.
+
+**The merge test is whether the WORK is the same, never whether the TEXT is.**
+Ask: does one person, doing this once, finish all of it? If no, they are
+separate issues no matter how alike the bodies read.
+
+Template-filled bodies are the trap, because a fleet of them looks like mass
+duplication at a glance. This happened, and cost real data: on 2026-08-04 this
+skill closed twenty `test <slug>` record-hint adjudications into one tracker,
+justifying it as "byte-identical bodies differing only in a name and two URLs".
+They were not duplicates in any sense — twenty different people, twenty
+different records, four different countries — and the shared text was the
+`/resolve-record-hint` boilerplate every one of them carries. The tracker then
+asserted three things that were false within days: that eighteen fixtures were
+still draft (ten were), that the unlisted ones had no card (three did, all
+assigned), and it dropped one fixture's hint ark entirely, pointing at a README
+that did not contain it. All four were reopened 2026-08-10 and the tracker
+deleted.
+
+If a set genuinely wants shared coordination, the tools for that are the
+`cluster:*` label and §4's batching, which keep every issue open and assignable.
+A standing `next run:` issue is the one legitimate umbrella, and it schedules
+work rather than containing it.
 
 Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
+
+**Two issues wanting different lines in the same file default to one issue.**
+Keeping them apart needs a stated reason — different lane, different reviewer, or
+a paid-run slot they cannot share. Absent one, merge.
 
 Bodies filed from 2026-08-04 open with a `**Touches:**` line — the instruction
 lives in `CLAUDE.md`'s `gh issue create` recipe, and essentially every issue in
 this repo is filed by Claude reading that file, so coverage on new issues should
 be high. Read it first.
 
-Still treat a missing line as **unknown**, never as "touches nothing": ~180 issues
-predate the convention, and a `CLAUDE.md` rule can be evicted from context late in
-a long session. The fallback grep is what carries the older half of the pool:
+Still treat a missing line as **unknown**, never as "touches nothing": much of the
+pool predates the convention, and a `CLAUDE.md` rule can be evicted from context
+late in a long session. The fallback grep carries the older half of the pool:
 
 ```sh
 grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
@@ -104,6 +232,24 @@ above the threshold, even ones that "feel" unrelated by title:
 ```sh
 grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
   /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 >= 3'
+```
+
+**The `>= 3` line is a triage cutoff, not an exclusion filter.** It orders where
+to spend attention first on a large pool — it is not a claim that a 2-hit file
+never hides a real duplicate. A pair of issues filed close together, before
+either has accumulated other unrelated citations, is exactly the shape most
+likely to sit at count 2 and be skipped by a skim. Run the 2-hit tier too
+(same command, `awk '$1 == 2'`) and give it the same close read — #1395 and
+#1396 cited the identical two lines (`research/SKILL.md:147`,
+`research-exhaustiveness/SKILL.md:113-116`) and were a clean absorb, but sat
+at count 2 in a large pool and were missed on a first pass that only read the
+`>= 3` tier. On a small pool, or when re-checking a single
+column against itself, drop the threshold to 2 outright rather than reporting
+only the head of the tally.
+
+```sh
+grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
+  /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 == 2'
 ```
 
 Same-file convergence is a strong batch signal on its own — verify it, don't
@@ -125,7 +271,7 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
 
 ## 2. Obsolete and out of date
 
-An issue body is a claim written on a particular day. Six checks, cheapest first.
+An issue body is a claim written on a particular day. Eight checks, cheapest first.
 
 **The PR already merged.** Look for a merged PR naming the issue number in its
 title or body, then confirm the artifact exists on disk.
@@ -170,6 +316,23 @@ on #N", "gated on the #N probe", "land after PR #N". Extract every one and
 resolve it. A closed blocker on an issue still marked blocked is the highest-value
 find in this section, because nothing else in the workflow notices.
 
+**The closed issue it points at never shipped.** The inverse of the check above,
+and it fails in the direction nobody looks. `closed` reads as done, so a body or
+a code comment that names a closed issue as its tracker is trusted on sight. Do
+not trust it — an issue can be closed `completed` with the work never landed.
+
+Resolve every closed issue cited **as a tracker**, in a body or in the code
+(`grep -rn '#<N>' packages/ apps/ eval/ docs/ scripts/ CLAUDE.md`), by checking
+the artifact, not the
+state. One case: a consolidation issue closed `completed` while all five copies
+it was meant to remove are still on `main` — with a source comment pointing
+readers at it. Anyone following that pointer lands on a closed ticket and an
+unsolved problem.
+
+Where the work did not land, say so on the closed issue and name what actually
+owns the scope. Reopening is usually wrong: the right survivor is often a
+different, open issue, and reopening a stale one just adds a second.
+
 **The measurement drifted.** Counts, sizes, line numbers and percentages age
 badly here. Re-run any figure an issue's decision rests on. Report the delta
 rather than silently using the new number — a body that says "46 of 80" against a
@@ -180,6 +343,46 @@ number ships a wrong constant.
 may have already disproved the reasoning. Bodies that were reviewed carry
 `> **Reviewed <date>**` headers; those are trustworthy. Bodies without one are
 as old as their `createdAt`.
+
+**The code exists — on a branch.** The costliest miss in this section, because
+every other check reads as *confirmed*. A body says a function shipped. It did —
+on a branch that never merged. The merged-PR check above passes it by (there is
+no merged PR), and a `grep` of `main` finds nothing, so the natural conclusion is
+"the premise is false" when the truth is "the premise is true somewhere nobody
+else can see." Search for the **content**, and ask `origin/main` first:
+
+```sh
+git fetch --all --prune --quiet                          # --all sees only what you fetched
+git log origin/main --oneline -S '<symbol or string>'    # did it ship? ask this first
+git log --all --oneline -S '<symbol or string>'          # only if main came back empty
+```
+
+Name `origin/main` explicitly. `HEAD` is whichever branch you are standing on,
+and a worktree is the normal place to run this from — testing against it answers
+a different question than the one you are asking. Do not test whether the sha is
+an ancestor of `main` either: this repo squash-merges, so a merged branch's
+commits are never ancestors of `main`, and every shipped PR reads as unmerged.
+
+When a body quotes a symbol, test id or string you cannot find on `main`,
+**search every branch before calling it invented.** The outcomes need opposite
+handling:
+
+| Result | Means | Do |
+|---|---|---|
+| `origin/main` finds it | It shipped | The body is current. Nothing to do here — the second command is not needed |
+| `origin/main` empty, `--all` empty | It never existed anywhere | The body is wrong. Correct it and ask the filer what they meant — do not close, their concern may survive a wrong citation |
+| `origin/main` empty, `--all` finds a commit | The body describes a branch | The issue is **blocked on that branch merging**. Name the branch and the sha in a comment |
+
+The `--all` search reads local refs, so a branch nobody fetched looks identical
+to a branch that never existed — hence the `fetch --prune` first, which also
+drops refs for branches deleted after merging.
+
+Both showed up in one 22-issue sample: an issue asserting a function had shipped
+warn-only when it sat on `origin/<feature-branch>`, with two follow-up comments
+written against code `main` does not contain; and a cluster of four issues citing
+test ids from an auditor's working tree, one of which had never existed in any
+branch. **Whole clusters can be filed from a tree that is not `main`** — when one
+issue in a group fails this check, check its siblings before trusting any of them.
 
 ## 3. Clusters — find them, then manage them
 
@@ -370,6 +573,16 @@ files, the same agent body. Do not merge across lanes to save a run: a
 `developer` harness fix and a `genealogist` fixture adjudication in one issue is
 unassignable, which costs more than the run saved.
 
+**Sharing a lane is necessary and not sufficient.** The run being paid once is
+what makes a merge pay, so this only applies where a single run covers the
+merged work — one snapshot, one suite, one annotation pass. It does **not**
+apply to N independent pieces of research that merely happen to be filed by the
+same lane against the same directory. Twenty record-hint adjudications are
+twenty separate investigations of twenty different people; merging them buys no
+run at all, because each still costs its own. Same-lane plus same-directory is
+where this rule has misfired — apply the "does one person finish all of it in
+one sitting?" test from §1 before merging on lane alone.
+
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
 trains people to bypass it on exactly the edits that are not neutral.
@@ -454,7 +667,8 @@ for it in board['items']:
 print('closed but in an active column:',
       [n for n,s in onboard.items() if s in cols and n not in issues])
 print('open but on no column:', sorted(set(issues)-set(onboard)))
-print('open but in Done:', [n for n,s in onboard.items() if s=='Done' and n in issues])
+print('open but in a terminal column:',
+      [(n,s) for n,s in onboard.items() if s in ('Done','Not planned') and n in issues])
 print('unlabeled:', [n for n,s in onboard.items() if s in cols and n in issues
                      and not issues[n]['labels']])
 print('unassigned in Ready/In Progress/Review:',
@@ -487,13 +701,17 @@ confidence.
 
 ## Output shape
 
-Lead with the two or three things that change what happens this week. Then:
+Open with the week's arithmetic (§0) — filed, closed, and whether this run's
+proposals meet the target, naming the gap when they do not. Then the two or three
+things that change what happens this week. Then:
 
 1. **Merge and close** — the duplicates and absorbs, with the evidence for each
    and the exact `gh` command. Then the batch-together and schedule-together
    pairs, kept separate from real merges.
 2. **Obsolete** — what to close outright, and what needs a body correction rather
-   than a close. One line of evidence each.
+   than a close. One line of evidence each. Keep **blocked on an unmerged branch**
+   as its own group: those are not obsolete, they are unbuildable, and the fix is
+   naming the branch rather than closing the issue.
 3. **Clusters** — one block each: members, what binds them, decision pending, next
    action, doer, and **Since**. Lead with any next action that has not moved since
    a previous audit.
