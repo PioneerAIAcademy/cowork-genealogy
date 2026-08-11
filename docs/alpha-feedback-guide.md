@@ -576,9 +576,13 @@ You're not in a directory set up by `setup-feedback-case.sh`. Run the setup
 script first, then `cd` into the resulting directory.
 
 **`/compare-state` says feedback.json has empty `<field>`.**
-The user's submission was missing a required field. Ask them to resubmit — that
-field is required by the submission format
-(`apps/electron/docs/feedback-json-spec.md`).
+For `user_prompt` or `agent_did`, the submission really is missing a required
+field — ask them to resubmit (those are required by the submission format,
+`apps/electron/docs/feedback-json-spec.md`). But an empty **`agent_should_have`**
+is legitimate, not a broken submission: `worked_as_expected: true` is a positive
+report (nothing went wrong), and even on a bug the reporter may not have known the
+ideal behavior. Don't ask them to resubmit — read `worked_as_expected` to tell a
+clean report from a problem.
 
 **`/mine-unit-test` can't identify the failing skill.**
 Run it as `/mine-unit-test --skill <name>` and pick the skill you edited.
