@@ -841,13 +841,21 @@ def main(argv: list[str] | None = None) -> int:
             interrupted = True
             stop_submitting = True
             print(
-                "\n  ! interrupted (Ctrl-C) — terminating in-flight tests and "
-                "saving completed results...",
+                "\n  ! interrupted (Ctrl-C) — saving completed results. "
+                "In-flight tests are not cancelled; this waits for them.",
                 file=sys.stderr,
                 flush=True,
             )
-            # Drop not-yet-started tests; in-flight worker subprocesses already
-            # got SIGINT from the terminal and are exiting. Don't wait on them.
+            # Drops not-yet-STARTED tests only. `cancel_futures=True` cannot
+            # cancel a future that is already running, and `wait=False` does not
+            # get us out either: the enclosing `with` block joins the pool on
+            # exit regardless. So in-flight tests run to completion and this
+            # returns after them — #1016 measured ~2 minutes on Windows. Their
+            # results are then discarded, because nothing reads those futures.
+            #
+            # The previous comment here claimed the opposite ("already got
+            # SIGINT and are exiting. Don't wait on them"), which is what made
+            # the wait look like a hang rather than the documented behavior.
             ex.shutdown(wait=False, cancel_futures=True)
             _flush_partials()
 
