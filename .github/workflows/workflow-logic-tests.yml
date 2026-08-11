@@ -1,13 +1,17 @@
 name: workflow-logic-tests
 
-# Runs the pure-logic tests for the workflows that write the kanban board.
+# Runs the pure-logic tests for the repo-governance files that route work:
+# which board column a card lands in, and which team reviews a path.
 #
-# WHY. project-status-sync.yml decides which column every card lands in, and a
-# wrong column is still a valid column: the run goes green, the board is quietly
-# wrong, and the only detector is a human noticing weeks later. Nothing else in
-# CI reads that file — the JS suite (`make test-js`) covers web, electron,
-# viewer-ui and schema, and a GitHub-workflow branch table belongs in none of
-# those packages.
+# WHY. Both decide something where a wrong answer is still a VALID answer, so
+# nothing downstream complains. project-status-sync.yml picks a column and a
+# wrong column is still a column; CODEOWNERS picks a reviewing team and an
+# unclaimed path still routes somewhere — to whoever the `*` catch-all names.
+# The run goes green, the board or the review queue is quietly wrong, and the
+# only detector is a human noticing weeks later. Nothing else in CI reads either
+# file — the JS suite (`make test-js`) covers web, electron, viewer-ui and
+# schema, and neither a workflow branch table nor a CODEOWNERS resolution
+# belongs in any of those packages.
 #
 # WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
 # says nothing about whether the App token can still write the board, whether
@@ -19,18 +23,16 @@ name: workflow-logic-tests
 # No install step and no dependencies on purpose: the test extracts the script
 # block from the raw YAML itself, so this job is `checkout` + `node`.
 
+# NO `paths:` FILTER, deliberately. The CODEOWNERS job's invariant is about the
+# repo's FILE SET — that no tracked path falls through to the `*` catch-all — so
+# the PR that breaks it is the one ADDING a file of a type nobody has claimed,
+# which touches none of the paths a filter could name. Both jobs are
+# `checkout` + `node` with no install step, so running them on every PR costs
+# seconds. Do not add a filter back without moving that job to its own workflow.
 on:
   pull_request:
-    paths:
-      - '.github/workflows/project-status-sync.yml'
-      - '.github/workflows/workflow-logic-tests.yml'
-      - '.github/tests/**'
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/project-status-sync.yml'
-      - '.github/workflows/workflow-logic-tests.yml'
-      - '.github/tests/**'
   workflow_dispatch:
 
 permissions:
@@ -46,3 +48,13 @@ jobs:
         with:
           node-version: '22'
       - run: node .github/tests/project-status-sync-routing.test.mjs
+
+  codeowners:
+    name: CODEOWNERS review routing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/codeowners-routing.test.mjs
