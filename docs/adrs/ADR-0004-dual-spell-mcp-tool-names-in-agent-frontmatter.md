@@ -9,7 +9,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Last updated:** 2026-08-05 (#1341 — two spellings became three)
+- **Last updated:** 2026-08-09 (a critique §9 citation repointed at ADR-0009)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -121,7 +121,8 @@ across spellings as a **CI-linted invariant**, which matters most on the deny
 side where a miss is silent. (An earlier draft claimed no public precedent for
 that. Dropped: a negative literature claim is unfalsifiable, an ADR is the wrong
 place for one, and the decision is fully justified by #650/#698 without it —
-critique §9 retracted a neighbouring novelty claim for the same reason.)
+ADR-0009's rev. 3 table retracted a neighbouring novelty claim for the same
+reason.)
 
 **Costs, knowingly accepted.**
 

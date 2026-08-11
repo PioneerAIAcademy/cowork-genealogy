@@ -1,0 +1,48 @@
+name: workflow-logic-tests
+
+# Runs the pure-logic tests for the workflows that write the kanban board.
+#
+# WHY. project-status-sync.yml decides which column every card lands in, and a
+# wrong column is still a valid column: the run goes green, the board is quietly
+# wrong, and the only detector is a human noticing weeks later. Nothing else in
+# CI reads that file — the JS suite (`make test-js`) covers web, electron,
+# viewer-ui and schema, and a GitHub-workflow branch table belongs in none of
+# those packages.
+#
+# WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
+# says nothing about whether the App token can still write the board, whether
+# the column names still exist on the live project, or whether the workflow wins
+# its race with the built-in "Item closed" automation. Those are only observable
+# from a live run — see the ORDERING note in project-status-sync.yml. Do not
+# read this job as end-to-end coverage of the board automation.
+#
+# No install step and no dependencies on purpose: the test extracts the script
+# block from the raw YAML itself, so this job is `checkout` + `node`.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/project-status-sync.yml'
+      - '.github/workflows/workflow-logic-tests.yml'
+      - '.github/tests/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/project-status-sync.yml'
+      - '.github/workflows/workflow-logic-tests.yml'
+      - '.github/tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  routing:
+    name: project-status-sync routing table
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/project-status-sync-routing.test.mjs
