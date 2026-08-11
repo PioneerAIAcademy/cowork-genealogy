@@ -1,6 +1,5 @@
 ---
 name: check-warnings
-model: claude-sonnet-4-6
 description: Genealogical data integrity guardrail — catches contradictions
   (data that cannot be true as recorded, such as death before birth or events
   after death) and implausible patterns (possible but unlikely enough to need

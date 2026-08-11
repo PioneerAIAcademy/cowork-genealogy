@@ -157,7 +157,16 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   if (gender !== undefined) out.gender = gender;
 
   if (Array.isArray(person.names) && person.names.length > 0) {
-    out.names = person.names.map(simplifyName);
+    // #1318: uphold the simplified-format first-position convention
+    // (simplified-gedcomx-spec.md §2) — a name FamilySearch marked
+    // `preferred` must be names[0], even when FS lists an alternate
+    // (e.g. AlsoKnownAs) before it. Stable: relative order within the
+    // preferred and non-preferred groups is preserved.
+    const names = person.names.map(simplifyName);
+    out.names = [
+      ...names.filter((n) => n.preferred === true),
+      ...names.filter((n) => n.preferred !== true),
+    ];
   }
 
   if (Array.isArray(person.facts) && person.facts.length > 0) {

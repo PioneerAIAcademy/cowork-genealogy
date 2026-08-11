@@ -30,9 +30,14 @@ name: Server tests
 # Anthropic key would break the "no secrets" property above. The offline tests in
 # that file do run, but they only prove the staging happened, not what the runtime
 # made of it. Run `make agent-smoke` by hand after touching
-# real_agent.build_options (root CLAUDE.md § Cowork plugin agents). Note the path
-# filter below also means a PR touching only packages/engine/plugin/agents/ runs
-# none of this. Wiring agent-smoke into CI is issue #1142.
+# real_agent.build_options (root CLAUDE.md § Cowork plugin agents). Wiring
+# agent-smoke into CI is issue #1142.
+#
+# packages/engine/plugin/agents/ is in the path filter below because the offline
+# half of that file reads those .md files directly — the staging test, the
+# frontmatter `name:` ↔ filename check, and the SKILL.md `@plugin:` delegation
+# contract. An agent rename is the change most likely to break bare-name
+# binding, and it touches no apps/server path.
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always reports
@@ -57,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^apps/server/|^\.github/workflows/server-tests\.yml$'
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^\.github/workflows/server-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

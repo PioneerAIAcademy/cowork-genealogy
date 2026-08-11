@@ -33,9 +33,12 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  const { url, label } = resolveFsImageInput(input, "image_read");
+  const { url, label, fallbackUrl } = resolveFsImageInput(input, "image_read");
 
-  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(url);
+  const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
+    url,
+    fallbackUrl
+  );
 
   // Refuse oversized images before encoding — returning them would overflow
   // the MCP transport buffer and crash the session (see MAX_INLINE_IMAGE_BYTES).
@@ -75,7 +78,7 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   return {
     imageData,
     metadata: {
-      url,
+      url: resolvedUrl,
       mimeType: contentType,
       sizeBytes,
       ...(imageRef ? { imageRef } : {}),
@@ -109,7 +112,13 @@ export const imageReadToolSchema = {
           "— ark:/61903/3:1:... or 3:2:... (e.g. from fulltext_search's " +
           "`id`), a bare 3:1:.../3:2:... id, a full resolver URL for one, " +
           "or an already-resolved DeepZoomCloud (ending in /$dist) or DGS " +
-          "(dgs:.../dist.jpg) distribution URL.",
+          "(dgs:.../dist.jpg) distribution URL. " +
+          "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
+          "film/register — the bare ARK can silently resolve to the WRONG image " +
+          "within that group. If the record was reached via a FamilySearch page " +
+          "URL carrying i=/cc=/groupId= query parameters (e.g. from the browser or " +
+          "a citation), pass the FULL URL including them, not just the bare ARK — " +
+          "those parameters are preserved and select the correct image.",
       },
       projectPath: {
         type: "string",

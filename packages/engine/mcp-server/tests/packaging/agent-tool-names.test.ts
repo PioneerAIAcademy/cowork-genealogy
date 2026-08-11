@@ -70,10 +70,18 @@ const repoRoot = join(mcpRoot, "..", "..", "..");
 // would break because a key moved out from under correctly-qualified agents.
 //
 // Grepping source for a dict key is brittle by nature. It is the pragmatic
-// option because the five sites span TypeScript, JSON and Python and share no
-// importable constant; the robust fix is a single shared MCP_SERVER_KEY that
-// all five read. If these patterns start missing, fix the pattern — do not
+// option because these sites span TypeScript, JSON and Python and mostly share
+// no importable constant; the robust fix is a single shared MCP_SERVER_KEY that
+// all of them read. If these patterns start missing, fix the pattern — do not
 // delete the assertion.
+//
+// The e2e site is the one that now has that constant. Since #941 the e2e
+// harness registers via `genealogy_mcp_config()` in eval/harness/e2e/
+// mcp_health.py — shared by orchestrator.py and preflight.py precisely so a
+// preflight cannot prove a different config than the run uses — so the key is a
+// named constant there rather than a literal inside a `mcp_servers={...}`
+// block, and this site reads the constant. That is the shape the paragraph
+// above recommends; the remaining sites still inline it.
 const SERVER_KEY_SITES: { file: string; pattern: RegExp; what: string }[] = [
   { file: ".mcp.json", pattern: /"mcpServers"\s*:\s*\{\s*"([^"]+)"/, what: "Claude Code project config" },
   {
@@ -82,8 +90,8 @@ const SERVER_KEY_SITES: { file: string; pattern: RegExp; what: string }[] = [
     what: "hosted web control plane",
   },
   {
-    file: "eval/harness/e2e/orchestrator.py",
-    pattern: /mcp_servers\s*=\s*\{\s*"([^"]+)"/,
+    file: "eval/harness/e2e/mcp_health.py",
+    pattern: /GENEALOGY_SERVER_NAME\s*=\s*"([^"]+)"/,
     what: "e2e harness",
   },
   {
@@ -336,4 +344,106 @@ describe("plugin agent/skill bodies", () => {
     }
     expect(offenders, offenders.join("\n")).toEqual([]);
   });
+});
+
+// A plugin agent's permission surface is frozen here, per agent, as the set of
+// BARE tool names it grants and denies.
+//
+// The assertions above check the SHAPE of each entry — that it names a real
+// tool under all three server spellings. Nothing checked the CONTENT: adding a
+// tool to `tools:`, or dropping one from `disallowedTools:`, was green. That is
+// the change most worth seeing, because no CI job can verify what a grant
+// actually binds to at runtime (only a live Cowork session can, in the run mode
+// being tested), and a missing deny fails OPEN — record-extractor silently
+// regains the broad `research_append` rather than erroring.
+//
+// This does not judge whether a permission is correct. It makes a change to one
+// impossible to land invisibly: the snapshot below has to be edited in the same
+// commit, where a reviewer sees it as a diff instead of as one more line in a
+// 50-line frontmatter block.
+//
+// Built-in tools that are not MCP tools (`Read`) stay bare and are pinned here
+// too — a widening to `Bash` or `Write` would otherwise slip past the
+// `mcp__`-only filter the assertions above use.
+//
+// Widening one of these is ordinary work. Editing the snapshot is how you say
+// you meant it.
+const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> = {
+  "gps-mentor.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "place_distance",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_query",
+      "validate_research_schema",
+      "wiki_place_page",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+  "image-reader-opus.md": { tools: ["image_read"], denies: [] },
+  "image-reader.md": { tools: ["image_transcribe"], denies: [] },
+  "record-extractor.md": {
+    tools: [
+      "extraction_append",
+      "place_search",
+      "place_search_all",
+      "project_context",
+      "record_person_matches",
+      "record_read",
+      "record_record_matches",
+      "research_log_append",
+    ],
+    denies: ["research_append"],
+  },
+};
+
+/** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
+function bareOrBuiltin(entry: string): string {
+  return entry.startsWith("mcp__") ? bareName(entry) : entry;
+}
+
+describe("plugin agent permission surface", () => {
+  it("pins every agent that ships", () => {
+    // Without this, adding a NEW agent — the easiest way to introduce a broad
+    // grant — adds no snapshot and the per-agent loop below simply never runs
+    // for it.
+    expect(
+      Object.keys(AGENT_PERMISSIONS).sort(),
+      "an agent was added or removed: update AGENT_PERMISSIONS to match",
+    ).toEqual([...agentFiles].sort());
+  });
+
+  for (const file of agentFiles) {
+    const expected = AGENT_PERMISSIONS[file];
+    if (!expected) continue; // reported by the test above
+
+    describe(file, () => {
+      const text = readFileSync(join(agentsDir, file), "utf8");
+      const granted = [...new Set(extractList(text, "tools").map(bareOrBuiltin))].sort();
+      const denied = [...new Set(extractList(text, "disallowedTools").map(bareOrBuiltin))].sort();
+
+      it("grants exactly the pinned tools", () => {
+        expect(
+          granted,
+          `${file}'s tools: no longer matches AGENT_PERMISSIONS. If you meant to widen ` +
+            `what this agent can call, update the snapshot in the same commit so the ` +
+            `change is reviewable as a diff.`,
+        ).toEqual([...expected.tools].sort());
+      });
+
+      it("denies exactly the pinned tools", () => {
+        expect(
+          denied,
+          `${file}'s disallowedTools: no longer matches AGENT_PERMISSIONS. A deny removed ` +
+            `here fails OPEN and silently — the agent regains the tool with no error ` +
+            `anywhere. Update the snapshot only if that is what you intend.`,
+        ).toEqual([...expected.denies].sort());
+      });
+    });
+  }
 });

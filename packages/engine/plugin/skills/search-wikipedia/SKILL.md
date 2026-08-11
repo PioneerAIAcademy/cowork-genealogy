@@ -1,6 +1,5 @@
 ---
 name: search-wikipedia
-model: claude-sonnet-4-6
 description: Look up a topic on Wikipedia — the general-purpose encyclopedia — and save the summary as a markdown file in the user's working folder. Use when the user explicitly names Wikipedia, or asks to look up or save general background on a topic, person, place, or historical event. Do NOT use when the user names the FamilySearch Research Wiki or "FamilySearch wiki" (use search-familysearch-wiki), wants a locality records-availability guide — what records exist for a place and where they are held (use locality-guide), or wants narrative genealogical history such as migration patterns or boundary changes (use historical-context).
 allowed-tools:
   - wikipedia_search
