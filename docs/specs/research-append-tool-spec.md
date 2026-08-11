@@ -172,6 +172,10 @@ camelCase convenience fields the same way `research_log_append` does.
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
 
+`validation.warnings` carries non-blocking advisories: `standard_place` that
+could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
+no-op, and the sources-without-assertions persistence nudge (§5.1).
+
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
 > **Batching cuts round-trips, not generation time.** Measured on a real
@@ -555,6 +559,38 @@ establish-and-consume in one call. Any future precondition of the form "X must
 already be true" needs the same treatment; other same-batch orderings have been
 flagged but not audited (`guardrail-enforcement-spec.md` §10).
 
+### 5.1 Sources-without-assertions nudge (warning, not a precondition)
+
+A **warning** — never a rejection — emitted on a successful write when the call
+appended a `sources` entry (a real, non-no-op append) and the resulting project
+holds **≥ 3** sources but **zero** assertions. It rides `validation.warnings`
+and never touches `ok`. Implemented as `sourcesWithoutAssertionsWarning` in
+`research-append.ts`; motivated by issue #1478, three feedback bundles where the
+research log and sources grew while `assertions` stayed empty — a run that
+reasons well but persists no evidence is indistinguishable downstream from one
+that did nothing.
+
+- **Warn, not deny.** A hard block would trip the false-deny asymmetry
+  (`guardrail-enforcement-spec.md` §10): the legitimate "record the sources this
+  turn, extract next turn" rhythm would become a loud availability regression.
+  This is the same warn-not-fail choice as `research_log_append`'s discarded-
+  results warning (issue #1477 / PR #1482), which this mirrors.
+- **Threshold and boundary.** 1–2 sources before any assertion is the normal
+  record-then-extract rhythm; ≥3 with none drawn is the reported pathology
+  (bundle 1: 13 sources, 0 assertions). The trigger is **exactly zero**
+  assertions, so it self-silences the instant one lands and never nags a
+  high-source/low-assertion project perpetually. The cost is a false negative —
+  a run that draws 1 assertion from 13 sources does not warn; that
+  partial-extraction shape is out of scope here (see the #1478 follow-on).
+- **Tool-neutral, because it fires for `extraction_append` too.**
+  `extraction_append` routes through `researchAppend` (§11), and its
+  `record-extractor` caller is denied `research_append`, so the message names no
+  specific write tool — it says "append the assertions this evidence supports,"
+  correct whether the caller reaches for `research_append` or `extraction_append`.
+- **Warnings can be rationalized away.** This surfaces the imbalance; it does not
+  compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
+  first lever, not the last word.
+
 ---
 
 ## 6. Decisions recorded
@@ -821,6 +857,11 @@ main-session `Skill` invocation at all — is `docs/specs/guardrail-enforcement-
 A `PreToolUse` hook *does* now reach production (Cowork and hosted, via the
 plugin), so the "eval-only" half of the sentence above is no longer true of the
 instrument, only of the caller-attribution rule it would need.
+
+One behavior *does* surface for `extraction_append`: the sources-without-
+assertions nudge (§5.1) fires whenever a call leaves ≥3 sources and zero
+assertions, including calls the `record-extractor` agent makes here — which is
+why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
