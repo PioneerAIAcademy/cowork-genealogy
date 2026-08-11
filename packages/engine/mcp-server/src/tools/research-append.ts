@@ -174,6 +174,36 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Warn — NOT reject — a `confident` person_evidence link that records no numeric
+ *  `match_score` (#1006). `same_person` returns a 0–1 float and `match_score` is
+ *  the field meant to carry it, yet 94% of historical person_evidence writes leave
+ *  it unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
+ *  text rides the response's `validation.warnings` and the write still succeeds —
+ *  because a hard reject on day one would break ~94% of runs and the hosted path
+ *  at once. Graduating it to a rejection is a separate decision (needs @DallanQ),
+ *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7.
+ *
+ *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
+ *  `research_append` is a stateless write that cannot see the tree or the session,
+ *  so "brand-new tree person" is not knowable here, but the confidence claim is —
+ *  and a confident identity is exactly the one that should carry the score behind
+ *  it. That gate is also the honest escape hatch: a link that genuinely cannot be
+ *  scored (no comparable FamilySearch person) should claim `probable`/`speculative`
+ *  rather than `confident`. A present number does not prove `same_person` actually
+ *  ran — but that is the same trust posture the `confidence` field itself takes,
+ *  and far stronger than nothing. */
+function personEvidenceScoreWarnings(entry: any): string[] {
+  if (entry.confidence !== "confident") return [];
+  if (typeof entry.match_score === "number") return [];
+  return [
+    `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
+      `claims confidence 'confident' but records no match_score. A confident identity should ` +
+      `carry the same_person score behind it (a number 0–1). If this link genuinely cannot be ` +
+      `scored against a comparable FamilySearch person, use 'probable' or 'speculative' instead ` +
+      `of 'confident'. The link was still written — this is a warning, not a rejection.`,
+  ];
+}
+
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
@@ -780,6 +810,10 @@ function applyOne(
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
+  // Warn-only advisories: collected here, surfaced on the successful response's
+  // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
+  // thrown. Distinct from invariantErrors, which reject the write (#1006).
+  const opWarnings: string[] = [];
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
@@ -790,6 +824,9 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+    // Warn-only: a confident link that records no match_score (#1006). Rides the
+    // response warnings; does not block the write.
+    opWarnings.push(...personEvidenceScoreWarnings(resultEntry));
   }
   // Only when THIS op is the one setting/changing tier — append always sets it;
   // update only when `fields` names it. An unrelated update to an entry already
@@ -805,7 +842,13 @@ function applyOne(
     throw new ResearchAppendError(invariantErrors);
   }
 
-  return { section, op: op.op, entryId, arrayIndex };
+  return {
+    section,
+    op: op.op,
+    entryId,
+    arrayIndex,
+    warnings: opWarnings.length > 0 ? opWarnings : undefined,
+  };
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
