@@ -68,7 +68,7 @@ observed live in Cowork 2026-08-09). Three of those carry `needs-decision`.
 persists the state, or a `PreToolUse` hook where no writer tool owns the route.
 Prose states the rule; it does not enforce it.**
 
-Concretely, this is a placement question with four answers:
+Concretely, this is a placement question with five answers:
 
 | The rule constrains… | Put it in |
 |---|---|

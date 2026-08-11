@@ -387,7 +387,7 @@ route, or ask the user). The transcription itself is complete and unchanged — 
 field is additive.
 
 **Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
-`` `${projectPath}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
+`` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
 per project; the group is the digits before the underscore in the `imageId`. The map
 is process-lifetime and **never persisted**; re-reading an image already in the set
 does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
