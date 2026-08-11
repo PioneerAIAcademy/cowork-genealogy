@@ -1,13 +1,18 @@
 name: workflow-logic-tests
 
-# Runs the pure-logic tests for the workflows that write the kanban board.
+# Runs the pure-logic tests for the repo-governance files that route work:
+# which board column a card lands in, and which team reviews a path.
 #
-# WHY. project-status-sync.yml decides which column every card lands in, and a
-# wrong column is still a valid column: the run goes green, the board is quietly
-# wrong, and the only detector is a human noticing weeks later. Nothing else in
-# CI reads that file — the JS suite (`make test-js`) covers web, electron,
-# viewer-ui and schema, and a GitHub-workflow branch table belongs in none of
-# those packages.
+# WHY. Both decide something where a wrong answer is still a VALID answer, so
+# nothing downstream complains. project-status-sync.yml picks a column and a
+# wrong column is still a column; senior-queue.yml picks a review queue off
+# CODEOWNERS, and a pattern its parser cannot read routes the PR to the wrong
+# team while the merge gate still enforces correctly. The run goes green, the
+# board or the review queue is quietly wrong, and the only detector is a human
+# noticing weeks later. Nothing else in CI reads either file — the JS suite
+# (`make test-js`) covers web, electron, viewer-ui and schema, and neither a
+# workflow branch table nor a CODEOWNERS resolution belongs in any of those
+# packages.
 #
 # WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
 # says nothing about whether the App token can still write the board, whether
@@ -21,16 +26,15 @@ name: workflow-logic-tests
 
 on:
   pull_request:
-    paths:
+    paths: &paths
+      - '.github/CODEOWNERS'
       - '.github/workflows/project-status-sync.yml'
+      - '.github/workflows/senior-queue.yml'
       - '.github/workflows/workflow-logic-tests.yml'
       - '.github/tests/**'
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/project-status-sync.yml'
-      - '.github/workflows/workflow-logic-tests.yml'
-      - '.github/tests/**'
+    paths: *paths
   workflow_dispatch:
 
 permissions:
@@ -46,3 +50,13 @@ jobs:
         with:
           node-version: '22'
       - run: node .github/tests/project-status-sync-routing.test.mjs
+
+  codeowners:
+    name: CODEOWNERS review routing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/codeowners-routing.test.mjs
