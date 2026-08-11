@@ -779,12 +779,14 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 inflight[fut] = (idx, spec)
 
-        # A single Ctrl-C terminates the in-flight tests (the terminal
-        # delivers SIGINT to the whole process group, including the `claude`
-        # subprocesses each worker is blocked on) and unwinds here. We catch
-        # it so the completed results that _flush_partials() already wrote
-        # survive, instead of crashing past the save step. A second Ctrl-C
-        # during the shutdown join re-raises and exits via __main__.
+        # A single Ctrl-C unwinds here: the terminal delivers SIGINT to the
+        # whole process group, including the `claude` subprocesses each worker
+        # is blocked on. It does NOT terminate the in-flight tests — #1016
+        # watched them run to completion on Windows while the parent waited
+        # (see the shutdown call below, which cannot cancel a running future).
+        # We catch it so the completed results that _flush_partials() already
+        # wrote survive, instead of crashing past the save step. A second
+        # Ctrl-C during the shutdown join re-raises and exits via __main__.
         try:
             _fill()
             while inflight:
