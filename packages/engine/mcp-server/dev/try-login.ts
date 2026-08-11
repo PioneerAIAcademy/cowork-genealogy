@@ -2,7 +2,7 @@
  * One-off FS login from the remote Linux box.
  *
  * Usage:
- *   npx tsx dev/try-login.ts <clientId>
+ *   npx tsx dev/try-login.ts
  *
  * What happens:
  *   1. Starts an HTTP listener on 127.0.0.1:1837 for the OAuth callback.
@@ -15,11 +15,9 @@
  */
 import { loginTool } from "../src/tools/login.js";
 
-const clientId = process.argv[2];
-if (!clientId) {
-  console.error("Usage: npx tsx dev/try-login.ts <clientId>");
-  process.exit(1);
-}
+// No argument: the FamilySearch client id comes from the bundled
+// config/familysearch.json via getClientId(). This script used to require one
+// and exit(1) without it, which made the now-correct invocation fail.
 
 console.log("Starting OAuth flow. Watch for the authorization URL below.");
 console.log("Open it in a browser on your laptop (port 1837 must be forwarded).");

@@ -515,7 +515,7 @@
   },
   "I": {
     "fuzzy": {
-      "total": 1025879,
+      "total": 1025884,
       "sampled": 100,
       "initialsShaped": 95,
       "initialsPct": 95,
@@ -539,9 +539,9 @@
     "fuzzyTransposedPct": 29,
     "exactTransposedPct": 0,
     "verdict:fuzzy swallows initials into spelled-out names": "NO — the fuzzy row is overwhelmingly initials-shaped too",
-    "verdict:.exact pins the initials ORDER": "CONFIRMED — fuzzy returns the transposition, exact does not",
+    "verdict:.exact pins the initials ORDER": "SAMPLED ONLY — fuzzy returns the transposition at a substantial rate and the exact sample contains none. The second half is an ABSENCE inside a 100-row window onto an 8,483-row pool, which is not evidence under RULE 0. Section N confirms the fuzzy half by enumeration; the exact half is unmeasured.",
     "verdict:the levers initials exception": "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion",
-    "measured_at": "2026-08-10T20:48:10.147Z"
+    "measured_at": "2026-08-11T17:35:19.781Z"
   },
   "V": {
     "ellis:Ellis-Island": {

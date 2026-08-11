@@ -662,16 +662,7 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
         /Father/i.test(d.role ?? "")
       );
     });
-    /**
-     * The GIVEN part of a person's name, out of the raw payload's actual shape.
-     *
-     * That shape is `names[].nameForms[].parts[]`, each part tagged with a
-     * GEDCOM X type URI (`http://gedcomx.org/Given`). It is NOT a flat
-     * `names[].given` — the first version of this helper assumed it was, found
-     * nothing on every person, and silently made every relative "nameless".
-     * Section R then reported ZERO conflicts because nothing could ever be
-     * classified as named: a vacuous pass that looked like a clean result.
-     */
+    // `givenOf` now lives in dev/payload-extract.ts (see its docblock there).
     const fatherName = ((father?.display ?? {}) as { name?: string }).name ?? null;
     const parentsIndexed = persons.filter((q) => parentIds.includes(q.id as string)).length;
 
@@ -862,35 +853,10 @@ function tally(values: string[]): string {
     .join(" ");
 }
 
-/**
- * First 4-digit year in an index date string, or null when there is none.
- *
- * FIRST, not last, and deliberately: a minority of entries hold a range
- * ("1849-1851") or a christening date alongside a birth year, and the leading
- * year is the one the range bound was matched against. A value with no year at
- * all (an empty date, or "abt" with no digits) returns null and is counted as
- * no-indexed-year rather than silently scored in-range — the difference is
- * exactly what section H's third verdict measures.
- */
-
-/**
- * A year from a GEDCOM X `date` OBJECT, not just its `original` string.
- *
- * `yearOf` above reads whatever string it is handed, and every caller handed it
- * `date.original`. That is frequently NOT where the year is. Confirmed live
- * 2026-08-11 against the death pool used by section Y:
- *
- *     QP8V-35G7  Burial  original: "5"   formal: "+1505"
- *     QP8V-35GM  Burial  original: "20"  formal: "+1520"
- *
- * A register entry often indexes the day-of-month in `original` and carries the
- * real date only in `formal`/`normalized`. Reading `original` alone scored four
- * of nine dated facts in one page as YEAR-SILENT when every one of them is
- * dated — and the error is one-directional: it can only ever manufacture
- * silence, never remove it. That inflates every year-silence figure in this
- * file, and it is why section Y called a genuinely in-range 1505 burial a
- * survivor of `.exact` and then loosened a threshold to accommodate it.
- */
+// `yearOf` and `yearOfDate` moved to dev/payload-extract.ts, where they are
+// asserted against captured payloads in tests/dev/payload-extract.test.ts.
+// Their doc comments went with them; leaving the blocks here made them
+// render as documentation for sectionA().
 
 // --- SECTION A — the require switch --------------------------------------
 

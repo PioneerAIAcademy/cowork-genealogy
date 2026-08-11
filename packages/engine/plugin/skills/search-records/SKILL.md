@@ -168,8 +168,10 @@ spouse families; other fields follow the same pattern.
 - **The one exception — an initials search.** Where the index holds the person as
   initials (common in US census and directory records), fuzzy
   `givenName: "J W"` also returns the **transposition** `W J` in a substantial
-  share of results. `givenNameExact` removes the transposed form, keeps the order
-  you asked for, and narrows the pool sharply. (The transposed record is still
+  share of results. `givenNameExact` is expected to pin the order you asked
+  for, and does narrow the pool sharply — but the exact half rests on a sampled
+  page, not a pool read to the end, so do not count on the transposition being
+  gone. (The transposed record is still
   reachable without it, by narrowing onto the surname.)
 - **`<event>PlaceExact` is for making a count mean something, not for finding.**
   An unqualified place scope expands upward so far that a county barely
@@ -522,7 +524,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Hand off the `recordId` explicitly.** Each ranked match (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
-1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** pass the Step 3 handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the searched person's full gedcomx (facts, source citation, standardized places) **without a network round-trip**. **Do NOT `Read` the sidecar file yourself:** `record_read` pulls just the one record out, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always `recordId` — the result's `recordId` field if present, otherwise its `arkUrl` value. Do NOT use `arkId`, `ark`, `id`, or `url`.
+1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** pass the Step 3 handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the searched person's full gedcomx (facts, source citation, standardized places) **without a network round-trip**. **Do NOT `Read` the sidecar file yourself:** `record_read` pulls just the one record out, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always `recordId` — the result's `recordId` field, which every result carries (the ARK, when you need it, is `recordArk`). Do NOT use `arkId`, `ark`, `id`, or `url`.
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
