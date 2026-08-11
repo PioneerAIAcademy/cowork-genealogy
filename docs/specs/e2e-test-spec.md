@@ -960,15 +960,16 @@ Three integrity rules make the agreement number trustworthy:
   compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
   deferred to `/interpret-e2e-result`, which is itself blind to them.
 
-  > **Caveat on annotations collected before PR #1114.** The roll-up has
+  > **Caveat on annotations collected before 2026-08-05.** The roll-up has
   > printed verdict-bearing output since the harness's first commit
-  > (`git show d371694a:eval/harness/e2e/report.py`). PR #972 (2026-07-31)
-  > removed the per-run verdict print but left the end-of-suite roll-up
-  > intact — recall summary, overall gate, and by-tag breakdowns all
-  > restated the verdict. PR #1114 removed those lines. Any `.ann.json`
-  > committed before #1114 was drawn with some form of the verdict on
-  > screen. `calibrate_judge` does not exclude these rows; the bias is
-  > accepted and ages out as new blind annotations replace them.
+  > (`git show d371694a:eval/harness/e2e/report.py`). On 2026-07-31, the
+  > separation of compliance from verdict removed the per-run verdict print
+  > but left the end-of-suite roll-up intact — recall summary, overall gate,
+  > and by-tag breakdowns all restated the verdict. On 2026-08-05, blind
+  > grading enforcement removed those lines. Any `.ann.json` committed before
+  > that date was drawn with some form of the verdict on screen.
+  > `calibrate_judge` does not exclude these rows; the bias is accepted and
+  > ages out as new blind annotations replace them.
   >
   > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
   > when the combined gate fails, so with compliance clean, `make`'s
@@ -1054,8 +1055,8 @@ never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
 `not_checked` rather than `pass`, distinguishing pre-detector code by the
 presence of the `guardrail_shadow_violations` key (the two shipped in the same
-commit). Retroactively scoring the corpus is tracked as issue #913, and needs
-the checks replayed at a pinned version to be meaningful.
+commit). Retroactively scoring the historical corpus needs the checks replayed
+at a pinned version to be meaningful.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
@@ -1098,17 +1099,17 @@ result, across 66 of the 555 runs — but **none is a `same_person`,
 tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
-is a correctness statement, not a warning of a large shift: the numbers issues
-#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
-blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
-a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
-is why the shift is this small.
+is a correctness statement, not a warning of a large shift: measured movement is
+~1 entry in 555 runs. `is_error` is also blind to a writer tool that returns
+`{ok:false}` without throwing and to a skill that launches and then fails
+(`guardrail-enforcement-spec.md` §7), which is why the shift is this small.
 
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
-that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
-calibration itself is #911's.
+that always reads zero. Revisit only if writer-tool failures that return (but
+don't throw) become visible in `is_error`, or the corpus accumulates errored
+`same_person`/`Skill` calls; the shadow-mode recency window calibration is the
+prerequisite.
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
@@ -1216,7 +1217,7 @@ change before diffing across it — see §15, "Evidence to read, in order", step
 At the end of a `run_e2e.py` invocation the harness prints a console summary of
 the run. Only **compliance** and **cost/duration** are shown — verdict-bearing
 lines (recall summary, overall gate, by-tag breakdowns) are deliberately
-omitted to preserve blind grading (§7.4, issue #1114):
+omitted to preserve blind grading (§7.4):
 
 ```
   compliance: 0/1 clean — 1 guardrail bypass (isabel-carvajal-daughter)
