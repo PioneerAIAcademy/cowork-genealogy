@@ -1,4 +1,4 @@
----
+﻿---
 name: search-records
 description: Executes searches against FamilySearch historical records per
   the research plan. Routes to the correct MCP search tool based on record
@@ -506,7 +506,7 @@ If the user says "search all repositories," execute the FamilySearch items then 
 - **Let the user confirm before extraction.** Show triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this skill writes only log entries and plan-item status, not assertions.
-- **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?" — that question was already answered (issue #1319).
+- **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 

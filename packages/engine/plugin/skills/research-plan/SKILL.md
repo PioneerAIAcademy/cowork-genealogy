@@ -1,4 +1,4 @@
----
+﻿---
 name: research-plan
 description: Creates, reviews, and revises a sequenced research plan (in research.json)
   for a genealogy question — which record sets to search, in what order, from which
@@ -269,13 +269,8 @@ to write:
 4. All relevant jurisdictions included (considering boundary changes)?
 5. All relevant time periods included?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
-a revision after being asked. Issue #1319: testers had to ask "was
-anything missed?" — sometimes twice — before probate, church, land, or
-FAN items that were already discoverable from `collections_search` at
-plan-writing time ever appeared. A plan that only reaches Standard 17 on
-a second round is not reasonably exhaustive on the first: it looked
-thorough (it hit the size range above) while staying narrow in
-record-type diversity.
+a revision after being asked. A plan that hits the size range above while
+staying narrow in record-type diversity is not reasonably exhaustive.
 
 ### 5. Write the plan
 
@@ -424,10 +419,7 @@ re-issue it first. Then present the plan:
   research," or "...don't stop to check in with me" — hand off to
   execution in this same turn instead of asking: `Skill("search-records")`
   for FamilySearch items, `Skill("search-external-sites")` for others.
-  Re-asking a question the message already answered is the defect this
-  guards against, not a safety margin (issue #1319 — a tester had to say
-  it twice before the agent proceeded past a plan she'd already authorized
-  executing). If only some items can execute right now (e.g. one
+  If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), execute those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
