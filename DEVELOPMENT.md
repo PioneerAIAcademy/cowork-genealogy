@@ -44,6 +44,13 @@ that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
 installer only when a *new* hook is added to the list.
 
+The one thing the hook does **not** set up is the compiled engine
+(`packages/engine/mcp-server/build/`). Run the Python suites through
+`make harness-test`, which builds the engine first; a bare `pytest` in a fresh
+worktree fails on the missing build and looks like a regression. Do not symlink
+`build/` into a worktree — a worktree on an engine branch would then silently
+test `main`'s compiled output.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
@@ -114,11 +121,19 @@ issue is easy to create and easy to forget; a PR that closes the gap it found
 needs nothing else to remember it. File a new issue instead of fixing it here
 only when at least one of these holds, and say which in the PR description:
 the fix needs a different reviewer or skill (a code fix found during fixture
-work, or vice versa); it would blow this PR's own scope enough to slow its
-review meaningfully; it depends on a decision only the lead can make; or it's
-a different skill's eval slot and bundling it would force a second paid run.
+work, or vice versa); it depends on a decision only the lead can make; it's
+a different skill's eval slot and bundling it would force a second paid run;
+or it is too big for this PR — **and you have opened the call sites and
+counted**, and can say how many files and roughly how many lines. "It feels
+out of scope" is not a measurement, and asserting scope instead of measuring it
+is the usual way a foldable fix turns into an orphaned ticket.
 "I noticed it in passing" is not one of these — on its own it's a reason to
 fix it now, not to file it.
+
+**And if it's a nit, drop it.** A wording preference, a tidier structure, a
+test you'd like but nothing is broken without — say nothing and move on. A
+filed nit costs triage every morning for as long as it stays open, and the
+board is where it will stay. Not every gap you notice needs a record.
 
 For whatever you do decide to defer: **file each one as a GitHub issue in the
 same PR that defers it.** Ask Claude to do it; it is one command and needs no
@@ -166,12 +181,24 @@ gh issue create --label developer --title "…" --body "…"
   chose not to do.
 
 **Search once before you file, then stop.** Filing is the last resort in a
-four-step order: fold it into this PR; comment on an existing issue that covers
-it; file with `--label icebox` when no decision sits behind it; file as normal
-work. The search is one command — `gh issue list --state open --search "<path or
-symbol>"`, plus a grep of the `**Touches:**` lines — because the overlap is
-usually at a line number, not a title, and a comment on the issue that already
-owns the file beats a second issue against it.
+four-step order: fix it in this PR; drop it if it's a nit; comment on an
+existing issue that covers it; file (with `--label icebox` when no decision sits
+behind it). The search is one command — `gh issue list --state open --search
+"<path or symbol>"`, plus a grep of the `**Touches:**` lines — because the
+overlap is usually at a line number, not a title, and a comment on the issue
+that already owns the file beats a second issue against it.
+
+**Filing prompts the lead.** `gh issue create` is gated by a `PreToolUse` hook
+(`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`,
+which Claude Code reads straight from the checkout — nothing to install) that
+stops the call and puts the four steps in front of him before anything is
+filed. It's a prompt, not a refusal —
+approving it files the issue. Answer it by saying which exemption applies.
+It costs about 15 ms per Bash call and fails open, so a crash in the gate can
+never block a command you were entitled to run. `python3
+scripts/claude-hooks/test-gate-issue-create.py` proves it fires on the real
+shapes (including inside a compound command) and stays quiet on
+`gh issue list`, `gh pr create`, and malformed input.
 
 Do not agonise past that one search. `/audit-board` merges, rewrites and drops
 issues across the whole pool weekly, which is the only vantage point from which
@@ -509,7 +536,15 @@ fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon depl
 On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
 config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
 `FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
-`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+`DATA_DIR` once the DB is on Neon.
+
+`WIKI_API_URL` and `POP_STATS_URL` belong in that `[env]` block too. They point
+hosted sessions at the wiki-query and Pop Stats services; leave them unset and
+the engine uses its compiled-in defaults, which name one developer's tailnet
+host. Changing one reaches existing sessions on their next connect — no need to
+recreate a project.
+
+The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a

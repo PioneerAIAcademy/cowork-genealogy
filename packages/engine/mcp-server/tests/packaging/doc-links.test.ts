@@ -295,7 +295,6 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "packages/schema/src/index.ts:269",
     "scripts/build-mcpb.mjs:26-27",
   ],
-  "docs/architecture.md": ["src/index.ts:736"],
   "docs/realtime-architecture.md": [
     "apps/server/app/models.py:45",
     "local.py:195",
@@ -440,8 +439,10 @@ describe("docs/ cite symbols, not line numbers", () => {
  * purely because a ticket closed, while the gap it describes never moved, and
  * not one of §9.4's six consumers (`task-reviewer`, `review-ready`,
  * `fill-ready`, `CLAUDE.md`, and two in-file pointers) reads a ticket number —
- * they all ask for the gap and its consequence. The `Tracking` column is gone
- * and the file is in scope like any other.
+ * they all ask for the gap and its consequence. The `Tracking` column went
+ * first; on 2026-08-09 the §9.4 gap table and the §10 open-questions list went
+ * too, both replaced by a live `gh issue list` query, which is what took this
+ * file from 24 refs to 20. It is in scope like any other.
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
@@ -452,7 +453,7 @@ describe("docs/ cite symbols, not line numbers", () => {
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
-  "docs/architecture.md": 24,
+  "docs/architecture.md": 20,
   "docs/specs/e2e-test-spec.md": 12,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
@@ -561,5 +562,37 @@ describe("README catalogs what ships", () => {
     };
     expect(stated("MCP tools"), "README's tool count").toBe(manifest.tools.length);
     expect(stated("shipped skills"), "README's skill count").toBe(skills.length);
+  });
+});
+
+/**
+ * `git merge-base --is-ancestor <sha> main` is the obvious way to ask "did this
+ * ship", and it is wrong in this repo: PRs land as squash commits, so a merged
+ * branch's commits are never ancestors of `main`. The test answers "unshipped"
+ * for every PR that shipped. It reached three skills before anyone ran it —
+ * `audit-board` routed shipped work to "blocked on a branch", `triage-standup`
+ * accused reporters of not landing work they landed, and `fill-ready` held
+ * cleared blockers shut. Ask `gh pr view --json baseRefName` what a PR merged
+ * into, and `git log origin/main -S` whether the content arrived.
+ */
+describe("prose does not test shipped-ness with commit ancestry", () => {
+  it("bans merge-base --is-ancestor across the linted corpus", () => {
+    const corpus = [...new Set([...lintedFiles(), ...docsMarkdown(projectRoot)])];
+    const offenders: string[] = [];
+    for (const rel of corpus) {
+      const full = join(projectRoot, rel);
+      if (!existsSync(full)) continue;
+      readFileSync(full, "utf8")
+        .split("\n")
+        .forEach((line, i) => {
+          if (line.includes("--is-ancestor")) offenders.push(`${rel}:${i + 1} — ${line.trim()}`);
+        });
+    }
+    expect(
+      offenders,
+      "This repo squash-merges: a merged branch's commits are never ancestors of main, " +
+        "so --is-ancestor calls every shipped PR unshipped. Ask `gh pr view --json baseRefName` " +
+        "what it merged into, and `git log origin/main -S '<string>'` whether the content landed.",
+    ).toEqual([]);
   });
 });

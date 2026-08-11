@@ -731,7 +731,7 @@ move the `compliance` axis until its false-positive rate is measured. Detector:
 - `docs/specs/research-append-tool-spec.md` §5, §11 — the write-boundary
   invariant and the `extraction_append` lane-gating precedent this extends
 - `docs/architecture.md` §5 — the three capability-binding surfaces and which
-  of them bind in production; §9.4 lists what nothing checks
+  of them bind in production; §9.4 points at what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
 - Issue #1054 — retain a hosted tool-call ledger, then port §8. The one open
   dependency named on this page; §8 cannot reach production without it.
