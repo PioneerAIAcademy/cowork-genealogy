@@ -7,11 +7,11 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-10 (first written down)
+- **Last updated:** 2026-08-11 (issue-filing gate added to Applies to)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
+- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
 - **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509
 
 ## Context
