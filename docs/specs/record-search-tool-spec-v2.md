@@ -132,7 +132,7 @@ together in a record but doesn't know the formal relationship.
 | Field | Type | Description |
 |-------|------|-------------|
 | `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `"1743384"`). |
-| `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
+| `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `volume_search` tool first to find the image group number. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
