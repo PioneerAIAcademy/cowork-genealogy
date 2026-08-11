@@ -1154,6 +1154,25 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
+**A fifth check runs in shadow mode only: the warnings guardrail was never
+consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
+`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
+relationships do not count) for which `person_warnings` — the cheapest, LLM-free
+guardrail — was never successfully called. It keys on the `person_warnings`
+**tool** across all server spellings, not the `check-warnings` skill, so it
+catches a direct-tool path and a skill that launches but fails before reaching the
+tool. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "warnings_unchecked"` for its own bucket
+(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
+diverged only on whether the parentage write was delegated to `proof-conclusion`
+(which carries the check-warnings step) or inlined by the orchestrator (which does
+not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
+check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
+an inlined write is still gated — is gated on reading this fire rate across the
+corpus first**; not decided here.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
