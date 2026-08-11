@@ -165,16 +165,20 @@ spouse families; other fields follow the same pattern.
   measured directly. They rank deep and are easy to miss: to chase a nickname, pass
   it as its own `givenName` value rather than making the formal name exact, or
   narrow the query until the pool is small enough to read in full.
-- **The one exception — an initials search.** Where the index holds the person as
-  initials (common in US census and directory records), fuzzy
-  `givenName: "J W"` also returns the **transposition** `W J` in a substantial
-  share of results. `givenNameExact` matches **only** a given name indexed
-  in that literal form: across pools read in full it returned nothing, because
-  the records reached fuzzily are indexed as spelled-out names or in the other
-  order. So it is the wrong tool for chasing initials — it does not reorder or
-  filter them, it excludes everything not indexed exactly that way. Whether it
-  would remove a transposition when one is present is **not established**. (The transposed record is still
-  reachable without it, by narrowing onto the surname.)
+- **Searching a person indexed under initials (common in US census and
+  directory records): pass `givenName: "J W"` and do NOT set `givenNameExact`.**
+  Three things follow from that, in order of when they will bite you:
+  - **Expect both orders back.** Fuzzy `J W` also returns records indexed `W J`.
+    A reversed-initials hit is very often the same person, not a different one —
+    do not discard it on the order alone.
+  - **`givenNameExact` here returns nothing, not fewer.** It matches only a given
+    name indexed in that exact literal form, and across every pool read in full
+    it came back empty, because the records fuzzy reaches are indexed either
+    spelled out or in the other order. If you set it and get a nil, that nil is
+    about the qualifier, not about the person.
+  - **To confirm which order the index actually uses**, narrow onto the surname
+    until the pool is small enough to read in full, and look. That is also how
+    you reach a transposed record deliberately.
 - **`<event>PlaceExact` is for making a count mean something, not for finding.**
   An unqualified place scope expands upward so far that a county barely
   discriminates — a *wrong* county can return nearly the same total as the right
