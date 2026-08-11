@@ -194,6 +194,16 @@ Analyze imported data before presenting results:
 - Holding disagrees with tree → flag as discrepancy (never frame user's holding as error).
 - `oral_knowledge` lead → surface early; oral sources are cheapest and most perishable.
 
+**When the objective disputes the existing relationship** — phrasing like
+"correct parents", "the right parents", "parents are not correct" — do NOT
+present the imported relationship as established. Frame the current
+parent-child (or other disputed) assignment as **the relationship under
+investigation**: an *unverified* (`quality: 1`) tree assertion that is the
+hypothesis to be tested this project, not a settled fact. Say so in the tree
+summary and findings, and never confirm it from the tree it came from
+(issue #1471). Recording and testing the doubt is question-selection's job —
+here, only the framing changes.
+
 **Present to the user:**
 - Research objective
 - **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`

@@ -255,3 +255,40 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
                 f"{ed.get('stop_criteria')}; expected None"
             )
     assert not errors, "Unstarted-exhaustive-declaration violations:\n  - " + "\n  - ".join(errors)
+
+
+# --- Tag-gated: disputed assignment is tested, not confirmed (#1471) ---
+
+# Regression for issue #1471. When the objective disputes the existing parent
+# assignment (unverified tree data), question-selection must frame the first
+# question as a TEST of that assignment (confirm-or-refute against independent
+# records), never a bare "identify the parents" that implicitly accepts the
+# attached ones, and never a confirmation of the tree under investigation.
+_VERIFY_SIGNALS = (
+    "verify", "confirm", "refute", "independent", "whether",
+    "test ", "re-examine", "reexamine", "disprove", "rule out",
+)
+
+
+def test_first_question_tests_disputed_parents(before_state, after_state, test):
+    """Tag-gated: on a disputed-assignment objective, the new question must be
+    framed to TEST the assignment, not confirm/assume it (#1471)."""
+    if "verifies-disputed-parents" not in test.get("tags", []):
+        pytest.skip("not a verifies-disputed-parents scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question testing the disputed assignment; none was added"
+    text = " ".join((q.get("question") or "") for q in new).lower()
+    assert any(sig in text for sig in _VERIFY_SIGNALS), (
+        "the first question does not frame the disputed parent assignment as "
+        "something to TEST. When the objective disputes the existing parents, "
+        "the question must confirm-or-refute the assignment against independent "
+        "records (e.g. 'Do independent records confirm or refute that X and Y "
+        "are the parents of Z?'), not merely ask to identify the parents while "
+        "accepting the attached ones, and not confirm the tree under "
+        f"investigation (issue #1471). Question(s) written: "
+        f"{[q.get('question') for q in new]!r}"
+    )
