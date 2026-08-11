@@ -555,6 +555,22 @@ establish-and-consume in one call. Any future precondition of the form "X must
 already be true" needs the same treatment; other same-batch orderings have been
 flagged but not audited (`guardrail-enforcement-spec.md` §10).
 
+**Warn-only advisories (the write still succeeds).** Distinct from the reject
+table above, `research_append` also surfaces non-blocking advisories on the
+successful response's `validation.warnings`. The first is the `person_evidence`
+**match_score** advisory: a link claiming `confidence: "confident"` that
+records no numeric `match_score` is warned, not rejected. `same_person` returns
+the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
+of historical `person_evidence` writes leave it unset — identity asserted, never
+scored. A hard reject on day one would break ~94% of runs and the hosted path at
+once, so this ships warn-only and is measured on live runs first; graduating it to
+a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduate
+discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
+"confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
+tell a brand-new person from a seeded one, but the confidence claim it *can* see)
+and the honest escape hatch, since a link that genuinely cannot be scored should
+claim `probable`/`speculative`. `personEvidenceScoreWarnings` in `research-append.ts`.
+
 ---
 
 ## 6. Decisions recorded
@@ -826,8 +842,9 @@ instrument, only of the caller-attribution rule it would need.
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
 "record-sized" slice, and a local stub returns a degenerate near-zero score the
 skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the engine invariant on
-`personEvidenceInvariants` decided in issue #1006 (2026-08-01). That decision
+here; what can be is its **presence**, which is the warn-only advisory
+`personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
+issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
 not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than

@@ -3067,6 +3067,16 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 
+  it("still warns when match_score is a number outside 0–1 — validator.ts does not bound the range", async () => {
+    // The runtime validator carries match_score in its field allow-list but does
+    // not enforce the schema's 0–1 minimum/maximum, so an out-of-range number is
+    // accepted at the write and would otherwise silence the warning (review #1550).
+    await writeProject();
+    const r = await researchAppend(link({ match_score: 5 }));
+    expect(r.ok).toBe(true); // not rejected — the range is unenforced at runtime
+    expect(r.validation.warnings.join(" ")).toMatch(/records no match_score/);
+  });
+
   it("does not warn on a probable link with no match_score (the honest escape hatch)", async () => {
     await writeProject();
     const r = await researchAppend(link({ confidence: "probable", match_score: null }));
