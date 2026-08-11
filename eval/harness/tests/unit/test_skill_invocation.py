@@ -1025,6 +1025,7 @@ def test_citation_nulling_tolerates_dangling_and_sourceless_refs():
 
 def test_citation_nulling_defensive_on_none_and_empty():
     assert find_citation_nulling_in_conclusions(None) == []
+    assert find_citation_nulling_in_conclusions({}) == []
 
 
 # --- find_relationship_writes_without_warnings_check (issue #1193, shadow) ----
@@ -1137,4 +1138,3 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
-    assert find_citation_nulling_in_conclusions({}) == []
