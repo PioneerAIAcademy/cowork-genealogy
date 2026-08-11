@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-07-22_11-02-36.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "run_log": "v1_2026-08-11_14-05-30.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
       "test_id": "ut_question_selection_002",
@@ -37,7 +37,7 @@
     {
       "test_id": "ut_question_selection_002",
       "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
+      "dimension_name": "Objective scope match",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -51,6 +51,14 @@
       "comment": null
     },
     {
+      "test_id": "ut_question_selection_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_question_selection_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -118,6 +126,38 @@
       "test_id": "ut_question_selection_001",
       "dimension_source": "rubric",
       "dimension_name": "Dependency awareness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope match",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Dependency awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope match",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -125,7 +165,7 @@
     {
       "test_id": "ut_question_selection_003",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -141,7 +181,7 @@
     {
       "test_id": "ut_question_selection_003",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -155,7 +195,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_003",
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Dependency awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": 3,
@@ -163,9 +211,41 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_003",
+      "test_id": "ut_question_selection_013",
       "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
+      "dimension_name": "Objective scope match",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -205,6 +285,14 @@
     {
       "test_id": "ut_question_selection_005",
       "dimension_source": "rubric",
+      "dimension_name": "Objective scope match",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
@@ -220,24 +308,8 @@
     },
     {
       "test_id": "ut_question_selection_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope match",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -245,7 +317,7 @@
     {
       "test_id": "ut_question_selection_006",
       "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
+      "dimension_name": "Dependency awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -261,7 +333,31 @@
     {
       "test_id": "ut_question_selection_006",
       "dimension_source": "rubric",
-      "dimension_name": "Dependency awareness",
+      "dimension_name": "Prioritization logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -293,7 +389,7 @@
     {
       "test_id": "ut_question_selection_007",
       "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
+      "dimension_name": "Objective scope match",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -315,17 +411,17 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Prioritization logic",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_question_selection_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Prioritization logic",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -341,14 +437,6 @@
     {
       "test_id": "ut_question_selection_008",
       "dimension_source": "rubric",
-      "dimension_name": "Prioritization logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_008",
-      "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
@@ -358,6 +446,30 @@
       "test_id": "ut_question_selection_008",
       "dimension_source": "rubric",
       "dimension_name": "Dependency awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope match",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -389,14 +501,6 @@
     {
       "test_id": "ut_question_selection_010",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_010",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -411,11 +515,19 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_011",
+      "test_id": "ut_question_selection_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -429,9 +541,9 @@
     {
       "test_id": "ut_question_selection_011",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
