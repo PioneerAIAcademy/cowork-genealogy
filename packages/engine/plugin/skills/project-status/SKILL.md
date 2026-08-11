@@ -1,6 +1,5 @@
 ---
 name: project-status
-model: claude-sonnet-4-6
 description: Reads the current state of a genealogy research project and
   produces two summaries — a detailed GPS-state summary for experienced
   genealogists and a user-friendly narrative for casual users. Detects

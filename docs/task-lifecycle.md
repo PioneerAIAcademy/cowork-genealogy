@@ -45,13 +45,16 @@ Two things worth knowing:
 
 ## The commands in this document
 
-Every slash command below ships with Claude Code, except `/critique-plan` and
-`/check-drift`, which live in this repo at
-[`.claude/commands/`](../.claude/commands/). Nothing here needs a plugin you
-have to install.
+Two of them ship with Claude Code: `/code-review` and `/security-review`. The
+other four ship with this repo, so cloning is the whole install —
+`/critique-plan` and `/check-drift` in
+[`.claude/commands/`](../.claude/commands/), `/review` and `/audit-merged-prs`
+in [`.claude/skills/`](../.claude/skills/). Nothing here needs a plugin you have
+to install.
 
-If you have a personal plugin that defines one of these names, **yours wins** —
-which is worth knowing before you wonder why `/review` did something else.
+If you have a personal plugin that defines one of these names, yours wins. Most
+people don't — but if `/review` ever behaves unlike what's described here,
+that's the first thing to check.
 
 ---
 
@@ -128,9 +131,6 @@ to do any of these:
   value on a closed enum, or a tree-shape change. Site lists:
   [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
-- Widens what a Cowork plugin agent is allowed to call — the `tools:` or
-  `disallowedTools:` lists in `packages/engine/plugin/agents/`. Editing an
-  agent's prompt is ordinary work; changing its permissions is not.
 - Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
 - Is hard to undo: a data migration, a write to user state, anything
   user-facing or talking to an external service.
@@ -229,9 +229,6 @@ what tells a reviewer, human or model, which few lines carry the decision among
 the ones that carry the mechanics. Write it for someone who has not seen your
 branch.
 
-Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
-co-author".
-
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
 ### 9. Peer review, then senior review — on the paths that need it
@@ -316,6 +313,23 @@ returns as an input to your review, never as your review.
    set out to do. Give Claude those, the issue, and the relevant spec, then ask
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
+4. **Two things aren't yours to approve.** A diff that hits step 4's stop rule —
+   schema, credentials, an ADR reversal, anything hard to undo — needs the lead,
+   whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
+   lists, your approval doesn't unblock merge. Say which is still owed rather
+   than leaving the author to discover it at the merge button.
+
+### "It says approved, but it won't merge"
+
+Three rules can each hold a green, approved PR. Check them in this order:
+
+- **Someone pushed after the approvals.** At least one approval has to land
+  *after* the most recent push. The old approvals are not cancelled — they still
+  count toward the two — so you need one fresh approval, not two.
+- **An unresolved conversation.** Every review thread must be marked resolved.
+  Resolve the ones you answered; the reviewer resolves the ones they raised.
+- **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team
+  is required per path. Four approvals from the wrong team is still zero.
 
 ---
 
