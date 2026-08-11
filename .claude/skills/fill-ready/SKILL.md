@@ -26,7 +26,8 @@ Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 ```sh
 PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
-# Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86 / Done 98236657
+# Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
+# Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 ```
 
@@ -818,6 +819,14 @@ command and its output. When a check refutes something you already said, correct
 it in one sentence and move on. When it refutes the *issue*, say so in the issue
 — a stale body left unannotated will mislead the next reader exactly as it
 misled you.
+
+Every number you write **into an issue** — a body you edit, an issue you file, a
+ruling you comment — carries the command that reproduces it. Prefer naming the
+command to pasting its output: `make e2e-nudges SINCE=all` stays true, a pasted
+count does not. When a number must be inline, stamp it
+`measured <date>, <command>` and say what would move it. An unstamped
+measurement is quoted forward as settled fact and cannot be re-checked; that is
+how issue bodies come to carry figures that do not survive a re-run.
 
 ## Repo-specific costs to respect
 
