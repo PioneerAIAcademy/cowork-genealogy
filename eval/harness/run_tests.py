@@ -10,7 +10,7 @@ Exit codes:
   1  the harness itself crashed, OR any test resolved to fail or xpass.
      On a crash, submission stops but every still-running test is allowed to
      finish, and the completed tests are saved as a partial `scratch_<ts>.json`
-     run log per skill — the same treatment a Ctrl-C gets.
+     run log per skill.
   2  any test was aborted for a test-corpus reason
      (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
      that doesn't exist at all — Type 1 unmatched_tool_call)

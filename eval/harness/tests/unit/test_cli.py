@@ -1321,14 +1321,10 @@ def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
         "--concurrency", "1",
     ])
 
-    # 1. A harness crash is exit 1 (documented at run_tests.py:10 and
-    #    eval/README.md:133). Unchanged by #943 — but it is the assertion that
-    #    fails if the promotion block is placed AFTER the run-log write, since
-    #    that path falls through and returns 0.
-    # 1. A harness crash is exit 1 (documented at run_tests.py:10 and
-    #    eval/README.md:133). Unchanged by #943 — but it is the assertion that
-    #    fails if the promotion block is placed AFTER the run-log write, since
-    #    that path falls through and returns 0.
+    # 1. A harness crash is exit 1 (documented in run_tests.py's exit-code
+    #    docstring and in eval/README.md). Unchanged by #943 — but it is the
+    #    assertion that fails if the promotion block is placed AFTER the
+    #    run-log write, since that path falls through and returns 0.
     assert rc == 1
     out_dir = runlogs / "unit" / "skill-a"
     _out = capsys.readouterr().out
