@@ -4375,6 +4375,96 @@ async function sectionR(): Promise<void> {
     `    drop-contradicting: ${totalConflicts === 0 ? "HOLDS (0 conflicts anywhere)" : `${totalConflicts} conflicts`}` +
       `   keep-silent: ${keepSilent ? "HOLDS" : "no"}   retention==silent share: ${tracks ? "HOLDS" : "no"}`
   );
+
+  // --- does `.exact` on a SPOUSE name require the spouse to be present? ----
+  //
+  // Section F answered this for `fatherGivenName` and nothing else: five legs
+  // set `q.fatherGivenName.exact=on`, and NO leg anywhere in this file has ever
+  // set a spouse `.exact`. The shipped tool descriptions nevertheless gave
+  // `spouseGivenNameExact` the firm father wording while hedging mother/parent/
+  // other — on the reasoning that section R enumerated spouse too. R does, but R
+  // enumerates the UNQUALIFIED term (keep-silent / drop-contradicting), which is
+  // a different parameter from the qualifier on top of it.
+  //
+  // It is the gap that matters most: R measures spouses indexed in 81-92% of
+  // marriage records against 10-70% for fathers, so a spouse anchor is the
+  // strongest narrowing lever available in the record type most searched.
+  //
+  // Same shape as F's father test — silent representatives must be ABSENT from
+  // the exact set, and a spouse-bearing control must be PRESENT — but read to
+  // the end on both sides rather than paged to a cap.
+  console.log("\n  --- does .exact on a SPOUSE name require the spouse to be present? ---");
+  const spouseExactRows: Array<Record<string, unknown>> = [];
+  for (const pop of POPS) {
+    const full = await mustEnumerate(pop.base);
+    if (full.personas === null) {
+      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — baseline ${full.why}`);
+      spouseExactRows.push({ pop: pop.id, why: `baseline ${full.why}` });
+      continue;
+    }
+    // A real spouse given name drawn from the data, so the exact search has
+    // something to match. Most common wins: it maximises the control's chance
+    // of existing without choosing it for the answer it gives.
+    const counts = new Map<string, number>();
+    for (const p of full.personas) {
+      const g = p.spouseGivenOfMatched;
+      if (g) counts.set(g, (counts.get(g) ?? 0) + 1);
+    }
+    const name = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    const silentReps = full.personas.filter((p) => p.spousesIndexed === 0);
+    const control = full.personas.find((p) => p.spouseGivenOfMatched === name);
+    if (!name || silentReps.length === 0 || control === undefined) {
+      const why = !name
+        ? "no spouse given name appears in the baseline at all"
+        : silentReps.length === 0
+          ? "no spouse-silent record in the baseline to test with"
+          : "no spouse-bearing control record";
+      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — ${why}`);
+      spouseExactRows.push({ pop: pop.id, why });
+      continue;
+    }
+    const ex = await mustEnumerate(
+      `${pop.base}&q.spouseGivenName=${encodeURIComponent(name)}&q.spouseGivenName.exact=on`
+    );
+    if (ex.personas === null) {
+      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — the .exact set was ${ex.why}`);
+      spouseExactRows.push({ pop: pop.id, why: `exact set ${ex.why}` });
+      continue;
+    }
+    const exIds = new Set(ex.personas.map((x) => x.id));
+    const silentKept = silentReps.filter((r) => exIds.has(r.id)).length;
+    const controlKept = exIds.has(control.id);
+    const row = {
+      pop: pop.id,
+      spouseName: name,
+      baselineRows: full.personas.length,
+      exactRows: ex.personas.length,
+      silentReps: silentReps.length,
+      silentKept,
+      controlPresent: controlKept,
+    };
+    spouseExactRows.push(row);
+    console.log(
+      `    ${pop.id.padEnd(22)} "${name}"  ${full.personas.length} -> ${ex.personas.length} rows;` +
+        ` spouse-silent ${silentReps.length} (kept ${silentKept}); control ${controlKept ? "PRESENT" : "ABSENT"}`
+    );
+  }
+  record("R", "spouseExactRequiresPresence", spouseExactRows);
+  const usable = spouseExactRows.filter((r) => typeof r.silentKept === "number");
+  const allDrop = usable.length > 0 && usable.every((r) => r.silentKept === 0 && r.controlPresent === true);
+  const anyKept = usable.some((r) => (r.silentKept as number) > 0);
+  record(
+    "R",
+    "verdict:spouse .exact requires the spouse to be present",
+    usable.length === 0
+      ? "NOT MEASURED — no population produced both a spouse-silent record and a spouse-bearing control in a set readable to the end"
+      : allDrop
+        ? `CONFIRMED — across ${usable.length} population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives`
+        : anyKept
+          ? `DOES NOT HOLD — a spouse-silent record survives .exact in ${usable.filter((r) => (r.silentKept as number) > 0).length} of ${usable.length} population(s)`
+          : "INCONCLUSIVE — silent records dropped but the control did not survive, so .exact is not selecting on spouse presence"
+  );
+  console.log(`  => ${String(getFig("R", "verdict:spouse .exact requires the spouse to be present"))}`);
 }
 
 // --- SECTION W — wildcards x qualifiers (issue #1093 question 4) ----------

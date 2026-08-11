@@ -511,7 +511,32 @@
     "verdict:keep-silent": "HOLDS — the records retained by an unmatchable name are the ones the baseline is silent about, in the same number",
     "verdict:keep-matching": "HOLDS — a real name drawn from the data returns matching records",
     "verdict:retention equals the silent share": "HOLDS — retention under an unmatchable name matches the baseline's silent share in every enumerated population, which is what makes the father/spouse difference an artifact of indexing rather than of the parameter",
-    "measured_at": "2026-08-11T03:56:28.598Z"
+    "spouseExactRequiresPresence": [
+      {
+        "pop": "Brazil/Bochenek",
+        "spouseName": "Maria",
+        "baselineRows": 521,
+        "exactRows": 35,
+        "silentReps": 51,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "pop": "England/Pocklington",
+        "spouseName": "Ann",
+        "baselineRows": 469,
+        "exactRows": 12,
+        "silentReps": 380,
+        "silentKept": 0,
+        "controlPresent": true
+      }
+    ],
+    "verdict:spouse .exact requires the spouse to be present": "CONFIRMED — across 2 population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives",
+    "measured_at": "2026-08-11T19:12:07.043Z"
   },
   "I": {
     "fuzzy": {

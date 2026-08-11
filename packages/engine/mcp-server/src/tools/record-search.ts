@@ -947,7 +947,7 @@ export const recordSearchToolSchema = {
 
       spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
       spouseSurname: { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires the spouse's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires the spouse's given name to be present and match exactly — measured on two marriage populations read in full, where every spouse-silent record is dropped and a spouse-bearing control survives. Same trade-off as `fatherGivenNameExact`." },
       spouseSurnameExact: { type: "boolean", description: "When `true`, requires the spouse's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
       fatherSurname: { type: "string", description: "Father's family name." },
