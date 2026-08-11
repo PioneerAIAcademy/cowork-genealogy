@@ -565,7 +565,7 @@ A **warning** — never a rejection — emitted on a successful write when the c
 appended a `sources` entry (a real, non-no-op append) and the resulting project
 holds **≥ 3** sources but **zero** assertions. It rides `validation.warnings`
 and never touches `ok`. Implemented as `sourcesWithoutAssertionsWarning` in
-`research-append.ts`; motivated by issue #1478, three feedback bundles where the
+`research-append.ts`; motivated by three feedback bundles where the
 research log and sources grew while `assertions` stayed empty — a run that
 reasons well but persists no evidence is indistinguishable downstream from one
 that did nothing.
@@ -574,14 +574,14 @@ that did nothing.
   (`guardrail-enforcement-spec.md` §10): the legitimate "record the sources this
   turn, extract next turn" rhythm would become a loud availability regression.
   This is the same warn-not-fail choice as `research_log_append`'s discarded-
-  results warning (issue #1477 / PR #1482), which this mirrors.
+  results warning, which this mirrors.
 - **Threshold and boundary.** 1–2 sources before any assertion is the normal
   record-then-extract rhythm; ≥3 with none drawn is the reported pathology
   (bundle 1: 13 sources, 0 assertions). The trigger is **exactly zero**
   assertions, so it self-silences the instant one lands and never nags a
   high-source/low-assertion project perpetually. The cost is a false negative —
   a run that draws 1 assertion from 13 sources does not warn; that
-  partial-extraction shape is out of scope here (see the #1478 follow-on).
+  partial-extraction shape is out of scope for this warning.
 - **Tool-neutral, because it fires for `extraction_append` too.**
   `extraction_append` routes through `researchAppend` (§11), and its
   `record-extractor` caller is denied `research_append`, so the message names no

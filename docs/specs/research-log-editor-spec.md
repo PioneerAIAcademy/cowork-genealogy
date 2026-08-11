@@ -267,10 +267,10 @@ warnings, not preconditions — they never touch `ok`, because a hard block here
 would trip the false-deny asymmetry (`guardrail-enforcement-spec.md` §10),
 turning a lossy-but-recoverable session into an availability regression.
 
-- **Unretained results** (issue #1477 / PR #1482): a `STAGING_CAPABLE_TOOLS`
-  search that reported `resultsAvailable > 0` but passed no `stagedResultsRef`
-  discarded its verbatim response. Fires per offending entry.
-- **Logging without persistence** (issue #1478): once **≥3** positive-outcome
+- **Unretained results:** a `STAGING_CAPABLE_TOOLS` search that reported
+  `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
+  response. Fires per offending entry.
+- **Logging without persistence:** once **≥3** positive-outcome
   searches have been logged while the project still holds **zero** sources and
   **zero** assertions, the session is finding records and persisting no evidence
   (feedback bundle-2 shape: 26 log entries, 0 sources, 0 assertions). Gated on
