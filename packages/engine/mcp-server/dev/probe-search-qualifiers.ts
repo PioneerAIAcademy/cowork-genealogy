@@ -5205,8 +5205,40 @@ async function sectionY(): Promise<void> {
     // The complement, as a control: if .exact dropped year-silent AND dated
     // rows alike it is not selecting on year-silence at all, and the whole
     // reading is wrong.
+    //
+    // THREE-WAY, and the split is load-bearing. "Dated" is not one class:
+    //
+    //   in-range  — the row a researcher expects to KEEP
+    //   fuzz      — dated outside the range; removing it is what `.exact` is FOR
+    //
+    // Lumping them made removal of correctly-excluded fuzz register as damage.
+    // Measured live 2026-08-11 over complete sets, intersecting by record id:
+    //
+    //   Pocklington/England deaths 1850-59   in-range 181 -> kept 176   fuzz 36 -> kept 0
+    //   Bochenek/Brazil marriages  1900-19   in-range  32 -> kept  32   fuzz  4 -> kept 4
+    //   Bochenek/Brazil births     1850-54   in-range   0 -> kept   0   fuzz 196 -> kept 0
+    //
+    // That last row is the one this section scored `collateralPct: 100` and
+    // called catastrophic. It has NO in-range rows at all — `.exact` removed 196
+    // out-of-range ones, exactly as documented. The metric was measuring the
+    // qualifier doing its job.
+    // `window` is THIS family's range, set when the population was chosen. An
+    // earlier version of this line read `FROM`/`TO` — section H's 1850 window,
+    // which is not in scope here and would have thrown at runtime. It went
+    // unnoticed because `dev/` is outside tsconfig's `include: ["src/**/*"]`,
+    // so `tsc --noEmit -p tsconfig.json` never opens this file and exits 0
+    // however broken it is. Typecheck it directly, or not at all.
+    const [winFrom, winTo] = window ?? [0, 0];
+    const inWindow = (p: Persona): boolean =>
+      p.allDated.some(
+        (d) => fam.kind.test(d.kind) && d.year !== null && d.year >= winFrom && d.year <= winTo
+      );
     const dated = fuzzy.filter(hasYear);
     const datedKept = dated.filter((p) => exactIds.has(p.id));
+    const inRange = fuzzy.filter(inWindow);
+    const inRangeKept = inRange.filter((p) => exactIds.has(p.id));
+    const fuzzRows = dated.filter((p) => !inWindow(p));
+    const fuzzKept = fuzzRows.filter((p) => exactIds.has(p.id));
 
     // THREE DISQUALIFIERS, each of which produced a wrong verdict on an earlier
     // run of this section before it was added.
@@ -5227,7 +5259,10 @@ async function sectionY(): Promise<void> {
     const MIN_COVERAGE = 0.5;
     const MAX_COLLATERAL = 0.1;
     const coverage = fuzzy.length ? dated.length / fuzzy.length : 0;
-    const collateral = dated.length ? 1 - datedKept.length / dated.length : 0;
+    // Collateral = IN-RANGE rows lost. Removing fuzz is the qualifier working,
+    // not damage, and counting it as damage is what made this metric fire on
+    // correct behaviour.
+    const collateral = inRange.length ? 1 - inRangeKept.length / inRange.length : 0;
 
     let verdict: string;
     if (coverage < MIN_COVERAGE) {
@@ -5277,6 +5312,10 @@ async function sectionY(): Promise<void> {
       datedKept: datedKept.length,
       coveragePct: Math.round(coverage * 1000) / 10,
       collateralPct: Math.round(collateral * 1000) / 10,
+      inRange: inRange.length,
+      inRangeKept: inRangeKept.length,
+      fuzzRows: fuzzRows.length,
+      fuzzKept: fuzzKept.length,
       verdict,
     });
   }

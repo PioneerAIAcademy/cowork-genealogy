@@ -25,7 +25,9 @@ console.log("Starting OAuth flow. Watch for the authorization URL below.");
 console.log("Open it in a browser on your laptop (port 1837 must be forwarded).");
 console.log("---");
 
-const result = await loginTool({ clientId });
+// Takes no input: the FamilySearch client id is read from the bundled
+// config/familysearch.json by getClientId(), never passed in.
+const result = await loginTool();
 console.log("---");
 console.log("Login result:");
 console.log(JSON.stringify(result, null, 2));

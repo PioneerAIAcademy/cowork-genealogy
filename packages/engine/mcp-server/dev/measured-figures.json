@@ -1500,7 +1500,11 @@
         "dated": 196,
         "datedKept": 0,
         "coveragePct": 99.5,
-        "collateralPct": 100,
+        "collateralPct": 0,
+        "inRange": 0,
+        "inRangeKept": 0,
+        "fuzzRows": 196,
+        "fuzzKept": 0,
         "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
       },
       {
@@ -1518,7 +1522,11 @@
         "dated": 143,
         "datedKept": 102,
         "coveragePct": 99.3,
-        "collateralPct": 28.7,
+        "collateralPct": 1.9,
+        "inRange": 104,
+        "inRangeKept": 102,
+        "fuzzRows": 39,
+        "fuzzKept": 0,
         "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
       },
       {
@@ -1537,6 +1545,10 @@
         "datedKept": 101,
         "coveragePct": 21.5,
         "collateralPct": 0,
+        "inRange": 101,
+        "inRangeKept": 101,
+        "fuzzRows": 0,
+        "fuzzKept": 0,
         "verdict": "NOT MEASURED — only 101/469 rows carry a marriage date in the payload, so \"year-silent\" cannot be told from \"date not in the payload\". Section H: payload-silence is not index-silence"
       },
       {
@@ -1555,10 +1567,14 @@
         "datedKept": 348,
         "coveragePct": 100,
         "collateralPct": 0,
+        "inRange": 348,
+        "inRangeKept": 348,
+        "fuzzRows": 0,
+        "fuzzKept": 0,
         "verdict": "NOT MEASURED — the unqualified set contains no year-silent record, so dropping and keeping predict the same result here"
       }
     ],
     "verdict:generalises past birth": "NOT MEASURED — no non-birth family produced a testable population",
-    "measured_at": "2026-08-11T12:38:38.612Z"
+    "measured_at": "2026-08-11T16:51:34.022Z"
   }
 }
