@@ -207,12 +207,11 @@ spouse families; other fields follow the same pattern.
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
 it. A record simply **silent** about a *name* field is kept — measured for the
-father and spouse names; for the searched person's own name it follows from the
-index virtually always holding it rather than from a measurement. (How a *year range*
-treats a record with no indexed year is **not established** in either direction,
-so do not assume a range either keeps or excludes undated records.) For the
-searched person's own name — which the index virtually always holds — that
-collapses to "must match". So **a nil result means one of the terms on the person
+father and spouse names. (How a *year range* treats a record with no indexed year
+is **not established** in either direction, so do not assume a range either keeps
+or excludes undated records.) For the searched person's own name, which the index
+virtually always holds, that collapses to "must match" — a consequence of the
+index, not a separate measurement. So **a nil result means one of the terms on the person
 you searched did not match.** Drop or loosen one of *those* to recover; adding
 more criteria cannot help. A nil is *not* evidence that some relative was absent
 from the records.
