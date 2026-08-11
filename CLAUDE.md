@@ -140,72 +140,6 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
-- **Fold it into the current PR unless there's a real reason not to.** Finding
-  a related gap while working a PR is not by itself a reason to file a new
-  issue — it's a reason to ask "does landing *this* PR require fixing that
-  too, or can I just fix it now while I'm here?" Default to yes. A stray
-  ticket is easy to create and easy to forget; a PR that actually closes the
-  gap it found needs nothing else to remember it. File a new issue instead
-  only when at least one of these is true, and say which when you file:
-  the fix needs a different reviewer or skill (a code fix surfaced during a
-  genealogist's fixture work, or vice versa); it would blow the PR's own
-  scope enough to slow its review meaningfully; it depends on something not
-  yet decided (a Gate-2 question only the lead can answer); or it's a
-  genuinely separate skill-eval slot (§ "Gate 4" in `/fill-ready`) that would
-  force a second paid run if bundled. "I noticed this in passing" and "I'm
-  not sure if this is in scope" are not reasons — they're the two most common
-  ways a foldable fix turns into an orphaned ticket. When genuinely unsure,
-  ask rather than defaulting to filing.
-- **Deferring work creates an issue, not a file entry.** Filing is the last
-  resort, not the default. Stop at the first of these that fits:
-
-  1. **Fold it into the current PR** — the rule above. Default.
-  2. **Comment on an existing issue that covers it.** Search before filing:
-     `gh issue list --state open --search "<path or symbol>"`, and grep the
-     `**Touches:**` lines. Adding to the issue that already owns the file beats
-     opening a second one against it.
-  3. **File with `--label icebox`** when no decision sits behind it.
-  4. **File as normal work.**
-
-  When you do file — in the same PR that defers it — one command, no board write:
-
-  ```sh
-  gh issue create --label developer|genealogist [--label icebox] \
-    [--label nothing-checks] \
-    --title "…" --body "**Touches:** path/one.ts, path/two.py
-
-  …"
-  ```
-
-  Open the body with a `**Touches:**` line naming the files the work would
-  change, when you know them. Overlap between issues here is almost never
-  same-title — it is two issues wanting different lines in one file — and that
-  line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
-  pass reads it, no gate does. One search is the whole obligation — do not agonise
-  past it. `/audit-board` judges fit across the whole open pool, which is the only
-  vantage point that sees every collision.
-
-  | Label | Use for |
-  |---|---|
-  | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
-  | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
-  | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
-  | `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
-
-  **Creating the issue is the whole job: do not call the Projects API yourself**
-  (no `gh project` commands, no `addProjectV2ItemById`).
-  `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-  card in Backlog; the one exception is the `feedback` label, which routes to
-  Ready. A `gh` token without the `project` scope — the default after
-  `gh auth login` — fails a board write *while still creating the issue*, which
-  looks like success. Reference the number in the PR body.
-
-  **Do not reintroduce a queue file under any name.** This replaced
-  `docs/TODOs.md`, retired 2026-08-02.
-
-  The rest — how to pick the label, what belongs in a body and what doesn't, the
-  `TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
-  "Follow-on work you find along the way", which owns these rules.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make harness-test`,
   `make eval-skill SKILL=<name>`, `eval/tests/e2e/` — **not** `make test`,
@@ -215,6 +149,83 @@ mocks (no E2B/Anthropic/OAuth needed).
   `docs/testing-guides/` cover setup paths the harness can't
   (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
   `gps-mentor-agent-testing-guide.md`). Do not add new ones.
+
+## Work you find along the way
+
+Implementing one task always turns up others. **Filing an issue is the last
+resort, not the default.** Walk these in order and stop at the first that fits:
+
+1. **Fix it in the current PR.** The default, and the right answer about two
+   times in three. You already have the context loaded; whoever picks up the
+   ticket has to rebuild it from nothing.
+2. **Drop it.** If it is a nit — a wording preference, a tidier structure, a
+   test you would like but nothing is broken without — say nothing and move on.
+   A filed nit costs triage every morning for as long as it stays open.
+3. **Comment on the issue that already covers it.** One search:
+   `gh issue list --state open --search "<path or symbol>"`, plus a grep of the
+   `**Touches:**` lines. Then stop searching — `/audit-board` sees the whole
+   pool weekly and is the only vantage point from which every duplicate is
+   visible.
+4. **File a new issue**, in the same PR that defers it.
+
+You may only reach step 4 by naming, in both the PR body and the issue body,
+which of these is true:
+
+- the fix needs a different reviewer or skill — a code fix surfaced during a
+  genealogist's fixture work, or vice versa;
+- it depends on a decision only the lead can make;
+- it is a different skill's eval slot, and bundling it would force a second
+  paid run;
+- it is too big for this PR — **and you have opened the call sites and counted.**
+  State the number of files and roughly the number of lines. "It feels out of
+  scope" is not a measurement; asserting scope instead of measuring it is the
+  single most common way a foldable fix becomes an orphaned ticket.
+
+"I noticed it in passing" and "I'm not sure if this is in scope" are not on
+that list. They are reasons to fix it now (step 1) or to drop it (step 2).
+
+Filing runs one command, no board write:
+
+```sh
+gh issue create --label developer|genealogist [--label icebox] \
+  [--label nothing-checks] \
+  --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+…"
+```
+
+Open the body with a `**Touches:**` line naming the files the work would
+change, when you know them. Overlap here is almost never same-title — it is two
+issues wanting different lines in one file — and that line is what makes it
+greppable. Best guess is fine; the weekly `/audit-board` pass reads it, no gate
+does.
+
+| Label | Use for |
+|---|---|
+| `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
+| `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
+| `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+| `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
+
+**Creating the issue is the whole job: do not call the Projects API yourself**
+(no `gh project` commands, no `addProjectV2ItemById`).
+`.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
+card in Backlog; the one exception is the `feedback` label, which routes to
+Ready. A `gh` token without the `project` scope — the default after
+`gh auth login` — fails a board write *while still creating the issue*, which
+looks like success. Reference the number in the PR body.
+
+**Do not reintroduce a queue file under any name.** This replaced
+`docs/TODOs.md`, retired 2026-08-02.
+
+`gh issue create` is gated by a `PreToolUse` hook
+(`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`)
+that stops the call and puts steps 1–3 in front of the lead before anything is
+filed. It is a prompt, not a refusal — answer it with which exemption applies.
+
+The rest — how to pick the label, what belongs in a body and what doesn't, the
+`TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
+"Follow-on work you find along the way", which owns these rules.
 
 ## Tools and skills
 
@@ -472,8 +483,8 @@ change, with different (and easy-to-undercount) site lists:
   `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
   cannot see and which stay hand-written in `packages/schema/src/index.ts` until
   they move. Worked blast-radius and
-  rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
-  the `evidence_type` row.
+  rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note in
+  the enum section.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
   persons, names, facts, relationships, or sources: in addition to the spec
   (`docs/specs/simplified-gedcomx-spec.md`) and the schema mirrors above, the

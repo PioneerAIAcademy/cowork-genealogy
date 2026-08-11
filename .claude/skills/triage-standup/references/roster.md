@@ -33,7 +33,7 @@ the two who are not are listed under "Does not post standup" below.
 | florence | Florence Taburu | `florencemashipei` | genealogist | **senior** |
 | tife | Tife | `T-FEH` | developer | **senior** |
 | isaac | Isaac Boateng | `Paaboat` | genealogist | |
-| jude | Ebigide Jude | `jud-sdev` | developer | |
+| jude | Ebigide Jude | `jud-sdev` | developer | **senior** |
 | collins | Cia, Collins | `Cia-3` | genealogist | |
 | ernest | Ernest Jacob, Ernest | `aghadiayeamayanvboernest` | developer | |
 | solomon | Solomon Baidoo | `kofiatinka12` | genealogist | |
@@ -47,7 +47,7 @@ the two who are not are listed under "Does not post standup" below.
 | ikennaya | Ikennaya Mbadiwe | `Ikennaya1` | genealogist | |
 | precious | Precious Onotu | `clack391` | developer | **senior** |
 | edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** |
-| pascal | Pascal Okezie | `Gennecis` | developer | |
+| pascal | Pascal Okezie | `Gennecis` | developer | **senior** |
 | marc | Marc Mangum | `MMagnum` | developer | |
 | richard | Richard | `chesworthrm` | developer | **senior** |
 
