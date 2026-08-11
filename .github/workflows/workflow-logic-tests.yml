@@ -5,13 +5,14 @@ name: workflow-logic-tests
 #
 # WHY. Both decide something where a wrong answer is still a VALID answer, so
 # nothing downstream complains. project-status-sync.yml picks a column and a
-# wrong column is still a column; CODEOWNERS picks a reviewing team and an
-# unclaimed path still routes somewhere — to whoever the `*` catch-all names.
-# The run goes green, the board or the review queue is quietly wrong, and the
-# only detector is a human noticing weeks later. Nothing else in CI reads either
-# file — the JS suite (`make test-js`) covers web, electron, viewer-ui and
-# schema, and neither a workflow branch table nor a CODEOWNERS resolution
-# belongs in any of those packages.
+# wrong column is still a column; senior-queue.yml picks a review queue off
+# CODEOWNERS, and a pattern its parser cannot read routes the PR to the wrong
+# team while the merge gate still enforces correctly. The run goes green, the
+# board or the review queue is quietly wrong, and the only detector is a human
+# noticing weeks later. Nothing else in CI reads either file — the JS suite
+# (`make test-js`) covers web, electron, viewer-ui and schema, and neither a
+# workflow branch table nor a CODEOWNERS resolution belongs in any of those
+# packages.
 #
 # WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
 # says nothing about whether the App token can still write the board, whether
@@ -23,16 +24,17 @@ name: workflow-logic-tests
 # No install step and no dependencies on purpose: the test extracts the script
 # block from the raw YAML itself, so this job is `checkout` + `node`.
 
-# NO `paths:` FILTER, deliberately. The CODEOWNERS job's invariant is about the
-# repo's FILE SET — that no tracked path falls through to the `*` catch-all — so
-# the PR that breaks it is the one ADDING a file of a type nobody has claimed,
-# which touches none of the paths a filter could name. Both jobs are
-# `checkout` + `node` with no install step, so running them on every PR costs
-# seconds. Do not add a filter back without moving that job to its own workflow.
 on:
   pull_request:
+    paths: &paths
+      - '.github/CODEOWNERS'
+      - '.github/workflows/project-status-sync.yml'
+      - '.github/workflows/senior-queue.yml'
+      - '.github/workflows/workflow-logic-tests.yml'
+      - '.github/tests/**'
   push:
     branches: [main]
+    paths: *paths
   workflow_dispatch:
 
 permissions:

@@ -3,101 +3,43 @@
 # show this — after every edit here, check
 # `gh api /repos/{owner}/{repo}/codeowners/errors`.
 #
-# NOTHING MAY REST ON THE CATCH-ALL. Every tracked path must be claimed by a
-# rule that names it. A path nobody names still routes somewhere — it falls to
-# `*` below and lands on senior genealogists — so an unnamed file type is a
-# routing decision made by omission, which is how ~45 Windows batch wrappers and
-# the FastAPI pyproject.toml came to need genealogist review. The `*` line stays
-# as a floor, but `.github/tests/codeowners-routing.test.mjs` fails if it owns
-# anything.
+# Resolution is LAST MATCH WINS, so ordering is load-bearing: the genealogist
+# rules at the bottom override the developer rules above them.
 #
-# Resolution is LAST MATCH WINS, so ordering is load-bearing: the developer
-# block overrides the default, and the genealogist carve-outs at the bottom
-# override the developer block.
-#
-# Branch protection requires two approvals plus `require_code_owner_reviews`, so
-# a PR needs an approval from each team that owns any path in its diff, plus one
-# more from anyone with write access. A PR touching only developer-owned paths
-# does not need a senior genealogist.
+# THERE IS NO `*` DEFAULT, deliberately. Branch protection requires two
+# approvals from anyone with write access on every PR regardless; a rule here
+# adds the requirement that one of them come from a named senior team. A path
+# nobody names still gets two reviewers — it just does not pull a senior into a
+# CSS tweak, an icon, or a dotfile. Only claim a path when a senior's judgment
+# is what a review of it needs.
 
-# --- Default owner --------------------------------------------------------
-* @PioneerAIAcademy/senior-genealogists
+# --- Senior developer review: code and the infra that breaks silently ---
+# --- CODEOWNERS has no concept of PR labels, so this is scoped by file ---
+# --- type, not by the "developer" label.                              ---
 
-# --- Content whose default is deliberate, restated so the catch-all owns   ---
-# --- nothing. Prose is genealogist-reviewed wherever it lives; the         ---
-# --- developer block below still claims .github/ and docs/specs/schemas/.  ---
-
-*.md @PioneerAIAcademy/senior-genealogists
-*.pdf @PioneerAIAcademy/senior-genealogists
-LICENSE @PioneerAIAcademy/senior-genealogists
-
-# --- Developer infrastructure: senior-developer review required on code ---
-# --- and infra file types, repo-wide (last-match-wins means these       ---
-# --- extensions get ONLY senior-developers, not senior-genealogists     ---
-# --- too — see the carve-out block below for the exception).           ---
-# --- Intent: genealogists review skills and runlogs; developers review ---
-# --- infrastructure. CODEOWNERS has no concept of PR labels, so this   ---
-# --- is scoped by file type/path, not by the "developer" label.        ---
-
-# Source.
 *.ts @PioneerAIAcademy/senior-developers
 *.tsx @PioneerAIAcademy/senior-developers
 *.js @PioneerAIAcademy/senior-developers
 *.mjs @PioneerAIAcademy/senior-developers
 *.cjs @PioneerAIAcademy/senior-developers
 *.py @PioneerAIAcademy/senior-developers
-*.gs @PioneerAIAcademy/senior-developers
-
-# Data and config formats.
 *.json @PioneerAIAcademy/senior-developers
 *.yml @PioneerAIAcademy/senior-developers
 *.yaml @PioneerAIAcademy/senior-developers
 *.toml @PioneerAIAcademy/senior-developers
-*.lock @PioneerAIAcademy/senior-developers
-*.plist @PioneerAIAcademy/senior-developers
-
-# Web and Electron UI: markup, styles, and app assets.
-*.css @PioneerAIAcademy/senior-developers
-*.html @PioneerAIAcademy/senior-developers
-*.svg @PioneerAIAcademy/senior-developers
-*.png @PioneerAIAcademy/senior-developers
-*.ico @PioneerAIAcademy/senior-developers
-*.icns @PioneerAIAcademy/senior-developers
-
-# Build, run, and packaging entry points. The .bat wrappers are the Windows
-# genealogists' entry point but are developer-authored tooling, not content.
-Makefile @PioneerAIAcademy/senior-developers
-Dockerfile @PioneerAIAcademy/senior-developers
-*.Dockerfile @PioneerAIAcademy/senior-developers
-*.sh @PioneerAIAcademy/senior-developers
 *.bat @PioneerAIAcademy/senior-developers
-
-# Toolchain pins and per-tool ignore files.
+Makefile @PioneerAIAcademy/senior-developers
 .gitattributes @PioneerAIAcademy/senior-developers
-.gitignore @PioneerAIAcademy/senior-developers
-.gitkeep @PioneerAIAcademy/senior-developers
-.dockerignore @PioneerAIAcademy/senior-developers
-.mcpbignore @PioneerAIAcademy/senior-developers
-.editorconfig @PioneerAIAcademy/senior-developers
-.prettierignore @PioneerAIAcademy/senior-developers
-.npmrc @PioneerAIAcademy/senior-developers
-.nvmrc @PioneerAIAcademy/senior-developers
-.python-version @PioneerAIAcademy/senior-developers
-.tool-versions @PioneerAIAcademy/senior-developers
-
-# Directories that are wholly developer-owned, which is also what claims the
-# extensionless files in them (scripts/git-hooks/post-checkout).
-/scripts/ @PioneerAIAcademy/senior-developers
-/.github/ @PioneerAIAcademy/senior-developers
 
 # --- Carve-out: genealogist-authored content that happens to live in   ---
-# --- .py/.json/.md files, re-asserted below the extension rules above  ---
-# --- so it stays senior-genealogists (last-match-wins). ---
+# --- .py/.json files, re-asserted below the extension rules above      ---
+# --- so it stays senior-genealogists (last-match-wins).                ---
 
 # Cowork plugin skills — SKILL.md prose, templates, references, and their
 # stdlib-only Python scripts (CLAUDE.md § "Skills") are genealogist-
 # reviewed content, not developer infrastructure, even though scripts/
-# holds .py files.
+# holds .py files. Scoped to the plugin: the process skills under
+# .claude/skills/ are the lead's, not genealogist content.
 /packages/engine/plugin/skills/ @PioneerAIAcademy/senior-genealogists
 
 # Cowork plugin agents — agent .md bodies are genealogist/doctrine prose.
@@ -111,11 +53,3 @@ Dockerfile @PioneerAIAcademy/senior-developers
 
 # Run logs and their .ann.json calibration annotations.
 /eval/runlogs/ @PioneerAIAcademy/senior-genealogists
-
-# docs/ prose, including specs — narrative and doctrine content. Schema
-# JSON Schema files under docs/specs/schemas/ are the one exception: they
-# are a code contract (validator.ts is generated/checked against them),
-# so they are deliberately NOT carved out here and stay under the *.json
-# rule above (senior-developers).
-/docs/ @PioneerAIAcademy/senior-genealogists
-/docs/specs/schemas/ @PioneerAIAcademy/senior-developers
