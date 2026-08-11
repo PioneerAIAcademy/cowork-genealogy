@@ -87,8 +87,10 @@ image ARK — never the browser page URL with its `i=`/`cc=`/`groupId=`.
 **Investigated live (2026-08-07, re-verified 2026-08-10): yes — the bare
 ARK's own resolver metadata names a clean `imageId` for the correct page.**
 
-- Fetching the bare ARK's resolver URL with `Accept: application/json`
-  (rather than `image/*`, which returns bytes) exposes structured metadata:
+- Fetching the bare ARK's resolver URL (`ark:/61903/3:1:9392-9ZVZ-X`) with
+  `Accept: application/json` (rather than `image/*`, which returns bytes)
+  exposes structured metadata — `npx tsx dev/probe-image-read-ark-resolver.ts
+  ark:/61903/3:1:9392-9ZVZ-X` returned
   `{"name":"004707850_00113","apid":"TH-1-18040-16514-50",
   "link":[…{"rel":"parents"}…]}`. `name` is a clean
   `{imageGroupNumber}_{sequence}` `imageId`, directly usable by `image_read`
@@ -98,14 +100,19 @@ ARK's own resolver metadata names a clean `imageId` for the correct page.**
   spread containing the target entry (#44, 19 Oct 1887). The `i=`/`cc=`/
   `groupId=` values a browser URL carries are a *different* ID system (image
   index and collection/group ids), not the DGS `{group}_{sequence}` that
-  names one image — so `name` alone lands correctly; the browser params are
-  not required. (Verified on this one reproduction ARK — a strong data
-  point, not a proof for every multi-image ARK.)
+  names one image — so the two values differing is *expected*, not a mismatch.
+  The JSON `name` route needs no browser URL; the bare-ARK **byte** path still
+  needs the `i=`/`cc=`/`groupId=` forwarding `arkToImageUrl` does (above), so
+  this is not licence to drop it. (Verified on this one reproduction ARK — a
+  strong data point, not a proof for every multi-image ARK.)
 - **The resolver is not stable over time.** The 2026-08-03 observation above
   (bare ARK → no-match page) did not reproduce on 08-05/07/10, when the same
-  ARK returned `200` and the correct image. The JSON `name` is the more
-  reliable signal because it names the image explicitly rather than
-  depending on redirect behavior.
+  ARK returned `200` — but *which image those bytes were was not checked*. The
+  fixture's own notes and a scored run show the bare-ARK bytes landing on the
+  wrong (1881) page, which is exactly why the byte path needs the
+  `i=`/`cc=`/`groupId=` forwarding above. The JSON `name` is the more reliable
+  signal because it names the image explicitly rather than depending on redirect
+  behavior.
 - **No tool surfaces the JSON route today.** `image_read`/`arkToImageUrl`
   request `image/*` and get bytes only, never the JSON `name`/`parents`;
   `record_read`'s output carries no `imageGroupNumber`/`imageId`/`i=`/`cc=`/
