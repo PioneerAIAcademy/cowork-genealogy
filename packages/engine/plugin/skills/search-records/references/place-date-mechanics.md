@@ -238,8 +238,8 @@ Each name field independently supports wildcards and `.exact=on`.
     (Italian parish records the highest). Records naming a father are a
     minority everywhere measured, but "almost none" holds only for this US
     census-era slice. Do not estimate it from a page of results either:
-    the sampled father-bearing rate swings 80/92/90/14/0/80/80 percent
-    across offsets 0..5000, so only totals answer the question.
+    the sampled father-bearing rate swings wildly from one page of results
+    to the next, so only totals answer the question.
 
   Practical consequence: a nil result means one of the terms **on the
   person you searched** did not match. Drop or loosen one of those to

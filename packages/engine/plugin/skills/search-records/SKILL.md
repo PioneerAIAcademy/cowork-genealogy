@@ -158,9 +158,11 @@ spouse families; other fields follow the same pattern.
   record indexed `Neill`, `Neal` with `surnameExact` returned nothing while plain
   fuzzy returned it. Set it only when you have *confirmed* how the index spells
   the name.
-- **`givenNameExact` excludes period diminutives that the default does reach** —
-  fuzzy `Elizabeth` returns `Betty` records, likewise `Margaret`/`Peggy` and
-  `Mary`/`Polly`. They rank deep and are easy to miss: to chase a nickname, pass
+- **The default reaches period diminutives; `givenNameExact` is expected to cut
+  them off.** Fuzzy `Elizabeth` returns `Betty` records, likewise
+  `Margaret`/`Peggy` and `Mary`/`Polly` — that reach is measured. That the exact
+  form excludes them follows from what exactness does elsewhere; it was not
+  measured directly. They rank deep and are easy to miss: to chase a nickname, pass
   it as its own `givenName` value rather than making the formal name exact, or
   narrow the query until the pool is small enough to read in full.
 - **The one exception — an initials search.** Where the index holds the person as
@@ -205,7 +207,10 @@ anchor broadened the search. How much it narrows depends on **which** relative,
 and on how often that relative is indexed in the records you are searching:
 
 - **An unmatchable relative name keeps exactly the records silent about that
-  relative, and drops every record naming a different one.**
+  relative, and drops every record naming a different one.** Enumerated for
+  `father*` and `spouse*` only, in marriage records; `mother*`, `parent*` and
+  `other*` are assumed to follow, not measured — so a mother-anchored nil is
+  weaker evidence than a father-anchored one.
 - **So the narrowing you get is the share of records that name that relative at
   all.** Where parents are rarely indexed, a parent name barely narrows and a
   parent-anchored nil is weak evidence. Where spouses are almost always indexed
