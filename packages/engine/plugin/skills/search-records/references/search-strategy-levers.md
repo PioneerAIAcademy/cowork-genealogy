@@ -54,7 +54,7 @@ and expect a specific record.
 | Search by child | Search child as principal with parent name set to subject | Subject's own records scarce; child's are abundant |
 | Wildcard surname | `q.surname=Sm*th` or `q.surname=*tnam` | Foreign transliteration, indexing errors, married-name variants |
 | Wildcard given name | `q.givenName=Joh*` or `q.givenName=Eli?abeth` | Diminutives, abbreviations, ambiguous handwriting |
-| Use initials only | `q.givenName=J W` (whether `.exact=on` removes the transposed order is **not established**) | Census/directory records abbreviated as initials |
+| Use initials only | `q.givenName=J W` — leave it fuzzy; `.exact=on` matches only records indexed under those literal initials and returned nothing in every pool read in full | Census/directory records abbreviated as initials |
 | Replace name with structural params | Fill `q.sex`, residence date+place, parent name; clear principal name | Name unrecoverable (e.g., "Negro woman aged 30") |
 
 ## Place levers

@@ -2951,15 +2951,22 @@ async function sectionI(): Promise<void> {
   const bound = await search(
     `q.givenName=W%20J&q.givenName.exact=on&${ENGLAND}&count=20&${REQUIRE_SWITCH}`
   );
-  let enumd: {
+  type OrderProbe = {
     surname: string; id: string; name: string;
     fuzzyRows: number; inFuzzy: boolean; exactRows: number; inExact: boolean;
-  } | null = null;
+  };
+  let enumd: OrderProbe | null = null;
+  let best: OrderProbe | null = null;
+  let discriminating = false;
+  let poolsTried = 0;
+  /** Every enumerated pool, so the SHAPE of the failure is recorded too. */
+  const attempts: OrderProbe[] = [];
   if (!errored(bound)) {
     for (const cand of bound.personas) {
       const sn = surnameToken(cand.matchedName);
       if (!sn) continue;
       const base = `q.surname=${encodeURIComponent(sn)}&q.givenName=J%20W&${ENGLAND}`;
+      poolsTried++;
       const size = await search(`${base}&count=1&${REQUIRE_SWITCH}`);
       if (errored(size) || (size.total ?? 0) === 0 || (size.total ?? 0) > 300) continue;
       const fzSet = await mustEnumerate(base, 400);
@@ -2975,12 +2982,47 @@ async function sectionI(): Promise<void> {
         exactRows: exSet.personas.length,
         inExact: exSet.personas.some((x) => x.id === cand.id),
       };
-      // Only a pool where fuzzy actually REACHES the transposition can test
-      // whether exact removes it; otherwise there is nothing to remove.
-      if (enumd.inFuzzy) break;
+      // Keep the first pool that can DISCRIMINATE, not the first that merely
+      // reaches. Two conditions, both required:
+      //   inFuzzy      — fuzzy must reach the transposition, or there is
+      //                  nothing for `.exact` to remove;
+      //   exactRows>0  — the exact set must retain something, or "the
+      //                  transposition is gone" cannot be told from "`.exact`
+      //                  returned nothing at all".
+      // Breaking on `inFuzzy` alone stopped at a 9 -> 0 pool and reported NOT
+      // MEASURED, which reads as a limit of the API when it was a limit of this
+      // loop. Weaker pools are kept only as a fallback for the report.
+      attempts.push(enumd);
+      if (enumd.inFuzzy && enumd.exactRows > 0) { discriminating = true; break; }
+      if (!best || (enumd.inFuzzy && !best.inFuzzy)) best = enumd;
+      enumd = null;
     }
   }
+  if (!discriminating) enumd = best;
   record("I", "initialsOrderEnumerated", enumd);
+  record("I", "initialsOrderPoolsTried", poolsTried);
+  // WHY it could not be measured, which is more useful than the bare refusal.
+  //
+  // An empty exact set is a CORRECT answer, not a fault: `.exact` on `J W`
+  // matches only a given name indexed literally as "J W". The bound record is
+  // indexed "W J" so exactness rightly excludes it, and the rest of the pool
+  // arrives through fuzzy from spelled-out forms ("John William") which it also
+  // rightly excludes. Zero is what the qualifier is for.
+  //
+  // What that costs is the ORDER test, which needs a pool holding BOTH a record
+  // indexed "J W" and one indexed "W J". None of the pools reachable this way
+  // has one, so the question stays open for want of a population.
+  const emptyExact = attempts.filter((a) => a.exactRows === 0).length;
+  record("I", "initialsExactEmptyPools", { enumeratedPools: attempts.length, emptyExactSets: emptyExact });
+  if (attempts.length > 0) {
+    record(
+      "I",
+      "verdict:.exact on an initials given name matches only the literal form",
+      emptyExact === attempts.length
+        ? `ONLY THE LITERAL FORM — across ${attempts.length} pool(s) read to the end, \`givenName.exact=on\` on a two-token initials value returned zero rows every time, because no record in them is indexed under those literal initials. That is the qualifier behaving correctly; the practical consequence is that setting it on an initials search returns nothing unless the index spells the name that same way.`
+        : `${attempts.length - emptyExact} of ${attempts.length} enumerated pool(s) kept rows under .exact`
+    );
+  }
   const orderEnumerated =
     enumd !== null && enumd.inFuzzy && !enumd.inExact && enumd.exactRows > 0;
   record(
