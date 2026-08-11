@@ -84,8 +84,10 @@ pass the full URL when one is available, precisely to avoid this trap.
 An autonomous run holds only what the tools give it for such a record —
 the `1:1:` index ARK, `record_read`'s `sources[]`, and the bare `3:1:`
 image ARK — never the browser page URL with its `i=`/`cc=`/`groupId=`.
-**Investigated live (2026-08-07, re-verified 2026-08-10): yes — the bare
-ARK's own resolver metadata names a clean `imageId` for the correct page.**
+**Investigated live (2026-08-07, re-verified 2026-08-10): the route exists,
+but nothing reaches it yet — the bare ARK's own resolver metadata names a
+clean `imageId` for the correct page, and no shipped tool fetches it (last
+bullet).**
 
 - Fetching the bare ARK's resolver URL (`ark:/61903/3:1:9392-9ZVZ-X`) with
   `Accept: application/json` (rather than `image/*`, which returns bytes)
