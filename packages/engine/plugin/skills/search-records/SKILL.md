@@ -170,11 +170,15 @@ spouse families; other fields follow the same pattern.
   - **Expect both orders back.** Fuzzy `J W` also returns records indexed `W J`.
     A reversed-initials hit is very often the same person, not a different one —
     do not discard it on the order alone.
-  - **`givenNameExact` here returns nothing, not fewer.** It matches only a given
-    name indexed in that exact literal form, and across every pool read in full
-    it came back empty, because the records fuzzy reaches are indexed either
-    spelled out or in the other order. If you set it and get a nil, that nil is
-    about the qualifier, not about the person.
+  - **`givenNameExact` is worth setting where the index really does use
+    initials** — census and directory records. It keeps only records indexed in
+    that literal form: on a US-wide `J W` search it cut the pool roughly
+    120-fold, and the sampled page held no transpositions at all.
+  - **But it returns NOTHING where the index spells names out.** On twenty
+    narrow English marriage pools read in full, it came back empty every time,
+    because no record there is indexed under initials. So a nil under
+    `givenNameExact` is a fact about the index, not about the person: drop the
+    qualifier and search fuzzy before concluding the record does not exist.
   - **To confirm which order the index actually uses**, narrow onto the surname
     until the pool is small enough to read in full, and look. That is also how
     you reach a transposed record deliberately.

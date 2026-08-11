@@ -109,7 +109,10 @@ claim.
 - `q.givenName=J*` — the three-letter minimum this once cited is **not enforced** (see Constraints above; measured on `q.surname`). Whether a one-letter given-name stem behaves the same was not measured.
 - `q.givenName=J W` works as a literal match against records indexed
   with initials
-- Use `.exact=on` on the given name when searching initials
+- `.exact=on` on the given name keeps only records indexed in that literal
+  initials form — useful in census and directory collections, and empty in
+  collections that spell names out. Start fuzzy; add it to cut the pool once
+  you know the index uses initials
 
 ## Middle names
 
