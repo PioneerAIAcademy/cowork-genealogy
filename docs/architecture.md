@@ -1377,7 +1377,7 @@ gh issue list --state open --label nothing-checks --search "<mechanism>"  # just
 ```
 
 **A new gap is a labelled issue, not a row here.** File it
-(`CLAUDE.md` § "Deferring work creates an issue") with `--label nothing-checks`.
+(`CLAUDE.md` § "Work you find along the way") with `--label nothing-checks`.
 Do not search for the phrase instead of the label: issue titles name the
 mechanism, not the shape, so a text search finds about half of them and returns
 confident near-misses for the rest.
