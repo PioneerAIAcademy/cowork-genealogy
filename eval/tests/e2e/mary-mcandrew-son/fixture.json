@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Findings are a DRAFT transcribed from the hint record (Michigan Births and Christenings 1775-1995: John A Morgan, b. 6 Mar 1873 Detroit, parents John and Mary Morgan), whose identity with the tree family (surname Mogan) is unverified — Mary/John Morgan are very common names in 1870s Detroit, and roughly half the records in this hint batch are false matches. Genealogist adjudication must confirm the match, revise the findings, or convert this to a no-findable-answer fixture."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). RESOLVED as a FALSE MATCH: the hinted 1873 birth (Michigan Births and Christenings 1775-1995: John A Morgan, b. 6 Mar 1873 Detroit, parents John and Mary Morgan; ark:/61903/1:1:F4RF-FV9) belongs to a different Detroit family — John A Morgan (9NJ7-Z6L) is already attributed to the couple John Morgan (9NJ7-Z6R, b. Ireland) and Mary Morgan (9NJ7-Z61), whose sole source is that birth record (an auto-generated parent stub). Mary McAndrew's 24 attached sources name husband John Mogan and five children, none of them this 1873 son. expected-findings.json is an avoid-guard plus a required negative conclusion (outcome c)."
 }

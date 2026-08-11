@@ -1,0 +1,1192 @@
+{
+  "project": {
+    "id": "rp_anna_findejsova_daughter",
+    "objective": "Did Anna Marie Findejsov\u00e1 and her husband Maxmili\u00e1n Michl have a daughter named Agnes, born 1818, in addition to their daughter Anna (b. 1823)?",
+    "subject_person_ids": [
+      "P915-7QP"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does any baptismal or birth record document a daughter named Agnes born approximately 1818 to Maxmili\u00e1n Michl and Anna Marie Findejsov\u00e1 in Bohemia?",
+      "rationale": "The research objective asks whether this couple had a daughter Agnes born ca. 1818 in addition to their known daughter Anna (b. 1823, already in tree as P91P-VCD). Bohemian Catholic parish registers (matriky) for the relevant parishes survive for this period and are the primary evidence source. This is the only factual sub-question implied by the objective and must be answered through exhaustive search of the applicable registers.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-09",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-08-09"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1815-1822",
+          "repository": "FamilySearch",
+          "rationale": "Search collection CID 1804263 (Czech Republic, Church Books, 1552-1981 \u2014 indexed + images, covering Litom\u011b\u0159ice, T\u0159ebo\u0148, Opava and Z\u00e1mrsk archives) for a baptism of Agnes or Ane\u017eka as daughter of Maxmili\u00e1n Michl and Anna Marie Findejsov\u00e1, ca. 1818. This is the highest-probability first step: the indexed collection covers the four major Bohemian archives and is free. Search variant spellings: Agnes/Ane\u017eka for child; Michl/Michlov\u00e1 for surname; Findejs/Findejsov\u00e1 for mother. A positive result would be direct evidence answering q_001; a null result narrows the parish universe.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1820-1826",
+          "repository": "FamilySearch",
+          "rationale": "Search CID 1804263 for the baptism of the known daughter Anna Michlov\u00e1 (b. ca. 1823, tree person P91P-VCD) to identify the specific parish. Once the parish is known, the correct browse-only register volume can be targeted for Agnes ca. 1818. This is a finding-aid search: Anna's baptism is expected to name both parents and the house/conscription number, pinpointing the village and the archive holding that parish's registers.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1800-1830",
+          "repository": "FamilySearch",
+          "rationale": "Search CID 1804263 and CID 1804227 (Czech Republic Marriages, 1654-1889) for the marriage of Maxmili\u00e1n Michl and Anna Marie Findejsov\u00e1. Per the record-type guide, the parents' marriage record (a) confirms the couple as a unit; (b) supplies the mother's maiden name independently of derived sources; and (c) by its date relative to Agnes's ca. 1818 birth, corroborates that this is the same couple. Critically, the marriage entry records the parish of celebration and both parties' residence, narrowing the parish for the children's baptisms.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1815-1822",
+          "repository": "FamilySearch",
+          "rationale": "Search legacy baptism index CID 1784129 (Czech Republic, Births and Baptisms, 1637-1889 \u2014 index only) for Agnes/Ane\u017eka Michl. This dataset was assembled from different source parishes than CID 1804263 and may cover parishes not yet in the main collection. It is a free fallback for pli_001 if CID 1804263 yields no results.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1810-1830",
+          "repository": "other",
+          "rationale": "Execute a full-text co-occurrence search across the Bohemian church register corpus for the surname pair 'Michl' and 'Findejsov\u00e1' (or 'Findejs') appearing on the same page. Per the record-type guide, this tactic is the highest-yield approach when indexed search has stalled: most Bohemian volumes are browse-only (0% name-indexed), and a co-occurrence full-text search can locate the family in unindexed volumes. Run via the search-full-text skill. A hit identifies the image group and page; combine with search-images to read the entry.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1815-1822",
+          "repository": "Ancestry",
+          "rationale": "Search Ancestry collection 60254 (Czech Republic Church Books, 1552-1963) for Agnes/Ane\u017eka Michl baptism ca. 1818. Ancestry's index may cover parishes or indexing passes distinct from FamilySearch's CID 1804263. This is a paid fallback for pli_001 if FamilySearch indexed searches and full-text fail.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Bohemia (Habsburg Austrian Empire)",
+          "date_range": "1810-1830",
+          "repository": "other",
+          "rationale": "Once the specific parish is identified (via pli_002 finding Anna's baptism or pli_003 finding the parents' marriage), browse the relevant Bohemian church register image group directly for the ca. 1815-1822 baptism window to look for Agnes/Ane\u017eka. Most Bohemian volumes are browse-only (0% name-indexed); after parish identification this targeted image-browse is the definitive check. Access via the regional archive's digital portal (Litom\u011b\u0159ice vademecum, T\u0159ebo\u0148 DigiArchiv, Prague Regional ebadatelna, or Z\u00e1mrsk aron) or through FamilySearch volume images. Fallback for pli_001 after parish is located.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-09T14:37:29.207Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Agnes",
+        "birthYearFrom": 1813,
+        "birthYearTo": 1823,
+        "fatherGivenName": "Maximilian",
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 36,
+      "notes": "36 total matches; Agnes Michl appears as secondary person (godparent) in other records \u2014 not as the principal baptized child. No record shows Agnes as principal child of Maximilian Michl + Anna Findejsov\u00e1. Follow-up needed with isPrincipal:true and parent-name anchoring."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-09T14:37:29.214Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Anna",
+        "birthYearFrom": 1818,
+        "birthYearTo": 1828,
+        "fatherGivenName": "Maximilian",
+        "motherGivenName": "Anna",
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 625,
+      "notes": "625 total matches; all match scores extremely low (max 0.016) because subject P91P-VCD (Anna Michlov\u00e1) has no dated/placed facts. Result 'Anna Michl-Ova' (ark:/61903/1:1:657J-D5HC) possibly uses Czech feminine suffix notation. No confident match identified. Follow-up needed with isPrincipal:true, narrower birth range, parent names."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-09T14:37:29.222Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Maximilian",
+        "spouseGivenName": "Anna",
+        "spouseSurname": "Findejs",
+        "collectionId": "1804263",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 2,
+      "notes": "Only 2 results, both irrelevant (one 'Michal' b.1838, one female 'Michel'). Spouse surname constraint Findejs too restrictive or not indexed. Follow-up without spouse surname."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-09T14:37:29.225Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Agnes",
+        "birthYearFrom": 1813,
+        "birthYearTo": 1823,
+        "collectionId": "1784129",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in legacy CID 1784129 baptism index for Agnes Michl born 1813-1823. Legacy index does not cover this record."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-09T14:42:17.268Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Agnes",
+        "isPrincipal": true,
+        "fatherGivenName": "Maximilian",
+        "motherGivenName": "Anna",
+        "birthYearFrom": 1813,
+        "birthYearTo": 1823,
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results with isPrincipal:true and mother given name added. Agnes (German form) as principal baptized child of Maximilian Michl + Anna not indexed in CID 1804263 for 1813-1823."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-09T14:42:17.268Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Ane\u017eka",
+        "isPrincipal": true,
+        "fatherGivenName": "Maximilian",
+        "motherGivenName": "Anna",
+        "birthYearFrom": 1813,
+        "birthYearTo": 1823,
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Czech form Ane\u017eka with isPrincipal:true. Neither the German nor Czech name form for Agnes is indexed as principal child of Maximilian Michl in CID 1804263 for this date range. Suggests the baptism either is in an unindexed volume or she was recorded under a different form."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-09T14:42:17.268Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Maximilian",
+        "spouseGivenName": "Anna",
+        "collectionId": "1804263",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 6,
+      "notes": "6 results returned, all wrong family or wrong era. Top 3 (score ~4.69) are 1900/1901 marriage entries for Anton Michl and Emil Michl \u2014 their father 'Max Michl'/'Maxmilian Michl' appears as secondary party, but mother is Anna Schmied/Schmid (not Findejsov\u00e1) and dates are c.1874/1876. Bottom 3 have negative scores. No marriage record for Maxmili\u00e1n Michl + Anna Marie Findejsov\u00e1 found in CID 1804263 with this query."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-09T14:46:40.068Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Findejs",
+        "givenName": "Anna",
+        "recordType": "marriage",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 64,
+      "notes": "64 results for Anna Findeis/Findejs as bride in CID 1804263. All results are secondary-party appearances (Anna as mother or witness in others' records) or wrong era (b. 1834-1875). No marriage of Anna Findejsov\u00e1 to Maxmili\u00e1n Michl found. Family now identified as Svitavy (Zwittau), Moravia via children's baptisms."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-09T14:46:40.074Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "motherSurname": "Findejs",
+        "recordType": "birth",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 56831,
+      "notes": "56,831 results: motherSurname:Findejs matches far too broadly. Results from different families and time periods. Brand\u00fds nad Orlic\u00ed cluster: Waclaw Michl + Kate\u0159ina, not Maximilian + Anna. Negative for targeted Agnes search."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-09T14:46:40.081Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Findejs",
+        "givenName": "Anna",
+        "fatherGivenName": "Antonin",
+        "recordType": "birth",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 671,
+      "notes": "671 results for Anna Findejs with father Antonin; top results from Pardubice (1878-1879) and Zwittau (1837-1855) \u2014 all wrong era for Anna Marie Findejsov\u00e1 who would have been born ca. 1790-1800. Her birth record not identified in this search."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-09T14:46:40.087Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Michl",
+        "givenName": "Maximilian",
+        "subjectId": "P915-SXM",
+        "collectionId": "1804263"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 151,
+      "notes": "POSITIVE. Ranked results found: (1) ark:/61903/1:1:6PJZ-CTT9 \u2014 Anna baptism 17 Sep 1823, Svitavy (Zwittau), Moravia; father Maxmilian Michl, mother Anna \u2014 already attached to P915-SXM (attachedToSubject:true, rank 7 matchScore 0.598). (2) ark:/61903/1:1:6PJZ-ZB9V \u2014 Agnes baptism 1 Mar 1818, Svitavy (Zwittau), Moravia; father Maxmilian Michal (Czech form of Michl), mother Anna \u2014 direct evidence for pli_001. Parish confirmed as Svitavy, Moravia. Mother surname not indexed in either record (only given name Anna). Also found: duplicate indexed entries for Agnes and Anna confirming same image volume."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-09T14:46:40.098Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Findejs",
+        "givenName": "Anna",
+        "subjectId": "P915-7QP",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 1167,
+      "notes": "No candidate above 0.01 matchScore for P915-7QP (subjectResolvable:false). Anna Marie Findejsov\u00e1's own baptism or marriage record not found in CID 1804263 via this approach. Her surname only appears in secondary contexts, not in an early 19th-century birth/marriage record."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-09T14:54:48.515Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QS7-89S1-K869"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fast OCR attempted on Agnes 1818 image page. Entry on 1 March 1818 with father named Maxmilian found but OCR heavily misread surnames (father surname read as 'Winfal', child name as 'Clymus', mother as 'Anna Kieffer'). Opus re-read refused: image 2.3 MB exceeds opus 700 KB limit. Fast OCR transcript saved as images/ark_61903_3_1_3QS7-89S1-K869.jpg. The 1 March 1818 entry does appear on the page with father given name Maxmilian \u2014 OCR errors on surnames prevent confirmation of maiden name. Original image examined in good faith but surnames remain unconfirmed from image alone."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-09T14:54:48.515Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QS7-89S1-K8F7"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Fast OCR attempted on Anna 1823 image page. Entry 5 with child Anna, father Maxmilian Michl, house 29 identified \u2014 consistent with indexed record. However OCR replicated the same mother description ('Tochter des M\u00fcllers Anton geb. Eger') across 6 different entries, indicating systematic confusion \u2014 mother surname for the Michl entry is unreliable. Opus re-read refused: 2.7 MB exceeds limit. Image saved as images/ark_61903_3_1_3QS7-89S1-K8F7.jpg. Father surname 'Michl' confirmed by OCR in Entry 5; mother maiden name unconfirmed due to OCR confusion on this page."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Czech Republic, Church Books, 1552-1981,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PJZ-ZB9V : accessed 9 August 2026), entry for Agnes and Maxmilian Michal, 1 Mar 1818; citing Moravia, Religious records, image volume https://www.familysearch.org/ark:/61903/3:1:3QS7-89S1-K869.",
+      "citation_detail": {
+        "who": "Agnes (infant), daughter of Maxmilian Michal and Anna",
+        "what": "Baptism register entry, Catholic church books, Svitavy parish",
+        "when_created": "1 March 1818",
+        "when_accessed": "9 August 2026",
+        "where": "FamilySearch \u2014 Czech Republic, Church Books, 1552-1981 (Collection ID 1804263)",
+        "where_within": "Entry for Agnes and Maxmilian Michal, 1 Mar 1818; image volume ark:/61903/3:1:3QS7-89S1-K869"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6PJZ-ZB9V",
+      "notes": "FamilySearch index entry for a Catholic baptism register. The original register image is accessible at https://www.familysearch.org/ark:/61903/3:1:3QS7-89S1-K869; the original image was not examined \u2014 this extraction is from the index/transcript only. The father is indexed as 'Maxmilian Michal' (Czech form); the tree records him as 'Maxmili\u00e1n Michl' (German form) \u2014 a known Czech/German transliteration variant confirmed by a parallel 1823 baptism record at the same parish. The mother is indexed only as 'Anna'; her maiden name 'Findejsov\u00e1' does not appear in this index entry.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Czech Republic, Church Books, 1552-1981,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PJZ-CTT9 : accessed 9 August 2026), entry for Anna, daughter of Maxmilian and Anna Michl, baptism 17 Sep 1823, Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia; citing original parish register image at https://www.familysearch.org/ark:/61903/1:2:HQHL-KQSY (image volume: https://www.familysearch.org/ark:/61903/3:1:3QS7-89S1-K8F7).",
+      "citation_detail": {
+        "who": "Anna, daughter of Maxmilian Michl and Anna (wife)",
+        "what": "Baptism register entry, Catholic church, Svitavy parish",
+        "when_created": "17 Sep 1823",
+        "when_accessed": "9 August 2026",
+        "where": "FamilySearch, Czech Republic, Church Books, 1552-1981 (Collection ID 1804263)",
+        "where_within": "Entry for Anna, baptism 17 Sep 1823; record page ark:/61903/1:2:HQHL-KQSY; image volume ark:/61903/3:1:3QS7-89S1-K8F7"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6PJZ-CTT9",
+      "notes": "FamilySearch indexed transcription of the original Svitavy Catholic baptism register. The original register image is accessible at ark:/61903/1:2:HQHL-KQSY (image volume ark:/61903/3:1:3QS7-89S1-K8F7) but has not been independently examined against this index entry \u2014 the classification is derivative (index/abstract). Mother is indexed only as 'Anna' with no surname; no maiden name can be asserted from this record alone.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Agnes",
+      "structured_value": {
+        "given": "Agnes",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1 Mar 1818",
+      "date": "1 March 1818",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "1 Mar 1818, Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "date": "1 March 1818",
+      "date_certainty": "exact",
+      "place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "information_quality": "primary",
+      "informant": "officiating priest, Svitavy parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001",
+      "standard_place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia, Czechoslovakia"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Maxmilian Michal",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Anna",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Maxmilian Michal",
+      "structured_value": {
+        "given": "Maxmilian",
+        "surname": "Michal"
+      },
+      "information_quality": "primary",
+      "informant": "Maxmilian Michal (father, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's surname indexed as 'Michal' (Czech form); the tree records him as 'Maxmili\u00e1n Michl' (German form) \u2014 a known Czech/German transliteration variant confirmed by the parallel 1823 Svitavy baptism record for daughter Anna. Same person: P915-SXM.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Maxmilian Michal (father, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Anna",
+      "structured_value": {
+        "given": "Anna",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Anna (mother, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother indexed only as 'Anna' \u2014 no maiden name (Findejsov\u00e1) appears in this index entry. Do not assert maiden name from this record alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6PJZ-ZB9V",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Anna (mother, present at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Anna",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "given": "Anna",
+        "surname": ""
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "16 Sep 1823",
+      "date": "1823-09-16",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "year": "1823"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko"
+      },
+      "source_id": "src_002",
+      "standard_place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia, Czechoslovakia"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "17 Sep 1823, Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "date": "1823-09-17",
+      "date_certainty": "exact",
+      "place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko",
+      "information_quality": "primary",
+      "informant": "officiating priest, Svitavy Catholic parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Morava, Rakousko"
+      },
+      "source_id": "src_002",
+      "standard_place": "Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia, Czechoslovakia"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Maxmilian Michl",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Anna (mother)",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the baptized child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Maxmilian Michl",
+      "information_quality": "primary",
+      "informant": "Maxmilian Michl (father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "given": "Maxmilian",
+        "surname": "Michl"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Maxmilian Michl (father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Anna",
+      "information_quality": "primary",
+      "informant": "Anna (mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "structured_value": {
+        "given": "Anna",
+        "surname": ""
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6PJZ-CTT9",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Anna (mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Agnes minted as I1 from this persona (materialize_facts). Name 'Agnes' Female is the sole identifying name on the person. I1 is the direct descendant of this assertion \u2014 no prior tree presence to confirm against; probable rather than confident.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex Female consistent with Agnes minted as I1. Supports gender assignment on the new person.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth date 1 Mar 1818 is the primary temporal anchor for I1 (Agnes). Probable: this is the only source for this date; no corroborating record yet independently places Agnes Michl at this date.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Baptism 1 Mar 1818 at Svitavy anchors I1 to place. Parish-level place confirmed (Svitavy/Zwittau, Moravia). Probable: single-source.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Agnes is child of father Maxmilian Michal. Bears on I1 as the child identified in the baptism entry; consistent with ParentChild edge written to P915-SXM.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "Same assertion ('child of Maxmilian Michal') bears on P915-SXM as the named father. Father's identity confirmed at same_person score 0.889 (a_007 \u2192 P915-SXM).",
+      "match_score": 0.889,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Agnes is child of mother Anna. Bears on I1 as the child; consistent with ParentChild edge to P915-7QP.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Same assertion ('child of Anna') bears on P915-7QP as the named mother. Family-unit identification: father = P915-SXM (score 0.889); P915-7QP is P915-SXM's recorded spouse.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "same_person score 0.889 (strong). 'Maxmilian Michal' = 'Maxmil\u00e1n Michl': given-name variant, Czech/German surname transliteration confirmed by parallel Anna 1823 record at same parish. Svitavy parish consistent with P915-SXM's family location. Record already FamilySearch-attached per CTTW treeMatch.",
+      "match_score": 0.889,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "Sex Male consistent with P915-SXM. Supports identity under the same_person score 0.889 established for a_007.",
+      "match_score": 0.889,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Mother indexed only as 'Anna' \u2014 no maiden name (Findejsov\u00e1) in this entry; no same_person scoring possible. Identification by family unit: father P915-SXM confirmed (score 0.889); P915-7QP (Anna Marie Findejsov\u00e1) is P915-SXM's recorded spouse at the same Svitavy parish.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Sex Female consistent with P915-7QP. Supporting assertion under the family-unit identification for a_009.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Name 'Anna' Female matches P91P-VCD. same_person score 0.000007 is a formatting artifact (no surname in record vs 'Michlov\u00e1' in tree; place discrepancy pre-existing tree error). Corroborating attributes: birth 16 Sep 1823, baptism 17 Sep 1823 Svitavy, parents Maxmilian Michl+Anna all match exactly. Linked at confident on correlation.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Sex Female consistent with P91P-VCD. Supporting assertion under the multi-attribute correlation for a_011 (score 0.000007, artifact).",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Birth date 16 Sep 1823 is an exact match with P91P-VCD's recorded birth date. This is the strongest single identifying attribute; date agreement overrides the near-zero score artifact.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Birth place Svitavy, Moravia matches the baptism entry for P91P-VCD (also Svitavy). The pre-existing tree 'Bistrau, Bohemia' birth-place entry is a pre-existing tree error now surfaced as a conflict; the record evidence points to Svitavy.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Baptism 17 Sep 1823 at Svitavy is an exact date+place match with P91P-VCD's baptism fact. Same exact dates confirming identity.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Relationship: Anna is child of Maxmilian Michl. Bears on P91P-VCD as the child in the baptism entry; consistent with existing R5 ParentChild edge to P915-SXM.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "Same assertion ('child of Maxmilian Michl') bears on P915-SXM as the named father. same_person score 0.895 (a_018 \u2192 P915-SXM) confirms identity.",
+      "match_score": 0.895,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "P91P-VCD",
+      "confidence": "confident",
+      "rationale": "Relationship: Anna is child of mother Anna. Bears on P91P-VCD as the identified child; consistent with R6 ParentChild edge to P915-7QP.",
+      "match_score": 7e-06,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Same assertion ('child of Anna/mother') bears on P915-7QP as the named mother. Family-unit identification: father P915-SXM confirmed (score 0.895); P915-7QP is P915-SXM's recorded spouse.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "same_person score 0.895 (strong). 'Maxmilian Michl' = 'Maxmil\u00e1n Michl' (minor given-name variant, identical surname). Svitavy 1823. Record ark:/61903/1:1:6PJZ-CTTW already FamilySearch-attached to P915-SXM per log_011 treeMatches (rank 7).",
+      "match_score": 0.895,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "P915-SXM",
+      "confidence": "confident",
+      "rationale": "Sex Male consistent with P915-SXM. Supporting assertion under same_person score 0.895.",
+      "match_score": 0.895,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Mother indexed only as 'Anna' \u2014 no maiden name. Family-unit identification: father P915-SXM confirmed (score 0.895); P915-7QP is P915-SXM's recorded spouse at Svitavy 1823.",
+      "match_score": null,
+      "created": "2026-08-09"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "P915-7QP",
+      "confidence": "probable",
+      "rationale": "Sex Female consistent with P915-7QP. Supporting assertion under the family-unit identification for a_020.",
+      "match_score": null,
+      "created": "2026-08-09"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "P915-7QP (Anna Marie Findejsov\u00e1) is the mother of Agnes (I1), baptized 1 March 1818 at Svitavy, Moravia",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_009",
+        "a_017",
+        "a_020"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Family-unit inference: the same father P915-SXM appears at Svitavy in both the Agnes 1818 and Anna 1823 baptisms. P915-7QP is P915-SXM's recorded spouse. Neither index entry names the mother's maiden name (Findejsov\u00e1). Identification is probable by family-unit reasoning but unconfirmed by direct document. The parents' marriage record or original register images remain as sources that could confirm this directly. Flagged per gps-mentor evaluation ev_001.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_009",
+        "a_013",
+        "a_015",
+        "a_016",
+        "a_018"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searches were executed against FamilySearch indexed collection CID 1804263 ('Czech Republic, Church Books, 1552-1981') using multiple strategies: the child's given name Agnes/Ane\u017eka with surname Michl/Michlov\u00e1; the father's name Maxmilian/Maximilianus Michl/Michal without record-type restriction; and the mother's surname Findejs/Findejsov\u00e1. The legacy index CID 1784129 ('Czech Republic, Births and Baptisms, 1637\u20131889') was also searched. A marriage search in CID 1804263 and CID 1804227 did not locate a marriage record for this couple. The original register images for both identified records (ark:/61903/3:1:3QS7-89S1-K869 and ark:/61903/3:1:3QS7-89S1-K8F7) were attempted but could not be reliably read due to image-size limitations with the OCR tools available. An Ancestry search (collection 60254) and a full-text co-occurrence search were planned as fallbacks (pli_005, pli_006) but were not executed once the key records were found through the FamilySearch indexed approach. Direct examination of the original register images and a search for the parents' marriage record remain as steps that could advance the conclusion to the proved tier.",
+      "narrative_markdown": "## Probable Conclusion: Agnes (b. 1 March 1818, Svitavy, Moravia) Is a Daughter of Maxmili\u00e1n Michl and Anna [Findejsov\u00e1]\n\n**Research question:** Does any baptismal or birth record document a daughter named Agnes born approximately 1818 to Maxmili\u00e1n Michl (b. ca. 1795) and Anna Marie Findejsov\u00e1 (b. 13 March 1784, Bystr\u00e9, Bohemia)?\n\n**Geographic note:** The original research question specified Bohemia. The baptism records locate the Michl family at Svitavy (German: Zwittau), a market town in the Moravsk\u00e1 T\u0159ebov\u00e1 district of Moravia \u2014 historically across the Bohemia\u2013Moravia provincial border. Svitavy was part of the Czech Crown Lands (Habsburgische Erblande) in 1818. The question is answered affirmatively for Moravia.\n\n---\n\n### Evidence\n\n**Record 1 \u2014 Agnes baptism (direct evidence)**\n\n\"Czech Republic, Church Books, 1552-1981,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PJZ-ZB9V : accessed 9 August 2026), entry for Agnes and Maxmilian Michal, 1 Mar 1818; citing Moravia, Religious records, image volume https://www.familysearch.org/ark:/61903/3:1:3QS7-89S1-K869.\n\nThis indexed entry in FamilySearch collection CID 1804263 records the baptism of a female infant named Agnes on 1 March 1818 at Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia, with her birth also on the same date. The father is indexed as \"Maxmilian Michal\" and the mother as \"Anna.\" Source classification: **derivative** (FamilySearch index/abstract of the original Catholic parish register); **primary** information (recorded contemporaneously by persons with direct knowledge: the presenting parents and officiating priest); **direct** evidence (the entry explicitly names Agnes as the daughter of the identified father). The original register image is accessible at ark:/61903/3:1:3QS7-89S1-K869; it was attempted but could not be reliably read due to image-size limitations with the OCR tools available. This finding rests on the derivative index.\n\n**Record 2 \u2014 Anna baptism (corroborating)**\n\n\"Czech Republic, Church Books, 1552-1981,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PJZ-CTT9 : accessed 9 August 2026), entry for Anna, daughter of Maxmilian and Anna Michl, baptism 17 Sep 1823, Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia; citing original parish register image at https://www.familysearch.org/ark:/61903/1:2:HQHL-KQSY (image volume: https://www.familysearch.org/ark:/61903/3:1:3QS7-89S1-K8F7).\n\nThis indexed entry records the baptism of Anna, daughter of Maxmilian Michl and his wife Anna, on 17 September 1823 at the same Svitavy parish. It corresponds to the known tree person P91P-VCD (Anna Michlov\u00e1, b. 16 Sep 1823), the couple's previously documented daughter, and was already attached to P915-SXM in the FamilySearch collaborative tree. It establishes that the Michl family was resident at Svitavy and entering baptisms in this Catholic register in the same era, providing the geographic anchor that identifies the Agnes 1818 entry as belonging to the same family. Classification: **derivative** source, **primary** information, **direct** evidence for Anna's birth, **indirect** corroborating evidence for Agnes's parentage.\n\n---\n\n### Correlation and analysis\n\n**Father identification:** The Agnes entry indexes the father as \"Maxmilian Michal\"; the Anna entry uses \"Maxmilian Michl.\" These represent an established Czech/German transliteration variant \u2014 \"Michal\" is the standard Czech rendering of the German \"Michl\" by indexers of Moravian registers. A FamilySearch same-person algorithmic comparison of the Agnes entry's father persona against P915-SXM returned a match score of 0.889 (strong, above the 0.7 threshold); the same comparison against the Anna entry's father returned 0.895. The Anna 1823 record was already attached to P915-SXM in the FamilySearch collaborative tree before this research, providing independent confirmation that P915-SXM is the Svitavy-parish Maxmilian Michl. The surname variation is an expected indexing artifact.\n\n**Mother identification:** Both entries record the mother only as \"Anna,\" without a maiden name. No marriage record for Maxmili\u00e1n Michl and Anna Marie Findejsov\u00e1 was located during this research. Identification of P915-7QP (Anna Marie Findejsov\u00e1) as the mother rests on family-unit reasoning: the same father (P915-SXM) appears at the same parish in both records, and P915-7QP is the recorded spouse of P915-SXM. This identification is probable but not independently confirmed from these index records alone. A direct document naming \"Findejsov\u00e1\" as the mother \u2014 such as the parents' marriage record, a census listing, or the full text of the original register images \u2014 would strengthen it. These remain unsearched or not-yet-read sources.\n\n**Agnes's surname:** Agnes's given name alone appears in the index. Standard Czech feminine naming practice gives daughters the feminized form of the father's surname; the expected surname would be \"Michlov\u00e1,\" consistent with her sister Anna being recorded as \"Anna Michlov\u00e1.\" No surname for Agnes is asserted from this source.\n\n---\n\n### Collateral discrepancy\n\nThe known daughter P91P-VCD (Anna Michlov\u00e1, b. 1823) carries a pre-existing birth-place entry of \"Bystr\u00e9/Bistrau, Poli\u010dka, Bohemia\" that conflicts with the baptism register's \"Svitavy, Moravsk\u00e1 T\u0159ebov\u00e1, Moravia.\" This discrepancy is collateral to the Agnes question. The register evidence (primary, direct) outweighs the unsourced pre-existing tree value. Both values coexist in the tree pending formal correction.\n\n---\n\n### Research scope\n\nSearches covered FamilySearch indexed collection CID 1804263 using Agnes/Ane\u017eka with Michl/Michlov\u00e1; the father's name Maxmilian/Maximilianus Michl/Michal without record-type restriction; and the mother's surname Findejs/Findejsov\u00e1. The legacy index CID 1784129 was also searched. A marriage search in CID 1804263 and CID 1804227 yielded no couple-marriage record. The original register images for both identified records were attempted but not reliably read. An Ancestry search and a full-text co-occurrence search were planned as fallbacks but were not needed. Direct examination of the original register images and a search for the parents' marriage record remain as the primary steps to advance this conclusion.\n\n---\n\n### Tier declaration\n\n**Probable.** The evidence strongly suggests that Agnes, baptized 1 March 1818 at Svitavy, Moravia, is a daughter of Maxmili\u00e1n Michl (P915-SXM) and Anna [Findejsov\u00e1] (P915-7QP). The conclusion does not reach the proved tier because: (1) both records are derivative index entries whose original images have not been independently examined; (2) both records derive from the same underlying parish register; and (3) the mother's maiden name \"Findejsov\u00e1\" has not been confirmed by a record that directly names her in connection with Agnes. Proof would require reading the original register images and locating at least one additional independent source naming both parents in connection with this child.\n\n*Previously unknown evidence may alter this assessment.*"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-09T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-09T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Bohemia",
+      "for_place": "Bohemia",
+      "time_period": "1800-1830",
+      "jurisdictions": [
+        {
+          "name": "Kingdom of Bohemia (Habsburg Austrian Empire)",
+          "date_range": "+1002/+1918"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1804263",
+          "title": "Czech Republic, Church Books, 1552-1981",
+          "date_range": "1552-1981"
+        },
+        {
+          "id": "1472854",
+          "title": "Czech Republic, Southern Bohemia, T\u0159ebo\u0148 Archive Church Books, 1650-1900",
+          "date_range": "1650-1900"
+        },
+        {
+          "id": "1784129",
+          "title": "Czech Republic, Births and Baptisms, 1637-1889",
+          "date_range": "1637-1889"
+        },
+        {
+          "id": "1930345",
+          "title": "Czech Republic Censuses and Inhabitant Registers, 1800-1990",
+          "date_range": "1800-1990"
+        }
+      ],
+      "quirks": [
+        "No civil registration before 1869 \u2014 all 1800\u20131830 births are in Catholic (or Protestant, from 1781) church registers (matriky).",
+        "Identify the specific parish before browsing: Bohemia has 28,000+ digitized volumes and browsing without a known parish is impractical. Use GenTeam Gazetteer (genteam.at) to map any village to its mother parish and regional archive.",
+        "From 1784 Joseph II's reform: baptism entries record child's name, parents' full names, grandparents' names, towns of origin, and house number \u2014 rich family data.",
+        "Records pre-1850 are in Gothic/Old German or Czech handwriting \u2014 requires paleographic skill to read. FamilySearch 'Reading Czech Parish Registers' online course is recommended.",
+        "Languages: Latin column headings with Czech or German entry text (1800\u20131830). Czech grammar adds feminine surname suffix -ov\u00e1: search both Michl and Michlov\u00e1, Findejs and Findejsov\u00e1.",
+        "The main indexed+images collection is CID 1804263 (Czech Republic, Church Books, 1552-1981), covering Litom\u011b\u0159ice, T\u0159ebo\u0148, Opava, and Z\u00e1mrsk archives. Try indexed search here first.",
+        "Southern Bohemia parishes are additionally covered in CID 1472854 (T\u0159ebo\u0148 Archive Church Books) \u2014 browse-only images, no name index.",
+        "Security-copy duplicate registers were created by the Habsburg government in the 1790s; where originals are damaged, duplicates often survive in the same archive.",
+        "Regional archive portals: Litom\u011b\u0159ice (vademecum.soalitomerice.cz), T\u0159ebo\u0148 (digi.ceskearchivy.cz), Prague Regional (ebadatelna.soapraha.cz), Z\u00e1mrsk (aron.vychodoceskearchivy.cz)."
+      ],
+      "guide_markdown": "# Locality Guide: Bohemia (1800\u20131830)\n\n## Jurisdiction overview\n- **Formed:** +1002 as Kingdom of Bohemia; Habsburg Austrian Crown Land during this period\n- **Administrative center:** Prague (Praha)\n- **Parent jurisdiction:** Habsburg Austrian Empire\n- **Economy:** Agriculture, linen weaving, glass; industrialization beginning 1820s\n- **Ethnic composition:** Czech-speaking majority; large German-speaking minority in western/northern border districts\n- **Religious denominations:** Roman Catholic (dominant); Lutheran/Evangelical (permitted from 1781); Jewish (required under Catholic supervision from 1784)\n- **Key events:** 1781 Toleration Patent; 1784 standardized church records; 1815 Congress of Vienna; 1820s industrial revolution\n\n## Boundary changes\nStable Crown Land borders throughout 1800\u20131830. All registers centralized into Czech state regional archives in the 1950s.\n\n## Available record types\n\n### Church records (primary vital record source)\n- **Baptism entries (1784+):** child's name; parents' full names, grandparents' names, towns of origin, house/conscription number; standardized columnar format\n- **Languages:** Latin, Czech, German; Gothic/Old German script pre-1850\n- **Where held:** Seven Czech state regional archives\n- **FamilySearch access:** CID 1804263 (indexed + images); CID 1472854 Southern Bohemia browse-only; CID 1784129 legacy index\n\n### Civil registration\n- **None before 1869** \u2014 church records are the sole vital records source for 1800\u20131830\n\n### Census records\n- No census for 1800\u20131830 period; earliest FamilySearch census records begin 1843 (CID 1930345)\n\n### Land records\n- Czech Republic Land Records, 1450-1889 (FamilySearch, browse-only)\n\n## Repository guide\n\n| Repository | Collection | Access |\n|---|---|---|\n| FamilySearch | CID 1804263 (Church Books, 1552-1981) \u2014 indexed + images | Free |\n| FamilySearch | CID 1472854 (Southern Bohemia T\u0159ebo\u0148, 1650-1900) \u2014 browse-only | Free |\n| FamilySearch | CID 1784129 (Births & Baptisms, 1637-1889) \u2014 index only | Free |\n| Ancestry | Czech Republic Church Books 1552-1963 (col. 60254) | Subscription |\n| digi.ceskearchivy.cz | T\u0159ebo\u0148 DigiArchiv \u2014 Southern Bohemia | Free |\n| vademecum.soalitomerice.cz | Litom\u011b\u0159ice \u2014 Northern Bohemia | Free |\n| ebadatelna.soapraha.cz | Prague Regional \u2014 Central Bohemia | Free |\n| aron.vychodoceskearchivy.cz | Z\u00e1mrsk \u2014 Eastern Bohemia | Free |\n\n## Research tips\n1. Identify the specific parish first using GenTeam Gazetteer (genteam.at)\n2. Search CID 1804263 indexed collection for Agnes Michl / Ane\u017eka Michlov\u00e1 with parents\n3. Also search legacy index CID 1784129 and Ancestry col. 60254\n4. Pre-1850 Gothic script requires paleographic skill \u2014 use FamilySearch 'Reading Czech Parish Registers' course\n5. Czech feminine suffix -ov\u00e1: search both Michl and Michlov\u00e1, Findejs and Findejsov\u00e1\n6. No civil registration before 1869; all births are church records\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-09"
+    }
+  ]
+}

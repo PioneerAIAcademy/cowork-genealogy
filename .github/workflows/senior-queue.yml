@@ -175,9 +175,14 @@ jobs:
                 // a mis-parsed rule would route a PR to the wrong queue with no sign.
                 let test;
                 if (pattern === '*')                      test = () => true;
-                else if (/^\*\.[A-Za-z0-9]+$/.test(pattern))
+                else if (/^\*\.[A-Za-z0-9.]+$/.test(pattern))
                                                           test = f => f.endsWith(pattern.slice(1));
                 else if (/^\/.*\/$/.test(pattern))        test = f => f.startsWith(pattern.slice(1));
+                // A bare filename (Makefile, .gitattributes) matches that
+                // basename at any depth, which is how GitHub resolves a
+                // slash-free pattern.
+                else if (/^[A-Za-z0-9._-]+$/.test(pattern))
+                                                          test = f => f.split('/').pop() === pattern;
                 else { unknown.push(pattern); continue; }
                 rules.push({ pattern, test, teams });
               }
