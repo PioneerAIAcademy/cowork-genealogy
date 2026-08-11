@@ -116,10 +116,13 @@ Write a 1-2 sentence assessment for each:
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent U.S. vital record embargoed ~100 years and released before
-    then only to the registrant or a direct heir; or nil across
+    then only to the registrant or a direct heir; nil across
     `record_search` / `fulltext_search` / `image_search` / external sites
-    after the bounded search-records attempts; a negative result from `record_search` or `fulltext_search` for a record type **not indexed in that repository** — confirmed by the collection's coverage, e.g. South Dakota vital records pre-1940 not on FamilySearch — is **pursued-and-unavailable**, not an unsearched gap) is *pursued-and-unavailable*,
-    not an unsearched gap. A privacy-sealed record must **not** be counted as
+    after the bounded search-records attempts; or a negative result from
+    `record_search` / `fulltext_search` for a record type **not indexed in
+    that repository** — confirmed by the collection's coverage, e.g. South
+    Dakota vital records pre-1940 not on FamilySearch) is
+    *pursued-and-unavailable*, not an unsearched gap. A privacy-sealed record must **not** be counted as
     an outstanding gap in the threshold questions, nor recommended as a next
     step to obtain. **Only** when the **accessible** evidence already supports a
     defensible conclusion, do not loop `research-plan` to re-attempt it: set
