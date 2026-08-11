@@ -20,11 +20,21 @@ name: senior-queue
 #
 # AN APPROVAL ANSWERS THE APPROVER'S OWN THREADS. Reviewers here routinely
 # re-review, approve, and never go back to click Resolve, so requiring the click
-# made the queue lag the review indefinitely and blocked the merge besides. A
-# thread is treated as closed — and resolved for real, so the merge gate agrees —
-# once the reviewer who OPENED it submits an approval later than their own last
-# comment on it. Threads opened by anyone who has not approved keep blocking, and
-# a fresh changes-requested puts every one of that reviewer's threads back.
+# made the queue lag the review by however long that took. A thread counts as
+# closed FOR QUEUEING once the reviewer who OPENED it submits an approval later
+# than their own last comment on it. Threads opened by anyone who has not
+# approved keep blocking, and a fresh changes-requested puts every one of that
+# reviewer's threads back.
+#
+# This does NOT resolve the thread, so `required_review_thread_resolution` still
+# blocks the MERGE until a human clicks Resolve — by design the person merging,
+# who is already looking at the PR. Auto-resolving was built and reverted: the
+# `resolveReviewThread` GraphQL mutation is refused to `GITHUB_TOKEN` with
+# "Resource not accessible by integration" even with `pull-requests: write`,
+# verified live on 2026-08-11 against PR #1523. If you re-attempt it, it needs an
+# identity this workflow does not have — the Projects App (`PROJECT_APP_ID`) is
+# the only other one in this repo, and whether it can call that mutation is
+# untested. Do not add the mutation back without testing the refusal first.
 #
 # WHY A LABEL AND NOT THE REVIEW REQUEST. CODEOWNERS makes GitHub request the
 # owning team the instant a matching PR opens, when CI is usually red and nobody
@@ -116,8 +126,8 @@ permissions:
   # `issues: write` is what authorizes labelling (labels live on the issues API
   # even for PRs); `pull-requests: write` is granted alongside it because the
   # mapping between the two is inconsistent enough that relying on one alone has
-  # bitten other repos. `pull-requests: write` is also what authorizes the
-  # `resolveReviewThread` mutation.
+  # bitten other repos. Neither grant reaches `resolveReviewThread` — see the
+  # approval note at the top.
   issues: write
   pull-requests: write
   checks: read
@@ -248,10 +258,10 @@ jobs:
             // thread IS their answer to it — they read the reply, or decided it
             // no longer matters, and said so in the only way that carries weight.
             // Holding the PR out of the senior queue until they also click
-            // Resolve makes the queue lag the review by however long that takes,
-            // and the same threads block the merge, so nothing downstream catches
-            // it either. These get resolved for real (see resolveSuperseded) so
-            // the merge gate agrees with the queue.
+            // Resolve makes the queue lag the review by however long that takes.
+            // These threads are counted as answered here and NOT resolved — the
+            // mutation is refused to this token, see the approval note at the top
+            // — so the merge still waits on a human click.
             //
             // Scoped per thread by its OPENER: an approval from one reviewer says
             // nothing about a thread another reviewer opened, and those keep
@@ -318,7 +328,7 @@ jobs:
             async function evaluate(number) {
               const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
               const labels = pr.labels.map(l => l.name);
-              const blank = { pr, labels, wanted: [], ready: false, toResolve: [] };
+              const blank = { pr, labels, wanted: [], ready: false, answered: [] };
 
               if (pr.state !== 'open') return { ...blank, reasons: ['not open'] };
               if (pr.draft)            return { ...blank, reasons: ['draft'] };
@@ -395,12 +405,12 @@ jobs:
               // A page-2 unresolved thread would otherwise read as "all resolved",
               // so an un-walked page is reported rather than assumed clean.
               const rt = threads.repository.pullRequest.reviewThreads;
-              // Threads an approval has already answered are counted as closed
-              // here and resolved for real in act(), so the queue and the merge
-              // gate cannot disagree about them.
-              const toResolve = supersededThreads(rt.nodes, approvals);
+              // Threads whose author approved afterwards do not hold up the
+              // queue. They are still open, and still block the merge — act()
+              // logs the count so the discrepancy is visible rather than implied.
+              const answered = supersededThreads(rt.nodes, approvals);
               const unresolved =
-                rt.nodes.filter(t => !t.isResolved).length - toResolve.length;
+                rt.nodes.filter(t => !t.isResolved).length - answered.length;
 
               const reasons = [];
               if (!standings.includes('APPROVED'))         reasons.push('no peer approval');
@@ -416,7 +426,7 @@ jobs:
               // nothing to queue — distinct from "not ready".
               if (!wanted.length)      reasons.push('no senior-owned path');
 
-              return { pr, labels, wanted, ready: reasons.length === 0, reasons, toResolve };
+              return { pr, labels, wanted, ready: reasons.length === 0, reasons, answered };
             }
 
             // ---- label bootstrap --------------------------------------------
@@ -434,49 +444,21 @@ jobs:
             }
             await ensureLabels();
 
-            // Resolve the threads an approval already answered. This is the one
-            // place this workflow changes anything other than a label, and it is
-            // deliberate: leaving them open would block the MERGE on comments the
-            // reviewer has signed off, which no amount of labelling fixes.
-            //
-            // The mutation returns the thread, so success is read back off the
-            // response rather than off the HTTP status — the same rule the label
-            // write follows, for the same reason. A refusal here is a permissions
-            // change, not a transient error, so it throws: the sweep records it
-            // per-PR and fails the job, and the PR is left unlabelled with its
-            // threads still blocking, which is the honest state.
-            async function resolveSuperseded(ids) {
-              for (const id of ids) {
-                const res = await github.graphql(`
-                  mutation($id:ID!) {
-                    resolveReviewThread(input:{threadId:$id}) {
-                      thread { id isResolved }
-                    } }`, { id });
-                if (!res.resolveReviewThread.thread.isResolved) {
-                  throw new Error(
-                    `resolveReviewThread(${id}) returned success but the thread is still ` +
-                    `unresolved. Treat this as a permissions or API-behaviour change.`);
-                }
-              }
-              return ids.length;
-            }
-
             // ---- act ---------------------------------------------------------
             // No try/catch around the write, and the labels are read back: an
             // earlier version downgraded a failed write to a warning and the API
             // then no-op'd with HTTP 200, so the job went green having done nothing.
             async function act(n) {
-              const { pr, labels, wanted, ready, reasons, toResolve } = await evaluate(n);
+              const { pr, labels, wanted, ready, reasons, answered } = await evaluate(n);
               const missing = wanted.filter(l => !labels.includes(l));
               let action;
 
-              // Independent of readiness: an approval answers its author's own
-              // threads whether or not CI is green.
-              if (toResolve.length && dryRun) {
-                core.info(`#${n} WOULD resolve ${toResolve.length} thread(s) superseded by an approval`);
-              } else if (toResolve.length) {
-                core.info(`#${n} resolved ${await resolveSuperseded(toResolve)} thread(s) ` +
-                          `superseded by an approval`);
+              // Say so rather than leave a silently-shrinking count: someone
+              // reading this log against the PR must be able to see that N open
+              // threads were discounted, and why.
+              if (answered.length) {
+                core.info(`#${n} discounted ${answered.length} open thread(s) whose author ` +
+                          `approved afterwards; they still block the merge until resolved`);
               }
 
               if (ready && !missing.length) {

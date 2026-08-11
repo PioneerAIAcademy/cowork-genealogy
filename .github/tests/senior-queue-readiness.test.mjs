@@ -11,9 +11,8 @@
 // The functions are lifted out of the workflow rather than copied, so the two
 // cannot drift.
 //
-// WHAT IT CANNOT COVER. That `resolveReviewThread` is actually permitted to the
-// GITHUB_TOKEN, that a label write lands, or that the self-check filter excludes
-// the right runs — all three are only observable from a live run. Use the
+// WHAT IT CANNOT COVER. That a label write lands, or that the self-check filter
+// excludes the right runs — both are only observable from a live run. Use the
 // `workflow_dispatch` dry run against a real approved PR.
 //
 // Run: node .github/tests/senior-queue-readiness.test.mjs
