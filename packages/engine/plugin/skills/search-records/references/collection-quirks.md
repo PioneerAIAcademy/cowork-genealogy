@@ -27,14 +27,16 @@ parameter at all**; see the England parish registers section.
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation upstream is the IGI batch number — which
-  `record_search` cannot send.** The API's `q.batchNumber` enumerates a
-  parish exhaustively and is a very strong filter (adding one cut a
-  251,867-hit search to 3; a nonsense batch returns 0 rather than being
-  ignored), but the tool exposes no batch parameter, so **none of the
-  batch strategy below is executable from this skill.** What you can do
-  instead: scope with `collectionId` plus place and a wide date range,
-  and cross-check with FreeREG and FindMyPast via
+- **Compensation upstream is the IGI batch number — which `record_search`
+  cannot send.** The API's `q.batchNumber` enumerates a parish exhaustively
+  and is a very strong filter (adding one cut a quarter-million-hit search to
+  single digits; a nonsense batch returns 0 rather than being ignored —
+  figures from the original probe session, not reproducible from
+  the repo's qualifier probe (host-side), which has no batch section, though
+  the behaviour was re-confirmed live), but the tool exposes no batch
+  parameter, so **none of the batch strategy below is executable from this
+  skill.** What you can do instead: scope with `collectionId` plus place and a
+  wide date range, and cross-check with FreeREG and FindMyPast via
   `search-external-sites`.
 - Batch number format, for reference: a letter prefix followed by digits.
   Both `C050761` (letter + 6 digits) and `M17288-6` (letter + digits +
@@ -62,10 +64,15 @@ parameter at all**; see the England parish registers section.
 
 ## Ellis Island Passenger Lists
 
-- **Wildcards are explicitly disabled** in these collections
-- **Compensation:** Try multiple specific spellings; search by
-  ship name + arrival year via other parameters; use external
-  Stephen Morse one-step tools
+- ~~**Wildcards are explicitly disabled** in these collections~~ —
+  **refuted by measurement.** Scoped to the Ellis Island passenger
+  collection, a one-character wildcard on a rare surname returns both
+  spellings it can match, and every record of the bound spelling turns up
+  in the wildcard's results — both sets read in full rather than sampled.
+  Wildcards work here; use them like anywhere else.
+- **Still useful:** multiple specific spellings, ship name + arrival year
+  via other parameters, and the external Stephen Morse one-step tools —
+  passenger-list indexing is rough regardless of whether wildcards work.
 
 ## United States SSDI (Social Security Death Index)
 

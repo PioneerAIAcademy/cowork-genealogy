@@ -52,7 +52,7 @@ but the anchor rule above must be satisfied.
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
-| `surnameExact` | boolean | When `true`, only records with the exact surname spelling match. By default the search uses fuzzy matching (nicknames, spelling variants). When `surnameAlt` is also set, the strict-match toggle applies to both the primary and the alternate. **Narrows the count, not the ranking, and can drop the target** — see "What `.exact=on` actually does" under the API reference before recommending it. |
+| `surnameExact` | boolean | When `true`, only records with the exact surname spelling match. By default the search uses fuzzy matching (nicknames, spelling variants). When `surnameAlt` is also set, the strict-match toggle applies to both the primary and the alternate. **Narrows the count, reorders the records it keeps, and it can drop the target** — read over complete sets, the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). See "What `.exact=on` actually does" under the API reference before recommending it. |
 | `givenNameExact` | boolean | Same idea for given name. Applies to `givenNameAlt` too when both are set. Excludes period diminutives; same caveat as `surnameExact`. |
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
@@ -99,12 +99,28 @@ year range and a place, with corresponding `Exact` toggles.
 Year inputs are 4-digit years. The search engine ignores month and
 day even if supplied.
 
-**The `*Exact` toggles in this table change the result count, not the
-ranking.** A place toggle stops upward expansion to parent jurisdictions
+**The `*Exact` toggles in this table change the result count.** A place toggle
+stops upward expansion to parent jurisdictions
 (it still descends to child localities); a year toggle removes the fuzz
 around the range bounds, excluding records whose indexed year falls just
-outside it. Neither promotes a record a fuzzy search buried, so neither
-can surface a target that was otherwise out of reach. Unqualified place
+outside it — though that fuzz is only weakly evidenced: 3 of 300 sampled
+records fell outside an unqualified single-year range on 2026-08-08 and every
+one carried an *approximate* date ("about 1848"), while on a pool small enough
+to read to the end just 1 of 22 classifiable rows fell outside, and that row
+survived `.exact` too, which is not the shape of fuzz. How a year range
+treats records carrying **no indexed year** is **not established**, in
+either direction: neither that an unqualified range keeps them, nor that
+`.exact` drops them. The instrument that produced both readings could not
+tell a record with no indexed year from one whose year the result payload
+merely does not expose, so both were withdrawn rather than reversed. The
+practical consequence is that a year range — set or unset — cannot be
+relied on to include or exclude undated records. Neither toggle was measured surfacing a
+record a fuzzy search buried, and for the `surname` family — the only one
+diffed over complete sets — it cannot: the exact result there is a strict
+subset of the fuzzy one. What `.exact` *does* do to the records it keeps is
+reorder them (see the section-B table below). For the place toggle the only
+ranking observation is a single target, which ranked first with and without
+it; that is narrower than a statement about ranking in general. Unqualified place
 expansion is aggressive enough that a county scope barely discriminates —
 which is what makes these toggles useful mainly where a total has to mean
 something, such as an exhaustiveness claim. Measured figures are under
@@ -142,7 +158,8 @@ relative. That is deliberate — absence in an index is not disconfirming,
 and sparse entries frequently omit parents — but it means a
 father-anchored hit may contain no father at all. Setting the
 corresponding `*Exact` requires the relative to be present and match,
-which drops the silent records along with abbreviation variants. Measured
+which drops the silent records along with variant forms the unqualified
+search did reach. Measured
 figures are under "What `.exact=on` actually does" in the API reference.
 
 `other*` is for cases where the caller knows two names appear
@@ -843,7 +860,7 @@ User-Agent: <browser-like user agent string>
 
 | Flag | Value | Purpose |
 |-----|------|---------|
-| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. **This flag is the only "required" mechanism the API offers** — there is no per-field qualifier. `q.<field>.required=on` is rejected outright (`400 {"errors":["Unable to map supplied value=required to term modifier"]}`), so a caller cannot make one term required and another optional. Because the tool sends the flag unconditionally, **every supplied `q.*` term is already a hard requirement** — but "required" means the record must not *contradict* the term, not that it must carry it. For the searched person's own name, which the index virtually always holds, that collapses to *must match*, which is why a nil result means one of the terms **on the person you searched** did not match. For a field a record can omit, silence is not a contradiction and those records are kept: an unmatchable `fatherGivenName` still returned 442,053 of a 456,644 baseline, dropping only the records that named a *different* father. See "Relative names keep records where the relative is absent" below. `f.*` filters apply either way; only `q.*` terms are governed by the switch. Verified live 2026-08-04 on `q.surname=Zsigmondy&q.surname.exact=on` (634 hits): adding a gibberish given name, an impossible 1700–1710 birth range, or Alaska as the birthplace returned **6 / 4 / 4** with the flag and **634 / 634 / 634 — unchanged** without it. Each added term was ignored outright. |
+| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. **This flag is the only "required" mechanism the API offers** — there is no per-field qualifier. `q.<field>.required=on` is rejected outright (`400 {"errors":["Unable to map supplied value=required to term modifier"]}`), so a caller cannot make one term required and another optional. Because the tool sends the flag unconditionally, **every supplied `q.*` term is already a hard requirement** — but "required" means the record must not *contradict* the term, not that it must carry it. For the searched person's own name, which the index virtually always holds, that collapses to *must match*, which is why a nil result means one of the terms **on the person you searched** did not match. For a field a record can omit, silence is not a contradiction and those records are kept: an unmatchable `fatherGivenName` still returned about 441,000 of a roughly 456,000 baseline, dropping only the records that named a *different* father. See "Relative names keep records where the relative is absent" below. `f.*` filters apply either way; only `q.*` terms are governed by the switch. Verified live 2026-08-04 on `q.surname=Zsigmondy&q.surname.exact=on` (634 hits): adding a gibberish given name, an impossible 1700–1710 birth range, or Alaska as the birthplace returned **6 / 4 / 4** with the flag and **634 / 634 / 634 — unchanged** without it. Each added term was ignored outright. |
 | `m.defaultFacets` | `off` | Tells the server not to compute facet aggregations. The tool doesn't consume facet data; turning them off speeds up broad queries by up to 9×. |
 
 **Tool input → API parameter mapping:**
@@ -956,58 +973,102 @@ alongside a `surnameAlt` reverts to the fully fuzzy count (measured
 **What `.exact=on` actually does — measured, not inferred:**
 
 Live measurements against `/service/search/hr/v2/personas`, 2026-08-04,
-reproducible via `packages/engine/mcp-server/dev/probe-search-qualifiers.ts`.
+re-measured 2026-08-08 and — for the legs that were re-done over complete
+result sets rather than samples — 2026-08-10/11, reproducible via
+`packages/engine/mcp-server/dev/probe-search-qualifiers.ts` — **with four
+exceptions the script has no section for**, which were measured during the
+original probe session under query shapes it does not run: the `14,095 → 51`
+pool pair and the `251,867 → 3` batch-number pair (both quoted in
+`search-strategy-levers.md` / `collection-quirks.md`, not here), and the
+`31,606 vs 445` alternate-surname pair above. Each *behaviour* was re-verified live on
+2026-08-08 (a batch number still cuts a multi-million-hit search to double
+digits and a nonsense batch still returns 0 rather than being ignored; a
+primary `.exact` alongside an untagged `surnameAlt` still reverts to the fuzzy
+count exactly). Only the figures are unreproducible from this script — do not
+cite them as probe output.
 These are the figures the tool's schema descriptions in
 `src/tools/record-search.ts` summarize, and they contradict the
 intuition the qualifier family invites.
 
-**`.exact=on` changes the result COUNT. It does not change the ranking,
-so it cannot surface a record a fuzzy search buries.** FamilySearch
-ranks exact-spelling matches above fuzzy expansions almost absolutely.
-Comparing the full top-200 persona-ID list of each (two pages of 100,
-`dev/probe-search-qualifiers.ts` section B), displacement was:
+**`.exact=on` REMOVES records and REORDERS the ones it keeps.** Measured
+over COMPLETE result sets on pools small enough to read to the end
+(`dev/probe-search-qualifiers.ts` section B), scoring each shared record's
+position among the shared set in fuzzy order against its position in the
+exact list — both run 1..N, so removal cannot itself move anything:
 
-| Surname | Fuzzy → exact count | Count inflation | Displacement in top 200 |
+| Population (`surname`, marriage) | Fuzzy → exact rows | Exact-only rows | Records displaced |
 |---|---|---|---|
-| `Zsigmondy` | 108,398 → 634 | 171× | **0** — all 200 IDs in common, 0 positions moved |
-| `Mingazzini` | 40,906 → 1,795 | 23× | **0** |
-| `Geach` | 18,520,641 → 23,185 | **799×** | **2 fuzzy-only records**, first at rank 100; max 1 position moved among the 198 in common |
+| Brazil / `Bochenek` | 521 → 81 | **0** | **0** |
+| England / `Pocklington` | 469 → 423 | **0** | **54**, the largest by 34 positions; 6 of them cross rows carrying a *different* relevance score |
 
-Fuzzy matches interleave by relevance rather than strictly appending,
-but even at 799× inflation only two fuzzy-only records outrank the real
-ones within 200. The same holds for places: a county-scoped marriage
-search measured **35,510 fuzzy against 2 exact with the same target
-ranked first in both**.
+Exact-only is 0 in both: every record the exact search returns is already
+in the fuzzy set, so `.exact` is a strict **subset** and cannot surface a
+record a fuzzy search buried. That half is settled — but only for the
+`surname` qualifier, and only in marriage populations. The reordering half
+is real too: 54 records move against a same-query noise floor of 0, so any
+prose claiming the qualifier leaves the order alone is contradicted here.
+
+Count inflation is a separate, totals-only argument (no enumeration
+required): `Zsigmondy` 108,848 → 634 (172×), `Mingazzini` 40,908 → 1,796
+(23×), `Geach` roughly 18.5 million → about 23,200 (**799×**).
+
+For places, no displacement diff was run. What section C recorded is one
+target's rank: a county-scoped marriage search measured **about 35,500 fuzzy
+against 2 exact, with the target ranked first in both** (rank measured by
+record id, not by name). Read that as a single-target observation, not as a
+general statement about place ranking.
 
 **Consequences per family:**
 
 | Family | Unqualified behavior | What `.exact=on` costs |
 |---|---|---|
 | `surname` | Filters, and expands loosely to spelling neighbours | **Can drop the target.** On a record indexed `Neill`, `q.surname=Neal` returns it and `q.surname=Neal&q.surname.exact=on` returns **0**. Fuzzy matching is the mechanism that bridges an index misspelling — the commonest reason a record cannot be found |
-| `givenName` | Filters. Expansion is real but **partial**: it reliably bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:21 Wm.:14` in a 300-result survey) and *some* nicknames, but not all. A top-100 sample of fuzzy `Elizabeth` held `Elizabeth:72 Eliza:14 Betsy:10` and **no `Betty`**, while `Betty` + exact showed 105 such records in the same window. Nothing widens it — qualifiers only subtract — so a diminutive the expansion misses has to be searched as its own `givenName` value | Excludes every variant, including the abbreviations and nicknames the default *does* reach |
-| relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below | Drops the silent records *and* abbreviation variants: an unqualified `fatherGivenName=William` survey of 300 results lost the 11% indexed `Wm`/`Wm.` |
-| `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned 35,473 against the right county's 35,510 (0.1% apart) | Nothing on retrieval; it makes the count meaningful. Useful only where a total has to mean something (an exhaustiveness claim) |
-| `<event>Year` | Fuzz around the range bounds | Excludes records whose indexed year falls just outside the range |
-| `recordCountry` / `recordSubdivision` | **Already strict** — `q.recordCountry=Narnia` returns 0 | No flag exists and none is needed |
+| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
+| relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*` and `spouse*` only, on marriage records in two countries; `mother*`, `parent*` and `other*` are assumed to follow, not measured | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
+| `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
+| `<event>Year` | Fuzz around the range bounds — weakly evidenced (see above). Whether an unqualified range requires an indexed year is **not established**: the instrument that addressed it could not tell a record with no indexed year from one whose year the result payload merely does not expose, so no direction is recorded. Do not quote a share of tolerated silence, and do not rely on an unqualified range to include undated records. `any` was never tested at all | Excludes records whose indexed year falls just outside the range, on the weak evidence above. Whether it also drops records carrying no indexed year, or in-range *approximate* dates, is **not established** — so it cannot be relied on to exclude undated records either. Use only with a firm date |
+| `recordCountry` | **Already strict** — `q.recordCountry=Narnia` returns 0 rather than being ignored | No flag exists and none is needed |
+| `recordSubdivision` | **Already strict**, measured the same way as `recordCountry`: a nonexistent subdivision returns 0 rather than being ignored, and a real one (`Alabama`) cut a 14,035,394 country total to 342,439. Note the scope — this establishes only that the value is *honoured*, not how a place scope EXPANDS. Whether dropping to a state-level scope rescues a search that nils at county level is a separate, unfinished place investigation and is not answered here | No flag exists and, on this evidence, none is needed |
 
 **Relative names keep records where the relative is absent.** This is
 correct as designed, and worth stating because it is invisible to the
-caller. A 300-result survey on the father's given name:
+caller. A 300-result survey on the father's given name — **SAMPLED**, from a
+pool far too large to enumerate, so read the columns as indicative and the
+enumerated version below as the finding:
 
-| Query | Father-bearing results | Top father names |
+| Query | Results naming a father | Top father names |
 |---|---|---|
-| baseline (no father term) | 104 | `John:12 William:6 George:5` |
-| `q.fatherGivenName=William` | 287 | `William:235 Wm:21 Wm.:14` |
-| …plus `.exact=on` | 300 | `William:297` (no `Wm`/`Wm.`) |
-| gibberish father name | **0** | — |
+| baseline (no father term) | 262 | `John:54 William:22 James:17` |
+| `q.fatherGivenName=William` | 283 | `William:192 Wm:52 Wm.:31` |
+| …plus `.exact=on` | 295 | `William:294` (no `Wm`/`Wm.`) |
+| real but rare (`Zachariah`) | 7 | `Zachariah:2 Zachie:1 Zacharius:1` |
+| gibberish father name | **1** | `Jno:1` |
 
-The gibberish row returning zero father-bearing results proves
-different-father records *are* excluded. So an unqualified relative name
-keeps matching records, keeps records where that relative was never
-indexed, and drops contradicting ones — the right trade, since absence
-in an index is not disconfirming and sparse entries often omit parents.
-**A caller cannot currently tell the first case from the second:** a
-father-anchored hit may contain no father at all.
+Re-measured 2026-08-08. The earlier figures (104 / 287 / 300 / **0**) were
+artifacts of the probe's father detection falling back to a role regex —
+`person.gender` is an object, so a string comparison against it never fired.
+The column counts records that *name* a father, which is a lower bound on
+father-bearing: a record can carry an indexed parent with no readable name.
+Measured the same day, the gibberish row names no father in 299 of 300 but
+only 292 carry no indexed parent at all.
+
+The gibberish row — 1 father-bearing result of 300 sampled — points the
+same way, and the question was then settled by enumeration rather than
+sampling. Reading whole result sets to the end on two marriage populations
+(Brazil / `Bochenek`, 521 rows; England / `Pocklington`, 469 rows) and on the
+`father` and `spouse` families only: an unmatchable name left **zero** records
+naming a different relative, retained exactly the records the baseline was
+silent about, and a real name drawn from the data returned matching records.
+Retention therefore equals the baseline's silent share — 70.2% against a 70.1%
+silent share and 92.8% against 92.8% for `father`, 10.2% against 9.8% and 81%
+against 81% for `spouse`. That is what makes the father/spouse difference an
+artifact of how often each is indexed, not a property of the parameter.
+
+So an unqualified relative name keeps matching records, keeps records where
+that relative was never indexed, and drops contradicting ones — the right
+trade, since absence in an index is not disconfirming and sparse entries
+often omit parents. **A caller cannot currently tell the first case from the
+second:** a father-anchored hit may contain no father at all.
 
 These semantics are **not** unit-testable — the URL-shape tests assert
 the string the tool builds, never that FamilySearch honors it. They are

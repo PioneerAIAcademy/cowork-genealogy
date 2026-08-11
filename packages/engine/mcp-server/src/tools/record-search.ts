@@ -878,17 +878,27 @@ export const recordSearchToolSchema = {
     "first to find the right collectionId.",
   // The `*Exact` descriptions below deliberately state what each qualifier does
   // to the result COUNT rather than to retrieval. Measured live against
-  // /service/search/hr/v2/personas 2026-08-04 (issue #1093): these qualifiers do
-  // not change which records rank first, so none of them can surface a target a
-  // fuzzy search buries. Comparing the full top 200: the fuzzy and exact ID lists
-  // were identical for Zsigmondy (108,398 -> 634) and Mingazzini (40,906 -> 1,795),
-  // and for Geach (18,520,641 -> 23,185, a 799x count inflation) held 2 fuzzy-only
-  // records, the first at rank 100, moving the rest by at most 1 position. A
-  // county-scoped marriage search measured 35,510 fuzzy vs 2 exact with the same
-  // target ranked first either way, and the WRONG county returned 35,473 against
-  // the right county's 35,510. `surnameExact` is additionally harmful: on a record indexed
-  // `Neill`, surname `Neal` + surnameExact returns 0 where fuzzy returns the
-  // record. Full figures and method: docs/specs/record-search-tool-spec-v2.md.
+  // /service/search/hr/v2/personas 2026-08-04 (issue #1093), re-done over
+  // COMPLETE result sets on 2026-08-10/11: `.exact` REMOVES records and
+  // REORDERS the ones it keeps. On the two enumerable `surname` marriage pools
+  // (Brazil/Bochenek 521 -> 81, England/Pocklington 469 -> 423) the exact set
+  // held 0 records absent from the fuzzy set, so it is a strict SUBSET and
+  // cannot surface a record a fuzzy search buried — but 54 shared records moved
+  // in the second pool, the largest by 34 positions, and 6 of those crossed
+  // rows carrying a different relevance score, against a same-query noise floor
+  // of 0. Count inflation is a separate totals-only argument: Zsigmondy
+  // (108,848 -> 634, 172x), Mingazzini (40,908 -> 1,796, 23x), Geach
+  // (roughly 18.5 million -> about 23,200, 799x). No displacement diff was run for places; what
+  // was measured there is one target's rank — a county-scoped marriage search
+  // measured about 35,500 fuzzy vs 2 exact with the target ranked first in both, and
+  // the WRONG county returned the same total as the right one to within 0.1%
+  // (about 35,500 each). `surnameExact` is additionally harmful: on a
+  // record indexed `Neill`, surname `Neal` + surnameExact returns 0 where fuzzy
+  // returns the record. A relative anchor NARROWS: holding a query constant,
+  // adding `fatherGivenName` moved 948 -> 886. The 947 -> 1,478 "widening" in
+  // issue #1088 was a confounded comparison — the marriage-year range was
+  // dropped in the same call. Full figures and method:
+  // docs/specs/record-search-tool-spec-v2.md.
   inputSchema: {
     type: "object",
     properties: {
@@ -897,38 +907,38 @@ export const recordSearchToolSchema = {
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact: { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count, not the ranking. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
-      givenNameExact: { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count, not the ranking. Excludes diminutives a period record may use (`Betty` for `Elizabeth`); pass a variant as a separate `givenName` instead. Applies to `givenNameAlt` too." },
+      surnameExact: { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count and reorders the records it keeps; measured over complete sets it only ever removes records, never surfaces one the fuzzy search buried. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
+      givenNameExact: { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count and reorders the records it keeps; it is not a way to surface a record the fuzzy search buried. Excludes diminutives a period record may use (`Betty` for `Elizabeth`); pass a variant as a separate `givenName` instead. Applies to `givenNameAlt` too." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched hard rather than fuzzed. Excludes records whose indexed year falls just outside the range — common when an age was reported rather than a date." },
+      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched hard, not fuzzed. It is meant to exclude records dated just outside the range, though that fuzz is only weakly evidenced. What it does to records carrying no indexed year is NOT established, and neither is whether an unqualified range keeps them — so do not rely on a year range, set or unset, to include or exclude undated records. Whether it drops in-range approximate dates is NOT established either. Use only with a firm date." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions (it still descends to child localities). Large effect on the count, none on the ranking; an unqualified county total is not a usable exhaustiveness signal. Set it when the count must mean something." },
+      birthPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions (it still descends to child localities). Large effect on the count; its effect on ordering was not measured beyond a single target, which ranked first with and without it; an unqualified county total is not a usable exhaustiveness signal. Set it when the count must mean something." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      deathYearExact: { type: "boolean", description: "As `birthYearExact`, for the death-year range." },
       deathPlace: { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      deathPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
+      deathPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       marriageYearFrom: { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
       marriageYearTo: { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      marriageYearExact: { type: "boolean", description: "As `birthYearExact`, for the marriage-year range." },
       marriagePlace: { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      marriagePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
+      marriagePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      residenceYearExact: { type: "boolean", description: "As `birthYearExact`, for the residence-year range." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      residencePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
+      residencePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       anyYearFrom: { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
       anyYearTo: { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched hard rather than fuzzed — same caution as `birthYearExact`." },
+      anyYearExact: { type: "boolean", description: "As `birthYearExact`, for the any-event year range (never measured on this family)." },
       anyPlace: { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      anyPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count, not what ranks first." },
+      anyPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
       spouseSurname: { type: "string", description: "Spouse's family name." },
@@ -936,7 +946,7 @@ export const recordSearchToolSchema = {
       spouseSurnameExact: { type: "boolean", description: "When `true`, requires the spouse's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
       fatherSurname: { type: "string", description: "Father's family name." },
-      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires the father's given name to be present and match exactly. Unqualified it keeps records where the father is not indexed while still excluding a different father; setting it drops those, plus abbreviations like `Wm`. Rarely worth it." },
+      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires the father's given name to be present and match exactly. Unqualified it keeps records where the father is not indexed while still excluding a different father; setting it drops those, plus variant forms the fuzzy search did reach. Rarely worth it." },
       fatherSurnameExact: { type: "boolean", description: "When `true`, requires the father's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
       motherSurname: { type: "string", description: "Mother's family name." },

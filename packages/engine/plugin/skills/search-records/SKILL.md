@@ -144,9 +144,112 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
 | `recordCountry` | Plan item jurisdiction | Anchor — required if `surname` is absent |
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
-| `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
+| `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |
+| `surnameExact`, `givenNameExact`, `birthPlaceExact`, `marriagePlaceExact`, `birthYearExact`, `marriageYearExact`, `fatherGivenNameExact`, `spouseSurnameExact` (and the same `Exact` suffix on every other name, place, and year field) | — | Boolean. **Leave unset unless a rule below says otherwise.** See "Exact-match qualifiers" |
 
-For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`.
+**Exact-match qualifiers (`*Exact`) — when to reach for one, and when not.**
+
+`record_search` exposes an `Exact` boolean beside most name, place, and year
+parameters. The rules below come from live measurements of the surname, given
+name, place, year, parent and spouse families; the other fields follow the same
+pattern but were not measured individually.
+
+- **Never set one to find a record you could not otherwise find.** Every
+  qualifier measured changes *how many* results come back. On the surname
+  family, read over whole result sets, the exact search returned nothing the
+  fuzzy one had not — it can only take records away, never surface one that was
+  buried — though it does re-shuffle the ones it keeps. If a search is not
+  surfacing the target, the levers are a different name spelling, a broader
+  place level, or dropping a filter — not exactness.
+  (`references/search-strategy-levers.md`.)
+- **`surnameExact` is usually the wrong reach.** Fuzzy matching is the mechanism
+  that bridges an index misspelling, and that is the commonest reason a record
+  cannot be found: on a record indexed `Neill`, searching `Neal` with
+  `surnameExact` returned nothing, while the plain fuzzy search returned it. Set
+  it only when you have *confirmed* how the index spells the name.
+- **`givenNameExact` excludes period diminutives that the default does reach** —
+  a fuzzy `Elizabeth` search does return `Betty` records, and likewise
+  `Margaret`/`Peggy` and `Mary`/`Polly`. They tend to rank deep, so they are easy
+  to miss: to chase a nickname, pass it as its own `givenName` value rather than
+  making the formal name exact, or narrow the query until the pool is small
+  enough to read to the end — narrowed onto the surname, a `Betty` record sat
+  around the middle of a couple-hundred-row set that was read in full.
+- **The one measured exception — an initials search.** When the index holds the
+  person as initials (common in US census and directory records), a fuzzy
+  `givenName: "J W"` also returns the **transposition**, `W J`, in a substantial
+  share of results. Setting `givenNameExact` removes the transposed form, keeps
+  the order you asked for, and narrows the pool sharply. Note what it does *not*
+  mainly do: fuzzy does not, in the main, replace initials with spelled-out
+  names, so exactness is not chiefly protecting you from that. Both shares come
+  from a sampled page of a pool too large to read to the end — the direction is
+  measured, the proportions only indicative — and the transposed record itself
+  is reachable without the qualifier: narrowed onto the surname it came back
+  ranked first in a set read in full.
+- **`<event>PlaceExact` is for making a count mean something, not for finding.**
+  An unqualified place scope expands upward so far that a county barely
+  discriminates — a *wrong* county has been measured returning nearly the same
+  total as the right one. Set it when you are about to record `results_available`
+  or argue a search was reasonably exhaustive; leave it unset while still looking.
+- **`<event>YearExact` narrows hard.** It is meant to remove the fuzz
+  around the range bounds, but that fuzz is only **weakly** evidenced: the few
+  sampled records outside an unqualified range all carried *approximate* dates,
+  and on a pool read to the end just one classifiable row fell outside — and it
+  survived `.exact` too, which is not the shape of fuzz. What it does to records
+  carrying **no indexed year** is **not established**, and neither is whether an
+  unqualified range keeps them — so do not use a year range, set or unset, to
+  include or exclude undated records. Whether it drops in-range approximate
+  dates was **not** established either. Use it only with a firm date from a
+  vital record.
+- **Wildcards survive exactness; variant spellings do not.** A wildcard still
+  expands with `.exact` set — `Sm?th` plus `surnameExact` still returns both
+  `Smith` and `Smyth` — while the same query without the wildcard drops `Smyth`
+  entirely. So a wildcard plus exactness is a way to control the *shape* of the
+  expansion rather than switch it off.
+
+**There is no "required" toggle, and this changes how you read a nil.** Every
+term you supply is already required, in one specific sense: a record must not
+*contradict* it. A record that is simply **silent** about a *name* field is kept
+— measured for the searched person's own name and for father and spouse names.
+(How a *year range* treats a record with no indexed year is **not established**
+in either direction, so do not assume a range either keeps or excludes undated
+records, and do not quote a share.) For
+the searched person's own name — which the index virtually always holds — that
+collapses to "must match". So **a nil result means one of the terms on the person
+you searched did not match.** Drop or loosen one of *those* to recover; adding
+more criteria cannot help. A nil is *not* evidence that some relative was absent
+from the records.
+
+**Relative-name anchors (`fatherGivenName`, `spouseGivenName`, …) narrow — they
+do not widen.** Holding a query otherwise constant, adding a parent's name
+reduces the result count. If a count goes **up** when you add one, something else
+changed in the same call — check for a dropped date range or place filter before
+concluding the anchor broadened the search.
+
+How much a relative anchor narrows depends on **which** relative — and on how
+often that relative is indexed in the records you are searching:
+
+- **An unmatchable relative name keeps exactly the records that are silent about
+  that relative, and drops every record naming a different one.** Measured by
+  reading whole result sets to the end, not by sampling them: across roughly a
+  thousand records in two marriage populations, on the father and spouse names
+  only, not one record naming a different relative survived. The other relative
+  families were not enumerated.
+- **So the narrowing you get is the share of records that name that relative at
+  all.** Where parents are rarely indexed, a parent name barely narrows and a
+  parent-anchored nil is weak evidence. Where spouses are almost always indexed
+  — typical of marriage records — a spouse name cuts most of the pool and its
+  nil means more. In a population that indexes both sparsely, both behave the
+  same way; there is nothing special about the parameter.
+- **A parent-anchored *hit* may still contain no parent at all**, because silent
+  records are kept. Never report one as confirming a parent without opening the
+  record.
+- **Setting the matching `*Exact` requires the relative to be indexed**, which
+  drops those silent records along with variant forms the fuzzy search did
+  reach — both sets read in full. Whether it also drops indexed abbreviations
+  (`Wm` for `William`) is **not** measured: the enumerated set held none to
+  drop. Measured on a father's given name; not measured for other relatives.
+
+For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`. Both carry the measured figures behind the rules above.
 
 **Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check `references/collection-quirks.md` for an entry on it and apply its guidance exactly.** This is a required check, not an optional pointer — the reference documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) that the general name-variant strategy above will not surface on its own. If an entry says two fields must be varied together (for example, a given name and a surname abbreviation), trying only one field is not sufficient — vary the fields the reference specifies, together, in the same call, before concluding a plan item is exhausted.
 
@@ -163,7 +266,7 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 **When secondary-party name variants are exhausted and still weak, drop the secondary filter instead of switching repositories.** Across repeated live runs against the same Norwegian marriage record (see `references/collection-quirks.md`, Norway section), the searches that actually recovered the target record dropped the secondary-party name filter entirely — searching the principal alone, scoped only by collection/date/place — rather than continuing to guess spelling combinations on the secondary party or pivoting to a different collection/record type. This is a required fallback, not an optional one: before concluding a plan item is exhausted or moving to another repository, run at least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.) with `count: 50`, then `rank_search_matches` with `checkAttachments: true` over the full candidate pool. A candidate with `attachedToSubject: true` is a strong confirming signal here — FamilySearch's own matcher already linked it to this person — even when its raw `matchScore` looks unremarkable (a real recovered case scored only 0.632 at rank 2 of 58). This is the inverse of the "attached → deprioritize" guidance in Step 4: that guidance is for *discovering new* evidence, where an attached record is old news; when the plan item's goal is *confirming* a fact already suspected (a marriage date, a birth record), an attached record is exactly the target and should be read via `record_read`, not skipped.
 
-**Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** Use explicit spelling variants instead.
+**Wildcards are supported — `*` and `?` both bind.** Measured: `?` is honoured as a single-character wildcard (a nonsense stem carrying one returns 0, so the term is not being ignored), and a wildcard still expands with `.exact=on` set. `%` is not a FamilySearch wildcard — use `*` or `?`. Prefer explicit spelling variants as the first move, because a wildcard widens in ways you cannot see; reach for one when the variants are exhausted (see the zero-hit levers in `references/search-strategy-levers.md`, which use them at steps 8 and 9).
 
 **Always keep givenName in variant searches.** Do not drop to a surname-only query — it broadens results to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
 

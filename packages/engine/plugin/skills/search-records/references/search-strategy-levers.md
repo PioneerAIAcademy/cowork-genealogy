@@ -34,9 +34,9 @@ and expect a specific record.
 1. **>5,000 hits** → Narrow by `f.collectionId` first, then place
    jurisdiction, then add spouse/parent names.
 2. **100–5,000 hits** → Add `f.collectionId` and `q.sex`; add parent
-   name. (A place qualifier will cut the count sharply but will not
-   re-order the results, so it is not the lever that surfaces a record —
-   see the qualifier table at the end.)
+   name. (A place qualifier will cut the count sharply, but no measurement shows
+   it surfacing a record the unqualified search buried, so do not reach for it
+   as a finding lever — see the qualifier table at the end.)
 3. **10–100 hits** → Evaluate the top results directly.
 4. **0 hits** → Apply levers in priority order (see below).
 
@@ -131,14 +131,18 @@ A reasonably exhaustive indexed Records search has been performed when:
 
 ## Quick-reference: the `*Exact` qualifiers (usually: don't)
 
-Measured 2026-08-04 against the live API. **These qualifiers change how
-many results come back. They do not change which results rank first, so
-none of them can surface a record a fuzzy search buried.** Displacement
-in the top 200 was 0 positions for two rare surnames and 1 position for
-a third whose count they cut 799-fold — and on that third, exact also
-**dropped 2 records fuzzy had returned**. If a search is not finding the
-record, an exact qualifier is not the lever — a different name value, a
-different place level, or a relative's name is.
+Measured against the live API, with re-measurements where a row says so.
+Figures are rounded deliberately: these are live totals that drift between
+runs, so the ratios and directions are the finding, not the digits.
+
+**These qualifiers change how many results come back** — on one rare surname
+the count fell roughly 800-fold. What they cannot do is surface a record: read
+over whole result sets on the surname qualifier, the exact search returned
+nothing the fuzzy one had not, so it is a subset that only subtracts. It does
+re-shuffle the records it keeps, which is a reason to expect a different order,
+not a reason to hope for a new record. So
+if a search is not finding the record, an exact qualifier is not the
+lever — a different name value, place level, or a relative's name is.
 
 They are written `.exact=on` in the API and **camelCase booleans on the
 tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
@@ -147,18 +151,23 @@ tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
 | Tool parameter | Default (fuzzy) reaches | Setting it |
 |---|---|---|
 | `surnameExact` | Spelling variants via the phonetic algorithm — this is what bridges an index misspelling | **Usually wrong.** On a record indexed `Neill`, `surname: "Neal"` + `surnameExact` returned **0** where fuzzy returned the target. Only with a **confirmed** indexed spelling, or to size a pool (below) |
-| `givenNameExact` | Abbreviations (`Wm`→`William`) and *some* nicknames — `Eliza` and `Betsy` for `Elizabeth`, but not `Betty` | Excludes every variant, including the ones fuzzy did reach. To chase a nickname, pass it as its own `givenName` value instead. **One real exception:** an initials search (`givenName: "J W"`) — initials *are* the indexed form, so exactness is what stops the fuzzy expansion swallowing them, the same confirmed-spelling logic as the surname row |
-| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned 35,473 against the right county's 35,510 — 0.1% apart | Cuts the count hard (35,510 → 2 on that same query) without re-ordering anything. Use when a total has to be defensible, not to find a record |
-| `<event>YearExact` | Fuzz around the range bounds | Excludes records whose indexed year sits just outside the range — common where an age was reported rather than a date. Fair when you hold a vital-record date |
-| relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …) | Keeps records where that relative was **never indexed**, while still excluding a different one | Drops those silent records *and* abbreviation variants — a 300-result survey lost the 11% indexed `Wm`/`Wm.` Rarely worth it |
-| `recordCountry` / `recordSubdivision` | Nothing — **already strict** | No qualifier exists and none is needed |
+| `givenNameExact` | Abbreviations (`Wm`→`William`) and period diminutives. Membership-tested: a fuzzy `Elizabeth` search does return `Betty` records, and likewise `Margaret`→`Peggy` and `Mary`→`Polly`. Only those three pairs were tested — do **not** read the nickname table in `name-search-mechanics.md` as measured. Rank is the constraint, not coverage: the best-placed case sat in the mid-300s of a pool of about a thousand and the rest were never seen inside a 500-deep scan, all far past the default page (20, or 50 with `subjectId`) — so searching the diminutive as its own `givenName`, or narrowing until the pool can be read to the end, is the reliable move | Excludes every variant, including the ones fuzzy did reach. To chase a nickname, pass it as its own `givenName` value instead. **One real exception:** an initials search (`givenName: "J W"`). Measured — but *not* for the reason previously given here. Fuzzy does not, in the main, replace initials with spelled-out names: a sampled page of a fuzzy initials search came back overwhelmingly initials-shaped. What it does is also return the **transposition** (`W J`), at a substantial share of results. Exactness removes the transposed form and keeps the order you asked for. Both figures are samples of a pool far too large to enumerate, so treat the direction as measured and the proportions as indicative |
+| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned a total within about a tenth of a percent of the right county's — a county scope barely discriminates at all | Cuts the count hard — on that same query, tens of thousands of hits down to a couple. Its effect on ordering was never measured beyond one record: the target ranked first either way (checked by record id). Use when a total has to be defensible, not to find a record |
+| `<event>YearExact` | Fuzz around the range bounds — **weakly** evidenced: the few records seen outside an unqualified range carried *approximate* dates, and on a pool read to the end the single row outside the range survived `.exact` too. Whether an unqualified range requires an indexed year is **not established** — no direction was measured, so do not assume a range either keeps or excludes undated records, and do not quote a share (`any` was never tested at all) | Excludes records whose indexed year sits just outside the range — where seen, that was the age-reported population. Whether it also drops records that carry no year, or in-range *approximate* dates, is **not established**, so `.exact` is not a reliable way to exclude undated records. Use only with a firm date. |
+| relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …) | Keeps records where that relative was **never indexed**, while still excluding a different one. **How much the unqualified term narrows depends on WHICH relative, and the spread is large.** Measured by reading whole result sets to the end, on two marriage populations and on the **father** and **spouse** names only: an unmatchable *father* name returned about 70-93% of the baseline, an unmatchable *spouse* name 10% in one population and 81% in the other, in each case matching the share of records silent about that relative. So a father-anchored nil is weak evidence wherever fathers are thinly indexed, and a spouse-anchored one is stronger wherever spouses are not. **The difference is exactly how often that relative is indexed:** an unmatchable name keeps the records silent about that relative and drops every record naming a different one, so retention matches the baseline's silent share to within about a point. Nothing is special about the parameter; mother, parent and other names were not enumerated | Requires the relative to be indexed **and** the spelling to match, so it drops the silent population as well as variant forms the fuzzy search did reach (both sets read in full). Whether it drops indexed abbreviations (`Wm` for `William`) specifically is **not** measured — the enumerated set held none to drop. Measured on a father's given name only — no probe has set a spouse or mother `*Exact`, so do not assume the size of the effect carries across families. Set it only with a confirmed indexed spelling of the relative's name |
+| `recordCountry` | Nothing — **already strict**: a nonexistent country returns 0 rather than being ignored | No qualifier exists and none is needed |
+| `recordSubdivision` | Nothing — **also already strict**: a nonexistent subdivision returns 0 rather than being ignored, and a real one cuts a country-wide total to a small fraction of it. What is *not* established is how place scopes expand — whether dropping from county to state level rescues a search that nils is a separate open question, so do not treat a nil at one level as settling the other | No qualifier exists and none is needed |
 
 **The one case that is genuinely about a qualifier: sizing a pool.** If
 you are about to record `results_available` or argue a search was
 reasonably exhaustive, an unqualified total will not support the claim —
-14,095 candidates is not a surveyed pool, and the same search with a
-qualifier returned 51. Narrow first, then make the claim.
+a pool of some fourteen thousand candidates is not a surveyed pool, and the
+same search with a qualifier came back in the dozens. (Those figures come from
+the original probe session under a query shape the repo's qualifier probe does
+not run — the ratio is the point, and the absolute numbers are not reproducible
+from the committed probe.) Narrow first, then make the claim.
 
-Full figures and method: `docs/specs/record-search-tool-spec-v2.md`
-§ "What `.exact=on` actually does", reproduced by
-`dev/probe-search-qualifiers.ts`.
+Full figures and method are repo-side and not readable from here:
+`docs/specs/record-search-tool-spec-v2.md`, section "What `.exact=on`
+actually does", reproduced by the qualifier probe. The summary above is
+the operative version.
