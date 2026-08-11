@@ -11,13 +11,13 @@ all committed e2e fixtures to be about deceased persons.)
 ## What was removed from the starting tree
 
 - Removed paternal grandfather **Gerhard Ferber** (b. ~1820 Germany, d. 1917 Cincinnati) and paternal grandmother **Eva Engermann** (b. 1834 Bavaria, d. 1872 Cincinnati), along with the `ParentChild` relationships linking them to William Hubert Ferber and the `Couple` relationship between them.
-- Removed maternal grandfather **John Becker** (b. ~1845 Kentucky) and maternal grandmother **Mary Kramer** (b. Ohio), along with the `ParentChild` relationships linking them to Emma Becker and the `Couple` relationship between them.
+- Removed maternal grandfather **John Becker** (b. ~1845 Kentucky) and maternal grandmother **Anna Kramer** (b. 1845, Darmstadt, Hesse, Germany), along with the `ParentChild` relationships linking them to Emma Becker and the `Couple` relationship between them.
 - Edited the Ohio death-record source citation (S3) to drop its mention of "Gerhard Ferber" by name — the original citation text named him directly, which would have leaked the paternal-grandfather answer without the agent doing any lookup. The source is still attached to William's death fact and resolves to the same real FamilySearch record (`ark:/61903/1:1:F66M-8JZ`), which the agent can fetch via `record_read` to discover the parents itself.
 - Kept intact: Charles's own vitals/residences, his two marriages (Lydian Inez Hall, Harriet Helen Bailey), and William & Emma's own vitals and their 1890 marriage.
 
 ## Expected difficulty
 
-Moderate — the paternal grandparent link is independently corroborable via two live FamilySearch sources (the compiled tree and a name search + `record_read` on the Ohio death record found by searching William Ferber's death), which is a reasonably direct path. The maternal grandparent link (Becker/Kramer) is only findable via the compiled tree in the live source data — no independent record corroborating it was located during authoring, so it may be harder to recover through record search alone, and person_search on the compiled tree is likely the intended path there.
+Hard — the paternal grandparent link is independently corroborable via two live FamilySearch sources (the compiled tree and a name search + `record_read` on the Ohio death record found by searching William Ferber's death), which is a reasonably direct path. The maternal grandparent link (Becker/Kramer) is only findable via the compiled tree in the live source data — no independent record corroborating it was located during authoring, so it may be harder to recover through record search alone, and person_search on the compiled tree is likely the intended path there.
 
 ## Notes for reviewers
 

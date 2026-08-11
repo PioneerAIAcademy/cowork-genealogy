@@ -98,7 +98,29 @@ echo "closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state c
 **This run's merge-or-close target is at least the week's inflow** — merges,
 absorbs, closes and obsoletes combined.
 
-If you cannot reach it, **say so at the top of the output**: the number you
+**Count what `/merge-recent-issues` already did toward it.** That skill runs daily
+against the last two days' inflow, so by the time this pass runs, the
+new-issue-versus-existing-issue merges should mostly be done:
+
+```sh
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
+  --limit 200 --search "closed:>=$d \"Merged into issue\"" \
+  --json number,title
+```
+
+Subtract those from the gap before reporting a shortfall, and **do not re-litigate
+a pair that pass judged independent** — read its reasoning in the issue comments
+first and only overturn it with something it could not see, which is usually the
+whole-pool view.
+
+That division is the point of running this weekly rather than daily: the daily
+pass catches a new issue landing on top of an existing one, which is the case that
+decays fastest. What only this pass can catch is **two old issues colliding** —
+neither filed recently, both quietly wanting the same lines — plus obsolescence,
+clusters, eval-slot queues and board hygiene. None of those change materially in a
+day, and all of them need every body in one head.
+
+If you cannot reach the target, **say so at the top of the output**: the number you
 propose, the target, and the gap. Four merges against a week of two hundred
 filings is not a successful audit; the shortfall is the finding, and burying it
 under the merges you did find misreports the week. The lead still approves every
@@ -122,9 +144,30 @@ so exactly one owns the scope.
 **Batch — separate issues, one paid run.** This is the most common and the most
 valuable. See §4.
 
-**Schedule together, do not merge.** Two halves that need each other but are
-different labor — a `developer` lint and a `genealogist` audit. Merging makes it
-unassignable. Say "same week, two people" and leave both open.
+**Split the lanes — only when the split is clean.** Two halves that are different
+labor — a `developer` lint and a `genealogist` audit — can stay apart, because one
+card spanning two lanes has no single assignee. That holds **only if neither half
+needs the other to land**. Test it: can each be finished, reviewed and merged
+without waiting on the other? If yes, split at the lane boundary and move the
+content, so neither issue is left pointing at the other for something it needs,
+and give each its own acceptance.
+
+If no — merge, and let the card carry both labels. A card with two labels is
+assignable; two cards that each need the other are not.
+
+**"Schedule together, leave both open" is not a verdict.** The lead ruled it out
+on 2026-08-11: *"Anything that should be done together sounds like a reason to
+merge. Otherwise we have to cross-reference the issues and rely on people
+remembering to assign both issues to themselves, which they have forgotten
+several times."* Same decision, same files, same paid run, same reviewer, or
+class-and-instance — all merge. Splitting on *mechanism purity* (two tools, two
+matchers, two code paths) is an author's aesthetic, not a work boundary.
+
+The one legitimate not-a-merge is a **one-way mechanical dependency**: issue B
+only needs to *apply* something issue A defines. Then edit B's body so it reads as
+an instruction ("apply the convention issue #A defines") rather than a
+coordination requirement — nobody needs both assignments, which is the whole
+objection.
 
 ### Never replace N issues with one issue holding N rows
 

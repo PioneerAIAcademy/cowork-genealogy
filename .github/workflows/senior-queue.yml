@@ -18,6 +18,24 @@ name: senior-queue
 # changes-requested, and neither of them keeps a PR out of a review QUEUE —
 # so without these two rules a PR is surfaced to a senior with round one open.
 #
+# AN APPROVAL ANSWERS THE APPROVER'S OWN THREADS. Reviewers here routinely
+# re-review, approve, and never go back to click Resolve, so requiring the click
+# made the queue lag the review by however long that took. A thread counts as
+# closed FOR QUEUEING once the reviewer who OPENED it submits an approval later
+# than their own last comment on it. Threads opened by anyone who has not
+# approved keep blocking, and a fresh changes-requested puts every one of that
+# reviewer's threads back.
+#
+# This does NOT resolve the thread, so `required_review_thread_resolution` still
+# blocks the MERGE until a human clicks Resolve — by design the person merging,
+# who is already looking at the PR. Auto-resolving was built and reverted: the
+# `resolveReviewThread` GraphQL mutation is refused to `GITHUB_TOKEN` with
+# "Resource not accessible by integration" even with `pull-requests: write`,
+# verified live on 2026-08-11 against PR #1523. If you re-attempt it, it needs an
+# identity this workflow does not have — the Projects App (`PROJECT_APP_ID`) is
+# the only other one in this repo, and whether it can call that mutation is
+# untested. Do not add the mutation back without testing the refusal first.
+#
 # WHY A LABEL AND NOT THE REVIEW REQUEST. CODEOWNERS makes GitHub request the
 # owning team the instant a matching PR opens, when CI is usually red and nobody
 # has read it — accurate as "a PR exists", useless as "this needs you". The
@@ -43,8 +61,8 @@ name: senior-queue
 # ADD-ONLY. Once labelled a PR stays labelled, even if it later goes red.
 # Demotion would make PRs flicker out of the queue mid-review.
 #
-# TWO TRAPS THIS FILE HAS HIT BEFORE, both of which made the job go green while
-# doing nothing:
+# THREE TRAPS THIS FILE HAS HIT BEFORE, each of which made the job go green
+# while doing nothing:
 #
 #   1. SELF must equal the JOB's name, because that is what a check run is named.
 #      Setting it to the workflow's name matched nothing, so every run counted
@@ -53,10 +71,16 @@ name: senior-queue
 #   2. The label write was wrapped in a try/catch that downgraded failure to a
 #      warning, and the API then no-op'd with HTTP 200. There is no catch around
 #      the write, and the label is read back to confirm it landed.
+#   3. Every check run ever attached to a sha comes back from `listForRef`, so a
+#      failure that was later re-run green still read as "CI failing" and the PR
+#      could never enter a queue again. See newestPerName().
 #
 # When changing the readiness rules, verify against a real approved PR. A
 # `workflow_dispatch` dry run does not exercise the self-filter at all: a
 # dispatch's check run lands on the default branch's sha, not on any PR's head.
+# It DOES exercise everything else, including both rules below, and it makes no
+# writes — so a dispatch dry run is the way to check a readiness change against
+# the live board before letting it label or resolve anything.
 #
 # THE EVENTS ALONE CANNOT KEEP THE QUEUE CURRENT. `check_suite` never fires here
 # (see the trigger below), so nothing observes CI turning green; a PR approved
@@ -102,7 +126,8 @@ permissions:
   # `issues: write` is what authorizes labelling (labels live on the issues API
   # even for PRs); `pull-requests: write` is granted alongside it because the
   # mapping between the two is inconsistent enough that relying on one alone has
-  # bitten other repos.
+  # bitten other repos. Neither grant reaches `resolveReviewThread` — see the
+  # approval note at the top.
   issues: write
   pull-requests: write
   checks: read
@@ -175,9 +200,14 @@ jobs:
                 // a mis-parsed rule would route a PR to the wrong queue with no sign.
                 let test;
                 if (pattern === '*')                      test = () => true;
-                else if (/^\*\.[A-Za-z0-9]+$/.test(pattern))
+                else if (/^\*\.[A-Za-z0-9.]+$/.test(pattern))
                                                           test = f => f.endsWith(pattern.slice(1));
                 else if (/^\/.*\/$/.test(pattern))        test = f => f.startsWith(pattern.slice(1));
+                // A bare filename (Makefile, .gitattributes) matches that
+                // basename at any depth, which is how GitHub resolves a
+                // slash-free pattern.
+                else if (/^[A-Za-z0-9._-]+$/.test(pattern))
+                                                          test = f => f.split('/').pop() === pattern;
                 else { unknown.push(pattern); continue; }
                 rules.push({ pattern, test, teams });
               }
@@ -189,6 +219,75 @@ jobs:
               let teams = [];
               for (const r of rules) if (r.test(file)) teams = r.teams;
               return teams;
+            }
+
+            // ---- the two decision rules, kept pure and testable ---------------
+            // Both are lifted out of this file verbatim by
+            // .github/tests/senior-queue-readiness.test.mjs, so they must stay
+            // top-level `function` declarations that close on a column-0 brace.
+
+            // A sha keeps EVERY check run ever attached to it, and
+            // `checks.listForRef`'s default `latest` filter dedupes per check
+            // SUITE, not per check NAME. Re-triggering a workflow on the same
+            // commit — which is exactly what applying `eval-cosmetic-skip` does —
+            // opens a second suite, so the first run's `failure` stays visible
+            // forever and this workflow reads the sha as failing however many
+            // times CI is re-run green. Add-only labelling means nothing ever
+            // recovers such a PR: it cannot reach a queue until someone pushes a
+            // new commit. PR #1523 sat out of both queues on a `runlogs` failure
+            // that had been re-run green 18 hours earlier.
+            //
+            // Keeping only the newest run per name is how branch protection
+            // resolves a required check. It does mean two DIFFERENT workflows
+            // sharing one job name collapse into one — but such a pair is already
+            // ambiguous to branch protection, so rename one rather than key this
+            // on the workflow.
+            function newestPerName(runs) {
+              const newest = new Map();
+              for (const c of runs) {
+                // A still-running attempt has no completed_at, and its started_at
+                // is later than the completed_at of the run it supersedes.
+                const at = Date.parse(c.completed_at || c.started_at || '') || 0;
+                const prev = newest.get(c.name);
+                if (!prev || at >= prev.at) newest.set(c.name, { at, run: c });
+              }
+              return [...newest.values()].map(v => v.run);
+            }
+
+            // An approval submitted after the reviewer's own last word in a
+            // thread IS their answer to it — they read the reply, or decided it
+            // no longer matters, and said so in the only way that carries weight.
+            // Holding the PR out of the senior queue until they also click
+            // Resolve makes the queue lag the review by however long that takes.
+            // These threads are counted as answered here and NOT resolved — the
+            // mutation is refused to this token, see the approval note at the top
+            // — so the merge still waits on a human click.
+            //
+            // Scoped per thread by its OPENER: an approval from one reviewer says
+            // nothing about a thread another reviewer opened, and those keep
+            // blocking. `approvals` holds only reviewers whose LATEST standing is
+            // APPROVED, so a re-requested change re-blocks every thread — and it
+            // is built from a map the PR's own author is already excluded from,
+            // so nobody can clear their own threads by approving their own PR.
+            function supersededThreads(threads, approvals) {
+              const superseded = [];
+              for (const t of threads) {
+                if (t.isResolved) continue;
+                const comments = t.comments.nodes;
+                if (!comments.length) continue;
+                const opener = comments[0].author && comments[0].author.login;
+                const approvedAt = opener && approvals.get(opener);
+                if (!approvedAt) continue;
+                // An unwalked page could hold a later comment from the opener,
+                // which would make the approval look like the last word when it
+                // is not. Leave the thread blocking rather than guess.
+                if (t.comments.pageInfo.hasNextPage) continue;
+                const lastWord = comments
+                  .filter(c => c.author && c.author.login === opener)
+                  .reduce((max, c) => Math.max(max, Date.parse(c.createdAt) || 0), 0);
+                if (Date.parse(approvedAt) > lastWord) superseded.push(t.id);
+              }
+              return superseded;
             }
 
             const { rules, unknown } = await loadCodeowners();
@@ -229,7 +328,7 @@ jobs:
             async function evaluate(number) {
               const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
               const labels = pr.labels.map(l => l.name);
-              const blank = { pr, labels, wanted: [], ready: false };
+              const blank = { pr, labels, wanted: [], ready: false, answered: [] };
 
               if (pr.state !== 'open') return { ...blank, reasons: ['not open'] };
               if (pr.draft)            return { ...blank, reasons: ['draft'] };
@@ -243,9 +342,15 @@ jobs:
               for (const r of reviews) {
                 if (!r.user || r.user.login === pr.user.login) continue;
                 if (r.state === 'COMMENTED') continue;
-                latest.set(r.user.login, r.state);
+                latest.set(r.user.login, { state: r.state, at: r.submitted_at });
               }
-              const standings = [...latest.values()];
+              const standings = [...latest.values()].map(s => s.state);
+              // When a reviewer's latest standing is APPROVED, that approval is
+              // their answer to every thread they opened before it — see
+              // supersededThreads().
+              const approvals = new Map([...latest]
+                .filter(([, s]) => s.state === 'APPROVED')
+                .map(([login, s]) => [login, s.at]));
 
               const [checks, status, files, threads] = await Promise.all([
                 github.paginate(github.rest.checks.listForRef,
@@ -263,7 +368,14 @@ jobs:
                       pullRequest(number:$number) {
                         reviewThreads(first:100) {
                           pageInfo { hasNextPage }
-                          nodes { isResolved }
+                          nodes {
+                            id
+                            isResolved
+                            comments(first:100) {
+                              pageInfo { hasNextPage }
+                              nodes { createdAt author { login } }
+                            }
+                          }
                         } } } }`,
                   { owner, repo, number }),
               ]);
@@ -275,9 +387,11 @@ jobs:
               const isSelf = c =>
                 (c.details_url || '').includes(`/actions/runs/${context.runId}/`)
                 || (c.name || '').startsWith(SELF);
-              const others   = checks.filter(c => !isSelf(c));
-              const failed   = others.filter(c => BAD.has(c.conclusion));
-              const running  = others.filter(c => PENDING.has(c.status));
+              // newestPerName drops superseded attempts — without it a failure
+              // that was later re-run green locks the PR out permanently.
+              const current  = newestPerName(checks.filter(c => !isSelf(c)));
+              const failed   = current.filter(c => BAD.has(c.conclusion));
+              const running  = current.filter(c => PENDING.has(c.status));
               const statuses = status.data.statuses || [];
               const statusFailed = statuses.filter(s => s.state === 'failure' || s.state === 'error');
 
@@ -291,7 +405,12 @@ jobs:
               // A page-2 unresolved thread would otherwise read as "all resolved",
               // so an un-walked page is reported rather than assumed clean.
               const rt = threads.repository.pullRequest.reviewThreads;
-              const unresolved = rt.nodes.filter(t => !t.isResolved).length;
+              // Threads whose author approved afterwards do not hold up the
+              // queue. They are still open, and still block the merge — act()
+              // logs the count so the discrepancy is visible rather than implied.
+              const answered = supersededThreads(rt.nodes, approvals);
+              const unresolved =
+                rt.nodes.filter(t => !t.isResolved).length - answered.length;
 
               const reasons = [];
               if (!standings.includes('APPROVED'))         reasons.push('no peer approval');
@@ -302,12 +421,12 @@ jobs:
               if (failed.length)       reasons.push(`CI failing: ${failed.map(c => c.name).join(', ')}`);
               if (statusFailed.length) reasons.push(`status failing: ${statusFailed.map(s => s.context).join(', ')}`);
               if (running.length)      reasons.push(`CI still running (${running.length})`);
-              if (others.length === 0 && statuses.length === 0) reasons.push('no CI has reported');
+              if (current.length === 0 && statuses.length === 0) reasons.push('no CI has reported');
               // A PR owned by no senior team needs no senior review, so there is
               // nothing to queue — distinct from "not ready".
               if (!wanted.length)      reasons.push('no senior-owned path');
 
-              return { pr, labels, wanted, ready: reasons.length === 0, reasons };
+              return { pr, labels, wanted, ready: reasons.length === 0, reasons, answered };
             }
 
             // ---- label bootstrap --------------------------------------------
@@ -330,9 +449,17 @@ jobs:
             // earlier version downgraded a failed write to a warning and the API
             // then no-op'd with HTTP 200, so the job went green having done nothing.
             async function act(n) {
-              const { pr, labels, wanted, ready, reasons } = await evaluate(n);
+              const { pr, labels, wanted, ready, reasons, answered } = await evaluate(n);
               const missing = wanted.filter(l => !labels.includes(l));
               let action;
+
+              // Say so rather than leave a silently-shrinking count: someone
+              // reading this log against the PR must be able to see that N open
+              // threads were discounted, and why.
+              if (answered.length) {
+                core.info(`#${n} discounted ${answered.length} open thread(s) whose author ` +
+                          `approved afterwards; they still block the merge until resolved`);
+              }
 
               if (ready && !missing.length) {
                 action = 'already queued';
