@@ -148,15 +148,119 @@ They are written `.exact=on` in the API and **camelCase booleans on the
 tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
 `marriageYearExact`, and so on for every event and relative family.
 
-| Tool parameter | Default (fuzzy) reaches | Setting it |
-|---|---|---|
-| `surnameExact` | Spelling variants via the phonetic algorithm — this is what bridges an index misspelling | **Usually wrong.** On a record indexed `Neill`, `surname: "Neal"` + `surnameExact` returned **0** where fuzzy returned the target. Only with a **confirmed** indexed spelling, or to size a pool (below) |
-| `givenNameExact` | Abbreviations (`Wm`→`William`) and period diminutives — expected to be cut off, though only the default's reach to them was measured. Membership-tested: a fuzzy `Elizabeth` search does return `Betty` records, and likewise `Margaret`→`Peggy` and `Mary`→`Polly`. Only those three pairs were tested — do **not** read the nickname table in `name-search-mechanics.md` as measured. Rank is the constraint, not coverage: the best-placed case sat in the mid-300s of a pool of about a thousand and the rest were never seen inside a 500-deep scan, all far past the default page (20, or 50 with `subjectId`) — so searching the diminutive as its own `givenName`, or narrowing until the pool can be read to the end, is the reliable move | Excludes every variant, including the ones fuzzy did reach. To chase a nickname, pass it as its own `givenName` value instead. **One real exception:** an initials search (`givenName: "J W"`). The stated reason is refuted; the alternative is not established. Fuzzy does not, in the main, replace initials with spelled-out names: a sampled page of a fuzzy initials search came back overwhelmingly initials-shaped. What it does is also return the **transposition** (`W J`), at a substantial share of results. Exactness pins the order: on a US census pool read in full both ways, a record indexed `W J` is returned by a fuzzy `J W` search and absent from the exact one, while four other records survive it — so the removal is selective, not an empty result. Confirmed on one enumerated pool; the wider proportions are samples |
-| `<event>PlaceExact` | Upward to parent jurisdictions, so broadly that a **wrong** county returned a total within about a tenth of a percent of the right county's — a county scope barely discriminates at all | Cuts the count hard — on that same query, tens of thousands of hits down to a couple. Its effect on ordering was never measured beyond one record: the target ranked first either way (checked by record id). Use when a total has to be defensible, not to find a record |
-| `<event>YearExact` | Fuzz around the range bounds — **weakly** evidenced: the few records seen outside an unqualified range carried *approximate* dates, and on a pool read to the end the single row outside the range survived `.exact` too. Whether an unqualified range requires an indexed year is **not established** — no direction was measured, so do not assume a range either keeps or excludes undated records, and do not quote a share (`any` was never tested at all) | Meant to exclude records whose indexed year sits just outside the range — where seen, that was the age-reported population — but an out-of-range row was observed surviving it, so the exclusion is not reliably complete. Whether it also drops records that carry no year, or in-range *approximate* dates, is **not established**, so `.exact` is not a reliable way to exclude undated records. Use only with a firm date. |
-| relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …) | Keeps records where that relative was **never indexed**, while still excluding a different one. **How much the unqualified term narrows depends on WHICH relative, and the spread is large.** Measured by reading whole result sets to the end, on two marriage populations and on the **father** and **spouse** names only: an unmatchable *father* name returned about 70-93% of the baseline, an unmatchable *spouse* name 10% in one population and 81% in the other, in each case matching the share of records silent about that relative. So a father-anchored nil is weak evidence wherever fathers are thinly indexed, and a spouse-anchored one is stronger wherever spouses are not. **The difference is exactly how often that relative is indexed:** an unmatchable name keeps the records silent about that relative and drops every record naming a different one, so retention matches the baseline's silent share to within about a point. Nothing is special about the parameter; mother, parent and other names were not enumerated | Requires the relative to be indexed **and** the spelling to match, so it drops the silent population as well as variant forms the fuzzy search did reach (both sets read in full). Measured on the **father** and **spouse** names — for spouse, across two marriage populations read to the end, every spouse-silent record is absent from the exact set while a spouse-bearing control survives. Mother, parent and other were not tested. Whether it drops indexed abbreviations (`Wm` for `William`) specifically is **not** measured — the enumerated set held none to drop. Mother, parent and other were not tested, so do not assume the size of the effect carries across families. Set it only with a confirmed indexed spelling of the relative's name |
-| `recordCountry` | Nothing — **already strict**: a nonexistent country returns 0 rather than being ignored | No qualifier exists and none is needed |
-| `recordSubdivision` | Nothing — **also already strict**: a nonexistent subdivision returns 0 rather than being ignored, and a real one cuts a country-wide total to a small fraction of it. What is *not* established is how place scopes expand — whether dropping from county to state level rescues a search that nils is a separate open question, so do not treat a nil at one level as settling the other | No qualifier exists and none is needed |
+| Parameter | In one line |
+|---|---|
+| `surnameExact` | **Usually wrong** — fuzzy is what bridges an index misspelling, so this can drop the target outright |
+| `givenNameExact` | Excludes the variants fuzzy reaches. One real use: an initials search |
+| `<event>PlaceExact` | Cuts the count hard; not a finding lever |
+| `<event>YearExact` | Only with a firm date — what it does to undated records is not established |
+| relative `*Exact` | Requires that relative to be indexed, so it drops the silent records the unqualified term keeps |
+| `recordCountry`, `recordSubdivision` | Already strict — no qualifier exists and none is needed |
+
+Each is expanded below. These were single table cells of up to ~290 words, which
+is the wrong container for a claim that has to carry its own scope.
+
+### `surnameExact`
+
+Fuzzy reaches spelling variants through the phonetic algorithm, and that is what
+bridges an index misspelling. On a record indexed `Neill`, `surname: "Neal"` +
+`surnameExact` returned **0** where fuzzy returned the target. Set it only with a
+**confirmed** indexed spelling, or to size a pool (see the end of this file).
+
+### `givenNameExact`
+
+Fuzzy reaches abbreviations (`Wm`→`William`) and period diminutives.
+Membership-tested: a fuzzy `Elizabeth` search does return `Betty` records, and
+likewise `Margaret`→`Peggy` and `Mary`→`Polly`. Only those three pairs were
+tested — do **not** read the nickname table in `name-search-mechanics.md` as
+measured. That the exact form excludes them is expected, not measured.
+
+**Rank is the constraint, not coverage.** The best-placed diminutive sat in the
+mid-300s of a pool of about a thousand, and the rest were never seen inside a
+500-deep scan — all far past the default page (20, or 50 with `subjectId`). So
+searching the diminutive as its own `givenName` value, or narrowing until the
+pool can be read to the end, is the reliable move.
+
+**The one real exception is an initials search** (`givenName: "J W"`). The reason
+previously given here was wrong: fuzzy does not, in the main, replace initials
+with spelled-out names — a sampled page came back overwhelmingly initials-shaped.
+What it does is also return the **transposition** (`W J`), at a substantial share
+of results.
+
+Exactness pins the order. On a US census pool read in full both ways, a record
+indexed `W J` is returned by a fuzzy `J W` search and absent from the exact one,
+while four other records survive it — so the removal is selective, not an empty
+result. Confirmed on one enumerated pool; the wider proportions are samples.
+
+But `.exact` keeps only the literal indexed form: in every English marriage pool
+read in full it returned nothing, because those records spell given names out. A
+nil under it is a fact about the index, not about the person.
+
+### `<event>PlaceExact`
+
+Fuzzy expands upward to parent jurisdictions, so broadly that a **wrong** county
+returned a total within about a tenth of a percent of the right county's — a
+county scope barely discriminates at all.
+
+Setting it cuts the count hard: on that same query, tens of thousands of hits
+down to a couple. Its effect on ordering was never measured beyond one record,
+which ranked first either way (checked by record id). Use it when a total has to
+be defensible, not to find a record.
+
+### `<event>YearExact`
+
+Fuzz around the range bounds is **weakly** evidenced: the few records seen
+outside an unqualified range carried *approximate* dates, and on a pool read to
+the end the single out-of-range row survived `.exact` too.
+
+Whether an unqualified range requires an indexed year is **not established** — no
+direction was measured, so do not assume a range either keeps or excludes undated
+records, and do not quote a share. The `any` family was never tested at all.
+
+Setting it is *meant* to exclude records whose indexed year sits just outside the
+range — where seen, that was the age-reported population — but an out-of-range
+row was observed surviving it, so the exclusion is not reliably complete. Whether
+it also drops records carrying no year, or in-range *approximate* dates, is
+**not established**. Use only with a firm date.
+
+### relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …)
+
+Unqualified, a relative name keeps records where that relative was **never
+indexed**, while still excluding a different one. **How much it narrows depends
+on WHICH relative, and the spread is large.** Measured by reading whole result
+sets to the end, on two marriage populations and on the **father** and **spouse**
+names only: an unmatchable *father* name returned about 70-93% of the baseline,
+an unmatchable *spouse* name 10% in one population and 81% in the other — in each
+case matching the share of records silent about that relative.
+
+So a father-anchored nil is weak evidence wherever fathers are thinly indexed,
+and a spouse-anchored one is stronger wherever spouses are not. **The difference
+is exactly how often that relative is indexed:** an unmatchable name keeps the
+records silent about that relative and drops every record naming a different one,
+so retention matches the baseline's silent share to within about a point. Nothing
+is special about the parameter. Mother, parent and other names were not
+enumerated.
+
+Setting `*Exact` requires the relative to be indexed **and** the spelling to
+match, so it drops the silent population as well as variant forms the fuzzy
+search did reach (both sets read in full). Measured on the **father** and
+**spouse** names — for spouse, across two marriage populations read to the end,
+every spouse-silent record is absent from the exact set while a spouse-bearing
+control survives. Mother, parent and other were not tested, so do not assume the
+size of the effect carries across families. Whether it drops indexed
+abbreviations (`Wm` for `William`) specifically is **not** measured — the
+enumerated set held none to drop. Set it only with a confirmed indexed spelling
+of the relative's name.
+
+### `recordCountry` and `recordSubdivision`
+
+Both are **already strict**: a nonexistent country or subdivision returns 0
+rather than being ignored, and a real subdivision cuts a country-wide total to a
+small fraction of it. No qualifier exists for either and none is needed.
+
+What is *not* established is how place scopes expand — whether dropping from
+county to state level rescues a search that nils is a separate open question, so
+do not treat a nil at one level as settling the other.
 
 **The one case that is genuinely about a qualifier: sizing a pool.** If
 you are about to record `results_available` or argue a search was
