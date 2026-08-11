@@ -66,6 +66,23 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "relationship",
 ]);
 
+// The subject's own person-level facts a relative selector must sweep alongside
+// the structure it removes. FamilySearch carries a conclusion TWICE — as graph
+// structure AND as a documentary fact on the subject's own record — so removing
+// only the structure leaks the answer as a fact (and the fact can be the SOLE
+// carrier when the relatives were never added as tree persons).
+//
+// These lists are a DELIBERATE, EVIDENCE-BACKED SUBSET, not the full couple/parent
+// fact family. Add a type here only after confirming FS actually echoes it
+// person-level in real data — never on assumption. (#1314's `Parents` matcher
+// was nearly merged targeting an "undefined" type until the feedback-2026-08-03
+// session log confirmed it is real; do not repeat that in reverse by adding
+// unverified types.) `materialize-facts.ts`'s `EVENT_TREE_TYPES` lists further
+// couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
+// is NOT yet confirmed — see issue #1549 before extending this set.
+const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 85 such facts across committed snapshot trees
+const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed: feedback-2026-08-03 session log, person GRN6-4MQ
+
 export interface ForgetSelector {
   selector: ForgetSelectorKind;
   personId?: string;
@@ -238,18 +255,15 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         // both). Forgetting the structure must take the fact too, or the answer
         // survives on the subject. Each fact can even be the SOLE carrier — when
         // the related persons were never added as tree persons — so its presence
-        // also keeps the selector from erroring as "matched nothing".
-        //   parents-of  → the subject's `Parents` fact       (issue #1314)
-        //   spouses-of  → the subject's `Marriage`/`Divorce`/`Annulment` facts,
-        //                 the person-level echo of the Couple relationship's own
-        //                 facts (issue #1417)
-        // children-of is unaffected: the `Parents` fact lives on the child, whom
-        // children-of removes wholesale.
+        // also keeps the selector from erroring as "matched nothing". The swept
+        // type sets — and why they are a deliberate subset — are defined at
+        // SWEPT_PARENT_FACT_TYPES / SWEPT_SPOUSE_FACT_TYPES. children-of is
+        // unaffected: the `Parents` fact lives on the child, whom it removes whole.
         const redundantFactIds =
           kind === "parents-of"
-            ? factIdsOfType(tree, pid, "Parents")
+            ? factIdsOfTypes(tree, pid, [...SWEPT_PARENT_FACT_TYPES])
             : kind === "spouses-of"
-              ? factIdsOfTypes(tree, pid, ["Marriage", "Divorce", "Annulment"])
+              ? factIdsOfTypes(tree, pid, [...SWEPT_SPOUSE_FACT_TYPES])
               : new Set<string>();
         if (people.size === 0 && rels.size === 0 && redundantFactIds.size === 0) {
           throw new TreeForgetError(

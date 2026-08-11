@@ -114,7 +114,13 @@ describe("tree_forget", () => {
 
   it("parents-of also strips the subject's own `Parents` documentary fact", async () => {
     // FamilySearch carries parentage twice — as ParentChild links AND as a
-    // `Parents` fact on the child's record (issue #1314). Add that fact to I1.
+    // `Parents` fact on the child's record (issue #1314). This is a real FS
+    // person-level fact type, not a fixture invention: confirmed in the
+    // feedback-2026-08-03T15-36-45 session log, person GRN6-4MQ, where a
+    // `{ type: "Parents", value: "Geo[illegible] Wilcox - Caroline E Woodruff" }`
+    // sits in `facts[]` beside Birth/Death (the tree.gedcomx.json export is
+    // privacy-redacted to empty facts; the session log preserves the raw data).
+    // Add that fact to I1.
     const tree = family();
     tree.persons[0].facts.push({
       id: "FP",
