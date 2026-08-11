@@ -28,6 +28,9 @@ from e2e.orchestrator import (
     DEFAULT_MCP_SERVER_ENTRY,
     DEFAULT_PLUGIN_SKILLS,
     DEFAULT_RUNLOG_ROOT,
+    McpUnavailableError,
+    PERSON_EVIDENCE_GUARD_MODES,
+    PERSON_EVIDENCE_GUARD_SHADOW,
     run_e2e_test,
 )
 from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
@@ -76,7 +79,12 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
     print(f"  result: {paths['result']}")
-    if not is_committable_run(result.verdict):
+    if result.verdict == "ungraded":
+        print(
+            "  (judge failed; run committed for re-grading — "
+            "re-run the judge or /grade-e2e-run manually)"
+        )
+    elif not is_committable_run(result.verdict):
         print(
             "  (scratch run — gitignored; the judge didn't run, so there's "
             "nothing to grade or commit)"
@@ -152,9 +160,11 @@ def main(argv: list[str] | None = None) -> int:
             "Pin the run's reasoning effort via a project-level setting "
             "(.claude/settings.json effortLevel). Session-wide. Default: high "
             "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
-            "the sole working effort lever. Vary it to test whether a runaway-"
-            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
+            "not the only lever — ClaudeAgentOptions.effort also works — but it "
+            "is the one proven to reach subagents. Vary it to test whether a "
+            "runaway-thinking subagent freeze clears (see "
+            "subagents[].runaway_thinking)."
         ),
     )
     parser.add_argument(
@@ -176,10 +186,28 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Override the model for BOTH the parent agent and every staged "
             "subagent (rewrites each agent's `.md` model pin). Default: unset = "
-            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
-            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
-            "run the whole flow under Cowork's model and test whether the "
-            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own "
+            "pin, which for record-extractor is also claude-sonnet-4-6 since "
+            "PR #725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
+            "Set e.g. claude-sonnet-5 to check whether that freeze reproduces. "
+            "Recorded in the runlog."
+        ),
+    )
+    parser.add_argument(
+        "--person-evidence-guard",
+        choices=list(PERSON_EVIDENCE_GUARD_MODES),
+        default=PERSON_EVIDENCE_GUARD_SHADOW,
+        help=(
+            "How the §8 same_person provenance check behaves when a research_append "
+            "links a brand-new tree person nothing has scored (issue #1231). "
+            "'shadow' (default) records the gap and lets the write through — the "
+            "posture everywhere. 'deny' also blocks the call, bounded by a loop "
+            "valve, and is for GATHERING RECOVERY EVIDENCE on one fixture: replayed "
+            "over the corpus this fires in ~80%% of runs that link a person, so a "
+            "suite-wide deny would wall nearly every run to max_turns. NOTE a "
+            "deny-mode run's `compliance` axis is not comparable to a shadow run's "
+            "— the blocked write never lands, so the post-run check passes "
+            "vacuously. Recorded in the runlog's usage block."
         ),
     )
     args = parser.parse_args(argv)
@@ -194,6 +222,32 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
+    # Key-validity preflight. A duplicated or revoked key is truthy, so the
+    # agent run proceeds (it uses the SDK's own auth), but the judge silently
+    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
+    # spending anything. Does NOT abort on a missing key: --skip-judge already
+    # handles that (produces verdict="skipped"), and the e2e path has never
+    # blocked on absence.
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key and not args.skip_judge:
+        from e2e.judge import DEFAULT_JUDGE_MODEL
+        from harness.auth import verify_judge_key
+
+        rejected_status = verify_judge_key(api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A $7+ e2e run would complete and then silently discard the "
+                f"result because the judge can't grade it.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"\n"
+                f"Re-run with --skip-judge to proceed without grading.",
+                file=sys.stderr,
+            )
+            return 2
+
     kwargs = {
         "runlog_root": args.runlog_root,
         "mcp_server_entry": args.mcp_server_entry,
@@ -203,6 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
+        "person_evidence_guard": args.person_evidence_guard,
     }
 
     results: list[E2eResult] = []
@@ -211,6 +266,15 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
         return 130
+    except McpUnavailableError as e:
+        # #941 — an environment failure, not a test result. Nothing was written
+        # (see run_e2e_test) and there is nothing to roll up: "this run never
+        # happened". Ahead of the generic handler below, which would print it as
+        # a harness ERROR and imply the run is a data point. Exit 2 matches the
+        # other "this run never happened" exits above (missing fixtures root,
+        # missing fixture) rather than 1, which means "a test failed".
+        print(f"\n{e}", file=sys.stderr)
+        return 2
     except Exception as e:  # noqa: BLE001 — report, then fall through to a nonzero exit
         print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
         return 1
@@ -222,7 +286,7 @@ def main(argv: list[str] | None = None) -> int:
     # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
     # Verified against all 122 committed runs — the gate distribution is
     # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped"})
+    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
     return 1 if failed else 0
 
 

@@ -16,7 +16,10 @@ Three guards, cheapest first:
 3. ``test_bare_agent_names_are_registered`` — the one that would have caught
    #939. Connects a real SDK client with the hosted options and reads the
    registered agent list out of the init handshake. No model call, so it costs
-   nothing but a process start; skipped when its prerequisites are absent.
+   nothing but a process start. Skipped when its prerequisites are absent under
+   an ordinary suite run, and FAILED when ``make agent-smoke`` (``AGENT_SMOKE=1``)
+   asked for it by name — a silent skip there is a green suite reporting that a
+   check ran when it did not.
 """
 from __future__ import annotations
 
@@ -121,14 +124,43 @@ _ENGINE_BUILD = Path(
 # eval/.env and exports it under this name. Setting it is the opt-in.
 _LIVE_KEY = os.environ.get("LIVE_ANTHROPIC_API_KEY", "")
 
+# Set only by the `agent-smoke` Makefile target — i.e. by someone who asked for
+# THIS check specifically, rather than by `make server-test` sweeping the file
+# up with the rest of the suite. The distinction is the whole point: a skip is
+# correct for a contributor with no key, and wrong for the one command whose
+# entire job is to run this test. Without it `make agent-smoke` printed
+# "143 passed, 1 skipped" and read as fully green — indistinguishable from the
+# check having run.
+_INVOKED_AS_SMOKE = bool(os.environ.get("AGENT_SMOKE"))
+
+
+def _missing_prerequisites() -> list[str]:
+    """What stops the live check from running, each with its remedy.
+
+    One list, read twice: as the skip reason for an ordinary suite run, and as
+    the failure message when `make agent-smoke` asked for this check by name.
+    """
+    missing = []
+    if not _LIVE_KEY:
+        missing.append(
+            "no Anthropic key — set ANTHROPIC_API_KEY, or put ANTHROPIC_API_KEY=... "
+            "in eval/.env (no model call is made; the CLI just refuses to start "
+            "without one)"
+        )
+    if not _ENGINE_BUILD.exists():
+        missing.append(f"no compiled engine at {_ENGINE_BUILD} — run `make engine-build`")
+    if shutil.which("node") is None:
+        missing.append("node is not on PATH — the MCP server is a node process")
+    return missing
+
 
 @pytest.mark.skipif(
-    not _LIVE_KEY, reason="live check — run `make agent-smoke` (sets LIVE_ANTHROPIC_API_KEY)"
+    bool(_missing_prerequisites()) and not _INVOKED_AS_SMOKE,
+    reason=(
+        "live check — run `make agent-smoke`: "
+        + "; ".join(_missing_prerequisites())
+    ),
 )
-@pytest.mark.skipif(
-    not _ENGINE_BUILD.exists(), reason="needs the compiled engine (make engine-build)"
-)
-@pytest.mark.skipif(shutil.which("node") is None, reason="needs node for the MCP server")
 async def test_bare_agent_names_are_registered(tmp_path, monkeypatch):
     """Start a real SDK client with the hosted options and assert every shipped
     agent is registered under its BARE name.
@@ -140,7 +172,24 @@ async def test_bare_agent_names_are_registered(tmp_path, monkeypatch):
 
     This spawns a CLI process but issues NO query, so it bills nothing; the key
     is needed only because the CLI refuses to start without one.
+
+    Under `AGENT_SMOKE` a missing prerequisite FAILS instead of skipping. The
+    skip is right for a contributor running `make server-test` with no key; it
+    is wrong for the one command whose entire job is this check, which reported
+    "143 passed, 1 skipped" and read as fully green.
     """
+    missing = _missing_prerequisites()
+    if missing:
+        # Reached only under AGENT_SMOKE — the skipif above covers every other
+        # caller. The target sets LIVE_ANTHROPIC_API_KEY to the empty string
+        # when neither source supplies a key, so a missing key arrives here as
+        # a silent skip rather than as a shell error.
+        pytest.fail(
+            "make agent-smoke could not run the ONLY check that reads what the "
+            "runtime resolved the hosted agent options to:\n  - "
+            + "\n  - ".join(missing)
+        )
+
     from claude_agent_sdk import ClaudeSDKClient
 
     monkeypatch.setattr(real_agent, "_PLUGIN_DIR", str(PLUGIN_DIR))

@@ -176,7 +176,7 @@ def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
 
 
 def test_is_committable_run_graded_verdicts():
-    for v in ("pass", "partial", "fail"):
+    for v in ("pass", "partial", "fail", "ungraded"):
         assert is_committable_run(v) is True
     for v in ("skipped", "aborted", ""):
         assert is_committable_run(v) is False
@@ -186,6 +186,7 @@ def test_runlog_prefix_graded_vs_scratch():
     assert runlog_prefix("pass") == "run-"
     assert runlog_prefix("partial") == "run-"
     assert runlog_prefix("fail") == "run-"
+    assert runlog_prefix("ungraded") == "run-"
     assert runlog_prefix("skipped") == "scratch_"
 
 
@@ -287,10 +288,12 @@ def test_guardrail_bypass_does_not_touch_the_genealogical_verdict():
         ("pass", [], "pass"),
         ("partial", [], "partial"),
         ("fail", [], "fail"),
+        ("ungraded", [], "ungraded"),
         ("skipped", [], "skipped"),
         ("pass", ["v"], "fail"),
         ("partial", ["v"], "fail"),
         ("fail", ["v"], "fail"),
+        ("ungraded", ["v"], "fail"),
         ("skipped", ["v"], "fail"),
     ],
 )
@@ -346,6 +349,37 @@ def test_a_judgeless_run_with_violations_stays_a_scratch_run(tmp_path: Path):
         timestamp="2026-05-26_14-30-45",
     )
     assert paths["result"].name.startswith("scratch_")
+
+
+def test_ungraded_verdict_derives_correct_axes():
+    """An ungraded run (judge exception) has a tree but was never graded.
+    It is committable (run- prefix) and its outcome passes through as
+    'ungraded' when compliance is clean."""
+    r = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="ungraded", stop_reason="completed",
+    )
+    assert r.compliance == "pass"
+    assert r.outcome == "ungraded"
+    assert is_committable_run(r.verdict) is True
+    assert runlog_prefix(r.verdict) == "run-"
+
+
+def test_ungraded_run_with_violations_is_still_committed(tmp_path: Path):
+    """An ungraded run with violations stays committable — the tree exists
+    and can be re-graded, unlike a skipped run which has no tree."""
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="ungraded", stop_reason="completed",
+        guardrail_bypass_violations=["'person-evidence' was never invoked"],
+    )
+    assert result.outcome == "fail"
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree={"persons": []}, final_research={},
+        timestamp="2026-05-26_14-30-45",
+    )
+    assert paths["result"].name.startswith("run-")
 
 
 # --- axes_from_runlog: reading the pre-#972 corpus --------------------------
@@ -430,9 +464,11 @@ def test_the_fingerprint_field_still_exists_on_the_dataclass():
     `usage.cli_version` is absent or null in every committed run, and nothing
     records a git sha.
 
-    That field is documented as SHADOW MODE ONLY and is expected to be retired
-    when §4.1 graduates (issue #911). This asserts the removal is a loud
-    failure rather than a silent reclassification of every pre-v1 log.
+    That field is documented as SHADOW MODE ONLY, and nothing is expected to
+    retire it: §7 is shadow-only permanently unless a guardrail skill gains a
+    completion signal, and the list is shared with the §8 and §7.5 stored
+    families besides. This asserts the removal is a loud failure rather than a
+    silent reclassification of every pre-v1 log.
     """
     names = {f.name for f in dataclasses.fields(E2eResult)}
     assert "guardrail_shadow_violations" in names, (
@@ -628,3 +664,116 @@ def test_no_transcript_artifact_is_written(tmp_path: Path):
     )
     assert "transcript" not in paths
     assert list(tmp_path.glob("*.transcript.md")) == []
+
+
+# --- Provenance: git_sha + skills_hash (issue #1091) ------------------------
+
+
+def _mini_skill_tree(tmp_path: Path) -> tuple[Path, Path]:
+    """A synthetic, dotfile-free skills/ + agents/ pair — no __pycache__ or
+    dotfile for `copytree` and the helper to diverge on (see the equality test).
+    Includes a nested `references/*.md` and a LOOSE file directly in skills/
+    (which build_workspace does NOT stage) to pin both edges."""
+    skills = tmp_path / "skills"
+    agents = tmp_path / "agents"
+    skill = skills / "search-records"
+    (skill / "references").mkdir(parents=True)
+    (skill / "SKILL.md").write_text("# search-records\n", encoding="utf-8")
+    (skill / "references" / "guide.md").write_text("guide\n", encoding="utf-8")
+    (skills / "README.md").write_text("loose — not under a skill subdir\n", encoding="utf-8")
+    agents.mkdir()
+    (agents / "gps-mentor.md").write_text("---\nname: gps-mentor\n---\nbody\n", encoding="utf-8")
+    return skills, agents
+
+
+def test_skills_hash_covers_exactly_what_build_workspace_stages(tmp_path: Path):
+    """The under-scoping guard: the helper's key set must equal the file set
+    `build_workspace` actually stages under .claude/skills + .claude/agents. A
+    wrong hash is otherwise a plausible-looking 64-hex string nothing catches.
+    """
+    from types import SimpleNamespace
+
+    from e2e import provenance
+    from e2e.orchestrator import build_workspace
+
+    skills, agents = _mini_skill_tree(tmp_path)
+    research = tmp_path / "research.json"
+    tree = tmp_path / "tree.gedcomx.json"
+    research.write_text("{}", encoding="utf-8")
+    tree.write_text("{}", encoding="utf-8")
+    # `dir` is read for a `provided-documents/` subdir (absent here); the other
+    # two are the only fixture attrs build_workspace copies.
+    fixture = SimpleNamespace(
+        dir=tmp_path, starting_research_path=research, starting_tree_path=tree
+    )
+
+    target = tmp_path / "ws"
+    target.mkdir()
+    build_workspace(fixture, target, skills, agents_dir=agents)
+
+    staged: set[str] = set()
+    for base, prefix in ((target / ".claude" / "skills", "skills"),
+                         (target / ".claude" / "agents", "agents")):
+        for p in base.rglob("*"):
+            if p.is_file():
+                staged.add(f"{prefix}/{p.relative_to(base).as_posix()}")
+
+    keys = set(provenance.staged_file_hashes(skills, agents))
+    assert keys == staged, f"hash scope != staged scope: {keys ^ staged}"
+    # The loose file in the skills root is staged by neither — build_workspace
+    # only descends non-dot subdirs.
+    assert "skills/README.md" not in keys
+
+
+def test_skills_hash_changes_on_a_staged_file_and_not_on_an_excluded_one(tmp_path: Path):
+    """Mutating a staged prompt file moves the digest; a __pycache__/dotfile the
+    run would carry but that is not prompt content does not."""
+    from e2e import provenance
+
+    skills, agents = _mini_skill_tree(tmp_path)
+    h0 = provenance.skills_hash(skills, agents)
+
+    # A nested staged file moves the hash.
+    (skills / "search-records" / "references" / "guide.md").write_text("CHANGED\n", encoding="utf-8")
+    h1 = provenance.skills_hash(skills, agents)
+    assert h1 != h0
+
+    # An agent edit moves it too.
+    (agents / "gps-mentor.md").write_text("---\nname: gps-mentor\n---\nedited\n", encoding="utf-8")
+    h2 = provenance.skills_hash(skills, agents)
+    assert h2 != h1
+
+    # A __pycache__ file and a dotfile inside a skill do NOT — they are excluded.
+    pyc = skills / "search-records" / "scripts" / "__pycache__"
+    pyc.mkdir(parents=True)
+    (pyc / "helper.cpython-312.pyc").write_bytes(b"\x00compiled")
+    (skills / "search-records" / ".DS_Store").write_bytes(b"junk")
+    assert provenance.skills_hash(skills, agents) == h2
+
+
+def test_e2e_result_carries_provenance_keys_with_defaults():
+    """Both keys serialize through asdict(), defaulting to None so every
+    historical run log stays a valid E2eResult."""
+    r = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="pass", stop_reason="completed",
+    )
+    d = dataclasses.asdict(r)
+    assert d["git_sha"] is None
+    assert d["skills_hash"] is None
+
+    populated = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="pass", stop_reason="completed",
+        git_sha="a" * 40, skills_hash="b" * 64,
+    )
+    pd = dataclasses.asdict(populated)
+    assert pd["git_sha"] == "a" * 40
+    assert pd["skills_hash"] == "b" * 64
+
+
+def test_git_sha_returns_none_outside_a_git_repo(tmp_path: Path):
+    """Best-effort: a run outside a checkout logs no SHA rather than raising."""
+    from e2e import provenance
+
+    assert provenance.git_sha(tmp_path) is None

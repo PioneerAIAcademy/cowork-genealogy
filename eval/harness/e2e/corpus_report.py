@@ -36,6 +36,19 @@ degenerate the report says so rather than printing a number. The same rule binds
 the violation total: it is stated across decidable runs, because a `not_checked`
 run's violations field is absent and so it cannot contribute one.
 
+**Bash access to the protected files.** The raw-write lockdown
+(`docs/specs/guardrail-enforcement-spec.md` §6) covers `Write` / `Edit` /
+`NotebookEdit` and deliberately not `Bash`: the skills run their stdlib scripts
+through the shell, and matching command text would deny a legitimate
+`python script.py research.json > out` while still missing a variable-built
+path. Its stated close-condition is "close this if a bypass appears in a
+runlog" — and nothing watched for one. This report counts them, splitting
+*write-shaped* commands out of the mostly-read traffic. Write-**shaped**, not
+write-proven: the classifier reads command text, which is exactly the inference
+§6 refuses to make a DENY on. Here it only decides what a human reads, so a
+false positive costs a glance and a false negative is bounded by the total
+sitting next to it.
+
 CLI (from eval/harness/):
   uv run python -m e2e.corpus_report                        # last 14 days
   uv run python -m e2e.corpus_report --since all            # whole corpus
@@ -47,6 +60,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -61,7 +75,7 @@ from e2e.runlog_selection import (
 )
 from e2e.result import axes_from_runlog
 
-VERDICT_ORDER = ("pass", "partial", "fail", "skipped")
+VERDICT_ORDER = ("pass", "partial", "fail", "ungraded", "skipped")
 
 # How many fixtures the concentration block names individually. The remainder is
 # summarised on one line rather than dropped — see `_concentration_lines`.
@@ -87,6 +101,51 @@ VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
 )
 
 
+# The files §6 protects, named for the census rather than spelled
+# `PROTECTED_PROJECT_FILES`. That name belongs to the three ENFORCEMENT copies,
+# which `tests/unit/test_write_lockdown_parity.py` holds to a shared behavioural
+# contract; this module denies nothing and has no predicate to compare, so
+# registering it there would be false and leaving it unregistered would trip
+# that test's "no unregistered copy" rule. Kept in step with the real constant
+# by `test_the_census_watches_the_files_the_lockdown_protects`.
+WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+
+_PROTECTED_RE = "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES)
+
+# Ordered `(label, pattern)`; the first match names the shape. Each pattern
+# either targets a protected path directly (redirect, tee, mv/cp) or is a
+# whole-command write verb that only gets here because the command already
+# named a protected file (`sed -i`, a Python write mode).
+WRITE_SHAPES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("redirect", re.compile(rf">>?\s*[^\s|;&]*(?:{_PROTECTED_RE})")),
+    ("tee", re.compile(rf"\btee\b[^|;&]*(?:{_PROTECTED_RE})")),
+    ("mv/cp", re.compile(rf"\b(?:mv|cp|install|dd|truncate)\b[^|;&]*(?:{_PROTECTED_RE})")),
+    ("sed -i", re.compile(r"\bsed\b[^|;&]*\s-i")),
+    ("python write", re.compile(r"json\.dump\(|\bopen\([^)]*['\"][wax]")),
+)
+
+
+def write_shape(command: str) -> str | None:
+    """Which write shape a command matches, or None if it only reads.
+
+    Called only on commands already known to name a protected file, which is
+    what lets `sed -i` and the Python write modes stay this loose.
+    """
+    for label, pattern in WRITE_SHAPES:
+        if pattern.search(command):
+            return label
+    return None
+
+
+class BashHit(NamedTuple):
+    """One `Bash` call whose command text named a protected project file."""
+
+    fixture: str
+    runlog: str
+    shape: str | None  # None = read-shaped
+    command: str
+
+
 class Tally(NamedTuple):
     """What one pass over the corpus counts. Named so a new axis is one line."""
 
@@ -96,6 +155,7 @@ class Tally(NamedTuple):
     problems: list[str]
     arms: Counter
     per_fixture: Counter
+    bash: list[BashHit]
 
 
 def decidable_runs(compliance: Counter) -> int:
@@ -124,6 +184,33 @@ def violations_of(data: dict) -> list[str]:
     return [str(v) for v in nested] if isinstance(nested, list) else []
 
 
+def bash_protected_hits(data: dict, path: Path) -> list[BashHit]:
+    """Every `Bash` call in one runlog whose command names a protected file.
+
+    Reads `tool_calls`, the same already-committed field `guardrail_shadow_report`
+    replays, so this costs nothing and needs no new instrumentation. A runlog
+    with no `tool_calls` (a crash before the first turn) contributes nothing
+    rather than raising.
+    """
+    hits: list[BashHit] = []
+    calls = data.get("tool_calls")
+    if not isinstance(calls, list):
+        return hits
+    for call in calls:
+        if not isinstance(call, dict) or call.get("tool") != "Bash":
+            continue
+        args = call.get("args")
+        command = args.get("command") if isinstance(args, dict) else None
+        if not isinstance(command, str):
+            continue
+        if not any(f in command for f in WATCHED_PROJECT_FILES):
+            continue
+        hits.append(
+            BashHit(path.parent.name, path.name, write_shape(command), command)
+        )
+    return hits
+
+
 def classify(violation: str) -> str:
     for probe, arm in VIOLATION_ARMS:
         if probe in violation:
@@ -149,22 +236,25 @@ def tally(paths: list[Path]) -> Tally:
     arms: Counter = Counter()
     per_fixture: Counter = Counter()
     problems: list[str] = []
+    bash: list[BashHit] = []
     for path in paths:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             verdict, compliance_axis, outcome = axes_from_runlog(data)
             violations = violations_of(data)
+            hits = bash_protected_hits(data, path)
         except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
             problems.append(f"{path}: {e}")
             continue
         recall[verdict] += 1
         compliance[compliance_axis] += 1
         gate[outcome] += 1
+        bash.extend(hits)
         if violations:
             per_fixture[path.parent.name] += len(violations)
         for violation in violations:
             arms[classify(violation)] += 1
-    return Tally(recall, compliance, gate, problems, arms, per_fixture)
+    return Tally(recall, compliance, gate, problems, arms, per_fixture, bash)
 
 
 def _counts(c: Counter, order: tuple[str, ...]) -> str:
@@ -287,6 +377,40 @@ def _violation_scope(compliance: Counter, total: int, n_runs: int) -> str:
     return f"{scope}; {unknown} unknown recorded none" if unknown else scope
 
 
+def _bash_lines(bash: list[BashHit]) -> list[str]:
+    """The §6 Bash-gap census: total access, then every write-shaped command.
+
+    The total is printed even at zero, because "nobody has touched these files
+    from the shell" and "the counter is not running" have to look different —
+    a close-condition nothing prints is the state this counter was added to
+    leave. Write-shaped hits are listed individually, since the decision they
+    feed (does §6's Bash gap close?) is made by reading the command.
+    """
+    writes = [h for h in bash if h.shape]
+    lines = [
+        f"  bash protected-file access: {len(bash)} call(s) naming "
+        f"{' / '.join(WATCHED_PROJECT_FILES)}"
+    ]
+    if not writes:
+        # Deliberately not scoped with "in this window" / "in the corpus": the
+        # rate line above owns that phrasing, and two lines competing to name
+        # the same scope is how a reader quotes one against the other's runs.
+        lines.append(
+            "    write-shaped: none — spec §6's Bash gap has not been exercised."
+        )
+        return lines
+    lines.append(
+        f"    write-shaped: {len(writes)} — read these; they are the close-condition in "
+        "\n                  guardrail-enforcement-spec.md §6. Shape is matched on command"
+        "\n                  text, so confirm each against its transcript before acting."
+    )
+    for hit in writes:
+        first = hit.command.strip().splitlines()[0] if hit.command.strip() else ""
+        lines.append(f"      {hit.fixture}/{hit.runlog}  [{hit.shape}]")
+        lines.append(f"        {first[:120]}")
+    return lines
+
+
 def format_report(
     recall: Counter,
     compliance: Counter,
@@ -295,6 +419,7 @@ def format_report(
     n_runs: int,
     arms: Counter | None = None,
     per_fixture: Counter | None = None,
+    bash: list[BashHit] | None = None,
     windowed: bool = False,
     skipped: int = 0,
 ) -> str:
@@ -325,6 +450,7 @@ def format_report(
             lines.append(f"    {arm:34} {n:3}")
         lines.extend(_concentration_lines(per_fixture or Counter(), total_violations))
     lines.append(_compliance_rate_line(compliance, windowed=windowed))
+    lines.extend(_bash_lines(bash or []))
     return "\n".join(lines)
 
 
@@ -376,6 +502,7 @@ def main(argv: list[str] | None = None) -> int:
             n_runs=parsed,
             arms=counts.arms,
             per_fixture=counts.per_fixture,
+            bash=counts.bash,
             windowed=cutoff is not None,
             skipped=skipped,
         )

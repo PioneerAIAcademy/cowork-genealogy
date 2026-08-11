@@ -625,6 +625,10 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 
 Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
 
+A matcher may also pin the fact **value**, not just its classification layers:
+
+- **`value: "<expected>"`** — every matching new assertion's value must **contain** `value` (case-insensitive substring), read from the attribute-relevant field: `place`/`standard_place` for `attribute: "place"`, `date` for `attribute: "date"`, else the human-readable `value`. Substring tolerates place standardization (`"Pennsylvania"` ⊂ `"Pennsylvania, United States"`) while still failing a genuinely wrong value (`"Ireland"` is not in `"Pennsylvania"`). This is what makes a value-level leak deterministic — e.g. a child's birthplace persisted `Pennsylvania` where the record says `Ireland` classifies `direct` either way, so only a `value` matcher catches it. Declare only where the doctrine fixes the value.
+
 Two matcher modifiers keep the check both precise and non-flappy:
 
 - **`attribute: "date" | "place"`** — for an event fact whose date and place are separate attributes of the one type (a birthplace is `birth` with `place` set; a computed year is `birth` with `date` set), matches only assertions of the given `fact_type` that have that attribute populated. Lets a `birth` place-claim (`direct`) and date-claim (`indirect`) be checked independently.
@@ -651,6 +655,13 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | proof-conclusion | project-status | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
+
+**Why both directions, and what enforces it.** Routing is a graph, and a negative test pins one edge of it in one direction. The DO-NOT clause that stops A over-triggering is exactly the edit that can start B under-triggering, so a one-directional pair lets a routing fix ship a routing regression with the whole suite green. That has happened: after DO-NOT clauses separated `search-familysearch-wiki` from `locality-guide`, Pennsylvania Quaker questions began routing to the wrong skill, and it was found by hand rather than by the corpus. The reciprocal test that closed it, `ut_locality_guide_025`, asserts that a generic how-to question routes *to* `search-familysearch-wiki` — note that it pins the opposite direction from the request that regressed, which is the whole point of a reciprocal.
+
+`eval/harness/scripts/check_negative_reciprocity.py` reports every edge that is still pinned from one side only. It is **warn-only, with no baseline file and no count threshold** — 45 of the corpus's 79 routing edges are one-directional and the check exits 0 anyway. That is deliberate, and both alternatives were rejected rather than deferred:
+
+- An **allowlist** would tax the behaviour the rule exists to encourage. Backfilling a reciprocal touches a second skill's test directory, which invalidates that skill's run-log snapshot and so costs a full re-run plus a fresh annotation. Requiring it of every description-widening PR prices routine routing work out of reach.
+- A **count threshold** — "the number may only fall" — is silently wrong. Remove one edge and add another and the total is unchanged, so the graph can rot while CI stays green. Any future promotion to blocking must therefore compare the edge **set**, never its size, and should follow a triage of which unbacked edges are deliberate one-directional near-misses rather than precede one.
 
 ### Activation: the `activated` field
 

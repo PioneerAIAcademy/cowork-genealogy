@@ -1,6 +1,5 @@
 ---
 name: proof-conclusion
-model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
   (Statement/Summary/Argument), and writes a self-contained narrative
@@ -150,6 +149,8 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 **Citations in the narrative must be copied directly from research.json, not recalled or paraphrased.** Before writing any footnote or inline citation, read the relevant source entry's `citation` and `citation_detail` fields from research.json and copy the text verbatim. Do not write collection names, repository names, or URLs from memory. A paraphrased citation that differs even slightly from the stored citation is a citation error — it sends future researchers to the wrong place.
 
 **Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
+
+**Disclose a sensitive finding gently — content note first, not detail first.** When the narrative reveals something sensitive about a person or family — unknown or non-paternity parentage, institutionalization, a criminal record, a traumatic death, or a record touching Indigenous data sovereignty or colonial-era harm — open that part of the narrative with a brief content note and a plain-language summary before the detailed account, so the reader meets the finding prepared rather than confronted with the particulars first. Center the people the record is about, not the framing of the institution or colonial authority that produced it. Where the research draws on the records of Indigenous communities, honor the CARE principles for Indigenous data governance (Collective Benefit, Authority to Control, Responsibility, Ethics) alongside the GPS standard.
 
 ### 5. Write the proof_summaries entry
 

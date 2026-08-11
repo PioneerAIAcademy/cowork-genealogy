@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-09 (the refutation ledger moved to ADR-0009)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -59,7 +59,7 @@ builds only the first one from tool input. The restriction is not in the payload
 so there is nothing for the model to set.
 
 The agent then holds `extraction_append` and **not** `research_append` — omitted
-from `tools:` and additionally named in `disallowedTools:` under both spellings
+from `tools:` and additionally named in `disallowedTools:` under all three spellings
 (ADR-0004), because a deny binds even under `bypassPermissions`.
 
 The general form:
@@ -77,7 +77,7 @@ The general form:
 | **Prose in the agent body** — "only write sources and assertions" | This is what was there. A delegation message prompted past it and the agent fabricated a `match_score` | The birkeland re-run; `research-append-tool-spec.md` §11 |
 | **A `sections:` parameter** on `research_append` | The caller supplies the input; a parameter is a request. Same class of failure as prose, one layer down | `research-append-tool-spec.md` §11.2 |
 | **A separate per-skill write tool for every lane** (`person_evidence_append`, `conflict_append`, …) | Rejected earlier and independently: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller who holds all of them — the constraint comes from *not holding* the broad one, which is what `disallowedTools:` provides | `docs/specs/guardrail-enforcement-spec.md` §9 |
-| **A `PreToolUse` hook** discriminating by caller | A design exists, but it is less portable than it looks. `eval/harness/harness/context_policy.py` denies `image_read` on **three** conditions — the tool is guarded, `agent_id` is absent, **and** the calling skill did not declare it in its own `allowed-tools` (`search-images` declares it and legitimately calls it on the main thread). The discriminator is therefore the skill's declaration, which the production path has no equivalent of, and the module says the e2e orchestrator cannot use it either. Unported and gated on calibrating the shadow window first (#911). Tool identity needed no new machinery | #911; `context_policy.py` ("Membership here is necessary but NOT sufficient") |
+| **A `PreToolUse` hook** discriminating by caller | A design exists, but it is less portable than it looks. `eval/harness/harness/context_policy.py` denies `image_read` on **three** conditions — the tool is guarded, `agent_id` is absent, **and** the calling skill did not declare it in its own `allowed-tools` (`search-images` declares it and legitimately calls it on the main thread). The discriminator is therefore the skill's declaration, which the production path has no equivalent of, and the module says the e2e orchestrator cannot use it either. Unported. It was gated on calibrating the shadow window, and that calibration was retired as having no instrument (`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see"); what the port needs first now is the live Cowork run that settles whether the router holds `image_read` at all. Tool identity needed no new machinery | #911; `context_policy.py` ("Membership here is necessary but NOT sufficient") |
 | **Duplicate the implementation** into a genuinely separate `extraction_append` | Two copies of the validation logic drift. Same implementation, different entry point, keeps one contract | Code-reuse convention, `CLAUDE.md` |
 | **Trust the eval suite to catch lane violations** | Grades after the fact and only on cases the corpus covers. `research-append-tool-spec.md` is explicit that for `match_score` specifically *"the lever there is eval/rubric, not tooling"* — which is precisely the gap this pattern closes for sections | `research-append-tool-spec.md` |
 
@@ -107,15 +107,16 @@ mechanism, the second function parameter that dispatch cannot populate.
 **Risks.** Nothing verifies the deny actually binds at runtime — the lint checks
 spelling only (#1084/#1085, ADR-0004). And the same reasoning is wanted for
 identity scoring (`same_person`), where it has **not** been made to work: three
-candidate discriminators have now failed adversarial review, and the next
-deliverable there is a gate spec with five named design constraints, not a code
-change. **Do not assume this pattern generalises to that problem** — read
-`docs/agentic-system-critique.md` §3 P0 and §9 before proposing a fourth.
+candidate discriminators failed adversarial review and a fourth now runs only in
+**shadow**, so what is open there is graduating that check to a deny, against six
+named design constraints — not a code change. **Do not assume this pattern
+generalises to that problem** — read
+`docs/adrs/ADR-0009-refuted-agent-design-claims.md` before proposing a fifth.
 
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` —
-> asserts `disallowedTools:` entries carry both spellings, so the deny binds
+> asserts `disallowedTools:` entries carry all three spellings, so the deny binds
 > wherever the server is registered.
 
 The structural half needs no test: dispatch builds only the first argument, so
@@ -128,7 +129,7 @@ into an owned section is correct.
 ## Revisit when
 
 A second lane needs narrowing — at which point the question is whether a
-per-context `PreToolUse` policy (#911) has become the cheaper general mechanism,
+per-context `PreToolUse` policy has become the cheaper general mechanism,
 since it discriminates by caller without adding a tool per lane. Or when the
 `same_person` gate spec lands, which may establish a different pattern for
 boundaries that depend on *values* rather than sections.

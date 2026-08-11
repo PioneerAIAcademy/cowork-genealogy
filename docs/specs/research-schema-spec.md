@@ -47,17 +47,36 @@ A project often starts with a question about a person who does not yet exist in 
 ```
 
 All arrays start empty. The file is created at project initialization.
-`researcher_profile` is optional and populated by `init-project` from a
-short two-question interview. `known_holdings` is optional and populated
-by `init-project` from the holdings survey (what the researcher already
-has — documents, prior research, living-relative knowledge — before any
-new research begins).
+
+**Twelve of these fifteen keys must be present**, even when their array is
+empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
+`person_evidence`, `conflicts`, `hypotheses`, `timelines`,
+`proof_summaries`, `evaluations`. Omitting one is a validation failure, not
+a shorthand for "empty". The other three are optional and may be absent
+entirely:
+
+- `researcher_profile` — written by `init-project` from a short two-question
+  interview (Section 5.1.1).
+- `known_holdings` — written by `init-project` from the holdings survey: what
+  the researcher already has (documents, prior research, living-relative
+  knowledge) before any new research begins (Section 5.1.2).
+- `localities` — written by `locality-guide`; absent on projects that predate
+  it (Section 5.13).
+
+**No other top-level key is permitted.** Every object in this file is
+closed: the JSON Schema sets `additionalProperties: false` on the document
+and on every nested object, so a field not named in the tables of Section 5
+is rejected rather than ignored. Proposing a new field means adding it to
+the schema, not just writing it.
 
 ---
 
 ## 2. Status Enums
 
-All enums are defined here once and referenced by section schemas. Skills must use these exact values.
+Every controlled vocabulary in `research.json` is listed here and referenced
+by the section schemas in Section 5. Skills must use these exact values: an
+unlisted value in a closed enum is **rejected** at write time, not stored and
+flagged. (One row below is the exception, and says so.)
 
 | Enum name | Values | Used by |
 |-----------|--------|---------|
@@ -65,24 +84,10 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `evidence_type` | `direct`, `indirect`, `negative` | assertions |
-
-> **`no_evidence` was considered and rejected (2026-06-21).** The model reaches
-> for it when a record simply does not speak to the question, and the instinct is
-> GPS-correct — but a *scalar* `evidence_type` cannot represent "no evidence"
-> honestly, and a bare enum add buys that honesty at the cost of new exclusion
-> logic in four consumers, none of it validator-caught, plus an under-specified
-> value. The retry loop it was meant to fix was closed instead by a
-> lower-blast-radius prose pin (#433: state the valid values inline, plus
-> "there is no `no_evidence`; keep best-effort `indirect`"). If the honesty is
-> ever judged worth it, do it deliberately, not as a quick fix: settle the
-> scalar-vs-structural mismatch first, define the structural convention + eval
-> invariant + re-classification trigger, then land all ~6 definition sites, both
-> skills, and the eval rubrics/goldens **in one PR**. This is also the worked
-> example of a closed-enum change's blast radius — see CLAUDE.md's schema-change
-> site list.
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
@@ -95,8 +100,38 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
+| `severity` | `high`, `medium`, `low` | timeline gaps (Section 5.10) |
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
 | `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
+| `experience_level` | `novice`, `intermediate`, `experienced`, `professional` | researcher_profile (Section 5.1.1) |
+| `subscriptions` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile. Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
+| `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
+| `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
+| `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
+| `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
+
+**Where these live in the machine-readable schemas.** Most are shared with
+`tree.gedcomx.json` and live in `enums.schema.json`. The last six rows above
+(`experience_level` through `locality_page_section`) are defined inline in
+`research.schema.json` instead, so their names are this document's; a
+developer changing one edits `research.schema.json` rather than
+`enums.schema.json`. The blast radius of a change either way is in CLAUDE.md's
+schema-change site list.
+
+> **`no_evidence` was considered and rejected as an `evidence_type` value
+> (2026-06-21).** The model reaches for it when a record simply does not speak
+> to the question, and the instinct is GPS-correct — but a *scalar*
+> `evidence_type` cannot represent "no evidence" honestly, and a bare enum add
+> buys that honesty at the cost of new exclusion logic in four consumers, none
+> of it validator-caught, plus an under-specified value. The retry loop it was
+> meant to fix was closed instead by a lower-blast-radius prose pin (issue #433:
+> state the valid values inline, plus "there is no `no_evidence`; keep
+> best-effort `indirect`"). If the honesty is ever judged worth it, do it
+> deliberately, not as a quick fix: settle the scalar-vs-structural mismatch
+> first, define the structural convention + eval invariant + re-classification
+> trigger, then land all ~6 definition sites, both skills, and the eval
+> rubrics/goldens **in one PR**. This is also the worked example of a
+> closed-enum change's blast radius — see CLAUDE.md's schema-change site list.
 
 The following are **open enums** — recommended values that skills should prefer, but new values may be added when existing values don't fit. Document new values in the assertion/plan/timeline entry's notes.
 
@@ -114,7 +149,11 @@ The following are **open enums** — recommended values that skills should prefe
 
 ## 3. ID Conventions
 
-All IDs are strings with a prefix indicating the section. IDs are immutable once created and never reused.
+All IDs are strings with a prefix indicating the section. IDs are immutable
+once created and never reused. **The prefixes are enforced, not advisory** —
+every id field and every field that references one is validated against its
+prefix, so an assertion id of `assert_001` or a `plan_item_id` holding a `q_`
+value is rejected at write time.
 
 | Prefix | Section | Example |
 |--------|---------|---------|
@@ -134,7 +173,40 @@ All IDs are strings with a prefix indicating the section. IDs are immutable once
 | `ev_` | evaluations | `ev_001` |
 | `loc_` | localities | `loc_001` |
 
+The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
+is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
+followed by digits only (`ev_001`, `ev_17`).
+
 GedcomX IDs (person IDs like `I1`, source description IDs like `S1`) use their own conventions from `tree.gedcomx.json` and are referenced as foreign keys.
+
+### Date and timestamp formats
+
+Two distinct formats appear in this file, and the distinction is enforced.
+
+| Format | Fields | Shape |
+|--------|--------|-------|
+| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
+| **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
+
+Write the colon form with a `Z` or a numeric offset and both validators accept
+it. Two footnotes for anyone reading a file rather than writing one:
+
+- For `log[].performed` and `timelines[].generated` the time part may also use
+  dashes instead of colons (`2026-05-01T10-15-00Z`), with optional fractional
+  seconds after either a dot or a dash. That tolerance exists so a timestamp can
+  double as a filename on filesystems that disallow colons. Nothing in the
+  corpus writes that form today.
+- `evaluations[].timestamp` is the one timestamp the two gates disagree on. The
+  JSON Schema types it as a plain `date-time` rather than the pattern above, and
+  `validate_research_schema` only checks that it parses as a date at all — so a
+  naive local time with no offset slips through there while an equivalent value
+  in `performed` does not. Section 5.12 requires UTC; treat that as the rule.
+
+These formats govern the *bookkeeping* fields above. They do **not** govern
+`assertions[].date` or `timelines[].events[].date`, which hold genealogical
+dates as encountered in records and are deliberately free-form — see
+Sections 5.6 and 5.10, and `simplified-gedcomx-spec.md` Section 4.5 for the
+date patterns the standardizer recognizes.
 
 ---
 
@@ -146,7 +218,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
 | `known_holdings` | init-project (survey at creation); record-extraction, citation (`promoted` flag when an item is turned into a real source) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete |
-| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete, supersede with status |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
@@ -156,9 +228,27 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
-| `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; supersede-not-delete. Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+| `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 
-**General rule:** Append-only sections (`log`) are never rewritten. All other sections allow field updates but skills must preserve IDs and never delete entries — supersede with a status field instead. This lets you reconstruct project history from the file alone.
+**General rule:** Append-only sections (`log`) are never rewritten. All other sections
+allow field updates but skills must preserve IDs and never delete entries. This lets you
+reconstruct project history from the file alone.
+
+**How an entry is retired depends on the section, and most sections have no supersede
+mechanism at all** — so do not reach for one generically. There are exactly three:
+
+| Mechanism | Where it exists | How |
+|---|---|---|
+| A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
+| A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+
+Writing a status value the section's enum does not define is rejected by
+`validate_research_schema`, so an instruction to "supersede with status" on a section in
+the third row is not a style preference — it is a write that cannot succeed. Skill prose
+has told an agent to do exactly that: `question-selection` carried three instructions to
+retire a question with `superseded` / `answered`, values `question_status` has never
+defined, and every such write was rejected on validation.
 
 ### Ownership for `tree.gedcomx.json`
 
@@ -206,8 +296,9 @@ Single object (not an array).
 ### 5.1.1 `researcher_profile`
 
 Optional single object. Captures per-project context about the
-researcher. Written once by `init-project` from a short two-question
-interview; read by every skill. Skills adapt their narration density to
+researcher. Mostly written once by `init-project` from a short
+two-question interview (`intended_audience` is the exception — it is set
+by hand, see below); read by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
 back to default narration. To update mid-project, edit this section
@@ -218,6 +309,7 @@ directly.
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
 | `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
+| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the interview stays two questions; set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
 
 ### 5.1.2 `known_holdings`
 
@@ -577,7 +669,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 | `verdict` | `evaluation_verdict` | yes | Result of the evaluation: `looks_solid`, `consider_addressing`, `address_first`, or `refused` |
 | `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`) |
 | `timestamp` | string | yes | UTC ISO 8601 timestamp of when the evaluation was written |
-| `superseded_by` | string \| null | yes | `ev_` ID of a later evaluation for the same `focus` + `target_id` combination, or null when this entry is the latest |
+| `superseded_by` | string or null | yes | `ev_` ID of a later evaluation for the same `focus` + `target_id` combination, or null when this entry is the latest |
 
 **Append-only ownership.** The `gps-mentor` agent is the sole writer of this array. Entries are never deleted. When a re-evaluation runs for the same `focus` + `target_id`, the prior entry's `superseded_by` field is updated to point at the new entry's `id`, and the new entry is appended with `superseded_by: null`. This preserves the full audit trail without overwriting history. No other skill should mutate `evaluations`, and `gps-mentor` itself never modifies any other section of `research.json`.
 
@@ -600,15 +692,16 @@ researches; it accumulates across the project's questions (reused, not per-quest
 |-------|------|----------|-------------|
 | `id` | string | yes | `loc_` prefix |
 | `place` | string | yes | Standardized jurisdiction the guide covers (usually country or US-state / Canadian-province — the wiki corpus granularity) |
-| `for_place` | string \| null | no | The specific place of interest that prompted it, when narrower than `place` |
-| `time_period` | string \| null | no | Era the guide was scoped to |
+| `for_place` | string or null | no | The specific place of interest that prompted it, when narrower than `place` |
+| `time_period` | string or null | no | Era the guide was scoped to |
 | `jurisdictions` | array | no | Border/name succession from `place_search_all`: `{ name, date_range? }` |
 | `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range? }` |
 | `quirks` | string[] | no | Short, actionable gotchas (e.g. "indexed only at county level") |
-| `guide_markdown` | string \| null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
-| `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips`. Makes read-coverage checkable |
+| `guide_markdown` | string or null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
+| `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips` (the `locality_page_section` enum). Makes read-coverage checkable |
 | `source` | string | yes | Always `"locality-guide"` |
-| `created` / `updated` | date | `created` yes | Tool-stamped `YYYY-MM-DD` |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+| `updated` | string | no | Tool-stamped ISO 8601 date; absent until the entry is first refreshed |
 
 **Applied facts live in `plan_item.rationale`.** `localities` is the knowledge base;
 the per-search decision (e.g. "search Oppland, not Ringebu — see `loc_001`") is
@@ -799,7 +892,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "child": "I1",
       "sources": [
         { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
-        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 3 },
+        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 2 },
         { "ref": "S3", "page": "Death cert. no. 4521", "quality": 2 }
       ]
     }
@@ -1126,7 +1219,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
-      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Everything on this line came from whoever answered the door, so proximity is 'household_member'; which member is unrecorded, and the 1850 census names no informant.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": ["q_002"]
@@ -1254,7 +1347,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
       "informant_proximity": "household_member",
-      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
+      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'household_member' (same reasoning as a_001).",
       "evidence_type": "direct",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -1290,8 +1383,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "indeterminate",
       "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
-      "informant_proximity": "unknown",
-      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname, so the researcher is the source of the claim rather than any record informant. The relationship column was not introduced until the 1880 census.",
       "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
@@ -1511,9 +1604,38 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
       "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
     }
+  ],
+
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/proof-critique-ps_001-2026-05-04T09-15-00.json",
+      "timestamp": "2026-05-04T09:15:00Z",
+      "superseded_by": null
+    }
   ]
 }
 ```
+
+### Notes on the example
+
+- **`evaluations` holds a pointer, not the review.** `ev_001` records that
+  `gps-mentor` critiqued proof summary ps_001 and returned
+  `consider_addressing`. The mentor's actual reasoning lives in the file named
+  by `file_path`, not in `research.json`. See Section 5.12.
+- **`researcher_profile`, `known_holdings`, and `localities` are absent.** All
+  three are optional (Section 1); a project that skipped the holdings survey
+  and has done no locality research legitimately has none of them. The other
+  twelve keys are all present. On a younger project several of them would be
+  present but empty, which is required; omitting them is not.
+- **The tree above and this file are consistent by design.** `subject_person_ids`
+  names `I1`; `sources[].gedcomx_source_description_id` values (`S1`–`S3`) name
+  source descriptions in the tree; `person_evidence[].person_id` values name
+  tree persons. Those three are the only links between the files (Section 1).
 
 ---
 
