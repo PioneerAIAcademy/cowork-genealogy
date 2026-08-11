@@ -2941,16 +2941,35 @@ async function sectionI(): Promise<void> {
   // Section N already enumerates the fuzzy half (bind a "W J", narrow onto its
   // surname, read the pool to the end, find it). This does the same for the
   // exact half on the same pool, so both answers come from complete scans.
-  // The SAME scope section N narrows on. A bare `q.recordCountry=England`
-  // leaves pools in the tens of thousands, so nothing enumerates and the
-  // section reports NOT MEASURED for want of a population rather than for
-  // want of an effect — which reads identically in the artifact and is not.
-  const ENGLAND =
-    "q.recordCountry=England&f.recordType=1" +
-    "&q.marriageLikeDate.from=1850&q.marriageLikeDate.to=1854";
-  const bound = await search(
-    `q.givenName=W%20J&q.givenName.exact=on&${ENGLAND}&count=20&${REQUIRE_SWITCH}`
-  );
+  // Scopes to try, in order, and the ORDER matters more than it looks.
+  //
+  // This first used England marriage 1850-54 — section N's population — and
+  // enumerated twenty pools there, every one returning ZERO exact rows, then
+  // reported NOT MEASURED. That was searching a population structurally unable
+  // to answer: English marriage records do not index initials, so `.exact` on
+  // `J W` correctly matches nothing and no pool can ever discriminate.
+  //
+  // The question only lives where initials ARE indexed — US census and
+  // directory records, the same collections behind the 8,483-row exact pool
+  // this section samples. Those go first; England stays last as a control, so a
+  // run that still finds nothing says so against both.
+  const SCOPES: Array<[string, string]> = [
+    ["US census", "q.recordCountry=United States&f.recordType=3"],
+    ["US any", "q.recordCountry=United States"],
+    ["England marriage 1850-54",
+     "q.recordCountry=England&f.recordType=1&q.marriageLikeDate.from=1850&q.marriageLikeDate.to=1854"],
+  ];
+  // Bind transposed records in whichever scope offers them.
+  let bound: Hit = { total: null, personas: [], error: null };
+  let scopeUsed = "";
+  for (const [label, scope] of SCOPES) {
+    const b = await search(
+      `q.givenName=W%20J&q.givenName.exact=on&${scope}&count=100&${REQUIRE_SWITCH}`
+    );
+    if (!errored(b) && b.personas.length > 0) { bound = b; scopeUsed = scope; 
+      console.log(`  order test: binding in ${label} (${fmt(b.total).trim()} transposed records)`);
+      break; }
+  }
   type OrderProbe = {
     surname: string; id: string; name: string;
     fuzzyRows: number; inFuzzy: boolean; exactRows: number; inExact: boolean;
@@ -2965,13 +2984,13 @@ async function sectionI(): Promise<void> {
     for (const cand of bound.personas) {
       const sn = surnameToken(cand.matchedName);
       if (!sn) continue;
-      const base = `q.surname=${encodeURIComponent(sn)}&q.givenName=J%20W&${ENGLAND}`;
+      const base = `q.surname=${encodeURIComponent(sn)}&q.givenName=J%20W&${scopeUsed}`;
       poolsTried++;
       const size = await search(`${base}&count=1&${REQUIRE_SWITCH}`);
-      if (errored(size) || (size.total ?? 0) === 0 || (size.total ?? 0) > 300) continue;
-      const fzSet = await mustEnumerate(base, 400);
+      if (errored(size) || (size.total ?? 0) === 0 || (size.total ?? 0) > 1000) continue;
+      const fzSet = await mustEnumerate(base, 1100);
       if (fzSet.personas === null) continue;
-      const exSet = await mustEnumerate(`${base}&q.givenName.exact=on`, 400);
+      const exSet = await mustEnumerate(`${base}&q.givenName.exact=on`, 1100);
       if (exSet.personas === null) continue;
       enumd = {
         surname: sn,

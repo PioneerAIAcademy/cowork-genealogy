@@ -167,9 +167,12 @@ spouse families; other fields follow the same pattern.
 - **Searching a person indexed under initials (common in US census and
   directory records): pass `givenName: "J W"` and do NOT set `givenNameExact`.**
   Three things follow from that, in order of when they will bite you:
-  - **Expect both orders back.** Fuzzy `J W` also returns records indexed `W J`.
-    A reversed-initials hit is very often the same person, not a different one —
-    do not discard it on the order alone.
+  - **Expect both orders back from a fuzzy search.** `J W` also returns records
+    indexed `W J`. A reversed-initials hit is very often the same person, not a
+    different one — do not discard it on the order alone. `givenNameExact` does
+    remove them: on a census pool read in full both ways, the `W J` record is in
+    the fuzzy results and absent from the exact ones while other records survive,
+    so exactness is how you pin the order — at the cost below.
   - **`givenNameExact` is worth setting where the index really does use
     initials** — census and directory records. It keeps only records indexed in
     that literal form: on a US-wide `J W` search it cut the pool roughly

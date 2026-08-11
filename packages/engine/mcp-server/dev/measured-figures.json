@@ -540,23 +540,23 @@
     "exactTransposedPct": 0,
     "verdict:fuzzy swallows initials into spelled-out names": "NO — the fuzzy row is overwhelmingly initials-shaped too",
     "initialsOrderEnumerated": {
-      "surname": "lever",
-      "id": "264R-CBK",
-      "name": "W J Lever",
-      "fuzzyRows": 9,
+      "surname": "royalty",
+      "id": "XHMN-QMN",
+      "name": "W J Royalty",
+      "fuzzyRows": 784,
       "inFuzzy": true,
-      "exactRows": 0,
+      "exactRows": 4,
       "inExact": false
     },
-    "initialsOrderPoolsTried": 20,
+    "initialsOrderPoolsTried": 13,
     "initialsExactEmptyPools": {
-      "enumeratedPools": 20,
-      "emptyExactSets": 20
+      "enumeratedPools": 1,
+      "emptyExactSets": 0
     },
-    "verdict:.exact on an initials given name matches only the literal form": "ONLY THE LITERAL FORM — across 20 pool(s) read to the end, `givenName.exact=on` on a two-token initials value returned zero rows every time, because no record in them is indexed under those literal initials. That is the qualifier behaving correctly; the practical consequence is that setting it on an initials search returns nothing unless the index spells the name that same way.",
-    "verdict:.exact pins the initials ORDER": "NOT MEASURED — the .exact set is EMPTY (lever, 9 -> 0 rows), so the transposition's absence cannot be told from .exact returning nothing at all",
-    "verdict:the levers initials exception": "NOT SUPPORTED AS STATED — fuzzy does not swallow initials into spelled-out names, so the stated reason is wrong; whether exactness pins the ORDER instead is NOT MEASURED (see the verdict above)",
-    "measured_at": "2026-08-11T18:17:01.698Z"
+    "verdict:.exact on an initials given name matches only the literal form": "1 of 1 enumerated pool(s) kept rows under .exact",
+    "verdict:.exact pins the initials ORDER": "CONFIRMED (ENUMERATED) — the transposed record is in the fuzzy set and absent from the .exact set, both read to the end, and .exact kept 4 other row(s) so the absence is selective (royalty, 784 -> 4 rows)",
+    "verdict:the levers initials exception": "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion",
+    "measured_at": "2026-08-11T18:50:35.027Z"
   },
   "V": {
     "ellis:Ellis-Island": {
