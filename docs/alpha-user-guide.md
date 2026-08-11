@@ -142,16 +142,19 @@ your notes and sends them to us privately.
 
 1. **What you asked the agent to do.**
 2. **What the agent did.** What actually happened.
-3. **What it should have done.** This is the one that turns a complaint into a
-   fix.
-4. **If it reached a wrong conclusion: the correct answer and its evidence.**
-   Optional, and only relevant when the *answer* was wrong rather than the
-   method. Fill it in and we can build a test from your case without coming back
-   to ask you. Leave it blank when the problem was how it worked, not what it
-   concluded.
+3. **Did it work as expected? Yes or No.** Required. Answer **Yes** and you're
+   done — a report about something that went well is worth sending, and there is
+   nothing more to fill in.
+4. **What it should have done.** Appears when you answer **No**, and it's
+   optional — leave it blank if you aren't sure what the right behavior was.
+5. **If it reached a wrong conclusion: the correct answer and its evidence.**
+   Also only on **No**, and also optional. Only relevant when the *answer* was
+   wrong rather than the method. Fill it in and we can build a test from your
+   case without coming back to ask you. Leave it blank when the problem was how
+   it worked, not what it concluded.
 
 There's also your email, and a free-text **Notes** box for anything that
-doesn't fit the four.
+doesn't fit the boxes above.
 
 **Send feedback while it's fresh**, in the session where it happened — the
 bundle captures that project's state, which is how we reproduce it.
