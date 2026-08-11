@@ -820,6 +820,14 @@ it in one sentence and move on. When it refutes the *issue*, say so in the issue
 — a stale body left unannotated will mislead the next reader exactly as it
 misled you.
 
+Every number you write **into an issue** — a body you edit, an issue you file, a
+ruling you comment — carries the command that reproduces it. Prefer naming the
+command to pasting its output: `make e2e-nudges SINCE=all` stays true, a pasted
+count does not. When a number must be inline, stamp it
+`measured <date>, <command>` and say what would move it. An unstamped
+measurement is quoted forward as settled fact and cannot be re-checked; that is
+how issue bodies come to carry figures that do not survive a re-run.
+
 ## Repo-specific costs to respect
 
 **A paid eval run is the hidden price of most eval fixes.** Editing a skill body,

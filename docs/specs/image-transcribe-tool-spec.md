@@ -664,7 +664,7 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   (lane 1).
 - File any deferred follow-ups (e.g. multi-image batching) as a GitHub issue in
   the same PR that defers them — `gh issue create --label developer`, see
-  `CLAUDE.md` § "Deferring work creates an issue".
+  `CLAUDE.md` § "Work you find along the way".
 
 ## 11. Cost & privacy
 
@@ -782,7 +782,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/specs/image-read-spec.md` — cross-reference
 - `CLAUDE.md` — new per-user config keys in the config table
 - A GitHub issue per deferred follow-up (e.g. multi-image batching), filed in
-  the same PR — see root `CLAUDE.md` § "Deferring work creates an issue"
+  the same PR — see root `CLAUDE.md` § "Work you find along the way"
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write
