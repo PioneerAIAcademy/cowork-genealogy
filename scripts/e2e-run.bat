@@ -22,7 +22,9 @@ cd eval\harness
 set _MODEL_ARG=
 set _EFFORT_ARG=
 set _TOKENS_ARG=
+set _STALL_ARG=
 if not "%AGENT_MODEL%"=="" set _MODEL_ARG=--agent-model %AGENT_MODEL%
 if not "%EFFORT_LEVEL%"=="" set _EFFORT_ARG=--effort-level %EFFORT_LEVEL%
 if not "%MAX_OUTPUT_TOKENS%"=="" set _TOKENS_ARG=--max-output-tokens %MAX_OUTPUT_TOKENS%
-uv run python -m e2e.run_e2e --test %TEST% %_MODEL_ARG% %_EFFORT_ARG% %_TOKENS_ARG%
+if "%RESUME_ON_STALL%"=="0" set _STALL_ARG=--no-resume-on-stall
+uv run python -m e2e.run_e2e --test %TEST% %_MODEL_ARG% %_EFFORT_ARG% %_TOKENS_ARG% %_STALL_ARG%
