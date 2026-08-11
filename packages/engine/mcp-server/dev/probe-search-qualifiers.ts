@@ -1147,7 +1147,19 @@ async function sectionB(): Promise<void> {
       r.selfMaxDisplacement !== null &&
       (r.maxDisplacement as number) > (r.selfMaxDisplacement as number)
   );
-  const maxDisp = Math.max(...rows.map((r) => r.maxDisplacement as number));
+  // From the BEATING rows only. `beatsNoise` is per-population (above, and
+  // deliberately), but this was a Math.max across every row — so a population
+  // moving 100 positions against a noise floor of 200 (not beating) could supply
+  // the "largest by N positions" figure for a verdict another population earned.
+  // The verdict string is what the spec table and every downstream doc quote.
+  const beatingRows = rows.filter(
+    (r) =>
+      r.selfMaxDisplacement !== null &&
+      (r.maxDisplacement as number) > (r.selfMaxDisplacement as number)
+  );
+  const maxDisp = beatingRows.length
+    ? Math.max(...beatingRows.map((r) => r.maxDisplacement as number))
+    : Math.max(...rows.map((r) => r.maxDisplacement as number));
   // Empty pools are not evidence. `mustEnumerate` returns `personas: []` for a
   // zero-result query — a short page trivially — so `rows.length > 0` does not
   // mean anything was measured. Without this, both verdicts below publish from
@@ -3031,6 +3043,49 @@ async function sectionI(): Promise<void> {
   // What that costs is the ORDER test, which needs a pool holding BOTH a record
   // indexed "J W" and one indexed "W J". None of the pools reachable this way
   // has one, so the question stays open for want of a population.
+  // A DELIBERATE sweep of the spell-out scope, because the doc claim needs it.
+  //
+  // The loop above stops at the first pool that discriminates, which since the
+  // scope reorder is a US census pool — so `attempts` no longer contains the
+  // English-marriage evidence, and two documents were left citing "twenty pools
+  // came back empty" against an artifact recording one pool that kept rows. The
+  // claim is true and worth teaching (`.exact` on initials returns nothing where
+  // the index spells names out), so it is measured here on purpose rather than
+  // salvaged from whatever the search happened to touch.
+  const SPELL_OUT = SCOPES[SCOPES.length - 1]?.[1] ?? "";
+  let spellOutPools = 0;
+  let spellOutEmpty = 0;
+  const spellBind = await search(
+    `q.givenName=W%20J&q.givenName.exact=on&${SPELL_OUT}&count=20&${REQUIRE_SWITCH}`
+  );
+  if (!errored(spellBind)) {
+    for (const cand of spellBind.personas) {
+      if (spellOutPools >= 8) break;
+      const sn = surnameToken(cand.matchedName);
+      if (!sn) continue;
+      const b = `q.surname=${encodeURIComponent(sn)}&q.givenName=J%20W&${SPELL_OUT}`;
+      const sz = await search(`${b}&count=1&${REQUIRE_SWITCH}`);
+      if (errored(sz) || (sz.total ?? 0) === 0 || (sz.total ?? 0) > 1000) continue;
+      const ex = await mustEnumerate(`${b}&q.givenName.exact=on`, 1100);
+      if (ex.personas === null) continue;
+      spellOutPools++;
+      if (ex.personas.length === 0) spellOutEmpty++;
+    }
+  }
+  record("I", "initialsExactInSpellOutScope", {
+    scope: SPELL_OUT,
+    poolsRead: spellOutPools,
+    emptyExactSets: spellOutEmpty,
+  });
+  if (spellOutPools > 0) {
+    record(
+      "I",
+      "verdict:.exact on initials where the index spells names out",
+      spellOutEmpty === spellOutPools
+        ? `RETURNS NOTHING — across ${spellOutPools} pool(s) read to the end in a collection that spells given names out, \`givenName.exact=on\` on a two-token initials value returned zero rows every time`
+        : `${spellOutPools - spellOutEmpty} of ${spellOutPools} pool(s) kept rows, so it does not always empty`
+    );
+  }
   const emptyExact = attempts.filter((a) => a.exactRows === 0).length;
   record("I", "initialsExactEmptyPools", { enumeratedPools: attempts.length, emptyExactSets: emptyExact });
   if (attempts.length > 0) {
@@ -4136,6 +4191,19 @@ async function sectionV(): Promise<void> {
  * and new numbers in play at once.
  */
 async function sectionR(): Promise<void> {
+  // Pre-seeded so an early return cannot DELETE them. `writeFigures` replaces a
+  // whole section object, so a run in which no population enumerates drops every
+  // key this section did not record on THAT run — including the spouse `.exact`
+  // finding, which the shipped `spouseGivenNameExact` description and the levers
+  // doc both cite. A missing key fails nothing: the traceability check reads
+  // figures, and FORBIDDEN_WHEN treats an absent verdict as an inactive rule. So
+  // the honest default is recorded first and overwritten by a real measurement.
+  record(
+    "R",
+    "verdict:spouse .exact requires the spouse to be present",
+    "NOT MEASURED — this run did not reach the spouse leg"
+  );
+  record("R", "spouseExactRequiresPresence", []);
   console.log("\n=== R. Relative names: keep-matching / keep-silent / drop-contradicting ===");
   console.log(
     "  Every pool below is READ TO THE END (RULE 0). Nothing here is a sample."
@@ -4652,7 +4720,7 @@ async function sectionW(): Promise<void> {
     });
     console.log(
       `  ${label.padEnd(20)}${fmt(entry.total)}  sampled=${String(r.personas.length).padStart(3)}` +
-        `  Smith=${entry.smith ? "Y" : "n"} Smyth=${entry.smyth ? "Y" : "n"}` +
+        `  Smith=${entry.smith === null ? "?" : entry.smith ? "Y" : "n"} Smyth=${entry.smyth ? "Y" : "n"}` +
         `${r.error === null ? "" : `  [${r.error}]`}`
     );
   }

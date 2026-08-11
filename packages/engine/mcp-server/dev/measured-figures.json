@@ -574,6 +574,12 @@
       "inExact": false
     },
     "initialsOrderPoolsTried": 13,
+    "initialsExactInSpellOutScope": {
+      "scope": "q.recordCountry=England&f.recordType=1&q.marriageLikeDate.from=1850&q.marriageLikeDate.to=1854",
+      "poolsRead": 8,
+      "emptyExactSets": 8
+    },
+    "verdict:.exact on initials where the index spells names out": "RETURNS NOTHING — across 8 pool(s) read to the end in a collection that spells given names out, `givenName.exact=on` on a two-token initials value returned zero rows every time",
     "initialsExactEmptyPools": {
       "enumeratedPools": 1,
       "emptyExactSets": 0
@@ -581,7 +587,7 @@
     "verdict:.exact on an initials given name matches only the literal form": "1 of 1 enumerated pool(s) kept rows under .exact",
     "verdict:.exact pins the initials ORDER": "CONFIRMED (ENUMERATED) — the transposed record is in the fuzzy set and absent from the .exact set, both read to the end, and .exact kept 4 other row(s) so the absence is selective (royalty, 784 -> 4 rows)",
     "verdict:the levers initials exception": "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion",
-    "measured_at": "2026-08-11T18:50:35.027Z"
+    "measured_at": "2026-08-11T19:38:22.038Z"
   },
   "V": {
     "ellis:Ellis-Island": {

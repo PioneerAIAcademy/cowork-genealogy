@@ -180,9 +180,9 @@ spouse families; other fields follow the same pattern.
     initials** — census and directory records. It keeps only records indexed in
     that literal form: on a US-wide `J W` search it cut the pool roughly
     120-fold, and the sampled page held no transpositions at all.
-  - **But it returns NOTHING where the index spells names out.** On twenty
-    narrow English marriage pools read in full, it came back empty every time,
-    because no record there is indexed under initials. So a nil under
+  - **But it returns NOTHING where the index spells names out.** On every
+    English marriage pool read in full, it came back empty, because no record
+    there is indexed under initials. So a nil under
     `givenNameExact` is a fact about the index, not about the person: drop the
     qualifier and search fuzzy before concluding the record does not exist.
   - **To confirm which order the index actually uses**, narrow onto the surname
@@ -207,7 +207,8 @@ spouse families; other fields follow the same pattern.
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
 it. A record simply **silent** about a *name* field is kept — measured for the
-searched person's own name and for father and spouse names. (How a *year range*
+father and spouse names; for the searched person's own name it follows from the
+index virtually always holding it rather than from a measurement. (How a *year range*
 treats a record with no indexed year is **not established** in either direction,
 so do not assume a range either keeps or excludes undated records.) For the
 searched person's own name — which the index virtually always holds — that

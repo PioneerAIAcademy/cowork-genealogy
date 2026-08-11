@@ -81,7 +81,10 @@ const FIGURE = new RegExp(
     // Comma-grouped totals — the drifting kind.
     String.raw`\b\d{1,3}(?:,\d{3})+\b`,
     // Ratios.
-    String.raw`\b\d+(?:×|-fold\b)`,
+    // `x` as well as `×`: record-search.ts writes ratios ASCII (`799x`, `172x`),
+    // and that file is an EVIDENCE surface, so editing `799x` to any value left
+    // the suite green.
+    String.raw`\b\d+(?:×|x\b|-fold\b)`,
     // Sub-1,000 figures in the three shapes this repo states them in. Matching
     // every bare integer would flag years, list numbers and ordinary prose, which
     // is why the first version of this pattern required a comma group — but that
