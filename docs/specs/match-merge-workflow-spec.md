@@ -249,14 +249,14 @@ decides when a persona is confidently enough linked to materialize onto a tree
 person.
 
 **Coherence gate** (new): the merge-mode warnings dry-run (§7).
-- `severity: "error"` → **blocks**. Errors are biological/temporal
+- `severity: "contradiction"` → **blocks**. Contradictions are biological/temporal
   impossibilities; a merge that introduces one signals either a wrong match or a
   bad record. Clearing requires explicit user confirmation **with the
   impossibility shown**, and the override is logged.
-- `severity: "warning"` → **advisory**. Improbable-but-possible; surfaced, never
+- `severity: "implausible"` → **advisory**. Improbable-but-possible; surfaced, never
   blocking.
 
-**Ordering:** identity → coherence → write. A coherence `error` is fed back as a
+**Ordering:** identity → coherence → write. A coherence `contradiction` is fed back as a
 reason to **revisit identity**, not merely dismissed — `hasSameCensus` in
 particular is strong evidence the pairing is wrong.
 
@@ -384,7 +384,7 @@ a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
   warningCount: number,
   warnings: [
     {
-      scoreType, issueType, severity: "error" | "warning",
+      scoreType, issueType, severity: "contradiction" | "implausible",
       personId, personName,         // who the warning is about (may be a relative or the survivor)
       message,
       factIds?, relatedPersonId?,

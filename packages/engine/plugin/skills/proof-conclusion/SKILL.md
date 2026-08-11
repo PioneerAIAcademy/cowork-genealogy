@@ -178,7 +178,7 @@ Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
 
 Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op — removals live in **`tree_correct`** (a separate call with the same batched `ops[]` form), not `tree_edit`.
 
-**Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons`.
+**Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "contradiction"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "implausible"` is advisory. Get confirmation, then call `merge_tree_persons`.
 
 After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct` call — or a merge, run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
 

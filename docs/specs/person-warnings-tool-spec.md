@@ -69,7 +69,7 @@ Example:
 | Field | Type | Description |
 |-------|------|-------------|
 | `warningId` | string | Warning type identifier (e.g., `DEATH_BEFORE_BIRTH`) |
-| `severity` | string | `error` (impossible) or `warning` (unlikely but possible) |
+| `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
@@ -88,7 +88,7 @@ Example output:
   "warnings": [
     {
       "warningId": "DEATH_BEFORE_BIRTH",
-      "severity": "error",
+      "severity": "contradiction",
       "personId": "I1",
       "personName": "Patrick Flynn",
       "message": "Death year (1840) is before birth year (1845) for Patrick Flynn.",
@@ -479,7 +479,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 31 | Death 1840, birth 1845 | 1 warning, severity `error` |
+| 31 | Death 1840, birth 1845 | 1 warning, severity `contradiction` |
 | 32 | Death year = birth year | No warning |
 | 33 | Death year > birth year | No warning |
 | 34 | Birth fact missing | No warning |
@@ -492,7 +492,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 39 | Father born 1845, child born 1850 (max age 5) | 1 warning, severity `warning` |
+| 39 | Father born 1845, child born 1850 (max age 5) | 1 warning, severity `implausible` |
 | 40 | Father born 1830, child born 1845 (max age 15) | No warning |
 | 41 | Father born 1832, child born 1845 (max age 13) | 1 warning |
 | 42 | Parent is female (mother) | No warning |
@@ -504,7 +504,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 46 | Residence 1920, death 1910 | 1 warning, severity `error` |
+| 46 | Residence 1920, death 1910 | 1 warning, severity `contradiction` |
 | 47 | Burial 1920, death 1910 | No warning |
 | 48 | Probate 1920, death 1910 | No warning |
 | 49 | Birth 1845, death 1910 | No warning |
