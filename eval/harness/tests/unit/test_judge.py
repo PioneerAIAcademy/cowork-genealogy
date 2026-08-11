@@ -1302,6 +1302,31 @@ def test_render_prompt_puts_per_test_context_last(sample_rubric):
     assert prompt.index("# Which rule wins") < context_at
 
 
+def test_render_prompt_puts_negative_test_rule_after_the_transcript(sample_rubric):
+    """The negative-test grading rule must render AFTER the transcript and
+    beside the per-test notes that flag a test as negative.
+
+    Measured, not assumed. With that section near the top of the prompt and
+    the per-test flag at the bottom, three negative tests whose skill
+    correctly routed and produced no text of its own were graded
+    Correctness 1 / Completeness 1 on byte-identical input that had
+    previously scored 3 / 3 — a judge that read "an empty response is the
+    pass condition" two thousand tokens before it read "this is a negative
+    test". The two belong together.
+    """
+    prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
+    transcript_at = prompt.index("## Claude's full text response")
+    tool_calls_at = prompt.index("## MCP tool calls")
+    negative_at = prompt.index("# Critical: Negative tests")
+    context_at = prompt.index("# Per-test context")
+    report_at = prompt.index("# How to report")
+    assert transcript_at < negative_at, "negative-test rule renders before the transcript"
+    assert tool_calls_at < negative_at
+    assert negative_at < context_at < report_at
+    # The operative sentence has to survive any future move of the section.
+    assert "Correctness and Completeness are a full pass" in prompt
+
+
 def test_render_prompt_concatenation_matches_parts(sample_rubric):
     """render_prompt() must equal prefix + suffix from render_prompt_parts."""
     kwargs = dict(

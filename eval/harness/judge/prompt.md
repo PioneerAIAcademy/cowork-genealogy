@@ -50,36 +50,6 @@ proves the skill called a tool with wrong arguments (or called a tool that
 doesn't exist). This is always a failure.
 
 ────────────────────────────────────────
-# Critical: Negative tests (decline / routing / non-activation)
-
-Some tests are **negative tests**: the correct behavior is for the skill
-under test to NOT carry out its own task. When this is the case, the
-**Per-test context** section below states it explicitly ("This is a
-NEGATIVE test…") and names what should have happened instead — decline
-and route to a specific other skill, or (for an out-of-scope request)
-produce no output at all.
-
-On a negative test, grade **Correctness** and **Completeness** against
-that expected behavior — NOT against the quality of any task output that
-happens to appear:
-
-- **Correct decline / routing / non-activation → score 3 (pass).** If the
-  skill declined, and/or the request was handled by the skill it was
-  supposed to route to (or, for an out-of-scope request, no skill acted),
-  Correctness and Completeness are a full pass. Do not lower them because
-  the decline was terse, because the skill performed the handoff by
-  invoking the correct skill, or because that other skill's work appears
-  in the transcript below. Not doing the under-test skill's task is the
-  correct outcome — do not both credit the routing and penalize the base
-  dimensions for "not declining thoroughly enough."
-- **Wrongly performing the task → score 1 (fail).** If the skill instead
-  carried out its own task, or produced substantive output when it should
-  have declined or stayed silent, Correctness and Completeness fail —
-  **even when that output is fluent, accurate-looking, and well-organized.**
-  Polished output for the wrong behavior is a failure, not a pass; do not
-  award craft credit for work that should never have been done.
-
-────────────────────────────────────────
 # Base rubric (always applies)
 
 ## Correctness
@@ -265,6 +235,36 @@ skill was invoked but it skipped the citation step.")
 {tool_calls}
 
 ────────────────────────────────────────
+# Critical: Negative tests (decline / routing / non-activation)
+
+Some tests are **negative tests**: the correct behavior is for the skill
+under test to NOT carry out its own task. When this is the case, the
+**Per-test context** section below states it explicitly ("This is a
+NEGATIVE test…") and names what should have happened instead — decline
+and route to a specific other skill, or (for an out-of-scope request)
+produce no output at all.
+
+On a negative test, grade **Correctness** and **Completeness** against
+that expected behavior — NOT against the quality of any task output that
+happens to appear:
+
+- **Correct decline / routing / non-activation → score 3 (pass).** If the
+  skill declined, and/or the request was handled by the skill it was
+  supposed to route to (or, for an out-of-scope request, no skill acted),
+  Correctness and Completeness are a full pass. Do not lower them because
+  the decline was terse, because the skill performed the handoff by
+  invoking the correct skill, or because that other skill's work appears
+  in the transcript below. Not doing the under-test skill's task is the
+  correct outcome — do not both credit the routing and penalize the base
+  dimensions for "not declining thoroughly enough."
+- **Wrongly performing the task → score 1 (fail).** If the skill instead
+  carried out its own task, or produced substantive output when it should
+  have declined or stayed silent, Correctness and Completeness fail —
+  **even when that output is fluent, accurate-looking, and well-organized.**
+  Polished output for the wrong behavior is a failure, not a pass; do not
+  award craft credit for work that should never have been done.
+
+────────────────────────────────────────
 # Per-test context
 
 The notes below describe what the test author expected the skill to do.
@@ -285,14 +285,16 @@ fixed by the "How to report" section below.
 Where a note overrides a rule stated earlier in this prompt, the note
 wins — see "Which rule wins" above.
 
-**If a note below says this is a NEGATIVE test, re-read "Critical:
-Negative tests" before you score anything.** You have just read a full
-transcript, and on a negative test the correct behaviour is the skill
-*not* doing its own task — so a transcript that looks thin, or that
-shows another skill doing the work, is the pass condition and not a
-deduction. Grade Correctness and Completeness against that expected
-behaviour, never against the quality of task output that happens to
-appear.
+**If a note below says this is a NEGATIVE test, the section immediately
+above governs your Correctness and Completeness scores.** It is placed
+there, after the transcript, for a measured reason: when it sat near the
+top of this prompt instead, three negative tests whose skill correctly
+routed and produced no text of its own were scored Correctness 1 and
+Completeness 1 on byte-identical input that had scored 3 and 3 before.
+An empty response from the skill under test, with the correct other
+skill named in "Skills Claude invoked", is the **pass** condition on
+those tests. It is not an omission, and terseness is never the
+deduction.
 
 {judge_context}
 
