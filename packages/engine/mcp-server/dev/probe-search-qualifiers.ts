@@ -2929,21 +2929,90 @@ async function sectionI(): Promise<void> {
     swallows ? "YES" : "NO — the fuzzy row is overwhelmingly initials-shaped too"
   );
   const pinsOrder = fzTransPct >= 10 && exTransPct <= 2;
+
+  // The ORDER question, ENUMERATED. The percentages above are a 100-row window
+  // onto an 8,483-row pool, and the claim that matters is an ABSENCE — that the
+  // transposition is GONE from the exact set. RULE 0 does not accept an absence
+  // inside a sample, and "SAMPLED ONLY" was a third verdict category that should
+  // never have existed: it published a direction while conceding the evidence
+  // did not support one, and three documents then quoted the direction and
+  // dropped the concession.
+  //
+  // Section N already enumerates the fuzzy half (bind a "W J", narrow onto its
+  // surname, read the pool to the end, find it). This does the same for the
+  // exact half on the same pool, so both answers come from complete scans.
+  // The SAME scope section N narrows on. A bare `q.recordCountry=England`
+  // leaves pools in the tens of thousands, so nothing enumerates and the
+  // section reports NOT MEASURED for want of a population rather than for
+  // want of an effect — which reads identically in the artifact and is not.
+  const ENGLAND =
+    "q.recordCountry=England&f.recordType=1" +
+    "&q.marriageLikeDate.from=1850&q.marriageLikeDate.to=1854";
+  const bound = await search(
+    `q.givenName=W%20J&q.givenName.exact=on&${ENGLAND}&count=20&${REQUIRE_SWITCH}`
+  );
+  let enumd: {
+    surname: string; id: string; name: string;
+    fuzzyRows: number; inFuzzy: boolean; exactRows: number; inExact: boolean;
+  } | null = null;
+  if (!errored(bound)) {
+    for (const cand of bound.personas) {
+      const sn = surnameToken(cand.matchedName);
+      if (!sn) continue;
+      const base = `q.surname=${encodeURIComponent(sn)}&q.givenName=J%20W&${ENGLAND}`;
+      const size = await search(`${base}&count=1&${REQUIRE_SWITCH}`);
+      if (errored(size) || (size.total ?? 0) === 0 || (size.total ?? 0) > 300) continue;
+      const fzSet = await mustEnumerate(base, 400);
+      if (fzSet.personas === null) continue;
+      const exSet = await mustEnumerate(`${base}&q.givenName.exact=on`, 400);
+      if (exSet.personas === null) continue;
+      enumd = {
+        surname: sn,
+        id: cand.id,
+        name: cand.matchedName,
+        fuzzyRows: fzSet.personas.length,
+        inFuzzy: fzSet.personas.some((x) => x.id === cand.id),
+        exactRows: exSet.personas.length,
+        inExact: exSet.personas.some((x) => x.id === cand.id),
+      };
+      // Only a pool where fuzzy actually REACHES the transposition can test
+      // whether exact removes it; otherwise there is nothing to remove.
+      if (enumd.inFuzzy) break;
+    }
+  }
+  record("I", "initialsOrderEnumerated", enumd);
+  const orderEnumerated =
+    enumd !== null && enumd.inFuzzy && !enumd.inExact && enumd.exactRows > 0;
   record(
     "I",
     "verdict:.exact pins the initials ORDER",
-    pinsOrder
-      ? "SAMPLED ONLY — fuzzy returns the transposition at a substantial rate and the exact sample contains none. The second half is an ABSENCE inside a 100-row window onto an 8,483-row pool, which is not evidence under RULE 0. Section N confirms the fuzzy half by enumeration; the exact half is unmeasured."
-      : "NOT CONFIRMED"
+    enumd === null
+      ? "NOT MEASURED — no bound transposition sat in a pool small enough to read to the end"
+      : !enumd.inFuzzy
+        ? `NOT MEASURED — the fuzzy search did not reach the bound transposition in the enumerated pool (${enumd.surname}, ${enumd.fuzzyRows} rows read in full), so there was nothing for .exact to remove`
+        : enumd.inExact
+          ? `DOES NOT PIN THE ORDER — the transposed record is present in BOTH the fuzzy and the .exact set, each read to the end (${enumd.surname}, ${enumd.fuzzyRows} -> ${enumd.exactRows} rows)`
+          : enumd.exactRows === 0
+            ? // Absence from an EMPTY set is not evidence about order. `.exact`
+              // returning nothing at all here is indistinguishable from it
+              // removing the transposition specifically, and the first reading
+              // would have this section certify the claim on a set that holds no
+              // records of any kind.
+              `NOT MEASURED — the .exact set is EMPTY (${enumd.surname}, ${enumd.fuzzyRows} -> 0 rows), so the transposition's absence cannot be told from .exact returning nothing at all`
+            : `CONFIRMED (ENUMERATED) — the transposed record is in the fuzzy set and absent from the .exact set, both read to the end, and .exact kept ${enumd.exactRows} other row(s) so the absence is selective (${enumd.surname}, ${enumd.fuzzyRows} -> ${enumd.exactRows} rows)`
   );
   record(
     "I",
     "verdict:the levers initials exception",
-    pinsOrder
-      ? "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion"
-      : swallows
-        ? "REAL AS STATED"
-        : "NOT SUPPORTED"
+    // The "different reason" was that exactness PINS THE ORDER — which the
+    // enumerated test above declines to confirm. Deriving this from `pinsOrder`
+    // (the sampled figure) would restate a claim the section just withheld, one
+    // key away from the withholding.
+    swallows
+      ? "REAL AS STATED"
+      : orderEnumerated
+        ? "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion"
+        : "NOT SUPPORTED AS STATED — fuzzy does not swallow initials into spelled-out names, so the stated reason is wrong; whether exactness pins the ORDER instead is NOT MEASURED (see the verdict above)"
   );
   console.log(
     `  -> initials-shaped: fuzzy ${fzPct.toFixed(0)}%, exact ${exPct.toFixed(0)}%` +

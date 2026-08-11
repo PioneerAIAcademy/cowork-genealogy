@@ -168,10 +168,11 @@ spouse families; other fields follow the same pattern.
 - **The one exception — an initials search.** Where the index holds the person as
   initials (common in US census and directory records), fuzzy
   `givenName: "J W"` also returns the **transposition** `W J` in a substantial
-  share of results. `givenNameExact` is expected to pin the order you asked
-  for, and does narrow the pool sharply — but the exact half rests on a sampled
-  page, not a pool read to the end, so do not count on the transposition being
-  gone. (The transposed record is still
+  share of results. `givenNameExact` does narrow the pool sharply, but whether
+  it removes the transposition is **not established** — on the one pool small
+  enough to read in full, the exact search returned nothing at all, so there was
+  no way to tell a removed transposition from a removed everything. Do not set it
+  expecting the wrong-order records to disappear. (The transposed record is still
   reachable without it, by narrowing onto the surname.)
 - **`<event>PlaceExact` is for making a count mean something, not for finding.**
   An unqualified place scope expands upward so far that a county barely

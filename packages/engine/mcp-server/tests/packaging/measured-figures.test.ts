@@ -420,3 +420,120 @@ describe("measured figures stay traceable to the probe artifact", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * Every recorded verdict must still be PRODUCIBLE by the probe.
+ *
+ * The artifact is generated output, but it is generated one section at a time —
+ * `npx tsx dev/probe-search-qualifiers.ts N` rewrites N and leaves the rest.
+ * So a section whose verdict WORDING is rewritten, and which is then not re-run,
+ * leaves the old string sitting in the artifact looking exactly as authoritative
+ * as a fresh one. Nothing else here notices: the traceability checks read
+ * figures quoted in prose, and FORBIDDEN_WHEN only covers verdicts someone
+ * thought to write a rule for.
+ *
+ * That is not hypothetical. Section I shipped
+ * `"CONFIRMED — fuzzy returns the transposition, exact does not"` while the code
+ * could only emit `"SAMPLED ONLY — …"` or `"NOT CONFIRMED"`, because the section
+ * was hardened for RULE 0 and never re-run. Three documents asserted the
+ * withdrawn claim, one of them recommending a query parameter on the strength of
+ * it, and every suite was green.
+ *
+ * The check: reduce a verdict to its longest run of non-numeric text and require
+ * that run to appear in the probe source. Digits are what interpolation
+ * substitutes, so removing them leaves the literal skeleton the template must
+ * still contain. Both sides are normalised so that a template split across
+ * string concatenation still matches the single line it produces.
+ */
+describe("recorded verdicts are still producible by the probe", () => {
+  const PROBE = join(mcpRoot, "dev", "probe-search-qualifiers.ts");
+
+  /** Collapse quoting, concatenation and interpolation into comparable text. */
+  const normalise = (s: string): string =>
+    s
+      // `${…}`, including one level of nested braces, is where the digits go.
+      .replace(/\$\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, " ")
+      .replace(/["`+]/g, " ")
+      // Digits go too, on BOTH sides. A head often opens with an interpolated
+      // count ("YES — 54 record(s) move"), which the source spells `${n}`; with
+      // digits stripped from each side the two heads line up, and the words that
+      // carry the polarity are what actually get compared.
+      // Thousands separators go with the digits: "357,893" is `${fmt(n)}` in
+      // the source, so a surviving comma would misalign the two heads.
+      .replace(/[\d,]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  it("every verdict: value has a literal counterpart in the probe source", () => {
+    if (!existsSync(FIGURES) || !existsSync(PROBE)) return;
+    const fig = JSON.parse(readFileSync(FIGURES, "utf8")) as Record<string, unknown>;
+    const probe = normalise(readFileSync(PROBE, "utf8"));
+
+    // Match the HEAD of the verdict, where its polarity lives.
+    //
+    // Two weaker designs were tried and both failed on the real case:
+    //   - split on digits, require the longest chunk: interpolation is not only
+    //     numeric (`${fam.family}` inserts "birth"), so it flagged eight
+    //     verdicts whose text is demonstrably in the source.
+    //   - any 32-char window anywhere: the superseded section-I verdict shares
+    //     the phrase "fuzzy returns the transposition" with its replacement, so
+    //     a stale CONFIRMED passed while the code could only emit SAMPLED ONLY.
+    //     Verified by injecting that exact string.
+    //
+    // The head is the discriminating part — CONFIRMED / SAMPLED ONLY / NOT
+    // MEASURED / HOLDS / REFUTED all sit there, and it is almost always literal
+    // because a template rarely opens with a substitution. A verdict whose head
+    // is not in the source is one the probe cannot currently open with.
+    /**
+     * Verdicts whose template OPENS with a substitution, so the polarity word is
+     * not literal in the source:
+     *
+     *     `${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"} (SAMPLED — ...`
+     *
+     * The head then reads `(SAMPLED —` in the source and `CONFIRMED (SAMPLED —`
+     * in the artifact, which no amount of normalising reconciles without also
+     * blinding the check to the rot it exists for. Two entries, both verified by
+     * reading the record() call; anything added here needs the same.
+     */
+    const HEAD_EXEMPT = new Map<string, string>([
+      [
+        "H.verdict:an unqualified range fuzzes past its bounds",
+        'template opens with `${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2208)',
+      ],
+      [
+        "H.verdict:.exact hardens the range",
+        'template opens with `${hardens ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2213)',
+      ],
+    ]);
+
+    const HEAD = 28;
+    const orphans: string[] = [];
+    const producible = (v: string): boolean => {
+      const s = normalise(v);
+      if (s.length < HEAD) return true; // too short to judge
+      return probe.includes(s.slice(0, HEAD));
+    };
+
+    for (const [section, body] of Object.entries(fig)) {
+      if (!body || typeof body !== "object") continue;
+      for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+        if (!key.startsWith("verdict:") || typeof value !== "string") continue;
+        if (HEAD_EXEMPT.has(`${section}.${key}`)) continue;
+        if (!producible(value)) {
+          orphans.push(`${section}.${key} -> ${JSON.stringify(value.slice(0, 80))}`);
+        }
+      }
+    }
+
+    expect(
+      orphans,
+      "these recorded verdicts cannot be produced by the probe as it stands.\n" +
+        "  Almost always: the section's wording was changed and the section was not\n" +
+        "  re-run, so the artifact still holds the SUPERSEDED verdict — and any prose\n" +
+        "  resting on it is asserting something the probe would now refuse to publish.\n" +
+        "  Re-run that section (`npx tsx dev/probe-search-qualifiers.ts <SECTION>`).\n" +
+        "  Do NOT hand-edit measured-figures.json: it is generated output, and editing\n" +
+        "  it would make the artifact say something no run produced."
+    ).toEqual([]);
+  });
+});
