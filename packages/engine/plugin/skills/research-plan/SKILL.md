@@ -259,7 +259,22 @@ Order items for efficient discovery (BCG Standard 15):
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
-too broad — consider splitting.
+too broad — consider splitting. **Size is not breadth** — a 5-item plan
+that is all one record type (all-census, or all-archival-request) can
+sit inside this range while still failing the self-check below.
+
+**Breadth self-check — run this before writing the plan, not after the
+user asks "was anything missed?"** Answer `references/planning-standards.md`
+Standard 17's five self-check questions against the plan you are about
+to write:
+1. Sufficient breadth of record types (not just census/vital)?
+2. All relevant repositories identified (not just the most convenient)?
+3. Variant spellings/name forms accounted for?
+4. All relevant jurisdictions included (considering boundary changes)?
+5. All relevant time periods included?
+If any answer is no, add the missing item(s) now, before Step 5 — not as
+a revision after being asked. A plan that hits the size range above while
+staying narrow in record-type diversity is not reasonably exhaustive.
 
 ### 5. Write the plan
 
@@ -403,7 +418,16 @@ re-issue it first. Then present the plan:
 - Fallback relationships ("if step 1 yields nothing, step 3 is
   the fallback")
 - Total estimated scope (how many searches)
-- Suggest next step: "Would you like me to start executing this
+- **If the invoking message already authorized execution** — a phrase
+  like "...and start executing it," "...and continue with exhaustive
+  research," or "...don't stop to check in with me" — hand off to
+  execution in this same turn instead of asking: `Skill("search-records")`
+  for FamilySearch items, `Skill("search-external-sites")` for others.
+  If only some items can execute right now (e.g. one
+  repository or tool is unavailable but another isn't), execute those and
+  report the block on the rest — don't let an item that's blocked for any
+  reason hold up items that aren't.
+- Otherwise, suggest next step: "Would you like me to start executing this
   plan?" (search-records / search-external-sites, depending on
   the repositories)
 
@@ -430,6 +454,7 @@ Ancestry (fallback), land records (fallback).
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
+| The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand off to execution in the same turn — do not ask "would you like me to start?" first |
 
 ## Re-invocation behavior
 
