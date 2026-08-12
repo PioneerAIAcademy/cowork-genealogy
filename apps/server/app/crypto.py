@@ -62,7 +62,9 @@ class EncryptedStr(TypeDecorator):
             return None
         try:
             return _fernet().decrypt(value.encode("ascii")).decode("utf-8")
-        except InvalidToken:
-            # Undecryptable (legacy plaintext / wrong key). Soft-fail to None so the
-            # row loads and can be healed; callers map None → "expired" → re-login.
+        except (InvalidToken, UnicodeError):
+            # Undecryptable — legacy plaintext, wrong key, or a non-ASCII/corrupted
+            # value that isn't valid ciphertext (the .encode("ascii") raises
+            # UnicodeError). Soft-fail to None so the row loads and can be healed;
+            # callers map None → "expired" → re-login.
             return None
