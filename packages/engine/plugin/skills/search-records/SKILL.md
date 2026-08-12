@@ -124,7 +124,7 @@ a plan item is waiting.
 
 The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-confidence facts and expect to retrieve a specific known record.
 
-**Anchor rule:** Every `record_search` query must include `surname`, `recordCountry`, or `batchNumber`. The tool rejects anchor-less queries. If none is known, fall back to a broader plan item or skip. A `batchNumber` anchors alone — never add `recordCountry` to a batch search to satisfy this rule: a country that does not match the batch returns 0, which is indistinguishable from a wrong batch.
+**Anchor rule:** Every `record_search` query must include `surname`, `recordCountry`, or `batchNumber`. The tool rejects anchor-less queries. If none is known, fall back to a broader plan item or skip. A `batchNumber` anchors alone, and **the tool rejects `batchNumber` + `recordCountry`** — a country that does not match the batch returns 0, indistinguishable from a wrong batch. Narrow a batch with `surname`, never with a country.
 
 **Search parameter guidance (`record_search`):**
 
@@ -136,7 +136,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
-| `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Never add it to a `batchNumber` search** |
+| `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Rejected if combined with `batchNumber`** |
 | `batchNumber` | `references/collection-quirks.md`, or a catalog/index page | IGI extraction batch. Anchors alone — send it with no other field to enumerate one parish; add only a `surname` to narrow. Pass as a quoted string exactly as the source gives it; never reformat or pad it |
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |

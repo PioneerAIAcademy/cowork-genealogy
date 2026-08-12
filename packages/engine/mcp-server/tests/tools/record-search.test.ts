@@ -202,6 +202,25 @@ describe("recordSearchTool input validation", () => {
     expect(() => validateInput({ givenName: "John" })).toThrow(/batchNumber/);
   });
 
+  // The structural half of the batch rule. Prose survives about three
+  // compactions (docs/architecture.md §3.1), and the pairing this rejects is
+  // precisely what a half-remembered "every query needs surname or
+  // recordCountry" produces. Rejecting is free: a MATCHING country returns an
+  // identical count, so the field never buys anything on a batch search.
+  it("5c. rejects batchNumber combined with recordCountry", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordCountry: "England" })
+    ).toThrow(/do not combine batchNumber with recordCountry/);
+  });
+
+  // ...and the permitted narrowing still works, so 5c cannot be satisfied by
+  // rejecting every companion field.
+  it("5d. allows batchNumber combined with surname", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", surname: "Smith" })
+    ).not.toThrow();
+  });
+
   it("6. throws when count > 100 or count < 1", async () => {
     await expect(
       recordSearchTool({ surname: "Lincoln", count: 200 })
