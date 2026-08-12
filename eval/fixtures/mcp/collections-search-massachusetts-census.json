@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search — FamilySearch's OWN Massachusetts record collections, trimmed to the census-titled subset. Includes the two surviving state-census schedules FamilySearch hosts: Massachusetts, State Census, 1855 (1459985) and 1865 (1410399), plus the 1870/1880 federal mortality schedules. This is the FS-holdings side of the collections-fs-holdings test (issue #1313): it proves FamilySearch holds the same 1855 census the MyHeritage external link points at (external-links-search-massachusetts), so the skill can note the FS holding instead of recommending the competitor. Results are verbatim from a live collections_search('Massachusetts, United States') on 2026-08-10. Distinct from the shared collections-search-massachusetts fixture (vital/probate/church, no census) used by the locality-guide tests — do not confuse them.",
+  "args": {
+    "standardPlace": "~Massachusetts"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Massachusetts, United States"
+    },
+    "scope": "Massachusetts",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1459985",
+        "title": "Massachusetts, State Census, 1855",
+        "dateRange": "1855-1855",
+        "recordCount": 1202234,
+        "personCount": 1202234,
+        "imageCount": 15239,
+        "url": "https://www.familysearch.org/search/collection/1459985"
+      },
+      {
+        "id": "1410399",
+        "title": "Massachusetts, State Census, 1865",
+        "dateRange": "1865-1865",
+        "recordCount": 1352817,
+        "personCount": 1352817,
+        "imageCount": 17616,
+        "url": "https://www.familysearch.org/search/collection/1410399"
+      },
+      {
+        "id": "2311325",
+        "title": "Massachusetts, Federal Census Mortality Schedule, 1870",
+        "dateRange": "1870-1870",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 657,
+        "url": "https://www.familysearch.org/search/collection/2311325"
+      },
+      {
+        "id": "2315101",
+        "title": "Massachusetts, Federal Census Mortality Schedule, 1880",
+        "dateRange": "1880-1880",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 2423,
+        "url": "https://www.familysearch.org/search/collection/2315101"
+      }
+    ]
+  }
+}
