@@ -3077,7 +3077,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).toMatch(/records no match_score/);
   });
 
-  it("does not warn on a probable link with no match_score (the honest escape hatch)", async () => {
+  it("does not warn on a probable link with no match_score — the gate is confidence, not a downgrade route", async () => {
     await writeProject();
     const r = await researchAppend(link({ confidence: "probable", match_score: null }));
     expect(r.ok).toBe(true);

@@ -568,8 +568,11 @@ a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduat
 discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
 "confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
 tell a brand-new person from a seeded one, but the confidence claim it *can* see)
-and the honest escape hatch, since a link that genuinely cannot be scored should
-claim `probable`/`speculative`. `personEvidenceScoreWarnings` in `research-append.ts`.
+and the narrowest claim a stateless write can check. It is not an escape hatch:
+a link that genuinely cannot be scored keeps `match_score: null` and the confidence
+its correlation analysis supports (person-evidence/SKILL.md §3). Downgrading
+confidence to silence this warning also slips the link past the confident-gated
+epistemic reject above. `personEvidenceScoreWarnings` in `research-append.ts`.
 
 ---
 
