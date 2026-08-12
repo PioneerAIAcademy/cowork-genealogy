@@ -792,6 +792,24 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   sandbox as a secrets file on connect (not build-time env); never surfaced to
   the browser; rotate FS tokens via central refresh. Keep the Anthropic key out
   of user-readable space where feasible.
+- **Production preflight (shipped 2026-08-05):** the control plane refuses
+  to boot when it is configured as production but still holds development defaults —
+  `session_secret`, `ws_signing_key`, or an unset `DATABASE_URL`
+  (`config.assert_production_config`, first statement of `main.py`'s lifespan).
+  - *Why an https `PUBLIC_URL` is the production discriminant:* it is the signal
+    `auth.cookie_secure()` already uses, it lives in `deploy/fly.toml`'s `[env]` rather
+    than in a secret (so it always ships, and cannot be the thing that is forgotten),
+    and both local targets pin http. The alternative — `sandbox_provider == "e2b"` —
+    was rejected because it would break `make server-e2b` on a developer's laptop.
+  - *Why `DATABASE_URL` is in a gate about secrets:* since the Neon migration there is
+    no Fly volume, so an unset `DATABASE_URL` in production is SQLite on ephemeral
+    rootfs — every user, session and allowlist row lost on the next machine restart,
+    with no error at any point. Same failure mode as a default secret: silent.
+  - *Why `ANTHROPIC_API_KEY` / `E2B_API_KEY` are deliberately excluded:* their absence
+    already fails loudly on the first session create. The gate is for silent failures
+    only; widening it past that would make it a second, drifting copy of the env table.
+  - The durable home for this is here until a `docs/specs/hosted-deploy-spec.md`
+    exists to own it.
 - **`validate_research_schema` path-traversal:** the tool takes a user-influenced
   `projectPath` and reads files — in multi-tenant it must be constrained to the
   user's project dir (no `..`/absolute escapes).

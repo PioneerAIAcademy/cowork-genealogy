@@ -62,6 +62,23 @@ returns an HTML shell, not the image — so `ark` only accepts `3:1:`/
 `3:2:` document-image ARKs; other ARK types are rejected with
 `"Unrecognized ark"` rather than silently attempted.
 
+**Not every `3:1:`/`3:2:` ARK is self-sufficient.** Some are waypoints
+into a multi-image film/register rather than a single page, and the
+bare resolver redirect can land on an arbitrary image within that
+group instead of the one the caller means — **confirmed live
+(2026-08-03)**: a bare ARK for a multi-image entry did not resolve to
+any document at all (FamilySearch returned a no-match search page),
+while the browser's page URL for the same document carried `i=`
+(image index), `cc=` (collection id), and `groupId=` (image group id)
+query parameters that were required to reach the correct page. When
+the caller's `ark` is a full URL carrying any of `i`/`cc`/`groupId`,
+`arkToImageUrl` (`src/utils/fs-image-fetch.ts`) forwards them onto the
+expanded resolver URL rather than discarding them — callers that only
+have the bare ARK (no browser/citation URL) get the pre-existing
+best-effort behavior, which may resolve to the wrong image for a
+multi-image document. The tool's `ark` description tells callers to
+pass the full URL when one is available, precisely to avoid this trap.
+
 Fetching requires a valid FamilySearch bearer token.
 
 ## Output

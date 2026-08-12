@@ -8,12 +8,14 @@ transcript is written to the *ephemeral* local cache:
     ~/.claude/projects/<cwd-slug>/<session-uuid>/subagents/agent-*.meta.json
 
 That directory is the temp-workspace-encoded path and is deleted with the
-workspace. The committed runlog only records the *parent's* tool calls plus a
-key-preserving `response_summary` per call (see
-`orchestrator._summarize_tool_response`; before `HARNESS_SCHEMA_VERSION` 2 it
-head-truncated anything over 500 chars, keeping 497 plus an ellipsis) — it stores
-**no** subagent transcript. So a failure that happens entirely inside a subagent
-is invisible from the committed runlog.
+workspace. The committed runlog records each tool call with a key-preserving
+`response_summary` (see `orchestrator._summarize_tool_response`; before
+`HARNESS_SCHEMA_VERSION` 2 it head-truncated anything over 500 chars, keeping 497
+plus an ellipsis), and since #1027 attributes each call to its `agent_type` /
+`agent_id` — but it stores **no** subagent *transcript*. So a failure that
+happens inside a subagent's own turns — no tool call to attribute, just thinking
+that burns the budget — is invisible from the committed runlog without the
+per-turn summaries this module adds.
 
 The failure that motivated this: a `record-extractor` subagent called
 `project_context` once, then emitted a single thinking-only turn that burned its

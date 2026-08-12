@@ -1,11 +1,18 @@
 """E2BProvider — the hosted provider (per-user Firecracker microVM).
 
-CORE scope: sandbox lifecycle
-+ filesystem + state. This is everything the **affinity-free** control plane needs
-under Ably **Option B**, where an in-sandbox *bridge* (not the host) owns the agent
-process + the /project watch. So `start_process` / `watch_project` raise
-`NotImplementedError` here (they belong to the Option B bridge, or to an Option A
-fallback if ever un-deferred); `expose_port` is a thin dead stub (no callers).
+Scope: sandbox lifecycle + filesystem + state, plus the one call that makes the
+sandbox reachable. The control plane is **affinity-free** because it is not in
+the streaming path: `create()` launches the in-sandbox WS server
+(`app.sandbox_server`) under `nohup`, and the browser then holds ONE WSS
+straight to the sandbox. `sandbox_server` spawns `agent_runner` itself on the
+first browser connection, so no host process owns the agent or watches /project.
+
+**`expose_port` is load-bearing — do not delete it.** It is what turns a
+sandbox id into the `wss://` URL the browser dials, and it has two live callers:
+`app/sessions.py` (`POST /api/sessions/{id}/connect`) and `app/v1.py` (the
+device-bridge `/connect` reuse). Both call it on every connect and reconnect,
+not just at create. `LocalProvider` implements the same method for the local
+dev path.
 
 Verified against the `e2b` SDK (2.x) — Phase 0 findings:
 - `AsyncSandbox.create(template, metadata, envs, allow_internet_access, timeout,
@@ -39,9 +46,19 @@ from .base import (
     SandboxState,
 )
 
-# Generous continuous-running backstop. With lifecycle on_timeout=pause, hitting
-# it just *pauses* (FS preserved) instead of killing — the control plane's idle
-# loop is the primary suspend driver.
+# Continuous-running backstop, and — with no host-side idle loop — effectively
+# THE suspend driver. With lifecycle on_timeout=pause, hitting it pauses (FS
+# preserved) rather than killing, and connect() auto-resumes. `resume()` calls
+# set_timeout with this same value, so the clock restarts on every /connect.
+# Nothing else suspends a sandbox: `SandboxProvider.suspend()` has no route and
+# no background task behind it (only LocalProvider.delete() and the tests call
+# it). A session therefore ends by aging out here, not by being reaped.
+#
+# 3600 is E2B's Hobby-tier MAXIMUM, not a value we picked: create with 7200 fails
+# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09). Raising it
+# here without a tier upgrade breaks create() outright. On Pro it becomes 86400.
+# Note set_timeout past the ceiling returns 204 and silently no-ops, so an
+# over-large value fails loudly at create and silently everywhere else.
 _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
@@ -251,7 +268,8 @@ class E2BProvider(SandboxProvider):
             return E2BSandbox(None, sandbox_id=sandbox_id, state=SandboxState.MISSING)
         # Give the session a fresh window on each /connect so a long turn isn't
         # paused mid-flight (connect() can reset the VM timeout to a short
-        # default). on_timeout=pause is still the idle backstop. Best-effort.
+        # default). on_timeout=pause is still the backstop — but it fires on
+        # continuous runtime, not on idleness. Best-effort.
         try:
             await sb.set_timeout(_RUNNING_TIMEOUT_S)
         except Exception:

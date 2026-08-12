@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Walter recovered as child of both parents, but on the single combined obituary source (S2) only; no birth date/place, and census/birth corroboration searches came back nil.",
+    "f3": "Ida (Dewes) recovered as child of both parents, but on the single obituary source (S2) only; no birth date/place recovered.",
+    "f4": "Not recovered (required:false). Agent deliberately declined Eleanor as an indexing artifact of the combined Dewus/Downs obituary, treating her as Henry Downs's child; no parent-child link to Heinrich Dewus asserted."
+  },
+  "annotator": "EdmondOware"
+}
