@@ -6,7 +6,7 @@ import io
 from contextlib import redirect_stdout
 
 from e2e.report import print_rollup
-from e2e.result import E2eResult
+from e2e.result import E2eResult, is_committable_run
 
 
 def _capture(results: list[E2eResult]) -> str:

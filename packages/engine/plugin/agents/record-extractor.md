@@ -260,6 +260,11 @@ fact to record, and **not negative evidence** (never a `"No X recorded"`
 assertion; negative evidence is a *person* expected-but-absent, see
 Negative evidence).
 
+**Worked example.** 1850 household — Thomas (Occupation: "Laborer"),
+Bridget (blank), Patrick (blank), John (blank). Occupation assertions
+written: **one** (Thomas). Not four. The three blank cells produce nothing
+— neither a positive assertion nor a `"No occupation"` negative.
+
 ## Step 3 — Extract and classify assertions
 
 **One fact per assertion.** Separate age from a birth claim — distinct
@@ -418,6 +423,14 @@ Rules that sharpen the tree:
   answered. Exception: a fact **no possible household respondent** could
   have witnessed — a parent's or grandparent's birthplace — is
   `secondary` regardless of who answered.
+- **Exception — residence.** The blanket rule above covers who inside
+  the household answered biographical questions; it does not cover the
+  enumerator's own observation. The enumerator personally visited the
+  dwelling — a known, firsthand witness for the residence fact
+  specifically. Residence stays `informant: census enumerator`,
+  `informant_proximity: witness`, `information_quality: primary` (see
+  the census informant table below). Name, age, birthplace, and
+  relationship on the same record remain governed by the rule above.
 
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
@@ -475,6 +488,13 @@ the census `household_member` default and NOT the death-certificate
 `family_not_present`. `self` is fully correct there; only the census lacks
 the "who answered" record that would justify it.
 
+**Worked example.** Proximity follows the *record type*, not the fact. The
+same fact — a head's own "age 32" — is `informant_proximity:
+household_member` on an 1850 census (a census does not establish that the
+person answered for themselves), but `self` on that person's own marriage
+license (where they demonstrably supplied it). Match the proximity to what
+the record establishes about who spoke.
+
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
   duration of illness. Proximity `official_duty` — the medical
@@ -516,12 +536,15 @@ the "who answered" record that would justify it.
 - **Groom and bride:** informants for their own identifying facts (age,
   birthplace, parents, occupation), proximity `self`. **Every fact the
   parties state — their own name/age/birthplace/occupation/residence AND
-  their parents' names — is `direct`; the record states each outright.** A
-  party's secondhand knowledge of a parent is an `information_quality`
-  matter (mark `secondary` if apt), NOT `evidence_type` — never downgrade a
-  stated fact to `indirect` on "relaying another's identity" / "computed
-  from memory" reasoning (that is death-certificate doctrine and does not
-  transfer here). The **only** `indirect` value on a marriage record is a
+  their parents' names — is `direct`; the record states each outright.**
+  Information quality for the party's own parents' names is `primary` —
+  the party has firsthand, ongoing knowledge of who their own parents
+  are, the same basis as their own occupation, not the death-certificate
+  secondhand-relay case. That is an `information_quality` call, NOT
+  `evidence_type` — never downgrade a stated fact to `indirect` on
+  "relaying another's identity" / "computed from memory" reasoning (that
+  is death-certificate doctrine and does not transfer here). The
+  **only** `indirect` value on a marriage record is a
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**
@@ -584,6 +607,13 @@ OWN age, birthplace, or parents to the clerk on a marriage or
 civil-registration record stays `direct` — they are relaying their own
 facts, not another person's. The test: did the informant have
 primary knowledge of *this* fact?
+
+**Worked example.** The one fact "born Ireland" classifies by *who
+reports it on which record*: on an 1850 census (a household member
+reporting) the birthplace (`birth`+`place`) is `direct`; on a 1908 death
+certificate (the widow relaying the decedent's birthplace) the same fact
+is `indirect`. And the birth *year* derived from a stated age is
+`indirect` on both — a value the record never stated outright.
 
 **Age, birthplace, birth year — separate assertions:** on a census,
 "age 32, born Ireland" yields three atomic assertions with different

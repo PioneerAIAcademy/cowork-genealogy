@@ -238,6 +238,81 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
     assert any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
 
+def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatch):
+    """#1361: a dropped judge dimension (unknown/duplicate rubric name) is
+    recorded on JudgeOutput.warnings — judge_results has no warnings field
+    of its own (additionalProperties:false on that schema object), so it
+    must be folded into the skill-level output.warnings instead. A clean
+    run (matched tool call, no uncovered calls) isolates the wiring."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        workspace = kwargs["workspace"]
+        (workspace / "schuylkill-county-pennsylvania.md").write_text(
+            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n",
+            encoding="utf-8",
+        )
+        return SkillRunResult(
+            text_response="I saved the file.",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[
+                {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
+                 "matched": {"kind": "predicate", "index": None},
+                 "response_fixture": "some-fixture"}
+            ],
+            duration_ms=10.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            attempted_mcp_calls=[
+                {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"}}
+            ],
+            registered_mcp_tools={"wikipedia_search"},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+
+    from harness.judge import JudgeOutput
+
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "fine"},
+                {"source": "base", "name": "Completeness", "score": 3, "rationale": "fine"},
+                {"source": "base", "name": "Tool Arguments", "score": 3, "rationale": "fine"},
+            ],
+            warnings=[{
+                "kind": "dropped_unknown_rubric_dimension",
+                "advisory": "judge emitted rubric dimension 'X', not found in the rubric",
+                "name": "X",
+                "valid_names": [],
+            }],
+            cost_usd=0.0,
+            input_tokens=0,
+            cached_input_tokens=0,
+            output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-05-20_10-30-00",
+    ))
+
+    run = entry["runs"][0]
+    # judge_results itself carries no warnings (additionalProperties:false).
+    assert "warnings" not in run["judge"]
+    warnings = run["output"].get("warnings", [])
+    dropped = [w for w in warnings if w["kind"] == "dropped_unknown_rubric_dimension"]
+    assert len(dropped) == 1
+    assert dropped[0]["name"] == "X"
+
+
 def _positive_spec(skill="search-wikipedia"):
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",

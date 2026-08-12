@@ -1,6 +1,5 @@
 ---
 name: search-full-text
-model: claude-sonnet-4-6
 description: Invoke for FamilySearch full-text search (FTS) — immediately
   when the user says "full-text search", "FTS", "search document
   transcripts", or "construct a full-text query". Use this skill to find a

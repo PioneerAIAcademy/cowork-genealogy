@@ -12,6 +12,23 @@ from typing import Iterable
 
 from e2e.result import E2eResult
 
+# The verdict vocabulary this reporter knows how to render. Kept here as one
+# name so the per-tag buckets and any future tally seed from the same list
+# instead of re-typing a literal that then drifts (issue #1245).
+#
+# `skipped` is the harness's own value for a run that produced nothing to grade
+# (spec §7.2); `ungraded` is #1239's narrower "judge raised while a tree
+# existed" case. A new ungradeable verdict must go in **both** tuples:
+# KNOWN_VERDICTS seeds the bucket keys, and UNGRADED_VERDICTS is summed with
+# `if v in bucket` — so adding it to the second alone sums zero and prints every
+# such run as "unrecognised" instead.
+KNOWN_VERDICTS = ("pass", "partial", "fail", "ungraded", "skipped")
+
+# The subset that means "this run produced no grade". NOT failures, and the
+# whole point of #1245: 19 ungraded runs reported as 19 failures is a claim
+# about genealogy that the harness never actually made.
+UNGRADED_VERDICTS = ("ungraded", "skipped")
+
 
 def print_rollup(results: Iterable[E2eResult]) -> None:
     """Print a one-shot summary of the runs from this invocation.

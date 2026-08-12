@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-27 (on the §5.3 rule audit)
-- **Last updated:** 2026-08-02
+- **Last updated:** 2026-08-09 (the ranking fold *is* pinned by a test)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -86,17 +86,20 @@ So the question when writing a new rule is *where it goes*:
 | Option | Why rejected | Evidence |
 |---|---|---|
 | **Reinforce the prose** — repeat the rule, bold it, add a "hard rules" section | This is what the 3% rule already had. Restating a rule does not survive the eviction of the text doing the restating | §5.3 audit; the ranking doctrine was already emphatic |
-| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. Worth doing for cost reasons (critique §6 lever 4), but it is not a correctness mechanism | `docs/agentic-system-critique.md` §6 |
+| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. Worth doing for cost reasons — prompt size is a per-turn cost, and the five largest bodies are ~215 KB between them — but it is not a correctness mechanism | `docs/architecture.md` §9.2, the `prompt-budget.test.ts` row — it reports growth and never fails |
 | **Split the rule into a dedicated per-skill write tool** so the tool name carries the doctrine | Rejected earlier and independently, for a reason that generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller | `docs/specs/guardrail-enforcement-spec.md` §9 |
-| **A read-only advisory tool** the model calls each turn to be told the next step | "Call the advisory every turn" is itself unanchored prose. Our own data disconfirms it: `project_context`, built for exactly this, is called ~3 times per run against `Read`'s ~19. It also adds a serial tool call — a turn — per routing decision | critique §3 P2 |
-| **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have three open defects and an unquantified false-positive rate | #998, #999, #1006 |
+| **A read-only advisory tool** the model calls each turn to be told the next step | "Call the advisory every turn" is itself unanchored prose. Our own data disconfirms it: `project_context`, built for exactly this, is called ~3 times per run against `Read`'s ~19. It also adds a serial tool call — a turn — per routing decision | The 2026-07-30 row-by-row routing analysis; `docs/adrs/ADR-0009-refuted-agent-design-claims.md`, first row |
+| **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have two open defects and an unquantified false-positive rate | #999, #1006 |
 
 ## Consequences
 
 **Gains.** Two rules were converted on the strength of this — the `count: 50`
-default and the ranking fold, both now in `record-search.ts`. (The critique
-reports the fold "verified 7/7"; the *conversions* are verifiable in the code,
-the 7/7 result is not recorded in any test or runlog here.) Every invariant moved
+default and the ranking fold, both now in `record-search.ts`, and both pinned by
+`packages/engine/mcp-server/tests/tools/record-search.test.ts` (a `subjectId`
+requests the deep pool and returns `ranked`; without one, `count` stays at 20).
+The committed e2e corpus agrees: 21 of the 22 searches eligible to be ranked — a
+`subjectId` given *and* at least one match — came back with a `ranked` block.
+Every invariant moved
 into `research_append` holds regardless of context
 state, model, or how long the session has run — and holds identically in Cowork,
 the hosted path, and both harnesses, which prose never does.
@@ -128,7 +131,7 @@ still prose today, and both are computable from files `research_append` already
 loads.
 
 The one instrument that measures the *effect* is the post-run compliance
-detector, and it cannot yet give a rate at all. It is uncalibrated (#998, #999,
+detector, and it cannot yet give a rate at all. It is uncalibrated (#999,
 #1006), and separately — settled in #1176 — **no committed run resolves `pass`**:
 before #972 the violations field was written only when non-empty, so "ran clean"
 and "did not emit" are indistinguishable and every post-detector run lands on

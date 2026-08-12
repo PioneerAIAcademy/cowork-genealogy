@@ -131,6 +131,29 @@ describe("imageTranscribeTool — request + happy path", () => {
   });
 });
 
+describe("imageTranscribeTool — ark URL query-param forwarding", () => {
+  // Wiring test: the URL-computation logic itself (forwarding i=/cc=/
+  // groupId=, dropping irrelevant params, offering a fallback) is covered
+  // directly against resolveFsImageInput in
+  // tests/utils/fs-image-fetch.test.ts. fetchFsImageBytes is mocked here
+  // (not `fetch`), so the retry-on-non-image-response logic itself isn't
+  // observable at this level — this only confirms imageTranscribeTool
+  // destructures fallbackUrl from resolveFsImageInput and threads it through
+  // as fetchFsImageBytes's second argument, the same way image-read.ts does.
+  it("passes both the resolved URL and its fallback through to fetchFsImageBytes", async () => {
+    mockOpenRouterOk("some text");
+    const url =
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
+
+    await imageTranscribeTool({ ark: url });
+
+    expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X",
+    ]);
+  });
+});
+
 describe("imageTranscribeTool — lookingFor", () => {
   it("sets found=FOUND from the marker and keeps the full transcription", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family\nFOUND");

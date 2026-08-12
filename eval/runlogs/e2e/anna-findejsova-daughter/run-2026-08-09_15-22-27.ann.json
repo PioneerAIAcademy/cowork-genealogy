@@ -1,0 +1,9 @@
+{
+  "annotator": "solomonbaidoo54@gmail.com",
+  "per_finding": {
+    "f1": "true"
+  },
+  "notes": {
+    "f1": "Agnes recovered as new person I1, baptized 1 March 1818 in Svitavy / Moravska Trebova, linked as child of BOTH Maxmilian Michl (R7) and Anna Marie Findejsova (R8), alongside the existing daughter Anna Michlova (b. 1823) — matches the finding. Graded independently of the compliance gate; the same_person bypass on I1 is a separate process/compliance failure, not part of this recall label."
+  }
+}
