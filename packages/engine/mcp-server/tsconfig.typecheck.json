@@ -1,14 +1,38 @@
 {
-  // Typecheck-only config. `tsconfig.json` exists to BUILD, so its `include`
-  // is `src/**/*` and its `rootDir` is `./src` — widening either would emit
-  // dev scripts and tests into `build/` and ship them in the .mcpb. So the
-  // check that covers them has to be a separate project with `noEmit`.
+  // Typecheck-only config for everything the build config cannot see.
   //
-  // Why this exists: nothing typechecked `dev/` or `tests/`, and that had a
-  // demonstrated cost, not a hypothetical one. Widening
-  // `findRepresentedPerson`'s return type broke a test at runtime while
-  // `tsc` stayed green, because the test was never in scope. Run via
-  // `npm run typecheck`.
+  // `tsconfig.json` is the BUILD config: `rootDir: "./src"` and
+  // `include: ["src/**/*"]`, because dev scripts and tests must not be compiled
+  // into build/ or shipped in the .mcpb. The side effect was that
+  // `tsc --noEmit -p tsconfig.json` exited 0 no matter what `dev/` or `tests/`
+  // contained — it never opened those files. So the check that covers them has
+  // to be a separate project with `noEmit`. Run via `npm run typecheck`, which
+  // `pretest` invokes so it cannot be forgotten.
+  //
+  // TWO incidents motivate this, found independently and worth keeping both:
+  //
+  //   1. (#1328) A broken edit to the ~5,000-line qualifier probe — a reference
+  //      to an identifier declared inside a different section's function —
+  //      passed a "typecheck clean" check that had never looked at it, and
+  //      would have thrown at runtime after several minutes of live API calls.
+  //
+  //   2. (#1324) Widening `findRepresentedPerson`'s return type broke a test at
+  //      runtime while `tsc` stayed green, because `tests/` was never in scope.
+  //
+  // Incident 1 argues for `dev/`; incident 2 argues for `tests/`. One config
+  // covering `src` + `dev` + `tests` answers both. It supersedes the narrower
+  // `tsconfig.dev.json` + `typecheck:dev` pair (#1328), which covered `dev/`
+  // only — deleted rather than kept alongside, because two overlapping
+  // typecheck projects with `pretest` running one of them is how someone gets a
+  // green check that never opened their files, which is incident 1 again.
+  //
+  // `tests/` was deliberately excluded when #1328 wrote its version, for a good
+  // reason at the time: vitest transpiles without typechecking, so the suite had
+  // never been type-clean, and including it surfaced 126 pre-existing errors
+  // (assertions reading a union they had not discriminated) which — since
+  // `pretest` runs this — would have blocked `npm test` repo-wide until every
+  // one was fixed. That precondition is gone: all 126 were fixed in #1324, so
+  // the exclusion is no longer load-bearing.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
@@ -18,6 +42,6 @@
   "include": ["src/**/*", "dev/**/*", "tests/**/*"]
 
   // No `exclude`, deliberately. This landed with 13 files carved out carrying
-  // 126 pre-existing errors; all 126 were fixed and the list is gone. Do not
-  // reintroduce one to get a red check green — fix the types.
+  // those 126 errors; all were fixed and the list is gone. Do not reintroduce
+  // one to get a red check green — fix the types.
 }
