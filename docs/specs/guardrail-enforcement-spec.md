@@ -87,15 +87,28 @@ guardrail skill run this session" misses every case we have evidence for.
 | `hole-parents-negative` (2026-07-22) | **pass** | ran proof-conclusion *and* research-exhaustiveness, then wrote conflict-resolution's output itself |
 | `eulogia-gatica-burial` (2026-07-28) | pass → failed by §8 | 83 calls, 6 skills invoked, 17 direct `research_append`; stamped `proved` over an unresolved 1862/1865 birth-year conflict |
 
-`bagley-father-1884` (2026-07-27) is the case that shaped §8's third check: at
-call 86 the router wrote a 26-op batch creating a new tree person and linking 13
-assertions to him, `person-evidence` having been read off disk at call 77 and
-not invoked until call 138 — for a different record. `same_person` was called
-**zero** times in the whole run. The whole-run "was it invoked" check passed;
-only the windowed check caught it. A blind human annotation independently
-downgraded the run for the same underlying defect (the person was never pinned
-to an identity), which is content-level corroboration that a skipped gate has
-genealogical consequences, not just procedural ones.
+`bagley-father-1884` (2026-07-27) is the case that shaped §8's third check.
+Verified against `run-2026-07-27_20-01-40.json`:
+
+- **call 85** — `materialize_facts`, 7 ops, mints the new tree person `I1` and
+  attaches sourced refs, including onto the *existing* `MJDL-Q8B` / `LVDV-6MK`.
+- **call 86** — a **30-op** `person_evidence` batch across **three** persons:
+  `MJDL-Q8B` 12, `I1` 11, `LVDV-6MK` 7.
+- **call 141** — `I1`'s remaining 2 links; final count 32.
+
+`person-evidence` had been read off disk at call 77 and was not invoked until
+call 138 — for a different record. `same_person` was called **zero** times in the
+whole 174-call run. The whole-run "was it invoked" check passed; only the
+windowed check caught it. A blind human annotation independently downgraded the
+run for the same underlying defect (the person was never pinned to an identity),
+which is content-level corroboration that a skipped gate has genealogical
+consequences, not just procedural ones.
+
+**The sequence sets the enforcement point, and it is not the `person_evidence`
+append.** The unscored identity claim commits at call 85's tree write, one call
+*before* any `person_evidence` entry exists to gate. A gate binding only on the
+pe append cannot catch the failure this example is the reference case for; a
+design has to span `materialize_facts`'s create-and-enrich path too.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
@@ -132,26 +145,139 @@ cannot, and none depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
-| §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only** |
+| §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
-| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** |
+| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
 until something is retained to detect against — the hosted path persists no
 tool-call ledger.
 
+**§7's status is a finding, not a queue position.** Its graduation was gated on a
+false-positive rate that cannot be measured while its success gate reads `Skill`
+launch acknowledgements — and no instrument available to the harness observes
+skill *completion* (§7, "What the success gate can and cannot see"). Treat that
+row as settled unless one of the four skills becomes something that emits a
+completion signal; do not re-open it as a calibration task.
+
 The last row is the live, pre-write form of a question §8 already hard-fails
 post-run, so its doctrine needs no shadow period — but its *enforcement* does.
-Replayed over the committed e2e corpus it fires in 65 of 81 fixtures (265 hits
-across 280 runs), because scoring a locally-minted tree person is not current
-agent behavior. Denying on that would intervene in four fifths of a suite
-costing $7-25 a run with no evidence for how the agent recovers, so it records
-into `guardrail_shadow_violations` and lets the write through. Graduating it to
-a deny is gated on these numbers. Note it asks a stricter question
-than its §8 counterpart: that one accepts a `same_person` anywhere in the run,
-including *after* the link, so link-then-score is a shadow hit and a post-run
-pass.
+It fires in the large majority of runs that link a person, because scoring a
+locally-minted tree person is not current agent behavior. Denying on that would
+intervene in most of a suite costing $7-25 a run with no evidence for how the
+agent recovers, so it records into `guardrail_shadow_violations` and lets the
+write through. Graduating it to a deny is gated on these numbers. Note it asks a
+stricter question than its §8 counterpart: that one accepts a `same_person`
+anywhere in the run, including *after* the link, so link-then-score is a shadow
+hit and a post-run pass.
+
+**Re-measure; do not read a count out of this page.** As with §3's table, the
+corpus only grows:
+
+```sh
+make e2e-guardrail-shadow REPLAY=1 SINCE=all
+```
+
+`REPLAY=1` recomputes the check from each run's `tool_calls` and its fixture's
+committed seed tree. That is a distinct number from the *stored* count printed
+above it, and the distinction is the thing to understand before reading either:
+
+- The **stored** count covers only runs made after the live check shipped
+  (`2026-08-04 23:45Z`). At the time of writing that is **zero of 144 committed
+  runs** — the newest committed run predates the merge by an hour — which is why
+  the graduation gate ("run a real suite and read the entries") could not be answered
+  from the corpus at all. It needs no code: the next committed e2e run produces
+  stored entries by itself.
+- Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
+  current checkout, so a graded run committed on an unmerged branch is not
+  skipped, it is never seen. Two are known to sit outside `main` today, one of
+  them the first run to store live entries for this check at all. Read a rate
+  off an up-to-date `main` with in-flight fixture PRs merged, or it is biased at
+  the moment it is used.
+- The **replayed** count reads the whole pre-hook corpus: at the time of writing
+  **111 of the 137 runs that link a person have ≥1 gap (750 links, 72
+  fixtures)**, with one run skipped and named for having no committed seed tree.
+  It is a **lower bound** — the live hook may not yet see a `same_person` issued
+  in the same turn as the write, while the replay always sees the full prefix.
+  Its second job is scoring a candidate *narrowing* of the rule against history
+  before that narrowing ships.
+
+**Why a deny needs more than a number: the reason has to be satisfiable.** The
+original reason said a brand-new identity "should be scored before it is
+asserted", which the agent believes it did. The cause is an **id mismatch**, not
+laziness: `tree_edit` mints local ids (`I1`) and rejects caller-supplied ones,
+while `same_person` scores `primaryId1`/`primaryId2` *inside the caller's own
+gedcomx documents*. The one satisfying shape is to pass the tree side as
+`gedcomx2` with `primaryId2: "I1"`, which agents produced in 3 of 103 corpus
+runs. The reason text now names that shape, says the **entire batch** is
+rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
+median of 17 ops), and states the escape below.
+
+**One class of write genuinely cannot satisfy the gate — and one that looks like
+it can't, does.** `person-evidence/SKILL.md` scopes scoring to
+`record_search`-sourced assertions only ("Match scoring works **only** for
+`record_search`-sourced assertions"): an FTS-, image- or PDF-sourced assertion
+has a null `record_persona_id`, so there is no record persona to compare
+against. That case is real, and the reason's stated escape — record in the link's
+`rationale` that no score was obtainable, and proceed — is what keeps it
+satisfiable.
+
+The same skill also says a locally-minted stub returns a degenerate score to be
+treated as "no score available". **That guidance is stale, and acting on it would
+be the more expensive mistake**, because it excuses the agent from the exact call
+this layer exists to require. It dates from 2026-07-02; the match-engine
+mint-hardening that made an ARK-less focus person score on document content
+landed 2026-07-07, five days later. Probed live
+(`packages/engine/mcp-server/dev/probe-same-person-local-id.ts`), holding the
+record side and every fact constant and varying only the tree side's `ark`:
+
+| arm | tree focus | score |
+|---|---|---|
+| A | real ARK (control) | `0.999967` |
+| B1 | ARK removed, local id `I1` | `0.9999484` |
+| B2 | identical to B1, fresh random mint | `0.9999484` |
+| C | every tree ARK removed | `0.9999484` |
+
+B1 and B2 are identical although `randomFsId()` mints a different id per call,
+and stripping every ARK degrades nothing further — the score is document
+content, not identity resolution. **A newly-minted tree person is scorable, so
+the gate is achievable for it.** The consequence for graduation is the opposite
+of what the fire rate suggests on its own: the rate measures an agent that does
+not know the call shape, not a gate that cannot be met — which makes the reason
+rewrite the lever, and a later deny more defensible than the raw number implies.
+
+One caveat on the probe: it is a single pair with strongly agreeing name, date,
+place and a parent relationship. A minted person carrying thinner content will
+score lower — but that is a real weak-match signal, which is what the gate is
+for, not an ARK artifact.
+
+**Trying a deny on one fixture.** `make e2e-run TEST=<slug>
+PERSON_EVIDENCE_GUARD=deny` (default `shadow`) blocks the write instead of only
+recording it, bounded by a two-limit loop valve: per id set, and per run. Past
+either the write is **released** rather than denied again, because a denied
+`research_append` returns before `tool_call_count` and so charges no budget,
+while `activity_count` increments regardless — so without the valve the only stop
+is `max_turns` / the wall clock, the §10 failure mode the deny is supposed to
+avoid. Releasing falls through to the normal path and charges budget, which is
+the only bound a wedged agent can actually reach.
+
+Two things about a deny-mode run's output:
+
+- Its provenance entries carry `kind: "person_evidence_deny"`, and
+  `guardrail_shadow_report`'s stored scan **excludes** them. Without that they
+  would land in the shadow corpus indistinguishably and inflated — the valve
+  records several denials plus a release for one logical gap — corrupting the
+  number the graduation is gated on. Those entries also carry
+  `valve_released: true|false`, which is how you tell the two apart: `false` is a
+  write the gate actually blocked, `true` is one it let through because a limit
+  was reached. **Reading a deny-mode run's fire rate means counting
+  `valve_released: false` only** — the releases are the valve working, not
+  additional violations.
+- **Its `compliance` axis is not comparable to a shadow run's.** The denied write
+  never lands, so `find_person_evidence_missing_same_person` finds no
+  `person_evidence` entry for that person and its arm passes **vacuously**. The
+  mode is recorded in the runlog's `usage` block so a reader can tell.
 
 ## 5. Write-boundary invariant
 
@@ -212,12 +338,13 @@ also loads the plugin — but "the plugin loader does what you'd expect in the
 hosted path" is exactly the assumption issue #939 disproved for agents. Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
 same reason, so the redundancy is harmless. Deleting the SDK copy was declined
-(issue #1129, closed not-planned) — all three stay. **No test asserts the three
-agree**, so a future addition to `PROTECTED_PROJECT_FILES` can silently lag in
-two of them; that gap is `docs/architecture.md` §9.4's, and the three copies are
+(issue #1129, closed not-planned) — all three stay. The three copies are
 `packages/engine/plugin/hooks/guard_project_files.py`,
 `apps/server/app/agent/real_agent.py`, and
-`eval/harness/e2e/orchestrator.py`.
+`eval/harness/e2e/orchestrator.py`, and
+`eval/harness/tests/unit/test_write_lockdown_parity.py` runs all three against
+one vector set, so an addition to `PROTECTED_PROJECT_FILES` that lands in only
+some of them fails `make harness-test`.
 
 **Deliberate gaps.**
 
@@ -226,13 +353,42 @@ two of them; that gap is `docs/architecture.md` §9.4's, and the three copies ar
   their stdlib-only scripts through `Bash` so it cannot be revoked, and matching
   command text would deny a legitimate `python script.py research.json > out`
   while still missing a variable-built path. A false deny is the worse failure
-  mode: it turns a silent quality bug into a loud availability regression. No
-  bypass in the corpus has used the shell; close this if one appears in a runlog
-  or a feedback case.
+  mode: it turns a silent quality bug into a loud availability regression.
+
+  Close this if a bypass appears in a runlog or a feedback case — and that
+  condition is now **watched rather than asserted**. `make e2e-corpus` prints a
+  `bash protected-file access:` census (`eval/harness/e2e/corpus_report.py`)
+  over every committed e2e runlog: the total `Bash` calls naming a protected
+  file, and the write-shaped subset named individually. It prints at zero too,
+  so "nobody has touched these from the shell" cannot be confused with "the
+  counter stopped running".
+
+  **Measured 2026-08-09, whole corpus (`--since all`, 145 runs): 36 accesses,
+  34 of them reads, 2 write-shaped — and both of those were refused before they
+  ran.** The reads are `cat`, `wc -l`, `grep`, and `python3 -c json.load`
+  inspecting the working files, which is the traffic §6 declines to pattern-match
+  against. The two write-shaped calls are
+  `victor-spenard-parents/run-2026-07-08_12-31-17.json` and
+  `zuniga-rojas-parents/run-2026-07-09_19-45-45.json`, both a
+  `cat > …/tree.gedcomx.json << 'EOF'` heredoc seeding a starting tree, and both
+  answered `Permission to use Bash has been denied because Claude Code is
+  running in don't ask mode`. So the corpus still holds **zero successful shell
+  writes** to a protected file — but the earlier reading, that the shell route
+  is never *attempted*, does not survive the measurement. The agent reaches for
+  it; only the harness's permission mode stopped it, and that is not one of the
+  three guard copies. Cowork runs `permission_mode: "default"` and the hosted
+  path runs `bypassPermissions`, so neither environment has the thing that
+  refused these two.
+
+  This does not by itself close the gap — the false-deny argument above is
+  unchanged, and no *landed* shell write has been observed. It does move the
+  question from "has this ever happened" to "what stops it where the permission
+  prompt does not", which is the form the next decision has to take.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and caps at 50 items with no pagination. For
+  `localities`) and pages at 50 items per call — `offset` reaches items 51+,
+  and `truncated` says when to use it. For
   `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
   to the tree as `research_query` stands to `research.json`. Plenty of tools
   *open* the file: `project_context` (its `readJson` of `research.json` in
@@ -253,9 +409,11 @@ two of them; that gap is `docs/architecture.md` §9.4's, and the three copies ar
 
 Each copy is tested independently (`tests/packaging/plugin-hooks.test.ts` runs
 the real script; `apps/server/tests/test_write_lockdown.py`;
-`eval/harness/tests/unit/test_e2e_tree_block.py`) and **no test asserts the
-three agree** — a known divergence risk when `PROTECTED_PROJECT_FILES` next
-changes.
+`eval/harness/tests/unit/test_e2e_tree_block.py`), and
+`eval/harness/tests/unit/test_write_lockdown_parity.py` asserts the three
+**agree** — extracting each copy's constant and predicate with `ast` and running
+them against one vector set, so the next `PROTECTED_PROJECT_FILES` change cannot
+land in one copy only.
 
 ## 7. Caller-attributed recency check (shadow mode)
 
@@ -285,9 +443,6 @@ Design points that were paid for and should not be re-derived:
   `find_person_evidence_missing_same_person`, and
   `find_protected_writes_by_unnamed_delegate`.
 
-  **There is no `PostToolUse` hook** anywhere in `eval/harness/`, and nothing
-  here should be built on one existing.
-
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:
 
@@ -295,9 +450,8 @@ Design points that were paid for and should not be re-derived:
     launch acknowledgement (`Launching skill: <name>`); the skill's work happens
     in later turns of the same session. So `is_error` on a `Skill` entry catches
     an unknown-skill-name launch failure and nothing else. **The
-    invoke-then-let-it-fail evasion named at the top of this bullet is still
-    open** — closing it needs an instrument that observes skill *completion*,
-    which `ToolResultBlock` is not.
+    invoke-then-let-it-fail evasion named at the top of this bullet stays open**,
+    and the next block explains why it cannot be closed from here.
   - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
     from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
     without throwing, so a rejected write still records `is_error: false`
@@ -323,11 +477,44 @@ Design points that were paid for and should not be re-derived:
   writes (`primary: true`, `ParentChild`/`Couple`). A check watching only
   `research.json` misses both.
 
-**Why it is still shadow.** The window is a recency heuristic, not a guarantee,
-and its default was a first-cut guess. Graduating it to deny requires knowing
-the false-positive rate, because a mistuned window hard-denies legitimate writes
-and can produce a stuck loop against the harness's own stall/budget machinery.
-**Measure the false-positive rate first. Do not graduate it on intuition.**
+### What the success gate can and cannot see
+
+This layer is shadow-only **permanently**, and the reason is not that nobody has
+got round to the calibration. It is that the calibration has no instrument.
+
+Graduating §7 was gated on a false-positive rate. That rate is not obtainable
+while "did the skill succeed" is read off `Skill` entries, because those entries
+carry launch acknowledgements — a census of the committed corpus returns 18
+distinct values across 1,242 entries, all of the form `Launching skill: <name>`
+plus one unknown-skill error. Three candidate instruments were checked and none
+observes completion:
+
+- **Trace-based** — between a launch and the next one, did the skill's own tool
+  sequence appear? Measured over 358 guardrail-skill episodes
+  (`make e2e-skill-episodes SINCE=all`): the highest-recall in-episode tool for
+  **all four** skills is `research_append` — the protected write itself. A gate
+  built on it would credit a skill for the very write §7 exists to gate. Nothing
+  reaches recall ≥ 0.30 with precision ≥ 0.90; the best is `materialize_facts`
+  for `person-evidence` at 0.84. And "launched, did nothing" has no ledger shape:
+  empty episodes are 4 of 358, while the failure mode is an episode whose only
+  event *is* the inline write, which is indistinguishable from success.
+- **A `PostToolUse` hook** — the SDK does expose one (along with
+  `SubagentStart`/`SubagentStop`), though `eval/harness/` registers only
+  `PreToolUse` and `Stop`. It does not help: on a `Skill` call it fires at
+  launch-ack, reporting exactly what `ToolResultBlock` already does.
+  `SubagentStop` fires only for Task-spawned agents, and a `Skill` runs inline in
+  the same session with no `agent_id` (§2).
+- **A skill-side completion marker** — self-attestation, refused by the
+  `match_score` precedent at the top of this section.
+
+**What would change the answer:** giving a guardrail skill an identity that emits
+a completion signal — i.e. converting it to an agent, which §9 costs out. Absent
+that, do not re-open this as a tuning task; the window is not the variable. The
+count barely moves from window 10 to 150 (§3), which was the early tell.
+
+The window itself stays at 40 and the layer stays instrumented, because the
+shadow signal is still worth having as measurement. What is retired is the
+expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
@@ -363,10 +550,16 @@ this section before reopening one.
   agent as unreliable *and silent* — read on some tests, ignored on others,
   over-applied on others; 6/19 against a 12–14/19 baseline. The only sanctioned
   fix is full inlining (`CLAUDE.md`, "No playbook/reference files for agents"),
-  and inlined, `person-evidence` (941 lines) and `conflict-resolution` (1006)
-  would each set a new high-water mark for a plugin agent body.
-  `research-exhaustiveness` (413) and `proof-conclusion` (509) are the cheap
-  candidates if this is revisited.
+  and inlined, `person-evidence` (974 lines) and `conflict-resolution` (1007)
+  would each set a new high-water mark for a plugin agent body — against
+  `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
+  `proof-conclusion` (519) are the cheap candidates if this is revisited.
+
+  **This is the only route that reopens §7.** An agent is the one form a
+  guardrail skill can take that emits a completion signal (`SubagentStop`) and
+  carries an `agent_id`, which is what §7's success gate has never had. Weigh
+  that against #702 before dismissing it as attribution-only plumbing — but weigh
+  #702 seriously too: it is a measured regression, not a theoretical risk.
 - **A thin agent whose only action is `Skill('<name>')`** — keeps SKILL.md as
   the single source of truth while buying a real `agent_id`. Plausible, because
   #702's failure was a *conditional, secondary* fetch whereas this would be
@@ -408,6 +601,21 @@ that outlive any one of them.
   This is the reason §7 ships in shadow and the reason `Bash` is left open in
   §6 — in both cases deliberately, in favor of the failure mode that is merely
   wrong over the one that is stuck.
+- **A gate can be unsatisfiable by doctrine, not just mistuned** — and the
+  owning skill's doctrine can itself be stale. §4's live provenance check asks
+  for a `same_person` score on writes `person-evidence` says cannot be scored.
+  One of those two claims is true (a non-`record_search` assertion has no
+  `record_persona_id` to compare against); the other — that a locally-minted stub
+  returns a degenerate score — was **refuted by probing the live API**, and had
+  been superseded by a match-engine change five days after it was written. A
+  fire-rate measurement distinguishes none of this: an impossible gate, a
+  mistuned one, and an achievable one the agent has been told to skip all look
+  identical from the count. Before graduating any layer here, read the owning
+  skill's doctrine for cases where no call sequence satisfies the gate — **and
+  date each claim against the code it describes** rather than trusting it,
+  because a stale excuse in a skill body suppresses the very call the guardrail
+  is measuring. Narrowing this check to `record_search`-sourced assertions is
+  open work; correcting the stale stub guidance is separate skill-prose work.
 - **`Skill`-tool content injection under compaction is unverified.** All four
   guardrail skills `Read` their own `references/*.md` on demand, in-session. If
   that read is as unreliable as #702 found the agent case to be, the failure
@@ -426,8 +634,16 @@ that outlive any one of them.
 
 ## 11. Caller-attributed protected writes (shadow mode)
 
-**Status:** shadow only. Instrumented, never denied. Graduating it is gated on
-the same calibration as §7.
+**Status:** shadow only. Instrumented, never denied.
+
+**Its gate is its own false-positive rate, not §7's.** This layer needs no
+completion instrument — it keys on the caller's `agent_id`/`agent_type`, a fact
+the PreToolUse hook stamps per call ("Why this needs no window", below). So the
+finding that closes §7's graduation says nothing about this one. What it does
+need is a sample, and the sample is thin: attribution rides only on runs made
+after PR #1027, which is 6 of 145 committed runs, one of them carrying any
+violation at all. Graduate on an accumulated count decided in advance — not on a
+date, and not on that single run.
 
 ### The rule
 
@@ -515,9 +731,7 @@ move the `compliance` axis until its false-positive rate is measured. Detector:
 - `docs/specs/research-append-tool-spec.md` §5, §11 — the write-boundary
   invariant and the `extraction_append` lane-gating precedent this extends
 - `docs/architecture.md` §5 — the three capability-binding surfaces and which
-  of them bind in production; §9.4 lists what nothing checks
+  of them bind in production; §9.4 points at what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
-- Issues #911 (calibrate §7), #913 (what past verdicts are worth), #1054
-  (retain a hosted ledger, then port §8), #998 (closed — §8 check 1's
-  proof-conclusion arm now takes the `starting_tree` baseline),
-  #940 (closed — the production port of §6)
+- Issue #1054 — retain a hosted tool-call ledger, then port §8. The one open
+  dependency named on this page; §8 cannot reach production without it.

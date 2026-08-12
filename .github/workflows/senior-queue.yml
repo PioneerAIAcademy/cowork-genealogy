@@ -1,0 +1,525 @@
+name: senior-queue
+
+# Labels a PR once it is actually ready for senior review — CI green, an
+# approving review from someone other than the author, no outstanding
+# changes-requested, and no unresolved review threads — with the label for the
+# team that owns its changed paths:
+#
+#   is:open is:pr label:ready-for-senior-genealogist
+#   is:open is:pr label:ready-for-senior-developer
+#
+# A PR whose files span both teams gets both labels; both approvals are
+# required, so both queues need to see it.
+#
+# The senior review is the SECOND review, and it happens only after the first
+# round has been answered. That is what the changes-requested and unresolved-
+# thread rules are for. The ruleset blocks merge on an unresolved thread
+# (`required_review_thread_resolution: true`) but not on an outstanding
+# changes-requested, and neither of them keeps a PR out of a review QUEUE —
+# so without these two rules a PR is surfaced to a senior with round one open.
+#
+# AN APPROVAL ANSWERS THE APPROVER'S OWN THREADS. Reviewers here routinely
+# re-review, approve, and never go back to click Resolve, so requiring the click
+# made the queue lag the review by however long that took. A thread counts as
+# closed FOR QUEUEING once the reviewer who OPENED it submits an approval later
+# than their own last comment on it. Threads opened by anyone who has not
+# approved keep blocking, and a fresh changes-requested puts every one of that
+# reviewer's threads back.
+#
+# This does NOT resolve the thread, so `required_review_thread_resolution` still
+# blocks the MERGE until a human clicks Resolve — by design the person merging,
+# who is already looking at the PR. Auto-resolving was built and reverted: the
+# `resolveReviewThread` GraphQL mutation is refused to `GITHUB_TOKEN` with
+# "Resource not accessible by integration" even with `pull-requests: write`,
+# verified live on 2026-08-11 against PR #1523. If you re-attempt it, it needs an
+# identity this workflow does not have — the Projects App (`PROJECT_APP_ID`) is
+# the only other one in this repo, and whether it can call that mutation is
+# untested. Do not add the mutation back without testing the refusal first.
+#
+# WHY A LABEL AND NOT THE REVIEW REQUEST. CODEOWNERS makes GitHub request the
+# owning team the instant a matching PR opens, when CI is usually red and nobody
+# has read it — accurate as "a PR exists", useless as "this needs you". The
+# obvious fix is to strip the request and re-add it when ready. That is not
+# possible: while `require_code_owner_review` is active, GitHub refuses to remove
+# a CODEOWNERS-mandated team request. `DELETE /pulls/{n}/requested_reviewers`
+# returns HTTP 200 and does nothing — no error, no timeline event, team still
+# listed on a fresh read. Verified three ways (GITHUB_TOKEN, org-admin PAT,
+# hand-written body). Do not re-attempt without re-testing that endpoint; the
+# failure mode is silent success, which reads as working.
+#
+# The known alternative, still unverified: the `protect-main` ruleset's
+# `pull_request` rule has a `required_reviewers` parameter, currently `[]`. If it
+# accepts a team scoped to file patterns, senior approval could be enforced there,
+# the CODEOWNERS team lines dropped, and nothing would mandate the request — which
+# would replace this workflow rather than extend it. Worth settling before
+# building further on the label.
+#
+# ENFORCEMENT IS UNCHANGED. `require_code_owner_review` gates the merge. This
+# workflow only decides what is visible in a queue; it cannot let anything merge
+# that could not merge before.
+#
+# ADD-ONLY. Once labelled a PR stays labelled, even if it later goes red.
+# Demotion would make PRs flicker out of the queue mid-review.
+#
+# THREE TRAPS THIS FILE HAS HIT BEFORE, each of which made the job go green
+# while doing nothing:
+#
+#   1. SELF must equal the JOB's name, because that is what a check run is named.
+#      Setting it to the workflow's name matched nothing, so every run counted
+#      its own in-progress check and concluded "CI still running". Keep `SELF`
+#      and the job's `name:` identical.
+#   2. The label write was wrapped in a try/catch that downgraded failure to a
+#      warning, and the API then no-op'd with HTTP 200. There is no catch around
+#      the write, and the label is read back to confirm it landed.
+#   3. Every check run ever attached to a sha comes back from `listForRef`, so a
+#      failure that was later re-run green still read as "CI failing" and the PR
+#      could never enter a queue again. See newestPerName().
+#
+# When changing the readiness rules, verify against a real approved PR. A
+# `workflow_dispatch` dry run does not exercise the self-filter at all: a
+# dispatch's check run lands on the default branch's sha, not on any PR's head.
+# It DOES exercise everything else, including both rules below, and it makes no
+# writes — so a dispatch dry run is the way to check a readiness change against
+# the live board before letting it label or resolve anything.
+#
+# THE EVENTS ALONE CANNOT KEEP THE QUEUE CURRENT. `check_suite` never fires here
+# (see the trigger below), so nothing observes CI turning green; a PR approved
+# while CI is still running gets its last event at approval time and is never
+# re-evaluated. The events are the fast path, the schedule is what makes the
+# queue converge. If you remove the schedule, something else must answer "what
+# re-checks a PR after CI finishes?"
+
+# TRIGGER CHOICE: `pull_request_target`, because developers without write access
+# contribute from forks and a `pull_request` run gets a read-only token there,
+# so `addLabels` would 403.
+#
+# Safe here for two reasons, both of which must stay true: the job is a single
+# inline `actions/github-script` step with no `actions/checkout` and no `run:`,
+# so nothing fork-authored ever executes; and the script is read from the base
+# branch, so a fork cannot edit the readiness rules in its own PR. Adding a
+# checkout of PR content would turn this into a pwn-request vector.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  check_suite:
+    # DEAD TRIGGER, kept only to document that it is dead. Every check suite here
+    # is created by an Actions workflow using `GITHUB_TOKEN`, and GitHub does not
+    # start a workflow run from a `GITHUB_TOKEN`-triggered event. The `schedule`
+    # below is what actually covers "CI turned green after the last PR event".
+    types: [completed]
+  schedule:
+    # Every 30 min. Scheduled runs are best-effort — GitHub delays or drops them
+    # under load — which is fine for a converging add-only sweep and is the other
+    # reason not to rely on the schedule alone.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change across all open PRs, without touching any"
+        type: boolean
+        default: true
+
+permissions:
+  # `issues: write` is what authorizes labelling (labels live on the issues API
+  # even for PRs); `pull-requests: write` is granted alongside it because the
+  # mapping between the two is inconsistent enough that relying on one alone has
+  # bitten other repos. Neither grant reaches `resolveReviewThread` — see the
+  # approval note at the top.
+  issues: write
+  pull-requests: write
+  checks: read
+  contents: read
+
+concurrency:
+  # Per-PR events serialize per PR. Sweeps share ONE key so a delayed cron run
+  # cannot race the next one; they are add-only and idempotent, so queueing
+  # rather than cancelling costs nothing.
+  group: >-
+    senior-queue-${{ github.event.pull_request.number
+      || github.event.check_suite.id
+      || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  # The job name IS the check-run name, and the script excludes its own check run
+  # by that name. Keep the two in sync — see SELF.
+  promote:
+    name: senior-queue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        with:
+          script: |
+            const SELF = 'senior-queue';
+
+            const TEAMS = {
+              'senior-genealogists': {
+                label: 'ready-for-senior-genealogist',
+                color: '0E8A16',
+                description: 'CI green + peer-approved; awaiting senior genealogist',
+              },
+              'senior-developers': {
+                label: 'ready-for-senior-developer',
+                color: '1D76DB',
+                description: 'CI green + peer-approved; awaiting senior developer',
+              },
+            };
+
+            const BAD     = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'stale']);
+            const PENDING = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+
+            const dryRun = process.env.DRY_RUN === 'true';
+            const { owner, repo } = context.repo;
+
+            // ---- CODEOWNERS is the source of truth for routing ---------------
+            // Read from the DEFAULT BRANCH, never from the PR: a fork must not be
+            // able to re-route its own review by editing CODEOWNERS in its branch.
+            async function loadCodeowners() {
+              const { data } = await github.rest.repos.getContent({
+                owner, repo, path: '.github/CODEOWNERS',
+                ref: (await github.rest.repos.get({ owner, repo })).data.default_branch,
+              });
+              const text = Buffer.from(data.content, 'base64').toString('utf8');
+              const rules = [];
+              const unknown = [];
+              for (const raw of text.split('\n')) {
+                const line = raw.replace(/#.*$/, '').trim();
+                if (!line) continue;
+                const [pattern, ...owners] = line.split(/\s+/);
+                const teams = owners
+                  .filter(o => o.startsWith('@') && o.includes('/'))
+                  .map(o => o.split('/')[1]);
+                if (!teams.length) continue;
+                // Only the pattern shapes this repo's CODEOWNERS actually uses.
+                // Anything else is REPORTED, not silently treated as non-matching —
+                // a mis-parsed rule would route a PR to the wrong queue with no sign.
+                let test;
+                if (pattern === '*')                      test = () => true;
+                else if (/^\*\.[A-Za-z0-9.]+$/.test(pattern))
+                                                          test = f => f.endsWith(pattern.slice(1));
+                else if (/^\/.*\/$/.test(pattern))        test = f => f.startsWith(pattern.slice(1));
+                // A bare filename (Makefile, .gitattributes) matches that
+                // basename at any depth, which is how GitHub resolves a
+                // slash-free pattern.
+                else if (/^[A-Za-z0-9._-]+$/.test(pattern))
+                                                          test = f => f.split('/').pop() === pattern;
+                else { unknown.push(pattern); continue; }
+                rules.push({ pattern, test, teams });
+              }
+              return { rules, unknown };
+            }
+
+            // Last matching rule wins, exactly as GitHub resolves CODEOWNERS.
+            function ownersOf(file, rules) {
+              let teams = [];
+              for (const r of rules) if (r.test(file)) teams = r.teams;
+              return teams;
+            }
+
+            // ---- the two decision rules, kept pure and testable ---------------
+            // Both are lifted out of this file verbatim by
+            // .github/tests/senior-queue-readiness.test.mjs, so they must stay
+            // top-level `function` declarations that close on a column-0 brace.
+
+            // A sha keeps EVERY check run ever attached to it, and
+            // `checks.listForRef`'s default `latest` filter dedupes per check
+            // SUITE, not per check NAME. Re-triggering a workflow on the same
+            // commit — which is exactly what applying `eval-cosmetic-skip` does —
+            // opens a second suite, so the first run's `failure` stays visible
+            // forever and this workflow reads the sha as failing however many
+            // times CI is re-run green. Add-only labelling means nothing ever
+            // recovers such a PR: it cannot reach a queue until someone pushes a
+            // new commit. PR #1523 sat out of both queues on a `runlogs` failure
+            // that had been re-run green 18 hours earlier.
+            //
+            // Keeping only the newest run per name is how branch protection
+            // resolves a required check. It does mean two DIFFERENT workflows
+            // sharing one job name collapse into one — but such a pair is already
+            // ambiguous to branch protection, so rename one rather than key this
+            // on the workflow.
+            function newestPerName(runs) {
+              const newest = new Map();
+              for (const c of runs) {
+                // A still-running attempt has no completed_at, and its started_at
+                // is later than the completed_at of the run it supersedes.
+                const at = Date.parse(c.completed_at || c.started_at || '') || 0;
+                const prev = newest.get(c.name);
+                if (!prev || at >= prev.at) newest.set(c.name, { at, run: c });
+              }
+              return [...newest.values()].map(v => v.run);
+            }
+
+            // An approval submitted after the reviewer's own last word in a
+            // thread IS their answer to it — they read the reply, or decided it
+            // no longer matters, and said so in the only way that carries weight.
+            // Holding the PR out of the senior queue until they also click
+            // Resolve makes the queue lag the review by however long that takes.
+            // These threads are counted as answered here and NOT resolved — the
+            // mutation is refused to this token, see the approval note at the top
+            // — so the merge still waits on a human click.
+            //
+            // Scoped per thread by its OPENER: an approval from one reviewer says
+            // nothing about a thread another reviewer opened, and those keep
+            // blocking. `approvals` holds only reviewers whose LATEST standing is
+            // APPROVED, so a re-requested change re-blocks every thread — and it
+            // is built from a map the PR's own author is already excluded from,
+            // so nobody can clear their own threads by approving their own PR.
+            function supersededThreads(threads, approvals) {
+              const superseded = [];
+              for (const t of threads) {
+                if (t.isResolved) continue;
+                const comments = t.comments.nodes;
+                if (!comments.length) continue;
+                const opener = comments[0].author && comments[0].author.login;
+                const approvedAt = opener && approvals.get(opener);
+                if (!approvedAt) continue;
+                // An unwalked page could hold a later comment from the opener,
+                // which would make the approval look like the last word when it
+                // is not. Leave the thread blocking rather than guess.
+                if (t.comments.pageInfo.hasNextPage) continue;
+                const lastWord = comments
+                  .filter(c => c.author && c.author.login === opener)
+                  .reduce((max, c) => Math.max(max, Date.parse(c.createdAt) || 0), 0);
+                if (Date.parse(approvedAt) > lastWord) superseded.push(t.id);
+              }
+              return superseded;
+            }
+
+            const { rules, unknown } = await loadCodeowners();
+            if (!rules.length) {
+              core.setFailed('parsed 0 rules out of .github/CODEOWNERS — refusing to label ' +
+                             'anything, since every PR would look unowned.');
+              return;
+            }
+            if (unknown.length) {
+              core.warning(`CODEOWNERS patterns this workflow cannot match, so paths they ` +
+                           `own may be routed to the wrong queue: ${unknown.join(', ')}. ` +
+                           `Teach loadCodeowners() the shape rather than ignoring it.`);
+            }
+            core.info(`parsed ${rules.length} CODEOWNERS rule(s)`);
+
+            // ---- which PRs to evaluate --------------------------------------
+            const sweep = context.eventName === 'schedule'
+                       || context.eventName === 'workflow_dispatch';
+
+            let numbers = [];
+            if (sweep) {
+              const open = await github.paginate(github.rest.pulls.list,
+                { owner, repo, state: 'open', per_page: 100 });
+              numbers = open.map(p => p.number);
+            } else if (context.eventName === 'check_suite') {
+              numbers = (context.payload.check_suite.pull_requests || []).map(p => p.number);
+              if (numbers.length === 0) {
+                const sha = context.payload.check_suite.head_sha;
+                const open = await github.paginate(github.rest.pulls.list,
+                  { owner, repo, state: 'open', per_page: 100 });
+                numbers = open.filter(p => p.head.sha === sha).map(p => p.number);
+              }
+            } else {
+              numbers = [context.payload.pull_request.number];
+            }
+
+            // ---- readiness ---------------------------------------------------
+            async function evaluate(number) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+              const labels = pr.labels.map(l => l.name);
+              const blank = { pr, labels, wanted: [], ready: false, answered: [] };
+
+              if (pr.state !== 'open') return { ...blank, reasons: ['not open'] };
+              if (pr.draft)            return { ...blank, reasons: ['draft'] };
+
+              // Peer review: latest standing per reviewer, author excluded. Any
+              // non-author approval counts — deliberately not checking team
+              // membership, which would need a token with `read:org`.
+              const reviews = await github.paginate(github.rest.pulls.listReviews,
+                { owner, repo, pull_number: number, per_page: 100 });
+              const latest = new Map();
+              for (const r of reviews) {
+                if (!r.user || r.user.login === pr.user.login) continue;
+                if (r.state === 'COMMENTED') continue;
+                latest.set(r.user.login, { state: r.state, at: r.submitted_at });
+              }
+              const standings = [...latest.values()].map(s => s.state);
+              // When a reviewer's latest standing is APPROVED, that approval is
+              // their answer to every thread they opened before it — see
+              // supersededThreads().
+              const approvals = new Map([...latest]
+                .filter(([, s]) => s.state === 'APPROVED')
+                .map(([login, s]) => [login, s.at]));
+
+              const [checks, status, files, threads] = await Promise.all([
+                github.paginate(github.rest.checks.listForRef,
+                  { owner, repo, ref: pr.head.sha, per_page: 100 }),
+                github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha }),
+                github.paginate(github.rest.pulls.listFiles,
+                  { owner, repo, pull_number: number, per_page: 100 }),
+                // Unresolved review comments mean round one is still open. Only
+                // GraphQL exposes resolution state. The ruleset blocks MERGE on an
+                // unresolved thread, but nothing stops such a PR being surfaced to a
+                // senior as ready — which is what this check is for.
+                github.graphql(`
+                  query($owner:String!, $repo:String!, $number:Int!) {
+                    repository(owner:$owner, name:$repo) {
+                      pullRequest(number:$number) {
+                        reviewThreads(first:100) {
+                          pageInfo { hasNextPage }
+                          nodes {
+                            id
+                            isResolved
+                            comments(first:100) {
+                              pageInfo { hasNextPage }
+                              nodes { createdAt author { login } }
+                            }
+                          }
+                        } } } }`,
+                  { owner, repo, number }),
+              ]);
+
+              // Drop this workflow's own check runs. Two mechanisms, both load-
+              // bearing: the run-id match is exact but covers only THIS run, and an
+              // EARLIER senior-queue run on the same sha that ended in `failure`
+              // would otherwise read as "CI failing" — the name prefix catches that.
+              const isSelf = c =>
+                (c.details_url || '').includes(`/actions/runs/${context.runId}/`)
+                || (c.name || '').startsWith(SELF);
+              // newestPerName drops superseded attempts — without it a failure
+              // that was later re-run green locks the PR out permanently.
+              const current  = newestPerName(checks.filter(c => !isSelf(c)));
+              const failed   = current.filter(c => BAD.has(c.conclusion));
+              const running  = current.filter(c => PENDING.has(c.status));
+              const statuses = status.data.statuses || [];
+              const statusFailed = statuses.filter(s => s.state === 'failure' || s.state === 'error');
+
+              // Which senior teams own anything in this diff.
+              const owning = new Set();
+              for (const f of files) for (const t of ownersOf(f.filename, rules)) {
+                if (TEAMS[t]) owning.add(t);
+              }
+              const wanted = [...owning].map(t => TEAMS[t].label);
+
+              // A page-2 unresolved thread would otherwise read as "all resolved",
+              // so an un-walked page is reported rather than assumed clean.
+              const rt = threads.repository.pullRequest.reviewThreads;
+              // Threads whose author approved afterwards do not hold up the
+              // queue. They are still open, and still block the merge — act()
+              // logs the count so the discrepancy is visible rather than implied.
+              const answered = supersededThreads(rt.nodes, approvals);
+              const unresolved =
+                rt.nodes.filter(t => !t.isResolved).length - answered.length;
+
+              const reasons = [];
+              if (!standings.includes('APPROVED'))         reasons.push('no peer approval');
+              if (standings.includes('CHANGES_REQUESTED')) reasons.push('changes requested');
+              if (unresolved)                              reasons.push(`${unresolved} unresolved review thread(s)`);
+              if (!unresolved && rt.pageInfo.hasNextPage)
+                reasons.push('more than 100 review threads — resolution not fully evaluated');
+              if (failed.length)       reasons.push(`CI failing: ${failed.map(c => c.name).join(', ')}`);
+              if (statusFailed.length) reasons.push(`status failing: ${statusFailed.map(s => s.context).join(', ')}`);
+              if (running.length)      reasons.push(`CI still running (${running.length})`);
+              if (current.length === 0 && statuses.length === 0) reasons.push('no CI has reported');
+              // A PR owned by no senior team needs no senior review, so there is
+              // nothing to queue — distinct from "not ready".
+              if (!wanted.length)      reasons.push('no senior-owned path');
+
+              return { pr, labels, wanted, ready: reasons.length === 0, reasons, answered };
+            }
+
+            // ---- label bootstrap --------------------------------------------
+            async function ensureLabels() {
+              for (const { label, color, description } of Object.values(TEAMS)) {
+                try {
+                  await github.rest.issues.getLabel({ owner, repo, name: label });
+                } catch (e) {
+                  if (e.status !== 404) throw e;
+                  if (dryRun) { core.info(`would create label ${label}`); continue; }
+                  await github.rest.issues.createLabel({ owner, repo, name: label, color, description });
+                  core.info(`created label ${label}`);
+                }
+              }
+            }
+            await ensureLabels();
+
+            // ---- act ---------------------------------------------------------
+            // No try/catch around the write, and the labels are read back: an
+            // earlier version downgraded a failed write to a warning and the API
+            // then no-op'd with HTTP 200, so the job went green having done nothing.
+            async function act(n) {
+              const { pr, labels, wanted, ready, reasons, answered } = await evaluate(n);
+              const missing = wanted.filter(l => !labels.includes(l));
+              let action;
+
+              // Say so rather than leave a silently-shrinking count: someone
+              // reading this log against the PR must be able to see that N open
+              // threads were discounted, and why.
+              if (answered.length) {
+                core.info(`#${n} discounted ${answered.length} open thread(s) whose author ` +
+                          `approved afterwards; they still block the merge until resolved`);
+              }
+
+              if (ready && !missing.length) {
+                action = 'already queued';
+              } else if (ready && dryRun) {
+                action = `WOULD add ${missing.join(', ')}`;
+              } else if (ready) {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: missing });
+
+                const { data: after } = await github.rest.issues.listLabelsOnIssue({
+                  owner, repo, issue_number: n });
+                const names = after.map(l => l.name);
+                const stillMissing = missing.filter(l => !names.includes(l));
+                if (stillMissing.length) {
+                  core.setFailed(
+                    `#${n}: addLabels returned success but ${stillMissing.join(', ')} is not on ` +
+                    `the PR. Treat this as a permissions or API-behaviour change, not a ` +
+                    `transient error.`);
+                  action = 'FAILED to label';
+                } else {
+                  action = `added ${missing.join(', ')}`;
+                }
+              } else {
+                // Add-only: a labelled PR is never unlabelled.
+                action = labels.some(l => wanted.includes(l)) ? 'not ready, left queued' : 'not ready';
+              }
+
+              const queue = wanted.length ? wanted.join(', ') : '—';
+              core.info(`#${n} ${action}${reasons.length ? ' — ' + reasons.join('; ') : ''}`);
+              return [`#${n}`, pr.user.login, queue, action, reasons.join('; ') || '—'];
+            }
+
+            const rows = [];
+            const errors = [];
+            for (const n of numbers) {
+              if (!sweep) { rows.push(await act(n)); continue; }
+              // A sweep must not lose every other PR to one PR's transient API
+              // error. This catch never decides whether a label write succeeded —
+              // that is settled by the read-back inside act() — and every error
+              // caught here still fails the job via setFailed below.
+              try {
+                rows.push(await act(n));
+              } catch (e) {
+                errors.push(`#${n}: ${e.message}`);
+                core.error(`#${n} errored — ${e.message}`);
+                rows.push([`#${n}`, '—', '—', 'ERRORED', e.message]);
+              }
+            }
+            if (errors.length) {
+              core.setFailed(
+                `${errors.length} of ${numbers.length} PR(s) errored during the sweep; ` +
+                `the rest were evaluated. ${errors.join(' | ')}`);
+            }
+
+            await core.summary
+              .addHeading(dryRun ? 'senior-queue (dry run)' : 'senior-queue', 3)
+              .addRaw(Object.values(TEAMS).map(t => `\`is:open is:pr label:${t.label}\``).join(' · '))
+              .addTable([
+                [{ data: 'PR', header: true }, { data: 'Author', header: true },
+                 { data: 'Queue', header: true }, { data: 'Action', header: true },
+                 { data: 'Blocking', header: true }],
+                ...rows,
+              ])
+              .write();

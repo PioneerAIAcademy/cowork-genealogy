@@ -4,6 +4,7 @@
     "skill": "research-plan",
     "name": "Execute-search request should route to search-records, not research-plan",
     "type": "negative",
+    "holdout": true,
     "description": "User says 'go search the 1880 census for Patrick Flynn now' — this is an execution request, not a planning request. research-plan should NOT accept this. It should route the user to search-records.",
     "tags": ["negative", "routing", "search-records", "execution-vs-planning"]
   },
