@@ -999,10 +999,12 @@ def find_unpersisted_conflict_resolutions(
     ``blocks_question_ids``; NAMED (its ``c_`` id) in the stop-criterion prose; or —
     when the prose names no ``c_`` id at all — simply existing. Each means the
     conflict was written to ``conflicts[]``, so the viewer's Conflicts section is
-    populated and this is not the #1317 miss. A fire therefore reads as **reliance
-    not linked**, NOT "conflict never written" — ``blocks_question_ids`` is
-    schema-required but legitimately empty, so a resolved conflict can exist,
-    populate the viewer, and still not carry the block.
+    populated and this is not the #1317 miss. A fire therefore means **no resolved
+    conflict backs this conclusion**: either ``conflicts[]`` holds no resolved entry
+    at all, or the stop-criterion names a ``c_`` id that is not resolved. The fourth
+    way is what keeps that true — ``blocks_question_ids`` is schema-required but
+    legitimately empty, so without it a resolved conflict could exist, populate the
+    viewer, and still be reported as unpersisted.
 
     SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
     (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
@@ -1115,8 +1117,7 @@ def find_unpersisted_conflict_resolutions(
                     "conflict per its exhaustive_declaration.stop_criteria."
                     "conflict_resolution, but no resolved conflicts[] entry is linked "
                     "to it (not cited on resolved_conflict_ids, not named in the "
-                    "stop-criterion, and no resolved conflict blocks this question) — "
-                    "read as 'reliance not linked', not 'conflict never written'"
+                    "stop-criterion, and no resolved conflict blocks this question)"
                 ),
             }
         )

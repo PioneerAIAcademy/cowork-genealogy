@@ -1257,12 +1257,13 @@ a required field that is always populated would otherwise default to firing) tha
 on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
 resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
 stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
-exists at all). A resolved conflict that exists but is linked to nothing still
-fires, so read this count as **"reliance not linked"**, not "conflict never
-written". The alpha-tester case is the strict subset where `conflicts[]` is
-empty: the viewer's Conflicts section stayed blank because nothing structured
-was persisted. Gated on a written conclusion so
-an honest partial run does not fire. Like the citation-nulling check it **logs to
+exists at all). A resolved conflict that exists but is linked to nothing fires
+only when the stop-criterion names a `c_` id that is not resolved; when it names
+no id, an existing resolved entry silences the check. So read the count as **"no
+resolved conflict backs this conclusion"** — every firing on the committed corpus
+today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
+viewer's Conflicts section stayed blank because nothing structured was persisted.
+Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "conflict_unpersisted"` for their own bucket
 (`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
