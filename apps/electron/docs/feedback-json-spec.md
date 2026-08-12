@@ -220,9 +220,11 @@ consuming skills can rely on it:
   the same filtering `feedback.ts` already does today. System
   messages, hook outputs, and other SDK-internal entries are
   excluded.
-- **Thinking blocks are stripped** from assistant messages before
-  writing. The skill that summarizes the transcript should not see
-  the model's internal reasoning.
+- **Thinking blocks are kept** in assistant messages. The agent's
+  internal reasoning is the highest-value signal for triage and exists
+  nowhere in the persisted project files, so it is retained rather than
+  stripped (`feedback.ts` and `feedback.py` both keep it; pinned by
+  `test_session_log_keeps_thinking_and_filters_non_conversation`).
 - **Entries are filtered to the submitting project's `cwd`** —
   multi-project sessions get one log per submission, scoped to
   the failing project only.

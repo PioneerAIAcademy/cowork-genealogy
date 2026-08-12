@@ -1005,9 +1005,23 @@ Three integrity rules make the agreement number trustworthy:
   human label is independent of the judge under test. Blindness is a property of
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
-  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
-  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
-  deferred to `/interpret-e2e-result`, which is itself blind to them.
+  must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
+  compliance axis, and — when the judge reached no conclusion at all — a
+  `no grade:` line saying which cause it was, and stops there; `verdict`,
+  `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
+  is itself blind to them.
+
+  That third line is on the harness-fact side of this rule, not an exception to
+  it. It distinguishes a judge that raised (quoting the judge's own error text)
+  from an agent that produced no final tree, from `--skip-judge`; none of those
+  is a genealogical conclusion, and the presence of an error says nothing about
+  what the agent recovered. It exists because the previous single fixed string
+  printed the same words for all three, directly beneath
+  `stop_reason: completed`, so a judge crash read as "this run succeeded and
+  produced nothing" — indistinguishable, in a batch, from runs that genuinely
+  failed. **Gradedness is a separate axis from committability**: after a judge
+  crash becomes committable, a run can be ungraded *and* worth committing for
+  re-grading, so the two are reported on their own lines.
 
   > **Caveat on annotations collected before 2026-07-31.** Until then the
   > harness printed the judge's verdict *and* its `proof_quality` score to the
@@ -1126,8 +1140,11 @@ the judge.
 
 Unlike the three hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
-repository's shadow → measure → graduate posture (same as §7's recency check
-and the `same_person` provenance check). The gate on a `proof_summaries` entry is
+repository's shadow → measure → graduate posture (same as the `same_person`
+provenance check). **Not** the same as §7's recency check, which shares the
+posture but not the prospects: its measure step has no instrument, so it is
+shadow permanently rather than pending — `guardrail-enforcement-spec.md` §7,
+"What the success gate can and cannot see." The gate on a `proof_summaries` entry is
 deliberate: tree citations are populated by `proof-conclusion` at *upload*
 time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
@@ -1137,13 +1154,35 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
+**A fifth check runs in shadow mode only: the warnings guardrail was never
+consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
+`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
+relationships do not count) for which `person_warnings` — the cheapest, LLM-free
+guardrail — was never successfully called. It keys on the `person_warnings`
+**tool** across all server spellings, not the `check-warnings` skill, so it
+catches a direct-tool path and a skill that launches but fails before reaching the
+tool. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "warnings_unchecked"` for its own bucket
+(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
+diverged only on whether the parentage write was delegated to `proof-conclusion`
+(which carries the check-warnings step) or inlined by the orchestrator (which does
+not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
+check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
+an inlined write is still gated — is gated on reading this fire rate across the
+corpus first**; not decided here.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
 `not_checked` rather than `pass`, distinguishing pre-detector code by the
 presence of the `guardrail_shadow_violations` key (the two shipped in the same
-commit). Retroactively scoring the corpus is tracked as issue #913, and needs
-the checks replayed at a pinned version to be meaningful.
+commit). **Retroactively scoring the corpus is not currently possible in a way
+worth trusting**, and `not_checked` is the honest label rather than a placeholder
+for work in progress: a replay only means something if the checks are pinned to
+the version each run actually executed, and nothing records that version per run.
+Recording it is the prerequisite for any corpus-wide compliance number.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
@@ -1179,15 +1218,16 @@ until this bump lands, so a run made in it would.
 key at all, at `3` exactly as at `2`.
 
 **Measured blast radius, so nobody over-corrects for this.** Replaying the
-committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
-result, across 66 of the 555 runs — but **none is a `same_person`,
+committed corpus at the time this was taken: 164 of 23,056 `tool_calls` entries
+carry an error-shaped result, across 66 of the 145 runs — but **none is a `same_person`,
 `research_append`, or `extraction_append`**. They are `record_search` (68),
 `external_links_search` (24), `fulltext_search` (20), `Glob`, `Grep`, `Bash` —
 tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
-is a correctness statement, not a warning of a large shift: the numbers issues
-#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
+is a correctness statement, not a warning of a large shift: every shadow-window
+and provenance number on this page moves by ~1 entry across the whole corpus.
+`is_error` is also
 blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
 a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
 is why the shift is this small.
@@ -1195,8 +1235,9 @@ is why the shift is this small.
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
 that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
-calibration itself is #911's.
+visible) or the corpus accumulates errored `same_person`/`Skill` calls. Window
+calibration is not a pending task at all — see
+`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these

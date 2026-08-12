@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     # (fs_oauth.write_config, sessions.create_project). See
     # docs/specs/image-transcribe-tool-spec.md §6.5.
     openrouter_api_key: str | None = None
+    # Base URLs for the two hosted sidecar services the engine calls (the wiki
+    # query API behind wiki_search/wiki_read/wiki_place_page, and the Pop Stats
+    # API behind place_population). Written into the sandbox's
+    # ~/.familysearch-mcp/config.json alongside the OpenRouter key. Left unset
+    # the engine falls back to its compiled-in defaults, which today name one
+    # developer's tailnet host — so these are how an operator points hosted
+    # sessions at a real deployment without rebuilding and re-releasing the
+    # engine (issue #290).
+    wiki_api_url: str | None = None
+    pop_stats_url: str | None = None
 
     # ── Build identity ───────────────────────────────────────────
     # Stamped into every feedback bundle so triage can tell which build a case

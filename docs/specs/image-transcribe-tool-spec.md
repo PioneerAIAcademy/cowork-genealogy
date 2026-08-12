@@ -330,6 +330,39 @@ The tool **never fabricates** a transcription on failure. It throws; the
 caller (record-extraction) pivots to indexed records, exactly as the
 `image-reader` NOT-READ path prescribes today.
 
+### 5.7 Timeout budget
+
+Every network leg is bounded through `fetchWithTimeout` (`src/utils/http.ts`);
+Node's `fetch` has no timeout of its own and an unbounded OCR call is what hung
+a run for 605s. The legs are budgeted **separately**, and the budget covers
+headers and body together:
+
+| Leg | Constant | Budget |
+|---|---|---|
+| FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
+| OpenRouter OCR | `OCR_TIMEOUT_MS` (`tools/image-transcribe.ts`) | 180s |
+
+Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
+inside the e2e harness's 600s inactivity window — and a timeout returns as a
+`tool_result`, which re-arms that window.
+
+**Where 180s comes from.** Measured across every `image_transcribe` call in the
+committed e2e run logs (n=101, matched to its own `tool_result` in
+`usage.timeline`): p50 36s, p90 98s, p95 114s, max 316s. That tail is not the
+steady state — all five calls above 150s belong to the single run that hung
+(`pierre-tullier-son`, 2026-07-27). Excluding it: n=89, p90 79s, p95 98s, max
+167s. The download leg is small enough not to move the split — `image_read`
+runs the same fetch without OCR at a 7.2s maximum, though only 6 such calls
+exist in the corpus — so the tool distribution is the OCR distribution plus
+roughly 7s.
+
+180s therefore clears every genuine read observed, including the 167s one,
+while still cutting the 190s/208s/286s/316s calls of the run that hung. A 90s
+OCR budget would have failed 5 of the 89 healthy calls (~6%) — turning a slow
+page into a lost one mid-sweep. Re-measure before changing it: the analyzer is
+`eval/harness/e2e/latency_report.py`'s source data (`usage.timeline`), and a
+model change can move the whole distribution.
+
 ## 6. OpenRouter integration
 
 ### 6.1 Request
@@ -555,7 +588,7 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   (lane 1).
 - File any deferred follow-ups (e.g. multi-image batching) as a GitHub issue in
   the same PR that defers them — `gh issue create --label developer`, see
-  `CLAUDE.md` § "Deferring work creates an issue".
+  `CLAUDE.md` § "Work you find along the way".
 
 ## 11. Cost & privacy
 
@@ -673,7 +706,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/specs/image-read-spec.md` — cross-reference
 - `CLAUDE.md` — new per-user config keys in the config table
 - A GitHub issue per deferred follow-up (e.g. multi-image batching), filed in
-  the same PR — see root `CLAUDE.md` § "Deferring work creates an issue"
+  the same PR — see root `CLAUDE.md` § "Work you find along the way"
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write
