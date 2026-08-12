@@ -485,8 +485,10 @@ Never treat an index entry as equivalent to examining the original record.
 - List records passed to extraction (or explain why none) — and if none, say plainly that no `sources` or `assertions` exist yet for these findings
 - Show plan progress: "3 of 5 plan items completed"
 - Suggest next steps:
+  - **If the invoking message already authorized continuing** (e.g. "...and continue with exhaustive research," "...don't stop to check in with me between searches") → execute the next `planned` item in the same turn instead of asking. That item is already part of the plan the user asked you to run — it is not a self-initiated idea (see Step 1's ad-hoc/planned distinction), so it does not need a fresh yes. Re-asking a question the message already answered is the defect this guards against, not a safety margin.
   - Promising results found, not yet extracted → "I found N promising record(s) for <person> — want me to run record-extraction now to turn them into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
-  - More plan items → "Shall I continue with the next search?"
+  - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
+  - More plan items, no prior authorization to continue → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)
   - No results → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
 
@@ -504,6 +506,7 @@ If the user says "search all repositories," execute the FamilySearch items then 
 - **Let the user confirm before extraction.** Show triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this skill writes only log entries and plan-item status, not assertions.
+- **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 
