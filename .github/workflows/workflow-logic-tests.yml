@@ -7,9 +7,11 @@ name: workflow-logic-tests
 # nothing downstream complains. project-status-sync.yml picks a column and a
 # wrong column is still a column; senior-queue.yml picks a review queue off
 # CODEOWNERS, and a pattern its parser cannot read routes the PR to the wrong
-# team while the merge gate still enforces correctly. The run goes green, the
-# board or the review queue is quietly wrong, and the only detector is a human
-# noticing weeks later. Nothing else in CI reads either file — the JS suite
+# team while the merge gate still enforces correctly. It also decides WHEN a PR
+# is ready, and a PR wrongly held back is indistinguishable from one nobody has
+# approved yet — an absent label looks the same either way. The run goes green,
+# the board or the review queue is quietly wrong, and the only detector is a
+# human noticing weeks later. Nothing else in CI reads either file — the JS suite
 # (`make test-js`) covers web, electron, viewer-ui and schema, and neither a
 # workflow branch table nor a CODEOWNERS resolution belongs in any of those
 # packages.
@@ -60,3 +62,13 @@ jobs:
         with:
           node-version: '22'
       - run: node .github/tests/codeowners-routing.test.mjs
+
+  readiness:
+    name: senior-queue readiness rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/senior-queue-readiness.test.mjs

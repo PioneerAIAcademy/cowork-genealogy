@@ -6,7 +6,7 @@ import io
 from contextlib import redirect_stdout
 
 from e2e.report import print_rollup
-from e2e.result import E2eResult
+from e2e.result import E2eResult, is_committable_run
 
 
 def _capture(results: list[E2eResult]) -> str:
@@ -145,3 +145,188 @@ def test_rollup_always_states_compliance_even_when_clean():
     out = _capture([_make_result("a", "pass")])
     assert "compliance: 1/1 clean" in out
     assert "overall gate: 1/1 pass" in out
+
+
+# --- ungradeable runs must not read as failures (#1245) ---------------
+#
+# A run that produced no grade is not a run that failed the genealogy. The
+# rollup used to render an all-ungraded tag as "0/N", byte-identical to a tag
+# where every run genuinely failed, which is the miscount acceptance criterion
+# 4 of #1245 asks about.
+
+
+def test_an_all_ungraded_tag_is_not_rendered_as_an_all_failed_tag():
+    ungraded = _capture(
+        [_make_result(f"t{i}", "skipped", tags={"era": "1800s"}) for i in range(3)]
+    )
+    failed = _capture(
+        [_make_result(f"t{i}", "fail", tags={"era": "1800s"}) for i in range(3)]
+    )
+    assert "0/3" in ungraded and "0/3" in failed  # the recall count is the same...
+    assert ungraded != failed, "...so the line must say which of the two it is"
+    assert "3 ungraded" in ungraded
+    assert "ungraded" not in failed
+
+
+def test_a_mixed_tag_names_only_the_ungraded_ones():
+    out = _capture(
+        [
+            _make_result("a", "pass", tags={"era": "1800s"}),
+            _make_result("b", "fail", tags={"era": "1800s"}),
+            _make_result("c", "skipped", tags={"era": "1800s"}),
+        ]
+    )
+    assert "1/3 (1 ungraded)" in out
+
+
+def test_an_unrecognised_verdict_is_printed_rather_than_swallowed():
+    """`verdict` arrives as whatever string the judge returned, so a value
+    outside the vocabulary is reachable. It used to land in a dict key nothing
+    rendered, leaving the totals quietly failing to reconcile."""
+    out = _capture(
+        [
+            _make_result("a", "pass", tags={"era": "1800s"}),
+            _make_result("b", "kinda-ok?", tags={"era": "1800s"}),
+        ]
+    )
+    assert "1 unrecognised" in out
+
+
+def test_an_unrecognised_verdict_does_not_crash_the_rollup():
+    # The pre-fix bucket seeded four fixed keys; anything else had to be
+    # tolerated by `.get`. Assert the tolerance survives the rewrite.
+    out = _capture([_make_result("a", "???", tags={"era": "1800s"})])
+    assert "era" in out
+
+
+# --- an ungradeable run must say WHY (#1245) --------------------------
+#
+# The clause after "scratch run" used to be one fixed string for all three
+# causes. For a judge crash it printed directly under `stop_reason: completed`,
+# so the two lines together read "this run succeeded and produced nothing".
+
+from e2e.run_e2e import ungradeable_reason  # noqa: E402
+
+
+def _skipped(verdict: str = "skipped", **kw) -> E2eResult:
+    return E2eResult(
+        test_id="t", captured_at="2026-08-05_00-00-00", verdict=verdict,
+        stop_reason="completed", usage={}, **kw,
+    )
+
+
+def test_a_judge_crash_says_so_and_says_the_work_survived():
+    out = ungradeable_reason(_skipped(judge_output={"error": "APIStatusError: 401"}))
+    assert "judge itself failed" in out
+    assert "401" in out, "quote the judge's own error, not a generic phrase"
+    assert "re-running" in out
+
+
+def test_no_tree_is_not_confused_with_a_judge_crash():
+    out = ungradeable_reason(_skipped(judge_output={}))
+    assert "no final tree" in out
+    assert "judge itself failed" not in out
+
+
+def test_skip_judge_is_named_as_the_deliberate_choice_it_is():
+    out = ungradeable_reason(_skipped(judge_output={}), skip_judge=True)
+    assert "--skip-judge" in out
+
+
+def test_a_judge_crash_outranks_skip_judge():
+    # If the judge raised, it was asked to run, so skip_judge cannot also be
+    # the explanation. Order matters here, not just coverage.
+    out = ungradeable_reason(
+        _skipped(judge_output={"error": "boom"}), skip_judge=True
+    )
+    assert "judge itself failed" in out
+
+
+def test_the_three_causes_are_mutually_distinguishable():
+    """The whole point: #1245 could not be diagnosed because they were not."""
+    reasons = {
+        ungradeable_reason(_skipped(judge_output={"error": "x"})),
+        ungradeable_reason(_skipped(judge_output={})),
+        ungradeable_reason(_skipped(judge_output={}), skip_judge=True),
+    }
+    assert len(reasons) == 3
+
+
+def test_no_grade_is_ever_disclosed():
+    """Spec 7.4 blindness: the operator grades this run later, so the message
+    must not leak the judge's conclusion."""
+    out = ungradeable_reason(
+        _skipped(judge_output={"error": "boom", "verdict": "pass", "proof_quality": 3})
+    )
+    for leaked in ("pass", "proof_quality", "verdict"):
+        assert leaked not in out, f"leaked {leaked!r} into a pre-grading message"
+
+
+def test_an_untagged_unrecognised_verdict_is_named_at_the_headline():
+    """The per-tag loop never sees an untagged run, so the headline has to be
+    where an unreadable verdict surfaces. It previously printed nothing."""
+    out = _capture([_make_result("a", "kinda-ok?")])
+    assert "1 unrecognised" in out
+
+
+def test_the_headline_reconciles_with_the_run_count():
+    out = _capture(
+        [
+            _make_result("a", "pass"),
+            _make_result("b", "fail"),
+            _make_result("c", "skipped"),
+            _make_result("d", "???"),
+        ]
+    )
+    line = next(ln for ln in out.splitlines() if ln.startswith("E2E suite:"))
+    assert "1/4 recall pass" in line
+    for token in ("1 fail", "1 skipped", "1 unrecognised"):
+        assert token in line, f"{token} missing; the headline must sum to 4"
+
+
+# --- gradedness is a separate axis from committability (#1245 / #1239) ---
+#
+# The console block used to key both on `is_committable_run`. That is fine only
+# while the two coincide. PR #1239 makes a judge crash committable (the tree
+# exists and can be re-graded) while it is still ungraded, at which point a
+# single committability branch would say nothing about the crash at all — the
+# exact silence #1245 was filed about.
+
+from e2e.run_e2e import is_ungraded  # noqa: E402
+
+
+def test_a_graded_run_is_not_flagged_as_ungraded():
+    for verdict in ("pass", "partial", "fail"):
+        assert not is_ungraded(_skipped(verdict=verdict))
+
+
+def test_todays_ungradeable_verdict_is_flagged():
+    assert is_ungraded(_skipped())  # verdict="skipped"
+
+
+def test_the_post_1239_verdict_is_flagged_too():
+    """`ungraded` does not exist yet. When #1239 lands it must still be caught,
+    which is why gradedness uses its own literal instead of importing
+    result.py's set — that set is the COMMITTABILITY axis and #1239 widens it."""
+    assert is_ungraded(_skipped(verdict="ungraded"))
+
+
+def test_gradedness_does_not_import_the_committability_set():
+    """Guards the reason the two are separate. If someone 'tidies' this by
+    importing result.py's set, a judge crash starts reading as graded the
+    moment #1239 merges, silently."""
+    import e2e.run_e2e as r
+
+    assert r._GRADED_VERDICTS == ("pass", "partial", "fail")
+    assert "ungraded" not in r._GRADED_VERDICTS
+
+
+def test_an_ungraded_run_is_also_uncommittable_today():
+    """The assertion PLAN.md §3 asked for, and the reason gradedness needed its
+    own axis: today the two coincide, so this passes on both. After #1239 a
+    judge crash becomes committable while staying ungraded, and only the
+    `is_ungraded` half will still hold — which is what `_GRADED_VERDICTS`
+    being a separate literal protects."""
+    r = _skipped(judge_output={"error": "APIStatusError: 401"})
+    assert is_ungraded(r) is True
+    assert is_committable_run(r.verdict) is False

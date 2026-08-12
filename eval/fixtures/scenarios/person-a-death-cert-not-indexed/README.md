@@ -1,4 +1,4 @@
-﻿# Scenario: person-a-death-cert-not-indexed
+# Scenario: person-a-death-cert-not-indexed
 
 proof-conclusion is ready to conclude a **death** question where the specifically
 requested record type (a state death certificate) was **searched but not found** in
