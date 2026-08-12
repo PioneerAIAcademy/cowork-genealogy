@@ -521,20 +521,27 @@ both edited `search-records/SKILL.md` concurrently; that is the failure.
   `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
 
 **Key it on paths, not on the skill's name in the title.** PR #1017 and PR #1196
-are both titled `record-extraction:`; only #1017 touches the snapshot. #1073's own
-DoD says *not* to edit `search-records/SKILL.md` — a tool fix does not take the
-skill's slot. The issue's `**Touches:**` line is the fastest read; fall back to
-the body's file citations.
+are both titled `record-extraction:`; only #1017 touches the snapshot. PR #1073's
+own DoD says *not* to edit `search-records/SKILL.md` — a tool fix does not take
+the skill's slot.
 
-Find the current holder:
+**The open PRs' changed paths are the primary read** — the only input here that is
+not self-reported. Run this *first*, before any issue body:
 
 ```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
-  --search "<skill> -label:icebox" --json number,title,assignees
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open \
   --json number,title,files \
-  --jq '.[] | select(any(.files[].path; test("plugin/skills/<skill>/|tests/unit/<skill>/"))) | .number'
+  --jq '.[] | select(any(.files[].path; test("plugin/skills/<skill>/|tests/unit/<skill>/"))) | "#\(.number)\t\(.title)"'
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
+  --search "<skill> -label:icebox" --json number,title,assignees
 ```
+
+**A `**Touches:**` line is a hint, not the input. A missing one means unknown, not
+empty** — fall back to the body's file citations, and to the changed paths of any
+PR the issue already has. Where a `Touches:` line and real paths disagree, the
+paths win: PR #1577 added ten lines to `init-project/SKILL.md` for an issue whose
+`Touches:` named three other skills. Discount a `Touches:` line inherited from an
+issue since closed `not planned` (issue #1322 carried issue #1447's).
 
 **Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
 whole skill. Say so in your report with the assignee and the idle count, and
