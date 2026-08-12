@@ -212,15 +212,14 @@ findings fail that bar. Before a finding earns a row, it must clear both:
 - **Is there implementation work here that doesn't already exist?** Check
   §3's duplicate search first. A finding that only confirms or corrects an
   *existing* issue (a stale claim, a wrong attribution, a "this already
-  shipped") is not a new task — surface it as a comment on that issue, or in
-  List 4, not as a second card competing with the first.
+  shipped") is not a new task — surface it as a comment on that issue, not as a
+  second card competing with the first.
 
 A finding can be real, verified, and still not worth a card. "Worth mentioning"
-(List 1, List 4, or a direct comment on an existing issue) and "worth a card"
-(List 2) are different bars, and the second is higher. When in doubt, mention
-it and don't file it — a missed mention costs a sentence next time; an
-over-filed card sits in Backlog until someone spends triage time re-discovering
-it's not actionable.
+(List 1 or a direct comment on an existing issue) and "worth a card" (List 2) are
+different bars, and the second is higher. When in doubt, mention it and don't
+file it — a missed mention costs a sentence next time; an over-filed card sits in
+Backlog until someone spends triage time re-discovering it's not actionable.
 
 What survives: implementation work, not yet tracked anywhere, that genuinely
 needs a separate session to pick up. For each surviving row, a table for the
@@ -247,9 +246,10 @@ Also flag, per row:
   it silently joins every morning's ranking.
 - **What you deliberately did NOT file, and where it went instead.** Over-filing
   is its own failure; a Backlog nobody can read is the same as no Backlog. Don't
-  just say "not filing" — say whether it moved to List 1, List 4, a comment on
-  an existing issue, or was handled directly (and how). A rejected candidate
-  with nowhere named is a finding quietly dropped, not a finding triaged.
+  just say "not filing" — say whether it moved to List 1, List 4, a comment on an
+  existing issue, was handled directly (and how), or was dropped as below every
+  bar. A rejected candidate with nowhere named is a finding quietly dropped, not
+  a finding triaged.
 
 ### List 3 — Problematic PRs
 
@@ -291,14 +291,17 @@ Checks that have actually caught things:
 
 ### List 4 — Individual replies
 
-**One or two sentences each. Name the one thing to do next and stop.**
-
-These are messages the lead pastes to a person, not a briefing about them. He
-already read your other lists, so the reply does not need to re-explain the
-finding, recap what they said, or justify itself — it needs to be short enough
-that he sends it without editing.
-
-Skip anyone who needs nothing, and just say who you skipped.
+**Default to silence.** Would this person, or the repo, be measurably worse off
+if nobody said it? A nit or mild inefficiency is not a reply. **Anything true of
+several people is not a reply** — the lead broadcasts those himself; List 1 or
+nowhere. Nor is praise with no action attached; a numbering nit (an issue called
+a PR); a PR that merely needs review; a red check its author already knows
+about; a fact already in List 1 or List 3; a correction that changes nothing
+they do next. Two people needing the same fact get one reply naming both. Zero
+to four replies is a normal day; past four, the bar was too low — say so and
+cut. Never list who you skipped. **One or two sentences each. Name the one thing
+to do next and stop.** Lead with the correction where there is one. Write in the
+lead's voice: direct, no preamble, no praise sandwich.
 
 Too long:
 
@@ -312,10 +315,6 @@ Right:
 
 > **Ruth** — #964 merged with your approval and no ark cited. Can you get the ark
 > from Solomon, or flip it to changes-requested?
-
-Lead with the correction where there is one. Route overlaps in a clause, not a
-paragraph ("read #942 and #963 first — same problem"). Write in the lead's voice:
-direct, no preamble, no praise sandwich.
 
 ## 5. File the approved tasks
 
