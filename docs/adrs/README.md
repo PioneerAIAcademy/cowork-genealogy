@@ -30,8 +30,8 @@ Two more tests:
 **1. Numbered, zero-padded, never reused.** `ADR-0007-short-slug.md`. A deleted
 ADR's number stays retired.
 
-**2. Titled as an action.** "Dual-spell every MCP tool name in agent
-frontmatter," not "Tool naming." A reader scanning the index should see what was
+**2. Titled as an action.** "Spell every MCP tool name under all three server
+registrations," not "Tool naming." A reader scanning the index should see what was
 decided, not what it was about.
 
 **3. These are living documents. Edit them freely.**
@@ -117,9 +117,10 @@ anything.
 
 ## Related
 
-- [`docs/agentic-system-critique.md`](../agentic-system-critique.md) §9 —
-  "Refuted in review — do not re-derive." A running ledger of claims that were
-  argued and disproved. Several of these ADRs were mined from it, and new
-  entries there are candidate ADRs.
+- [`ADR-0009`](ADR-0009-refuted-agent-design-claims.md) — the refutation ledger:
+  claims that were argued and disproved, kept so they are not re-derived. Several
+  of the other ADRs were mined from it, and a new entry there is a candidate ADR
+  of its own. It is the surviving half of `docs/agentic-system-critique.md`,
+  retired 2026-08-09.
 - `docs/specs/guardrail-enforcement-spec.md` §9 — "Options set aside," the same
   pattern scoped to guardrails.

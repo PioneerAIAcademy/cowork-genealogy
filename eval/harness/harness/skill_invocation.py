@@ -256,6 +256,21 @@ def _is_conflict_resolution_product(conflict: Any) -> bool:
     return any(conflict.get(f) for f in CONFLICT_ANALYSIS_FIELDS)
 
 
+def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
+    """A stable identity for a ParentChild/Couple relationship, for diffing a
+    final tree against its starting tree.
+
+    A ParentChild carries parent/child; a Couple carries person1/person2. Key on
+    the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run, and an `id`
+    key would read that genuinely-re-pointed relationship as seeded — a false
+    negative in the gates that diff against the starting tree. Shared by
+    `find_effects_without_invocation` (§8 hard gate) and
+    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    """
+    return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -270,11 +285,16 @@ def find_effects_without_invocation(
     both project files and to run over a whole e2e run rather than one
     isolated skill call.
 
-    `starting_tree`, when given, lets the person-evidence check ignore
-    persons that already had facts/names before this run began (a seeded
-    fixture's starting tree) and flag only NEW persons or persons that GAINED
-    facts this run — without it, every already-linked-by-nothing seed person
-    would read as a violation. Best-effort and may over-flag when omitted.
+    `starting_tree`, when given, lets both the proof-conclusion and the
+    person-evidence checks ignore what a seeded fixture already carried before
+    this run began: the person-evidence arm ignores persons that already had
+    facts/names, and the proof-conclusion arm ignores ParentChild/Couple
+    relationships and primary facts already present, flagging a conclusion
+    encoded as a NEW relationship or an ADDED primary fact (it does not see one
+    written into an existing relationship, e.g. a marriage fact dated onto a
+    seeded couple — issue #1368). Without it every seeded relationship or
+    already-unlinked seed person would read as a violation. Best-effort and may
+    over-flag when omitted.
 
     Each arm keys on a *product* of the skill, never on the skill's mere
     footprint — see `_is_conflict_resolution_product` for why the
@@ -305,13 +325,49 @@ def find_effects_without_invocation(
     proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
     persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
     relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
-    has_primary_fact = any(
-        isinstance(p, dict) and any(isinstance(f, dict) and f.get("primary") is True for f in (p.get("facts") or []))
-        for p in persons
+
+    # Starting-tree baseline, shared by the proof-conclusion arm below and the
+    # person-evidence arm further down: only content that APPEARED this run is a
+    # skill's product. Without it a fixture's seeded relationships, persons, and
+    # facts read as this run's work — which fired the proof-conclusion arm on
+    # seed state alone, since 99 of 104 fixtures ship ParentChild/Couple
+    # relationships in their starting tree (issue #998). When no starting tree is
+    # given, treat everything as new (best-effort), matching the person-evidence
+    # arm.
+    starting_persons = (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    starting_fact_counts = {p.get("id"): len(p.get("facts") or []) for p in starting_persons if isinstance(p, dict)}
+    starting_primary_counts = {
+        p.get("id"): sum(1 for f in (p.get("facts") or []) if isinstance(f, dict) and f.get("primary") is True)
+        for p in starting_persons
         if isinstance(p, dict)
-    )
+    }
+
+    starting_relationship_keys = {
+        _relationship_key(r)
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
+    }
+
+    def _has_new_primary_fact(p: dict[str, Any]) -> bool:
+        count = sum(1 for f in (p.get("facts") or []) if isinstance(f, dict) and f.get("primary") is True)
+        baseline = 0 if starting_tree is None else starting_primary_counts.get(p.get("id"), 0)
+        return count > baseline
+
+    # Detects a conclusion encoded as a NEW ParentChild/Couple relationship or an
+    # ADDED primary fact, each diffed against the starting tree (both are routinely
+    # seeded). It does NOT see a conclusion written into an existing relationship —
+    # a marriage fact dated onto a seeded couple, a parentage re-classified
+    # Biological->Adopted — nor a primary fact replaced in place (count 1->1 reads
+    # as unchanged); the proof_summaries disjunct still catches the normal path
+    # where a summary is also written (issue #1368). proof_summaries itself needs
+    # no baseline — no fixture seeds a non-empty one.
+    has_primary_fact = any(isinstance(p, dict) and _has_new_primary_fact(p) for p in persons)
     has_conclusion_relationship = any(
-        isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple") for r in relationships
+        isinstance(r, dict)
+        and r.get("type") in ("ParentChild", "Couple")
+        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
+        for r in relationships
     )
     if (
         (len(proof_summaries) > 0 or has_primary_fact or has_conclusion_relationship)
@@ -319,15 +375,12 @@ def find_effects_without_invocation(
     ):
         violations.append(
             "research.json/tree.gedcomx.json shows a proof_summaries entry and/or an encoded "
-            "conclusion (a primary fact, or a ParentChild/Couple relationship) but "
+            "conclusion (a primary fact, or a ParentChild/Couple relationship) new this run but "
             "'proof-conclusion' was never successfully invoked in this run"
         )
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
     linked_person_ids = {pe.get("person_id") for pe in person_evidence if isinstance(pe, dict)}
-    starting_persons = (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
-    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
-    starting_fact_counts = {p.get("id"): len(p.get("facts") or []) for p in starting_persons if isinstance(p, dict)}
 
     def _has_content(p: dict[str, Any]) -> bool:
         return bool(p.get("facts") or p.get("names"))
@@ -644,7 +697,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     Note what the two layers do and do not compose to. The main-thread half is
     DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
     not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated (#911). So a `general-purpose` delegate's `extraction_append`
+    calibrated. So a `general-purpose` delegate's `extraction_append`
     still succeeds today; what this detector buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
@@ -735,3 +788,218 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                 "dedicated agent"
             )
     return violations
+
+
+# Marks a citation-nulling shadow entry in the shared
+# `guardrail_shadow_violations` list. `guardrail_shadow_report.py` keys on it to
+# count this failure class in its own bucket instead of lumping it with the
+# #963 person_evidence-provenance gaps (both carry a `detail`).
+CITATION_NULLING_KIND = "citation_nulling"
+
+# Marks a #963 provenance entry recorded by a run launched in DENY mode
+# (`--person-evidence-guard deny`, issue #1231). Same list, same `detail` shape,
+# but a different meaning: the write was blocked and retried rather than landing,
+# and the loop valve can record several denials plus a release for one logical
+# gap. `scan_provenance` excludes it so the shadow fire rate the graduation
+# decision reads is not inflated by deny-mode runs. Lives here beside its sibling
+# rather than in `e2e/orchestrator.py` — which sets it — so that
+# `guardrail_shadow_report.py` can read it without importing the orchestrator
+# (and with it the Claude Agent SDK) just to learn one string.
+PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
+
+# Marks a #1193 warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
+# relationship but never called the (free, deterministic) `person_warnings`
+# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# own bucket. Lives here beside its siblings so the report can read it without
+# importing the orchestrator (and the Claude Agent SDK) for one string.
+WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
+
+
+def find_citation_nulling_in_conclusions(
+    research: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1133): a source that BACKS A WRITTEN
+    CONCLUSION carries a null or empty ESM ``citation`` string — the "provenance
+    nulling" failure class the engine's write-seam guard deliberately does not
+    cover.
+
+    Provenance nulling has two halves. A null *source-ref* on authored tree
+    content (a fact/name/edge pointing at no source) is already unrepresentable
+    at the write seam — the mandatory-ref golden in
+    ``materialize-facts.test.ts`` / ``tree-edit.test.ts`` rejects it, inverting
+    the cruz "0/13 facts carried a ref" leak. This detector covers the OTHER
+    half that golden explicitly disowns
+    (``docs/specs/tree-materialization-spec.md`` — "The ESM citation string is
+    out of scope here"): a source that exists and is cited by a conclusion but
+    whose citation *string* was left empty. That is the cruz "11/14 citation-less
+    tree sources" / birkeland "F1/F2 citation-less conclusion facts" class in
+    ``docs/record-extraction-consolidation-closing-report.md`` §4, which the
+    judge cannot see and the three §7.5 compliance checks do not read.
+
+    GATED ON A WRITTEN CONCLUSION. Fires only when a ``proof_summaries`` entry
+    exists, and only for the sources its ``supporting_assertion_ids`` reference
+    (``assertion.source_id`` → ``sources[].id``). This gate is what keeps the
+    check from false-positiving on honest partial runs: tree S-entry citations
+    are populated by ``proof-conclusion`` at UPLOAD time, so a run that
+    legitimately stops before upload has empty citations by design — but a run
+    that WROTE a conclusion has asserted the evidence is citable, so a concluded
+    source with an empty citation string is a real nulling. Reads
+    ``research.json`` only (upload-independent): the citation string is AUTHORED
+    there before ``proof-conclusion`` copies it to the tree, so this catches the
+    nulling at its origin rather than waiting on upload.
+
+    SHADOW MODE ONLY: returns violation records shaped to share
+    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
+    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
+    never hit a ``None`` format spec; ``kind == CITATION_NULLING_KIND`` so that
+    report counts this class in its own bucket). Never fails a run. Graduating to
+    a hard 4th compliance check is a deliberate follow-up (issue #1358) gated on
+    measuring the fire rate across the corpus — not decided here.
+    """
+    research = research or {}
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # the gate: no written conclusion, so nothing is held to a citation
+
+    sources = research.get("sources") if isinstance(research.get("sources"), list) else []
+    assertions = (
+        research.get("assertions") if isinstance(research.get("assertions"), list) else []
+    )
+    sources_by_id = {s.get("id"): s for s in sources if isinstance(s, dict)}
+    assertions_by_id = {a.get("id"): a for a in assertions if isinstance(a, dict)}
+
+    def _citation_is_empty(src: dict[str, Any]) -> bool:
+        c = src.get("citation")
+        return c is None or (isinstance(c, str) and c.strip() == "")
+
+    violations: list[dict[str, Any]] = []
+    seen: set[tuple[Any, Any]] = set()  # one entry per (conclusion, source)
+    for ps in proof_summaries:
+        if not isinstance(ps, dict):
+            continue
+        ps_id = ps.get("id")
+        qid = ps.get("question_id")
+        aids = (
+            ps.get("supporting_assertion_ids")
+            if isinstance(ps.get("supporting_assertion_ids"), list)
+            else []
+        )
+        for aid in aids:
+            assertion = assertions_by_id.get(aid)
+            if not isinstance(assertion, dict):
+                continue  # dangling assertion ref — a schema concern, not this detector's
+            sid = assertion.get("source_id")
+            if not sid:
+                continue  # assertion not source-backed (e.g. a bare hypothesis) — nothing to cite
+            src = sources_by_id.get(sid)
+            if not isinstance(src, dict):
+                continue  # dangling source ref — a schema concern, not this detector's
+            if not _citation_is_empty(src):
+                continue
+            key = (ps_id, sid)
+            if key in seen:
+                continue
+            seen.add(key)
+            violations.append(
+                {
+                    "index": -1,  # post-hoc final-state read; there is no tool-call index
+                    "tool": "research.json",
+                    "required_skill": "citation",
+                    "question_id": qid,
+                    "kind": CITATION_NULLING_KIND,
+                    "detail": (
+                        f"concluded source {sid} (via assertion {aid}, "
+                        f"proof_summary {ps_id}) has a null/empty citation string"
+                    ),
+                }
+            )
+    return violations
+
+
+def find_relationship_writes_without_warnings_check(
+    tool_calls: list[dict[str, Any]] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
+    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
+    the cheapest guardrail in the system (deterministic, no LLM — it reads
+    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
+    round-trip). Two runs of the same fixture, same skills, diverged only on
+    whether the parentage write was delegated to ``proof-conclusion`` (which
+    carries the "run check-warnings after tree writes" step) or inlined by the
+    orchestrator (which does not) — and nothing recorded that the guardrail was
+    never consulted. This makes that omission visible.
+
+    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
+    ``Couple`` relationship in the final tree is absent from the starting tree
+    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
+    104 fixtures seed such relationships, so an ungated check would fire on seed
+    state alone; the diff is what limits it to this run's own product. When no
+    starting tree is given, treat everything as new (best-effort), matching
+    ``find_effects_without_invocation``.
+
+    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
+    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
+    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
+    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
+    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
+    even when it fired inside ``check-warnings``. A call counts as consulting the
+    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
+    tree unchecked.
+
+    SHADOW MODE ONLY: returns violation records shaped to share
+    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
+    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
+    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
+    report counts this class in its own bucket). Never fails a run. Promotion to a
+    hard gate — or a mandatory pre/post-write call in the ``/research``
+    orchestrator so an inlined write is still gated — is a deliberate follow-up
+    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    """
+    tree = tree or {}
+    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
+
+    starting_relationship_keys = {
+        _relationship_key(r)
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
+    }
+    new_relationship = any(
+        isinstance(r, dict)
+        and r.get("type") in ("ParentChild", "Couple")
+        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
+        for r in relationships
+    )
+    if not new_relationship:
+        return []  # the gate: nothing was written that a warnings check should have preceded
+
+    consulted = any(
+        isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") == "person_warnings"
+        and not call.get("is_error")
+        for call in (tool_calls or [])
+    )
+    if consulted:
+        return []
+
+    return [
+        {
+            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "tool": "tree.gedcomx.json",
+            "required_skill": "check-warnings",
+            "question_id": None,
+            "kind": WARNINGS_UNCHECKED_KIND,
+            "detail": (
+                "a new ParentChild/Couple relationship was written this run but "
+                "person_warnings (the free deterministic guardrail) was never "
+                "successfully called"
+            ),
+        }
+    ]

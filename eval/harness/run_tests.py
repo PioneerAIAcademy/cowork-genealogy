@@ -7,15 +7,19 @@ Selection modes (mutually exclusive except --tag, which repeats):
 
 Exit codes:
   0  every selected test resolved to pass / partial / xfail
-  1  the harness itself crashed, OR any test resolved to fail or xpass
+  1  the harness itself crashed, OR any test resolved to fail or xpass.
+     On a crash, submission stops but every still-running test is allowed to
+     finish, and the completed tests are saved as a partial `scratch_<ts>.json`
+     run log per skill.
   2  any test was aborted for a test-corpus reason
      (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
      that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
-     saved as a partial `scratch_<ts>.json` run log per skill; in-flight
-     tests are terminated and discarded. Conventional 128 + SIGINT(2).
+     saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
+     are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
+     their results are discarded. Conventional 128 + SIGINT(2).
 
 Note on unmatched tool calls (Phase 2):
   - Type 1 (tool doesn't exist): aborts with unmatched_tool_call (exit 2)
@@ -35,6 +39,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Iterator
@@ -395,13 +400,42 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
 
 def _print_summary(rows: list[dict]) -> None:
     print()
-    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10}")
-    print("-" * 76)
+    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} REASON")
+    print("-" * 96)
     for row in rows:
         print(
-            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10}"
+            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10} "
+            f"{row.get('reason', '')}"
         )
     print()
+    _print_outcome_counts(rows)
+
+
+# Every outcome the harness can record, per unit-test-spec.md §7 and
+# `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
+# (pass/partial/fail/aborted) silently under-sums a suite containing an
+# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+_OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
+
+
+def _print_outcome_counts(rows: list[dict]) -> None:
+    """One line saying the shape of the suite, so nobody counts rows by eye.
+
+    Issue #1245 was reported as "19 of 20 aborted" — a number the harness never
+    printed. It also names any outcome outside `_OUTCOMES`, so the totals always
+    reconcile against `len(rows)` rather than quietly dropping a value.
+    """
+    if not rows:
+        return
+    counts = Counter(row["outcome"] for row in rows)
+    parts = [f"{counts[o]} {o}" for o in _OUTCOMES if counts.get(o)]
+    parts += [f"{n} {o}" for o, n in sorted(counts.items()) if o not in _OUTCOMES]
+    print(f"Outcomes: {', '.join(parts)} of {len(rows)} test(s).")
+    aborted = counts.get("aborted", 0)
+    if aborted:
+        reasons = Counter(r.get("reason") or "unrecorded" for r in rows if r["outcome"] == "aborted")
+        detail = ", ".join(f"{n}x {reason}" for reason, n in reasons.most_common())
+        print(f"  aborted reasons: {detail}")
 
 
 def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
@@ -539,8 +573,8 @@ def main(argv: list[str] | None = None) -> int:
     #
     # Negative tests are graded on routing and survive a dead judge, so a
     # negative-only selection still gets the old warning rather than an abort.
+    needs_judge = [s for s in specs if s.type == "positive"]
     if not auth.api_key:
-        needs_judge = [s for s in specs if s.type == "positive"]
         if needs_judge and not args.allow_missing_judge:
             print(
                 f"Judge preflight failed: no ANTHROPIC_API_KEY is set, but "
@@ -565,6 +599,31 @@ def main(argv: list[str] | None = None) -> int:
             "  and routing only.",
             file=sys.stderr,
         )
+    # Key present but invalid (e.g. duplicated or revoked). A truthy key passes
+    # the presence check above, the entire suite runs, and every positive test
+    # fails at grade time — the operator reads "everything failed" as a skill
+    # regression rather than an auth error. Catch it with a cheap 1-token
+    # liveness call before spending anything.
+    if auth.api_key and needs_judge and not args.allow_missing_judge:
+        from harness.auth import verify_judge_key
+        from harness.judge import DEFAULT_JUDGE_MODEL
+
+        rejected_status = verify_judge_key(auth.api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A duplicated or revoked key passes the presence check but fails "
+                f"every judge call, wasting the entire suite.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"  In a git worktree: make worktree-link\n"
+                f"\n"
+                f"Re-run with --allow-missing-judge to proceed anyway "
+                f"(validators and routing only).",
+                file=sys.stderr,
+            )
+            return 2
     # Large-suite variance warning: the judge is temperature-pinned, but the
     # *skill run* is not — claude-agent-sdk exposes no temperature field, so
     # model nondeterminism still leaks into single-run outcomes. Mostly fine
@@ -750,12 +809,14 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 inflight[fut] = (idx, spec)
 
-        # A single Ctrl-C terminates the in-flight tests (the terminal
-        # delivers SIGINT to the whole process group, including the `claude`
-        # subprocesses each worker is blocked on) and unwinds here. We catch
-        # it so the completed results that _flush_partials() already wrote
-        # survive, instead of crashing past the save step. A second Ctrl-C
-        # during the shutdown join re-raises and exits via __main__.
+        # A single Ctrl-C unwinds here: the terminal delivers SIGINT to the
+        # whole process group, including the `claude` subprocesses each worker
+        # is blocked on. It does NOT terminate the in-flight tests — #1016
+        # watched them run to completion on Windows while the parent waited
+        # (see the shutdown call below, which cannot cancel a running future).
+        # We catch it so the completed results that _flush_partials() already
+        # wrote survive, instead of crashing past the save step. A second
+        # Ctrl-C during the shutdown join re-raises and exits via __main__.
         try:
             _fill()
             while inflight:
@@ -799,9 +860,16 @@ def main(argv: list[str] | None = None) -> int:
 
                     dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
                     mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                    # Name the abort reason inline. This is the line an operator
+                    # actually watches during a long suite, and a bare "aborted"
+                    # here is what made issue #1245's 19 of 20 unexplainable
+                    # after the fact. The reason is already on the entry.
+                    why = ""
+                    if outcome == "aborted" and entry.get("runs"):
+                        why = f" [{entry['runs'][0].get('aborted_reason') or 'unrecorded'}]"
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
-                        f"— {outcome} ({dur:.0f}s skill)",
+                        f"— {outcome}{why} ({dur:.0f}s skill)",
                         flush=True,
                     )
                 # Persist everything finished so far before blocking on the
@@ -812,19 +880,30 @@ def main(argv: list[str] | None = None) -> int:
             interrupted = True
             stop_submitting = True
             print(
-                "\n  ! interrupted (Ctrl-C) — terminating in-flight tests and "
-                "saving completed results...",
+                "\n  ! interrupted (Ctrl-C) — saving completed results. "
+                "In-flight tests are not cancelled; this waits for them.",
                 file=sys.stderr,
                 flush=True,
             )
-            # Drop not-yet-started tests; in-flight worker subprocesses already
-            # got SIGINT from the terminal and are exiting. Don't wait on them.
+            # Drops not-yet-STARTED tests only. `cancel_futures=True` cannot
+            # cancel a future that is already running, and `wait=False` does not
+            # get us out either: the enclosing `with` block joins the pool on
+            # exit regardless. So in-flight tests run to completion and this
+            # returns after them — #1016 measured ~2 minutes on Windows. Their
+            # results are then discarded, because nothing reads those futures.
+            #
+            # The previous comment here claimed the opposite ("already got
+            # SIGINT and are exiting. Don't wait on them"), which is what made
+            # the wait look like a hang rather than the documented behavior.
             ex.shutdown(wait=False, cancel_futures=True)
             _flush_partials()
 
-    # A harness exception is fatal regardless of the other results.
-    if harness_error is not None:
-        return 1
+    # A harness exception used to return 1 right here, before the summary and
+    # before the partial promotion below — so a crash on test 23 of 24 threw
+    # away all 22 finished tests into a gitignored `.partial_` dotfile nothing
+    # surfaced, while a Ctrl-C in the identical state kept them (#943). It now
+    # falls through to the shared save-and-report block, which is safe: nothing
+    # between here and there writes a run log.
 
     # Rebuild per-skill entries + summary rows in selection order (completion
     # order is nondeterministic under concurrency). Specs skipped by a budget
@@ -839,6 +918,16 @@ def main(argv: list[str] | None = None) -> int:
                 "test_id": spec.id,
                 "skill": spec.skill,
                 "outcome": entry["outcome"],
+                # Carry the abort reason through to the summary. Without it an
+                # `aborted` row states that nothing happened and not why, and
+                # the operator's only remaining clue is the suite-wide exit
+                # code. That is what left issue #1245's 19 aborts unexplained;
+                # the value was already on the entry, one level up.
+                "reason": (
+                    (entry["runs"][0].get("aborted_reason") or "")
+                    if entry["outcome"] == "aborted" and entry.get("runs")
+                    else ""
+                ),
             }
         )
 
@@ -851,14 +940,26 @@ def main(argv: list[str] | None = None) -> int:
         print("Some tests skipped due to suite-level budget cap.")
     if interrupted:
         print("Run interrupted with Ctrl-C — keeping the tests that finished.")
+    if harness_error is not None:
+        print(
+            "Run stopped by a harness error — keeping the tests that finished. "
+            f"({type(harness_error).__name__}: {harness_error})"
+        )
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
 
-    # Interrupted run: the completed tests are already in the partial dotfiles.
-    # Promote each to a recognized (gitignored) scratch run log the CRUD UI can
-    # open, then exit 130. We never write a releasable v{N} from a partial run.
-    if interrupted:
+    # Cut short, either way: the completed tests are already in the partial
+    # dotfiles. Promote each to a recognized (gitignored) scratch run log the
+    # CRUD UI can open, name the path, and stop. We never write a releasable
+    # v{N} from a run that did not finish.
+    #
+    # Exit code: the crash wins when both hold. A harness error stops
+    # submission but the drain loop keeps going with no shutdown call, so an
+    # operator watching a crashed suite sit there presses Ctrl-C and sets both
+    # — and "the harness broke" is the more actionable of the two facts. This
+    # also preserves the pre-#943 code, which returned 1 for that state.
+    if interrupted or harness_error is not None:
         promoted = False
         for skill, pp in partial_paths.items():
             if pp.exists():
@@ -866,8 +967,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  → wrote {_format_path(sp)} (partial)")
                 promoted = True
         if not promoted:
-            print("  (no tests finished before the interrupt — nothing to save)")
-        return 130
+            print("  (no tests finished — nothing to save)")
+        return 1 if harness_error is not None else 130
 
     # --- Write one run log per skill --------------------------------------
     written_paths: list[Path] = []

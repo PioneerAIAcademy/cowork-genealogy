@@ -378,7 +378,7 @@ For each person in `response.persons[]`:
 | `id` | `id` | Copy directly |
 | `living` | `living` | Copy directly |
 | `gender.type` | `gender` | Last segment of URI (e.g., `"Male"`) |
-| `names[0].nameForms[0].parts[]` | `names[0].given`, `names[0].surname`, `names[0].prefix`, `names[0].suffix` | Extract `Given` → `given`, `Surname` → `surname`, `Prefix` → `prefix`, `Suffix` → `suffix` |
+| `names[].nameForms[0].parts[]` | `names[].given`, `names[].surname`, `names[].prefix`, `names[].suffix` | Extract `Given` → `given`, `Surname` → `surname`, `Prefix` → `prefix`, `Suffix` → `suffix`. Names marked `preferred: true` are stable-reordered to the front, so simplified `names[0]` is the preferred name even when FS lists an alternate first (`gedcomx-convert-spec.md` § "Rule 4") |
 | `facts[]` | `facts[]` | See fact conversion below |
 
 Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`,
@@ -416,7 +416,7 @@ Strip: `id`, `attribution`, `links`.
 
 #### 4. Names
 
-Extract from `names[0].nameForms[0].parts[]`:
+Extract from each name's `nameForms[0].parts[]`:
 
 - Find part with `type` containing `"Given"` → `given` value
 - Find part with `type` containing `"Surname"` → `surname` value
@@ -425,6 +425,11 @@ Extract from `names[0].nameForms[0].parts[]`:
 - Ignore other part types (e.g., `Title`)
 
 If no Given found, use `""`. If no Surname found, use `""`.
+
+The converter stable-reorders `preferred: true` names to the front, so
+`names[0]` is the preferred name regardless of the order FS returned. A
+consumer reading `names[0]` therefore gets the primary name, not an
+`AlsoKnownAs` alternate.
 
 #### 5. Relationships (when `relatives: true`)
 
