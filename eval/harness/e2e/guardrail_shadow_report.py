@@ -48,6 +48,7 @@ from harness.skill_invocation import (
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
+    WARNINGS_UNCHECKED_KIND,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -157,7 +158,12 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     return _scan_stored(
         paths,
         lambda v: "detail" in v
-        and v.get("kind") not in (CITATION_NULLING_KIND, PERSON_EVIDENCE_DENY_KIND),
+        and v.get("kind")
+        not in (
+            CITATION_NULLING_KIND,
+            PERSON_EVIDENCE_DENY_KIND,
+            WARNINGS_UNCHECKED_KIND,
+        ),
     )
 
 
@@ -167,6 +173,15 @@ def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
     ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1193 warnings-unchecked shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a new ParentChild/Couple relationship written
+    with no `person_warnings` call). Identified by
+    `kind == WARNINGS_UNCHECKED_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
 
 @dataclass
@@ -360,6 +375,19 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
     )
 
 
+def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
+    """One flat count — a fact about the final tree + tool_calls, not a windowed
+    scan. This is the number the graduation decision (shadow → mandatory
+    person_warnings call in the orchestrator, issue #1193 question b) is gated
+    on."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7 warnings-unchecked check (issue #1193, shadow): "
+        f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
+        f"without calling person_warnings, across {affected} run(s)."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
@@ -402,6 +430,9 @@ def main(argv: list[str] | None = None) -> int:
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
+    warnings_unchecked = scan_warnings_unchecked(paths)
+    print(format_warnings_unchecked(warnings_unchecked))
+
     replay = replay_provenance(paths) if args.replay else None
     if replay is not None:
         print(format_provenance_replay(replay))
@@ -415,6 +446,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
+        for v in warnings_unchecked:
             print(f"  {v['fixture']:<35} {v['detail']}")
         if replay is not None:
             print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")
