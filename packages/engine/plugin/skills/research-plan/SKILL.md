@@ -169,11 +169,20 @@ something that changes *how* a specific search must run — a boundary
 succession (records may sit under the event-era jurisdiction or the
 place's present-day one) or an indexing quirk (a parish indexed only at
 county level, a collection filed under the modern country) — write that
-applied decision into the affected plan item's `rationale`, and where a
-boundary changed, stage the successor jurisdiction as its own
-`fallback_for` item. `search-records` executes these; it does not look
-up place history itself, so a locale fact left only in the guide never
-reaches the search.
+applied decision into the affected plan item's `rationale`.
+
+**A confirmed boundary split within the target date range is not a
+`fallback_for`.** When the locality guide (or `place_search_all`) shows
+the named jurisdiction split, was absorbed into, or was renamed to
+something else during the period, plan a co-equal item for **each**
+surviving jurisdiction that could hold the record — not one item under
+the old name plus a `fallback_for` on the new one. `fallback_for` is for
+genuine uncertainty about whether a source exists at all (try a different
+repository or record type if this one comes back empty); it is the wrong
+tool for "the split itself is why the records could be under either
+name," which calls for searching both from the start. `search-records`
+executes these; it does not look up place history itself, so a locale
+fact left only in the guide never reaches the search.
 
 ### 3. Identify relevant record sets
 
@@ -211,14 +220,44 @@ table and contextual factors checklist.
 - **For a parentage question, always add a dedicated plan item for the
   candidate parents' marriage to *each other*** — not the subject's own
   marriage, and not folded into a generic "church records" item. The
-  couple's marriage record supplies the mother's maiden name (which
-  census and death records usually omit) and, by its date relative to
-  the child's birth, corroborates a parent named only by indirect or
-  derivative evidence (a death certificate, a single census
-  co-residence). It does **not**, by itself, establish that the subject
-  is their child — that link needs a record placing the child *with* the
-  parents (see `research-exhaustiveness`). See
+  couple's marriage record supplies the mother's maiden name **only when
+  that marriage was her first** — and you usually cannot tell which of
+  her marriages was first until you have found all of them. When a
+  remarriage is known or suspected (a surname that differs between two
+  records naming her, a household under a different name than an earlier
+  one), do not plan around the surname this one marriage record gives
+  her: add an item for *each* of her marriage records, not just the one
+  to the candidate father, and add items for records that name her
+  parents directly (her own birth/baptism, probate, a sibling's record).
+  Never plan a household search keyed on a surname taken off a single
+  marriage record — that surname may be a prior married name, not her
+  birth name. Where no remarriage is suspected, the marriage record's
+  date relative to the child's birth still corroborates a parent named
+  only by indirect or derivative evidence (a death certificate, a single
+  census co-residence) — but it does **not**, by itself, establish that
+  the subject is their child — that link needs a record placing the
+  child *with* the parents (see `research-exhaustiveness`). See
   `references/record-type-guide.md` ("Identifying parents").
+- **When the target jurisdiction's boundaries changed within the date
+  range** (a parish/county split, an absorption, a rename) — call
+  `place_search_all` and plan a co-equal item for each successor
+  jurisdiction that could hold the record, not a single item under the
+  old name. A split that is ambiguous as to which side the specific
+  place fell on (e.g., Feliciana Parish, Louisiana split into East and
+  West Feliciana Parish in 1824) means the records could be under
+  either successor — plan both as primaries, not one as a `fallback_for`
+  the other. Cite the applied decision (which jurisdictions, and why) in
+  each item's `rationale`; see Step 2's locality-survey guidance above.
+- **Size an indirect record's date window to its likely CREATOR, not the
+  subject.** A parent's probate or estate file, a sibling's marriage
+  record, a guardianship petition — each is filed by or about someone
+  other than the research subject, so cap that item's `date_range` to
+  the creator's plausible lifespan, not the subject's own research
+  window. A parent of a child born in year Y can plausibly die anywhere
+  from Y to roughly Y+60; a probate item capped at the subject's own
+  research window (e.g., ending at the subject's marriage or death)
+  excludes most of the range where the record actually sits. State in
+  the item's `rationale` whose lifespan set the window's bounds.
 - **For a male subject in a conscription country (Denmark/Norway from
   1789, and similar continental levy systems), plan the military levy
   rolls as their own item** — Danish *lægdsruller* enroll boys from
