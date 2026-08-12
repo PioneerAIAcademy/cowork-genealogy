@@ -359,6 +359,70 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     ) == "pass"
 
 
+def test_na_rule_coercion_fires_on_a_real_historical_draw():
+    """Frozen, not sourced from the live corpus on purpose.
+
+    The corpus-replay test below used to assert non-vacuity by requiring
+    at least one of two named (test_id, run log filename) pairs to still
+    be present under eval/runlogs/unit. Retention prunes to the newest 5
+    candidates per skill on every write (eval/CLAUDE.md); both pairs have
+    since aged out, and that assertion started failing for a reason that
+    has nothing to do with the coercion — the mechanism was never broken,
+    the one piece of evidence it pointed at just rotated out from under
+    it. This test pins the actual historical judge draw (recovered from
+    git history, commit e48d0dbf^:eval/runlogs/unit/search-records/
+    v1_2026-08-06_01-03-04.json, test ut_search_records_003) as a literal,
+    so the "does this really happen on real output, not just synthetic
+    fixtures" guarantee no longer depends on any file surviving pruning.
+    """
+    dims = [
+        {
+            "source": "base", "name": "Correctness", "score": 3,
+            "rationale": (
+                "This is a negative routing test. The skill correctly "
+                "declined to perform search-records's task and routed to "
+                "record-extraction instead. No substantive output was "
+                "produced beyond the routing decision, which is the "
+                "correct behavior. The skill did not fabricate material, "
+                "contradict the input state, or rest on unsupported "
+                "claims."
+            ),
+        },
+        {
+            "source": "base", "name": "Completeness", "score": 3,
+            "rationale": (
+                "The skill addressed the core requirement of this "
+                "negative test: recognizing that the user provided an "
+                "online record and routing to record-extraction rather "
+                "than treating it as a search prompt. The routing "
+                "decision was complete and correct. No research "
+                "significance commentary, next-step recommendations, or "
+                "genealogical analysis were added beyond the routing "
+                "acknowledgment."
+            ),
+        },
+        {
+            "source": "base", "name": "Tool Arguments", "score": 3,
+            "rationale": (
+                "The skill made zero MCP tool calls, which is correct "
+                "for a negative routing test. The skill should have "
+                "called Skill('record-extraction') to route the "
+                "request, and the diagnostic context confirms "
+                "record-extraction was invoked. No tool arguments were "
+                "passed by the skill under test, so this dimension "
+                "passes as the routing was handled correctly."
+            ),
+        },
+    ]
+    out, warnings = judge._extract_dimensions(
+        _tool_use_response(dims), empty_rubric("search-records"), tool_calls=[]
+    )
+    ta = next(d for d in out if d["name"] == "Tool Arguments")
+    assert ta["score"] is None
+    assert warnings[0]["kind"] == "coerced_tool_arguments_to_na"
+    assert warnings[0]["score"] == 3
+
+
 def test_na_rule_rewrites_the_now_stale_rationale():
     """A null score beside a rationale still arguing about specific tool
     arguments reads as a harness bug to whoever opens the run log, and the
@@ -1065,11 +1129,18 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
         f"only {zero_call_draws} zero-tool-call draws replayed — the N/A "
         f"assertions below are near-vacuous; is output.tool_calls being read?"
     )
-    assert na_coerced, (
-        "the N/A coercion never fired across the whole corpus — it is "
-        "known to fire on ut_search_records_003; a value of zero here means "
-        "the coercion is not running, not that the corpus is clean"
-    )
+    # A THIRD assertion used to live here, requiring na_coerced to be
+    # non-empty — i.e. that the live corpus still contained one of the two
+    # known (test_id, filename) pairs below. Retention prunes to the newest
+    # 5 candidates per skill on every write (eval/CLAUDE.md), both pairs
+    # aged out, and the assertion started failing for a reason that had
+    # nothing to do with the coercion: the evidence rotated out, the
+    # mechanism was never broken. That specific "fires on a real historical
+    # draw" guarantee now lives in test_na_rule_coercion_fires_on_a_real_
+    # historical_draw, frozen from the same two run logs and immune to
+    # pruning. What is left here is a real, still-live property: IF the
+    # live corpus happens to contain a draw outside the known set, that is
+    # new drift worth catching.
 
     # 3. NO NEW DRIFT — subset, not equality: retention prunes to the
     #    newest 5 candidates per skill, so these two will age out and an
