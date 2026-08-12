@@ -49,6 +49,7 @@ from harness.skill_invocation import (
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
+    WARNINGS_UNCHECKED_KIND,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -165,6 +166,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
             CITATION_NULLING_KIND,
             CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
+            WARNINGS_UNCHECKED_KIND,
         ),
     )
 
@@ -184,6 +186,15 @@ def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
     `kind == CONFLICT_UNPERSISTED_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CONFLICT_UNPERSISTED_KIND)
+
+
+def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1193 warnings-unchecked shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a new ParentChild/Couple relationship written
+    with no `person_warnings` call). Identified by
+    `kind == WARNINGS_UNCHECKED_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
 
 @dataclass
@@ -389,6 +400,19 @@ def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
     )
 
 
+def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
+    """One flat count — a fact about the final tree + tool_calls, not a windowed
+    scan. This is the number the graduation decision (shadow → mandatory
+    person_warnings call in the orchestrator, issue #1193 question b) is gated
+    on."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7 warnings-unchecked check (issue #1193, shadow): "
+        f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
+        f"without calling person_warnings, across {affected} run(s)."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
@@ -433,6 +457,10 @@ def main(argv: list[str] | None = None) -> int:
 
     conflict_unpersisted = scan_conflict_unpersisted(paths)
     print(format_conflict_unpersisted(conflict_unpersisted))
+
+    warnings_unchecked = scan_warnings_unchecked(paths)
+    print(format_warnings_unchecked(warnings_unchecked))
+
     replay = replay_provenance(paths) if args.replay else None
     if replay is not None:
         print(format_provenance_replay(replay))
@@ -449,6 +477,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nConflict unpersisted (issue #1317), {len(conflict_unpersisted)}:")
         for v in conflict_unpersisted:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
+        for v in warnings_unchecked:
             print(f"  {v['fixture']:<35} {v['detail']}")
         if replay is not None:
             print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")

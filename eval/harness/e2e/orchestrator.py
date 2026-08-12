@@ -50,6 +50,7 @@ from harness.skill_invocation import (
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
+    find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
     PERSON_EVIDENCE_DENY_KIND,
@@ -2283,6 +2284,23 @@ async def run_e2e_test(
         guardrail_bypass_violations = check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
+
+        # SHADOW MODE ONLY (issue #1193) — a new ParentChild/Couple relationship
+        # was written this run but the free, deterministic `person_warnings`
+        # guardrail was never called. Folded into the same already-plumbed
+        # `guardrail_shadow_violations` field, discriminated by its `kind` key so
+        # the shadow report counts it in its own bucket. Logs; never fails the
+        # run — unlike guardrail_bypass_violations above, this does not feed
+        # compliance/outcome. Promotion to a hard gate, or a mandatory call in the
+        # `/research` orchestrator so an inlined write is still gated, is gated on
+        # measuring this fire rate across the corpus (issue #1193, question b).
+        warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
+            tool_calls, final_tree, starting_tree=starting_tree
+        )
+        if warnings_unchecked_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + warnings_unchecked_shadow
+            )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
         # matches the wall-clock cap and the stall watchdog (also monotonic) and
