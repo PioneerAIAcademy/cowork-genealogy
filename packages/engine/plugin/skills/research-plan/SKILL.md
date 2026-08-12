@@ -267,8 +267,10 @@ table and contextual factors checklist.
   a patronymic-era Scandinavian parentage plan they rank alongside the
   baptism and the parents' marriage. See
   `references/record-type-guide.md` ("sons in conscription countries").
-- Include the FAN cluster (relatives, neighbors, associates) — their
-  records may contain evidence about the subject.
+- Include the FAN cluster (relatives, neighbors, associates) **when their
+  records may contain evidence about the question's subject** — purpose is the
+  test, not the relative's presence in the tree. An item whose deliverable is a
+  relative's *own* missing facts serves a different objective.
 - Consider occupation-specific, institutional, and organizational
   records when relevant to the subject's life.
 - Cover both FamilySearch and external/paid repositories (Ancestry,
@@ -289,8 +291,10 @@ Order items for efficient discovery (BCG Standard 15):
 4. **Narrow before broad** — specific county before adjacent counties
 5. **Include contingencies** — use `fallback_for` to link alternate
    sources when a primary may fail
-6. **Include FAN items** — at least one search targeting records of
-   relatives, neighbors, or associates
+6. **Include FAN items where they earn their place** — relatives, neighbors,
+   or associates whose records would bear on the subject. Not a quota: if none
+   could speak to this question, don't manufacture one. State in the item's
+   `rationale` what it reveals *about the subject*
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
