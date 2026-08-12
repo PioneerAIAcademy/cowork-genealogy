@@ -15,6 +15,18 @@ The researcher wants to know whether you can actually *do* the research, not
 whether you can read an answer off a tree that already contains it. This skill
 removes a chosen slice of the local tree so the question becomes genuine.
 
+## Prerequisite
+
+`tree_forget` is required. If it is not available (ToolSearch returns no match,
+or calls error with "unknown tool"), **stop and tell the researcher:**
+
+> The `tree_forget` tool is not available in your current MCP server.
+> Rebuild and reinstall the extension from a current repo pull, then retry.
+
+**Do not substitute `tree_edit`.** `tree_edit` cannot cascade removals, cannot
+write the restore file, and is the mechanism `tree_forget` replaced — using it
+here causes the data damage this skill exists to prevent.
+
 ## The two halves — both are required
 
 Stripping the local tree is only half the mechanism.
