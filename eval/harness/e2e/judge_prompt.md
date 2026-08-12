@@ -58,6 +58,104 @@ Mark a finding `partial` when the agent recovered some of its details
 (e.g., found a person with the right name but wrong birth year) but
 diverged on a key fact.
 
+### Relationship findings — decompose before labelling
+
+A finding with `"type": "relationship"` is graded on its **relationship
+components**, not on whether the named people exist. A person record alone
+never satisfies a relationship finding.
+
+Apply this mechanically, in order:
+
+**1. List the components, each tagged `link` or `detail`.**
+
+- **`link`** — a relationship the finding asserts between two people. These are
+  what the finding is *about*, and they are the only components that score.
+- **`detail`** — biography that identifies *which* person is meant: birth dates,
+  occupations, residences, death years. Recorded for transparency, never scored.
+  The one exception is a date the finding puts on the **relationship itself**
+  (e.g. a marriage date) — tag that `link` so it scores. See Scoping below.
+
+"Manoel and Cândida had a daughter Josefa, who married Elfridio" is three
+links: father, mother, spouse.
+
+"John Laurie Sr. was the father of John Laurie. Born 1833 in the Gorbals; an
+iron moulder; died 1910" is **one** link — the father link. Everything after it
+is `detail`: it tells you which John Laurie Sr. is meant, not something the
+agent must add to the tree.
+
+The existence of a person the finding names, however well identified or sourced,
+is **not** a component at all. The finding is about the links between those
+people; the people are their endpoints. A run that recovered only the person has
+**zero** links supported.
+
+**2. Mark each one from the tree only:** *supported* (present in the tree),
+*unsupported* (absent), or *contradicted* (the tree asserts something
+incompatible).
+
+**3. Emit the label, counting `link` components only:**
+
+| Links | `matched` |
+|---|---|
+| Any link contradicted | `"false"` |
+| **No** link supported | `"false"` |
+| Some supported, some unsupported | `"partial"` |
+| All supported | `"true"` |
+
+A bare person record with no relationship supported is `"false"`, not
+`"partial"` — `"partial"` requires at least one claimed relationship to actually
+exist in the tree. A missing `detail` never lowers the label.
+
+**Record every component in the `components` array** — one entry per claim,
+each with its `claim` text, its `kind` (`link` / `detail`) and its `status`
+(`supported` / `unsupported` / `contradicted`). `matched` is computed from the
+`link` entries, so the components are the part that must be right.
+
+**4. Emit the label from the count. Do not adjust it afterwards.**
+
+State the number of supported components in `notes`, then read `matched`
+straight off the table above for that number and emit exactly that value.
+The label is a lookup, not a second judgement — you have already done the
+judging in steps 1–3.
+
+Two moves are specifically forbidden, because both have happened:
+
+- **At zero supported components, `"partial"` is not available.** `"partial"`
+  means *some* claimed component was found. If none was, the only correct value
+  is `"false"` — however well the people themselves were identified, sourced or
+  named.
+- **`"true"` is not available** when your own `agent_evidence` or `notes` say a
+  claimed relationship or detail is missing, absent, or not established.
+
+If you find yourself writing a rationale that concludes one label and then
+emitting a different one, the rationale is right and the label is wrong. Emit
+the label your own reasoning arrived at.
+
+Scoping:
+
+- The person-identifier allowance above — a newly created person record counts
+  as a match if the name and key facts are right — applies to findings that ask
+  for a **person**. It never satisfies a relationship component.
+- A spouse link satisfies a marriage claim that names no date.
+- **The date of a relationship the finding claims is a scoring component, not a
+  detail.** When the finding dates the relationship itself — most often a
+  marriage date on a spouse claim — that date is its own component and you must
+  tag it `kind: "link"`, never `detail`, which would leave it in the unscored
+  pile. Mark it `supported` only when the tree records that date on the
+  relationship. So a spouse link present with no marriage date recorded is
+  `"partial"`, not `"true"`: one link supported, one unsupported.
+- **This does not promote a linked person's own biography.** The birth and death
+  dates of the parent, spouse or child being linked stay `detail`, even when the
+  finding states them precisely — they say *which* person is meant (the John
+  Laurie case above), and the agent is not being asked to file them. Only a date
+  on the claimed relationship scores. Tagging identifying dates `link`
+  downgrades findings whose relationship was recovered exactly right, which is
+  the error this taxonomy exists to prevent.
+- Where a finding states that a detail is unresolved and either value is
+  acceptable, honour that — the component is supported if the tree carries
+  either.
+
+This section does not apply to `polarity: "avoid"` findings.
+
 Do **not** require that the agent's citations match the
 `supporting_sources` list exactly — `supporting_sources` is provided
 for context only. If the agent found the right answer via different
@@ -126,7 +224,14 @@ markdown fences around it):
       "finding_id": "f1",
       "matched": "true" | "partial" | "false",
       "agent_evidence": "<which element in the final tree supports the match, or empty>",
-      "notes": "<short rationale>"
+      "notes": "<short rationale>",
+      "components": [
+        {
+          "claim": "<the single claim this component covers>",
+          "kind": "link" | "detail",
+          "status": "supported" | "unsupported" | "contradicted"
+        }
+      ]
     }
   ],
   "recall_required": 0.0,

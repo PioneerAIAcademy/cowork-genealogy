@@ -573,6 +573,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
@@ -597,6 +598,59 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 unable to finish — which under the first form required a judge instruction
 ("do not penalize the skill for not producing Ancestry URLs") to keep the test
 green. A grading patch over a harness gap is the signal you needed `response`.
+
+**`run_skills` — letting a sub-skill really run.** The opposite declaration:
+this test wants the callee to execute. Naming it here unions the callee's
+`allowed-tools` into the session allowlist, because `Skill()` loads the
+callee's instructions into the **same conversation** — its tool calls are
+checked against the caller's allowlist, not one of its own.
+
+Two things must both be true before a callee can work, and they are enforced
+in different places:
+
+| | grants | enforced by | failure |
+|---|---|---|---|
+| `run_skills` | the tool is **permitted** | `compute_allowed_tools` | SDK denies the call |
+| `mcp_fixtures` | the tool **exists** | `mock_mcp.build_manifest` | `unmatched_tool_call` aborts the *caller's* test |
+
+So a test that names a callee in `run_skills` must also stock a fixture for
+each of that callee's tools. The harness checks this **before the run starts**
+and fails with the missing pairs named, rather than letting the callee's first
+call abort the caller twenty turns in. Fixtures stay explicitly declared rather
+than auto-loaded from a per-skill default set: auto-loading would let a test
+pass on fixtures it never named, and a later change to the default set would
+alter that test's behaviour with no diff in the test file.
+
+Opt-in, not automatic. `search-records` names four callees but any one test
+drives at most one, so unioning every `Skill()` reference would arm that abort
+across the whole suite to serve the one test that wants it. A callee that is
+neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
+this field existed — it runs without its own tools.
+
+**The two fields are mutually exclusive for the same callee, and naming one in
+both is refused before the run starts.** The runnability gate
+(`eval/harness/harness/runnability.py`) rejects the test at load time rather
+than letting it start, because the combination is worse than either field
+alone: `run_skills` grants the callee's tools *and* obliges the test to stock a
+fixture for each, while `stub_skills` waives that fixture preflight
+(`uncovered_callee_fixtures` skips a stubbed callee) and then denies the launch.
+Declaring both grants the tools and waives the check, so the session ends up
+holding tools nothing backs and nothing warned about — and the *main thread*
+calling one trips `unmatched_tool_call` and aborts the caller, which is exactly
+what the preflight exists to prevent. That is the silent fourth state the
+three-state table above would otherwise admit; the gate is what keeps the
+states at three. Keep whichever field you meant — `run_skills` to execute the
+callee, `stub_skills` to deny it.
+
+> **Correction (2026-07-31).** This section previously described
+> stubbing as trading away integration coverage at the caller/callee seam.
+> There was no such coverage to trade: until `run_skills` existed, a callee had
+> no way to obtain its tools, so *not* stubbing bought a callee that improvised.
+> `ut_search_records_018` passed for weeks on an Ancestry URL missing
+> `name_x=ps_ps` — the phonetic-match parameter that is the entire reason the
+> escalation exists. Note this is a harness limitation only: production builds
+> no per-skill allowlist (`permission_mode="bypassPermissions"` with no
+> `allowed_tools`), so a real session holds every tool and the callee works.
 
 Assert the hand-off with a deterministic `skills_invoked` validator, not the
 judge, which reads a transcript and can misread it. Note the limit: the harness
@@ -624,6 +678,10 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 ### 5.10 `expected_classifications`
 
 Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+
+A matcher may also pin the fact **value**, not just its classification layers:
+
+- **`value: "<expected>"`** — every matching new assertion's value must **contain** `value` (case-insensitive substring), read from the attribute-relevant field: `place`/`standard_place` for `attribute: "place"`, `date` for `attribute: "date"`, else the human-readable `value`. Substring tolerates place standardization (`"Pennsylvania"` ⊂ `"Pennsylvania, United States"`) while still failing a genuinely wrong value (`"Ireland"` is not in `"Pennsylvania"`). This is what makes a value-level leak deterministic — e.g. a child's birthplace persisted `Pennsylvania` where the record says `Ireland` classifies `direct` either way, so only a `value` matcher catches it. Declare only where the doctrine fixes the value.
 
 Two matcher modifiers keep the check both precise and non-flappy:
 

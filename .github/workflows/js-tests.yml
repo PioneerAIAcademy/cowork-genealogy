@@ -14,9 +14,9 @@ name: JS workspace tests
 #
 # Three checks, because each catches a different class of breakage and all three
 # together take well under a minute:
-#   test       apps/electron + packages/viewer-ui vitest suites. apps/web has no
-#              tests, which is exactly why the next two matter.
-#   typecheck  the only coverage apps/web and packages/schema have.
+#   test       apps/electron, packages/viewer-ui, and apps/web vitest suites.
+#   typecheck  the only coverage packages/schema has (apps/web also has the
+#              vitest suite above, but typecheck still catches what it doesn't).
 #   build      `pnpm --filter web build` is the same command deploy/Dockerfile
 #              runs to produce the production client. A Vite/plugin major can
 #              typecheck cleanly and still fail here, so this is the check that

@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import auth, feedback, sessions, v1
-from .config import get_settings
+from .config import assert_production_config, get_settings
 from .db import init_db
 from .obs import setup_logging
 from .sandbox import make_provider
@@ -29,6 +29,10 @@ from .sandbox import make_provider
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # FIRST — before logging, the DB or the provider. A production deploy still on
+    # the dev-default secrets is refused here rather than coming up and minting
+    # forgeable cookies and WS tokens. See config.assert_production_config.
+    assert_production_config(get_settings())
     setup_logging()
     init_db()
     app.state.provider = make_provider()

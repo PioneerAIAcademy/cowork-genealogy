@@ -50,12 +50,25 @@ from harness.skill_invocation import (
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
+    find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
+    PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
 )
 
 from e2e import provenance
+from e2e.mcp_health import (
+    CONSECUTIVE_TOOL_SEARCH_MISSES,
+    backstop_fired,
+    classify_server_status,
+    find_server_entry,
+    genealogy_mcp_config,
+    is_no_match_tool_search,
+    should_abort_at_init,
+    tool_search_miss_streak,
+    unavailable_message,
+)
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -65,6 +78,20 @@ from e2e.stop_checker import (
 )
 from e2e.subagent_capture import collect_subagents
 from e2e import judge as judge_module
+
+
+class McpUnavailableError(RuntimeError):
+    """The genealogy MCP surface was absent, so this run never happened.
+
+    Issue #941. Raised by `run_e2e_test` *after* the agent stops and *before*
+    the judge or any file write, which is what implements the lead's retention
+    decision: an `mcp_unavailable` run writes no run-log files at all, makes no
+    judge call, and exits non-zero. Rationale and the rejected alternatives are
+    in docs/specs/e2e-test-spec.md beside the `stop_reason` table.
+
+    Carries the operator-facing text (e2e.mcp_health.unavailable_message) as
+    its message, so `run_e2e.py` can print it verbatim.
+    """
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -338,14 +365,134 @@ def person_evidence_provenance_gap(
     )
     if not unguarded:
         return None
+    return person_evidence_gap_reason(unguarded)
+
+
+def person_evidence_gap_reason(unguarded: list[str]) -> str:
+    """The operator/agent-facing text for a provenance gap, given the ids.
+
+    Split from `person_evidence_provenance_gap` so a caller that already holds
+    the flagged ids — `pretool_hook`, which needs them for the deny valve's
+    per-id-set key — can format the reason without a second
+    `same_person_scored_ids` + `unguarded_new_person_evidence_links` pass over
+    the whole `tool_calls` list on every flagged write.
+    """
     shown = ", ".join(unguarded[:_MAX_SHADOW_IDS])
     if len(unguarded) > _MAX_SHADOW_IDS:
         shown += f", +{len(unguarded) - _MAX_SHADOW_IDS} more"
+    example = unguarded[0]
     return (
         f"person_evidence link written for new tree person(s) {shown} with no "
         "prior same_person call: a brand-new identity should be scored before it "
-        "is asserted (research/SKILL.md doctrine; issue #963)."
+        "is asserted (research/SKILL.md doctrine; issue #963). "
+        # Issue #1231 prereq 2. The text above alone is unactionable — replayed
+        # over the corpus it would have denied 100 of 103 runs that link a new
+        # person, and the agent believes it DID call same_person. The cause is an
+        # id mismatch, so the reason has to name the one shape that satisfies the
+        # gate. See docs/specs/guardrail-enforcement-spec.md §4's last row.
+        f"These are LOCAL tree ids minted by tree_edit (which rejects "
+        f"caller-supplied ids), not FamilySearch ids, so score them by passing "
+        f"the TREE side as `gedcomx2` — a subset simplified-GedcomX holding the "
+        f"person plus their matching mob — with `primaryId2: \"{example}\"`, and "
+        "the record side as `gedcomx1`/`primaryId1` (person-evidence/SKILL.md, "
+        "'Score the match with same_person'). "
+        # A PreToolUse deny is all-or-nothing on the call, and the batches this
+        # fires on have a median of 17 ops (max 152), 11% of which carry ops in
+        # OTHER sections. Without this sentence the agent cannot tell what it lost.
+        "If this call was denied, the entire batch was rejected — including any "
+        "ops in other sections — and must be re-issued after the same_person "
+        "call. "
+        # The one real escape: scoring needs a record persona to compare
+        # against, and a non-record_search assertion has no record_persona_id.
+        #
+        # There is deliberately NO escape for "the id is a locally-minted stub".
+        # person-evidence/SKILL.md says such an id returns a degenerate score to
+        # be treated as "no score available", but that guidance (2026-07-02)
+        # predates the match-engine mint-hardening (2026-07-07) and is stale.
+        # Probed live against the API (dev/probe-same-person-local-id.ts): with
+        # the tree focus person's ARK removed the score is 0.9999484 against a
+        # 0.999967 control — and identical across two runs despite randomFsId()
+        # minting a fresh id each call. FS scores document CONTENT, so a minted
+        # person IS scorable, and telling the agent otherwise would hand it a
+        # documented way to skip a call that works.
+        "If no score is obtainable — the assertion is not record_search-sourced, "
+        "so it has no record_persona_id to compare against — say so in the "
+        "link's `rationale` and proceed. A locally-minted tree id is NOT such a "
+        "case: it scores on document content and must be scored."
     )
+
+
+# The loop valve (issue #1231 prereq 3). Two limits, because one does not bound
+# the loop:
+#   * per id set — a wedged identity stops costing wall clock after N tries;
+#   * per run — the per-key counter alone is unbounded, since a batch differing
+#     by one op, or a freshly minted I2/I3, mints a NEW key and buys another full
+#     per-key budget.
+# Past either, the write is RELEASED rather than denied again. That matters
+# mechanically: the deny returns above `tool_call_count["n"] += 1`, so a denied
+# call charges no budget, and `activity_count` increments unconditionally so the
+# no-progress watchdog reads a deny loop as progress. Releasing is the only path
+# that reaches the tool_calls cap. Spec §10 also prefers a merely-wrong run over
+# a stuck one.
+PERSON_EVIDENCE_DENY_REPEAT_LIMIT = 3
+PERSON_EVIDENCE_DENY_TOTAL_LIMIT = 10
+
+# The two run modes for the §8 provenance check. `shadow` (the default
+# everywhere) records and lets the write through; `deny` additionally returns a
+# PreToolUse deny, and is opt-in per run via --person-evidence-guard.
+PERSON_EVIDENCE_GUARD_SHADOW = "shadow"
+PERSON_EVIDENCE_GUARD_DENY = "deny"
+PERSON_EVIDENCE_GUARD_MODES = (PERSON_EVIDENCE_GUARD_SHADOW, PERSON_EVIDENCE_GUARD_DENY)
+
+
+def person_evidence_deny_decision(
+    reason: str,
+    flagged_ids: set[str] | frozenset[str],
+    *,
+    mode: str,
+    repeat_counts: dict[frozenset[str], int],
+    denied_total: dict[str, int],
+    per_key_limit: int = PERSON_EVIDENCE_DENY_REPEAT_LIMIT,
+    total_limit: int = PERSON_EVIDENCE_DENY_TOTAL_LIMIT,
+) -> tuple[str, dict[str, Any] | None]:
+    """Whether a provenance gap should be denied, and the PreToolUse payload.
+
+    Returns `(outcome, payload)` where outcome is one of `shadow` (mode is not
+    `deny` — nothing denied, no counter moved), `denied` (payload is the deny),
+    or `released` (the valve opened: a limit was reached, so the write goes
+    through even though the gap is real).
+
+    A `None` payload means the hook falls through to its normal path, which
+    already increments `tool_call_count` — so the release path charges budget for
+    free, and that is deliberate: it is the only route to the tool_calls cap.
+
+    Pure decision logic living beside `person_evidence_provenance_gap` for the
+    same reason that one was extracted — `pretool_hook` spawns the SDK and the
+    real MCP server, so a closure-local implementation would be reachable only
+    from a paid e2e run (`tests/unit/test_e2e_orchestrator.py`'s own docstring
+    says so). The two counter arguments are mutated in place, matching the
+    hook's existing `{"n": 0}` counter idiom.
+
+    An unrecognized `mode` is treated as `shadow` rather than raising: a hook
+    that raises fails a tool call the agent was entitled to make (CLAUDE.md,
+    "Plugin hooks"), so the failure direction here is always fail-open.
+    """
+    if mode != PERSON_EVIDENCE_GUARD_DENY:
+        return PERSON_EVIDENCE_GUARD_SHADOW, None
+
+    key = frozenset(flagged_ids)
+    if repeat_counts.get(key, 0) >= per_key_limit or denied_total["n"] >= total_limit:
+        return "released", None
+
+    repeat_counts[key] = repeat_counts.get(key, 0) + 1
+    denied_total["n"] += 1
+    return "denied", {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
 
 
 @dataclass
@@ -482,10 +629,10 @@ def provided_documents(fixture: Fixture) -> list[Path]:
 def _override_agent_model(md_text: str, model: str) -> str:
     """Rewrite a staged subagent's ``model:`` frontmatter to ``model``.
 
-    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-5``)
+    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-4-6``)
     so an e2e run can be executed against a different model — e.g. to test
-    whether the sonnet-5 record-extractor freeze reproduces under sonnet-4-6,
-    the model Cowork uses. Inserts a ``model:`` line if the agent has none.
+    whether the sonnet-5 record-extractor freeze still reproduces. Inserts a
+    ``model:`` line if the agent has none.
     """
     if re.search(r"(?m)^model:[ \t]*.*$", md_text):
         return re.sub(r"(?m)^model:[ \t]*.*$", f"model: {model}", md_text, count=1)
@@ -543,8 +690,14 @@ def build_workspace(
 
     # Optionally pin the run's reasoning effort via a PROJECT-level setting.
     # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
-    # NOT (it's output-only — verified). This is the only working effort lever
-    # from the harness. Session-wide (parent + every subagent). Left unset, the
+    # NOT (it's output-only — verified). This is *a* working effort lever, not
+    # the only one: `ClaudeAgentOptions.effort` also works and always has —
+    # the SDK's subprocess transport emits `--effort` unconditionally when the
+    # option is set, at every version this repo has pinned. The settings-file
+    # route is kept because it is the one that provably reaches subagents; the
+    # SDK option's subagent propagation is unverified. Do not restate this as
+    # "the only lever" — that claim shaped a spend decision before it was
+    # checked. Session-wide (parent + every subagent). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
@@ -862,6 +1015,7 @@ async def _run_agent(
     resume_on_stall: bool = False,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
+    person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -905,6 +1059,12 @@ async def _run_agent(
     # signal lands in one already-plumbed field; entries carry `required_skill`
     # to match that list's shape. Nothing reads this into a verdict.
     provenance_shadow: list[dict[str, Any]] = []
+    # Loop-valve state for `person_evidence_guard == "deny"` (issue #1231
+    # prereq 3). Both are inert under the default shadow mode. Per-id-set counts
+    # bound a single wedged identity; the run-global count bounds the loop the
+    # per-key counter cannot, since a batch differing by one op mints a new key.
+    pe_deny_repeat_counts: dict[frozenset[str], int] = {}
+    pe_denied_total = {"n": 0}
 
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -943,6 +1103,16 @@ async def _run_agent(
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
     last_nudge_activity_count = {"n": -1}
+    # #941 — the genealogy MCP surface's health. `unavailable` latches True on
+    # the first detector hit and is read by the Stop hook (so an in-flight
+    # nudge can't push the agent back into an empty tool set) and by the abort
+    # path. `misses` is the consecutive no-match ToolSearch streak feeding the
+    # mid-run backstop; see e2e.mcp_health for how it is calibrated.
+    # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES *no-match*
+    # ToolSearch queries — the ones that actually built the streak — so a
+    # backstop abort can name what was searched: that path writes no run log, so
+    # the console is the only place a false positive could ever be spotted.
+    mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
 
@@ -1163,27 +1333,69 @@ async def _run_agent(
         # research_append tool, so it's safe either way. Decision logic lives in
         # that helper so it's unit-testable without the SDK.
         if bare == "research_append" and starting_person_ids is not None:
-            provenance_gap = person_evidence_provenance_gap(
+            # Scanned ONCE. The flagged ids are needed twice — for the reason
+            # text and for the deny valve's per-id-set key — so they are computed
+            # here rather than via person_evidence_provenance_gap, which would
+            # re-walk the whole tool_calls list to rebuild the same list.
+            unguarded_ids = unguarded_new_person_evidence_links(
                 tool_name,
                 input_data.get("tool_input") or {},
-                tool_calls=tool_calls,
-                starting_person_ids=starting_person_ids,
+                scored_ids=same_person_scored_ids(tool_calls),
+                starting_ids=starting_person_ids,
             )
+            provenance_gap = person_evidence_gap_reason(unguarded_ids) if unguarded_ids else None
             if provenance_gap:
                 # Shaped to match find_unguarded_protected_writes' entries so
                 # both can share `guardrail_shadow_violations` without a reader
                 # having to branch on which source an entry came from.
                 # `detail` is the discriminator: only this source sets it.
-                provenance_shadow.append(
-                    {
-                        "index": len(tool_calls),
-                        "tool": bare,
-                        "required_skill": "person-evidence",
-                        "question_id": None,
-                        "detail": provenance_gap,
-                    }
+                entry: dict[str, Any] = {
+                    "index": len(tool_calls),
+                    "tool": bare,
+                    "required_skill": "person-evidence",
+                    "question_id": None,
+                    "detail": provenance_gap,
+                }
+                # issue #1231 prereq 3 — opt-in per run, `shadow` everywhere by
+                # default, so this is a no-op unless --person-evidence-guard deny
+                # was passed. The gap is recorded either way: what changes is
+                # whether the write is also blocked.
+                outcome, deny = person_evidence_deny_decision(
+                    provenance_gap,
+                    unguarded_ids,
+                    mode=person_evidence_guard,
+                    repeat_counts=pe_deny_repeat_counts,
+                    denied_total=pe_denied_total,
                 )
-                _emit("[guardrail-shadow] person_evidence w/o prior same_person")
+                if outcome != PERSON_EVIDENCE_GUARD_SHADOW:
+                    # Tag deny-mode entries so `guardrail_shadow_report`'s
+                    # scan_provenance can exclude them: it selects on key shape,
+                    # never on the run's mode, and the valve can record several
+                    # denials plus a release for ONE logical gap. Untagged, they
+                    # would inflate the very corpus the graduation reads.
+                    entry["kind"] = PERSON_EVIDENCE_DENY_KIND
+                    entry["valve_released"] = outcome == "released"
+                provenance_shadow.append(entry)
+                _emit(f"[guardrail-{outcome}] person_evidence w/o prior same_person")
+                if deny is not None:
+                    narration.append(
+                        {
+                            "tool_calls_before": len(tool_calls),
+                            "kind": "blocked",
+                            "text": (
+                                "`research_append` denied — a person_evidence link "
+                                "for a brand-new tree person must be scored by "
+                                "`same_person` first (#1231). The whole batch was "
+                                "rejected; re-issue it after scoring."
+                            ),
+                        }
+                    )
+                    # Returns BEFORE tool_call_count below, so a denied call
+                    # charges no budget — which is exactly why the valve above
+                    # must eventually release: releasing falls through to that
+                    # increment, and the tool_calls cap is the only bound a
+                    # wedged agent can actually reach.
+                    return deny
 
         tool_call_count["n"] += 1
         if tool_call_count["n"] > fixture.caps.tool_calls:
@@ -1212,6 +1424,7 @@ async def _run_agent(
             max_nudges=fixture.caps.max_continue_nudges,
             tool_count=activity_count["n"],
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
+            mcp_unavailable=mcp_state["unavailable"],
         ):
             return {}
         continue_nudges["n"] += 1
@@ -1246,13 +1459,24 @@ async def _run_agent(
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
-        mcp_servers={
-            "genealogy": {
-                "type": "stdio",
-                "command": "node",
-                "args": [str(mcp_server_entry)],
-            },
-        },
+        # One definition, shared with preflight's connection check (#941) — a
+        # preflight that proves a *different* config than the run uses is the
+        # bug class that issue was filed about.
+        mcp_servers=genealogy_mcp_config(mcp_server_entry),
+        # ...and `strict_mcp_config` is what makes that sharing mean anything:
+        # without it the CLI merges file/user-scoped MCP config over the block
+        # above, so preflight (which sets it) and the run (which did not) could
+        # resolve the same `genealogy` key to different servers — reopening the
+        # gap from the other side.
+        #
+        # Measured, not assumed: a run's own init message listed the operator's
+        # claude.ai connectors (`needs-auth`) even though `build_workspace`
+        # stages no `.mcp.json` and `cwd` is a fresh tempdir — user scope leaks
+        # in. Nothing usable is lost by dropping them: `allowed_tools` below is
+        # `BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"]`, so a foreign MCP tool
+        # was never callable in an e2e run; this only stops one from being
+        # advertised, and removes a way to shadow the server under test.
+        strict_mcp_config=True,
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
         # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
         # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
@@ -1338,6 +1562,56 @@ async def _run_agent(
 
     async def _consume():
         nonlocal usage, error, aborted_reason
+
+        def _abort_mcp_unavailable(
+            entry: dict[str, Any] | None,
+            *,
+            backstop: bool = False,
+            queries: list[str] | None = None,
+        ) -> None:
+            """Latch the #941 abort. Callers `return` immediately after.
+
+            Travels as an `aborted_reason` sentinel rather than an exception on
+            purpose: a raise from inside this coroutine is swallowed by the
+            generic `except Exception` around `_consume()` below and relabelled
+            `error`, which is the very confusion this detector exists to end.
+            `run_e2e_test` turns the sentinel into `McpUnavailableError` after
+            `_run_agent` returns, before the judge or any file write.
+            """
+            nonlocal aborted_reason, error
+            mcp_state["unavailable"] = True
+            aborted_reason = "mcp_unavailable"
+            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Recorded like every other harness-side event even though THIS path
+            # never persists it (the run writes no files at all — see
+            # run_e2e_test). Kept so the in-memory trace is complete and so a
+            # future change to the retention rule needs no new code here.
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "harness",
+                    "text": f"ABORT (mcp_unavailable) — {error}",
+                }
+            )
+            _emit("[abort] genealogy MCP server unavailable — this run never happened")
+
+        async def _shutdown(it) -> None:
+            """Close the query stream so the CLI subprocess exits before we go.
+
+            This abort fires seconds into a run, while every other stop reason
+            takes minutes and then spends ~30s in the judge. That difference
+            matters on Windows: a live CLI child still holds handles inside the
+            workspace, so `TemporaryDirectory.__exit__` raises
+            `PermissionError [WinError 32]` — and because `__exit__` runs before
+            our exception propagates, that error *replaces* McpUnavailableError,
+            burying the operator message and returning the wrong exit code
+            (observed 2026-08-04). Mirrors the resume path's teardown below.
+            """
+            try:
+                await asyncio.wait_for(it.aclose(), timeout=15)
+            except Exception:  # noqa: BLE001 — teardown is best-effort
+                pass
+
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
@@ -1434,6 +1708,43 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
+                                    # #941 backstop — for a server that dies
+                                    # AFTER init, when there is no init message
+                                    # left to read. Absence surfaces only as
+                                    # ToolSearch finding nothing (the genealogy
+                                    # schemas are deferred under
+                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # no-match lookups while not one `mcp__`
+                                    # call has ever succeeded. Threshold and
+                                    # reset rule are calibrated against the
+                                    # three lost runs in e2e.mcp_health.
+                                    mcp_state["misses"] = tool_search_miss_streak(
+                                        mcp_state["misses"],
+                                        tool=entry["tool"],
+                                        response_summary=summary,
+                                        mcp_call_count=tool_call_count["n"],
+                                    )
+                                    # Record only the lookups that BUILT the
+                                    # streak. A matched ToolSearch no longer
+                                    # resets it (see tool_search_miss_streak),
+                                    # so "the last N ToolSearch queries" is no
+                                    # longer the same set as "the N misses" —
+                                    # and it is the misses the operator needs to
+                                    # tell a dead server from a real streak of
+                                    # searches for tools that never existed.
+                                    if is_no_match_tool_search(entry["tool"], summary):
+                                        q = (entry.get("args") or {}).get("query")
+                                        mcp_state["queries"] = (
+                                            mcp_state["queries"] + [str(q)]
+                                        )[-CONSECUTIVE_TOOL_SEARCH_MISSES:]
+                                    if backstop_fired(mcp_state["misses"]):
+                                        _abort_mcp_unavailable(
+                                            None,
+                                            backstop=True,
+                                            queries=mcp_state["queries"],
+                                        )
+                                        await _shutdown(iterator)
+                                        return
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1452,6 +1763,85 @@ async def _run_agent(
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
+                    # #941 — the decisive check, and it costs nothing: the CLI's
+                    # init message lists every MCP server it tried to connect
+                    # (`mcp_servers: [{name, status}]`, a required field of its
+                    # own init schema). Three e2e runs were lost to a genealogy
+                    # server that never connected; the agent then improvised for
+                    # 35 minutes and two of the three declared success.
+                    #
+                    # Measured against this CLI (2026-08-04), which is why the
+                    # classification is three-way and not a `!= "connected"`
+                    # assert:
+                    #   - dead server  -> init at ~25s, status ALREADY "failed"
+                    #     (it settles in ~4s), so this aborts at ~25s.
+                    #   - healthy      -> init at ~11s, status still "pending"
+                    #     (it settles at ~25s). A "not connected -> abort" test
+                    #     would kill EVERY healthy run here.
+                    # So `pending` is the normal healthy reading at init, and a
+                    # dead server that settles late lands there too — which is
+                    # what the ToolSearch backstop below exists to catch.
+                    #
+                    # Scoped to the genealogy server by name on purpose: this
+                    # list also carries the operator's own claude.ai connectors
+                    # (observed: "claude.ai Google Drive"/"Slack" as
+                    # `needs-auth`), so an "any server unhealthy" test would
+                    # abort every run on such a machine.
+                    if message.subtype == "init":
+                        servers = data.get("mcp_servers")
+                        health = classify_server_status(servers)
+                        # Only a run that has done NOTHING can be declared never
+                        # to have happened. This branch is NOT reachable only at
+                        # t=0: a resume after a stall (resume_on_stall, ON by
+                        # default) re-spawns the CLI — and with it the MCP server
+                        # — and emits a FRESH init. If that second spawn fails 40
+                        # minutes into a run that already did real, tool-backed
+                        # research, aborting would raise before
+                        # write_result_files and throw all of it away while
+                        # printing "no research was possible", which would be
+                        # false. So past the first genealogy call this degrades
+                        # to a recorded warning: the run keeps its artifacts and
+                        # ends on its own terms (natural_end / a cap), which is
+                        # the honest verdict for a run that did work and then
+                        # lost its tools.
+                        abort_now = should_abort_at_init(
+                            health, mcp_call_count=tool_call_count["n"]
+                        )
+                        nothing_attempted_yet = tool_call_count["n"] == 0
+                        note = {
+                            "connected": "connected — tools available",
+                            "inconclusive": (
+                                "still connecting (normal at init); the "
+                                "ToolSearch backstop covers it from here"
+                            ),
+                            "unavailable": (
+                                "UNAVAILABLE — aborting"
+                                if nothing_attempted_yet
+                                else (
+                                    "UNAVAILABLE on this session, but "
+                                    f"{tool_call_count['n']} genealogy call(s) "
+                                    "already happened — NOT aborting; the run "
+                                    "keeps its artifacts and ends on its own"
+                                )
+                            ),
+                        }[health]
+                        # Persisted on every run, healthy ones included: `init`
+                        # arrives before any tool call, so this lands at
+                        # tool_calls_before 0 and tells a reader whether the
+                        # surface was there at all.
+                        narration.append(
+                            {
+                                "tool_calls_before": len(tool_calls),
+                                "kind": "harness",
+                                "text": (
+                                    f"genealogy MCP server at session start: {note}"
+                                ),
+                            }
+                        )
+                        if abort_now:
+                            _abort_mcp_unavailable(find_server_entry(servers))
+                            await _shutdown(iterator)
+                            return
                 elif isinstance(message, ResultMessage):
                     timeline.append([round(now - run_started, 1), "result", []])
                     usage = {
@@ -1741,6 +2131,7 @@ async def run_e2e_test(
     effort_level: str | None = "high",
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
+    person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -1751,8 +2142,8 @@ async def run_e2e_test(
     sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
     fixture default for the parent + each subagent's own `.md` pin) overrides the
     model for BOTH the parent and every staged subagent — e.g. run the whole flow
-    under claude-sonnet-4-6 to test whether the sonnet-5 record-extractor freeze
-    reproduces under Cowork's model. All are logged.
+    under claude-sonnet-5 to test whether the record-extractor freeze that PR #725
+    pinned it off still reproduces. All are logged.
     """
     fixture = load_fixture(fixture_dir)
     if not mcp_server_entry.exists():
@@ -1763,7 +2154,6 @@ async def run_e2e_test(
 
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
-
     # Provenance (#1091), captured at run start from the repo files this run
     # stages — the prompt identity, so a committed run ties back to what produced
     # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
@@ -1772,7 +2162,15 @@ async def run_e2e_test(
     run_git_sha = provenance.git_sha(REPO_ROOT)
     run_skills_hash = provenance.skills_hash(skills_dir, DEFAULT_PLUGIN_AGENTS)
 
-    with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
+    # ignore_cleanup_errors: on Windows a CLI child that outlives the run keeps
+    # handles inside the workspace, and TemporaryDirectory.__exit__ then raises
+    # PermissionError [WinError 32] — which REPLACES whatever exception the block
+    # was already propagating (observed with #941's McpUnavailableError, where it
+    # buried the operator message and changed the exit code). A leaked temp dir is
+    # strictly better than a masked error; the OS reclaims it.
+    with tempfile.TemporaryDirectory(
+        prefix=f"e2e-{fixture.id}-", ignore_cleanup_errors=True
+    ) as tmp:
         workspace = build_workspace(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
@@ -1800,6 +2198,7 @@ async def run_e2e_test(
             resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
+            person_evidence_guard=person_evidence_guard,
         )
 
         final_research = read_research_json(workspace)
@@ -1807,6 +2206,19 @@ async def run_e2e_test(
         stop_reason = derive_stop_reason(
             sdk_aborted_reason=aborted, research=final_research
         )
+
+        # #941 — bail out here, and only here. One raise, placed between the
+        # stop_reason and the judge, satisfies the whole retention decision:
+        # the judge below never fires (its `final_tree is None` guard would NOT
+        # have caught this — build_workspace copies the fixture's starting tree
+        # in, so an aborted run HAS a tree and would have paid for an opus
+        # call), and neither write_result_files nor the session.jsonl copy is
+        # reached, so no run-log files exist and no E2eResult is ever built.
+        # "This run never happened" — print the error, exit non-zero.
+        if stop_reason == "mcp_unavailable":
+            raise McpUnavailableError(
+                error or unavailable_message(None)
+            )
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:
@@ -1851,6 +2263,23 @@ async def run_e2e_test(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
 
+        # SHADOW MODE ONLY (issue #1193) — a new ParentChild/Couple relationship
+        # was written this run but the free, deterministic `person_warnings`
+        # guardrail was never called. Folded into the same already-plumbed
+        # `guardrail_shadow_violations` field, discriminated by its `kind` key so
+        # the shadow report counts it in its own bucket. Logs; never fails the
+        # run — unlike guardrail_bypass_violations above, this does not feed
+        # compliance/outcome. Promotion to a hard gate, or a mandatory call in the
+        # `/research` orchestrator so an inlined write is still gated, is gated on
+        # measuring this fire rate across the corpus (issue #1193, question b).
+        warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
+            tool_calls, final_tree, starting_tree=starting_tree
+        )
+        if warnings_unchecked_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + warnings_unchecked_shadow
+            )
+
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
         # matches the wall-clock cap and the stall watchdog (also monotonic) and
         # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
@@ -1869,12 +2298,19 @@ async def run_e2e_test(
             # output-budget × model vs subagents[] behavior. `agent_model` is the
             # effective PARENT model. `subagent_model_override` is non-null only
             # when --agent-model forced every staged subagent off its own `.md`
-            # pin (record-extractor's default is sonnet-5); null means each
+            # pin (record-extractor's default is sonnet-4-6); null means each
             # subagent used its pin. `max_output_tokens` / `cli_version` come from
             # _run_agent.
             "agent_model": agent_model or fixture.agent_model,
             "subagent_model_override": agent_model,
             "effort_level": effort_level,
+            # issue #1231. "shadow" (the default) records provenance gaps and
+            # lets the write through; "deny" also blocks it. Recorded because the
+            # two are NOT interchangeable when reading a run: under "deny" the
+            # blocked write never lands, so the post-run
+            # find_person_evidence_missing_same_person sees no person_evidence
+            # entry for that person and its compliance arm passes VACUOUSLY.
+            "person_evidence_guard": person_evidence_guard,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
