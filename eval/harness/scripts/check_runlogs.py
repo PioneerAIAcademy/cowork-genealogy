@@ -554,6 +554,14 @@ def rule5_concurrent_snapshot_prs(
     along with a run already being spent. The value is the author finding out
     before doing the annotation pass twice, not a merge being stopped.
 
+    RULE 2 ALREADY BLOCKS THE SECOND LANDER — this adds no enforcement, only
+    timing. `runlogs` is a required status check under a strict up-to-date
+    policy, so once the other PR lands this one must update its branch, rule 2
+    re-runs against the merged tree, and it hard-fails on the now-inactive run
+    log. What rule 5 buys is hearing about the collision while folding the two
+    changes together or sequencing them is still possible. Do not promote it to
+    blocking on the theory that the collision is otherwise unguarded.
+
     SKIPPED IS NOT CLEAN. Listing other PRs' files needs a token that can read
     them; when it cannot, this emits a `::notice::` saying the check did not run
     and why, rather than falling through to a silent pass. Reads only — no
@@ -561,8 +569,10 @@ def rule5_concurrent_snapshot_prs(
 
     Exempt skills (`RUNLOG_GATE_EXEMPT_SKILLS`) are still reported. The
     exemption says a skill has no unit suite, which removes the paid-run cost
-    but not the collision: two PRs still edit one skill body. The message says
-    which case it is.
+    but not the collision: two PRs still edit one skill body. It also drops them
+    from rule 2, so for an exempt skill this warning is the only signal there
+    is — nothing hard-fails later. The message says which case it is, and only
+    the non-exempt one promises a red check.
     """
     if not my_skills:
         print("Rule 5: this PR changes no skill eval snapshot; nothing to compare.")
@@ -636,7 +646,8 @@ def rule5_concurrent_snapshot_prs(
                 f"changes, so these PRs cannot share one paid run: whichever lands "
                 f"second needs its own `make eval-skill SKILL={skill}` plus a fresh "
                 f".ann.json covering every dimension of every test, and landing it "
-                f"first invalidates the other's run log too."
+                f"first invalidates the other's run log too. When that PR lands, "
+                f"this one's `runlogs` check goes red on rule 2 until you re-run."
             )
         gh_warning(
             f"skill `{skill}`: this PR changes its eval snapshot, and so does "

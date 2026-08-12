@@ -25,8 +25,13 @@ name: Check runlog discipline
 #   land pays its own `make eval-skill` and a full re-annotation. Derived from
 #   real changed paths on both sides, which is what `fill-ready`'s Gate 4 cannot
 #   do — it runs at promotion time off a self-reported `**Touches:**` line.
-#   Warn-only on purpose: two PRs on one skill is sometimes the right call, and
-#   the value is the author hearing about it before paying twice.
+#
+#   It adds no enforcement: rule 2 above already hard-fails the second lander
+#   once the first one lands, since `runlogs` is a required check under a strict
+#   up-to-date policy. What rule 5 adds is timing — the collision surfaces while
+#   folding or sequencing the two PRs is still possible, instead of as a red
+#   required check afterwards. Two PRs on one skill is also sometimes the right
+#   call, which is the other reason it warns rather than blocks.
 #
 # Scratch runs (scratch_<ts>.json) are gitignored and never reach this
 # workflow.

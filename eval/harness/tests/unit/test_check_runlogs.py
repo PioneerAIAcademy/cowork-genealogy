@@ -624,6 +624,10 @@ def test_rule5_warns_on_a_shared_skill_snapshot(monkeypatch, capsys):
     assert "PR #1577" in out and "PR #1523" in out
     assert "PR #1414" not in out  # a different skill is not a collision
     assert "eval-skill SKILL=init-project" in out  # names the cost
+    # Names the check the author will actually hit. Rule 2 is what blocks the
+    # second lander; rule 5 only says it early, and a reader who doesn't know
+    # that can't act on the warning.
+    assert "`runlogs` check goes red on rule 2" in out
     assert "Warn-only" in out
 
 
@@ -700,7 +704,9 @@ def test_rule5_other_prs_runlog_only_change_is_not_a_collision(monkeypatch, caps
 
 def test_rule5_exempt_skill_is_reported_without_a_paid_run_claim(monkeypatch, capsys):
     """`forget-and-rederive` has no unit suite, so the collision is real but the
-    re-run cost is not. The message must not claim a run that does not exist."""
+    re-run cost is not. The message must not claim a run that does not exist —
+    nor a red check: an exempt skill is dropped before rule 2, so nothing
+    hard-fails it later and this warning is the only signal there is."""
     assert "forget-and-rederive" in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
     _fake_listing(
         monkeypatch,
@@ -711,6 +717,7 @@ def test_rule5_exempt_skill_is_reported_without_a_paid_run_claim(monkeypatch, ca
     assert "::warning" in out
     assert "no unit suite, so no paid run is at stake" in out
     assert "eval-skill SKILL=forget-and-rederive" not in out
+    assert "goes red on rule 2" not in out
 
 
 # --- Rule 5 degradation: SKIPPED must never read as CLEAN -------------------
