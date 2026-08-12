@@ -938,11 +938,18 @@ _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 # resolution marker at all is skipped. The `\b` on the marker is what stops
 # `resolved` matching inside `unresolved`.
 _RESOLUTION_MARKER_RE = re.compile(
-    r"\b(resolved|resolution|reconciled|outweighs?|preferred assertion)\b", re.I
+    r"\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?"
+    r"|adjudicated|preferred assertion)\b",
+    re.I,
 )
 _NON_RESOLUTION_OPENER_RE = re.compile(
     r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
 )
+# `c_NNN` ids named in a stop-criterion's prose, e.g. "resolved (c_001, preferred
+# a_019 …)". Used to tell a conclusion that names the conflict it relied on from
+# one that names none — a resolved conflicts[] entry the conclusion *names* backs
+# it even when it is not cited on resolved_conflict_ids (senior review, PR #1438).
+_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I)
 
 
 def find_unpersisted_conflict_resolutions(
@@ -972,9 +979,16 @@ def find_unpersisted_conflict_resolutions(
     parsed reliably). A ``conflict_resolution`` that says there was no conflict
     (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
 
-    The reliance is BACKED, and no violation fires, when the proof_summary's
-    ``resolved_conflict_ids`` cites at least one ``conflicts[]`` entry with
-    ``status == "resolved"``. Otherwise the resolution is asserted but unpersisted.
+    The reliance is BACKED, and no violation fires, when a ``status == "resolved"``
+    ``conflicts[]`` entry is linked to the conclusion any of four ways: cited on the
+    proof_summary's ``resolved_conflict_ids``; naming this question in its own
+    ``blocks_question_ids``; NAMED (its ``c_`` id) in the stop-criterion prose; or —
+    when the prose names no ``c_`` id at all — simply existing. Each means the
+    conflict was written to ``conflicts[]``, so the viewer's Conflicts section is
+    populated and this is not the #1317 miss. A fire therefore reads as **reliance
+    not linked**, NOT "conflict never written" — ``blocks_question_ids`` is
+    schema-required but legitimately empty, so a resolved conflict can exist,
+    populate the viewer, and still not carry the block.
 
     SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
     (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
@@ -1047,13 +1061,30 @@ def find_unpersisted_conflict_resolutions(
             if isinstance(ps.get("resolved_conflict_ids"), list)
             else []
         )
-        if any(rc in resolved_conflict_ids for rc in rcids) or qid in resolved_blocked_qids:
-            continue  # backed by a real resolved conflicts[] entry — fine
         question = questions_by_id.get(qid)
         if not isinstance(question, dict):
             continue  # no linked question to read a reliance signal from
-        if _resolution_claimed(question) is None:
+        claimed = _resolution_claimed(question)
+        if claimed is None:
             continue  # no conflict claimed (or explicitly "no conflicts") — nothing owed
+        # A resolved conflicts[] entry backs this conclusion when it is cited on the
+        # proof_summary, blocks this question, is NAMED in the conclusion's prose (a
+        # resolved c_ id in the stop-criterion text), or — when the prose names no
+        # conflict id at all — simply exists. Any of these means the conflict was
+        # written to conflicts[] and the viewer's Conflicts section is populated, so
+        # the #1317 miss this detector catches (nothing persisted) does not apply.
+        # blocks_question_ids alone is too weak: it is schema-required but
+        # legitimately empty, so most resolved conflicts do not carry it (senior
+        # review, PR #1438 — mary-dwyer-father / jimmie-jewel-neal wrote a resolved
+        # c_001 with blocks_question_ids: [] and were wrongly reported as unpersisted).
+        named_ids = set(_CONFLICT_ID_RE.findall(claimed))
+        if (
+            any(rc in resolved_conflict_ids for rc in rcids)
+            or qid in resolved_blocked_qids
+            or bool(named_ids & resolved_conflict_ids)
+            or (not named_ids and bool(resolved_conflict_ids))
+        ):
+            continue  # a resolved conflicts[] entry backs it — persisted, not the #1317 miss
         key = (ps_id, qid)
         if key in seen:
             continue
@@ -1069,8 +1100,9 @@ def find_unpersisted_conflict_resolutions(
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
                     "conflict per its exhaustive_declaration.stop_criteria."
                     "conflict_resolution, but no resolved conflicts[] entry is linked "
-                    "to it (resolved_conflict_ids cites none, and no resolved conflict "
-                    "blocks this question)"
+                    "to it (not cited on resolved_conflict_ids, not named in the "
+                    "stop-criterion, and no resolved conflict blocks this question) — "
+                    "read as 'reliance not linked', not 'conflict never written'"
                 ),
             }
         )

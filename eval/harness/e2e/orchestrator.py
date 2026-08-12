@@ -2018,8 +2018,9 @@ async def _run_agent(
     # shadow report counts it in its own bucket. Logs; never fails the run.
     # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
     # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
+    final_research_for_shadow = read_research_json(workspace)
     citation_nulling_shadow = find_citation_nulling_in_conclusions(
-        read_research_json(workspace)
+        final_research_for_shadow
     )
     if citation_nulling_shadow:
         guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
@@ -2036,7 +2037,7 @@ async def _run_agent(
     # discriminated by `kind`. Logs; never fails the run. Promotion to a hard gate
     # is gated on measuring this fire rate across the corpus.
     conflict_unpersisted_shadow = find_unpersisted_conflict_resolutions(
-        read_research_json(workspace)
+        final_research_for_shadow
     )
     if conflict_unpersisted_shadow:
         guardrail_shadow_violations = (

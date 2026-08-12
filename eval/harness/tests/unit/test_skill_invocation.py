@@ -1173,6 +1173,59 @@ def test_conflict_unpersisted_silent_when_resolved_conflict_blocks_the_question(
     assert find_unpersisted_conflict_resolutions(research) == []
 
 
+def test_conflict_unpersisted_silent_when_the_stop_criterion_names_a_resolved_conflict():
+    """Senior-review round 2: blocks_question_ids is schema-required but legitimately
+    empty, so a resolved conflict the conclusion NAMES in its prose backs it even
+    when nothing links it structurally. The mary-dwyer-father corpus shape: a
+    resolved c_001, blocks_question_ids [], resolved_conflict_ids [], but the
+    stop-criterion says '... resolved (c_001, ...)'. The Conflicts section populates,
+    so it must not fire."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="YES. Birth year conflict resolved (c_001, preferred a_019).",
+        conflicts=[{"id": "c_001", "status": "resolved", "blocks_question_ids": []}],
+        resolved_conflict_ids=[],
+    )
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_silent_when_a_resolved_entry_exists_and_prose_names_none():
+    """Senior-review round 2: when the stop-criterion claims a resolution but names
+    no c_ id, the mere existence of a resolved conflicts[] entry backs it — the
+    conflict was written, the viewer is populated. The jimmie-jewel-neal shape."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="Martha birth year conflict resolved by preponderance.",
+        conflicts=[{"id": "c_001", "status": "resolved", "blocks_question_ids": []}],
+        resolved_conflict_ids=[],
+    )
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
+def test_conflict_unpersisted_still_fires_when_named_conflict_is_unresolved():
+    """The naming backing is scoped to RESOLVED entries: a conclusion that claims a
+    resolution and names a c_ id that is NOT status:resolved is still unlinked to
+    any resolved entry, so it fires (nothing resolved was persisted for it)."""
+    research = _research_with_conflict_claim(
+        conflict_resolution="Birth conflict resolved (c_001).",
+        conflicts=[{"id": "c_001", "status": "open", "blocks_question_ids": []}],
+        resolved_conflict_ids=[],
+    )
+    assert len(find_unpersisted_conflict_resolutions(research)) == 1
+
+
+def test_conflict_unpersisted_idless_question_does_not_match_a_summary_missing_qid():
+    """questions_by_id drops a question with no id, so a proof_summary whose
+    question_id is None cannot bind to it (both would otherwise key on None).
+    Reverting the q.get('id') truthiness filter re-introduces that false match."""
+    research = {
+        "proof_summaries": [{"id": "ps_001", "resolved_conflict_ids": []}],  # no question_id
+        "questions": [  # no id
+            {"exhaustive_declaration": {"stop_criteria": {"conflict_resolution": "Conflict resolved."}}}
+        ],
+        "conflicts": [],
+    }
+    assert find_unpersisted_conflict_resolutions(research) == []
+
+
 def test_conflict_unpersisted_silent_on_text_that_negates_a_resolution():
     """Senior-review fix 2: conflict_resolution is a REQUIRED field, so 'absence of
     negative words' defaulted to fire. Text that explicitly says the conflict is

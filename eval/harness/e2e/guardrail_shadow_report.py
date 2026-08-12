@@ -125,10 +125,10 @@ def _scan_stored(
     function of `tool_calls` at a given window, so it can be recomputed for any
     window from a committed log. The stored families are not — the #963
     provenance gap depends on the seed tree and on what the live hook could see;
-    the #1133 citation-nulling class is a post-hoc read of the final
-    research.json. Both share `guardrail_shadow_violations` and are told apart by
-    their keys, so each family passes its own predicate here. Unreadable files
-    are skipped with a stderr note, never raised.
+    the #1133 citation-nulling and #1317 conflict-unpersisted classes are post-hoc
+    reads of the final research.json. All share `guardrail_shadow_violations` and
+    are told apart by their `kind`, so each family passes its own predicate here.
+    Unreadable files are skipped with a stderr note, never raised.
     """
     out: list[dict[str, Any]] = []
     for path in paths:
@@ -151,9 +151,11 @@ def _scan_stored(
 def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     """The issue-#963 provenance shadow entries STORED in each run's
     `guardrail_shadow_violations` (a `person_evidence` link written with no
-    prior `same_person`). Identified by the `detail` key, which only the stored
-    sources set — but EXCLUDING the #1133 citation-nulling class, which also
-    carries `detail` and is counted separately by `scan_citation_nulling`.
+    prior `same_person`). Identified by the `detail` key, which the stored
+    sources set — but EXCLUDING the other `detail`-carrying kinds counted in
+    their own buckets: #1133 citation-nulling (`scan_citation_nulling`), #1317
+    conflict-unpersisted (`scan_conflict_unpersisted`), and deny-mode provenance
+    (`PERSON_EVIDENCE_DENY_KIND`).
     """
     return _scan_stored(
         paths,

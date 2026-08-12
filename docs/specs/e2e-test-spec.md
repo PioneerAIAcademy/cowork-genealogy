@@ -1161,11 +1161,15 @@ written `proof_summaries` conclusion, flags a question whose
 `exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
 (positive resolution language, not merely the absence of "no conflict" wording —
 a required field that is always populated would otherwise default to firing) that
-**no `status: "resolved"` `conflicts[]` entry backs** — neither cited on the
-proof_summary's `resolved_conflict_ids` nor linked via a resolved conflict's
-`blocks_question_ids`. That is the "resolved in prose, never written to
-`conflicts[]`" class an alpha tester hit: the viewer's Conflicts section stayed
-blank because nothing structured was persisted. Gated on a written conclusion so
+**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
+on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
+resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
+stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
+exists at all). A resolved conflict that exists but is linked to nothing still
+fires, so read this count as **"reliance not linked"**, not "conflict never
+written". The `#1317` case an alpha tester hit is the strict subset where
+`conflicts[]` is empty: the viewer's Conflicts section stayed blank because
+nothing structured was persisted. Gated on a written conclusion so
 an honest partial run does not fire. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "conflict_unpersisted"` for their own bucket
