@@ -589,7 +589,6 @@ def rule5_concurrent_snapshot_prs(
         return
 
     me = os.environ.get("PR_NUMBER", "").strip()
-    others = [pr for pr in prs if str(pr.get("number")) != me]
     if not me:
         # Without PR_NUMBER this PR cannot be excluded from the listing and it
         # would collide with itself. Report it rather than emit a bogus warning.
@@ -599,6 +598,7 @@ def rule5_concurrent_snapshot_prs(
             "reported as colliding with itself. This is a SKIP, not a clean result."
         )
         return
+    others = [pr for pr in prs if str(pr.get("number")) != me]
 
     # Collisions keyed by shared skill, not by other-PR — the author's question
     # is "who else is on my skill", and a skill with three other PRs on it is one

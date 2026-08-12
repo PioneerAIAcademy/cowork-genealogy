@@ -115,5 +115,3 @@ skipped cleanly (`known_holdings: []`)?
 - **fail:** Volunteered holdings dropped entirely, holdings fabricated, or
   items written as full sources/assertions instead of lightweight survey notes.
 - **N/A:** Test does not involve known holdings.
-
-<!-- TEMPORARY: prove rule 5 exercises the real Actions token; reverted next push -->
