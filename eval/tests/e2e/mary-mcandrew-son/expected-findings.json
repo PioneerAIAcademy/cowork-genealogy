@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Mary (McAndrew) Mogan and her husband John Mogan had a son who is not yet in the tree: John A Morgan (Morgan/Mogan spellings vary for this family), born 6 March 1873 in Detroit, Wayne County, Michigan — three years before Thomas Frank Mogan (b. 1876), previously the couple's eldest known child.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that John A Morgan (born 6 March 1873, Detroit, Wayne, Michigan; FamilySearch PID 9NJ7-Z6L) is an additional son of Mary E. McAndrew (G13G-P68) and her husband John Mogan. That 1873 birth belongs to a different Detroit Morgan family: John A Morgan is already attributed in the FamilySearch tree to the couple John Morgan (9NJ7-Z6R, born Ireland) and Mary Morgan (9NJ7-Z61), whose only source is the birth record itself — the signature of an auto-generated parent stub created when the record was first attached. The birth record names the parents only as 'John Morgan' and 'Mary Morgan', with no maiden name, age, birthplace, or address, so it is too sparse to override Mary McAndrew's established family record. Pass = the final tree/research contains no sixth child, no new son named John A Morgan (b. 1873), and no stub person linking that 1873 birth to Mary McAndrew and John Mogan (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Mary E McAndrew (G13G-P68)",
         "relation": "child",
-        "target_person": {
-          "name": "John A Morgan",
-          "birth": "6 March 1873, Detroit, Wayne, Michigan, United States"
+        "wrong_candidate": {
+          "name": "John A Morgan (PID 9NJ7-Z6L), b. 6 March 1873, Detroit, Wayne, Michigan",
+          "note": "already attributed in the FamilySearch tree to a separate couple, John Morgan (9NJ7-Z6R, b. Ireland) and Mary Morgan (9NJ7-Z61), whose sole source is this birth record; John Morgan and Mary Morgan were extremely common names in 1870s Detroit, and no independent evidence connects this child to the Mogan/McAndrew household"
         }
       },
       "supporting_sources": [
-        "Michigan, Births and Christenings, 1775-1995 — entry for John A Morgan, born 6 Mar 1873, Detroit; parents John Morgan and Mary Morgan"
+        "Michigan, Births and Christenings, 1775-1995 — entry for John A Morgan, born 6 Mar 1873, Detroit; parents 'John Morgan' and 'Mary Morgan' (no maiden name, age, birthplace, or address); https://www.familysearch.org/ark:/61903/1:1:F4RF-FV9",
+        "FamilySearch tree attribution of John A Morgan (9NJ7-Z6L) to John Morgan (9NJ7-Z6R) and Mary Morgan (9NJ7-Z61) — a separate couple whose only source is this same birth record"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having tested the FamilySearch hint (John A Morgan, b. 6 March 1873, Detroit) against Mary E. McAndrew's established family record, the agent should document a negative conclusion: no additional child of Mary (McAndrew) Mogan and John Mogan beyond the five already in the tree (Thomas Frank b. 1876, John Vincent b. 1879, Anna Irene b. 1884, Edward Lawrence b. 1885, Mary L. b. 1888) can be established, and the 1873 birth record does not belong to this family. Supporting reasoning: Mary's 24 attached sources consistently name her husband as John Mogan and document those five children; John A Morgan (b. 1873) appears in none of the family's records, including the 1880 and 1900 census households; and the 1873 birth is independently attached to a different John/Mary Morgan couple.",
+      "details": {
+        "subject_person": "Mary E McAndrew (G13G-P68)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no sixth child established; 1873 John A Morgan birth belongs to a different family",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Mary E McAndrew's 24 attached FamilySearch sources — consistently naming husband John Mogan and documenting five children (Thomas Frank 1876, John Vincent 1879, Anna Irene 1884, Edward Lawrence 1885, Mary L. 1888)",
+        "Absence of John A Morgan (b. 1873) from the family's 1880 and 1900 census households and from every other record attached to this family"
       ],
       "required": true
     }

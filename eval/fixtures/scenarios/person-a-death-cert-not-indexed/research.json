@@ -1,0 +1,272 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine whether a South Dakota death certificate exists for Person A (born 1856, Germany) and establish when Person A died.",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-06",
+    "updated": "2026-08-06",
+    "title": "Person A Death Record Search"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": ["none"],
+    "narration_guidance": "One-line preamble per skill invocation. Assume basic GPS vocabulary."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Person A leave an accessible South Dakota death certificate, and when did Person A die?",
+      "rationale": "Primary objective. Indirect sources (Find a Grave, grave registration) support death year 1935, Gregory, SD, but no indexed death certificate has been found.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched FamilySearch-indexed South Dakota death records with two surname spelling variants (log_003, log_004); both returned negative. Find a Grave index and WPA Grave Registration records are the only accessible FamilySearch sources recording this individual's death. South Dakota vital records archives and unindexed microfilm are outside the accessible FamilySearch scope and represent the next research avenue if the certificate is needed.",
+        "log_entry_ids": ["log_001", "log_002", "log_003", "log_004"],
+        "stop_criteria": {
+          "goal_alignment": "Partially. Death year 1935 is supported by indirect sources, but no death certificate was found to confirm the exact date or provide primary-information death details.",
+          "repository_breadth": "All FamilySearch-indexed South Dakota death records searched with two spelling variants. State archives not searched.",
+          "original_substitution": "Grave Registration record (original) examined; Find a Grave is derivative and was not replaced because no original source exists for that entry type.",
+          "independent_verification": "Two independent sources (Find a Grave, Grave Registration) both place death in Gregory, SD, 1935. Same-year range corroborated by age-at-death calculation.",
+          "evidence_class": "No original source with primary death information found. Both sources carry secondary information.",
+          "conflict_resolution": "No conflicts.",
+          "overturn_risk": "Moderate. An indexed death certificate would provide primary information and could refine or contradict the 1935 date. Not accessible through FamilySearch indexing."
+        }
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-08-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "South Dakota",
+          "date_range": "1930-1940",
+          "repository": "FamilySearch",
+          "rationale": "Search for death certificate in SD vital records indexed on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "South Dakota",
+          "date_range": "1930-1940",
+          "repository": "FamilySearch",
+          "rationale": "Repeat search with alternate spelling variant.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-08-06T19:35:56.775Z",
+      "tool": "record_read",
+      "query": { "recordId": "ark:/61903/1:1:QVLD-NSQ7" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Find a Grave Index entry. Person A, born 1856, died 1935, buried Gregory, Gregory, South Dakota. Establishes death year 1935 and burial location."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-08-06T19:35:56.776Z",
+      "tool": "record_read",
+      "query": { "recordId": "ark:/61903/1:1:CYCQ-NRW2" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "SD Grave Registration Records 1939-1942. Person A, Male, buried Gregory, Gregory, South Dakota. Age at death 79. With birth year 1856, constrains death to 26 March through 31 December 1935."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-06T20:10:15.572Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "PersonA-Variant1",
+        "recordType": "death",
+        "residencePlace": "South Dakota"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "No SD death certificate for Person A found in indexed FamilySearch records. Top results were known derivative sources (Find a Grave, SD Grave Registration). No exact death date available through this collection."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-06T20:10:15.576Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "PersonA-Variant2",
+        "recordType": "death",
+        "residencePlace": "South Dakota"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Alternate spelling variant also returned no SD death certificate. Confirms that an indexed SD death certificate for Person A in 1935 is not accessible on FamilySearch. Unindexed certificates would require the SD State Archives or FamilySearch microfilm browsing."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Find a Grave Index,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVLD-NSQ7 : accessed 6 August 2026), entry for Person A, memorial #88075502.",
+      "citation_detail": {
+        "who": "Find a Grave contributor (unidentified)",
+        "what": "Memorial page for Person A, born 1856, died 1935, buried Gregory, Gregory, South Dakota",
+        "when_created": "unknown",
+        "when_accessed": "2026-08-06",
+        "where": "Find a Grave (findagrave.com)",
+        "where_within": "Memorial #88075502"
+      },
+      "source_classification": "derivative",
+      "repository": "Find a Grave",
+      "access_date": "2026-08-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVLD-NSQ7",
+      "url_archived": null,
+      "notes": "Records birth year 1856, death year 1935, burial Gregory, Gregory, South Dakota.",
+      "transcription": null,
+      "image_filename": null,
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"South Dakota, Grave Registration Records, 1939-1942,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:CYCQ-NRW2 : accessed 6 August 2026), entry for Person A, Gregory, Gregory, South Dakota.",
+      "citation_detail": {
+        "who": "South Dakota state registrar or informant unknown",
+        "what": "Grave registration record for Person A, buried Gregory, Gregory, South Dakota; age at death 79",
+        "when_created": "1939-1942",
+        "when_accessed": "2026-08-06",
+        "where": "South Dakota state vital records (FamilySearch)",
+        "where_within": "Entry for Person A"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:CYCQ-NRW2",
+      "url_archived": null,
+      "notes": "Original government record. Age at death 79, male, non-veteran, buried Gregory IOOF Cemetery. Date of death blank.",
+      "transcription": null,
+      "image_filename": null,
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QVLD-NSQ7",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "1935, Gregory, Gregory County, South Dakota",
+      "structured_value": null,
+      "date": "1935",
+      "date_certainty": "approximate",
+      "place": "Gregory, Gregory, South Dakota, United States",
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor (unidentified)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"],
+      "source_id": "src_001",
+      "standard_place": "Gregory, Gregory, South Dakota, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:CYCQ-NRW2",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Gregory, Gregory, South Dakota, United States",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": "Gregory, Gregory, South Dakota, United States",
+      "information_quality": "secondary",
+      "informant": "SD state registrar or informant unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"],
+      "source_id": "src_002",
+      "standard_place": "Gregory, Gregory, South Dakota, United States"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:CYCQ-NRW2",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "79",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "WPA Graves Registration worker (identity unknown)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "With birth year 1856, age 79 constrains death to 26 March through 31 December 1935. Indirect evidence: age at death does not state the exact date.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"],
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Find a Grave entry for Person A matches the known birth year (1856), death location (Gregory, SD), and burial — consistent with all other records for the subject.",
+      "match_score": null,
+      "created": "2026-08-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Grave Registration record for Person A matches birth year and burial location consistent with the Find a Grave entry and census records.",
+      "match_score": null,
+      "created": "2026-08-06",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": []
+}
