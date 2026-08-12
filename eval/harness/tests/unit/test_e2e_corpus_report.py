@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -406,11 +407,19 @@ def test_violation_scope_falls_back_when_nothing_is_decidable():
 
 def test_unreadable_runlogs_are_excluded_from_the_headline_count(tmp_path: Path, capsys):
     """A skip line goes to stderr, so a report piped to a file would otherwise
-    carry a denominator inflated by files that contributed to nothing."""
+    carry a denominator inflated by files that contributed to nothing.
+
+    The fixture's date must stay inside `main([])`'s default 14-day window
+    (`since_window.DEFAULT_SINCE_DAYS`) or this test starts failing on the
+    calendar rather than on a real regression — a hardcoded date here once
+    aged out from under it. Two days back leaves margin either side of
+    "today" without depending on it being any particular day."""
+    today = datetime.now()
+    stamp = (today - timedelta(days=2)).strftime("%Y-%m-%d")
     fixture = tmp_path / "fx"
     fixture.mkdir()
-    good = _write(fixture, "run-2026-07-28_10-00-00.json", {"verdict": "pass"})
-    bad = fixture / "run-2026-07-28_11-00-00.json"
+    good = _write(fixture, f"run-{stamp}_10-00-00.json", {"verdict": "pass"})
+    bad = fixture / f"run-{stamp}_11-00-00.json"
     bad.write_text("{not json", encoding="utf-8")
 
     import e2e.corpus_report as cr
