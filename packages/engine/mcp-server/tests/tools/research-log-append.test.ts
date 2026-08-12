@@ -713,3 +713,84 @@ describe("research_log_append", () => {
     });
   });
 });
+
+describe("research_log_append — logging-without-persistence nudge (#1478)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-1478-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const write = async (research: any, tree: any = minimalTree) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  };
+  const pos = (n: number) => ({ ...logEntry(n), outcome: "positive" });
+  const warnOf = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "");
+  const NUDGE = /logged with a positive outcome but no sources or assertions/;
+
+  it("warns once ≥3 positive searches are logged with no sources or assertions", async () => {
+    // Two positive searches already logged; this call makes the third.
+    await write(baseResearch([pos(1), pos(2)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).toMatch(NUDGE);
+    expect(warnOf(r)).toContain("3 search(es)");
+    // never blocks: the log entry still lands
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.log).toHaveLength(3);
+  });
+
+  it("stays silent below the threshold", async () => {
+    await write(baseResearch([pos(1)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+
+  it("stays silent once a source has been persisted", async () => {
+    const validSource = {
+      id: "src_001",
+      gedcomx_source_description_id: "SD-001",
+      citation: "1850 U.S. Census",
+      citation_detail: {
+        who: "Census enumerator",
+        what: "1850 U.S. Census",
+        when_created: "1850",
+        when_accessed: "2026-01-01",
+        where: "Schuylkill County, Pennsylvania",
+        where_within: "dwelling 201",
+      },
+      source_classification: "original",
+      repository: "NARA",
+      access_date: "2026-01-01",
+    };
+    const treeWithSD = { persons: [], relationships: [], sources: [{ id: "SD-001", title: "1850 U.S. Census" }] };
+    await write({ ...baseResearch([pos(1), pos(2), pos(3)]), sources: [validSource] }, treeWithSD);
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+});

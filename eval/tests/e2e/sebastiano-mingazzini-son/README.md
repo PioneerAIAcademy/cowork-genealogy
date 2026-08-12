@@ -29,6 +29,14 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 22, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Italy, Ravenna, Ravenna, Civil Registration (Tribunale), 1866-1943: record for Simone Mingazzini (b. 1860 Faenza, d. 4 Jan 1933 Solarolo), naming parents Sebastiano and Lucia Silvestri. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Simone Mingazzini as the subject's son, plus a `required` finding that the report documents the rejection.
+**Resolved: true match.** The genealogist confirmed the hint as transcribed after reviewing both the tree person and the hint record on familysearch.org.
 
-Points a reviewer should weigh: the mother's surname is recorded as "Silvestri" in the hint vs. "Silvestrini" in the tree — a routine Italian surname-suffix variant. The father's given name "Sebastiano" matches exactly, the region (Ravenna, Emilia-Romagna) matches, and a birth in 1860 fits neatly after the tree's three known children (1849, 1852, 1853) as a later child, though the birthplace shifts from Castel Bolognese (the other children) to nearby Faenza — a plausible short-distance move within the same district, but a difference worth noting.
+The tree person (GQSW-B3V) already carries one attached source: a death record for his daughter Francesca (d. 1938), from "Italia, Ravenna, Ravenna, Stato Civile (Tribunale), 1866-1943." Simone Mingazzini's death entry (d. 4 Jan 1933, Solarolo) comes from that same civil-registration collection and jurisdiction — this family is already documented in this exact archive, so the hint isn't introducing an unfamiliar source, just another entry from an office that has already proven reliable for them.
+
+The father's given name, "Sebastiano," matches exactly. The mother's surname is recorded as "Silvestri" in the hint versus "Silvestrini" in the tree — a routine Italian surname-suffix variant, not a contradiction; the "-ini" ending is commonly dropped or added depending on the clerk or informant.
+
+Geography is consistent rather than identical: the three known children were born in Castel Bolognese, while Simone's death record gives his birthplace as Faenza. Both are neighboring towns within the same Ravenna civil district, and a short-distance move across an 11-year gap between births is unremarkable.
+
+Chronology fits without strain: the known children were born in 1849, 1852, and 1853; a fourth child in 1860 extends the pattern by a plausible seven years, and the mother (b. abt. 1830) would have been about 30 — biologically unremarkable.
+
+No point of actual contradiction turned up: no name that's flatly wrong, no place that's implausible, no date that breaks the timeline. Combined with the shared source collection, the evidence supports keeping the hint as transcribed.
