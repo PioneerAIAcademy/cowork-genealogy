@@ -104,7 +104,7 @@ def test_assertion_error_captured_as_failure(tmp_path):
     bad = tmp_path / "test_universal.py"
     bad.write_text(
         "def test_always_fails(before_state, after_state, tool_calls):\n"
-        "    assert False, 'intentional'\n"
+        "    assert False, 'intentional'\n", encoding="utf-8"
     )
     results = run_validators(
         skill="x",
@@ -120,7 +120,7 @@ def test_assertion_error_captured_as_failure(tmp_path):
 
 def test_validator_with_no_args_still_runs(tmp_path):
     nullary = tmp_path / "test_universal.py"
-    nullary.write_text("def test_no_args():\n    assert 1 == 1\n")
+    nullary.write_text("def test_no_args():\n    assert 1 == 1\n", encoding="utf-8")
     results = run_validators(
         skill="x", validators_dir=tmp_path,
         before_state={}, after_state={}, tool_calls=[],
@@ -401,6 +401,43 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
     )
     assert required.passed is False
     assert "expected at least one" in (required.error or "")
+
+
+def test_expected_classifications_value_pins_the_fact_value():
+    """`value` (#1108) checks the fact VALUE, not a layer. The ut_013 leak —
+    Patrick's birthplace persisted 'Pennsylvania' where the record says
+    'Ireland' — is `direct` either way, so only a value matcher catches it.
+    Substring + case-insensitive, read from the attribute-relevant field."""
+    # Correct value → passes.
+    ok = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
+          "place": "Ireland", "evidence_type": "direct"}],
+        [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
+          "value": "Ireland", "evidence_type": "direct"}],
+    )
+    assert ok.passed is True, f"unexpected failure: {ok.error}"
+
+    # The ut_013 leak: wrong birthplace value, still classified `direct` → the
+    # value matcher fails where the evidence_type facet alone would pass.
+    leak = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
+          "place": "Pennsylvania", "evidence_type": "direct"}],
+        [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
+          "value": "Ireland", "evidence_type": "direct"}],
+    )
+    assert leak.passed is False
+    for frag in ("a_1", "Ireland", "Pennsylvania"):
+        assert frag in (leak.error or ""), f"missing {frag!r}: {leak.error}"
+
+    # Place standardization is tolerated ("Pennsylvania" ⊂ "Pennsylvania, United States").
+    std = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "child_3", "fact_type": "birth",
+          "place": "Pennsylvania", "standard_place": "Pennsylvania, United States",
+          "evidence_type": "direct"}],
+        [{"record_role": "child_3", "fact_type": "birth", "attribute": "place",
+          "value": "Pennsylvania", "evidence_type": "direct"}],
+    )
+    assert std.passed is True, f"unexpected failure: {std.error}"
 
 
 def test_expected_classifications_attribute_facet_separates_birth_claims():
@@ -734,7 +771,7 @@ def test_pytest_skip_is_treated_as_pass_with_skipped_marker(tmp_path):
     bad.write_text(
         "import pytest\n"
         "def test_uses_skip(before_state, after_state, tool_calls):\n"
-        "    pytest.skip('not applicable to this state')\n"
+        "    pytest.skip('not applicable to this state')\n", encoding="utf-8"
     )
     results = run_validators(
         skill="x",
@@ -759,3 +796,88 @@ def test_as_dicts_shape():
         {"name": "a", "passed": True, "error": None},
         {"name": "b", "passed": False, "error": "boom"},
     ]
+
+
+# --- #987: full project-file validation + duplicate-id universal validators ---
+
+_VALID_TREE = {
+    "persons": [
+        {"id": "I1", "gender": "Male", "names": [{"id": "N1", "given": "A", "surname": "B", "preferred": True}]},
+        {"id": "I2", "gender": "Female", "names": [{"id": "N2", "given": "C", "surname": "B", "preferred": True}]},
+    ],
+    "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
+    "sources": [],
+}
+
+
+def _run_universal(after_tree):
+    before = _empty_research_state()
+    after = {**before, "tree_gedcomx_json": after_tree, "tree_gedcomx": after_tree}
+    return run_validators(
+        skill="x",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+    )
+
+
+def _named(results, name):
+    return next((r for r in results if r.name == name), None)
+
+
+def test_no_duplicate_tree_ids_flags_a_repeat():
+    dup = {
+        **_VALID_TREE,
+        "persons": _VALID_TREE["persons"]
+        + [{"id": "I1", "gender": "Male", "names": [{"id": "N3", "given": "D", "surname": "B", "preferred": True}]}],
+    }
+    bad = _named(_run_universal(dup), "test_no_duplicate_tree_ids")
+    assert bad is not None and not bad.passed, "a repeated person id must fail test_no_duplicate_tree_ids"
+    ok = _named(_run_universal(_VALID_TREE), "test_no_duplicate_tree_ids")
+    assert ok is not None and ok.passed
+
+
+@pytest.mark.requires_engine_build
+def test_full_validation_catches_reference_integrity():
+    # Drives the compiled TS validateParsed via _run_universal; the marker skips
+    # (never fails) when build/ is absent, matching the skip-not-fail contract.
+    # A dangling ParentChild endpoint passes jsonschema but must fail full
+    # validation (reference integrity jsonschema cannot express).
+    dangling = {
+        **_VALID_TREE,
+        "relationships": [{"id": "R1", "type": "ParentChild", "parent": "GONE", "child": "I1"}],
+    }
+    bad = _named(_run_universal(dangling), "test_project_files_pass_full_validation")
+    assert bad is not None and not bad.passed, "a dangling ParentChild endpoint must fail full validation"
+
+    ok = _named(_run_universal(_VALID_TREE), "test_project_files_pass_full_validation")
+    assert ok is not None and ok.passed, "a clean project must pass full validation"
+
+
+@pytest.mark.requires_engine_build
+def test_full_validation_catches_cross_file_subject_person_id():
+    # #987 plan §2/§6: the most likely init-project defect — subject_person_ids
+    # naming a person the tree does not contain (init-project hand-writes both).
+    from harness.ts_validator import validate_parsed
+
+    research = _empty_research_state()["research_json"]
+    research = {**research, "project": {**research["project"], "subject_person_ids": ["I9"]}}
+    errors = validate_parsed(research, _VALID_TREE)  # tree has I1/I2, not I9
+    assert errors, "a subject_person_ids ref absent from the tree must fail"
+    assert any("subject_person_ids" in e and "I9" in e for e in errors), errors
+
+
+@pytest.mark.requires_engine_build
+def test_validator_crash_is_not_reported_as_missing_build():
+    # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
+    # be reported as None ("build missing") and silently passed. A bare string in
+    # persons trips a TypeError in the TS validator — exactly the malformed tree
+    # this feature exists to catch.
+    from harness.ts_validator import validate_parsed
+
+    research = _empty_research_state()["research_json"]
+    crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
+    result = validate_parsed(research, crash_tree)
+    assert result is not None, "a crash must not be reported as missing-build (None)"
+    assert result, "a crash must surface a non-empty error"

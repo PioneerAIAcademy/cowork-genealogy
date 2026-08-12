@@ -92,6 +92,25 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  // Same class as record_search's recordType: `SECTIONS[section]` and
+  // `EXAMPLES[section]` walk the prototype chain, so "constructor" indexed out
+  // `Object` — truthy, so `!config` failed to reject — and the rejection path
+  // then threw `TypeError: entry.split is not a function` out of the tool.
+  it("rejects an inherited Object.prototype key as section, with the actionable error", async () => {
+    await writeProject();
+    for (const key of Object.getOwnPropertyNames(Object.prototype)) {
+      const r = await researchAppend({
+        projectPath: dir,
+        section: key as never,
+        op: "append",
+        entry: { value: "x" },
+      });
+      expect(r.ok, `section '${key}' was not rejected`).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/is not supported by research_append/);
+    }
+  });
+
   it("rejects an append entry that carries a real id (the tool assigns ids)", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -493,6 +512,34 @@ describe("research_append (Phase 2)", () => {
     expect(r.ok && r.entryId).toBe("q_002");
     const created = (await readResearch()).questions.find((x: any) => x.id === "q_002").created;
     expect(typeof created).toBe("string");
+  });
+
+  /**
+   * `question_status` has no retire value, so there is no way to close a
+   * question by status other than the two transitions the schema spec assigns
+   * to research-exhaustiveness (`exhaustive_declared`) and proof-conclusion
+   * (`resolved`).
+   *
+   * This is pinned because `question-selection/SKILL.md` instructed exactly
+   * these two values — "to retire one, `op: 'update'` its `status`
+   * (`superseded` / `answered`)" — in three separate places until #1135. The
+   * write was rejected every time an agent followed it, and nothing recorded
+   * that the values were illegal in the first place.
+   */
+  it("rejects retiring a question with a status outside question_status", async () => {
+    await writeProject();
+    for (const status of ["superseded", "answered"]) {
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status },
+      });
+      expect(r.ok, `status '${status}' must be rejected`).toBe(false);
+    }
+    // Nothing was written on either attempt.
+    expect((await readResearch()).questions[0].status).toBe("open");
   });
 
   it("appends a plan, then rejects a second active plan for the same question", async () => {

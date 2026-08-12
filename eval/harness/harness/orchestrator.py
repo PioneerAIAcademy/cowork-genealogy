@@ -115,6 +115,8 @@ FILE_VALIDITY_VALIDATORS = frozenset(
         "test_research_json_validates_schema",
         "test_tree_gedcomx_json_validates_schema",
         "test_id_references_resolve",
+        "test_project_files_pass_full_validation",
+        "test_no_duplicate_tree_ids",
     }
 )
 
@@ -447,6 +449,13 @@ async def _execute_single_run(
     )
 
     # --- Judge ----------------------------------------------------------
+    # Advisories from _extract_dimensions (a dropped unknown/duplicate
+    # dimension, #1361) — populated only on the successful branch below.
+    # judge_results (the `judge` field) has no warnings property of its own
+    # (additionalProperties:false — docs/specs/schemas/run-log.schema.json)
+    # so these are folded into the SKILL-level `output.warnings` instead,
+    # via _build_warnings below, alongside its other advisory kinds.
+    judge_dimension_warnings: list[dict[str, Any]] = []
     if validators_passed and result.aborted_reason is None:
         _judge_start = time.perf_counter()
         try:
@@ -482,6 +491,7 @@ async def _execute_single_run(
                 cached_input_tokens=judge_output.cached_input_tokens,
                 output_tokens=judge_output.output_tokens,
             )
+            judge_dimension_warnings = judge_output.warnings
         # Records judge wall-clock on every attempted branch (success or
         # error). The skipped branch below leaves the 0.0 default.
         judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
@@ -559,6 +569,7 @@ async def _execute_single_run(
                     skill_frontmatter=skill_frontmatter,
                     attempted_mcp_calls=result.attempted_mcp_calls,
                     unread_skill_calls=result.unread_skill_calls,
+                    judge_warnings=judge_dimension_warnings,
                 ))
                 else {}
             ),
@@ -712,6 +723,7 @@ def _build_warnings(
     skill_frontmatter: dict[str, Any] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     unread_skill_calls: list[list[str]] | None = None,
+    judge_warnings: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -729,8 +741,15 @@ def _build_warnings(
     - unread skill call when a Skill tool call carried the invoked skill's
       name under a key the harness doesn't read, meaning the SDK's Skill
       contract moved and `skills_invoked` is undercounting.
+    - dropped judge dimension (`dropped_unknown_rubric_dimension` /
+      `dropped_duplicate_dimension`, #1361) — passed in already-built by
+      the caller from `JudgeOutput.warnings`, since building them requires
+      the judge's raw tool_use output, which this function never sees.
+      Same drop-not-fail rationale as the tool-usage dimension above: v1.8
+      demoted that check from a hard gate to a warning for the same
+      reason — a naming mismatch shouldn't cost the whole test.
     """
-    warnings: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = list(judge_warnings or [])
 
     # Skill-tool contract drift. Without this the failure is invisible:
     # skills_invoked stays empty, every routing verdict reads "never
@@ -1125,16 +1144,45 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     which silently dropped the 4th+ source and made the judge (and human
     annotators reading the same block) flag a correctly-cited later source
     (`src_004` / `S4`) as fabricated. That is the exact failure this block was
-    written to prevent. So emit the full id list explicitly and only sample the
-    heavy per-source content (citations, notes) for prompt size.
+    written to prevent. So emit the full id list explicitly, and summarize the
+    heavy per-source content (citations, notes) one source at a time.
+
+    Summarizing **per source** rather than handing the array to
+    `_summarize_response` is the point: the sampler only truncates the container
+    it is given, so a list of 9 comes back as 3 while 9 separate calls come back
+    as 9. Fixing this for the ids alone (a37a7fe4 / c7f56c3c) left the misgrade
+    alive in a subtler form — the judge could see `src_006` in `all_ids`, find no
+    citation for it in the detail, and call a correctly-cited source fabricated
+    anyway. That is ut_research_plan_001's recurring base-Correctness 2. Per-string
+    truncation and the depth cap still apply inside each source, and the caller's
+    `_BEFORE_STATE_MAX_CHARS` trim still bounds the block — dropping detail,
+    never ids.
     """
     items = sources if isinstance(sources, list) else []
     ids = [s["id"] for s in items if isinstance(s, dict) and s.get("id")]
     return {
         "count": len(items),
         "all_ids": ids,
-        "detail": _summarize_response(items, string_max=_BEFORE_STATE_STRING_MAX),
+        "detail": [
+            _summarize_response(s, string_max=_BEFORE_STATE_STRING_MAX)
+            for s in items
+        ],
     }
+
+
+def _detail_ids(summary: dict[str, Any]) -> list[str]:
+    """Ids positionally aligned with `summary["detail"]`, for naming drops.
+
+    `all_ids` skips entries with no `id`, so it cannot be zipped against
+    `detail` (which keeps every entry). Rebuild from the detail itself and
+    label an id-less entry by position, so the omission note can still point at
+    something a reader can find.
+    """
+    out: list[str] = []
+    for i, entry in enumerate(summary.get("detail") or []):
+        sid = entry.get("id") if isinstance(entry, dict) else None
+        out.append(sid or f"<entry #{i + 1}, no id>")
+    return out
 
 
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
@@ -1194,19 +1242,50 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source sample after — this is what the prompt-size cap trims.
-    detail_blocks = [
-        f"{label} — sample detail (heavy fields truncated):\n"
-        + json.dumps(summary["detail"], ensure_ascii=False, indent=2)
-        for label, summary in labelled
-    ]
-    detail_section = "\n\n".join(detail_blocks)
+    # heavy per-source detail after — this is what the prompt-size cap trims.
+    #
+    # Drop whole sources rather than slicing the rendered string. A raw
+    # `[:budget]` cut lands mid-object, so the last source renders half-written
+    # and the ones after it vanish with no trace — while their ids are still
+    # listed above, complete. That is exactly the state that makes the judge
+    # call a correctly-cited source fabricated (the bug this block exists to
+    # prevent, relocated to large projects). Naming the dropped ids turns a
+    # silent gap into a stated one the judge can reason about.
+    #
+    # Sources are skipped individually, not truncated at the first overflow, so
+    # a small late source can survive while a larger earlier one is dropped.
+    # That packs more citations into the budget; the omission note names
+    # whatever was left out, so which ones went is never a guess.
+    #
+    # The note itself is appended after the budget is spent, so the block can
+    # exceed `_BEFORE_STATE_MAX_CHARS` by roughly the length of the dropped-id
+    # list. Deliberate: the note is what stops the judge reading an omission as
+    # a fabrication, and dropping it to stay under a soft prompt-size cap would
+    # reintroduce the bug the cap is not there to cause.
     budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
-    if len(detail_section) > budget:
-        detail_section = (
-            detail_section[: max(budget, 0)]
-            + f"\n[detail truncated by harness for prompt size; "
-            f"full detail length {len(detail_section)} chars — ids above are complete]"
+    detail_blocks: list[str] = []
+    dropped: list[str] = []
+    remaining = budget
+    for label, summary in labelled:
+        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        kept: list[Any] = []
+        for entry, sid in zip(summary["detail"], _detail_ids(summary)):
+            candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
+            if len(header) + len(candidate) > remaining:
+                dropped.append(sid)
+                continue
+            kept.append(entry)
+        block = header + json.dumps(kept, ensure_ascii=False, indent=2)
+        detail_blocks.append(block)
+        remaining -= len(block) + 2  # the "\n\n" join
+
+    detail_section = "\n\n".join(detail_blocks)
+    if dropped:
+        detail_section += (
+            f"\n\n[per-source detail omitted for prompt size: "
+            f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
+            f"file — the absence of their detail here is a harness size limit, "
+            f"not evidence that they are missing or fabricated.]"
         )
     return id_section + "\n\n" + detail_section
 

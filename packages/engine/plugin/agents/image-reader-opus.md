@@ -3,12 +3,13 @@ name: image-reader-opus
 description: Re-reads ONE FamilySearch image scan with Opus's own vision, for when the default reader's fast OCR (image-reader) came back unreliable — heavy [illegible] marks, faded ink, a difficult hand, Kurrentschrift. Call this ONLY when explicitly asked for a higher-accuracy re-read of a specific page ("re-read this with Opus", "the fast OCR garbled this, try harder"). It is slower and far more expensive than image-reader and must NEVER be used as a default, for routine browsing, or for a first-pass read. Reads exactly one image per invocation; invoke it once per image. Do NOT use for indexed records (use record_read / record_search), PDFs (read them directly), routine reads (use image-reader), or images over ~700 KB raw (this agent's tool refuses those — image-reader/image_transcribe has no size limit).
 model: claude-opus-4-8
 tools:
-  # Listed under both the `genealogy` server key (harnesses, .mcp.json,
-  # hosted web) and the `remote-devices` bridge namespace Cowork exposes the
-  # installed .mcpb under. See record-extractor.md for the full rationale;
-  # guarded by tests/packaging/agent-tool-names.test.ts.
+  # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
+  # hosted web), `remote-devices__Genealogy_Research` (cloud Cowork), and
+  # `Genealogy_Research` (on-computer Cowork). See record-extractor.md for the
+  # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_read
   - mcp__remote-devices__Genealogy_Research__image_read
+  - mcp__Genealogy_Research__image_read
 ---
 
 # Image Reader (Opus)

@@ -35,6 +35,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Iterator
@@ -56,6 +57,7 @@ from harness.runlog import (
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
+    DEFAULT_KEEP_CANDIDATES,
     is_releasable_invocation,
     next_filename_for,
     now_utc_filename_timestamp,
@@ -394,13 +396,42 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
 
 def _print_summary(rows: list[dict]) -> None:
     print()
-    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10}")
-    print("-" * 76)
+    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} REASON")
+    print("-" * 96)
     for row in rows:
         print(
-            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10}"
+            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10} "
+            f"{row.get('reason', '')}"
         )
     print()
+    _print_outcome_counts(rows)
+
+
+# Every outcome the harness can record, per unit-test-spec.md §7 and
+# `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
+# (pass/partial/fail/aborted) silently under-sums a suite containing an
+# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+_OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
+
+
+def _print_outcome_counts(rows: list[dict]) -> None:
+    """One line saying the shape of the suite, so nobody counts rows by eye.
+
+    Issue #1245 was reported as "19 of 20 aborted" — a number the harness never
+    printed. It also names any outcome outside `_OUTCOMES`, so the totals always
+    reconcile against `len(rows)` rather than quietly dropping a value.
+    """
+    if not rows:
+        return
+    counts = Counter(row["outcome"] for row in rows)
+    parts = [f"{counts[o]} {o}" for o in _OUTCOMES if counts.get(o)]
+    parts += [f"{n} {o}" for o, n in sorted(counts.items()) if o not in _OUTCOMES]
+    print(f"Outcomes: {', '.join(parts)} of {len(rows)} test(s).")
+    aborted = counts.get("aborted", 0)
+    if aborted:
+        reasons = Counter(r.get("reason") or "unrecorded" for r in rows if r["outcome"] == "aborted")
+        detail = ", ".join(f"{n}x {reason}" for reason, n in reasons.most_common())
+        print(f"  aborted reasons: {detail}")
 
 
 def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
@@ -538,8 +569,8 @@ def main(argv: list[str] | None = None) -> int:
     #
     # Negative tests are graded on routing and survive a dead judge, so a
     # negative-only selection still gets the old warning rather than an abort.
+    needs_judge = [s for s in specs if s.type == "positive"]
     if not auth.api_key:
-        needs_judge = [s for s in specs if s.type == "positive"]
         if needs_judge and not args.allow_missing_judge:
             print(
                 f"Judge preflight failed: no ANTHROPIC_API_KEY is set, but "
@@ -564,6 +595,31 @@ def main(argv: list[str] | None = None) -> int:
             "  and routing only.",
             file=sys.stderr,
         )
+    # Key present but invalid (e.g. duplicated or revoked). A truthy key passes
+    # the presence check above, the entire suite runs, and every positive test
+    # fails at grade time — the operator reads "everything failed" as a skill
+    # regression rather than an auth error. Catch it with a cheap 1-token
+    # liveness call before spending anything.
+    if auth.api_key and needs_judge and not args.allow_missing_judge:
+        from harness.auth import verify_judge_key
+        from harness.judge import DEFAULT_JUDGE_MODEL
+
+        rejected_status = verify_judge_key(auth.api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
+            print(
+                f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
+                f"rejected it ({rejected_status}).\n"
+                f"A duplicated or revoked key passes the presence check but fails "
+                f"every judge call, wasting the entire suite.\n"
+                f"\n"
+                f"  Fix: check eval/.env for a duplicated or expired key.\n"
+                f"  In a git worktree: make worktree-link\n"
+                f"\n"
+                f"Re-run with --allow-missing-judge to proceed anyway "
+                f"(validators and routing only).",
+                file=sys.stderr,
+            )
+            return 2
     # Large-suite variance warning: the judge is temperature-pinned, but the
     # *skill run* is not — claude-agent-sdk exposes no temperature field, so
     # model nondeterminism still leaks into single-run outcomes. Mostly fine
@@ -798,9 +854,16 @@ def main(argv: list[str] | None = None) -> int:
 
                     dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
                     mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                    # Name the abort reason inline. This is the line an operator
+                    # actually watches during a long suite, and a bare "aborted"
+                    # here is what made issue #1245's 19 of 20 unexplainable
+                    # after the fact. The reason is already on the entry.
+                    why = ""
+                    if outcome == "aborted" and entry.get("runs"):
+                        why = f" [{entry['runs'][0].get('aborted_reason') or 'unrecorded'}]"
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
-                        f"— {outcome} ({dur:.0f}s skill)",
+                        f"— {outcome}{why} ({dur:.0f}s skill)",
                         flush=True,
                     )
                 # Persist everything finished so far before blocking on the
@@ -838,6 +901,16 @@ def main(argv: list[str] | None = None) -> int:
                 "test_id": spec.id,
                 "skill": spec.skill,
                 "outcome": entry["outcome"],
+                # Carry the abort reason through to the summary. Without it an
+                # `aborted` row states that nothing happened and not why, and
+                # the operator's only remaining clue is the suite-wide exit
+                # code. That is what left issue #1245's 19 aborts unexplained;
+                # the value was already on the entry, one level up.
+                "reason": (
+                    (entry["runs"][0].get("aborted_reason") or "")
+                    if entry["outcome"] == "aborted" and entry.get("runs")
+                    else ""
+                ),
             }
         )
 
@@ -891,7 +964,13 @@ def main(argv: list[str] | None = None) -> int:
             tests=entries,
         )
         path = write_run_log(
-            log, runlogs_root=paths.runlogs_root, filename=filename
+            log,
+            runlogs_root=paths.runlogs_root,
+            filename=filename,
+            on_prune=lambda removed: print(
+                f"  → pruned {len(removed)} file(s) beyond the newest "
+                f"{DEFAULT_KEEP_CANDIDATES} candidates — commit the deletions"
+            ),
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")

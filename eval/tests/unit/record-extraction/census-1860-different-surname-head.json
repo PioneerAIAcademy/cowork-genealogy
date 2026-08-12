@@ -31,5 +31,40 @@
     "The kinship possibility is a hypothesis lead, not record content — the skill should NOT fabricate a relationship assertion (e.g., Silas as Mary's father) from this record; assertions record only what the census states.",
     "Scope of the fabrication ban: it applies to CROSS-SURNAME links — anything connecting Silas Kerrigan to the Flynn group. Intra-family household-position inference WITHIN the same-surname family group — Thomas-Mary as spouse_inferred, Patrick as child_inferred of the Flynn couple, with proximity researcher and evidence indirect — is expected, correct 1860-census practice and must not be penalized as fabrication.",
     "Should distinguish the census enumerator (recorder) from the unknown household informant; pre-1940 census informant is unknown, so information quality for names/ages/birthplaces is indeterminate."
+  ],
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "laborer",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "evidence_type": "indirect",
+      "optional": true
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pennsylvania",
+      "evidence_type": "direct",
+      "optional": true
+    }
   ]
 }

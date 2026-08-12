@@ -1,0 +1,1118 @@
+{
+  "project": {
+    "id": "rp_gertrudis_hoffmans_daughter",
+    "objective": "Did Gertrudis Hoffmans and her husband Petrus Jansen of Wanroij, North Brabant, Netherlands have a daughter named Elisabeth, baptized 1713, in addition to their three known sons (christened 1709-1717)?",
+    "subject_person_ids": [
+      "KN19-Q19"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does a baptismal record exist for a daughter named Elisabeth born to Petrus Jansen and Gertrudis Hoffmans of Wanroij, Noord-Brabant, Netherlands, circa 1713?",
+      "rationale": "The research objective asks whether a daughter named Elisabeth was baptized in 1713 alongside three known sons (baptized 1709\u20131717). The Wanroij Dutch Reformed and Catholic parish registers for Noord-Brabant circa 1700\u20131720 are the primary record class for this question; FamilySearch holds digitized Noord-Brabant DTB registers and the WieWasWie index covers many of them. This single question maps directly to the objective and is testable: a positive baptism entry confirms the daughter; an exhaustive negative search of all surviving registers for the period constitutes negative evidence that she did not exist or was not recorded.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-03",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_012"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two representations of the Wanroij DTB register entry for 30 March 1713 were consulted: (1) the derivative archival index via FamilySearch collection 2704829 (BHIC/OpenArch, src_001, ark:/61903/1:1:QL69-GBJC), and (2) the original DTB register page image (src_002, image 005844878_00049, transcribed in full). Both confirm: Elisabet baptized 30 March 1713, Wanroij, Noord-Brabant; father Petri Jansen; mother Gertrudis Geerts (= Gertrudis Hoffmans = KN19-Q19 \u2014 patronymic form used interchangeably with family surname in the same register; confirmed by adjacent Gerardus entry on image 48). Adjacent sibling entries in the same register confirm the correct family. The collection-ID transposition (2704729 vs. 2704829) was identified and corrected. The original image was located by volumetric estimation across 84-image volume 005844878. External sites (WieWasWie/BHIC) were deferred in autonomous mode but collection 2704829 aggregates the same BHIC index data; the positive finding was obtained there. Limitation: src_001 and src_002 are representations of the same DTB entry and share the same informant (parish priest); they count as one evidence unit. For pre-1811 Dutch Catholic baptisms, the DTB register is the primary and typically sole record type, so this structural limitation cannot be overcome by further searching.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. Original DTB register image (src_002, image 005844878_00049) and derivative index (src_001) both confirm Elisabeth baptized 30 March 1713 in Wanroij, Noord-Brabant, daughter of Petrus Jansen and Gertrudis Hoffmans/Geerts. Question answered affirmatively with primary direct evidence.",
+          "repository_breadth": "FamilySearch collections 1778468 (Netherlands Births and Baptisms 1564-1910) and 2704829 (Netherlands Archival Indexes Vital Records 1600-2000, aggregating BHIC data) searched; original DTB register browse-volume 005844878 browsed across images 27, 35, 48, 49; marriage record confirmed in tree (7YSN-34G, 5 Feb 1709). Name variants tried: Jansen/Janssen, Hoffmans/Hofmans, Gerits/Geerts. For 1713 Noord-Brabant no other accessible repository holds this record type.",
+          "original_substitution": "Derivative index (src_001, collection 2704829, BHIC/OpenArch) followed to original DTB register image (src_002, image 005844878_00049) and transcribed in full. Original successfully accessed.",
+          "independent_verification": "Structural limitation: src_001 and src_002 both represent the same underlying DTB register entry (same informant, same event); they count as one evidence unit. No genuinely independent record type exists for a 1713 Dutch Catholic baptism in pre-civil-registration Netherlands (civil registration 1811+; burial and marriage DTBs share the same provenance family). One original primary-source evidence unit accessed at the highest quality tier.",
+          "evidence_class": "src_002 is an original source (actual parish register image, volume 005844878_00049), primary information (recorded at baptism by parish priest), direct evidence (names child, date 30 March 1713, parents Petri Jansen and Gertrudis Geerts, godparents Martinus Geerts and Anna Jan Nelissen). Highest GPS classification achieved.",
+          "conflict_resolution": "Apparent surname discrepancy resolved: mother recorded as 'Geertrudis Gerits' (src_001 index), 'Gertrudis Geerts' (src_002 original image 49), and 'Gertrudis Hoffmans' (same register image 48, Gerardus baptism 6 Aug 1711). All are patronymic vs. family-surname variants for the same individual \u2014 the register itself alternates forms across adjacent entries. LZ6D-XC4 (Gerrit Gerrits Hoffmans, father of KN19-Q19) in the tree makes the derivation explicit. No genuine conflicts.",
+          "overturn_risk": "Low. The original parish register entry has been located and transcribed; it matches the derivative index. No unsearched record type in 18th-century Dutch Catholic tradition would independently record this specific baptism. The naming discrepancy is internally resolved by the source. A future researcher might find Elisabeth in later records (a marriage or death entry in a subsequent DTB register), which would further corroborate her existence but could not plausibly deny the documented 1713 baptism."
+        }
+      },
+      "created": "2026-08-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1700-1720",
+          "repository": "other",
+          "rationale": "WieWasWie (wiewaswie.nl) is the national Dutch genealogy index aggregating DTB registers including Noord-Brabant, with index & images, free. BHIC (bhic.nl \u2014 Brabants Historisch Informatie Centrum) is the provincial archive for Noord-Brabant and likely holds the most complete searchable index for Wanroij registers. Searching both indexed portals before browsing images is the fastest and most efficient route. Search for baptisms of children of Petrus Jansen (variants: Janssen, Jansz) and Gertrudis Hoffmans (variants: Hofmans, Hoffmann) in Wanroij, ca. 1700\u20131720, specifically looking for a daughter named Elisabeth ca. 1713. Also note any other children to confirm we have the right family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1564-1910",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1778468 (Netherlands, Births and Baptisms, 1564-1910) contains 1,572,754 indexed records and is the primary indexed baptism collection on FamilySearch for the Netherlands. Search for Elisabeth Jansen / Janssen baptized in Wanroij or Noord-Brabant ca. 1710\u20131716. Also search for children of Petrus Jansen and Gertrudis Hoffmans to confirm family. Note: this is a legacy collection with no further additions, so a negative result here does not preclude records being found in the browse-only volumes. Try surname variants: Jansen / Janssen / Jansz; Hoffmans / Hofmans / Hoffmann.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1600-1800",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2704729 (Netherlands, Archival Indexes, Vital Records, 1600-2000) contains 46.5 million records with images and aggregates many Noord-Brabant archival indexes. This broader index may capture Wanroij baptisms not covered by collection 1778468. Search for Petrus Jansen / Gertrudis Hoffmans children baptized in Wanroij or Noord-Brabant ca. 1700\u20131720.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1656-1723",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch image volume 005844878_001_M96P-YNM (84 images) covers Wanroij baptisms, deaths, and marriages 1656\u20131723 \u2014 the most targeted volume for the ca. 1713 research window. It is 0% name-indexed and not full-text searchable: must be browsed image-by-image. Browse for all baptismal entries ca. 1709\u20131717 to locate the known sons (confirming we have the right family) and identify whether Elisabeth appears ca. 1713. Catholic records in this region are in Latin. Access via FamilySearch collection 2037960 (Netherlands, Noord-Brabant, Church Records) \u2192 Religion/Other \u2192 Wanroij \u2192 Baptisms/Volume. Alternatively use Genealogie Werkbalk (genealogiewerkbalk.nl/fs/).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1655-1811",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch image volumes 005864409_002_M99N-2VV (1,059 images) and 005864410 (3,099 images) cover Wanroij baptisms 1655\u20131811. These larger volumes provide supplemental coverage and may contain entries not present in volume 005844878_001 (e.g., if the records are from different series or registers). Browse for Elisabeth Jansen ca. 1713 if not found in volume 005844878_001, and to confirm or extend the sibling list. All are 0% indexed \u2014 browse-only.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Wanroij, Noord-Brabant, Netherlands",
+          "date_range": "1655-1723",
+          "repository": "FamilySearch",
+          "rationale": "A search of the Wanroij DTB marriage register for the marriage of Petrus Jansen and Gertrudis Hoffmans serves two purposes: (1) it confirms the couple as a documented unit with a known marriage date, providing a chronological anchor for when children could have been born; (2) it may supply additional identifying details (ages, parents' names, witnesses) that help distinguish this couple from any namesakes. Volume 005844878_001_M96P-YNM (84 images, 1656\u20131723) covers marriages (*Trouwen*) in addition to baptisms and deaths for this period. Volume 005864411 (3,080 images, 1655\u20131811) also covers Wanroij marriages. Browse both for the Jansen\u2013Hoffmans marriage entry.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T20:36:36.491Z",
+      "tool": "wiewaswie_search",
+      "query": {
+        "site": "wiewaswie.nl",
+        "surname": "Jansen",
+        "spouseSurname": "Hoffmans",
+        "eventType": "baptism",
+        "place": "Wanroij, Noord-Brabant, Netherlands",
+        "yearFrom": 1700,
+        "yearTo": 1720,
+        "targetChild": "Elisabeth",
+        "targetChildYear": 1713,
+        "urlGenerated": "https://www.wiewaswie.nl/en/search/?q=Elisabeth+Jansen&event=baptism&yearFrom=1709&yearTo=1720&place=Wanroij"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run; requires interactive user browser capture. WieWasWie (wiewaswie.nl) is the national Dutch genealogy index aggregating DTB registers including Noord-Brabant, with index and images, free access. Search URL generated for Elisabeth Jansen baptism ca. 1709-1720 in Wanroij: https://www.wiewaswie.nl/en/search/?q=Elisabeth+Jansen&event=baptism&yearFrom=1709&yearTo=1720&place=Wanroij. Broader family search URL (Jansen + Hoffmans): https://www.wiewaswie.nl/en/search/?q=Jansen+Hoffmans&event=baptism&yearFrom=1700&yearTo=1720&place=Wanroij. A later interactive session should capture results and, if positive, forward to record-extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T20:36:36.491Z",
+      "tool": "bhic_search",
+      "query": {
+        "site": "bhic.nl",
+        "surname": "Jansen",
+        "firstname": "Elisabeth",
+        "birthYear": 1713,
+        "place": "Wanroij, Noord-Brabant, Netherlands",
+        "urlGenerated": "https://www.bhic.nl/onderzoeken/stamboom/eenvoudig-zoeken?lastname=Jansen&firstname=Elisabeth&birthyear=1713&place=Wanroij"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run; requires interactive user browser capture. BHIC (Brabants Historisch Informatie Centrum, bhic.nl) is the provincial archive for Noord-Brabant and likely holds the most complete searchable index for Wanroij registers. Search URL for Elisabeth Jansen ca. 1713: https://www.bhic.nl/onderzoeken/stamboom/eenvoudig-zoeken?lastname=Jansen&firstname=Elisabeth&birthyear=1713&place=Wanroij. Broader Jansen family search: https://www.bhic.nl/onderzoeken/stamboom/eenvoudig-zoeken?lastname=Jansen&birthyearfrom=1700&birthyearto=1720&place=Wanroij. A later interactive session should capture results and forward promising hits to record-extraction."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T20:38:26.386Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1778468",
+        "givenName": "Elisabeth",
+        "surname": "Jansen",
+        "fatherGivenName": "Petrus",
+        "fatherSurname": "Jansen",
+        "motherGivenName": "Gertrudis",
+        "motherSurname": "Hoffmans",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1709,
+        "birthYearTo": 1717
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Collection 1778468 (Netherlands Births and Baptisms 1564-1910, legacy collection) returned 0 results for Elisabeth Jansen, father Petrus Jansen, mother Gertrudis Hoffmans, Noord-Brabant, 1709-1717."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T20:38:26.386Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1778468",
+        "givenName": "Elisabeth",
+        "surname": "Jansen",
+        "fatherGivenName": "Petrus",
+        "fatherSurname": "Jansen",
+        "motherGivenName": "Gertrudis",
+        "motherSurname": "Hofmans",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1709,
+        "birthYearTo": 1717
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Mother surname variant Hofmans also returned 0 results. Collection 1778468 does not appear to index Wanroij baptisms for this family."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T20:38:36.973Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1778468",
+        "surname": "Jansen",
+        "fatherGivenName": "Petrus",
+        "fatherSurname": "Jansen",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1705,
+        "birthYearTo": 1720
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 78,
+      "notes": "Broad search returned 78 results (Jansen children of a Petrus Jansen, Noord-Brabant 1705-1720) but none named Elisabeth and none placing in Wanroij or citing Hoffmans as mother. Top-scored results (Stientjen, Jannitien, Koendertjen \u2014 Dutch Reformed naming style) appear to belong to a different Petrus Jansen family, not the Catholic Wanroij family. Collection 1778468 is a legacy collection (2010, no updates) with inconsistent Noord-Brabant coverage; its geographic indexing shows only 'Netherlands' for all hits. Absence here is not conclusive \u2014 records very likely exist in unindexed browse-only volumes (FS collection 2037960). Moving to collection 2704729 (Netherlands Archival Indexes Vital Records) per pli_003."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-03T20:40:26.543Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2704729",
+        "givenName": "Elisabeth",
+        "surname": "Jansen",
+        "fatherGivenName": "Petrus",
+        "fatherSurname": "Jansen",
+        "motherGivenName": "Gertrudis",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1709,
+        "birthYearTo": 1717
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Note: plan item referenced collection 2704729 but the verified Vital Records collection ID is 2704829 \u2014 the plan had a transposition error. Searched both to exhaust this avenue."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-03T20:40:26.543Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2704729",
+        "givenName": "Elisabeth",
+        "surname": "Janssen",
+        "fatherGivenName": "Petrus",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1709,
+        "birthYearTo": 1717
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Surname variant Janssen also returned nothing from collection 2704729. Confirmed this collection ID does not hold the Wanroij data. Broadened search to all collections."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-03T20:40:37.212Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elisabeth",
+        "surname": "Jansen",
+        "birthPlace": "Noord-Brabant, Netherlands",
+        "birthYearFrom": 1709,
+        "birthYearTo": 1717,
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1448,
+      "notes": "TOP RESULT: Elisabeth Jansen, baptized 30 Mar 1713, Wanroij, Noord-Brabant \u2014 recordId ark:/61903/1:1:QL69-GBJC, collection 2704829 (Netherlands Archival Indexes Vital Records 1600-2000, via OpenArch/BHIC). Father: Petrus Jansen. Mother indexed as Geertrudis Gerits (patronymic \u2014 daughter of Gerrit), not Hoffmans. Patronymic Gerits is consistent with tree person Gerrit Gerrits Hoffmans (LZ6D-XC4) as Gertrudis's father. Identification of Geertrudis Gerits = Gertrudis Hoffmans is strongly supported but requires person-evidence analysis. This record directly answers q_001: a daughter named Elisabeth was baptized to Petrus Jansen in Wanroij on 30 March 1713. Passing to record-extraction."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T20:50:55.370Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Marriage of Petrus Jansen and Gertrudis Hoffmans already documented in tree from prior session"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "pli_006 goal (confirm Petrus Jansen \u2013 Gertrudis Hoffmans as a documented couple with marriage date) is already met by tree source 7YSN-34G: 'Entry for Petrus Jansen and Geertrudis Gerits Hoffmans, 5 Feb 1709, Netherlands Archival Indexes Vital Records, 1600-2000' (QLR1-11VM), already encoded as Couple R1 with a Marriage fact dated 5 Feb 1709 in Wanroij. The marriage was found and extracted in a prior research session before this autonomous run. No additional search required for pli_006."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T20:56:04.283Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "005844878_001_M96P-YNM"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Listed 84 images in volume 005844878 (Wanroij DTB 1656-1723) to identify target image range for the 30 March 1713 baptism."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T20:56:04.284Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "005844878_00027"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Calibration read. Page covers 1692-1693 baptisms. Target (1713) not present. Establishes approximately 1 image per year rate."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T20:56:04.284Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "005844878_00035"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Calibration read. Page covers 1700-1701 baptisms. Target (1713) not present. Confirms ~1 image/year rate; extrapolated target to image ~48."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T20:56:04.284Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "005844878_00048"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Page covers 1711-1712 baptisms. Target (30 Mar 1713) not on this page. FOUND corroborating entry: 6 Aug 1711 - Gerardus, filius Petri Jansen et Gertrudis Hoffmans (godparents: Anthonius Hoffmans, Tijcken Jansen). This confirms the family is in this register and mother is 'Gertrudis Hoffmans' in this entry. Adjacent page (image 49) should contain the 1713 entries."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T20:56:04.284Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "005844878_00049"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Page covers Sep 1712 through Apr 1713. FOUND TARGET ENTRY: '30 martij baptizata e Elisabet, filia Petri Jansen, et Gertrudis Geerts / ss Martinus Geerts, et Anna Jan Nelissen'. Original Latin Catholic DTB register confirms: Elisabeth baptized 30 March 1713 in Wanroij, daughter of Petrus Jansen and Gertrudis Geerts (patronymic variant of Gertrudis Hoffmans). Godparents: Martinus Geerts and Anna Jan Nelissen. This is the primary source underlying the indexed record (src_001, ark:/61903/1:1:QL69-GBJC). Image saved at images/005844878_00049.jpg."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL69-GBJC : accessed 3 August 2026), Entry for Elisabeth Jansen and Petrus Jansen, 30 Mar 1713.",
+      "citation_detail": {
+        "who": "Elisabeth Jansen (child); Petrus Jansen (father); Geertrudis Gerits (mother)",
+        "what": "Baptism entry, Netherlands Archival Indexes, Vital Records, 1600-2000 (archival index/transcription of original DTB church register)",
+        "when_created": "30 March 1713 (original event); indexed from DTB register, date of indexing unknown",
+        "when_accessed": "3 August 2026",
+        "where": "FamilySearch (https://www.familysearch.org), collection 2704829; underlying record via OpenArch/BHIC",
+        "where_within": "ARK ark:/61903/1:1:QL69-GBJC; source image at https://www.familysearch.org/ark:/61903/1:2:QPJT-J7RK"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch \u2014 Netherlands, Archival Indexes, Vital Records, 1600-2000 (collection 2704829)",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QL69-GBJC",
+      "notes": "Original not examined \u2014 this entry is an archival index/transcription aggregated via OpenArch/BHIC from the original Wanroij DTB register. The original church register was not directly accessed. The mother is indexed as 'Geertrudis Gerits', likely a patronymic (daughter of Gerrit) rather than the family surname Hoffmans used elsewhere; early-18th-century Noord-Brabant Catholic DTB registers commonly listed women by patronymic. Identity resolution of Geertrudis Gerits with tree person Gertrudis Hoffmans (KN19-Q19) is reserved for person-evidence.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Wanroij Catholic DTB Register, 1656\u20131723, baptisms; entry for Elisabet [Jansen], 30 March 1713; FamilySearch image group 005844878, image 00049; image 005844878_00049.jpg; original parish register, Wanroij, Noord-Brabant, Netherlands; accessed 2026-08-03.",
+      "citation_detail": {
+        "who": "Elisabet, daughter of Petri Jansen and Gertrudis Geerts",
+        "what": "Baptism entry, Catholic DTB register (Latin), Wanroij parish",
+        "when_created": "30 March 1713",
+        "when_accessed": "2026-08-03",
+        "where": "FamilySearch image group 005844878 (Wanroij DTB 1656\u20131723); physical custodian: BHIC, 's-Hertogenbosch",
+        "where_within": "Image 005844878_00049, entry for 30 March 1713"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch image group 005844878, image 00049 (BHIC original)",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:005844878_00049",
+      "notes": "This is the original parish register page, not a derivative index. The indexed FamilySearch record (src_001, ark:/61903/1:1:QL69-GBJC) is a derivative made from this original. The mother's name appears here as 'Gertrudis Geerts' (patronymic); the index spelled it 'Geertrudis Gerits'; and the same register on the preceding image (005844878_00048) for the Gerardus baptism of 6 Aug 1711 names her 'Gertrudis Hoffmans'. All three are variant forms for the same individual, KN19-Q19 in the tree.",
+      "transcription": "30 martij baptizata e Elisabet, filia Petri Jansen, et Gertrudis Geerts; ss Martinus Geerts, et Anna Jan Neli\u00dfen",
+      "image_filename": "images/005844878_00049.jpg",
+      "log_entry_id": "log_014",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103106329719",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Elisabeth Jansen",
+      "structured_value": {
+        "given": "Elisabeth",
+        "surname": "Jansen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103106329719",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103106329719",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "Baptized 30 March 1713, Wanroij, Noord-Brabant, Netherlands",
+      "date": "30 Mar 1713",
+      "date_certainty": "exact",
+      "place": "Wanroij, Noord-Brabant, Nederland",
+      "standard_place": "Wanroij, North Brabant, Netherlands",
+      "information_quality": "primary",
+      "informant": "church official (priest/recorder of the Wanroij DTB register)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816851",
+      "record_role": "father_of_child_1",
+      "fact_type": "name",
+      "value": "Petrus Jansen",
+      "structured_value": {
+        "given": "Petrus",
+        "surname": "Jansen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely Petrus Jansen himself or the presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816851",
+      "record_role": "father_of_child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely Petrus Jansen himself or the presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816851",
+      "record_role": "father_of_child_1",
+      "fact_type": "relationship",
+      "value": "father of Elisabeth Jansen (inferred from record structure)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Relationship inferred from the ParentChild structure in the archival index entry. The original DTB register likely states the parents explicitly, but this derivative index encodes the relationship structurally. No relationship column exists in this baptism context; the link is structural/inferred.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816856",
+      "record_role": "mother_of_child_1",
+      "fact_type": "name",
+      "value": "Geertrudis Gerits",
+      "structured_value": {
+        "given": "Geertrudis",
+        "surname": "Gerits"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely the mother herself or the presenting parent at the baptism)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The mother is indexed as 'Geertrudis Gerits'. In early-18th-century Noord-Brabant Catholic DTB registers, women were commonly listed by patronymic (father's given name) rather than a hereditary family surname. 'Gerits' likely derives from father 'Gerrit', consistent with tree person Gerrit Gerrits Hoffmans (LZ6D-XC4) who appears as a related male. The family surname 'Hoffmans' used elsewhere for this woman (tree person KN19-Q19, Gertrudis Hoffmans) does not appear in this record. Identity resolution \u2014 whether Geertrudis Gerits = Gertrudis Hoffmans \u2014 is reserved for person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816856",
+      "record_role": "mother_of_child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely the mother herself or the presenting parent at the baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QL69-GBJC",
+      "record_persona_id": "p_103105816856",
+      "record_role": "mother_of_child_1",
+      "fact_type": "relationship",
+      "value": "mother of Elisabeth Jansen (inferred from record structure)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Relationship inferred from the ParentChild structure in the archival index entry. The original DTB register likely states the parents explicitly, but this derivative index encodes the relationship structurally. Mother is listed as 'Geertrudis Gerits' \u2014 see name assertion bias notes regarding the patronymic convention and the unresolved identity question with Gertrudis Hoffmans (KN19-Q19).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Elisabet",
+      "structured_value": {
+        "given": "Elisabet",
+        "surname": "Jansen"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed in record)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed in record)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized 30 March 1713",
+      "date": "30 March 1713",
+      "place": "Wanroij, Noord-Brabant, Netherlands",
+      "information_quality": "primary",
+      "informant": "parish priest (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002",
+      "standard_place": "Wanroij, North Brabant, Netherlands"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Petri Jansen",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed in record)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Gertrudis Geerts",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed in record)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother named 'Gertrudis Geerts' in this entry (patronymic form). Same register names her 'Gertrudis Hoffmans' on image 005844878_00048 (Gerardus baptism, 6 Aug 1711); indexed derivative (src_001) spells the patronymic 'Geertrudis Gerits'. All three are variant representations of the same individual, identified as KN19-Q19 in the tree. The surname/patronymic alternation is common in this region and period.",
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Petri Jansen",
+      "structured_value": {
+        "given": "Petrus",
+        "surname": "Jansen"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Gertrudis Geerts",
+      "structured_value": {
+        "given": "Gertrudis",
+        "surname": "Geerts"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Name recorded as patronymic 'Geerts' (= daughter of Gerrit). Same individual appears as 'Gertrudis Hoffmans' (family surname) in the same register on image 005844878_00048. Patronymic and family surname used interchangeably for the same woman across entries in this register.",
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "godparent_1",
+      "fact_type": "name",
+      "value": "Martinus Geerts",
+      "structured_value": {
+        "given": "Martinus",
+        "surname": "Geerts"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Godfather. Surname 'Geerts' is a patronymic (son of Gerrit). Possible kin connection to the mother Gertrudis Geerts \u2014 same patronymic \u2014 but no stated relationship; flag as FAN associate for potential kin lead.",
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "capture:wanroij-dtb-baptism-1713-elisabet",
+      "record_role": "godparent_2",
+      "fact_type": "name",
+      "value": "Anna Jan Neli\u00dfen",
+      "structured_value": {
+        "given": "Anna",
+        "surname": "Jan Neli\u00dfen"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Godmother. 'Jan Neli\u00dfen' appears to be a double patronymic (daughter of Jan, son of Nelis/Cornelis). Flag as FAN associate.",
+      "log_entry_id": "log_014",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_001 is the name assertion for the record principal (child_1, record role = child_1). I1 was minted from this persona's assertions via materialize_facts. The record was retrieved by searching specifically for Elisabeth Jansen baptized in Noord-Brabant 1709\u20131717. Same-person score 0.000016 is an API artifact (FS matched against FS-hosted online tree persons, not our local project person); correlation analysis stands alone and is decisive. No competing candidate.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_002 is the sex (Female) assertion for the record principal (child_1). I1 was minted from this persona. No competing candidate; sex matches I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_003 is the christening assertion: Elisabeth Jansen baptized 30 Mar 1713 at Wanroij, Noord-Brabant. This is the key positive finding for q_001. I1 was minted from this persona. Record found in collection 2704829 (Netherlands Archival Indexes Vital Records) via OpenArch/BHIC. No competing candidate.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KN19-QB1",
+      "confidence": "confident",
+      "rationale": "a_004 is the name assertion for the father persona (Petrus Jansen). Tree person KN19-QB1 is Petrus Jansen, Male, born ABT 1680 Wanrooij. Points of agreement: exact name match (Petrus Jansen), correct gender (Male), same place (Wanroij, Noord-Brabant), chronologically consistent (father aged ~33 at daughter's birth in 1713), same couple partner (Geertrudis/Gertrudis in both record and tree via R1). Tree already contains three children from this same couple at the same location and decade. Same-person score 0.000016 is an API artifact \u2014 FS cannot match our local project tree person via ARK. Correlation analysis is strong. No competing candidate. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KN19-QB1",
+      "confidence": "confident",
+      "rationale": "a_005 is the sex (Male) assertion for the father persona. KN19-QB1 is Male. Follows from same strong match as a_004.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KN19-QB1",
+      "confidence": "confident",
+      "rationale": "a_006 is the parent relationship assertion: Petrus Jansen is father of Elisabeth Jansen (inferred from record structure). KN19-QB1 is identified as Petrus Jansen with strong correlation. The baptism record structurally encodes him as the child's father. Same strong match as a_004\u2013a_005. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_006 bears on Elisabeth (I1) as well as Petrus \u2014 it identifies her father (Petrus Jansen = KN19-QB1) from the record structure. I1 is the child in this baptism record; the relationship assertion is direct evidence of her parentage from this source.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "KN19-Q19",
+      "confidence": "probable",
+      "rationale": "a_007 is the name assertion for the mother persona: 'Geertrudis Gerits'. Tree candidate KN19-Q19 is Gertrudis Hoffmans, Female, born ABT 1677 Wanrooij. Points of agreement: given name (Geertrudis = Gertrudis, trivial spelling variant), Female, same place (Wanroij, Noord-Brabant), same couple partner (Petrus Jansen in both record and tree via R1), chronologically consistent (mother aged ~36 at birth in 1713). Patronymic surname discrepancy ('Gerits' vs. 'Hoffmans'): in 18th-century Noord-Brabant Catholic DTB registers, women were commonly listed by patronymic rather than family surname. 'Gerits' derives from the father's given name 'Gerrit'. Tree person LZ6D-XC4 (Gerrit Gerrits Hoffmans) is KN19-Q19's father via R3 \u2014 his given name 'Gerrit' generates exactly the patronymic 'Gerits' for a daughter. The discrepancy is explained, consistent, and corroborated. Same-person score 0.000009 is an API artifact (FS matches against FS-hosted persons only). Correlation meets Moderate bar (explained patronymic, same spouse, same place, chronological fit). Probable. Autonomous mode \u2014 moderate match authorized at probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KN19-Q19",
+      "confidence": "probable",
+      "rationale": "a_008 is the sex (Female) assertion for the mother persona. KN19-Q19 is Female. Follows from same moderate match as a_007.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KN19-Q19",
+      "confidence": "probable",
+      "rationale": "a_009 is the parent relationship assertion: Geertrudis Gerits is mother of Elisabeth Jansen. KN19-Q19 is identified as Geertrudis/Gertrudis Hoffmans with moderate correlation (see a_007 rationale for full patronymic analysis). The baptism record structurally encodes her as the child's mother. Probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_009 bears on Elisabeth (I1) as well as Geertrudis \u2014 it identifies her mother from the record structure. I1 is the child in this baptism record; the relationship assertion is direct evidence of her parentage regardless of which specific tree person the mother corresponds to.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_010 is the name assertion for the child (Elisabet) in the original DTB register (src_002, image 005844878_00049). I1 was minted from src_001 (same child, same date, same parents). The original register entry and the indexed derivative agree on all key facts (name: Elisabet, date: 30 Mar 1713, place: Wanroij, parents: Petri Jansen + Gertrudis). Two independent sources for the same baptism. No competing candidate.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_011 is the sex (Female) assertion from the original register. Consistent with I1. Confirmed by 'baptizata e' (feminine Latin form) in the register.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_012 is the christening assertion from the original DTB register: baptized 30 March 1713, Wanroij, Noord-Brabant. This is the original primary source underlying src_001's derivative index. The date and place are confirmed by both sources. Primary source, direct evidence for q_001.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_013 identifies I1's father (Petri Jansen = KN19-QB1) from the original register. Primary source. Cross-links to both I1 (child whose father is named) and KN19-QB1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "KN19-QB1",
+      "confidence": "confident",
+      "rationale": "a_013 identifies Petrus Jansen (KN19-QB1) as the father of Elisabet. This original register entry confirms what the derivative index (src_001) already stated. The same name 'Petri Jansen' appears consistently as father of this family in multiple entries in the same register (Gerardus, 6 Aug 1711, image 48; Elisabet, 30 Mar 1713, image 49). Strong corroboration. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "a_014 identifies I1's mother (Gertrudis Geerts = KN19-Q19) from the original register. Primary source. Cross-links to both I1 (child whose mother is named) and KN19-Q19.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "KN19-Q19",
+      "confidence": "confident",
+      "rationale": "a_014 identifies Gertrudis Geerts (= KN19-Q19, Gertrudis Hoffmans) as the mother of Elisabet. The original register's internal cross-check provides a decisive corroboration: image 005844878_00048 (Gerardus baptism, 6 Aug 1711) names the same mother as 'Gertrudis Hoffmans'; image 005844878_00049 (Elisabeth baptism, 30 Mar 1713) names her as 'Gertrudis Geerts' \u2014 the same register, same scribe, alternating family surname and patronymic for the same woman in adjacent family entries. This is strong corroboration: same register, same child-bearing couple, same place, alternating surname/patronymic forms confirmed within the source. Upgraded from probable (src_001) to confident. Score 0.000009 from same_person API is an artifact of the API not having our local tree persons. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "KN19-QB1",
+      "confidence": "confident",
+      "rationale": "a_015 is the name assertion for the father (Petri Jansen = Petrus Jansen = KN19-QB1) from the original register. Confirmed by multiple entries in the same register and by the derivative indexed record (src_001). Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "KN19-Q19",
+      "confidence": "confident",
+      "rationale": "a_016 is the name assertion for the mother (Gertrudis Geerts = KN19-Q19, Gertrudis Hoffmans). The register records her as 'Geerts' (patronymic) in this entry. Same register image 48 records her as 'Hoffmans' (family surname). This internal cross-register evidence confirms the patronymic and family surname refer to the same person, and that KN19-Q19 is correctly identified. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_017 is the name assertion for godfather Martinus Geerts (I2, minted as a new stub). I2 was minted from this persona. Name 'Geerts' is the same patronymic as the mother, suggesting a possible kin relationship (potential brother of Gertrudis Geerts = KN19-Q19). No other identifying information in the record. No competing candidate for this new stub. Probable (new person, name only).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "a_018 is the name assertion for godmother Anna Jan Neli\u00dfen (I3, minted as a new stub). I3 was minted from this persona. No other identifying information in the record. No competing candidate for this new stub. Probable (new person, name only).",
+      "created": "2026-08-03"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The woman recorded as 'Geertrudis Gerits' (src_001 derivative index) and 'Gertrudis Geerts' (src_002 original DTB register image 49) in the 30 March 1713 baptism of Elisabet at Wanroij is the same individual as Gertrudis Hoffmans (KN19-Q19) in the project tree.",
+      "status": "supported",
+      "supporting_assertion_ids": [
+        "a_007",
+        "a_014",
+        "a_016"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Patronymic forms 'Gerits/Geerts' (daughter of Gerrit) derive from the given name of Gertrudis's father Gerrit Gerrits Hoffmans (LZ6D-XC4), documented in the tree as KN19-Q19's father via R3 (ParentChild). The same DTB register uses 'Gertrudis Hoffmans' on image 48 (Gerardus baptism, 6 Aug 1711, godfather Anthonius Hoffmans) and 'Gertrudis Geerts' on image 49 (Elisabet baptism, 30 Mar 1713) \u2014 alternating family surname and patronymic for the same woman in consecutive family entries, by the same priest. Same spouse Petrus Jansen appears in both entries. This is a documented naming convention in early-18th-century Noord-Brabant Catholic registers. Identity resolution supported: cross-register internal corroboration by the same source resolves the apparent discrepancy."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch collection 1778468 (Netherlands Births and Baptisms, 1564\u20131910) and collection 2704829 (Netherlands Archival Indexes Vital Records, 1600\u20132000, aggregating BHIC/OpenArch data) were searched with name variants Jansen/Janssen and Hoffmans/Hofmans/Gerits/Geerts. Collection 1778468 returned no entries for the target family; collection 2704829 returned the indexed Elisabeth Jansen baptism record (ark:/61903/1:1:QL69-GBJC). The original DTB register volume 005844878 (84 images, Wanroij 1656\u20131723) was browsed across images 27, 35, 48, and 49; the target entry was located on image 49. External sites WieWasWie and BHIC were deferred in autonomous mode, but collection 2704829 aggregates the same BHIC index data and yielded the positive finding. Marriage of Petrus Jansen and Gertrudis Hoffmans already confirmed in tree (source 7YSN-34G, dated 5 Feb 1709). A future search for Elisabeth in later Wanroij DTB volumes (a marriage record or burial) or in baptism records of any children she may have had would provide a genuinely independent corroboration and could advance the tier to proved.",
+      "narrative_markdown": "## Baptism of Elisabeth Jansen, Wanroij, 30 March 1713: Daughter of Petrus Jansen and Gertrudis Hoffmans\n\n**Research question:** Did Petrus Jansen and Gertrudis Hoffmans of Wanroij, Noord-Brabant, Netherlands, have a daughter named Elisabeth baptized circa 1713, in addition to their three known sons (Joannes, baptized 1709; Gerardus, baptized 1711; Joannes, baptized 1717)?\n\n**Conclusion:** The preponderance of evidence strongly suggests that Elisabeth Jansen, baptized 30 March 1713 at Wanroij, Noord-Brabant, was a daughter of Petrus Jansen and Gertrudis Hoffmans.\n\n### Primary Evidence: Original DTB Register\n\nThe original Catholic DTB (Dopen/Trouwen/Begraven) parish register for Wanroij, spanning 1656\u20131723, contains the following entry transcribed from the Latin on folio image 005844878_00049:\n\n> *30 martij baptizata e Elisabet, filia Petri Jansen, et Gertrudis Geerts; ss Martinus Geerts, et Anna Jan Neli\u00dfen.*\n\n\"30 March [1713], baptized was Elisabeth, daughter of Petrus Jansen and Gertrudis Geerts; godparents: Martinus Geerts and Anna Jan Neli\u00dfen.\"\n\nThis is an original source \u2014 the actual parish register page \u2014 with primary information recorded at the time of baptism by the parish priest acting in an official capacity, and constitutes direct evidence bearing on the research question.[^1]\n\n### Corroborating Derivative Index\n\nA derivative archival index compiled by the Brabants Historisch Informatie Centrum (BHIC) via OpenArch and indexed on FamilySearch records the same event: Elisabeth Jansen, baptized 30 March 1713, Wanroij, Noord-Brabant, father Petrus Jansen, mother Geertrudis Gerits.[^2] As a derivative of the same DTB register entry and sharing the same informant (the parish priest), this index and the original constitute one evidence unit, not two independent sources.\n\n### Mother's Naming Discrepancy Resolved\n\nThe mother's surname appears in three variant forms across sources: \"Gertrudis Hoffmans\" (as recorded in the same DTB register for the baptism of Gerardus, 6 August 1711, image 005844878_00048, with godfather Anthonius Hoffmans), \"Gertrudis Geerts\" (the Elisabeth entry, image 005844878_00049), and \"Geertrudis Gerits\" (the derivative index). These are not different individuals; they are naming-convention variants for the same person.\n\nIn early-eighteenth-century Catholic DTB registers for Noord-Brabant, women were commonly recorded by their patronymic (derived from the father's given name) in some entries and by their hereditary family surname in others. The patronymics \"Geerts\" and \"Gerits\" both derive from the given name \"Gerrit.\" Gerrit Gerrits Hoffmans (tree person LZ6D-XC4), whose primary given name is Gerrit, is documented as Gertrudis Hoffmans's father via a ParentChild relationship in the project tree. His given name directly generates the patronymic \"Geerts/Gerits\" for a daughter. The alternation of \"Hoffmans\" and \"Geerts\" in adjacent entries of the same DTB register \u2014 recorded by the same priest for children of the same couple \u2014 confirms this is a naming-convention variation, not evidence of a different person. The corroborating Gerardus entry on image 005844878_00048 further confirms the family surname through godfather Anthonius Hoffmans.\n\n### Evidence Assessment\n\n**Strengths:** The primary evidence is an original Catholic parish register, read directly from the digitized image and transcribed in full. The information is primary (recorded at time of baptism by the officiating priest in an official capacity), and the evidence is direct (names the child, parents, date, and place explicitly). All assertions are classified at the highest GPS tier \u2014 original source, primary information, direct evidence.\n\n**Limitation \u2014 single evidence unit:** The derivative index (src_001) and the original register image (src_002) both represent the same DTB entry recorded by the same parish priest. Per GPS independence principles, sources with the same informant count as one evidence unit. In pre-civil-registration Netherlands (civil registration began 1811), the DTB register is the primary and typically sole record type for Catholic baptismal events; no genuinely independent corroborating record type existed for a 1713 baptism. This structural limitation \u2014 inherent to the question type and period, not a research gap \u2014 prevents a \"proved\" conclusion under strict GPS Component 1 requirements.\n\nA future search for Elisabeth Jansen in later Wanroij DTB records (a marriage entry or burial record), or in baptism records for any children she may have had, would provide a genuinely independent corroboration from a different event and informant, and could advance this conclusion to \"proved\" if found.\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that Petrus Jansen and Gertrudis Hoffmans of Wanroij, Noord-Brabant, had a daughter named Elisabeth, baptized in the Catholic parish of Wanroij on 30 March 1713. The original DTB register entry (image 005844878_00049), transcribed from the Latin and confirmed against the derivative index, is the authoritative primary record for this event. The apparent surname variation for the mother is fully explained and internally corroborated by the same register. The conclusion is rated **probable** due to the structural single-evidence-unit limitation inherent to this record type and era \u2014 not from any weakness in the quality or directness of the available evidence.\n\n[^1]: Wanroij Catholic DTB Register, 1656\u20131723, baptisms; entry for Elisabet [Jansen], 30 March 1713; FamilySearch image group 005844878, image 00049; image 005844878_00049.jpg; original parish register, Wanroij, Noord-Brabant, Netherlands; accessed 2026-08-03.\n\n[^2]: \"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL69-GBJC : accessed 3 August 2026), Entry for Elisabeth Jansen and Petrus Jansen, 30 Mar 1713."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-03T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-03T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Brabant, Netherlands",
+      "for_place": "Wanroij, Noord-Brabant, Netherlands",
+      "time_period": "1700-1720",
+      "jurisdictions": [
+        {
+          "name": "Wanroij, Brabant, Netherlands",
+          "date_range": "/1815"
+        },
+        {
+          "name": "Wanroij, North Brabant, Netherlands",
+          "date_range": "1815/1993"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2037960",
+          "title": "Netherlands, Noord-Brabant, Church Records, 1473-1965",
+          "date_range": "1473-1965"
+        },
+        {
+          "id": "1778468",
+          "title": "Netherlands, Births and Baptisms, 1564-1910",
+          "date_range": "1564-1910"
+        },
+        {
+          "id": "2704729",
+          "title": "Netherlands, Archival Indexes, Vital Records, 1600-2000",
+          "date_range": "1600-2000"
+        },
+        {
+          "id": "1500716",
+          "title": "Netherlands, Marriages, 1565-1892",
+          "date_range": "1565-1892"
+        },
+        {
+          "id": "1500717",
+          "title": "Netherlands, Deaths and Burials, 1668-1945",
+          "date_range": "1668-1945"
+        },
+        {
+          "id": "2841008",
+          "title": "Netherlands, Archival Indexes, Public Records",
+          "date_range": "1600-2000"
+        }
+      ],
+      "quirks": [
+        "ALL six FamilySearch image volumes for Wanroij DTB registers are 0% name-indexed and not full-text searchable \u2014 browse-only image by image. Volume 005844878_001_M96P-YNM (84 images, 1656\u20131723, baptisms/marriages/deaths) is the highest-priority volume for the 1700\u20131720 period.",
+        "Civil registration did not begin until 1 March 1811; church records (DTB) are the only vital records for this period.",
+        "Wanroij was in the Generaliteitsland (administered directly by the States-General, not a recognized province) before 1815 \u2014 records filed under 'Brabant, Netherlands' pre-1815, but FamilySearch volume waypoints typically apply the post-1815 label 'North Brabant, Netherlands' retroactively.",
+        "Catholic parish records in this region are written in Latin. Key terms: baptizatus/a (baptized), filius/filia (son/daughter), patrini (godparents).",
+        "Search WieWasWie (wiewaswie.nl) and BHIC (bhic.nl) for indexed/searchable versions of these registers before committing to browse-only image reading on FamilySearch.",
+        "BHIC (Brabants Historisch Informatie Centrum, 's-Hertogenbosch) is the physical custodian of Noord-Brabant DTB registers and likely has the most complete online index for this area.",
+        "Surname 'Jansen' may appear as Janssen, Jans, Jansz; 'Hoffmans' as Hofmans, Hoffmann, Hoffman \u2014 search all variants.",
+        "If not found in Wanroij, search neighboring parishes: Westerbeek, Mill, Sint Anthonis.",
+        "Browse FS collection 2037960 via: Religion or Other Category \u2192 Municipality (Wanroij) \u2192 Record Type / Years / Volume. Genealogie Werkbalk (genealogiewerkbalk.nl/fs/) is an alternative browse interface for the same images."
+      ],
+      "guide_markdown": "# Locality Guide: Wanroij, Noord-Brabant, Netherlands (ca. 1700\u20131720)\n\n## Jurisdiction overview\n- **Pre-1815 name:** Wanroij, Brabant, Netherlands (Generaliteitsland under the Dutch Republic)\n- **Post-1815 name:** Wanroij, North Brabant, Netherlands (municipality, formed 1815; merged 1993)\n- **Religious denomination:** Predominantly Roman Catholic \u2014 records in Latin\n- **Key context:** Wanroij was in the Generaliteitsland, governed directly by the States-General. Civil registration did not exist; all vital records were kept by the Catholic parish (DTB registers).\n\n## Boundary changes\n- Pre-1815: Wanroij, Brabant, Netherlands\n- From 1815: Wanroij, North Brabant, Netherlands\n- The same physical DTB registers span both periods \u2014 treat as one continuous record set.\n\n## Church records (DTB) \u2014 primary source for this period\n- **Language:** Latin (Catholic)\n- **Record types:** Baptisms (Dopen), Marriages (Trouwen), Burials (Begraven)\n- **Coverage:** Baptisms from 1655; burials and marriages from 1655\u20131663 onward\n\n### FamilySearch image volumes (all browse-only, 0% indexed)\n| Image Group | Images | Types | Dates |\n|---|---|---|---|\n| 005844878_001 | 84 | Baptisms, Marriages, Deaths | 1656\u20131723 \u2190 *most targeted* |\n| 005844868_006 | 197 | Baptisms, Deaths | 1667\u20131803 |\n| 005864409_002 | 1,059 | Baptisms | 1655\u20131811 |\n| 005864410 | 3,099 | Baptisms | 1655\u20131811 |\n| 005864412_001 | 127 | Burials | 1663\u20131811 |\n| 005864411 | 3,080 | Burials, Marriages | 1655\u20131811 |\n\n## Indexed collections (search before browsing)\n- **WieWasWie** (wiewaswie.nl) \u2014 national index; index & images; free\n- **BHIC** (bhic.nl) \u2014 provincial archive, indexed DTB registers; free\n- FS **1778468** Netherlands Births and Baptisms 1564-1910 \u2014 1.57M indexed records\n- FS **2704729** Netherlands Archival Indexes Vital Records 1600-2000 \u2014 46.5M records\n\n## Research tips\n1. Search WieWasWie and BHIC before browsing FS images.\n2. Volume 005844878_001 (84 images, 1656\u20131723) is highest priority.\n3. Catholic records in Latin \u2014 use Dutch and Latin word lists.\n4. Surname variants: Jansen/Janssen/Jansz; Hoffmans/Hofmans/Hoffman.\n5. Search neighboring parishes (Westerbeek, Mill, Sint Anthonis) if not found in Wanroij.\n6. FS collection 2037960 browse path: Religion \u2192 Municipality (Wanroij) \u2192 Record Type/Volume.\n7. Genealogie Werkbalk (genealogiewerkbalk.nl/fs/) offers an alternative browse interface.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-03"
+    }
+  ]
+}

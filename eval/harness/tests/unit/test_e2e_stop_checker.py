@@ -19,12 +19,12 @@ def test_read_research_json_returns_none_when_missing(tmp_path: Path):
 
 
 def test_read_research_json_returns_none_on_invalid_json(tmp_path: Path):
-    (tmp_path / "research.json").write_text("{not valid")
+    (tmp_path / "research.json").write_text("{not valid", encoding="utf-8")
     assert read_research_json(tmp_path) is None
 
 
 def test_read_research_json_parses_valid(tmp_path: Path):
-    (tmp_path / "research.json").write_text(json.dumps({"project": {"status": "in_progress"}}))
+    (tmp_path / "research.json").write_text(json.dumps({"project": {"status": "in_progress"}}), encoding="utf-8")
     parsed = read_research_json(tmp_path)
     assert parsed == {"project": {"status": "in_progress"}}
 
@@ -34,7 +34,7 @@ def test_read_tree_json_returns_none_when_missing(tmp_path: Path):
 
 
 def test_read_tree_json_parses_valid(tmp_path: Path):
-    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     parsed = read_tree_json(tmp_path)
     assert parsed == {"persons": []}
 
@@ -114,6 +114,26 @@ def test_derive_stop_reason_error():
     )
 
 
+def test_derive_stop_reason_mcp_unavailable():
+    assert (
+        derive_stop_reason(sdk_aborted_reason="mcp_unavailable", research=None)
+        == "mcp_unavailable"
+    )
+
+
+def test_derive_stop_reason_mcp_unavailable_beats_completed():
+    """#941's exact regression: two of the three lost runs self-declared
+    `completed` while making zero genealogy tool calls, and were reported as
+    research failures. The environment reason must win."""
+    assert (
+        derive_stop_reason(
+            sdk_aborted_reason="mcp_unavailable",
+            research={"project": {"status": "completed"}},
+        )
+        == "mcp_unavailable"
+    )
+
+
 def test_derive_stop_reason_completed_when_no_abort_and_status_set():
     assert (
         derive_stop_reason(
@@ -178,4 +198,23 @@ def test_should_continue_blocks_first_nudge_even_with_equal_counts():
     assert should_continue_run(
         research=_INCOMPLETE, nudges_used=0, max_nudges=5,
         tool_count=5, tool_count_at_last_nudge=-1,
+    ) is True
+
+
+def test_should_continue_allows_when_mcp_unavailable():
+    """#941 ask (3). Every other input says "nudge it onward" — unfinished
+    project, full budget, progress since the last nudge — and the absent MCP
+    surface still wins: there is nothing to resume into."""
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
+        tool_count=12, tool_count_at_last_nudge=8,
+        mcp_unavailable=True,
+    ) is False
+
+
+def test_mcp_unavailable_defaults_false_so_existing_callers_are_unchanged():
+    """The flag is opt-in: the same inputs that vetoed a stop before still do."""
+    assert should_continue_run(
+        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
+        tool_count=12, tool_count_at_last_nudge=8,
     ) is True

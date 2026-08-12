@@ -22,6 +22,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    # Same pin as eval/harness: validates the mock agent output against
+    # docs/specs/schemas/research.schema.json (tests/test_mock_agent_schema.py).
+    "jsonschema>=4.22.0",
     "pytest-asyncio>=0.24",
     "anyio>=4.14.2",
 ]

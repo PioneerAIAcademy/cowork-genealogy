@@ -104,15 +104,20 @@ const EXTERNAL_SITE_VALUES = new Set([
  * it isn't — `enums.schema.json` is, and this is a hand-maintained copy of it in
  * code. That copy drifting silently ships *bad validation*, which is strictly
  * worse than the stale prose crib note the same lint was built to catch, so it
- * gets the same guard. Nothing at runtime reads this.
+ * gets the same guard.
+ *
+ * `satisfies`, not `: Record<string, ReadonlySet<string>>` — the annotation
+ * erases the literal key names, so `VALIDATOR_ENUMS.log_outcomes` would compile,
+ * yield `undefined`, and throw at module load when a tool schema spreads it.
+ * Tool input schemas read this (see research-log-append.ts).
  */
-export const VALIDATOR_ENUMS: Record<string, ReadonlySet<string>> = {
+export const VALIDATOR_ENUMS = {
   ...CLOSED_ENUMS,
   selection_basis: SELECTION_BASIS_VALUES,
   date_certainty: DATE_CERTAINTY_VALUES,
   date_certainty_timeline: DATE_CERTAINTY_TIMELINE,
   external_site: EXTERNAL_SITE_VALUES,
-};
+} satisfies Record<string, ReadonlySet<string>>;
 
 // research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
 // (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
@@ -395,7 +400,7 @@ export const RESEARCH_SHAPES = {
     "created", "updated",
   ]),
   researcher_profile: new Set([
-    "experience_level", "subscriptions", "narration_guidance",
+    "experience_level", "subscriptions", "narration_guidance", "intended_audience",
   ]),
   known_holding: new Set([
     "id", "holding_type", "description", "relates_to_person_ids",
@@ -561,6 +566,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ng = rp.narration_guidance;
       if (ng !== null && ng !== undefined && typeof ng !== "string") {
         addError(report, rpPath, "narration_guidance must be a string");
+      }
+      const ia = rp.intended_audience;
+      if (ia !== null && ia !== undefined && typeof ia !== "string") {
+        addError(report, rpPath, "intended_audience must be a string");
       }
     }
   }

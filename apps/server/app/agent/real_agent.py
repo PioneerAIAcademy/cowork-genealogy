@@ -229,7 +229,14 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         model=os.environ.get("MODEL") or None,
         permission_mode="bypassPermissions",  # operator-controlled, headless
         system_prompt={"type": "preset", "preset": "claude_code", "append": project_note},
-        setting_sources=["user", "project"],
+        # "project" only — the same source both eval harnesses load
+        # (workspace.py, e2e/orchestrator.py) and what registers the agents
+        # stage_plugin_agents just wrote. "user" was also listed, which read a
+        # source no harness run sees: nothing writes ~/.claude in the sandbox
+        # (sandbox/e2b.Dockerfile creates only ~/.familysearch-mcp), so it
+        # contributed nothing here while widening the gap between what CI
+        # exercises and what production loads.
+        setting_sources=["project"],
         plugins=[{"type": "local", "path": _PLUGIN_DIR}],
         mcp_servers={
             "genealogy": {"type": "stdio", "command": "node", "args": [_MCP_BUILD]},
@@ -473,7 +480,7 @@ class RealAgent:
         if sid and sid != self._resume_id:
             self._resume_id = sid
             try:
-                self._session_file.write_text(sid)
+                self._session_file.write_text(sid, encoding="utf-8")
             except OSError:
                 pass
 

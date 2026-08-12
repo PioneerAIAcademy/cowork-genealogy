@@ -1,6 +1,5 @@
 ---
 name: proof-conclusion
-model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
   (Statement/Summary/Argument), and writes a self-contained narrative
@@ -151,6 +150,8 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 
 **Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
 
+**Disclose a sensitive finding gently — content note first, not detail first.** When the narrative reveals something sensitive about a person or family — unknown or non-paternity parentage, institutionalization, a criminal record, a traumatic death, or a record touching Indigenous data sovereignty or colonial-era harm — open that part of the narrative with a brief content note and a plain-language summary before the detailed account, so the reader meets the finding prepared rather than confronted with the particulars first. Center the people the record is about, not the framing of the institution or colonial authority that produced it. Where the research draws on the records of Indigenous communities, honor the CARE principles for Indigenous data governance (Collective Benefit, Authority to Control, Responsibility, Ethics) alongside the GPS standard.
+
 ### 5. Write the proof_summaries entry
 
 `research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
@@ -228,6 +229,7 @@ is already persisted.
 - **Cite everything; acknowledge limitations.** State what was not searched, what conflicts remain, what assumptions are made. A well-written "Not Proved" is better than a fabricated "Proved."
 - **Never assert unresolvability without testing it.** Before writing that resolving X "requires direct examination of [source]" or that [source] is "the only path," explicitly ask: what other record types could independently establish this same fact? If alternatives exist that were not searched, name them as unsearched alternatives rather than claiming the fact is unresolvable. Asserting unresolvability that was never tested embeds a GPS Component 1 gap inside the GPS Component 5 narrative.
   - **The distinction is between the evidence and the fact.** It is correct to write that X "is not established by the evidence gathered so far" or "remains unresolved pending [named record types]" — a claim about the *current* record set. It is forbidden to write that X "cannot be established," "cannot be inferred, assumed, or assigned," is "indeterminable," or "unobtainable" while any relevant record type is unsearched — a claim about the *fact itself*. The first invites the next search; the second forecloses it. When a target fact is unresolved, every sentence that states so **must**, in the same breath, name at least one specific unsearched record type that could still establish it (e.g. "…remains unresolved pending a premarital census or a birth/baptism record"). A bare "cannot be determined from the record" with no such pairing is a fail, even when the tier (Not Proved / Possible) is otherwise correct.
+- **A "record not found" search result is not a conclusion — tier on the indirect evidence.** When a record type was searched but returned no results because the repository does not index it or it is not accessible, the narrative must (1) explicitly state what was searched and not found, naming the repository and its coverage limitation, and (2) tier the conclusion at the level the available indirect evidence supports. Do not collapse to `not_proved` when indirect evidence allows a higher tier. Do not write "cannot prove or disprove." This is the §2 documented-negative doctrine applied at the conclusion step.
 - **Do not resolve conflicts here** — recommend conflict-resolution. Do not evaluate exhaustiveness here — reference the existing declaration and tier accordingly.
 
 ## Re-invocation behavior

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import SourcesSection from '../SourcesSection'
 import type { ResearchData, Source } from '../../../lib/schema'
 import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
+import { setOpenExternal } from '../../../lib/external'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
   const actual = await vi.importActual<typeof import('../../../contexts/ResearchDataContext')>(
@@ -130,5 +131,39 @@ describe('SourcesSection — B3 captured-by footer', () => {
     render(<SourcesSection />)
     await expandFirstCard()
     expect(screen.queryByText(/Captured by/)).toBeNull()
+  })
+})
+
+describe('SourcesSection — url_archived (#1166)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+  })
+
+  const ARCHIVED = 'https://web.archive.org/web/20260101/https://example.com/record/1'
+
+  it('renders the Archived URL when present', async () => {
+    mockResearch({ sources: [makeSource({ url_archived: ARCHIVED })] })
+    render(<SourcesSection />)
+    await expandFirstCard()
+    expect(screen.getByText('Archived URL')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ARCHIVED })).toBeInTheDocument()
+  })
+
+  it('omits the Archived URL when url_archived is null', async () => {
+    mockResearch({ sources: [makeSource({ url_archived: null })] })
+    render(<SourcesSection />)
+    await expandFirstCard()
+    expect(screen.queryByText('Archived URL')).toBeNull()
+  })
+
+  it('clicking the Archived URL routes through openExternal', async () => {
+    const opened = vi.fn()
+    setOpenExternal(opened)
+    mockResearch({ sources: [makeSource({ url_archived: ARCHIVED })] })
+    render(<SourcesSection />)
+    await expandFirstCard()
+    await userEvent.click(screen.getByRole('button', { name: ARCHIVED }))
+    expect(opened).toHaveBeenCalledWith(ARCHIVED)
   })
 })

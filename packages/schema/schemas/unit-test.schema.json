@@ -120,6 +120,10 @@
             "default": false,
             "description": "When true, the matcher does NOT require a matching assertion to EXIST — it only checks the classification IF one is present. Use for a fact whose existence is completeness the skill produces unreliably (gating on it flaps), while still verifying its classification when present. The judge's soft Completeness dimension covers the omission. Defaults to false (existence required)."
           },
+          "value": {
+            "type": "string",
+            "description": "Optional expected fact value on every matching new assertion (#1108). Compared case-insensitively as a SUBSTRING of the assertion's value for the matcher's `attribute`: `place`/`standard_place` for attribute \"place\", `date` for \"date\", else the human-readable `value`. Substring tolerates place standardization (\"Pennsylvania\" -> \"Pennsylvania, United States\") while still failing a genuinely wrong value (\"Ireland\" is not in \"Pennsylvania\"). Declare only where the doctrine fixes the value deterministically."
+          },
           "evidence_type": {
             "oneOf": [
               { "type": "string" },

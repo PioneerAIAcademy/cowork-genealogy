@@ -145,9 +145,18 @@ which surface she used.
 That three-part note is the most valuable thing produced all day. Everything
 below is mechanics.
 
-## Step 1 — Branch before you touch anything ⌨️ Terminal
+## Step 1 — Claim the issue, then branch ⌨️ Terminal
 
 *(Step 0 happened days earlier, and by someone else. Your work starts here.)*
+
+Every submission opens a GitHub issue titled `[feedback] <timestamp>`, sitting in
+**Ready** on the board. Pick one with no assignee and **assign it to yourself
+before you start** — that is the claim, and it is the only thing stopping two
+people working the same case. If it already has an assignee, take another one.
+The zip link is in the issue body; download it now, you need it in Step 2.
+
+Two issues with timestamps a few minutes apart are usually one tester
+resubmitting, not two bugs. Open both before you start.
 
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end. Name it with a few hyphenated words describing the fix — no
@@ -172,8 +181,7 @@ still on `main` and your test ends up on `main`.
 
 ## Step 2 — Unpack the case ⌨️ Terminal
 
-The bundle lands in the shared Drive folder. Download it and, **from the repo
-root**, run:
+With the zip from Step 1 in hand, **from the repo root**, run:
 
 **macOS / Linux:**
 
@@ -487,6 +495,21 @@ runlog gate checks every skill the PR touches. What to avoid is bundling two
 You push and open the PR; the senior genealogist reviews and
 merges.
 
+**Put `Closes #<issue>` in the PR body** — the number of the `[feedback]` issue
+you claimed in Step 1. That line is the only thing that closes the issue and
+moves its card off the board when the PR merges; a PR with no linked issue moves
+no card, and Ready fills up with finished work. It is one line and it is easy to
+forget.
+
+**Not every case ends in a fix, and those still close.** Say which it was and
+close the issue by hand:
+
+- **Doesn't reproduce** — close, with a comment saying what you tried.
+- **Tool bug, not a skill bug** — file a `developer` issue, link it from the
+  feedback issue, close the feedback issue.
+- **Duplicate of another submission** — close as a duplicate, naming the one it
+  duplicates.
+
 **Then tell Marta what changed.** An alpha tester who never hears back stops
 reporting, and the reports are the entire point of the alpha.
 
@@ -507,7 +530,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | Step | What you do | Where |
 |---|---|---|
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
-| 1 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal (repo) |
+| 1 Claim + branch | assign the `[feedback]` issue to yourself; download the zip; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |

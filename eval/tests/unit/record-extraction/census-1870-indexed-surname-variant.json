@@ -74,6 +74,12 @@
       "optional": true,
       "evidence_type": "indirect",
       "informant_proximity": "researcher"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "optional": true,
+      "information_quality": "primary"
     }
   ]
 }

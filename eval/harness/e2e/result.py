@@ -1,6 +1,6 @@
 """E2e result schema and persistence.
 
-A run produces four artifacts under eval/runlogs/e2e/<test-id>/, named by
+A run produces three artifacts under eval/runlogs/e2e/<test-id>/, named by
 outcome (see runlog_prefix):
 
 - a gradeable run (verdict pass / partial / fail) uses the committable
@@ -8,16 +8,24 @@ outcome (see runlog_prefix):
   signal — "the system can't solve this yet; retry later" — exactly as a failing
   unit test is committed. Fixture *validity* is a separate axis: only a `pass`
   proves the fixture solvable (e2e-test-spec.md §14).
+- an `ungraded` run (the judge raised an exception — the tree exists but was
+  never graded) also uses the committable `run-<timestamp>.*` prefix. It is
+  distinct from `fail` (the judge never reached a conclusion) and can be
+  re-graded with /grade-e2e-run or by re-running the judge.
 - a `skipped` run (the judge never ran — the agent crashed before producing any
   tree, so there is nothing to grade) uses `scratch_<timestamp>.*`, which
   `.gitignore` keeps out of version control.
 
-The four files per run ({prefix} = `run-` or `scratch_`):
+The three files per run ({prefix} = `run-` or `scratch_`):
 
-- {prefix}<timestamp>.json — structured result (this module)
-- {prefix}<timestamp>.transcript.md — human-readable transcript
+- {prefix}<timestamp>.json — structured result (this module), including the
+  ordered `narration` stream that replaced the old `.transcript.md`
 - {prefix}<timestamp>.final-tree.gedcomx.json — agent's final tree
 - {prefix}<timestamp>.final-research.json — agent's final research.json
+
+Each run also carries provenance (issue #1091): `git_sha` (the tree it started
+from) and `skills_hash` (a digest of the skill + agent prompts it staged), so a
+committed run can be tied to the prompt that produced it. See e2e/provenance.py.
 
 See e2e-test-spec.md §8.
 """
@@ -36,7 +44,56 @@ from typing import Any
 # `axes_from_runlog` has to do for pre-v1 logs (see that function).
 #   1 — the three-axis split: top-level `compliance` / `outcome` /
 #       `guardrail_bypass_violations` (GitHub issue #972).
-HARNESS_SCHEMA_VERSION = 1
+#   2 — `tool_calls[].response_summary` is key-preserving rather than
+#       head-truncated at 497 chars (GitHub issue #1073). A reader MUST branch on
+#       this: 48% of captures differ in format from a v1 log, so diffing a v1
+#       against a v2 log shows changes that are not agent or skill regressions.
+#       See `docs/specs/e2e-test-spec.md` §15 step 4. This is the field to read —
+#       a timestamp cannot answer it, because the change was authored days before
+#       it merged, so v1 logs exist with timestamps later than the authoring date.
+#   3 — `tool_calls[]` carries `is_error`, joined from `ToolResultBlock.is_error`
+#       by `apply_tool_result` in `e2e/orchestrator.py`. Before that join nothing
+#       set the key and the five `entry.get("is_error") is True` gates in
+#       `harness/skill_invocation.py` were dead, so an ERRORED call counted as a
+#       successful invocation everywhere.
+#
+#       READ THIS BEFORE TRUSTING A `2`. The join shipped in PR #1255 (main
+#       `4541a4c5`) WITHOUT a bump, on the argument that adding a key is additive.
+#       That left `2` meaning two different things — no `is_error` before
+#       `4541a4c5`, `is_error` after — which is precisely the "keeps its name
+#       while its meaning changes" case this counter exists for. `3` is what
+#       makes the distinction readable. So:
+#         - `3`             — has `is_error`. Unambiguous.
+#         - `2` after `4541a4c5`  — has `is_error`. Zero such logs are committed
+#                             as of this bump; the window is small but real, and
+#                             a reader who finds one must date it against that
+#                             commit, since the payload cannot tell them.
+#         - `2` before, and `1`, and absent — no `is_error`.
+#       `"is_error" in entry` is NOT a usable substitute tell in either
+#       direction: an entry whose `ToolResultBlock` never arrived (any aborted or
+#       wall-clock-capped run) carries no key at all, at `3` exactly as at `2`.
+#
+#       What moves across the boundary, and by how much. Both hard-fail arms of
+#       `check_guardrail_compliance` get strictly stricter —
+#       `find_effects_without_invocation` stops crediting a failed `Skill` call,
+#       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
+#       both feed `guardrail_bypass_violations`, which sets `compliance: fail` ->
+#       `outcome: fail`. So a run that passed compliance before the join can
+#       hard-fail after it from an identical trace, and `compliance` / `outcome`
+#       are not comparable across it. Measured on the committed corpus, though,
+#       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
+#       which also explains why `e2e/guardrail_shadow_report.py` does not split
+#       its corpus by version (#911 / #1176 / #1231 read that number).
+#
+# A change readers can detect from the payload itself does NOT need a bump.
+# `narration` replacing `.transcript.md` is one: the field is a dataclass
+# `default_factory=list` and the writer emits `asdict(result)`, so every run
+# log written since carries the key and every earlier one lacks it. Branch on
+# `"narration" in data`, not on a version. Bump only when a key keeps its name
+# and type while its MEANING changes — that is the case with no structural tell,
+# and entry 2 above is exactly it: `response_summary` stays a string, and only
+# what that string means changes.
+HARNESS_SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -44,9 +101,9 @@ class E2eResult:
     test_id: str
     captured_at: str  # ISO-8601 UTC
 
-    # GENEALOGICAL verdict from the judge: "pass" | "partial" | "fail" — or
-    # "skipped" when the judge did not run (e.g. SDK crashed before producing
-    # any tree state).
+    # GENEALOGICAL verdict from the judge: "pass" | "partial" | "fail" |
+    # "ungraded" (judge raised an exception — tree exists but was never graded)
+    # | "skipped" (judge did not run — no tree to grade).
     #
     # This field is the judge's conclusion and NOTHING else. It used to be
     # overwritten to "fail" by the guardrail check below, which fused two
@@ -70,11 +127,13 @@ class E2eResult:
     # Every tool call the agent attempted, in order — not just mcp__-prefixed
     # ones (Skill, Agent, Read, … are included too; the entry-construction
     # code has no such filter). Each entry is {tool, args, response_summary,
-    # agent_id, agent_type}; the last two come from the PreToolUse hook's own
-    # payload (docs/specs/guardrail-enforcement-spec.md §11) and are only
-    # set once a ToolResultBlock arrives for that call — None on the main
-    # thread, the subagent's identifiers otherwise. A call still in-flight
-    # when the run aborts mid-stream never gets any of the last three keys.
+    # is_error, agent_id, agent_type}; `is_error` (a bool, `block.is_error is
+    # True`) and the last two are all set together once a ToolResultBlock
+    # arrives for that call — agent_id/agent_type come from the PreToolUse
+    # hook's own payload (docs/specs/guardrail-enforcement-spec.md §11), None on
+    # the main thread and the subagent's identifiers otherwise. A call still
+    # in-flight when the run aborts mid-stream keeps response_summary: None and
+    # never gets is_error, agent_id, or agent_type.
     # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
@@ -96,9 +155,38 @@ class E2eResult:
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
     #
-    # In every case the call was denied, so it never reaches `tool_calls` —
-    # this list is the only record that it was attempted.
+    # In every case the call was denied, so nothing executed — but it DOES
+    # reach `tool_calls` (32 of the 33 denials in the committed corpus have a
+    # matching entry there, carrying the deny reason as `response_summary` and,
+    # from HARNESS_SCHEMA_VERSION 3, `is_error: true`). This list is the
+    # structured record — read `blocked_by` from here rather than pattern-
+    # matching the summary — and it is what tells a §15 reader that an
+    # `is_error: true` entry is a policy denial, not an upstream failure.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
+
+    # Main-thread `extraction_append` calls the PreToolUse hook denied — the
+    # router substituting for a failed record-extractor spawn and doing the
+    # extraction itself (#942). Each entry is {tool, args, blocked_by:"context"}.
+    # Kept separate from `blocked_tree_reads` because this is a WRITE, not a
+    # read, and a different guard (the per-context subagent-only policy, not the
+    # tree block) denied it. Same reading rule as the list above: the attempt is
+    # in `tool_calls`; this list is the record that it did not run.
+    blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only mean anything in trace order (a denied tool, a continue-nudge).
+    # Entries are {tool_calls_before, kind, text} with kind in
+    # {assistant, blocked, harness}. `tool_calls_before` is how many tool calls
+    # had already happened: N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N], and 0 means before any tool call. A count, not an index —
+    # so the stream replays against tool_calls without being interleaved into
+    # it, and without an off-by-one.
+    #
+    # This replaces the `.transcript.md` artifact (removed 2026-08-03). That
+    # file was 93% a re-render of tool_calls; the assistant prose was the only
+    # thing it held that lived nowhere else, and diagnosing a mid-loop yield or
+    # a stall needs that prose *in position* — see issue #1104.
+    narration: list[dict[str, Any]] = field(default_factory=list)
 
     # Compact per-subagent transcript summaries (agent_type, per-turn
     # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
@@ -117,6 +205,21 @@ class E2eResult:
     # forbidden to read `judge_output` at all, so burying it there made it
     # invisible to the one reader whose job is explaining a run (issue #972).
     guardrail_bypass_violations: list[str] = field(default_factory=list)
+
+    # Provenance — which prompt produced this run (issue #1091). Both default so
+    # every historical run log stays a valid E2eResult. See e2e/provenance.py.
+    #
+    # `git_sha` — `git rev-parse HEAD` at run start; lets a reviewer check out the
+    # exact tree. `skills_hash` — one sha256 over the sorted {path: hash} of every
+    # skill + agent SOURCE file the run stages; catches an UNCOMMITTED SKILL.md
+    # edit that `git_sha` cannot (the PR #1079 case this was filed for), since it
+    # hashes working-tree content. It hashes the source, not the staged copy, so
+    # it does not move with `--agent-model` (see `subagent_model_override`, and
+    # e2e-test-spec.md §8.1.3). Known limit: a hash proves WHETHER two runs used the
+    # same prompt, never WHAT changed — reconstruct that from the SHA + a re-hash
+    # on a clean tree. Evidence for a reviewer, not a gate: no CI reads either.
+    git_sha: str | None = None
+    skills_hash: str | None = None
 
     # Schema marker for readers. See HARNESS_SCHEMA_VERSION.
     harness_schema_version: int = HARNESS_SCHEMA_VERSION
@@ -149,8 +252,10 @@ class E2eResult:
     # because it is a `default_factory` field its key is emitted
     # unconditionally — which makes its mere PRESENCE the only reliable
     # fingerprint of "the code that wrote this runlog had the detector" for
-    # the 122 pre-v1 logs. There is no other signal: `usage.cli_version` is
-    # absent or null in every committed run, and nothing records a git sha.
+    # the 122 pre-v1 logs. There is no other signal *on those logs*:
+    # `usage.cli_version` is absent or null in every committed run, and none of
+    # them records a git sha. (`git_sha` above landed later — issue #1091 — so it
+    # fingerprints runs from that point on, not the pre-v1 corpus this is about.)
     # `test_e2e_result.py` pins the 6 known-fingerprint runs so removing this
     # field fails loudly instead of silently reclassifying them.
     # (Logs written from HARNESS_SCHEMA_VERSION >= 1 carry `compliance`
@@ -167,7 +272,7 @@ class E2eResult:
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate.
     #
     # SHADOW: deliberately NOT read by __post_init__ below. It must not move
-    # the compliance axis until its false-positive rate is calibrated (#911).
+    # the compliance axis until its false-positive rate is calibrated.
     protected_writes_by_unnamed_delegate: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -189,28 +294,31 @@ def timestamp_slug(now: datetime | None = None) -> str:
     return t.strftime("%Y-%m-%d_%H-%M-%S")
 
 
-_GRADED_VERDICTS = frozenset({"pass", "partial", "fail"})
+_COMMITTABLE_VERDICTS = frozenset({"pass", "partial", "fail", "ungraded"})
 
 
 def is_committable_run(verdict: str) -> bool:
-    """Whether a run produced a gradeable tree worth committing.
+    """Whether a run produced a tree worth committing.
 
-    A judge verdict of pass / partial / fail means the run produced a final
-    tree, so it is committed as `run-<ts>.*` and must be graded (§7.4) —
-    including a `fail`, which is retained signal: a capability gap to retry
-    later, exactly as a failing unit test is committed. Only a `skipped` (or
-    otherwise non-graded) run — the judge never ran, so there is no tree to
-    grade — stays a gitignored `scratch_` run.
+    "Committable" and "graded" are two different axes. A judge verdict of
+    pass / partial / fail means the run was graded. An `ungraded` run (the
+    judge raised an exception) produced a tree but was never graded — it is
+    still committable because the tree can be re-graded later. Both use the
+    `run-<ts>.*` prefix and are committed.
+
+    Only a `skipped` (or otherwise unrecognized) run — the agent crashed
+    before producing any tree, so there is nothing to grade or re-grade —
+    stays a gitignored `scratch_` run.
 
     Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
     proves the fixture solvable. A committed `fail` does NOT validate the
     fixture (validity is a recommended authoring practice, not a CI check).
     """
-    return verdict in _GRADED_VERDICTS
+    return verdict in _COMMITTABLE_VERDICTS
 
 
 def runlog_prefix(verdict: str) -> str:
-    """`run-` for a gradeable run (pass/partial/fail), else `scratch_` (skipped).
+    """`run-` for a committable run (pass/partial/fail/ungraded), else `scratch_`.
 
     Keyed on the GENEALOGICAL verdict, deliberately — not on `outcome`. A run
     whose judge never ran has nothing to grade no matter what the guardrail
@@ -264,8 +372,17 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
         outcome = str(data.get("outcome") or overall_outcome(verdict, compliance))
         return verdict, compliance, outcome
 
-    judge_output = data.get("judge_output") or {}
-    if "guardrail_bypass_violations" in judge_output:
+    # `isinstance`, not `or {}` — a non-dict `judge_output` (a string, a number)
+    # makes the membership test raise, and this function is the one every reader
+    # of historical data goes through, so the crash reaches `corpus_report`,
+    # `latency_report` and `calibrate_judge` alike. Guarding here rather than in
+    # each caller is what keeps one malformed log from killing three tools.
+    # NOTE this tests key PRESENCE, not a non-empty list, and that is deliberate:
+    # presence means the detector ran and wrote, which is the signal branch 2
+    # exists to read. Whether an explicit empty list should instead resolve
+    # `pass` is #972 doctrine, not a bug — see the class docstring above.
+    judge_output = data.get("judge_output")
+    if isinstance(judge_output, dict) and "guardrail_bypass_violations" in judge_output:
         verdict = str(judge_output.get("verdict") or "skipped")
         return verdict, "fail", "fail"
 
@@ -297,25 +414,22 @@ def write_result_files(
     *,
     result: E2eResult,
     runlog_dir: Path,
-    transcript: str,
     final_tree: dict[str, Any] | None,
     final_research: dict[str, Any] | None,
     timestamp: str | None = None,
 ) -> dict[str, Path]:
-    """Write the four committed artifacts. Returns the paths written."""
+    """Write the three committed artifacts. Returns the paths written."""
     runlog_dir.mkdir(parents=True, exist_ok=True)
     ts = timestamp or timestamp_slug()
     stem = f"{runlog_prefix(result.verdict)}{ts}"
 
     paths = {
         "result": runlog_dir / f"{stem}.json",
-        "transcript": runlog_dir / f"{stem}.transcript.md",
         "tree": runlog_dir / f"{stem}.final-tree.gedcomx.json",
         "research": runlog_dir / f"{stem}.final-research.json",
     }
 
     paths["result"].write_text(json.dumps(asdict(result), indent=2), encoding="utf-8")
-    paths["transcript"].write_text(transcript, encoding="utf-8")
     if final_tree is not None:
         paths["tree"].write_text(json.dumps(final_tree, indent=2), encoding="utf-8")
     if final_research is not None:

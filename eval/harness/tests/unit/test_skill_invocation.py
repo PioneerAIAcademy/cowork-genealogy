@@ -11,17 +11,23 @@ from pathlib import Path
 import pytest
 
 from harness.skill_invocation import (
+    CITATION_NULLING_KIND,
     CONFLICT_ANALYSIS_FIELDS,
     DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
+    WARNINGS_UNCHECKED_KIND,
+    find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
+    find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     owning_skills,
     recently_succeeded,
+    same_person_scored_ids,
     skill_name_if_skill_call,
+    unguarded_new_person_evidence_links,
 )
 
 # Sentinel distinguishing "key absent entirely" (the historical tool_calls
@@ -283,6 +289,50 @@ def test_flags_a_primary_fact_with_no_proof_conclusion_invocation_even_with_no_p
 def test_flags_a_parent_child_relationship_with_no_proof_conclusion_invocation():
     tree = {"persons": [], "relationships": [{"type": "ParentChild", "person1": "I1", "person2": "I2"}]}
     violations = find_effects_without_invocation([], {}, tree)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_does_not_flag_a_seeded_relationship_already_in_the_starting_tree():
+    """Issue #998: the proof-conclusion arm took no starting-tree baseline, so a
+    fixture's seeded ParentChild/Couple read as this run's conclusion. 99 of 104
+    fixtures ship such relationships, so the arm fired on seed state alone."""
+    rel = {"type": "ParentChild", "parent": "I1", "child": "I2"}
+    tree = {"persons": [], "relationships": [rel]}
+    starting = {"persons": [], "relationships": [rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_relationship_created_this_run_against_the_starting_tree():
+    """The other side of the baseline: a ParentChild present only in the FINAL
+    tree is this run's work and must still fire when proof-conclusion is absent."""
+    starting = {"persons": [], "relationships": []}
+    tree = {"persons": [], "relationships": [{"type": "ParentChild", "parent": "I1", "child": "I2"}]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_does_not_flag_a_seeded_primary_fact_already_in_the_starting_tree():
+    """Defensive: no fixture ships a primary:true fact today, but the primary-fact
+    half is baselined the same way so a future seeded one cannot fire the arm."""
+    person = {"id": "I1", "facts": [{"type": "Death", "primary": True}]}
+    tree = {"persons": [person], "relationships": []}
+    starting = {"persons": [person]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_placeholder_relationship_re_pointed_this_run():
+    """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
+    would read that genuinely-re-pointed relationship as seeded — a false negative
+    in the one gate that overrides the judge. Shape taken from young-marriage-1828,
+    which seeds {parent: PID-TODO, child: p-child-thomas, id: rel-1}."""
+    starting = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "PID-TODO", "child": "p-child-thomas"}]}
+    tree = {"persons": [], "relationships": [
+        {"id": "rel-1", "type": "ParentChild", "parent": "G7X1-234", "child": "p-child-thomas"}]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
     assert any("proof-conclusion" in v for v in violations)
 
 
@@ -744,3 +794,347 @@ def test_no_starting_tree_treats_every_current_person_as_new():
 def test_empty_tree_and_research_have_no_violations():
     assert find_person_evidence_missing_same_person([], {}, {}) == []
     assert find_person_evidence_missing_same_person([], None, None) == []
+
+
+# --- same_person_scored_ids --------------------------------------------------
+
+
+def test_scored_ids_collects_both_primary_id_sides():
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999")]
+    assert same_person_scored_ids(calls) == {"I1", "p_999"}
+
+
+def test_scored_ids_ignores_errored_calls():
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999", is_error=True)]
+    assert same_person_scored_ids(calls) == set()
+
+
+def test_scored_ids_ignores_non_same_person_tools():
+    calls = [_mcp_call("research_append", {"section": "person_evidence", "entry": {"person_id": "I1"}})]
+    assert same_person_scored_ids(calls) == set()
+
+
+# --- unguarded_new_person_evidence_links (issue #963 pre-write check) ---------
+
+
+def _pe_append(person_id):
+    return {"section": "person_evidence", "op": "append", "entry": {"person_id": person_id}}
+
+
+def test_pending_pe_link_for_new_unscored_person_is_flagged():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == ["I1"]
+
+
+def test_pending_pe_link_allowed_when_already_scored():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids={"I1"}, starting_ids=set()
+    )
+    assert out == []
+
+
+def test_pending_pe_link_to_a_seed_person_is_never_flagged():
+    """Linking an assertion to a pre-existing (seed) tree person is not a new
+    identity, so it needs no same_person scoring."""
+    args = _pe_append("L6L3-BB8")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids={"L6L3-BB8"}
+    )
+    assert out == []
+
+
+def test_pending_batch_flags_only_the_new_unscored_persons():
+    args = {
+        "ops": [
+            _pe_append("I1"),          # new, unscored -> flag
+            _pe_append("I2"),          # new, scored   -> allow
+            _pe_append("L6L3-BB8"),   # seed          -> allow
+        ]
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        args,
+        scored_ids={"I2"},
+        starting_ids={"L6L3-BB8"},
+    )
+    assert out == ["I1"]
+
+
+def test_non_person_evidence_write_is_not_flagged():
+    args = {"section": "proof_summaries", "op": "append", "entry": {"id": "ps_001"}}
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == []
+
+
+def test_non_research_append_tool_is_not_flagged():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__materialize_facts", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == []
+
+
+def test_pending_pe_link_deduped_when_same_new_person_appears_twice():
+    args = {"ops": [_pe_append("I1"), _pe_append("I1")]}
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == ["I1"]
+
+
+# --- unguarded_new_person_evidence_links: defensive/empty shapes -------------
+
+
+def test_unguarded_links_args_none_does_not_panic():
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", None, scored_ids=set(), starting_ids=set()
+    ) == []
+
+
+def test_unguarded_links_args_empty_dict_returns_empty():
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", {}, scored_ids=set(), starting_ids=set()
+    ) == []
+
+
+def test_unguarded_links_pe_op_missing_person_id_is_skipped():
+    args = {"section": "person_evidence", "op": "append", "entry": {}}
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    ) == []
+
+
+# --- find_citation_nulling_in_conclusions (issue #1133, shadow) --------------
+# The citation-STRING half of provenance nulling: a source backing a WRITTEN
+# conclusion whose ESM citation string is empty. Gated on a proof_summaries
+# entry so it stays inert on honest partial runs (tree citations are populated
+# at upload time). The source-REF half is already unrepresentable at the engine
+# write seam, so it is deliberately NOT covered here.
+
+
+def _research_with_conclusion(*, citation):
+    """A minimal research.json: one proof_summary citing one assertion whose
+    source carries `citation`. `citation` is the value under test."""
+    return {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "assertions": [{"id": "a_001", "source_id": "src_001", "fact_type": "birth"}],
+        "sources": [{"id": "src_001", "citation": citation}],
+    }
+
+
+def test_citation_nulling_fires_on_a_concluded_null_citation():
+    out = find_citation_nulling_in_conclusions(_research_with_conclusion(citation=None))
+    assert len(out) == 1
+    v = out[0]
+    assert v["kind"] == CITATION_NULLING_KIND
+    assert v["required_skill"] == "citation"
+    assert v["question_id"] == "q_001"
+    assert "src_001" in v["detail"]
+    # int index + string tool so guardrail_shadow_report's :<4 / :<30 formatters
+    # never hit a None format spec.
+    assert isinstance(v["index"], int) and isinstance(v["tool"], str)
+
+
+def test_citation_nulling_fires_on_empty_and_whitespace_citation():
+    assert len(find_citation_nulling_in_conclusions(_research_with_conclusion(citation=""))) == 1
+    assert len(find_citation_nulling_in_conclusions(_research_with_conclusion(citation="   "))) == 1
+
+
+def test_citation_nulling_silent_when_citation_present():
+    good = _research_with_conclusion(citation="1850 U.S. Census, Schuylkill Co., Pa., dwelling 84.")
+    assert find_citation_nulling_in_conclusions(good) == []
+
+
+def test_citation_nulling_inert_without_a_proof_summary():
+    """The gate: an assertion+source with an empty citation but NO written
+    conclusion is a legitimate partial run, not a violation."""
+    research = {
+        "proof_summaries": [],
+        "assertions": [{"id": "a_001", "source_id": "src_001"}],
+        "sources": [{"id": "src_001", "citation": None}],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_only_flags_sources_backing_the_conclusion():
+    """A citation-less source NOT referenced by the conclusion's
+    supporting_assertion_ids is out of scope — only concluded evidence is held
+    to a citation."""
+    research = {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "assertions": [
+            {"id": "a_001", "source_id": "src_001"},  # cited by the conclusion
+            {"id": "a_099", "source_id": "src_099"},  # NOT cited by the conclusion
+        ],
+        "sources": [
+            {"id": "src_001", "citation": "A full citation."},
+            {"id": "src_099", "citation": None},  # citation-less but not concluded
+        ],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_dedups_one_source_cited_by_many_assertions():
+    research = {
+        "proof_summaries": [
+            {
+                "id": "ps_001",
+                "question_id": "q_001",
+                "supporting_assertion_ids": ["a_001", "a_002"],
+            }
+        ],
+        "assertions": [
+            {"id": "a_001", "source_id": "src_001"},
+            {"id": "a_002", "source_id": "src_001"},  # same source
+        ],
+        "sources": [{"id": "src_001", "citation": ""}],
+    }
+    out = find_citation_nulling_in_conclusions(research)
+    assert len(out) == 1  # one (conclusion, source) pair, not two
+
+
+def test_citation_nulling_tolerates_dangling_and_sourceless_refs():
+    """Dangling assertion/source refs and assertions with no source_id are
+    schema concerns, not this detector's — it skips them without erroring."""
+    research = {
+        "proof_summaries": [
+            {
+                "id": "ps_001",
+                "question_id": "q_001",
+                "supporting_assertion_ids": ["a_missing", "a_nosrc", "a_dangling"],
+            }
+        ],
+        "assertions": [
+            {"id": "a_nosrc"},  # no source_id
+            {"id": "a_dangling", "source_id": "src_missing"},  # source not in sources[]
+        ],
+        "sources": [],
+    }
+    assert find_citation_nulling_in_conclusions(research) == []
+
+
+def test_citation_nulling_defensive_on_none_and_empty():
+    assert find_citation_nulling_in_conclusions(None) == []
+    assert find_citation_nulling_in_conclusions({}) == []
+
+
+# --- find_relationship_writes_without_warnings_check (issue #1193, shadow) ----
+# A new ParentChild/Couple relationship written this run with no person_warnings
+# call. Gated on the relationship being NEW (diffed against the starting tree),
+# and keyed on the person_warnings TOOL (not the check-warnings skill), so it
+# catches a direct-tool path and a skill that fails before reaching the tool.
+
+
+def _tree_with_parentchild(child="I3", parent="I1"):
+    return {"relationships": [{"id": "R1", "type": "ParentChild", "parent": parent, "child": child}]}
+
+
+def _person_warnings_call(*, is_error=None):
+    return {"tool": "mcp__genealogy__person_warnings", "args": {"personId": "I3"}, "is_error": is_error}
+
+
+def test_warnings_unchecked_fires_on_new_relationship_with_no_call():
+    """The evidenced #1193 shape: a parentage link written, guardrail never run."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+    v = out[0]
+    assert v["kind"] == WARNINGS_UNCHECKED_KIND
+    assert v["required_skill"] == "check-warnings"
+    # int index + string tool so guardrail_shadow_report's formatters never hit a
+    # None format spec.
+    assert isinstance(v["index"], int) and isinstance(v["tool"], str)
+
+
+def test_warnings_unchecked_silent_when_person_warnings_was_called():
+    """Keyed on the tool: a successful person_warnings call means the guardrail
+    was consulted, whatever skill (or none) reached it."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}, _person_warnings_call()],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_still_fires_when_the_call_errored():
+    """A failed person_warnings call left the tree unchecked, so it does not
+    count as consulting the guardrail."""
+    out = find_relationship_writes_without_warnings_check(
+        [_person_warnings_call(is_error=True)],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
+    """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
+    bridge spellings are recognized too."""
+    for tool in (
+        "mcp__Genealogy_Research__person_warnings",
+        "mcp__remote-devices__Genealogy_Research__person_warnings",
+    ):
+        out = find_relationship_writes_without_warnings_check(
+            [{"tool": tool, "is_error": None}],
+            _tree_with_parentchild(),
+            starting_tree={"relationships": []},
+        )
+        assert out == [], f"{tool} should count as consulting the guardrail"
+
+
+def test_warnings_unchecked_gated_on_a_new_relationship():
+    """A relationship present in the starting tree is not this run's product, so
+    a run that wrote nothing new is not flagged for skipping the check."""
+    seeded = _tree_with_parentchild()
+    out = find_relationship_writes_without_warnings_check([], seeded, starting_tree=seeded)
+    assert out == []
+
+
+def test_warnings_unchecked_fires_on_a_new_couple_relationship():
+    out = find_relationship_writes_without_warnings_check(
+        [],
+        {"relationships": [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I2"}]},
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_ignores_non_parentchild_couple_relationships():
+    """Only ParentChild/Couple writes are the parentage-assertion class #1193 is
+    about; another relationship type is not gated on a warnings check."""
+    out = find_relationship_writes_without_warnings_check(
+        [],
+        {"relationships": [{"id": "R3", "type": "Sibling", "person1": "I1", "person2": "I2"}]},
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_no_relationship_no_finding():
+    """No parent/child write at all → nothing a warnings check should have
+    preceded, so silent even with no person_warnings call."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__record_search", "is_error": None}],
+        {"relationships": []},
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_defensive_on_none():
+    assert find_relationship_writes_without_warnings_check(None, None) == []
+    assert find_relationship_writes_without_warnings_check([], {}) == []

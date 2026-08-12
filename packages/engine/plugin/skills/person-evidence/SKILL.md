@@ -1,6 +1,5 @@
 ---
 name: person-evidence
-model: claude-sonnet-4-6
 description: >-
   Links assertions to GedcomX persons — identity resolution. Evaluates whether
   a record's person matches a tree person, creates person_evidence entries with
@@ -688,6 +687,13 @@ When multiple candidates share the same name in the same area:
   document the variant explanation in `rationale`.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
+- **Flag a sensitive discovery forward — don't let it surface silently.**
+  When a link establishes a sensitive family-structure finding — unknown or
+  non-paternity parentage, an undisclosed adoption, or similar — call it out
+  explicitly in the `rationale` rather than folding it into a routine `pe_`
+  entry. Flagging it forward is what lets `proof-conclusion` disclose it with
+  care (content note first, gradual), instead of the finding reaching the user
+  for the first time buried in an ordinary link summary.
 - **Rationale is mandatory.** Every link must explain WHY. "Name
   matches" is insufficient — include age, place, household context,
   relationship fit.

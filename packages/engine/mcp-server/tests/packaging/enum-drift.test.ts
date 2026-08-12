@@ -36,6 +36,32 @@ const SCHEMA_PATHS = [
 
 type ClosedEnums = Map<string, Set<string>>;
 
+/**
+ * Closed enums declared inline in research.schema.json instead of in
+ * enums.schema.json, mapped to the name `VALIDATOR_ENUMS` gives them.
+ *
+ * These were invisible to this lint until they were listed here — canonical in
+ * neither schema file, so `loadClosedEnums` never saw them and `VALIDATOR_ONLY`
+ * excused them. Where they *should* live is issue #1015; until that is decided,
+ * the values are at least checked.
+ */
+const INLINE_ENUMS: Array<{ path: string[]; name: string }> = [
+  { path: ["researcher_profile", "experience_level"], name: "experience_level" },
+  { path: ["researcher_profile", "subscriptions", "items"], name: "subscription" },
+  { path: ["evaluation_entry", "focus"], name: "evaluation_focus" },
+  { path: ["evaluation_entry", "target_type"], name: "evaluation_target_type" },
+  { path: ["evaluation_entry", "verdict"], name: "evaluation_verdict" },
+];
+
+/**
+ * `locality.pages_read[].section` is a sixth inline closed enum, re-typed at
+ * src/tools/wiki-place-page.ts:174 and enforced by no validator check. Adding
+ * one would change what the tool rejects, which is a behaviour change and its
+ * own PR — issue #1270. Listed so the omission is deliberate and visible
+ * rather than an enum this lint simply never noticed.
+ */
+const INLINE_NOT_ENFORCED = ["locality.pages_read.items.section"];
+
 function loadClosedEnums(schemaPath: string): ClosedEnums {
   const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
   const defs: Record<string, any> = schema.$defs ?? {};
@@ -47,6 +73,25 @@ function loadClosedEnums(schemaPath: string): ClosedEnums {
       result.set(name, new Set(def.enum as string[]));
     }
   }
+
+  // …plus the ones declared inline in research.schema.json next door.
+  const researchPath = join(dirname(schemaPath), "research.schema.json");
+  if (existsSync(researchPath)) {
+    const research = JSON.parse(readFileSync(researchPath, "utf8"));
+    for (const { path, name } of INLINE_ENUMS) {
+      let node: any = research.$defs;
+      for (const seg of path) node = node?.[seg] ?? node?.properties?.[seg];
+      if (!Array.isArray(node?.enum)) {
+        throw new Error(
+          `[enum-drift] INLINE_ENUMS path ${path.join(".")} no longer resolves to an ` +
+            `enum in research.schema.json — the value moved; update INLINE_ENUMS ` +
+            `(or delete the entry if it moved into enums.schema.json).`,
+        );
+      }
+      result.set(name, new Set(node.enum as string[]));
+    }
+  }
+
   return result;
 }
 
@@ -256,6 +301,14 @@ const EXPECTED: Array<{ relPath: string; enums: string[] }> = [
       "source_classification",
     ],
   },
+  // question-selection states the legal question statuses in order to say it
+  // writes none of them (#1135). Declared with ∈ rather than as prose so this
+  // lint owns the copy — the instruction it replaced named two values that were
+  // never in the enum at all, and nothing noticed.
+  {
+    relPath: "skills/question-selection/SKILL.md",
+    enums: ["question_status"],
+  },
 ];
 
 // ─── Tests ─────────────────────────────────────────────────────────
@@ -293,7 +346,7 @@ describe("enum-drift lint", () => {
     );
   });
 
-  // The EXPECTED registry only protects the two files listed in it. Everywhere
+  // The EXPECTED registry only protects the files listed in it. Everywhere
   // else — the 75 references/ files and the rubrics — a declaration this scan
   // can't parse would otherwise vanish without a trace, which is exactly the
   // surface the registry does not cover. Fail on the parse instead of on the
@@ -384,16 +437,53 @@ describe("enum-drift lint", () => {
  * it was promoted into the schema, and it should come off this list so the
  * value-equality check below starts covering it.
  */
-const VALIDATOR_ONLY = new Set([
-  "evaluation_focus",
-  "evaluation_target_type",
-  "evaluation_verdict",
-  "experience_level",
-  "subscription",
-]);
+// Empty: the five names that used to sit here are declared inline in
+// research.schema.json and are now loaded by loadClosedEnums via INLINE_ENUMS,
+// so they are diffed against the schema like every other closed enum. A name
+// reappearing here means the validator invented an enum with no schema behind
+// it at all.
+const VALIDATOR_ONLY = new Set<string>([]);
 
 describe("validator enums match enums.schema.json", () => {
   const validatorNames = new Set(Object.keys(VALIDATOR_ENUMS));
+
+  it("the only unenforced inline enum is the one we know about", () => {
+    // Every inline `enum` array in research.schema.json is either mapped by
+    // INLINE_ENUMS (and therefore diffed above) or listed as knowingly
+    // unenforced. A new one must land in one list or the other, rather than
+    // being invisible the way these five were.
+    const research = JSON.parse(
+      readFileSync(join(projectRoot, "docs", "specs", "schemas", "research.schema.json"), "utf8"),
+    );
+    const found: string[] = [];
+    const walk = (node: any, path: string) => {
+      if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${path}[${i}]`));
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node.enum)) found.push(path);
+      for (const [k, v] of Object.entries(node)) {
+        if (k === "enum") continue;
+        walk(v, path === "" ? k : `${path}.${k}`);
+      }
+    };
+    walk(research.$defs, "");
+
+    const mappedPaths = INLINE_ENUMS.map(
+      (e) => e.path.join("."),
+    );
+    const unaccounted = found.filter((p) => {
+      const compact = p.replace(/\.properties\./g, ".").replace(/\.items(\[\d+\])?/g, ".items");
+      return (
+        !mappedPaths.some((m) => compact.endsWith(m)) &&
+        !INLINE_NOT_ENFORCED.includes(compact)
+      );
+    });
+
+    expect(
+      unaccounted,
+      "inline enum in research.schema.json accounted for by neither INLINE_ENUMS " +
+        "nor INLINE_NOT_ENFORCED — add it to one",
+    ).toEqual([]);
+  });
 
   it("every closed enum in the schema is enforced by the validator", () => {
     const unenforced = [...canonical.keys()]

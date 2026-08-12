@@ -1,0 +1,374 @@
+{
+  "persons": [
+    {
+      "id": "G6MR-VHF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Santiago",
+          "surname": "Gonzalez",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "20632850-49c3-437f-9213-b7ac09a8c64b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G6MT-HDQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Petra",
+          "surname": "Tumbaco",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Petita",
+          "surname": "Tumbaco",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "b98bfed4-e327-4246-afe0-544f865eaf70",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GNZV-457",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Maria Angela",
+          "surname": "Gonzalez Tumbaco"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9c3cffdf-e56b-4848-b7e4-628141d89dca",
+          "type": "Birth",
+          "date": "1921",
+          "standard_date": "1921"
+        },
+        {
+          "id": "f80a454f-7f8b-4ca1-9dd4-1bfa2c2764d1",
+          "type": "Death",
+          "date": "25 Dec 1996",
+          "standard_date": "25 Dec 1996",
+          "place": "Guayaquil, Guayas, Ecuador",
+          "standard_place": "Guayaquil, Guayaquil, Guayas, Ecuador"
+        }
+      ]
+    },
+    {
+      "id": "GDL1-W4B",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria Bartola",
+          "surname": "Gonz\u00e1lez Tumbaco"
+        },
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Bartola",
+          "surname": "Gonzalez Tumbaco",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Bartola",
+          "surname": "Gonzales Tumbaco",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "82b670fa-961a-4167-a7ce-88b726e36349",
+          "type": "Birth",
+          "date": "1934",
+          "standard_date": "1934",
+          "place": "Guayaquil, Guayas, Ecuador",
+          "standard_place": "Guayaquil, Guayaquil, Guayas, Ecuador",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "8c555545-7c7c-425f-ac76-1a182ded887f",
+          "type": "Death",
+          "date": "15 de marzo de 2003",
+          "standard_date": "15 Mar 2003",
+          "place": "Guayaquil, Guayas, Ecuador",
+          "standard_place": "Guayaquil, Guayaquil, Guayas, Ecuador",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "deef7d4e-6a0c-4f13-a619-1df8e7453966",
+          "type": "Burial",
+          "date": "16 de marzo de 2003",
+          "standard_date": "16 Mar 2003",
+          "place": "Cementerio General de Guayaquil, Guayaquil, Guayaquil, Guayas, Ecuador",
+          "standard_place": "Cementerio General de Guayaquil, Guayaquil, Guayas, Ecuador"
+        },
+        {
+          "id": "F6",
+          "type": "MaritalStatus",
+          "value": "Soltera (single/unmarried)",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "CauseOfDeath",
+          "value": "Derame Cerebral (cerebral hemorrhage/stroke); attending physician Dr. Joel Suarez",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "IdentityNumber",
+          "value": "C\u00e9dula 0905532404",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "RegistryReference",
+          "value": "Registro de Defunciones 2003, tomo 6, p\u00e1gina 127, acta no. 1917, Registro Civil de Guayaquil",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Manuel de Jesus",
+          "surname": "Gonzalez Tumbaco",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1915",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "5 Dec 1985",
+          "place": "Ecuador",
+          "standard_place": "Ecuador",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "value": "Sastre (tailor)",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "MaritalStatus",
+          "value": "Soltero (single/unmarried)",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "CauseOfDeath",
+          "value": "Edema Agudo del Pulm\u00f3n / Edema Pulmonar; died at 9:00 AM; certified by Dr. Diogenes Layana",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G6MR-VHF",
+      "person2": "G6MT-HDQ"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G6MR-VHF",
+      "child": "GNZV-457"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G6MT-HDQ",
+      "child": "GNZV-457"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G6MR-VHF",
+      "child": "GDL1-W4B"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G6MT-HDQ",
+      "child": "GDL1-W4B"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "G6MR-VHF",
+      "child": "I1",
+      "id": "R6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "G6MT-HDQ",
+      "child": "I1",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "3J4Q-1Y8",
+      "title": "Santiago Gonzalez, \"Ecuador, registros de cementerios, 1862-2020\"",
+      "citation": "\"Ecuador, registros de cementerios, 1862-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8YX3-T5N2 : Fri Mar 08 14:08:21 UTC 2024), Entry for Bartola Gonzalez Tumbaco and Santiago Gonzalez, 15 Mar 2003.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8YX3-T52M"
+    },
+    {
+      "id": "WZ3V-2NF",
+      "title": "Santiago Gonzalez, \"Ecuador, registros de cementerios, 1862-2020\"",
+      "citation": "\"Ecuador, registros de cementerios, 1862-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DV3G-DKZM : Sun Mar 10 22:57:48 UTC 2024), Entry for Maria Angela Gonzalez Tumbaco and Santiago Gonzalez, 25 Dec 1996.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DV3G-DK6Z"
+    },
+    {
+      "id": "S1",
+      "title": "Manuel de Jesus Gonzalez Tumbaco, \"Ecuador, Cemetery Records, 1862-2020\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBZM",
+      "citation": "Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 1985, tomo 18, p\u00e1gina 157, acta no. 6059, entry for Manuel de Jesus Gonzalez Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3QHV-D3C4-M7WX : accessed 3 August 2026)."
+    },
+    {
+      "id": "S2",
+      "title": "Bartola Gonzalez Tumbaco, \"Ecuador, registros de cementerios, 1862-2020\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8YX3-T5N2",
+      "citation": "Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 2003, tomo 6, p\u00e1gina 127, acta no. 1917, entry for Bartola Gonzales Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3Q9M-C3HF-SZWT : accessed 3 August 2026)."
+    }
+  ]
+}

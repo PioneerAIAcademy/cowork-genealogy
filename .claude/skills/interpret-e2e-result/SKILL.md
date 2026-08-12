@@ -1,7 +1,7 @@
 ---
 name: interpret-e2e-result
 model: claude-sonnet-4-6
-description: Reads an e2e benchmark run log and explains what happened — which expected findings the agent recovered and which it missed (read from its final tree, not the judge's grade), what proof conclusion it wrote, why it stopped, and the most likely cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the right transcript section to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution), or to grade this run into its calibration annotation (use grade-e2e-run — this skill only explains the result and never writes the .ann.json).
+description: Reads an e2e benchmark run log and explains what happened — which expected findings the agent recovered and which it missed (read from its final tree, not the judge's grade), what proof conclusion it wrote, why it stopped, and the most likely cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the exact tool call and narration turn to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution), or to grade this run into its calibration annotation (use grade-e2e-run — this skill only explains the result and never writes the .ann.json).
 ---
 
 # Interpret E2E Result
@@ -9,16 +9,18 @@ description: Reads an e2e benchmark run log and explains what happened — which
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` if one exists in the working folder; otherwise default to concise narration.
 
 Reads the files an e2e run produces and tells the user what happened in
-plain language, with pointers to the relevant transcript section.
+plain language, with pointers to the exact turn to read.
 
-Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
+Each run writes three files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `usage`, `blocked_tree_reads[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
-| `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
+| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `narration[]`, `usage`, `blocked_tree_reads[]`, `blocked_context_calls[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — the ground truth for what it recovered |
 | `run-<ts>.final-research.json` | The agent's final `research.json`, including the proof conclusion it wrote |
+
+- When `narration[]` is absent (runs before 2026-08-03), read the
+  `run-<ts>.transcript.md` sibling if present, otherwise `tool_calls[]` alone.
 
 This skill reads files; it does not call any MCP tools.
 
@@ -59,7 +61,8 @@ You have everything the user needs without the judge:
 - **The proof conclusion** — read what the agent *wrote* in `final-research.json`
   (`proof_summaries`). That's the agent's own claim, not a grade.
 - **Why it stopped, what it did** — `stop_reason`, `tool_calls`,
-  `blocked_tree_reads`, `usage` are harness facts, not judge output.
+  `blocked_tree_reads`, `blocked_context_calls`, `usage` are harness facts, not
+  judge output.
 
 ## What to do
 
@@ -69,7 +72,7 @@ tool counts, and cost come from `run-<ts>.json` (harness fields only). What the
 agent found / missed comes from the final tree vs `expected-findings.json`.
 Anything more specific — *which* collections were searched, *which* records were
 found, *which* index confirmed a date — must come from
-`tool_calls[].args`/`response_summary`, the transcript, or `final-research.json`
+`tool_calls[].args`/`response_summary`, `narration[]`, or `final-research.json`
 (the agent's proof summaries and log entries name the actual sources, with ARKs
 — quote/cite those). If a specific source name isn't in any of those files,
 don't assert it; a plausible-sounding collection name you didn't actually read
@@ -99,7 +102,8 @@ not quote a judge verdict; describe what you see:
 - **None present** — the run recovered nothing. The agent stalled or went
   sideways; `stop_reason` usually explains.
 - **No tree at all** (`run-<ts>.final-tree.gedcomx.json` missing) — the agent
-  crashed before producing tree state. Read the transcript for the crash.
+  crashed before producing tree state. Read the last `narration` entries and
+  `error` for the crash.
 
 For a fixture with **negative findings** (`polarity: "avoid"` in
 `expected-findings.json`), the correct outcome is the tree **not** asserting the
@@ -117,7 +121,7 @@ confidence/tier it asserted. Report observable characteristics as facts (e.g.
 that's what the user grades blind next. If no proof summary was written, say so;
 it's not itself a failure, just nothing to describe.
 
-### Step 2c — Note any blocked tree-reads
+### Step 2c — Note any blocked tree-reads or context-writes
 
 Check `blocked_tree_reads` in `run-<ts>.json`. The harness blocks
 `person_read` / `person_search` / `person_ancestors` during a run so the
@@ -130,6 +134,20 @@ from records). Each entry is a denied attempt.
   `/research` flow shouldn't reach for `person_read` on the subject during an
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
+
+Then check `blocked_context_calls` — the write-side twin, denied by a different
+guard. Each entry is a main-thread `extraction_append` the harness blocked
+(`blocked_by: "context"`): the `record-extraction` router doing the
+record-extractor subagent's write itself because that subagent failed to spawn
+(#942). Same shape as above (`{tool, args, blocked_by}`), and the denied attempt
+also shows up in `narration[]` with `kind: "blocked"`.
+
+- **Empty** — normal; say nothing.
+- **Non-empty** — the router tried to substitute for a failed spawn and was
+  blocked, so no extracted assertions were written on the main thread. Flag it:
+  it points at a `record-extractor` spawn failure, not a records gap, and any
+  findings the router would have produced this way are correctly absent. Read
+  the matching `narration[]` turn to see where the spawn failed.
 
 ### Step 2d — Note any GPS guardrail bypasses
 
@@ -155,7 +173,7 @@ overall — that is the `outcome` gate, which is judge-derived and off-limits.
 
 If the fixture has a `provided-documents/` folder (bundled external
 captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
-check the transcript / `tool_calls` for `Read` of those filenames. **How
+check `tool_calls` for `Read` of those filenames. **How
 the answer was obtained is part of the result**, so say it plainly:
 
 - **A finding came from a provided PDF** — note it (e.g. "the burial
@@ -166,7 +184,7 @@ the answer was obtained is part of the result**, so say it plainly:
   capability against FamilySearch.
 - **A provided doc the run needed was never read** — flag it: the agent
   may have missed the bundled evidence, which can explain a miss the
-  transcript otherwise makes look like a search failure.
+  tool calls otherwise make look like a search failure.
 
 If the fixture has no `provided-documents/`, skip this step.
 
@@ -179,13 +197,15 @@ Translate `stop_reason` into something a researcher can act on:
 - `natural_end` — SDK ended the conversation but the agent didn't
   declare done. Either the agent thought it was done without setting
   the flag (skill regression), or the conversation drifted to silence.
-  Check the last few transcript turns.
+  Check the last few `narration` entries.
 - `inactivity` — agent went silent for the inactivity cap window
-  (default ~10 min). It's stuck. Find the last tool call in the
-  transcript; the issue is usually right after it.
+  (default ~10 min). It's stuck. `tool_calls_before` counts the calls that
+  preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
+  narration that followed it carries `tool_calls_before == len(tool_calls)`.
+  That entry is usually where the issue shows.
 - `timeout` — wall-clock cap fired (default 60 min). Either the
   question is too big for the cap or the agent looped. Skim the tail
-  of the transcript for repeating tool-call patterns.
+  of `tool_calls` for repeating patterns.
 - `tool_cap` — agent hit the per-run tool-call cap (default 200).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
@@ -194,7 +214,18 @@ Translate `stop_reason` into something a researcher can act on:
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
-  message and the transcript for the surrounding context.
+  message and the last `narration` entries for the surrounding context.
+- `mcp_unavailable` — **an environment failure, not a research result.**
+  The genealogy MCP tools were absent from the session, so the agent had
+  no way to search anything. Tell the researcher to **re-run the test —
+  not to re-research the case**, and to run `make e2e-preflight` for the
+  server's own error text.
+  **You will not be handed a run log for this**: such a run writes no
+  files at all (e2e-test-spec.md §6, the retention rule under the
+  `stop_reason` table), so it reaches a genealogist as terminal output.
+  If you are asked to interpret one, the whole interpretation is the
+  paragraph above — do not go looking for missing findings, and do not
+  read the starting tree as the agent's output.
 
 ### Step 4 — Compare expected vs found (when the tree is missing some findings)
 
@@ -211,9 +242,10 @@ agent's `run-<ts>.final-tree.gedcomx.json` and decide:
   somewhere the finding's shape doesn't expect (e.g. on a stub person
   rather than the principal). Diagnosis: finding shape, not agent capability.
 
-For each `missed` finding, search the transcript for the relevant
-person name or place. The agent often *touched* the right evidence
-but didn't conclude from it; that turn is the diagnostic moment.
+For each `missed` finding, search `narration[].text` and
+`tool_calls[].args`/`response_summary` for the relevant person name or
+place. The agent often *touched* the right evidence but didn't conclude
+from it; that turn is the diagnostic moment.
 
 ### Step 5 — Identify the most likely cause
 
@@ -226,7 +258,7 @@ useful questions are about *this* run:
 - **It never researched** — the agent stopped after setup (e.g. wrote a
   question, then `stop_reason: natural_end` with no `record_search` /
   `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
-  Pointer: tool counts (no FS search tools) + the last transcript turn.
+  Pointer: tool counts (no FS search tools) + the last `narration` entry.
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
   `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
@@ -254,7 +286,17 @@ These are the regression causes:
 - **FamilySearch data drift** — same tool calls, different results.
   FS may have reindexed or a contributor may have edited the live
   tree. Pointer: `tool_calls[].response_summary` differs from the prior
-  run. The agent isn't at fault.
+  run. The agent isn't at fault. First compare `harness_schema_version`
+  on both runs. Across the `1` → `2` boundary the capture format
+  changed, not the data — roughly half of all captures differ there, so
+  do not read a `response_summary` diff across it. The later
+  `tool_calls[].is_error` boundary does **not** affect
+  `response_summary`, so a drift comparison still holds across it; what
+  it does move is `compliance` / `outcome` and the guardrail violation
+  counts, which get stricter once the key is present (an errored call no
+  longer counts as a successful invocation). That boundary is the commit
+  main `4541a4c5`, not cleanly a version — a `3` log has the key, a `2`
+  log has it only if written after that commit.
 - **Single-run jitter** — Anthropic models are non-deterministic and
   this harness can't pin `temperature=0`. A single finding flipping
   recovered / not-recovered may just be variance. Recommend a re-run
@@ -270,8 +312,9 @@ ambiguity:
 - Re-run the fixture (cheap and decisive if you suspect jitter).
 - Diff against the last passing run log (cheap; commits make this
   easy).
-- Open the transcript at a specific turn (point the user at the
-  line number or the tool-call index).
+- Point the user at a specific turn: the `tool_calls` index `i`, and the
+  `narration` entries with `tool_calls_before == i + 1` (the prose that
+  followed that call).
 - Update the fixture's `README.md` to record what shifted if it
   looks like FS data drift.
 - File a regression issue if the cause looks like an agent or
@@ -312,7 +355,7 @@ You should:
 2. Read `eval/tests/e2e/<slug>/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
-4. Skim the last 30 tool calls in the transcript — agent is looping
+4. Skim the last 30 entries in `tool_calls` — agent is looping
    on `place_search` for "Augusta County" with three near-duplicate
    queries.
 5. Tell the user: "Recovered none of the required findings; stopped at the

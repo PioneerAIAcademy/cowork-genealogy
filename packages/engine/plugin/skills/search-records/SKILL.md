@@ -1,6 +1,5 @@
 ---
 name: search-records
-model: claude-sonnet-4-6
 description: Executes searches against FamilySearch historical records per
   the research plan. Routes to the correct MCP search tool based on record
   type, triages results using match scoring, logs every search including nil
@@ -317,6 +316,16 @@ candidates; you still confirm the top ones:
   caveat. Report the record, the conflict, and what would settle it. The
   people in it belong to whoever that record is actually about, and until
   the cross-check clears you do not know that it is your subject.
+- **Pre-1880 US censuses have no relationship column.** 1850/1860/1870 list
+  name, age, sex, birthplace, occupation in household order — "relationship to
+  head" is **1880-onward**. So any "head"/"wife"/"son" read off a pre-1880
+  household is your inference from surname, age and listing order, and the
+  record's own `ParentChild`/`Couple` edges are the indexer's inference from
+  those same signals, not what the schedule says. Write the listing and mark
+  the family structure inferred — not "head Daniel + wife Margaret + daughter
+  Hannah" but "Daniel, Margaret, Hannah in one dwelling; family structure
+  inferred from surname, ages and order, not stated." Same caution for any
+  field that year didn't collect: `references/census-field-availability.md`.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.**
   Every raw search stub carries a `score` (and a `confidence`): that is
   FamilySearch's own *search relevance*, the unreliable ordering the match-ranker

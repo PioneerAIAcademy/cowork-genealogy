@@ -29,8 +29,14 @@ EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
 # Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
-# manifest or lockfile changes.
-$(JS_DEPS): package.json pnpm-lock.yaml
+# root manifest, the lockfile, the member list, or ANY member's manifest
+# changes. A member's package.json is listed because it carries that member's
+# lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
+# to packages/schema and touched neither, so every existing checkout kept a
+# stamp newer than both prerequisites, never reinstalled, and never ran the
+# generator that postinstall exists to run.
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
+            $(wildcard packages/*/package.json apps/*/package.json)
 	pnpm install
 	@touch $@
 
@@ -120,19 +126,21 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 
 # ── Worktrees ────────────────────────────────────────────────────
 # Git worktrees don't share gitignored files, so a freshly-added worktree lacks
-# the shared secrets (eval/.env) and installed deps (node_modules). These link
-# them to the primary worktree's copies. `install-hooks` makes new worktrees
-# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+# the shared secrets (eval/.env) and installed deps (node_modules). This links
+# the secrets and the npm-managed engine to the primary worktree's copies, and
+# INSTALLS the pnpm workspace locally — linking that one would resolve every
+# `@genealogy/*` import to the primary's source. `install-hooks` makes new
+# worktrees do this on `git worktree add`; `worktree-link` does it for an
+# existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
-worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
 	@scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
-# of this clone): post-checkout auto-links shared files into new worktrees;
-# commit-msg warns when a commit has no human Co-authored-by trailer. Opt-in and
-# per-clone: it touches only local .git state, never core.hooksPath, so it can't
-# disable husky/other hook tooling and is invisible to teammates who don't run
-# it. Refuses to clobber a hook that isn't ours.
+# of this clone): post-checkout auto-links shared files into new worktrees.
+# Opt-in and per-clone: it touches only local .git state, never core.hooksPath,
+# so it can't disable husky/other hook tooling and is invisible to teammates who
+# don't run it. Refuses to clobber a hook that isn't ours.
 #
 # We copy scripts/git-hooks/shim.sh (a stub that re-execs the tracked hook)
 # rather than symlink the hook itself, so InstallHooks.bat can do the identical
@@ -143,13 +151,13 @@ worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from t
 # symlink install, `cp` would follow the symlink and write the shim straight into
 # the tracked scripts/git-hooks/<hook> it points at.
 .PHONY: install-hooks
-install-hooks: ## Install shared git hooks (post-checkout, commit-msg) — opt-in, per-clone
+install-hooks: ## Install shared git hooks (post-checkout) — opt-in, per-clone
 	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	 main=$$(dirname "$$common"); \
 	 shim="$$main/scripts/git-hooks/shim.sh"; \
 	 [ -f "$$shim" ] || { echo "install-hooks: $$shim not found — check out a branch that has it." >&2; exit 1; }; \
 	 mkdir -p "$$common/hooks"; \
-	 for hook in post-checkout commit-msg; do \
+	 for hook in post-checkout; do \
 	   dst="$$common/hooks/$$hook"; \
 	   if [ -e "$$dst" ] || [ -L "$$dst" ]; then \
 	     if [ ! -L "$$dst" ] && ! grep -q 'cowork-genealogy managed hook shim' "$$dst" 2>/dev/null; then \
@@ -289,7 +297,14 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	# query, so it costs nothing but a CLI process start. The key comes from
 	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
 	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	#
+	# AGENT_SMOKE=1 is what turns the live test's skips into hard errors. The
+	# test skips by design under a plain `make server-test`, so a contributor
+	# with no key still gets a green suite — but it made THIS target report
+	# "passed, 1 skipped" and read as if the check had run. Only the caller
+	# knows which of the two it is, so the caller says.
 	cd apps/server && \
+	  AGENT_SMOKE=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
@@ -313,6 +328,10 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 .PHONY: harness-test
 harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -q
+
+.PHONY: harness-lint
+harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
+	cd eval/harness && uv run ruff check .
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
@@ -349,11 +368,34 @@ gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-
 	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
 
 .PHONY: eval-timings
-eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20] [SINCE=all|N|YYYY-MM-DD]
 	# Reads the timing instrumentation already in the run logs — does NOT
 	# re-run anything. Use it to spot makespan long poles and the stall tax
 	# week over week. TOP overrides how many slowest tests to list.
-	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
+	# Shows every skill and MARKS the stale ones (newest run log >14d), sorted
+	# last, with a named summary. It does not filter: this is one row per
+	# skill, so a date cut would delete the skill rather than narrow a sample —
+	# hiding the very thing to act on, that it needs a re-run. SINCE=N filters
+	# when you want it.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: prune-runlogs
+prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
+	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+	#
+	# You should not normally need PRUNE: the harness prunes to the newest 5
+	# candidates per skill on every write (harness/runlog.py), so the cap holds
+	# on its own. This is the catch-up sweep and the escape hatch for a
+	# different K.
+	#
+	# REHASH=1 migrates pre-v3 logs (snapshot content -> sha256 digests,
+	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
+	# value is the same normalized string build_snapshot hashes, so no re-run
+	# is needed and no skill's active state changes.
+	cd eval/harness && uv run python -m scripts.prune_runlogs \
+	  $(if $(REHASH),--rehash,) \
+	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
+	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
@@ -371,7 +413,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
-e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps)
+e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
 	cd eval/harness && uv run python -m e2e.preflight
 
 .PHONY: e2e-login
@@ -404,10 +446,16 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
+	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
+	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
+	# new person instead of only recording it. For gathering recovery evidence on
+	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
+	# run's `compliance` is not comparable to a shadow run's (the blocked write
+	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -448,31 +496,84 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) across every committed e2e run: make e2e-corpus | TEST=<slug>
-	# Pure analysis over committed run JSONs — no live run, no API. The
-	# cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# Defaults to the last 14 days and prints the window it used: the repo
+	# moves fast enough that older runs often describe behaviour already
+	# fixed, so a whole-corpus average silently mixes eras. SINCE=all opts
+	# back in for a retroactive integrity scan (issues #913, #1145).
+	#
+	# Also counts violations per arm and per fixture, and refuses to print a
+	# percentage whose denominator would be doing the work (issue #1176).
+	#
+	# The cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),)
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-agent-tools
+e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each plugin agent that declares tool X and appears in a run, did it
+	# ever actually call X? Unions two per-agent sources already in the runlog —
+	# `subagents[].turns[].blocks` and (since #1027) `tool_calls[].agent_type` —
+	# and diffs the union against each agent's `tools:` frontmatter, bare-named.
+	# `gps-mentor`'s never-called tools are the candidates for #1084's live
+	# binding probe. Windowed to 14 days like every reader; SINCE=all for the
+	# whole corpus. A report, not a gate (see its own "Limits" footer).
+	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40
-	# Also pure analysis, no API. Existed with no make target until #972.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),)
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 stored shadow families over committed runs: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# SINCE=all for a maximum-sample replay.
+	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
+	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
+	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
+	# signal, not for choosing a value to ship.
+	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
+	# from tool_calls + each fixture's committed seed tree (issue #1231). The
+	# stored-entry count above only covers runs made after #1178 merged; the
+	# replay is what makes the pre-hook corpus readable, and what lets a
+	# candidate narrowing of the rule be scored before it ships.
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
+
+.PHONY: e2e-skill-episodes
+e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue #1463): make e2e-skill-episodes | TEST=<slug> | ALL_SKILLS=1 | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API. Answers whether a skill's LAUNCH can be told from
+	# its COMPLETION in the ledger — i.e. whether §7's success gate is fixable.
+	# It cannot: the highest-recall in-episode tool is the protected write
+	# itself. SINCE=all for the maximum-sample replay; absolute counts are a
+	# point-in-time record, the shape is what reproduces.
+	cd eval/harness && uv run python -m e2e.skill_episode_report $(if $(TEST),--test $(TEST),) $(if $(ALL_SKILLS),--all-skills,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-nudges
+e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs and their .transcript.md
+	# siblings. Reports each continue-nudge with the seam it sits on and whether
+	# the agent named its next step before yielding -- the move research/SKILL.md
+	# forbids. Unions both sources on purpose: `narration` replaced the
+	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
+	# hold 20 of the 23 events. Reading only one silently reports a fraction.
+	cd eval/harness && uv run python -m e2e.nudge_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,)
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: skill-latency
-skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
+skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
@@ -480,7 +581,8 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
-		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
+		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,)) \
+		$(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
@@ -588,6 +690,12 @@ deploy-preflight:
 	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
 	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
 	fi
+	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING, unlike
+	# the advisory above: this one is a real build of the thing about to ship, so
+	# a failure here is a failure on the Fly builder minutes later. Nothing in CI
+	# builds this image — `make deploy` is the only path, so this is the check.
+	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
+	@node scripts/check-deploy-stage1.mjs
 
 .PHONY: deploy
 deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
