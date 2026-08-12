@@ -326,10 +326,9 @@ Four rules can each hold a green, approved PR. Check them in this order:
 - **Someone pushed after the approvals.** At least one approval has to land
   *after* the most recent push, from someone other than whoever pushed it. The
   old approvals are not cancelled — they still count toward the two — so you
-  need one fresh approval, not two. This catches reviewers too: a senior who
-  pushes a minor fix rather than asking for it becomes the pusher, and their own
-  approval will not clear the gate. Ask whoever already approved to re-approve,
-  or send the fix as a suggested change and approve after the author commits it.
+  need one fresh approval, not two. **Senior developers are exempt**, so a
+  senior who pushes a small fix rather than asking the author for it can still
+  merge it themselves.
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
 - **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team

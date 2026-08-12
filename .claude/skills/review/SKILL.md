@@ -338,12 +338,11 @@ sufficient: a PR approved twice and then pushed to still needs a fresh approval,
 while both old ones still count. Do not tell an author their approvals were
 reset, and do not treat a pre-push approval as clearing the gate.
 
-**If you push the fix yourself, your own approval will not clear it.** Pushing a
-minor correction instead of asking the author for it is fine, but it makes you
-the pusher, so the merge now needs a click from a *third* person. Either ask
-whoever already approved to re-approve, or send the fix as a suggested change
-and approve after the author commits it — that second route keeps it to the two
-people already on the PR.
+**Senior developers are exempt.** Pushing a small fix rather than asking the
+author for it is the fast path, and it stays fast: the `last-push-approval`
+ruleset lists `senior-developers` as a bypass actor, so a senior who pushes the
+last commit can still merge. Anyone else who pushes needs an approval from
+someone who didn't.
 
 ## 8. Write the edits — don't make them
 
