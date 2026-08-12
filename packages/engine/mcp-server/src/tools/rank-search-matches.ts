@@ -149,9 +149,6 @@ export async function rankSearchMatches(
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
 
-  const relativeTermNote = buildRelativeTermNote(matches);
-  if (relativeTermNote) out.relativeTermNote = relativeTermNote;
-
   if (noSignal && subjectTooThin) {
     // Withhold the ranking rather than flag it. Returning a ranked-LOOKING
     // top-10 that is really search order is the silent-degradation path: the
@@ -180,6 +177,14 @@ export async function rankSearchMatches(
       `${DEGENERATE_FLOOR}. Treat that as a real negative for this query — ` +
       `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
   }
+
+  // Built from `out.matches`, not `matches` — the withheld branch above empties
+  // it, and a note about records that were not returned is the false
+  // confirmation this field exists to prevent. Built here, after that branch,
+  // so `returnedCount: 0` can never ship alongside "of the 2 matches returned".
+  const relativeTermNote = buildRelativeTermNote(out.matches);
+  if (relativeTermNote) out.relativeTermNote = relativeTermNote;
+
   return out;
 }
 

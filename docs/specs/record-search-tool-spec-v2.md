@@ -1243,9 +1243,10 @@ either and importing from the other would make the two mutually importing.
 - `buildSearchUrl(input)` — query-parameter builder. Maps each
   input field to its `q.*` / `f.*` parameter, applies `.exact`
   modifiers, encodes values, applies the default `m.*` flags.
-- `mapEntry(entry, prefixes?)` — `FSSearchEntry → RecordSearchResult` mapping
-  (the 11-step procedure above). `prefixes` is the relative-name prefix list
-  from `suppliedKinTerms`; omitted, no `relativeTerms` is emitted.
+- `mapEntry(entry, terms?)` — `FSSearchEntry → RecordSearchResult` mapping
+  (the 11-step procedure above). `terms` is the `KinTerm[]` from
+  `suppliedKinTerms` — a prefix plus the names the caller gave, which `other`
+  resolves against; omitted, no `relativeTerms` is emitted.
 - `extractEvent(fact)` — `FSFact → RecordSearchEvent`.
 - `findRepresentedPerson(entry)` — the persona match used in step 1 of mapping.
   Returns `{ person, anchor }`, where `anchor` is `"ark"` for a positive

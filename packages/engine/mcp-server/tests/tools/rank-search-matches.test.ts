@@ -716,6 +716,38 @@ describe("rank_search_matches", () => {
     expect(out.relativeTermNote).toContain("not evidence of them");
   });
 
+  it("emits no note when the ranking was withheld — nothing was returned to warn about", async () => {
+    // The note is built from `out.matches`, after the withheld branch empties
+    // it. Built from the pre-branch `matches` instead, this response would say
+    // `returnedCount: 0` and "Of the 2 matches returned" in the same object —
+    // a claim about records it did not return, which is the exact false
+    // confirmation `relativeTerms` exists to prevent.
+    //
+    // Reachable in the likeliest case there is: you anchor a search on a
+    // relative's name precisely BECAUSE the subject is too thin to search on
+    // directly. It reaches `record_search` too, which folds this ranking in
+    // whenever `subjectId` and `projectPath` are both supplied.
+    await writeTree(starvedTree);
+    scorePairMock.mockResolvedValue(scoreResult(0.001));
+    const rows = ["AA1", "AA2"].map((suffix, i) => {
+      const r = candidate({
+        recordId: `ark:/61903/1:1:AAAA-${suffix}`,
+        primaryId: `p${i + 1}`,
+      }) as Record<string, unknown>;
+      r.relativeTerms = { father: { status: "absent" } };
+      return r;
+    });
+    const ref = await stage(rows);
+
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+
+    expect(out.matches).toEqual([]);
+    expect(out.returnedCount).toBe(0);
+    expect(out.relativeTermNote).toBeUndefined();
+    // The withhold itself still reports, so the caller is not left guessing.
+    expect(out.diagnostic).toMatch(/no fact with a date or place/);
+  });
+
   it("does not warn on unknown — only on absent", async () => {
     // "We could not tell" is not a finding to warn about, and warning on it
     // would train the caller to ignore the note.
