@@ -294,14 +294,24 @@ Checks that have actually caught things:
 **Default to silence.** Would this person, or the repo, be measurably worse off
 if nobody said it? A nit or mild inefficiency is not a reply. **Anything true of
 several people is not a reply** — the lead broadcasts those himself; List 1 or
-nowhere. Nor is praise with no action attached; a numbering nit (an issue called
-a PR); a PR that merely needs review; a red check its author already knows
-about; a fact already in List 1 or List 3; a correction that changes nothing
-they do next. Two people needing the same fact get one reply naming both. Zero
-to four replies is a normal day; past four, the bar was too low — say so and
-cut. Never list who you skipped. **One or two sentences each. Name the one thing
-to do next and stop.** Lead with the correction where there is one. Write in the
-lead's voice: direct, no preamble, no praise sandwich.
+nowhere.
+
+Nor is any of these:
+
+- praise with no action attached
+- a numbering nit (an issue called a PR)
+- a PR that merely needs review
+- a red check its author already knows about
+- a fact already in List 1 or List 3
+- a correction that changes nothing they do next
+
+Two people needing the same fact get one reply naming both. Zero to four replies
+is a normal day; past four, the bar was too low — say so and cut. Never list who
+you skipped.
+
+**One or two sentences each. Name the one thing to do next and stop.** Short
+enough that the lead sends it without editing. Lead with the correction where
+there is one. Write in the lead's voice: direct, no preamble, no praise sandwich.
 
 Too long:
 
