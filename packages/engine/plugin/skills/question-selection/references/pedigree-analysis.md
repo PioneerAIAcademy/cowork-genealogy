@@ -3,6 +3,9 @@
 Guidance for evaluating pedigree data to identify research gaps,
 errors, and candidates for new research questions.
 
+The sweep below covers the whole tree. Only gaps the research
+objective covers are question candidates; the rest are context.
+
 ## Purpose
 
 Pedigree analysis is the process of systematically reviewing the
@@ -22,7 +25,9 @@ Every individual in the pedigree should have at minimum:
   — not just a country or state)
 
 Individuals missing any of these three data points are candidates
-for new research questions.
+for new research questions — but only those the objective covers. A
+gap on someone outside its scope (a spouse, a child, a collateral
+line) is tree context to note, not a question to write.
 
 ## Completeness Assessment
 
@@ -93,7 +98,9 @@ research but cannot support a proved conclusion.
 
 ## Prioritizing Gaps for Research
 
-Not all gaps are equally important. Prioritize based on:
+First discard gaps outside the objective's scope — they are context,
+not research candidates. Among those that remain, not all are equally
+important. Prioritize based on:
 
 1. **Proximity to the research objective**: Gaps directly blocking
    the project's central question take priority.
