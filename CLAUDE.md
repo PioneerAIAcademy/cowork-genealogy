@@ -664,10 +664,12 @@ skill `scripts/`, the `apps/server/` FastAPI control plane, **and test files**
 immediately handed to `json.loads(...)` — `read_text()` decodes before
 `json` ever sees the bytes, so `json.loads(p.read_text(encoding="utf-8"))`,
 never `json.loads(p.read_text())`. Pass it as a keyword (`encoding="utf-8"`),
-not positionally, so a `read_text(` / `open(` grep that excludes `encoding=`
-reliably finds every offender. For a vendored third-party script, apply the
-patch and record it under a "Local divergences from upstream" note so it
-survives re-vendoring.
+not positionally: the repo-wide guard is an AST lint that requires the
+`encoding=` keyword (`eval/harness/tests/unit/test_encoding_lint.py`). It parses
+rather than greps because a grep is wrong in both directions here — a per-line
+grep *false-flags* a compliant call whose `encoding=` sits on a later physical
+line, and a file-level grep *misses* a bare offender inside a multi-line call. For a vendored third-party script, apply the patch and record it
+under a "Local divergences from upstream" note so it survives re-vendoring.
 
 ## Code reuse
 
