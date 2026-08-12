@@ -1066,6 +1066,95 @@ def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
     assert rc == 0
 
 
+# --- an aborted row must say why (#1245) ------------------------------
+#
+# Issue #1245 was reported as "19 of 20 tests came back aborted" with no cause
+# available. The cause was on the entry the whole time; the summary just never
+# printed it, and there was no count line to read "19 of 20" from either.
+
+
+def _summary(rows, capsys):
+    run_tests._print_summary(rows)
+    return capsys.readouterr().out
+
+
+def test_summary_prints_the_abort_reason(capsys):
+    out = _summary(
+        [{"test_id": "ut_a", "skill": "citation", "outcome": "aborted",
+          "reason": "sdk_stream_silence"}],
+        capsys,
+    )
+    assert "REASON" in out
+    assert "sdk_stream_silence" in out
+
+
+def test_summary_tolerates_a_row_with_no_reason_key(capsys):
+    # Rows are built in one place, but a caller (or an older partial) may not
+    # carry the key; a summary that raises would lose the whole suite's output.
+    out = _summary([{"test_id": "ut_a", "skill": "citation", "outcome": "pass"}], capsys)
+    assert "ut_a" in out
+
+
+def test_summary_counts_every_outcome_and_reconciles(capsys):
+    rows = [
+        {"test_id": "a", "skill": "s", "outcome": "pass", "reason": ""},
+        {"test_id": "b", "skill": "s", "outcome": "xfail", "reason": ""},
+        {"test_id": "c", "skill": "s", "outcome": "xpass", "reason": ""},
+        {"test_id": "d", "skill": "s", "outcome": "aborted", "reason": "error"},
+    ]
+    out = _summary(rows, capsys)
+    # xfail/xpass are real outcomes; a four-value tally would under-sum here.
+    for token in ("1 pass", "1 xfail", "1 xpass", "1 aborted", "of 4 test(s)"):
+        assert token in out, token
+
+
+def test_summary_groups_the_abort_reasons(capsys):
+    rows = [
+        {"test_id": f"t{i}", "skill": "s", "outcome": "aborted", "reason": "error"}
+        for i in range(19)
+    ] + [{"test_id": "t19", "skill": "s", "outcome": "pass", "reason": ""}]
+    out = _summary(rows, capsys)
+    assert "19 aborted" in out and "of 20 test(s)" in out
+    assert "19x error" in out
+
+
+def test_summary_names_an_outcome_outside_the_known_set(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "surprise", "reason": ""}], capsys
+    )
+    assert "1 surprise" in out, "an unknown outcome must not vanish from the tally"
+
+
+def test_summary_records_an_abort_that_carried_no_reason(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "aborted", "reason": ""}], capsys
+    )
+    assert "unrecorded" in out
+
+
+def test_the_live_progress_line_names_the_abort_reason(tmp_path, monkeypatch, capsys):
+    """The surface an operator actually watches during a long suite.
+
+    `_print_summary` lands after every test has finished; this line is the only
+    thing visible while a 20-test suite is still running, and a bare `aborted`
+    here is what left issue #1245 undiagnosable in real time. The existing
+    exit-code tests already drive this path, so without an output assertion a
+    regression to a bare `aborted` would stay green.
+    """
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "— aborted [max_turns]" in out, (
+        "the progress line must carry the reason, not just the outcome"
+    )
+
+
+def test_the_end_of_suite_tally_names_the_abort_reason_too(tmp_path, monkeypatch, capsys):
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "1 pass, 1 aborted of 2 test(s)" in out
+    assert "1x max_turns" in out
 def _stub_keyed_auth(monkeypatch, key="sk-test-key"):
     from harness.auth import AuthConfig
     monkeypatch.setattr(
