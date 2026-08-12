@@ -543,10 +543,6 @@ paths win: PR #1577 added ten lines to `init-project/SKILL.md` for an issue whos
 `Touches:` named three other skills. Discount a `Touches:` line inherited from an
 issue since closed `not planned` (issue #1322 carried issue #1447's).
 
-`rule5_concurrent_snapshot_prs` in `eval/harness/scripts/check_runlogs.py` warns on
-this same collision from real changed paths at PR time. It is the backstop for what
-this gate cannot see, not a replacement — it fires after the work is done.
-
 **Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
 whole skill. Say so in your report with the assignee and the idle count, and
 propose returning it to Backlog so the next item can go. Do not reclaim silently —

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Four blocking rules + two warn-only rules per
+Four blocking rules + one warn-only rule per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -13,13 +13,9 @@ docs/plan/eval-runlog-versioning.md §C6:
              (test_id, dimension_source, dimension_name) triple. An edited
              annotation gates; a pruned (deleted) one does not.
     Rule 4   no two unit-test files share a `test.id`.
-    Rule 5   (warn-only) no OTHER open PR changes a skill eval snapshot this
-             PR changes — two PRs on one skill cannot share a paid run.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
-stdlib + the harness's own `snapshot.py` and `versioning.py` modules. Rule 5
-additionally shells out to `gh pr list` (read-only) and reports SKIPPED when
-that listing is unavailable.
+stdlib + the harness's own `snapshot.py` and `versioning.py` modules.
 """
 
 from __future__ import annotations
@@ -54,18 +50,6 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 # (the agent body is embedded in those skills' run-log snapshots), exactly
 # like an edit inside the skill dir itself.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
-
-# Match a path inside a skill body or the skill's unit-test dir → owning skill.
-# Hoisted out of `main()` so rule 5 keys cross-PR collisions off exactly the
-# expression the blocking touched-skill detection keys off, rather than a
-# second, parallel notion of which skill a path belongs to.
-SKILL_PATH_RE = re.compile(
-    r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/"
-)
-
-# How many open PRs rule 5 considers. Well above the ~30 this repo carries; the
-# cap exists only so a runaway listing cannot stall the job.
-OPEN_PR_LIMIT = 200
 
 
 # Skills exempt from the per-skill runlog rules (2 + 3) — skills that by design
@@ -102,16 +86,6 @@ def gh_error(message: str, *, file: str | None = None) -> None:
 def gh_warning(message: str, *, file: str | None = None) -> None:
     prefix = f"::warning file={file}::" if file else "::warning::"
     print(f"{prefix}{message}")
-
-
-def gh_notice(message: str) -> None:
-    """Emit a GitHub notice annotation. Informational; never fails the step.
-
-    Used by rule 5 for "this check could not run". A skipped check that printed
-    nothing would be indistinguishable in the log from one that ran and found
-    nothing, which is the failure mode that makes a check worse than absent.
-    """
-    print(f"::notice::{message}")
 
 
 def git_diff_changes() -> list[tuple[str, str | None]]:
@@ -201,48 +175,6 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
         for agent in agent_refs_in_text(text):
             mapping.setdefault(agent, set()).add(skill_md.parent.name)
     return mapping
-
-
-def snapshot_skills_for_paths(
-    paths: list[str], agent_to_skills: dict[str, set[str]]
-) -> set[str]:
-    """The skills whose run-log SNAPSHOT the given paths change.
-
-    The single notion of "which skill does this path belong to" in this file,
-    shared by the blocking touched-skill detection in `main()` and by rule 5's
-    cross-PR collision report. Three path classes, the same three
-    `harness.snapshot.build_snapshot` embeds:
-
-      - `packages/engine/plugin/skills/<skill>/**`
-      - `eval/tests/unit/<skill>/**`
-      - `packages/engine/plugin/agents/<name>.md`, which fans out to every
-        skill whose SKILL.md delegates via `@plugin:<name>`
-
-    `eval/runlogs/unit/**` is deliberately NOT a snapshot path: a run log is not
-    an input to its own snapshot, so changing one invalidates nothing. `main()`
-    adds run-log and annotation paths to its own touched set separately, on
-    different (add-vs-delete-asymmetric) rules — that is "new evidence about a
-    skill", not snapshot membership, and rule 5 must not inherit it.
-
-    Scenario and MCP-fixture paths are also absent. They are part of a
-    snapshot, but they belong to many skills at once and this file holds no
-    fixture → skill map to resolve them through.
-    """
-    skills: set[str] = set()
-    agents: set[str] = set()
-    for path in paths:
-        if RUNLOG_PATH_RE.match(path):
-            continue
-        m = SKILL_PATH_RE.match(path)
-        if m:
-            skills.add(m.group(1))
-            continue
-        m = AGENT_PATH_RE.match(path)
-        if m:
-            agents.add(m.group(1))
-    for agent in sorted(agents):
-        skills |= agent_to_skills.get(agent, set())
-    return skills
 
 
 def rule1_max_one_released(touched_releases: dict[str, list[str]]) -> int:
@@ -448,215 +380,6 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
     return fails
 
 
-# --- Rule 5: another open PR is on the same skill's eval snapshot -----------
-
-
-def _pr_paths(pr: dict) -> list[str]:
-    """Changed paths of one PR as returned by `gh pr list --json files`.
-
-    The GraphQL field is `path`. (REST's `pulls/{n}/files` calls the same thing
-    `filename` — the `scope` step in check-runlogs.yml reads that one.) Keying
-    on the wrong name yields an empty list for every PR, so rule 5 would report
-    "clean" forever with nothing in the log to say otherwise;
-    `_files_shape_error` below is the guard against exactly that.
-    """
-    return [
-        f["path"]
-        for f in (pr.get("files") or [])
-        if isinstance(f, dict) and isinstance(f.get("path"), str) and f["path"]
-    ]
-
-
-def _files_shape_error(prs: list[dict]) -> str | None:
-    """A reason the listing's file lists are unreadable, or None.
-
-    Turns the two ways rule 5 could silently pass — the `files` field absent,
-    or present under a renamed key — into a SKIPPED notice.
-    """
-    entries = sum(len(pr.get("files") or []) for pr in prs)
-    paths = sum(len(_pr_paths(pr)) for pr in prs)
-    if entries == 0:
-        return (
-            f"`gh pr list --json files` returned {len(prs)} open PR(s) and not one "
-            f"file entry — the `files` field did not come back"
-        )
-    if paths == 0:
-        return (
-            f"`gh pr list --json files` returned {entries} file entry/entries across "
-            f"{len(prs)} open PR(s) but no `path` key on any of them — the field name "
-            f"has changed"
-        )
-    return None
-
-
-def _list_open_prs(repo: str) -> tuple[list[dict], str | None]:
-    """`(prs, error)` for every open PR and its changed paths, in one call.
-
-    `error` is a human-readable reason the listing is unusable; when it is set,
-    rule 5 reports SKIPPED instead of clean. Never raises.
-
-    A PR with more than 100 changed files has its file list truncated by the
-    GraphQL page size, so rule 5 can under-report on one of those. It cannot
-    over-report, which is the right direction for a warn-only check.
-    """
-    cmd = [
-        "gh", "pr", "list",
-        "--repo", repo,
-        "--state", "open",
-        "--limit", str(OPEN_PR_LIMIT),
-        "--json", "number,title,isDraft,files",
-    ]
-    try:
-        # encoding= (not bare text=) because PR titles carry em-dashes and smart
-        # quotes, and the platform default is cp1252 on the team's Windows boxes.
-        proc = subprocess.run(
-            cmd, capture_output=True, encoding="utf-8", timeout=120, check=False
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        return [], f"could not run `gh pr list` ({exc.__class__.__name__}: {exc})"
-    if proc.returncode != 0:
-        tail = (proc.stderr or "").strip().splitlines()
-        why = tail[-1] if tail else "no stderr"
-        return [], f"`gh pr list` exited {proc.returncode}: {why}"
-    try:
-        prs = json.loads(proc.stdout)
-    except ValueError as exc:
-        return [], f"`gh pr list` returned unparseable JSON ({exc})"
-    if not isinstance(prs, list) or not all(isinstance(p, dict) for p in prs):
-        return [], "`gh pr list` returned an unexpected shape (not a list of objects)"
-    if not prs:
-        # This PR is itself open, so an empty listing means the listing failed
-        # to see anything — not that there are no other PRs.
-        return [], "`gh pr list` returned no open PRs at all"
-    shape_error = _files_shape_error(prs)
-    if shape_error:
-        return [], shape_error
-    return prs, None
-
-
-def rule5_concurrent_snapshot_prs(
-    my_skills: set[str], agent_to_skills: dict[str, set[str]]
-) -> None:
-    """Rule 5 (warn-only): another open PR changes a skill snapshot this PR changes.
-
-    Two PRs on one skill cannot share a paid eval run. A skill's run log goes
-    inactive the moment any file in its snapshot changes, so whichever lands
-    second pays its own `make eval-skill SKILL=<skill>` plus a fresh `.ann.json`
-    with a correction for every dimension of every test — and if it lands first
-    it invalidates the other's run log the same way. `fill-ready`'s Gate 4 tries
-    to prevent that at promotion time from the issue's self-reported
-    `**Touches:**` line, which is blind to a missing line and to a PR that edits
-    more than its issue asked for. This asks the same question from the real
-    changed paths, at the point where the code exists to read.
-
-    WARN-ONLY, and it returns no failure count. Two PRs on one skill is
-    sometimes the right call — a split the lead asked for, a one-line fix riding
-    along with a run already being spent. The value is the author finding out
-    before doing the annotation pass twice, not a merge being stopped.
-
-    RULE 2 ALREADY BLOCKS THE SECOND LANDER — this adds no enforcement, only
-    timing. `runlogs` is a required status check under a strict up-to-date
-    policy, so once the other PR lands this one must update its branch, rule 2
-    re-runs against the merged tree, and it hard-fails on the now-inactive run
-    log. What rule 5 buys is hearing about the collision while folding the two
-    changes together or sequencing them is still possible. Do not promote it to
-    blocking on the theory that the collision is otherwise unguarded.
-
-    SKIPPED IS NOT CLEAN. Listing other PRs' files needs a token that can read
-    them; when it cannot, this emits a `::notice::` saying the check did not run
-    and why, rather than falling through to a silent pass. Reads only — no
-    permission beyond the `pull-requests: read` the workflow already holds.
-
-    Exempt skills (`RUNLOG_GATE_EXEMPT_SKILLS`) are still reported. The
-    exemption says a skill has no unit suite, which removes the paid-run cost
-    but not the collision: two PRs still edit one skill body. It also drops them
-    from rule 2, so for an exempt skill this warning is the only signal there
-    is — nothing hard-fails later. The message says which case it is, and only
-    the non-exempt one promises a red check.
-    """
-    if not my_skills:
-        print("Rule 5: this PR changes no skill eval snapshot; nothing to compare.")
-        return
-
-    repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if not repo:
-        gh_notice(
-            "Rule 5 (concurrent eval-snapshot PRs) SKIPPED: GITHUB_REPOSITORY is "
-            "unset, so the open-PR listing has no repo to query. This is a SKIP, "
-            "not a clean result — no cross-PR collision check ran."
-        )
-        return
-
-    prs, error = _list_open_prs(repo)
-    if error:
-        gh_notice(
-            f"Rule 5 (concurrent eval-snapshot PRs) SKIPPED: {error}. A fork PR's "
-            f"token, a rate limit, or a missing `gh` all land here. This is a SKIP, "
-            f"not a clean result — no cross-PR collision check ran, so check by "
-            f"hand whether another open PR touches "
-            f"{', '.join('`' + s + '`' for s in sorted(my_skills))}."
-        )
-        return
-
-    me = os.environ.get("PR_NUMBER", "").strip()
-    if not me:
-        # Without PR_NUMBER this PR cannot be excluded from the listing and it
-        # would collide with itself. Report it rather than emit a bogus warning.
-        gh_notice(
-            "Rule 5 (concurrent eval-snapshot PRs) SKIPPED: PR_NUMBER is unset, so "
-            "this PR cannot be excluded from the open-PR listing and would be "
-            "reported as colliding with itself. This is a SKIP, not a clean result."
-        )
-        return
-    others = [pr for pr in prs if str(pr.get("number")) != me]
-
-    # Collisions keyed by shared skill, not by other-PR — the author's question
-    # is "who else is on my skill", and a skill with three other PRs on it is one
-    # line instead of three (GitHub renders only 10 annotations per step).
-    by_skill: dict[str, list[dict]] = {}
-    for pr in sorted(others, key=lambda p: p.get("number") or 0):
-        for skill in my_skills & snapshot_skills_for_paths(
-            _pr_paths(pr), agent_to_skills
-        ):
-            by_skill.setdefault(skill, []).append(pr)
-
-    if not by_skill:
-        print(
-            f"Rule 5: no other open PR changes the eval snapshot of "
-            f"{', '.join(sorted(my_skills))} "
-            f"({len(others)} other open PR(s) checked)."
-        )
-        return
-
-    for skill, hits in sorted(by_skill.items()):
-        refs = ", ".join(
-            f"PR #{pr['number']}"
-            + (" (draft)" if pr.get("isDraft") else "")
-            + f' — "{(pr.get("title") or "").strip()}"'
-            for pr in hits
-        )
-        if skill in RUNLOG_GATE_EXEMPT_SKILLS:
-            cost = (
-                f"`{skill}` has no unit suite, so no paid run is at stake — but the "
-                f"two changes still land on one skill body and will conflict."
-            )
-        else:
-            cost = (
-                f"A skill's run log goes inactive the moment any snapshot file "
-                f"changes, so these PRs cannot share one paid run: whichever lands "
-                f"second needs its own `make eval-skill SKILL={skill}` plus a fresh "
-                f".ann.json covering every dimension of every test, and landing it "
-                f"first invalidates the other's run log too. When that PR lands, "
-                f"this one's `runlogs` check goes red on rule 2 until you re-run."
-            )
-        gh_warning(
-            f"skill `{skill}`: this PR changes its eval snapshot, and so does "
-            f"{refs}. {cost} Warn-only — two PRs on one skill is sometimes right. "
-            f"If it is not, fold the changes together or sequence them with that "
-            f"PR's author before the second re-run is paid for."
-        )
-
-
 def main() -> int:
     changes = git_diff_changes()
 
@@ -688,38 +411,44 @@ def main() -> int:
     added_runlog_paths = {p for _, p in changes if p is not None}
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
-
-    # Skill bodies, unit tests, and referenced plugin agents — the snapshot path
-    # classes. A touched plugin agent surfaces every skill whose SKILL.md
-    # references `@plugin:<name>`, because the agent body is part of those
-    # skills' run-log snapshots, so editing it outside eval discipline must fail
-    # rule 2. Rule 5 reuses this set as-is (before the exemption and
-    # deleted-skill filters below), so a collision is reported on exactly the
-    # paths that invalidate a run log.
-    agent_to_skills = skills_referencing_agents(PLUGIN_SKILLS_DIR)
-    snapshot_skills = snapshot_skills_for_paths(touched_paths, agent_to_skills)
-    touched_skills: set[str] = set(snapshot_skills)
-
+    touched_skills: set[str] = set()
+    touched_agents: set[str] = set()
     for path in touched_paths:
         m = RUNLOG_PATH_RE.match(path)
-        if not m:
-            continue
-        # RUNLOG_PATH_RE matches `.ann.json` too (it ends in `.json`), and
-        # the two need opposite rules:
-        #
-        #   run log     — gates only when ADDED. Rewriting or pruning one is
-        #                 housekeeping; a run log is not an input to its own
-        #                 snapshot, so it cannot invalidate anything.
-        #   annotation  — gates unless DELETED. An *edited* .ann.json is a
-        #                 grading change and must still face rule 3, or a PR
-        #                 could walk an annotation back from complete to
-        #                 partial unchallenged. Only its deletion (pruned
-        #                 alongside its run log) is housekeeping.
-        if path.endswith(".ann.json"):
-            if path not in deleted_paths:
+        if m:
+            # RUNLOG_PATH_RE matches `.ann.json` too (it ends in `.json`), and
+            # the two need opposite rules:
+            #
+            #   run log     — gates only when ADDED. Rewriting or pruning one is
+            #                 housekeeping; a run log is not an input to its own
+            #                 snapshot, so it cannot invalidate anything.
+            #   annotation  — gates unless DELETED. An *edited* .ann.json is a
+            #                 grading change and must still face rule 3, or a PR
+            #                 could walk an annotation back from complete to
+            #                 partial unchallenged. Only its deletion (pruned
+            #                 alongside its run log) is housekeeping.
+            if path.endswith(".ann.json"):
+                if path not in deleted_paths:
+                    touched_skills.add(m.group(1))
+            elif path in added_runlog_paths:
                 touched_skills.add(m.group(1))
-        elif path in added_runlog_paths:
+            continue
+        # Changes to skill files / tests surface their owning skill.
+        m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)
+        if m:
             touched_skills.add(m.group(1))
+            continue
+        m = AGENT_PATH_RE.match(path)
+        if m:
+            touched_agents.add(m.group(1))
+
+    # A touched plugin agent gates every skill whose SKILL.md references
+    # `@plugin:<name>` — the agent body is part of those skills' run-log
+    # snapshots, so editing it outside eval discipline must fail rule 2.
+    if touched_agents:
+        referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
+        for agent in sorted(touched_agents):
+            touched_skills |= referencing.get(agent, set())
 
     # Drop orchestrator skills with no unit suite by design (see
     # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
@@ -748,10 +477,6 @@ def main() -> int:
     # which cannot introduce a duplicate id.
     if any(p.startswith("eval/tests/unit/") for p in touched_paths):
         fails += rule4_unique_test_ids(TESTS_UNIT_DIR)
-
-    # Rule 5 runs here — ahead of the RUNLOGS_DIR early return below — because
-    # it reads no run log at all. It adds nothing to `fails`.
-    rule5_concurrent_snapshot_prs(snapshot_skills, agent_to_skills)
 
     if not RUNLOGS_DIR.is_dir():
         print(f"No runlogs directory at {RUNLOGS_DIR}; skipping rules 2 + 3.")
