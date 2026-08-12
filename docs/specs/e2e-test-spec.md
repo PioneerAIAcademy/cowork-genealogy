@@ -1167,9 +1167,9 @@ resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
 stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
 exists at all). A resolved conflict that exists but is linked to nothing still
 fires, so read this count as **"reliance not linked"**, not "conflict never
-written". The `#1317` case an alpha tester hit is the strict subset where
-`conflicts[]` is empty: the viewer's Conflicts section stayed blank because
-nothing structured was persisted. Gated on a written conclusion so
+written". The alpha-tester case is the strict subset where `conflicts[]` is
+empty: the viewer's Conflicts section stayed blank because nothing structured
+was persisted. Gated on a written conclusion so
 an honest partial run does not fire. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "conflict_unpersisted"` for their own bucket
