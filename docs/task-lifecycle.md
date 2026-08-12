@@ -321,15 +321,25 @@ returns as an input to your review, never as your review.
 
 ### "It says approved, but it won't merge"
 
-Three rules can each hold a green, approved PR. Check them in this order:
+Four rules can each hold a green, approved PR. Check them in this order:
 
 - **Someone pushed after the approvals.** At least one approval has to land
-  *after* the most recent push. The old approvals are not cancelled — they still
-  count toward the two — so you need one fresh approval, not two.
+  *after* the most recent push, from someone other than whoever pushed it. The
+  old approvals are not cancelled — they still count toward the two — so you
+  need one fresh approval, not two. This catches reviewers too: a senior who
+  pushes a minor fix rather than asking for it becomes the pusher, and their own
+  approval will not clear the gate. Ask whoever already approved to re-approve,
+  or send the fix as a suggested change and approve after the author commits it.
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
 - **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team
   is required per path. Four approvals from the wrong team is still zero.
+- **A review request left over from an older CODEOWNERS.** Owners are computed
+  when the PR opens; editing `.github/CODEOWNERS` later never re-runs against an
+  open PR, and GitHub never withdraws a request it has already made. So a PR can
+  sit showing a team that owns none of its files. Check the current file before
+  believing the request, and clear a dead one with
+  `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
 
 ---
 

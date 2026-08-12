@@ -332,11 +332,18 @@ Two ruleset settings decide what a stale approval is worth here, and they pull
 in opposite directions. `dismiss_stale_reviews_on_push: false` means a push does
 **not** clear existing approvals — they keep counting toward the two required,
 and nothing re-requests review. But `require_last_push_approval: true` means at
-least one approval must land **after** the most recent push. So an old approval
-is neither void nor sufficient: a PR approved twice and then pushed to still
-needs a fresh approval, while both old ones still count. Do not tell an author
-their approvals were reset, and do not treat a pre-push approval as clearing the
-gate.
+least one approval must land **after** the most recent push **and come from
+someone other than whoever pushed it**. So an old approval is neither void nor
+sufficient: a PR approved twice and then pushed to still needs a fresh approval,
+while both old ones still count. Do not tell an author their approvals were
+reset, and do not treat a pre-push approval as clearing the gate.
+
+**If you push the fix yourself, your own approval will not clear it.** Pushing a
+minor correction instead of asking the author for it is fine, but it makes you
+the pusher, so the merge now needs a click from a *third* person. Either ask
+whoever already approved to re-approve, or send the fix as a suggested change
+and approve after the author commits it — that second route keeps it to the two
+people already on the PR.
 
 ## 8. Write the edits — don't make them
 
