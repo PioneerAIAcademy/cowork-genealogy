@@ -552,6 +552,12 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
+   **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
+   have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
+   is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
+   old "no wildcards" rule was measured and withdrawn. Order matters: explicit variants
+   first (they are checkable and you can say which letter changed), then a wildcard to
+   catch the shape you could not guess.
    **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **bounce back to `research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this skill's. Do not look up place history or hardcode per-country rules here. See `references/search-strategy-levers.md`.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
