@@ -15,14 +15,16 @@
  */
 import { loginTool } from "../src/tools/login.js";
 
-// No clientId argument: `loginTool` takes `Record<string, never>` and the FS
-// client ID comes from the bundled `config/familysearch.json` via getClientId()
-// — the sole source, with no override (CLAUDE.md § Secrets/config convention).
-// This script used to demand an argument it could not pass on.
+// No argument: the FamilySearch client id comes from the bundled
+// config/familysearch.json via getClientId(). This script used to require one
+// and exit(1) without it, which made the now-correct invocation fail.
+
 console.log("Starting OAuth flow. Watch for the authorization URL below.");
 console.log("Open it in a browser on your laptop (port 1837 must be forwarded).");
 console.log("---");
 
+// Takes no input: the FamilySearch client id is read from the bundled
+// config/familysearch.json by getClientId(), never passed in.
 const result = await loginTool();
 console.log("---");
 console.log("Login result:");

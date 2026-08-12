@@ -186,6 +186,8 @@ export interface RecordSearchInput {
 
   collectionId?: string;
   imageGroupNumber?: string;
+  /** IGI batch number, e.g. `M01048-5`. Sent as `q.batchNumber`. */
+  batchNumber?: string;
   recordCountry?: string;
   recordSubdivision?: string;
   recordType?: string;

@@ -87,7 +87,7 @@ async function main() {
     process.exit(1);
   }
 
-  if (!result.errors.some((e) => e.message?.includes("missing required field 'id'"))) {
+  if (!result.errors.some((e) => e.message.includes("missing required field 'id'"))) {
     console.log("ERROR: Should report missing id!");
     process.exit(1);
   }
@@ -117,7 +117,9 @@ async function main() {
     process.exit(1);
   }
 
-  if (!result.errors.some((e) => e.message?.includes("not a valid project_status"))) {
+  // `errors` is always ValidationError[] ({ path, message }); the old string
+  // branch narrowed `e` to `never` and could never have matched.
+  if (!result.errors.some((e) => e.message.includes("not a valid project_status"))) {
     console.log("ERROR: Should report invalid enum!");
     process.exit(1);
   }

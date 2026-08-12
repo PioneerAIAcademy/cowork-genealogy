@@ -361,6 +361,22 @@ describe("buildSearchUrl param mapping", () => {
     const url = buildSearchUrl({ surname: "Smith", imageGroupNumber: "004010852_001_M9QY-X6Y" });
     expect(url).toContain("q.filmNumber=004010852_001_M9QY-X6Y");
   });
+
+  // The PR's one behaviour change, and it was the only one with no guard: the
+  // mapping is real (buildSearchUrl emits `q.batchNumber`) but nothing asserted
+  // it, so a rename would have gone unnoticed while the skill and the spec both
+  // kept teaching the parameter.
+  it("21d. batchNumber maps to q.batchNumber", () => {
+    const url = buildSearchUrl({ surname: "Wilkins", batchNumber: "M01048-5" });
+    expect(url).toContain("q.batchNumber=M01048-5");
+  });
+
+  // The dashed form is the one the live check used; the older letter + 6 digits
+  // form has to survive too, since the spec documents both.
+  it("21e. batchNumber accepts the letter + 6 digit form", () => {
+    const url = buildSearchUrl({ batchNumber: "C050761", recordCountry: "England" });
+    expect(url).toContain("q.batchNumber=C050761");
+  });
 });
 
 describe("recordSearchTool error propagation", () => {
