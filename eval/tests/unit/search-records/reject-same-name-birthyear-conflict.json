@@ -21,10 +21,12 @@
     "scenario": "job-purnell-parents-identity"
   },
   "execution": {
+    "max_turns": 35,
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
     "record-search-purnell-1821-decoy",
+    "record-search-purnall-variant-no-results",
     "rank-search-matches-purnell-1821-decoy",
     "record-read-job-purnell-6dsr-xd6y",
     "record-search-purnell-any-variant-no-results",
