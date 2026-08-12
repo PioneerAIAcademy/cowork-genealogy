@@ -638,7 +638,7 @@
           "end": "1908-03-12",
           "expected_events": [],
           "severity": "low",
-          "notes": "1870, 1880, and 1900 censuses searched — Patrick Flynn not found. 1890 census destroyed. Remaining gap involves marriage, church, and occupation records not yet searched."
+          "notes": "1870, 1880, and 1900 censuses searched — Patrick Flynn not found. 1890 census destroyed. Schuylkill County probate (log_009) and church records (log_010) searched, both negative. Remaining gap involves marriage and occupation records not yet searched."
         }
       ]
     }
@@ -652,7 +652,7 @@
       "vehicle": "summary",
       "supporting_assertion_ids": ["a_004", "a_005", "a_006"],
       "resolved_conflict_ids": ["c_001"],
-      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001–log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), 1870 census (FamilySearch — log_006, negative), 1880 census (FamilySearch — log_007, negative), 1900 census (FamilySearch — log_008, negative). Patrick Flynn not found in post-1860 censuses. Direct evidence searches exhausted.",
+      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001–log_003), 1860 census (FamilySearch — log_004), death certificate (FamilySearch — log_005), 1870 census (FamilySearch — log_006, negative), 1880 census (FamilySearch — log_007, negative), 1900 census (FamilySearch — log_008, negative), probate records Schuylkill County 1870–1900 (FamilySearch — log_009, negative), and Catholic church records Schuylkill County 1840–1870 (FamilySearch — log_010, negative). Patrick Flynn not found in post-1860 censuses. Direct evidence searches exhausted.",
       "narrative_markdown": "Patrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania, based on co-enumeration in the 1850 and 1860 censuses and a death certificate naming Thomas as father. Conclusion remains at **Probable** because both census sources provide only indirect relationship evidence (relationship column not introduced until 1880), and the death certificate informant (son-in-law) is secondary for parentage facts. Direct census searches for 1870, 1880, and 1900 returned no Patrick Flynn of matching profile, leaving the post-1860 period undocumented. Associates/neighbors research has not yet been attempted."
     }
   ],
