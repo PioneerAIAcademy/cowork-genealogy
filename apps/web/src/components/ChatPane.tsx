@@ -3,6 +3,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
+import { foldChatEvent, type ChatMessage } from './chatEvents'
 
 const OPENING_TURN = "Let's start a new genealogy research project."
 
@@ -111,25 +112,6 @@ function useStickToBottom(ref: React.RefObject<HTMLDivElement | null>): {
   return { detached, follow, scrollToBottom }
 }
 
-interface ToolChip {
-  tool: string
-  summary: string
-  done: boolean
-  agent?: string // set when a subagent, not the main agent, made the call
-}
-
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  text: string
-  tools: ToolChip[]
-  thinking?: string
-  // Partial content streaming in ahead of its canonical block. Held separately
-  // so committing the block can't double-render what the deltas already showed.
-  streamText?: string
-  streamThinking?: string
-  error?: boolean
-}
-
 // What a running subagent is doing right now, from the SDK's task lifecycle
 // messages. Live-only — never part of the transcript.
 interface AgentActivity {
@@ -205,51 +187,9 @@ export default function ChatPane({
       })
       return
     }
-    setMessages((prev) => {
-      const next = [...prev]
-      let last = next[next.length - 1]
-      if (!last || last.role !== 'assistant') {
-        last = { role: 'assistant', text: '', tools: [] }
-        next.push(last)
-      } else {
-        last = { ...last, tools: [...last.tools] }
-        next[next.length - 1] = last
-      }
-      if (kind === 'text') {
-        // The canonical block covers everything its deltas already previewed —
-        // commit it and drop the preview rather than appending both.
-        last.text += (ev.text as string) ?? ''
-        last.streamText = ''
-      } else if (kind === 'text_delta') {
-        last.streamText = (last.streamText ?? '') + ((ev.text as string) ?? '')
-      } else if (kind === 'thinking') {
-        last.thinking = (last.thinking ?? '') + ((ev.text as string) ?? '')
-        last.streamThinking = ''
-      } else if (kind === 'thinking_delta') {
-        last.streamThinking = (last.streamThinking ?? '') + ((ev.text as string) ?? '')
-      } else if (kind === 'error') {
-        last.text += (ev.text as string) ?? 'Error'
-        last.error = true
-      } else if (kind === 'tool_use') {
-        last.tools.push({
-          tool: ev.tool as string,
-          summary: ev.summary as string,
-          done: false,
-          agent: typeof ev.agent === 'string' ? ev.agent : undefined
-        })
-      } else if (kind === 'tool_result') {
-        const idx = last.tools.findIndex((t) => t.tool === ev.tool && !t.done)
-        if (idx >= 0) last.tools[idx] = { ...last.tools[idx], done: true, summary: ev.summary as string }
-        else
-          last.tools.push({
-            tool: ev.tool as string,
-            summary: ev.summary as string,
-            done: true,
-            agent: typeof ev.agent === 'string' ? ev.agent : undefined
-          })
-      }
-      return next
-    })
+    // The text/thinking/tool accumulation lives in `foldChatEvent` (chatEvents.ts)
+    // so it can be unit-tested without a DOM — see #1312.
+    setMessages((prev) => foldChatEvent(prev, kind, ev))
   }
 
   useEffect(() => {
@@ -369,9 +309,9 @@ export default function ChatPane({
                 </div>
               )}
               {(m.thinking || m.streamThinking) && (
-                <details className="thinkingBlock" style={{ margin: '4px 0' }}>
-                  <summary className="muted small" style={{ cursor: 'pointer' }}>💭 Thinking</summary>
-                  <div className="muted small" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
+                <details className="thinkingBlock">
+                  <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>
+                  <div className="thinkingBody">
                     {m.thinking}
                     {m.streamThinking}
                   </div>
