@@ -340,8 +340,8 @@ final tree only. `derive_matched` then rolls up the `link` entries:
 it links and then describes them ("Born 1833 in the Gorbals; an iron
 moulder; died 1910"); that description says *which* person is meant, not
 something the agent must file, and scoring it downgraded twelve findings
-whose relationship had been recovered exactly right (2026-08-10
-calibration sweep, issue #1090). The one exception is a date the finding
+whose relationship had been recovered exactly right, measured across the
+committed corpus in the 2026-08-10 calibration sweep. The one exception is a date the finding
 puts on **the relationship itself** — most often a marriage date on a
 spouse claim. The judge prompt tags those `link` so they score: a spouse
 link recovered with no marriage date is `partial`, not full credit for a
@@ -387,7 +387,7 @@ Scope and record-keeping:
 
 Historical verdicts were produced by a judge without this derivation.
 They are not invalidated, but they are **not directly comparable** to
-post-#1090 grades; the trend view spans that boundary.
+grades produced with it; the trend view spans that boundary.
 
 ### 3.5 `README.md`
 
