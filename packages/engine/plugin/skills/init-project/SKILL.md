@@ -119,7 +119,7 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 
 ### 2. Fetch person data
 
-Call `person_read({ personId: "<id>" })` with exactly that single argument (no optional flags). Returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, source descriptions. Auth error → tell user to log in.
+Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
 
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
@@ -208,8 +208,8 @@ Analyze imported data before presenting results:
 
 User: "Start a new research project for person KWCJ-RN4. I want to identify his parents."
 
-1. Call `person_read({ personId: "KWCJ-RN4" })`
-2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret.
+1. Call `person_read({ personId: "KWCJ-RN4", relatives: true, sourceDescriptions: true })`
+2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
 4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
 5. Write `research.json` with project section, profile, holdings, empty arrays.

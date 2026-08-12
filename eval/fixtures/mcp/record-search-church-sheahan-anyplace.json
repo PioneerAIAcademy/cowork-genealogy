@@ -1,0 +1,54 @@
+{
+  "tool": "record_search",
+  "description": "Fallback-shape variant of record-search-church-sheahan-collectionid: covers a search that anchors on anyPlace/anyYear (a reasonable strategy when the model has not looked up a collectionId) instead of pinning collectionId directly. Same underlying match as the collectionId-anchored fixture. Authored for ut_search_records_t9p (issue #1319 companion test) -- not carved from a real case.",
+  "args": {
+    "surname": "~Sheahan",
+    "givenName": "~Michael",
+    "anyPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "surname": "Sheahan",
+      "givenName": "Michael",
+      "anyPlace": "Schuylkill County, Pennsylvania"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "QK7T-CH1",
+        "recordId": "QK7T-CH1",
+        "personName": "Michael Sheahan",
+        "score": 0.78,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QK7T-CH1",
+        "collectionId": "1401638",
+        "collectionTitle": "Pennsylvania, Church and Town Records, 1708-1985",
+        "recordTitle": "Michael Sheahan, parish membership record, Schuylkill County, Pennsylvania, 1881",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Michael", "surname": "Sheahan", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Residence", "date": "1881", "place": "Schuylkill County, Pennsylvania, United States" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

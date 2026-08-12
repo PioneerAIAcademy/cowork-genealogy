@@ -31,7 +31,7 @@ You have no `Edit` or `Write` tool on purpose.
 job and never yours.
 
 The one exception is **hygiene**: a closed issue stranded in an active column, an
-open issue sitting in `Done`, an issue on no column at all. Those are corrections,
+open issue sitting in `Done` or `Not planned`, an issue on no column at all. Those are corrections,
 not ranking, and fixing them needs `gh project item-edit` with the Status field id
 (`gh project field-list 1 --owner PioneerAIAcademy --format json`). Check the
 token first — `gh auth status` must list the `project` scope, or the write fails
@@ -98,7 +98,29 @@ echo "closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state c
 **This run's merge-or-close target is at least the week's inflow** — merges,
 absorbs, closes and obsoletes combined.
 
-If you cannot reach it, **say so at the top of the output**: the number you
+**Count what `/merge-recent-issues` already did toward it.** That skill runs daily
+against the last two days' inflow, so by the time this pass runs, the
+new-issue-versus-existing-issue merges should mostly be done:
+
+```sh
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
+  --limit 200 --search "closed:>=$d \"Merged into issue\"" \
+  --json number,title
+```
+
+Subtract those from the gap before reporting a shortfall, and **do not re-litigate
+a pair that pass judged independent** — read its reasoning in the issue comments
+first and only overturn it with something it could not see, which is usually the
+whole-pool view.
+
+That division is the point of running this weekly rather than daily: the daily
+pass catches a new issue landing on top of an existing one, which is the case that
+decays fastest. What only this pass can catch is **two old issues colliding** —
+neither filed recently, both quietly wanting the same lines — plus obsolescence,
+clusters, eval-slot queues and board hygiene. None of those change materially in a
+day, and all of them need every body in one head.
+
+If you cannot reach the target, **say so at the top of the output**: the number you
 propose, the target, and the gap. Four merges against a week of two hundred
 filings is not a successful audit; the shortfall is the finding, and burying it
 under the merges you did find misreports the week. The lead still approves every
@@ -122,9 +144,64 @@ so exactly one owns the scope.
 **Batch — separate issues, one paid run.** This is the most common and the most
 valuable. See §4.
 
-**Schedule together, do not merge.** Two halves that need each other but are
-different labor — a `developer` lint and a `genealogist` audit. Merging makes it
-unassignable. Say "same week, two people" and leave both open.
+**Split the lanes — only when the split is clean.** Two halves that are different
+labor — a `developer` lint and a `genealogist` audit — can stay apart, because one
+card spanning two lanes has no single assignee. That holds **only if neither half
+needs the other to land**. Test it: can each be finished, reviewed and merged
+without waiting on the other? If yes, split at the lane boundary and move the
+content, so neither issue is left pointing at the other for something it needs,
+and give each its own acceptance.
+
+If no — merge, and let the card carry both labels. A card with two labels is
+assignable; two cards that each need the other are not.
+
+**"Schedule together, leave both open" is not a verdict.** The lead ruled it out
+on 2026-08-11: *"Anything that should be done together sounds like a reason to
+merge. Otherwise we have to cross-reference the issues and rely on people
+remembering to assign both issues to themselves, which they have forgotten
+several times."* Same decision, same files, same paid run, same reviewer, or
+class-and-instance — all merge. Splitting on *mechanism purity* (two tools, two
+matchers, two code paths) is an author's aesthetic, not a work boundary.
+
+The one legitimate not-a-merge is a **one-way mechanical dependency**: issue B
+only needs to *apply* something issue A defines. Then edit B's body so it reads as
+an instruction ("apply the convention issue #A defines") rather than a
+coordination requirement — nobody needs both assignments, which is the whole
+objection.
+
+### Never replace N issues with one issue holding N rows
+
+There is no fifth verdict. Do **not** close a set of issues into a "batch
+tracker", "umbrella", or "index" issue whose body is a table of the work — one
+row per item, each with a **Who** column to claim. It reads like tidying and it
+destroys the thing the board is for.
+
+A row cannot be assigned, cannot sit in a column, cannot be closed, and does not
+appear in anyone's queue. One card that is done when twenty independent
+adjudications are done is a card nobody can finish, and the twenty become
+invisible the moment the tracker scrolls.
+
+**The merge test is whether the WORK is the same, never whether the TEXT is.**
+Ask: does one person, doing this once, finish all of it? If no, they are
+separate issues no matter how alike the bodies read.
+
+Template-filled bodies are the trap, because a fleet of them looks like mass
+duplication at a glance. This happened, and cost real data: on 2026-08-04 this
+skill closed twenty `test <slug>` record-hint adjudications into one tracker,
+justifying it as "byte-identical bodies differing only in a name and two URLs".
+They were not duplicates in any sense — twenty different people, twenty
+different records, four different countries — and the shared text was the
+`/resolve-record-hint` boilerplate every one of them carries. The tracker then
+asserted three things that were false within days: that eighteen fixtures were
+still draft (ten were), that the unlisted ones had no card (three did, all
+assigned), and it dropped one fixture's hint ark entirely, pointing at a README
+that did not contain it. All four were reopened 2026-08-10 and the tracker
+deleted.
+
+If a set genuinely wants shared coordination, the tools for that are the
+`cluster:*` label and §4's batching, which keep every issue open and assignable.
+A standing `next run:` issue is the one legitimate umbrella, and it schedules
+work rather than containing it.
 
 Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
@@ -496,6 +573,16 @@ files, the same agent body. Do not merge across lanes to save a run: a
 `developer` harness fix and a `genealogist` fixture adjudication in one issue is
 unassignable, which costs more than the run saved.
 
+**Sharing a lane is necessary and not sufficient.** The run being paid once is
+what makes a merge pay, so this only applies where a single run covers the
+merged work — one snapshot, one suite, one annotation pass. It does **not**
+apply to N independent pieces of research that merely happen to be filed by the
+same lane against the same directory. Twenty record-hint adjudications are
+twenty separate investigations of twenty different people; merging them buys no
+run at all, because each still costs its own. Same-lane plus same-directory is
+where this rule has misfired — apply the "does one person finish all of it in
+one sitting?" test from §1 before merging on lane alone.
+
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
 trains people to bypass it on exactly the edits that are not neutral.
@@ -580,7 +667,8 @@ for it in board['items']:
 print('closed but in an active column:',
       [n for n,s in onboard.items() if s in cols and n not in issues])
 print('open but on no column:', sorted(set(issues)-set(onboard)))
-print('open but in Done:', [n for n,s in onboard.items() if s=='Done' and n in issues])
+print('open but in a terminal column:',
+      [(n,s) for n,s in onboard.items() if s in ('Done','Not planned') and n in issues])
 print('unlabeled:', [n for n,s in onboard.items() if s in cols and n in issues
                      and not issues[n]['labels']])
 print('unassigned in Ready/In Progress/Review:',

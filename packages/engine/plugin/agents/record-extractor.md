@@ -430,6 +430,14 @@ Rules that sharpen the tree:
   answered. Exception: a fact **no possible household respondent** could
   have witnessed — a parent's or grandparent's birthplace — is
   `secondary` regardless of who answered.
+- **Exception — residence.** The blanket rule above covers who inside
+  the household answered biographical questions; it does not cover the
+  enumerator's own observation. The enumerator personally visited the
+  dwelling — a known, firsthand witness for the residence fact
+  specifically. Residence stays `informant: census enumerator`,
+  `informant_proximity: witness`, `information_quality: primary` (see
+  the census informant table below). Name, age, birthplace, and
+  relationship on the same record remain governed by the rule above.
 
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
@@ -535,12 +543,15 @@ the record establishes about who spoke.
 - **Groom and bride:** informants for their own identifying facts (age,
   birthplace, parents, occupation), proximity `self`. **Every fact the
   parties state — their own name/age/birthplace/occupation/residence AND
-  their parents' names — is `direct`; the record states each outright.** A
-  party's secondhand knowledge of a parent is an `information_quality`
-  matter (mark `secondary` if apt), NOT `evidence_type` — never downgrade a
-  stated fact to `indirect` on "relaying another's identity" / "computed
-  from memory" reasoning (that is death-certificate doctrine and does not
-  transfer here). The **only** `indirect` value on a marriage record is a
+  their parents' names — is `direct`; the record states each outright.**
+  Information quality for the party's own parents' names is `primary` —
+  the party has firsthand, ongoing knowledge of who their own parents
+  are, the same basis as their own occupation, not the death-certificate
+  secondhand-relay case. That is an `information_quality` call, NOT
+  `evidence_type` — never downgrade a stated fact to `indirect` on
+  "relaying another's identity" / "computed from memory" reasoning (that
+  is death-certificate doctrine and does not transfer here). The
+  **only** `indirect` value on a marriage record is a
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**

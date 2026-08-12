@@ -1,0 +1,130 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the children of Bridget Halloran and her first husband, John Doyle, in Schuylkill County, Pennsylvania",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the other children born to Bridget Halloran and her first husband, John Doyle, beyond the one already identified (Ellen Doyle)?",
+      "rationale": "An 1900 census entry (log_002) records Bridget as mother of 9 children with only 2 living, but only one child (Ellen Doyle) has been identified so far, found incidentally rather than through a direct search for Doyle offspring. This is a pedigree gap directly within the project objective. No plan has yet been written for this question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-06-01"
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-06-01T17:23:11Z",
+      "tool": "record_search",
+      "query": {
+        "recordType": "marriage",
+        "surname": "Kearney",
+        "givenName": "Martin",
+        "spouseGivenName": "Bridget",
+        "marriagePlace": "Schuylkill County, Pennsylvania",
+        "marriageYearFrom": 1879,
+        "marriageYearTo": 1879
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Pennsylvania County Marriages: Martin Kearney m. Bridget (Doyle) Halloran, 1879, Schuylkill County. Confirms Bridget's second marriage and that her first married surname was Doyle, maiden name Halloran. Found incidentally while researching an unrelated question; not part of any plan."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-06-01T17:33:52Z",
+      "tool": "image_read",
+      "query": {
+        "ark": "3:1:SCHUYLKILL-1900-CENSUS-KEARNEY",
+        "description": "1900 census page image, Schuylkill County, PA - Kearney household, fertility columns"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original 1900 census image for the Kearney household: 'Mother of how many children' = 9; 'Number of these children living' = 2. Indicates Bridget bore ~9 children, most likely during the earlier Doyle marriage, with only 2 surviving to 1900. Only one of the two, Ellen Doyle, has been identified by name so far. Roughly 7-8 children remain unidentified/undocumented."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": null,
+      "performed": "2026-06-01T17:41:46Z",
+      "tool": "record_search",
+      "query": {
+        "recordType": "marriage",
+        "surname": "Doyle",
+        "givenName": "Ellen",
+        "recordCountry": "United States",
+        "marriageYearFrom": 1865,
+        "marriageYearTo": 1875
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Pennsylvania County Marriages: entry for Ellen Doyle's own marriage, with her parents recorded as John Doyle and Bridget Halloran. Independently identifies the first husband's given name as JOHN Doyle. Found incidentally; not part of any plan."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Pennsylvania, United States",
+      "for_place": "Schuylkill County, Pennsylvania",
+      "time_period": "1838-1900",
+      "jurisdictions": [
+        {
+          "name": "Schuylkill County, Pennsylvania",
+          "date_range": "1811-present"
+        },
+        {
+          "name": "Berks and Northampton Counties (parent jurisdictions)",
+          "date_range": "pre-1811"
+        }
+      ],
+      "quirks": [
+        "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
+        "Probate records (wills, administrations) are held by the county Register of Wills, available from 1811 - a primary parentage source naming heirs.",
+        "Roman Catholic parishes fell under the Diocese of Philadelphia until the Diocese of Scranton was erected in 1868; sacramental registers are held at the parish/diocese, not the county.",
+        "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events rely on church, cemetery, and probate records.",
+        "Some naturalization and church films for the anthracite coal region are browse-only image groups (volume_search shows ~0% record-searchable) - browse image-by-image."
+      ],
+      "guide_markdown": "## Schuylkill County, Pennsylvania - 1838-1900\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Probate is held by the county Register of Wills from 1811. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906, so pre-1906 vital events depend on church, cemetery, and probate records. Some coal-region naturalization and church films are browse-only.",
+      "pages_read": [
+        { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
+        { "section": "getting_started", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started", "found": true },
+        { "section": "online_records", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records", "found": true },
+        { "section": "research_tips", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Research_Tips", "found": true }
+      ],
+      "source": "locality-guide",
+      "created": "2026-06-01"
+    }
+  ]
+}
