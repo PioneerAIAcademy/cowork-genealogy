@@ -1,4 +1,4 @@
-﻿---
+---
 name: research-plan
 description: Creates, reviews, and revises a sequenced research plan (in research.json)
   for a genealogy question — which record sets to search, in what order, from which

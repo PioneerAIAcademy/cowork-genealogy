@@ -1,4 +1,4 @@
-﻿---
+---
 name: search-records
 description: Executes searches against FamilySearch historical records per
   the research plan. Routes to the correct MCP search tool based on record
