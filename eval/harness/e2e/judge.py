@@ -93,7 +93,8 @@ JUDGE_OUTPUT_SCHEMA: dict[str, Any] = {
                             "properties": {
                                 "claim": {"type": "string"},
                                 # `link` — a person-to-person relationship the
-                                # finding asserts. `detail` — biography that
+                                # finding asserts, or a date it puts on that
+                                # relationship. `detail` — biography that
                                 # identifies *which* person is meant. Only
                                 # links score; see `derive_matched`.
                                 "kind": {"type": "string", "enum": ["link", "detail"]},
@@ -243,6 +244,15 @@ def derive_matched(components: list[dict[str, Any]]) -> str | None:
     something the agent must file. Scoring the description downgraded twelve
     findings whose relationship had been recovered exactly right — see the
     2026-08-10 calibration sweep on #1090. Genealogists grade the link.
+
+    The one thing that is *not* mere description is a date the finding puts on
+    the **relationship itself** — most often a marriage date on a spouse claim.
+    The judge prompt tags those `link` precisely so they land in this tally: a
+    spouse link recovered with no marriage date is `partial`, not full credit for
+    a marriage that was never dated. A linked person's own birth/death dates stay
+    `detail`; promoting those too reproduced the twelve-finding downgrade above
+    under the haiku judge. That classification is the prompt's job — this
+    function only counts what it is given.
 
     - ``false``   — any link contradicted, or no link supported
     - ``true``    — every link supported

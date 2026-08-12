@@ -72,6 +72,8 @@ Apply this mechanically, in order:
   what the finding is *about*, and they are the only components that score.
 - **`detail`** — biography that identifies *which* person is meant: birth dates,
   occupations, residences, death years. Recorded for transparency, never scored.
+  The one exception is a date the finding puts on the **relationship itself**
+  (e.g. a marriage date) — tag that `link` so it scores. See Scoping below.
 
 "Manoel and Cândida had a daughter Josefa, who married Elfridio" is three
 links: father, mother, spouse.
@@ -133,9 +135,21 @@ Scoping:
 - The person-identifier allowance above — a newly created person record counts
   as a match if the name and key facts are right — applies to findings that ask
   for a **person**. It never satisfies a relationship component.
-- A spouse link satisfies a marriage claim that names no date. If the finding
-  **claims a date**, that date is its own component: a spouse link with no
-  marriage date is `"partial"`.
+- A spouse link satisfies a marriage claim that names no date.
+- **The date of a relationship the finding claims is a scoring component, not a
+  detail.** When the finding dates the relationship itself — most often a
+  marriage date on a spouse claim — that date is its own component and you must
+  tag it `kind: "link"`, never `detail`, which would leave it in the unscored
+  pile. Mark it `supported` only when the tree records that date on the
+  relationship. So a spouse link present with no marriage date recorded is
+  `"partial"`, not `"true"`: one link supported, one unsupported.
+- **This does not promote a linked person's own biography.** The birth and death
+  dates of the parent, spouse or child being linked stay `detail`, even when the
+  finding states them precisely — they say *which* person is meant (the John
+  Laurie case above), and the agent is not being asked to file them. Only a date
+  on the claimed relationship scores. Tagging identifying dates `link`
+  downgrades findings whose relationship was recovered exactly right, which is
+  the error this taxonomy exists to prevent.
 - Where a finding states that a detail is unresolved and either value is
   acceptable, honour that — the component is supported if the tree carries
   either.
@@ -210,7 +224,14 @@ markdown fences around it):
       "finding_id": "f1",
       "matched": "true" | "partial" | "false",
       "agent_evidence": "<which element in the final tree supports the match, or empty>",
-      "notes": "<short rationale>"
+      "notes": "<short rationale>",
+      "components": [
+        {
+          "claim": "<the single claim this component covers>",
+          "kind": "link" | "detail",
+          "status": "supported" | "unsupported" | "contradicted"
+        }
+      ]
     }
   ],
   "recall_required": 0.0,
