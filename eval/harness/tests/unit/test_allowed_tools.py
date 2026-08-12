@@ -343,19 +343,35 @@ def test_preflight_flags_a_live_callee_with_no_fixtures():
 
 
 def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
-    from harness.allowed_tools import uncovered_callee_fixtures
+    """Derives the stocked set from the callee's own frontmatter rather than
+    hardcoding it.
+
+    The hardcoded version went red the moment main granted the callee a new
+    tool: #1521 added `collections_search` to search-external-sites so it can
+    note FamilySearch's own holdings before recommending a competitor, and this
+    test — which claims "the preflight is satisfied once the fixtures are
+    stocked" — was still describing a two-tool callee. Neither change was
+    wrong; they only broke together, and the test's own subject is that a
+    complete set satisfies the preflight, not which tools happened to be in it
+    on the day it was written.
+    """
+    from harness.allowed_tools import load_skill_frontmatter, uncovered_callee_fixtures
+
+    callee_fm = load_skill_frontmatter(
+        PLUGIN_SKILLS / "search-external-sites" / "SKILL.md"
+    )
+    stocked = {
+        t.rsplit("__", 1)[-1] for t in (callee_fm.get("allowed-tools") or [])
+    } | {"record_search"}
+    assert "collections_search" in stocked, (
+        "sanity: the callee's frontmatter should be the source of this set"
+    )
 
     missing = uncovered_callee_fixtures(
         "search-records",
         PLUGIN_SKILLS,
         stubbed_skills=set(),
-        registered_tools={
-            "record_search",
-            "place_search",
-            "external_links_search",
-            "research_append",
-            "research_log_append",
-        },
+        registered_tools=stocked,
     )
     assert [(c, t) for c, t in missing if c == "search-external-sites"] == []
 
