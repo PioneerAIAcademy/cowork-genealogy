@@ -163,6 +163,12 @@ export async function walkProject(folder: string): Promise<ProjectFile[]> {
 
 export type SessionLog = { entries: unknown[]; sizeBytes: number }
 
+// Why `_feedback/session-log.jsonl` is or isn't in the bundle. Surfaced in
+// FEEDBACK.md (issue #1481) so triage isn't left hunting for a file that was
+// never written: a Cowork session has no Claude Code transcript on this machine
+// (the agent runs in Cowork's VM), which is expected, not missing.
+type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
+
 export async function readSessionLog(folderPath: string): Promise<SessionLog> {
   // Claude Code stores sessions in ~/.claude/projects/<path-with-dashes>/
   const projectHash = folderPath.replace(/^\//, '').replace(/\//g, '-')
@@ -352,12 +358,14 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   const fileCount = selected.length
 
   const timestamp = new Date().toISOString()
-  let sessionLogIncluded = false
+  let sessionLogStatus: SessionLogStatus = 'not-requested'
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     if (sessionLog.entries.length > 0) {
       zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
-      sessionLogIncluded = true
+      sessionLogStatus = 'included'
+    } else {
+      sessionLogStatus = 'requested-but-empty'
     }
   }
 
@@ -368,7 +376,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
       timestamp,
       projectFolder: folderResolved,
       viewerVersion,
-      sessionLogIncluded,
+      sessionLogStatus,
       skipped,
       redactedLiving
     })
@@ -429,7 +437,7 @@ function renderFeedbackMarkdown(args: {
   timestamp: string
   projectFolder: string
   viewerVersion: string
-  sessionLogIncluded: boolean
+  sessionLogStatus: SessionLogStatus
   skipped: string[]
   redactedLiving?: number
 }): string {
@@ -438,7 +446,7 @@ function renderFeedbackMarkdown(args: {
     timestamp,
     projectFolder,
     viewerVersion,
-    sessionLogIncluded,
+    sessionLogStatus,
     skipped,
     redactedLiving = 0
   } = args
@@ -472,12 +480,28 @@ function renderFeedbackMarkdown(args: {
     sections.push('', '## Notes', '', fields.notes)
   }
 
-  if (sessionLogIncluded) {
+  // Always state the session log's status — never silently omit the section.
+  // A Cowork session has no Claude Code transcript on this machine (the agent
+  // runs in Cowork's VM), so an absent log is expected, not missing; saying so
+  // keeps triage from hunting for a file that was never written (issue #1481).
+  sections.push('', '## Session log', '')
+  if (sessionLogStatus === 'included') {
     sections.push(
-      '',
-      '## Session log',
-      '',
       "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
+    )
+  } else if (sessionLogStatus === 'not-requested') {
+    sections.push(
+      'No Claude Code session log was included. For a Cowork session this is expected — ' +
+        "the agent runs in Cowork's own VM, so there is no Claude Code transcript on this " +
+        'machine to attach (see `docs/alpha-user-guide-cowork.md`). The `results/` sidecars ' +
+        'carry the search/step record instead.'
+    )
+  } else {
+    // requested-but-empty
+    sections.push(
+      'A Claude Code session log was requested but none was found under `~/.claude/projects`. ' +
+        'For a Cowork session that is expected (the agent ran in Cowork’s VM); for a Claude ' +
+        'Code session, the transcript that should be here is missing.'
     )
   }
 
