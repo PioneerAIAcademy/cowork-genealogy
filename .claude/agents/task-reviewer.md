@@ -155,6 +155,13 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 it goes. This covers only what is true whichever way the decisions below go.
 Omit the section when the verdict needs no edit.
 
+Every number you put in a body edit carries the command that reproduces it.
+Prefer naming the command to pasting its output — `make e2e-nudges SINCE=all`
+stays true, a pasted count does not. When a number must be inline, stamp it
+`measured <date>, <command>` and say what would move it. An unstamped
+measurement is quoted forward as settled fact and cannot be re-checked; that is
+how issue bodies come to carry figures that do not survive a re-run.
+
 **For the lead** — one block per genuinely open decision, to the contract below.
 Omit when there are none.
 

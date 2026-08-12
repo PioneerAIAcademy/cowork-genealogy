@@ -20,7 +20,10 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
   return { ...actual, fetchFsImageBytes: fetchFsImageBytesMock };
 });
 
-import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
+import {
+  imageTranscribeTool,
+  __clearBrowseBudgetForTests,
+} from "../../src/tools/image-transcribe.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -48,6 +51,10 @@ function mockOpenRouterStatus(status: number, body = "") {
 }
 
 beforeEach(() => {
+  // The browse-budget Map is module-level and survives across it() blocks; a
+  // vi mock reset does not clear it, so reset it explicitly or the budget tests
+  // become order-dependent.
+  __clearBrowseBudgetForTests();
   mockFetch.mockReset();
   getOpenRouterApiKeyMock.mockReset();
   getOpenRouterModelMock.mockReset();
@@ -253,5 +260,107 @@ describe("imageTranscribeTool — input validation", () => {
       })
     ).rejects.toThrow(/either imageId or ark, not both/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
+  const GROUP = "004261111";
+  const img = (seq: number) => `${GROUP}_${String(seq).padStart(5, "0")}`;
+
+  // A persistent OK OCR response: each transcribe consumes one fetch, and these
+  // tests make many calls where the exact text does not matter.
+  function mockOcrAlwaysOk(content = "page text") {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ choices: [{ message: { content } }] }),
+      text: async () => "",
+    });
+  }
+
+  it("does not attach browseBudget for the first 20 distinct images in one group/project", async () => {
+    mockOcrAlwaysOk();
+    for (let i = 1; i <= 20; i++) {
+      const result = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      expect(result.browseBudget).toBeUndefined();
+    }
+  });
+
+  it("attaches browseBudget on the 21st distinct image, naming the count, group, and pivot actions", async () => {
+    mockOcrAlwaysOk();
+    for (let i = 1; i <= 20; i++) {
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+    }
+    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+
+    expect(result.browseBudget).toBeDefined();
+    expect(result.browseBudget?.imageGroup).toBe(GROUP);
+    expect(result.browseBudget?.distinctImagesRead).toBe(21);
+    const notice = result.browseBudget?.notice ?? "";
+    expect(notice).toContain("21");
+    expect(notice).toContain(GROUP);
+    // The concrete pivot actions must survive verbatim — a paraphrase fails here.
+    expect(notice).toContain("research_log_append");
+    expect(notice).toContain("record_search");
+    expect(notice).toContain("record_read");
+    expect(notice).toContain("fulltext_search");
+  });
+
+  it("leaves transcription / found / imageRef / metadata untouched on the noticing call", async () => {
+    mockOcrAlwaysOk("Wilkins register page 93");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-budget-"));
+    try {
+      for (let i = 1; i <= 20; i++) {
+        await imageTranscribeTool({ imageId: img(i), projectPath: dir });
+      }
+      const result = await imageTranscribeTool({ imageId: img(21), projectPath: dir });
+
+      expect(result.browseBudget?.distinctImagesRead).toBe(21);
+      // Everything else is exactly the un-noticed path's output.
+      expect(result.transcription).toBe("Wilkins register page 93");
+      expect(result.found).toBeUndefined();
+      expect(result.imageRef).toBe(`images/${img(21)}.jpg`);
+      expect(result.metadata).toEqual({
+        imageId: img(21),
+        model: MODEL,
+        sizeBytes: 3,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("does not carry the budget to a different image group in the same process", async () => {
+    mockOcrAlwaysOk();
+    for (let i = 1; i <= 21; i++) {
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+    }
+    const other = await imageTranscribeTool({ imageId: "999999999_00001", projectPath: "/p" });
+    expect(other.browseBudget).toBeUndefined();
+  });
+
+  it("keys by project: the same group under a different projectPath starts fresh", async () => {
+    mockOcrAlwaysOk();
+    for (let i = 1; i <= 21; i++) {
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p1" });
+    }
+    const p2 = await imageTranscribeTool({ imageId: img(1), projectPath: "/p2" });
+    expect(p2.browseBudget).toBeUndefined();
+  });
+
+  it("does not advance the count when an already-read image is re-read", async () => {
+    mockOcrAlwaysOk();
+    for (let i = 1; i <= 20; i++) {
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+    }
+    // Re-read all 20 — the set does not grow, so still no notice.
+    for (let i = 1; i <= 20; i++) {
+      const r = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      expect(r.browseBudget).toBeUndefined();
+    }
+    // The 21st DISTINCT image trips it at exactly 21, proving re-reads did not inflate.
+    const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+    expect(r21.browseBudget?.distinctImagesRead).toBe(21);
   });
 });

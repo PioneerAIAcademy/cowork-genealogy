@@ -1066,6 +1066,95 @@ def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
     assert rc == 0
 
 
+# --- an aborted row must say why (#1245) ------------------------------
+#
+# Issue #1245 was reported as "19 of 20 tests came back aborted" with no cause
+# available. The cause was on the entry the whole time; the summary just never
+# printed it, and there was no count line to read "19 of 20" from either.
+
+
+def _summary(rows, capsys):
+    run_tests._print_summary(rows)
+    return capsys.readouterr().out
+
+
+def test_summary_prints_the_abort_reason(capsys):
+    out = _summary(
+        [{"test_id": "ut_a", "skill": "citation", "outcome": "aborted",
+          "reason": "sdk_stream_silence"}],
+        capsys,
+    )
+    assert "REASON" in out
+    assert "sdk_stream_silence" in out
+
+
+def test_summary_tolerates_a_row_with_no_reason_key(capsys):
+    # Rows are built in one place, but a caller (or an older partial) may not
+    # carry the key; a summary that raises would lose the whole suite's output.
+    out = _summary([{"test_id": "ut_a", "skill": "citation", "outcome": "pass"}], capsys)
+    assert "ut_a" in out
+
+
+def test_summary_counts_every_outcome_and_reconciles(capsys):
+    rows = [
+        {"test_id": "a", "skill": "s", "outcome": "pass", "reason": ""},
+        {"test_id": "b", "skill": "s", "outcome": "xfail", "reason": ""},
+        {"test_id": "c", "skill": "s", "outcome": "xpass", "reason": ""},
+        {"test_id": "d", "skill": "s", "outcome": "aborted", "reason": "error"},
+    ]
+    out = _summary(rows, capsys)
+    # xfail/xpass are real outcomes; a four-value tally would under-sum here.
+    for token in ("1 pass", "1 xfail", "1 xpass", "1 aborted", "of 4 test(s)"):
+        assert token in out, token
+
+
+def test_summary_groups_the_abort_reasons(capsys):
+    rows = [
+        {"test_id": f"t{i}", "skill": "s", "outcome": "aborted", "reason": "error"}
+        for i in range(19)
+    ] + [{"test_id": "t19", "skill": "s", "outcome": "pass", "reason": ""}]
+    out = _summary(rows, capsys)
+    assert "19 aborted" in out and "of 20 test(s)" in out
+    assert "19x error" in out
+
+
+def test_summary_names_an_outcome_outside_the_known_set(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "surprise", "reason": ""}], capsys
+    )
+    assert "1 surprise" in out, "an unknown outcome must not vanish from the tally"
+
+
+def test_summary_records_an_abort_that_carried_no_reason(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "aborted", "reason": ""}], capsys
+    )
+    assert "unrecorded" in out
+
+
+def test_the_live_progress_line_names_the_abort_reason(tmp_path, monkeypatch, capsys):
+    """The surface an operator actually watches during a long suite.
+
+    `_print_summary` lands after every test has finished; this line is the only
+    thing visible while a 20-test suite is still running, and a bare `aborted`
+    here is what left issue #1245 undiagnosable in real time. The existing
+    exit-code tests already drive this path, so without an output assertion a
+    regression to a bare `aborted` would stay green.
+    """
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "— aborted [max_turns]" in out, (
+        "the progress line must carry the reason, not just the outcome"
+    )
+
+
+def test_the_end_of_suite_tally_names_the_abort_reason_too(tmp_path, monkeypatch, capsys):
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "1 pass, 1 aborted of 2 test(s)" in out
+    assert "1x max_turns" in out
 def _stub_keyed_auth(monkeypatch, key="sk-test-key"):
     from harness.auth import AuthConfig
     monkeypatch.setattr(
@@ -1257,3 +1346,86 @@ def test_preflight_skips_check_for_negative_only(tmp_path, monkeypatch):
     ])
 
     assert rc == 0
+
+
+def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
+    tmp_path, monkeypatch, capsys
+):
+    """A harness-level exception part-way through saves the tests that finished,
+    exactly as a Ctrl-C does, and exits 1.
+
+    The sibling Ctrl-C test above is the contract this mirrors: same state, same
+    partial dotfile on disk, and until #943 the opposite outcome — the error
+    path returned before promoting it, so every completed test was stranded in a
+    gitignored `.partial_` file nothing surfaced.
+
+    Concurrency is pinned to 1 so exactly one test completes before the raise.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(3):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(spec.id, spec.skill, "pass")
+        raise RuntimeError("boom")  # the harness itself breaks during test 2
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # 1. A harness crash is exit 1 (documented in run_tests.py's exit-code
+    #    docstring and in eval/README.md). Unchanged by #943 — but it is the
+    #    assertion that fails if the promotion block is placed AFTER the
+    #    run-log write, since that path falls through and returns 0.
+    assert rc == 1
+    out_dir = runlogs / "unit" / "skill-a"
+    _out = capsys.readouterr().out
+
+    # 2. The completed test was promoted to a scratch log...
+    scratch = list(out_dir.glob("scratch_*.json"))
+    assert len(scratch) == 1, "completed tests should be promoted to a scratch log"
+    # 3. ...and it is the one test that finished before the raise.
+    assert json.loads(scratch[0].read_text(encoding="utf-8"))["n_tests"] == 1
+    # 4. Promoted, not copied — the dotfile was renamed away.
+    assert list(out_dir.glob(".partial_*")) == []
+    # 5. The operator is told where it went.
+    assert scratch[0].name in _out
+    # 6. We must NOT mint a releasable candidate from a crashed run.
+    assert list(out_dir.glob("v*.json")) == []

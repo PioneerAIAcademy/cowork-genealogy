@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Tree contains no Birte b. 1805 and no 10th child; ps_001 is a probable negative. Agent missed the true birth in the April-October 1805 section of image 007226375_00232 (OCR degraded after 20 Mar 1805) and did not surface the 1819 confirmation (QG8V-2DDT). Recovered a previously-unknown son Niels (b. 1807) as contextual evidence only. Sound negative given accessible sources, but the required finding was not recovered."
+  },
+  "annotator": "genealogist"
+}

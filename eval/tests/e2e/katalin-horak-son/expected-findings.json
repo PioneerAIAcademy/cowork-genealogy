@@ -3,9 +3,9 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Katalin Horák (recorded in the hint as Káti Liskovics) and István Banyári had a son, János Banyári, baptized 1 September 1844 in Kľak, Nová Baňa, close in time to the tree's existing son István (christened 15 April 1846).",
+      "description": "István Banyári (Katalin Horák's husband, LDSJ-SX2) had a son named János Banyári, baptized 1 September 1844, Kľak, Nová Baňa, Slovakia — a direct, exact match on name, date, and place from the Kľak Roman Catholic baptismal register. This finding is scoped to the father-child relationship only: the well-evidenced part of the original hint. See f2/f3 for why Katalin Horák's own connection to János must NOT be asserted.",
       "details": {
-        "subject_person": "Katalin Horák (LDSJ-SXL)",
+        "subject_person": "István Banyári (LDSJ-SX2)",
         "relation": "child",
         "target_person": {
           "name": "János Banyári",
@@ -13,7 +13,45 @@
         }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, 1 Sep 1844, Kľak, Nová Baňa, naming parents István Banyári and Káti Liskovics"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, 1 Sep 1844, Kľak, Nová Baňa, naming János Banyári's father as István Banyári (ark:/61903/1:1:KDVC-BPB)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert or newly encode Katalin Horák (LDSJ-SXL) as János Banyári's mother — the specific new claim this hint would add. (The starting tree already carries a pre-existing ParentChild relationship from LDSJ-SXL to her existing son LDSJ-SXK; this finding is scoped to the NEW child János only and does not ask the agent to touch that pre-existing relationship.) János's own 1844 baptism names the mother as Katalin (Káti) Liskovics, not Horák — a direct contradiction, not a name variant. Pass = the final tree/research contains no new ParentChild (or Couple-derived) relationship linking Katalin Horák (LDSJ-SXL) to János as his mother.",
+      "details": {
+        "subject_person": "Katalin Horák (LDSJ-SXL)",
+        "relation": "mother of child (unconfirmed)",
+        "wrong_candidate": {
+          "name": "Katalin Horák as János Banyári's mother",
+          "note": "János's baptismal record names his mother as Katalin (Káti) Liskovics, not Horák. Whether 'Horák' is also wrong for the tree's pre-existing son (his own 1846 baptism names a third name, Katalin Szeget) is a separate, broader data-quality question this finding does not require the agent to resolve or touch — it only requires not adding a new, unsupported link for János."
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — 1844 baptism naming mother Katalin (Káti) Liskovics (ark:/61903/1:1:KDVC-BPB)",
+        "Slovakia, Church and Synagogue Books, 1592-1935 — 1846 baptism of the tree's own son István (LDSJ-SXK) naming mother Katalin Szeget",
+        "Slovakia, Church and Synagogue Books, 1592-1935 — 1853 baptism naming mother Elisabetha Szeged, a third distinct Banyári couple in the same parish"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Having found that János's baptismal record names a mother other than 'Horák,' and no marriage record for István Banyári indexed under any name variant, the agent should document a negative/unresolved conclusion: 'Katalin Horák' cannot be confirmed as János's mother from accessible records. Noting the broader pattern as context (the tree's own existing son's 1846 baptism names yet a different mother, Katalin Szeget, suggesting 'Horák' may be a tree-compilation error generally) is valuable but not itself required — the required part is the negative conclusion on János specifically, flagged rather than silently dropped.",
+      "details": {
+        "subject_person": "Katalin Horák (LDSJ-SXL)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: mother's identity not proved",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any indexed marriage record for István Banyári and a wife named Horák, Liskovics, or Szeget in Kľak",
+        "Absence of any baptismal record naming a Banyári mother 'Horák' anywhere in the parish"
       ],
       "required": true
     }

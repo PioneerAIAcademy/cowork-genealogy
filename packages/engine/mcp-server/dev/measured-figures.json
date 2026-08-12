@@ -1,0 +1,1626 @@
+{
+  "C": {
+    "correctCountyFuzzy": 35509,
+    "correctCountyFuzzyTargetRank": 1,
+    "correctCountyExact": 2,
+    "correctCountyExactTargetRank": 1,
+    "wrongCountyFuzzy": 35472,
+    "wrongCountyFuzzyTargetRank": null,
+    "targetWindowScanned": 20,
+    "targetIdBound": "414L-Y42M",
+    "measured_at": "2026-08-10T15:41:47.723Z"
+  },
+  "D": {
+    "nealFuzzy": 2,
+    "nealExact": 0,
+    "neillExact": 2,
+    "verdict:fuzzy bridges the misspelling and exact destroys it": "HOLDS — the fuzzy spelling finds the record and the exact spelling returns nothing",
+    "measured_at": "2026-08-11T03:23:42.478Z"
+  },
+  "E": {
+    "reached": 8,
+    "conclusive": 8,
+    "rankScan": 500,
+    "pairsTested": [
+      "Elizabeth<-Betty",
+      "Margaret<-Peggy",
+      "Mary<-Polly"
+    ],
+    "populationsTested": 3,
+    "membershipTested": [
+      "Betty",
+      "Peggy",
+      "Polly"
+    ],
+    "seenWithinScan": 2,
+    "rankable": 8,
+    "bestRank": 347,
+    "bestPool": 1019,
+    "unseenMinPool": 55514,
+    "pools": [
+      1019,
+      1019,
+      55514,
+      55514,
+      90037,
+      90037,
+      219494,
+      219494
+    ],
+    "measured_at": "2026-08-11T03:22:07.896Z"
+  },
+  "F": {
+    "baseline": {
+      "total": 455762,
+      "sampled": 300,
+      "namesAFather": 262,
+      "noFatherName": 38,
+      "noParentAtAll": 26,
+      "tally": "John:54 William:22 James:17 Thomas:17 Henry:8"
+    },
+    "william": {
+      "total": 442819,
+      "sampled": 300,
+      "namesAFather": 283,
+      "noFatherName": 17,
+      "noParentAtAll": 0,
+      "tally": "William:192 Wm:52 Wm.:31 John:5 Willm:1"
+    },
+    "williamExact": {
+      "total": 390,
+      "sampled": 300,
+      "namesAFather": 295,
+      "noFatherName": 5,
+      "noParentAtAll": 0,
+      "tally": "William:294 Mr:1"
+    },
+    "zachariah": {
+      "total": 441216,
+      "sampled": 300,
+      "namesAFather": 7,
+      "noFatherName": 293,
+      "noParentAtAll": 284,
+      "tally": "Zachariah:2 Zachie:1 Zacharius:1 Zacharish:1 Zacaria:1"
+    },
+    "zachariahExact": {
+      "total": 2,
+      "sampled": 2,
+      "namesAFather": 2,
+      "noFatherName": 0,
+      "noParentAtAll": 0,
+      "tally": "Zachariah:2"
+    },
+    "gibberish": {
+      "total": 441205,
+      "sampled": 300,
+      "namesAFather": 1,
+      "noFatherName": 299,
+      "noParentAtAll": 292,
+      "tally": "Jno:1"
+    },
+    "williamExactTotal": 390,
+    "verdict:relative .exact requires the relative to be present": "CONFIRMED — every father-less representative is absent from the exact set read in full, and the father-bearing control is present",
+    "gibberishKeptPct": 96.8,
+    "conflictRate": 0.0067,
+    "verdict:drop-contradicting": "CONFIRMED (SAMPLED — 300 rows of a pool far too large to enumerate; section R enumerates the same question)",
+    "pop:Martin/John US b.1840-60": {
+      "baseline": 455762,
+      "gibberish": 441205,
+      "fatherBearingPct": 3.2
+    },
+    "pop:Martin, Gloucs b.1810-14": {
+      "baseline": 415477,
+      "gibberish": 397176,
+      "fatherBearingPct": 4.4
+    },
+    "pop:Martin, marriage 1850-60": {
+      "baseline": 9488575,
+      "gibberish": 7975825,
+      "fatherBearingPct": 15.9
+    },
+    "pop:Martin, residence 1880": {
+      "baseline": 11385929,
+      "gibberish": 9477724,
+      "fatherBearingPct": 16.8
+    },
+    "pop:Smith, England": {
+      "baseline": 13060160,
+      "gibberish": 10640288,
+      "fatherBearingPct": 18.5
+    },
+    "pop:Gallo, Italy": {
+      "baseline": 723882,
+      "gibberish": 481085,
+      "fatherBearingPct": 33.5
+    },
+    "popShareLoPct": 3.2,
+    "popShareHiPct": 33.5,
+    "popCount": 6,
+    "measured_at": "2026-08-11T10:01:55.191Z"
+  },
+  "B": {
+    "rows": [
+      {
+        "pop": "Brazil/Bochenek",
+        "deepestSharedFuzzyRank": 81,
+        "biggestPositionGain": 0,
+        "exampleFuzzyRank": 0,
+        "exampleExactRank": 0,
+        "fuzzyRows": 521,
+        "exactRows": 81,
+        "exactOnly": 0,
+        "fuzzyOnly": 440,
+        "sharedRows": 81,
+        "recordsDisplaced": 0,
+        "maxDisplacement": 0,
+        "selfMaxDisplacement": 0,
+        "displacedAcrossDistinctScores": 0
+      },
+      {
+        "pop": "England/Pocklington",
+        "deepestSharedFuzzyRank": 423,
+        "biggestPositionGain": 34,
+        "exampleFuzzyRank": 82,
+        "exampleExactRank": 48,
+        "fuzzyRows": 469,
+        "exactRows": 423,
+        "exactOnly": 0,
+        "fuzzyOnly": 46,
+        "sharedRows": 423,
+        "recordsDisplaced": 54,
+        "maxDisplacement": 34,
+        "selfMaxDisplacement": 0,
+        "displacedAcrossDistinctScores": 6
+      }
+    ],
+    "Zsigmondy": {
+      "fuzzyTotal": 108848,
+      "exactTotal": 634,
+      "inflation": 172
+    },
+    "Mingazzini": {
+      "fuzzyTotal": 40908,
+      "exactTotal": 1796,
+      "inflation": 23
+    },
+    "Geach": {
+      "fuzzyTotal": 18515976,
+      "exactTotal": 23186,
+      "inflation": 799
+    },
+    "verdict:exact surfaces records fuzzy does not": "NO — across complete sets, every record the exact search returns is already in the fuzzy set. Exact is a strict subset, so it cannot surface a record a fuzzy search buried. Measured on the `surname` qualifier in marriage populations only.",
+    "verdict:exact reorders the shared records": "YES — 54 record(s) move, the largest by 34 positions, exceeding the same-query noise floor, and 6 of them cross rows carrying a DIFFERENT relevance score",
+    "measured_at": "2026-08-11T10:29:14.458Z"
+  },
+  "G": {
+    "UnitedStates": 14035394,
+    "Narnia": 0,
+    "subdivision:Alabama": 342439,
+    "subdivision:Xanadu": 0,
+    "verdict:recordCountry is strict": "STRICT",
+    "verdict:recordSubdivision is strict": "STRICT — a nonexistent subdivision returns 0",
+    "measured_at": "2026-08-11T03:23:42.479Z"
+  },
+  "H": {
+    "population": "US Martin/John",
+    "unqualifiedOutOfRange": 3,
+    "unqualifiedSampled": 300,
+    "unqualifiedApproximate": 3,
+    "exactOutOfRange": 0,
+    "exactSampled": 300,
+    "unqualifiedTotal": 357893,
+    "exactTotal": 3056,
+    "verdict:an unqualified range fuzzes past its bounds": "CONFIRMED (SAMPLED — 3/300 rows of a 357,893-record pool; section N enumerates this and records WEAK)",
+    "verdict:.exact hardens the range": "CONFIRMED (SAMPLED — an ABSENCE inside 300 rows of a 3,056-record pool, which RULE 0 does not accept as evidence; section N enumerates and finds an out-of-range row SURVIVING .exact)",
+    "verdict:year-silent": "DROPPED",
+    "verdict:in-range approximate": "NOT MEASURED",
+    "verdict:in-range precise": "KEPT",
+    "widePopulation": "US Martin residence-1880",
+    "wideBaseline": 11386631,
+    "wideUnqualified": 11279569,
+    "wideUnqualifiedPct": 99.1,
+    "wideExact": 2748979,
+    "wideExactPct": 24.1,
+    "silentPersonaSampled": 261,
+    "silentPersonaRecordHasYear": 0,
+    "silentPersonaRecordAlsoSilent": 261,
+    "verdict:year-less personas sit on records carrying another person's year": "NO — those records carry no birth year on any person",
+    "impossibleRangeTotals": [
+      152371,
+      195372
+    ],
+    "impossibleRangeSampled": 100,
+    "impossibleRangePayloadSilent": 0,
+    "verdict:payload-silent is the tolerated population": "NO — only 0% of an impossible range's results are payload-year-less, so something else is also being kept",
+    "yearlessByOffset": [
+      {
+        "offset": 0,
+        "sampled": 100,
+        "noYear": 86
+      },
+      {
+        "offset": 1000,
+        "sampled": 100,
+        "noYear": 1
+      },
+      {
+        "offset": 2000,
+        "sampled": 100,
+        "noYear": 86
+      },
+      {
+        "offset": 3000,
+        "sampled": 100,
+        "noYear": 86
+      },
+      {
+        "offset": 4000,
+        "sampled": 100,
+        "noYear": 86
+      }
+    ],
+    "yearlessSpreadPct": 85,
+    "sweepCoveragePctOfPool": 0.0044,
+    "verdict:the sampled year-less share describes the population": "NO — the sampled window is a vanishing fraction of the pool, and it is not even stable across offsets",
+    "meanBucketsSpannedPerRecord": 1.78,
+    "partitionRecordsSampled": 300,
+    "partitionBuckets": [
+      573517,
+      3011190,
+      7268009,
+      7759854,
+      3313850
+    ],
+    "partitionSum": 21926420,
+    "partitionRatioToWide": 1.944,
+    "partitionImpliedSilent": 2661713,
+    "narrowKeptPct": 45.1,
+    "smallestBucket": 573517,
+    "silentCeilingPctOfWide": 5.1,
+    "silentEstimate": 585228,
+    "silentEstimatePctOfWide": 5.2,
+    "impossibleRangeMean": 173872,
+    "silentEstimatesAgree": false,
+    "silentEstimateCount": 3,
+    "verdict:silence tolerated": "OPEN — the three independent estimates of the silent population disagree, and the impossible-range test refutes the match-every-range model they assume. Do not quote a share, and do not say an unqualified range keeps year-silent records.",
+    "measured_at": "2026-08-11T12:54:16.929Z"
+  },
+  "X": {
+    "yearsNoAnchor": 948,
+    "yearsFather": 886,
+    "noYearsNoAnchor": 2095,
+    "noYearsFather": 1479,
+    "noYearsMother": 1444,
+    "verdict:father anchor at constant query": "NARROWS",
+    "verdict:dropping the year range": "WIDENS",
+    "verdict:1478 explained by the dropped year range": "CONFIRMED",
+    "anchorDeltaPct": -6.5,
+    "measured_at": "2026-08-10T15:39:46.129Z"
+  },
+  "A": {
+    "perFieldRequiredError": "Unable to map supplied value=required to term modifier",
+    "verdict:per-field .required": "REJECTED",
+    "suffixExactThenCardinalityTotal": 108849,
+    "suffixCardinalityThenExactError": "Unable to map supplied value=1 to term modifier",
+    "verdict:suffix order": "exact.1 ACCEPTED, 1.exact REJECTED",
+    "baseline": {
+      "on": 634,
+      "off": 634
+    },
+    "gibberishGiven": {
+      "on": 6,
+      "off": 634
+    },
+    "impossibleRange": {
+      "on": 4,
+      "off": 634
+    },
+    "wrongPlace": {
+      "on": 4,
+      "off": 634
+    },
+    "termsIgnoredWithoutSwitch": 3,
+    "verdict:terms without the switch": "IGNORED",
+    "measured_at": "2026-08-10T15:43:05.299Z"
+  },
+  "W": {
+    "smithFuzzy": {
+      "total": 1102,
+      "sampled": 100,
+      "smithPresent": true,
+      "smythPresent": false,
+      "forms": "smith:100",
+      "error": null
+    },
+    "smithExact": {
+      "total": 1050,
+      "sampled": 100,
+      "smithPresent": true,
+      "smythPresent": false,
+      "forms": "smith:100",
+      "error": null
+    },
+    "wildFuzzy": {
+      "total": 1066,
+      "sampled": 100,
+      "smithPresent": true,
+      "smythPresent": false,
+      "forms": "smith:100",
+      "error": null
+    },
+    "wildExact": {
+      "total": 1060,
+      "sampled": 100,
+      "smithPresent": true,
+      "smythPresent": false,
+      "forms": "smith:100",
+      "error": null
+    },
+    "membership": {
+      "scansComplete": true,
+      "smythRecordsBound": 10,
+      "smythIdsInSmithFuzzy": 10,
+      "smythIdsInSmithExact": 0,
+      "smythIdsInWildcardExact": 10,
+      "smithFuzzyScanned": 1102,
+      "smithExactScanned": 1050,
+      "wildcardExactScanned": 1060
+    },
+    "verdict:.exact removes variant expansion": "REMOVES",
+    "verdict:wildcard restores the variant under .exact": "RESTORES",
+    "samplingCheck": {
+      "sampleSize": 100,
+      "poolScanned": 1060,
+      "smythFoundBySample": "no",
+      "smythFoundByFullScan": 10
+    },
+    "verdict:top-N sampling on this question": "PRODUCES A FALSE NEGATIVE — sample found none, full scan found them all",
+    "nonsenseWildcardExact": {
+      "total": 0,
+      "error": null
+    },
+    "verdict:? is a wildcard, not a literal": "CONFIRMED",
+    "minLettersTwo": {
+      "total": 86626453,
+      "error": null
+    },
+    "minLettersThree": {
+      "total": 75628695,
+      "error": null
+    },
+    "leadingStar": {
+      "total": 305945,
+      "error": null
+    },
+    "fourStars": {
+      "total": 74638269,
+      "error": null
+    },
+    "fiveStars": {
+      "total": 996793,
+      "error": null
+    },
+    "verdict:minimum 3 non-wildcard letters": "NOT ENFORCED — a 2-letter stem expanded MORE broadly than a 3-letter one",
+    "verdict:four-star maximum": "NOT ENFORCED — a 5th star changed the count, so it was honoured",
+    "measured_at": "2026-08-11T19:19:43.865Z"
+  },
+  "R": {
+    "rows": [
+      {
+        "pop": "Brazil/Bochenek",
+        "family": "father",
+        "baselineRows": 521,
+        "namedInBaseline": 147,
+        "namelessButIndexedInBaseline": 9,
+        "silentInBaseline": 365,
+        "silentSharePct": 70.1,
+        "gibberish": {
+          "total": 366,
+          "match": 0,
+          "conflict": 0,
+          "silent": 365,
+          "nameless": 1
+        },
+        "realName": "João",
+        "real": {
+          "total": 379,
+          "match": 12,
+          "conflict": 0,
+          "silent": 365,
+          "nameless": 2
+        },
+        "retentionPct": 70.2
+      },
+      {
+        "pop": "Brazil/Bochenek",
+        "family": "spouse",
+        "baselineRows": 521,
+        "namedInBaseline": 468,
+        "namelessButIndexedInBaseline": 2,
+        "silentInBaseline": 51,
+        "silentSharePct": 9.8,
+        "gibberish": {
+          "total": 53,
+          "match": 0,
+          "conflict": 0,
+          "silent": 51,
+          "nameless": 2
+        },
+        "realName": "Broneslava",
+        "real": {
+          "total": 54,
+          "match": 1,
+          "conflict": 0,
+          "silent": 51,
+          "nameless": 2
+        },
+        "retentionPct": 10.2
+      },
+      {
+        "pop": "England/Pocklington",
+        "family": "father",
+        "baselineRows": 469,
+        "namedInBaseline": 26,
+        "namelessButIndexedInBaseline": 8,
+        "silentInBaseline": 435,
+        "silentSharePct": 92.8,
+        "gibberish": {
+          "total": 435,
+          "match": 0,
+          "conflict": 0,
+          "silent": 435,
+          "nameless": 0
+        },
+        "realName": "Thoroton",
+        "real": {
+          "total": 436,
+          "match": 1,
+          "conflict": 0,
+          "silent": 435,
+          "nameless": 0
+        },
+        "retentionPct": 92.8
+      },
+      {
+        "pop": "England/Pocklington",
+        "family": "spouse",
+        "baselineRows": 469,
+        "namedInBaseline": 89,
+        "namelessButIndexedInBaseline": 0,
+        "silentInBaseline": 380,
+        "silentSharePct": 81,
+        "gibberish": {
+          "total": 380,
+          "match": 0,
+          "conflict": 0,
+          "silent": 380,
+          "nameless": 0
+        },
+        "realName": "Mary",
+        "real": {
+          "total": 385,
+          "match": 5,
+          "conflict": 0,
+          "silent": 380,
+          "nameless": 0
+        },
+        "retentionPct": 81
+      }
+    ],
+    "verdict:drop-contradicting": "HOLDS — across every enumerated pool, an unmatchable name left zero records naming a different relative",
+    "verdict:keep-silent": "HOLDS — the records retained by an unmatchable name are the ones the baseline is silent about, in the same number",
+    "verdict:keep-matching": "HOLDS — a real name drawn from the data returns matching records",
+    "verdict:retention equals the silent share": "HOLDS — retention under an unmatchable name matches the baseline's silent share in every enumerated population, which is what makes the father/spouse difference an artifact of indexing rather than of the parameter",
+    "spouseExactRequiresPresence": [
+      {
+        "pop": "Brazil/Bochenek",
+        "spouseName": "Maria",
+        "baselineRows": 521,
+        "exactRows": 35,
+        "silentReps": 51,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "pop": "England/Pocklington",
+        "spouseName": "Ann",
+        "baselineRows": 469,
+        "exactRows": 12,
+        "silentReps": 380,
+        "silentKept": 0,
+        "controlPresent": true
+      }
+    ],
+    "verdict:spouse .exact requires the spouse to be present": "CONFIRMED — across 2 population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives",
+    "measured_at": "2026-08-11T19:12:07.043Z"
+  },
+  "I": {
+    "fuzzy": {
+      "total": 1025885,
+      "sampled": 100,
+      "initialsShaped": 95,
+      "initialsPct": 95,
+      "inQueriedOrder": 66,
+      "transposed": 29,
+      "forms": "J W:66 W J:29 J W Martin:2 Edward W J:1 Mary W J:1"
+    },
+    "exact": {
+      "total": 8483,
+      "sampled": 100,
+      "initialsShaped": 97,
+      "initialsPct": 97,
+      "inQueriedOrder": 97,
+      "transposed": 0,
+      "forms": "J W:97 J W Martin:2 J W Martin,:1"
+    },
+    "fuzzyInitialsPct": 95,
+    "exactInitialsPct": 97,
+    "fuzzyInOrderPct": 66,
+    "exactInOrderPct": 97,
+    "fuzzyTransposedPct": 29,
+    "exactTransposedPct": 0,
+    "verdict:fuzzy swallows initials into spelled-out names": "NO — the fuzzy row is overwhelmingly initials-shaped too",
+    "initialsOrderEnumerated": {
+      "surname": "royalty",
+      "id": "XHMN-QMN",
+      "name": "W J Royalty",
+      "fuzzyRows": 784,
+      "inFuzzy": true,
+      "exactRows": 4,
+      "inExact": false
+    },
+    "initialsOrderPoolsTried": 13,
+    "initialsExactInSpellOutScope": {
+      "scope": "q.recordCountry=England&f.recordType=1&q.marriageLikeDate.from=1850&q.marriageLikeDate.to=1854",
+      "poolsRead": 8,
+      "emptyExactSets": 8
+    },
+    "verdict:.exact on initials where the index spells names out": "RETURNS NOTHING — across 8 pool(s) read to the end in a collection that spells given names out, `givenName.exact=on` on a two-token initials value returned zero rows every time",
+    "initialsExactEmptyPools": {
+      "enumeratedPools": 1,
+      "emptyExactSets": 0
+    },
+    "verdict:.exact on an initials given name matches only the literal form": "1 of 1 enumerated pool(s) kept rows under .exact",
+    "verdict:.exact pins the initials ORDER": "CONFIRMED (ENUMERATED) — the transposed record is in the fuzzy set and absent from the .exact set, both read to the end, and .exact kept 4 other row(s) so the absence is selective (royalty, 784 -> 4 rows)",
+    "verdict:the levers initials exception": "REAL, BUT FOR A DIFFERENT REASON THAN STATED — exactness pins the order, it does not stop a spelled-out expansion",
+    "measured_at": "2026-08-11T19:38:22.038Z"
+  },
+  "V": {
+    "ellis:Ellis-Island": {
+      "purnellExact": 218,
+      "parnellExact": 436,
+      "wildcardExact": 669,
+      "wildcardExpands": true
+    },
+    "ellis:no-collection-filter": {
+      "purnellExact": 197451,
+      "parnellExact": 354698,
+      "wildcardExact": 630499,
+      "wildcardExpands": true
+    },
+    "ellis:membership": {
+      "scansComplete": true,
+      "purnellBound": 218,
+      "wildcardPool": 669,
+      "purnellIdsInWildcardPool": 218
+    },
+    "verdict:wildcards disabled in Ellis Island collections": "REFUTED — inside Ellis Island the wildcard expands on totals, and the bound records are carried into the wildcard pool by membership over complete scans",
+    "place:literal": {
+      "total": 15334322,
+      "error": null
+    },
+    "place:innermost": {
+      "total": 1284820,
+      "error": null
+    },
+    "place:middle": {
+      "total": 1284468,
+      "error": null
+    },
+    "place:outermost": {
+      "total": 1284744,
+      "error": null
+    },
+    "place:noPlaceTerm": 1033621894,
+    "place:variantTotals": [
+      1284820,
+      1284468,
+      1284744
+    ],
+    "place:variantSpread": 0.027,
+    "place:wildcardEqualsNoPlaceTerm": false,
+    "verdict:place wildcards work only at the innermost level": "REFUTED, AND THE RULE HAS THE WRONG SHAPE — a wildcard at ANY level gives the same total, far from the literal's and not equal to dropping the term either. The level makes no difference; what the wildcarded place resolves to is not established here",
+    "measured_at": "2026-08-11T00:36:30.241Z"
+  },
+  "S": {
+    "rows": [
+      {
+        "pop": "US marriage",
+        "family": "father",
+        "indexedPct": 27,
+        "retention": [
+          83.7,
+          83.7
+        ]
+      },
+      {
+        "pop": "US marriage",
+        "family": "spouse",
+        "indexedPct": 100,
+        "retention": [
+          4.9,
+          5.3
+        ]
+      },
+      {
+        "pop": "US residence 1880",
+        "family": "father",
+        "indexedPct": 0,
+        "retention": [
+          83.2,
+          83.3
+        ]
+      },
+      {
+        "pop": "US residence 1880",
+        "family": "spouse",
+        "indexedPct": 5,
+        "retention": [
+          35.3,
+          35.5
+        ]
+      },
+      {
+        "pop": "England, Purnell",
+        "family": "father",
+        "indexedPct": 39,
+        "retention": [
+          81.7,
+          81.7
+        ]
+      },
+      {
+        "pop": "England, Purnell",
+        "family": "spouse",
+        "indexedPct": 31,
+        "retention": [
+          64.9,
+          65
+        ]
+      },
+      {
+        "pop": "Brazil marriage",
+        "family": "father",
+        "indexedPct": 100,
+        "retention": [
+          72.1,
+          72.1
+        ]
+      },
+      {
+        "pop": "Brazil marriage",
+        "family": "spouse",
+        "indexedPct": 100,
+        "retention": [
+          18.9,
+          18.9
+        ]
+      }
+    ],
+    "unstableRows": 0,
+    "verdict:retention is stable across gibberish tokens": "STABLE — the two unmatchable tokens agree, so this measures silence rather than fuzzy matching",
+    "comparisons": [
+      {
+        "pop": "US marriage",
+        "father": 83.7,
+        "spouse": 5.1,
+        "gap": 78.60000000000001
+      },
+      {
+        "pop": "US residence 1880",
+        "father": 83.25,
+        "spouse": 35.4,
+        "gap": 47.85
+      },
+      {
+        "pop": "England, Purnell",
+        "father": 81.7,
+        "spouse": 64.95,
+        "gap": 16.75
+      },
+      {
+        "pop": "Brazil marriage",
+        "father": 72.1,
+        "spouse": 18.9,
+        "gap": 53.199999999999996
+      }
+    ],
+    "verdict:father retains more than spouse": "PARTIAL — a large gap in 3 of 4 populations; not a general rule",
+    "matchedIndexingPopulations": [
+      {
+        "pop": "US residence 1880",
+        "gap": 47.85,
+        "fIdx": 0,
+        "sIdx": 5
+      },
+      {
+        "pop": "England, Purnell",
+        "gap": 16.75,
+        "fIdx": 39,
+        "sIdx": 31
+      },
+      {
+        "pop": "Brazil marriage",
+        "gap": 53.199999999999996,
+        "fIdx": 100,
+        "sIdx": 100
+      }
+    ],
+    "verdict:retention tracks the indexed share": "NOT MEASURED HERE — sampled populations violate RULE 0; see section R, which enumerates and finds retention equals the silent share",
+    "measured_at": "2026-08-11T10:01:55.192Z"
+  },
+  "T": {
+    "findings": [
+      {
+        "pop": "US marriage",
+        "field": "own givenName",
+        "baseline": 1534507,
+        "real1": 108503,
+        "real2": 13250,
+        "gibberish": 12384,
+        "fieldCostPct": 0.8,
+        "contentSensitivityPct": 6.26,
+        "contentSwingPct": 88.6,
+        "topMatchPct": 95
+      },
+      {
+        "pop": "US marriage",
+        "field": "fatherGivenName",
+        "baseline": 1534507,
+        "real1": 1312566,
+        "real2": 1284018,
+        "gibberish": 1283844,
+        "fieldCostPct": 83.7,
+        "contentSensitivityPct": 1.87,
+        "contentSwingPct": 2.2,
+        "topMatchPct": 85
+      },
+      {
+        "pop": "US marriage",
+        "field": "spouseGivenName",
+        "baseline": 1534507,
+        "real1": 166336,
+        "real2": 75720,
+        "gibberish": 74995,
+        "fieldCostPct": 4.9,
+        "contentSensitivityPct": 5.95,
+        "contentSwingPct": 54.9,
+        "topMatchPct": 95
+      },
+      {
+        "pop": "Brazil marriage",
+        "field": "own givenName",
+        "baseline": 1907852,
+        "real1": 13320,
+        "real2": 52079,
+        "gibberish": 10151,
+        "fieldCostPct": 0.5,
+        "contentSensitivityPct": 2.2,
+        "contentSwingPct": 80.5,
+        "topMatchPct": 100
+      },
+      {
+        "pop": "Brazil marriage",
+        "field": "fatherGivenName",
+        "baseline": 1907852,
+        "real1": 1375414,
+        "real2": 1387050,
+        "gibberish": 1374639,
+        "fieldCostPct": 72.1,
+        "contentSensitivityPct": 0.65,
+        "contentSwingPct": 0.9,
+        "topMatchPct": 100
+      },
+      {
+        "pop": "Brazil marriage",
+        "field": "spouseGivenName",
+        "baseline": 1907852,
+        "real1": 362994,
+        "real2": 391174,
+        "gibberish": 360530,
+        "fieldCostPct": 18.9,
+        "contentSensitivityPct": 1.61,
+        "contentSwingPct": 7.8,
+        "topMatchPct": 100
+      },
+      {
+        "pop": "England, Purnell",
+        "field": "own givenName",
+        "baseline": 59932,
+        "real1": 6067,
+        "real2": 2462,
+        "gibberish": 1044,
+        "fieldCostPct": 1.7,
+        "contentSensitivityPct": 8.38,
+        "contentSwingPct": 82.8,
+        "topMatchPct": 90
+      },
+      {
+        "pop": "England, Purnell",
+        "field": "fatherGivenName",
+        "baseline": 59932,
+        "real1": 50555,
+        "real2": 49034,
+        "gibberish": 48960,
+        "fieldCostPct": 81.7,
+        "contentSensitivityPct": 2.66,
+        "contentSwingPct": 3.2,
+        "topMatchPct": 100
+      },
+      {
+        "pop": "England, Purnell",
+        "field": "spouseGivenName",
+        "baseline": 59932,
+        "real1": 40313,
+        "real2": 39424,
+        "gibberish": 38891,
+        "fieldCostPct": 64.9,
+        "contentSensitivityPct": 2.37,
+        "contentSwingPct": 3.5,
+        "topMatchPct": 90
+      }
+    ],
+    "verdict:own givenName": "NOT MEASURED HERE — computed over pools too large to enumerate (RULE 0). Observed swing 80.5-88.6% of the field's own pool; see section R for the enumerated answer. Previous reading: FILTERS ON CONTENT in every population measured",
+    "contentSwingPct:own givenName": {
+      "min": 80.5,
+      "max": 88.6
+    },
+    "meanTop20MatchPct:own givenName": 95,
+    "verdict:fatherGivenName": "NOT MEASURED HERE — computed over pools too large to enumerate (RULE 0). Observed swing 0.9-3.2% of the field's own pool; see section R for the enumerated answer. Previous reading: RANKS ONLY — the value barely moves the total anywhere measured, yet dominates the top of the result set",
+    "contentSwingPct:fatherGivenName": {
+      "min": 0.9,
+      "max": 3.2
+    },
+    "meanTop20MatchPct:fatherGivenName": 95,
+    "verdict:spouseGivenName": "NOT MEASURED HERE — computed over pools too large to enumerate (RULE 0). Observed swing 3.5-54.9% of the field's own pool; see section R for the enumerated answer. Previous reading: POPULATION-DEPENDENT — swings from 3.5% to 54.9% of its own pool, so it filters in some populations and only ranks in others",
+    "contentSwingPct:spouseGivenName": {
+      "min": 3.5,
+      "max": 54.9
+    },
+    "meanTop20MatchPct:spouseGivenName": 95,
+    "verdict:all name fields behave alike": "NOT MEASURED — the per-field verdicts are withheld under RULE 0, so nothing here can compare them. Section R answers this by enumeration.",
+    "measured_at": "2026-08-11T10:01:55.192Z"
+  },
+  "N": {
+    "variantForms": {
+      "fuzzyRows": 379,
+      "exactRows": 9,
+      "fuzzyForms": "João:8 João Baptista:2 Joao:1 Thiago J:1",
+      "exactForms": "João:8 Joao:1",
+      "formsDroppedByExact": [
+        "João Baptista",
+        "Thiago J"
+      ]
+    },
+    "verdict:relative .exact drops the variant forms fuzzy reached": "HOLDS — forms present in the unqualified set are absent from the exact set, both read in full",
+    "abbrev": {
+      "fuzzyRows": 439,
+      "exactRows": 4,
+      "fuzzyAbbrev": 0,
+      "exactAbbrev": 0,
+      "fuzzyForms": "William:4",
+      "exactForms": "William:4"
+    },
+    "verdict:relative .exact drops indexed abbreviations": "NOT MEASURED — the unqualified set contained no abbreviated form to drop",
+    "yearImpossibleRange": {
+      "rows": 11,
+      "yearSilent": 11
+    },
+    "verdict:an unqualified range tolerates year-silent records": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
+    "verdict:payload-silent means index-silent": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
+    "verdict:.exact drops year-silent records": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
+    "yearFuzz": {
+      "fuzzyRows": 715,
+      "out": 1,
+      "approx": 0,
+      "noYear": 693,
+      "exactRows": 22,
+      "exactOut": 1,
+      "exactNoYear": 0
+    },
+    "yearFuzzClassifiable": 22,
+    "yearFuzzRecordLevelInRange": 21,
+    "verdict:an unqualified year range fuzzes past its bounds": "WEAK — 1 of 22 classifiable rows (of 715 returned; the rest carry no year in the payload). 1 out-of-range row(s) ALSO survive .exact, which is not the shape of fuzz. Scored on the matched persona only; the record-level check is not applied.",
+    "diminutiveReach": {
+      "boundId": "2332-PN2",
+      "boundName": "Betty Riley",
+      "narrowedOnSurname": "Riley",
+      "narrowedRows": 227,
+      "present": true,
+      "rankInNarrowedSet": 103
+    },
+    "verdict:diminutiveReach": "REACHED — the bound record is in the narrowed set, read in full",
+    "initialsTransposition": {
+      "boundId": "264R-CBK",
+      "boundName": "W J Lever",
+      "narrowedOnSurname": "Lever",
+      "narrowedRows": 9,
+      "present": true,
+      "rankInNarrowedSet": 1
+    },
+    "verdict:initialsTransposition": "REACHED — the bound record is in the narrowed set, read in full",
+    "measured_at": "2026-08-11T15:33:43.404Z"
+  },
+  "Y": {
+    "silence:birth": {
+      "genuinelySilent": 0,
+      "silentKeptByExact": null,
+      "fuzzRows": 70,
+      "poolsClassified": 3,
+      "poolsExcludedTooDeep": 1
+    },
+    "impossible:birth": "NO SILENCE OBSERVED — every one of the 70 row(s) an impossible 1500-1505 range retained carries a dated birth fact OUTSIDE the range. That is range fuzz, not silence tolerance, and it says nothing about either half of the claim (1 pool(s) excluded — too deep to enumerate and classify)",
+    "impossiblePools:birth": [
+      {
+        "pool": "Pocklington/England",
+        "poolTotal": 6038,
+        "tolerated": 11,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 11,
+        "silent": 0,
+        "silentKept": 0
+      },
+      {
+        "pool": "Bochenek/Brazil",
+        "poolTotal": 733,
+        "tolerated": 3,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 3,
+        "silent": 0,
+        "silentKept": 0
+      },
+      {
+        "pool": "Bickerdike/England",
+        "poolTotal": 26620,
+        "tolerated": 56,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 56,
+        "silent": 0,
+        "silentKept": 0
+      },
+      {
+        "pool": "Geach/England",
+        "poolTotal": 936568,
+        "tolerated": 2056,
+        "survived": 3,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Mingazzini/Italy",
+        "poolTotal": 10643,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Zsigmondy/Hungary",
+        "poolTotal": 12990,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      }
+    ],
+    "silence:death": {
+      "genuinelySilent": 3,
+      "silentKeptByExact": 0,
+      "fuzzRows": 40,
+      "poolsClassified": 3,
+      "poolsExcludedTooDeep": 1
+    },
+    "impossible:death": "NOT MEASURED — only 3 genuinely year-silent row(s) across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)",
+    "impossiblePools:death": [
+      {
+        "pool": "Pocklington/England",
+        "poolTotal": 3638,
+        "tolerated": 5,
+        "survived": 1,
+        "inRange": 2,
+        "outOfRange": 3,
+        "silent": 0,
+        "silentKept": 0
+      },
+      {
+        "pool": "Bochenek/Brazil",
+        "poolTotal": 1136,
+        "tolerated": 21,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 18,
+        "silent": 3,
+        "silentKept": 0
+      },
+      {
+        "pool": "Bickerdike/England",
+        "poolTotal": 16225,
+        "tolerated": 20,
+        "survived": 1,
+        "inRange": 1,
+        "outOfRange": 19,
+        "silent": 0,
+        "silentKept": 0
+      },
+      {
+        "pool": "Geach/England",
+        "poolTotal": 614951,
+        "tolerated": 785,
+        "survived": 61,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Mingazzini/Italy",
+        "poolTotal": 12269,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Zsigmondy/Hungary",
+        "poolTotal": 6000,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      }
+    ],
+    "silence:marriage": {
+      "genuinelySilent": 51,
+      "silentKeptByExact": 0,
+      "fuzzRows": 0,
+      "poolsClassified": 3,
+      "poolsExcludedTooDeep": 0
+    },
+    "impossible:marriage": "TOLERATES SILENCE, AND .exact REMOVES IT — 51 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
+    "impossiblePools:marriage": [
+      {
+        "pool": "Pocklington/England",
+        "poolTotal": 5335,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Bochenek/Brazil",
+        "poolTotal": 521,
+        "tolerated": 3,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 0,
+        "silent": 3,
+        "silentKept": 0
+      },
+      {
+        "pool": "Bickerdike/England",
+        "poolTotal": 22002,
+        "tolerated": 1,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 0,
+        "silent": 1,
+        "silentKept": 0
+      },
+      {
+        "pool": "Geach/England",
+        "poolTotal": 634076,
+        "tolerated": 48,
+        "survived": 1,
+        "inRange": 1,
+        "outOfRange": 0,
+        "silent": 47,
+        "silentKept": 0
+      },
+      {
+        "pool": "Mingazzini/Italy",
+        "poolTotal": 9446,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Zsigmondy/Hungary",
+        "poolTotal": 3034,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      }
+    ],
+    "silence:residence": {
+      "genuinelySilent": 7,
+      "silentKeptByExact": 0,
+      "fuzzRows": 0,
+      "poolsClassified": 1,
+      "poolsExcludedTooDeep": 0
+    },
+    "impossible:residence": "TOLERATES SILENCE, AND .exact REMOVES IT — 7 genuinely year-silent row(s) across 1 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
+    "impossiblePools:residence": [
+      {
+        "pool": "Pocklington/England",
+        "poolTotal": 4993,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Bochenek/Brazil",
+        "why": "empty pool"
+      },
+      {
+        "pool": "Bickerdike/England",
+        "poolTotal": 22534,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Geach/England",
+        "poolTotal": 914952,
+        "tolerated": 7,
+        "survived": 0,
+        "inRange": 0,
+        "outOfRange": 0,
+        "silent": 7,
+        "silentKept": 0
+      },
+      {
+        "pool": "Mingazzini/Italy",
+        "poolTotal": 127,
+        "tolerated": 0,
+        "survived": 0,
+        "inRange": null,
+        "outOfRange": null,
+        "silent": null,
+        "silentKept": null
+      },
+      {
+        "pool": "Zsigmondy/Hungary",
+        "why": "empty pool"
+      }
+    ],
+    "impossibleRows": [
+      {
+        "family": "birth",
+        "window": [
+          1500,
+          1505
+        ],
+        "pools": [
+          {
+            "pool": "Pocklington/England",
+            "poolTotal": 6038,
+            "tolerated": 11,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 11,
+            "silent": 0,
+            "silentKept": 0
+          },
+          {
+            "pool": "Bochenek/Brazil",
+            "poolTotal": 733,
+            "tolerated": 3,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 3,
+            "silent": 0,
+            "silentKept": 0
+          },
+          {
+            "pool": "Bickerdike/England",
+            "poolTotal": 26620,
+            "tolerated": 56,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 56,
+            "silent": 0,
+            "silentKept": 0
+          },
+          {
+            "pool": "Geach/England",
+            "poolTotal": 936568,
+            "tolerated": 2056,
+            "survived": 3,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Mingazzini/Italy",
+            "poolTotal": 10643,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Zsigmondy/Hungary",
+            "poolTotal": 12990,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          }
+        ],
+        "verdict": "NO SILENCE OBSERVED — every one of the 70 row(s) an impossible 1500-1505 range retained carries a dated birth fact OUTSIDE the range. That is range fuzz, not silence tolerance, and it says nothing about either half of the claim (1 pool(s) excluded — too deep to enumerate and classify)"
+      },
+      {
+        "family": "death",
+        "window": [
+          1500,
+          1505
+        ],
+        "pools": [
+          {
+            "pool": "Pocklington/England",
+            "poolTotal": 3638,
+            "tolerated": 5,
+            "survived": 1,
+            "inRange": 2,
+            "outOfRange": 3,
+            "silent": 0,
+            "silentKept": 0
+          },
+          {
+            "pool": "Bochenek/Brazil",
+            "poolTotal": 1136,
+            "tolerated": 21,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 18,
+            "silent": 3,
+            "silentKept": 0
+          },
+          {
+            "pool": "Bickerdike/England",
+            "poolTotal": 16225,
+            "tolerated": 20,
+            "survived": 1,
+            "inRange": 1,
+            "outOfRange": 19,
+            "silent": 0,
+            "silentKept": 0
+          },
+          {
+            "pool": "Geach/England",
+            "poolTotal": 614951,
+            "tolerated": 785,
+            "survived": 61,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Mingazzini/Italy",
+            "poolTotal": 12269,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Zsigmondy/Hungary",
+            "poolTotal": 6000,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          }
+        ],
+        "verdict": "NOT MEASURED — only 3 genuinely year-silent row(s) across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)"
+      },
+      {
+        "family": "marriage",
+        "window": [
+          1500,
+          1505
+        ],
+        "pools": [
+          {
+            "pool": "Pocklington/England",
+            "poolTotal": 5335,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Bochenek/Brazil",
+            "poolTotal": 521,
+            "tolerated": 3,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 0,
+            "silent": 3,
+            "silentKept": 0
+          },
+          {
+            "pool": "Bickerdike/England",
+            "poolTotal": 22002,
+            "tolerated": 1,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 0,
+            "silent": 1,
+            "silentKept": 0
+          },
+          {
+            "pool": "Geach/England",
+            "poolTotal": 634076,
+            "tolerated": 48,
+            "survived": 1,
+            "inRange": 1,
+            "outOfRange": 0,
+            "silent": 47,
+            "silentKept": 0
+          },
+          {
+            "pool": "Mingazzini/Italy",
+            "poolTotal": 9446,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Zsigmondy/Hungary",
+            "poolTotal": 3034,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          }
+        ],
+        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 51 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
+      },
+      {
+        "family": "residence",
+        "window": [
+          1500,
+          1505
+        ],
+        "pools": [
+          {
+            "pool": "Pocklington/England",
+            "poolTotal": 4993,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Bochenek/Brazil",
+            "why": "empty pool"
+          },
+          {
+            "pool": "Bickerdike/England",
+            "poolTotal": 22534,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Geach/England",
+            "poolTotal": 914952,
+            "tolerated": 7,
+            "survived": 0,
+            "inRange": 0,
+            "outOfRange": 0,
+            "silent": 7,
+            "silentKept": 0
+          },
+          {
+            "pool": "Mingazzini/Italy",
+            "poolTotal": 127,
+            "tolerated": 0,
+            "survived": 0,
+            "inRange": null,
+            "outOfRange": null,
+            "silent": null,
+            "silentKept": null
+          },
+          {
+            "pool": "Zsigmondy/Hungary",
+            "why": "empty pool"
+          }
+        ],
+        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 7 genuinely year-silent row(s) across 1 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
+      }
+    ],
+    "verdict:generalises past birth (impossible-range)": "NOT MEASURED — the instrument did not reproduce the known BIRTH behaviour (birth: NO SILENCE OBSERVED — every one of the 70 row(s) an impossible 1500-1505 range retained carries a dated birth fact OUTSIDE the range. That is range fuzz, not silence tolerance, and it says nothing about either half of the claim (1 pool(s) excluded — too deep to enumerate and classify)), so nothing can be read off it for the other families",
+    "kinds:birth": {
+      "Birth": 141,
+      "birthDate": 141,
+      "Christening": 110,
+      "BirthRegistration": 38,
+      "Marriage": 10,
+      "marriageDate": 10,
+      "Death": 3,
+      "deathDate": 3,
+      "Baptism": 1
+    },
+    "verdict:birth": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way",
+    "kinds:death": {
+      "Burial": 84,
+      "Death": 72,
+      "deathDate": 72,
+      "Birth": 58,
+      "birthDate": 58,
+      "Obituary": 4
+    },
+    "verdict:death": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way",
+    "kinds:marriage": {
+      "Birth": 476,
+      "birthDate": 476,
+      "Marriage": 101,
+      "marriageDate": 15,
+      "MarriageNotice": 1
+    },
+    "verdict:marriage": "NOT MEASURED — only 101/469 rows carry a marriage date in the payload, so \"year-silent\" cannot be told from \"date not in the payload\". Section H: payload-silence is not index-silence",
+    "kinds:residence": {
+      "Census": 2081,
+      "Birth": 2081,
+      "birthDate": 2081
+    },
+    "verdict:residence": "NOT MEASURED — the unqualified set contains no year-silent record, so dropping and keeping predict the same result here",
+    "rows": [
+      {
+        "family": "birth",
+        "population": "q.surname=Bochenek&q.recordCountry=Brazil&f.recordType=0",
+        "window": [
+          1850,
+          1854
+        ],
+        "fuzzyTotal": 197,
+        "fuzzyRows": 197,
+        "exactTotal": 0,
+        "silent": 1,
+        "silentKept": 0,
+        "dated": 196,
+        "datedKept": 0,
+        "coveragePct": 99.5,
+        "collateralPct": 0,
+        "inRange": 0,
+        "inRangeKept": 0,
+        "fuzzRows": 196,
+        "fuzzKept": 0,
+        "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
+      },
+      {
+        "family": "death",
+        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=2",
+        "window": [
+          1850,
+          1854
+        ],
+        "fuzzyTotal": 144,
+        "fuzzyRows": 144,
+        "exactTotal": 102,
+        "silent": 1,
+        "silentKept": 0,
+        "dated": 143,
+        "datedKept": 102,
+        "coveragePct": 99.3,
+        "collateralPct": 1.9,
+        "inRange": 104,
+        "inRangeKept": 102,
+        "fuzzRows": 39,
+        "fuzzKept": 0,
+        "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
+      },
+      {
+        "family": "marriage",
+        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=1",
+        "window": [
+          1850,
+          1854
+        ],
+        "fuzzyTotal": 469,
+        "fuzzyRows": 469,
+        "exactTotal": 102,
+        "silent": 368,
+        "silentKept": 1,
+        "dated": 101,
+        "datedKept": 101,
+        "coveragePct": 21.5,
+        "collateralPct": 0,
+        "inRange": 101,
+        "inRangeKept": 101,
+        "fuzzRows": 0,
+        "fuzzKept": 0,
+        "verdict": "NOT MEASURED — only 101/469 rows carry a marriage date in the payload, so \"year-silent\" cannot be told from \"date not in the payload\". Section H: payload-silence is not index-silence"
+      },
+      {
+        "family": "residence",
+        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=3",
+        "window": [
+          1850,
+          1854
+        ],
+        "fuzzyTotal": 348,
+        "fuzzyRows": 348,
+        "exactTotal": 348,
+        "silent": 0,
+        "silentKept": 0,
+        "dated": 348,
+        "datedKept": 348,
+        "coveragePct": 100,
+        "collateralPct": 0,
+        "inRange": 348,
+        "inRangeKept": 348,
+        "fuzzRows": 0,
+        "fuzzKept": 0,
+        "verdict": "NOT MEASURED — the unqualified set contains no year-silent record, so dropping and keeping predict the same result here"
+      }
+    ],
+    "verdict:generalises past birth": "NOT MEASURED — no non-birth family produced a testable population",
+    "measured_at": "2026-08-11T16:51:34.022Z"
+  }
+}
