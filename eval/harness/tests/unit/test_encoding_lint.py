@@ -37,7 +37,20 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 
 # Requirement (a): generated / vendored trees. eval/harness/.venv alone holds
 # ~2277 .py files created by `uv sync` before pytest runs, none fixable by us.
-SKIP_DIR_NAMES = frozenset({".venv", "node_modules", "__pycache__", "build"})
+#
+# `worktrees` is here for a different reason: it is another *commit* of this
+# same repo, not code anyone is editing. `.claude/skills/review` tells reviewers
+# to run `git worktree add .claude/worktrees/pr<N> <branch>`, so following the
+# documented review workflow plants a full second copy of the tree inside the
+# repo — and every pre-fix .py in that branch is reported as an offender here.
+# Observed 2026-08-12: one stale `pr1373` worktree produced 100 findings, none
+# of them in a file on this branch. CI never saw it (fresh checkout, no
+# worktrees), so this only ever fires locally, which is the worst shape for a
+# lint: red on the developer's machine, green in the pipeline, and nothing in
+# the output hinting that the paths are not theirs to fix.
+SKIP_DIR_NAMES = frozenset(
+    {".venv", "node_modules", "__pycache__", "build", "worktrees"}
+)
 
 # Always called on a Path receiver; both take an encoding= keyword.
 TEXT_METHODS = frozenset({"read_text", "write_text"})
