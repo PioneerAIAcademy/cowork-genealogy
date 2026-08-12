@@ -7,12 +7,12 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-11 (issue-filing gate added to Applies to)
+- **Last updated:** 2026-08-11 (read-tool carve-out added; issue-filing gate added to Applies to)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
-- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509
+- **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
+- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509, #1081
 
 ## Context
 
@@ -68,7 +68,7 @@ observed live in Cowork 2026-08-09). Three of those carry `needs-decision`.
 persists the state, or a `PreToolUse` hook where no writer tool owns the route.
 Prose states the rule; it does not enforce it.**
 
-Concretely, this is a placement question with four answers:
+Concretely, this is a placement question with five answers:
 
 | The rule constrains… | Put it in |
 |---|---|
@@ -76,6 +76,7 @@ Concretely, this is a placement question with four answers:
 | a route no writer tool owns — raw `Write`/`Edit`, the shell | the plugin `PreToolUse` hook (ADR-0005), the only guardrail that reaches Cowork |
 | what one delegated agent may touch | tool identity plus a `disallowedTools:` deny (ADR-0006) |
 | judgment exercised inside a single invocation | prose — that is what prose is for |
+| a resource budget on a read tool — pages, calls, elapsed spend — where the failure is a loop, not a bad state | the read tool, as an **advisory field on a successful result**; nothing is refused (see the read-tool row in Alternatives considered) |
 
 The first row is the default and the cheapest: it is caller-agnostic, so it binds
 identically in Cowork, the hosted path, and both harnesses, and it needs no new
@@ -121,6 +122,7 @@ measured rather than argued.
 | **Fold this into ADR-0003** rather than write a new ADR | ADR-0003 answers *does this rule need an anchor*, from a compaction-decay audit of one skill. This answers *which boundary, and what the gate must satisfy before it ships* — and its four limits are the payload. Two of them (false-allow preference, satisfiability) are counterweights *against* anchoring, which would read as contradiction inside an ADR whose argument is that prose decays | Argued, not measured. `docs/adrs/README.md` rule 4's test: a reader arriving with "where does my guardrail go" is not served by the decay file |
 | **A per-skill or per-section split writer tool**, so the tool's name carries the doctrine | Rejected before, and it generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names constrains nobody who holds all the names; the constraint comes from the check, or from not holding the broad tool | `docs/specs/guardrail-enforcement-spec.md`, "Options set aside"; ADR-0006 |
 | **An advisory instead of a refusal** — a warning, or a mentor verdict the agent is told to respect | This is what the completion gate replaced. In the `wilkins-death-kentucky` run the prose-level guardrails fired and were rationalized away, and the project completed over an unresolved identity conflict | The gate's own comment in `research-append.ts`; issue #1490 |
+| **A read tool's resource budget, as an advisory** — `image_transcribe`'s browse notice | **Scopes the row above, does not overturn it.** That row is about a *state* gate: an advisory let `wilkins-death-kentucky` complete over an unresolved identity conflict. A page read persists nothing, so the asymmetry inverts — a wrong refusal hard-blocks a researcher mid-browse with no way around it, and no production telemetry would surface that. The budget therefore ships as a field on a successful result, and knowingly does nothing if the agent ignores it | Issue #1081; 267 `image_transcribe` calls across 145 committed runs, of which two image groups in one run exceed 20 distinct pages — and that run passed, citing no image from either |
 | **Post-run detection only** — let it happen, catch it at grading | Catches it after the user has the wrong answer. The detectors also cannot yet yield a rate: no committed run resolves `pass`, and the universal validator's project-file check is coarse by design — one legitimate writer call legitimizes the session's raw edits | ADR-0003's enforcement note; issue #1493's read of `test_universal.py` |
 | **Ship the deny on the violation count alone**, and tune later | The count cannot distinguish an impossible gate from an achievable one the agent was never taught to satisfy. Both cases were measured here, and both look identical from the number | ADR-0009 constraint 6 (3 of 103); issue #1463 (52%, projecting to 132 of 145 runs failing) |
 | **Wait for a per-caller `PreToolUse` policy** to be ported to production before moving anything | Unported and not gated on anything currently moving; the writer-tool check needs none of it and reaches every environment today | ADR-0006's hook row; `eval/harness/harness/context_policy.py` |

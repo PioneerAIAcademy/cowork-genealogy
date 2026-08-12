@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 4, flag adds_daughter, confidence 3). Draft transcribed from a Czech church baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 4, flag adds_daughter, confidence 3). Resolved TRUE MATCH (proof standing: Probable): the 1 Mar 1818 baptism of Agnes is in the Svitavy / Mährisch Trübau register (Moravia) — image group 005652359, image 23, Pag. 20, Entry 2, house no. 29 (ark:/61903/3:1:3QS7-89S1-K869; indexed hint ark:/61903/1:1:6PJZ-ZBSM) — naming father Maxmilian Michal (= tree spouse Maxmilián Michl). The original Bystré/Bistrau hypothesis was wrong; that register is not digitized on FamilySearch. Not the Proved tier because the child's name and father's surname are not yet read directly from the image (OCR misread them). See README 'Notes for reviewers'."
 }
