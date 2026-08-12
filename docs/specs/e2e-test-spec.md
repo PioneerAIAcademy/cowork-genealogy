@@ -1005,9 +1005,23 @@ Three integrity rules make the agreement number trustworthy:
   human label is independent of the judge under test. Blindness is a property of
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
-  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
-  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
-  deferred to `/interpret-e2e-result`, which is itself blind to them.
+  must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
+  compliance axis, and — when the judge reached no conclusion at all — a
+  `no grade:` line saying which cause it was, and stops there; `verdict`,
+  `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
+  is itself blind to them.
+
+  That third line is on the harness-fact side of this rule, not an exception to
+  it. It distinguishes a judge that raised (quoting the judge's own error text)
+  from an agent that produced no final tree, from `--skip-judge`; none of those
+  is a genealogical conclusion, and the presence of an error says nothing about
+  what the agent recovered. It exists because the previous single fixed string
+  printed the same words for all three, directly beneath
+  `stop_reason: completed`, so a judge crash read as "this run succeeded and
+  produced nothing" — indistinguishable, in a batch, from runs that genuinely
+  failed. **Gradedness is a separate axis from committability**: after a judge
+  crash becomes committable, a run can be ungraded *and* worth committing for
+  re-grading, so the two are reported on their own lines.
 
   > **Caveat on annotations collected before 2026-07-31.** Until then the
   > harness printed the judge's verdict *and* its `proof_quality` score to the
@@ -1139,6 +1153,25 @@ carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
 their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
+
+**A fifth check runs in shadow mode only: the warnings guardrail was never
+consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
+`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
+relationships do not count) for which `person_warnings` — the cheapest, LLM-free
+guardrail — was never successfully called. It keys on the `person_warnings`
+**tool** across all server spellings, not the `check-warnings` skill, so it
+catches a direct-tool path and a skill that launches but fails before reaching the
+tool. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "warnings_unchecked"` for its own bucket
+(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
+diverged only on whether the parentage write was delegated to `proof-conclusion`
+(which carries the check-warnings step) or inlined by the orchestrator (which does
+not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
+check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
+an inlined write is still gated — is gated on reading this fire rate across the
+corpus first**; not decided here.
 
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
