@@ -104,7 +104,7 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
@@ -140,6 +140,8 @@ Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** T
 **Base dimensions (always graded):** Correctness, Completeness, Tool Arguments. Base dimensions don't consume the 3–5 rubric budget.
 
 The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) is per-test, not per-dimension — aggregated across runs for dashboard reporting.
+
+**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results.
 
 ## Snapshot model
 

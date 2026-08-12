@@ -24,6 +24,15 @@ name: project-status-sync
 #      by hand, and cards with a PR up for review sat in In Progress (#849,
 #      with PR #981 open and non-draft, was the live example).
 #
+#   3. ABANDONED WORK WAS INDISTINGUISHABLE FROM FINISHED WORK. Every closed
+#      issue landed in Done regardless of why it closed, so Done conflated
+#      "we shipped this" with "we decided not to". Measured 2026-08-09: of 62
+#      issues ever closed as not planned, 61 sat in Done, and 60 of those
+#      closures happened in the preceding two weeks — Done was ~40% pruning by
+#      volume in the week it was measured, which makes reading the board for
+#      what the team actually delivered actively misleading. Fixed by routing
+#      on the issue's close reason into a separate "Not planned" column.
+#
 # WHY NOT JUST DISABLE THE BUILT-IN. "Pull request linked to issue" is right
 # most of the time — an OPEN issue that gains a PR genuinely is in progress.
 # Its only defect is the missing closed-issue guard, and the Projects API has
@@ -32,6 +41,17 @@ name: project-status-sync
 # the same events and CORRECTS the result rather than racing to prevent it:
 # the built-in sets In Progress, this sets Done a moment later. The end state
 # is what matters, and it self-heals if the built-in is ever changed.
+#
+# THE ORDERING THIS DEPENDS ON, STATED PLAINLY. Correcting rather than
+# preventing means last-writer-wins, and this workflow is only reliably last
+# because a built-in project automation lands in about a second while an
+# Actions run takes tens of seconds to schedule. That is an observation about
+# current timing, not a guarantee the API offers. If the built-in "Item closed"
+# ever wins the race, a not-planned issue lands in Done and stays there — the
+# same failure the Not planned column exists to prevent, just rarer. The
+# backstop is the dispatch sweep, which recomputes every closed card's column
+# from its live close reason; run it if the board looks wrong. Nothing here
+# detects the race on its own.
 #
 # WHAT IT WILL NOT DO. It acts only on issues a PR *links* — GitHub's
 # `closingIssuesReferences`, populated by a closing keyword ("Closes #123") or
@@ -75,6 +95,19 @@ on:
     # "Closes #123" to an existing PR body, which is how most links here are
     # created. `converted_to_draft` walks a card back from Review.
     types: [opened, reopened, edited, ready_for_review, converted_to_draft, closed]
+  issues:
+    # `closed` is the only moment the close REASON is knowable, and the reason
+    # is what separates Done from Not planned. Nothing else carries it: the
+    # built-in "Item closed" workflow fires on the same event and sets Done
+    # unconditionally, so this runs alongside it and corrects the result — the
+    # same correct-don't-race approach used for symptom 1 above.
+    #
+    # `reopened` is not optional once Not planned exists. Both terminal columns
+    # are dead ends — no other trigger moves a card out of one — so a revived
+    # issue would sit in a column meaning "abandoned" while being open and
+    # worked on, invisible to /fill-ready and /audit-board, which read only the
+    # four active columns. Reopening returns the card to Backlog for re-triage.
+    types: [closed, reopened]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -93,7 +126,13 @@ concurrency:
   # Per-PR events serialize per PR; every sweep shares one key. Two PRs
   # touching the same issue can still interleave, but each run recomputes the
   # desired status from live state, so the last writer is also the correct one.
-  group: project-status-sync-${{ github.event.pull_request.number || 'sweep' }}
+  #
+  # The event kind is part of the key on purpose: issues and PRs share one
+  # number sequence in this repo, so a bare number would make issue #1200 and
+  # PR #1200 contend for the same slot and serialize two unrelated runs.
+  group: >-
+    project-status-sync-${{ github.event_name }}-${{
+      github.event.pull_request.number || github.event.issue.number || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
@@ -186,21 +225,46 @@ jobs:
             // Resolve every column this workflow can write, up front: a
             // renamed column should fail the run, not go silently unwritten.
             const DONE        = option('Done');
+            const NOT_PLANNED = option('Not planned');
             const REVIEW      = option('Review');
             const IN_PROGRESS = option('In Progress');
+            const BACKLOG     = option('Backlog');
+
+            // Both columns that hold closed issues. A card in either is at rest:
+            // only reopening moves it out.
+            const TERMINAL = [DONE.name, NOT_PLANNED.name];
+
+            // ---- which terminal column a closed issue belongs in --------------
+            // GitHub's stateReason is COMPLETED | NOT_PLANNED | DUPLICATE |
+            // REOPENED, and is null on some issues closed before the field
+            // existed. Only COMPLETED is finished work, so everything else that
+            // is genuinely closed reads as not planned — a duplicate was not
+            // delivered either. Null is the one case that must NOT infer
+            // abandonment: it means "unknown", and Done is where those cards
+            // already sit, so treating it as completed changes nothing about
+            // today's board. Measured 2026-08-09 across all 467 closed issues:
+            // only COMPLETED and NOT_PLANNED occur, so the other branches are
+            // future-proofing, not current behavior.
+            const terminalFor = stateReason =>
+              (stateReason === 'NOT_PLANNED' || stateReason === 'DUPLICATE')
+                ? NOT_PLANNED
+                : DONE;
 
             // ---- the rule ----------------------------------------------------
             // Desired column for an issue, given a PR that links it. Returns
             // null for "this workflow has no opinion — leave the card alone".
             //
-            // A closed issue is Done no matter what the PR is doing: that is
-            // symptom 1's fix, and it must outrank every other branch.
+            // A closed issue is terminal no matter what the PR is doing: that is
+            // symptom 1's fix, and it must outrank every other branch. Routing
+            // through terminalFor rather than straight to Done is what stops a
+            // PR that merely cites an abandoned issue from resurrecting it into
+            // Done — the exact shape of symptom 1, one column over.
             // A merged PR is deliberately NOT its own rule — merging closes
             // the issue, which the built-in "Item closed" workflow already
             // handles, and a PR merged to a non-default branch leaves the
             // issue genuinely open and still in progress.
-            function desiredStatus(issueState, pr) {
-              if (issueState === 'CLOSED')          return DONE;
+            function desiredStatus(issue, pr) {
+              if (issue.state === 'CLOSED')         return terminalFor(issue.stateReason);
               if (pr.state !== 'OPEN')              return null;
               if (pr.isDraft)                       return IN_PROGRESS;
               return REVIEW;
@@ -246,7 +310,7 @@ jobs:
             // No try/catch: a write that throws must fail the job. Three
             // workflows in this repo have gone green while doing nothing.
             async function reconcile(issue, pr) {
-              const want = desiredStatus(issue.state, pr);
+              const want = desiredStatus(issue, pr);
               if (!want) {
                 return [`#${issue.number}`, 'no opinion', `PR #${pr.number} ${pr.state.toLowerCase()}`];
               }
@@ -270,7 +334,7 @@ jobs:
 
             const LINKED = `
               closingIssuesReferences(first: 20) {
-                nodes { id number state title }
+                nodes { id number state stateReason title }
               }`;
 
             const rows = [];
@@ -282,7 +346,11 @@ jobs:
               // PR that caused it may be long merged); Review drift is only
               // visible from the open PR list.
 
-              // Pass 1: every card whose issue is closed belongs in Done.
+              // Pass 1: every card whose issue is closed belongs in the terminal
+              // column its close reason selects. This pass is also the backfill:
+              // the first live sweep after "Not planned" was added is what moves
+              // the historical not-planned cards out of Done, and it stays
+              // correct to re-run because it compares against current state.
               let cursor = null;
               for (;;) {
                 const page = await github.graphql(`
@@ -296,7 +364,7 @@ jobs:
                             fieldValueByName(name: "${STATUS_FIELD}") {
                               ... on ProjectV2ItemFieldSingleSelectValue { name }
                             }
-                            content { ... on Issue { number state } }
+                            content { ... on Issue { number state stateReason } }
                           }
                         }
                       }
@@ -307,13 +375,15 @@ jobs:
                   const c = item.content;
                   if (!c || c.state !== 'CLOSED') continue;
                   const status = item.fieldValueByName?.name || null;
-                  if (status === DONE.name) continue;
+                  const want = terminalFor(c.stateReason);
+                  if (status === want.name) continue;
+                  const why = `closed: ${(c.stateReason || 'unknown').toLowerCase()}`;
                   if (dryRun) {
-                    rows.push([`#${c.number}`, `WOULD move ${status || '(none)'} -> Done`, 'closed issue']);
+                    rows.push([`#${c.number}`, `WOULD move ${status || '(none)'} -> ${want.name}`, why]);
                     continue;
                   }
-                  await move(item.id, DONE);
-                  rows.push([`#${c.number}`, `moved ${status || '(none)'} -> Done`, 'closed issue']);
+                  await move(item.id, want);
+                  rows.push([`#${c.number}`, `moved ${status || '(none)'} -> ${want.name}`, why]);
                 }
                 if (!items.pageInfo.hasNextPage) break;
                 cursor = items.pageInfo.endCursor;
@@ -339,6 +409,58 @@ jobs:
                 }
                 if (!prs.pageInfo.hasNextPage) break;
                 prCursor = prs.pageInfo.endCursor;
+              }
+            } else if (context.eventName === 'issues') {
+              // ---- event: one issue closed or reopened ----------------------
+              // No PR is involved, so this path does not use desiredStatus.
+              // The close reason is read back from the API rather than taken
+              // from context.payload.issue.state_reason: the payload spells it
+              // lowercase while every other read here is the GraphQL enum, and
+              // one spelling for one concept is worth the extra call.
+              //
+              // On repoGraphql (GITHUB_TOKEN), not the App token, per the
+              // two-token note above: this is a repo read, and keeping the App
+              // to board reads and writes is what lets it stay Issues:
+              // Read-only-and-nothing-more.
+              const issueNodeId = context.payload.issue.node_id;
+              const number      = context.payload.issue.number;
+              const action      = context.payload.action;
+              const q = await repoGraphql(`
+                query($id: ID!) {
+                  node(id: $id) { ... on Issue { state stateReason } }
+                }`, { id: issueNodeId });
+              const { state, stateReason } = q.node;
+
+              const before = await card(issueNodeId);
+              if (!before) {
+                // add-to-project.yml owns putting cards on the board. It runs on
+                // `reopened` too, so a reopened issue with no card gets one from
+                // that workflow; racing it here would create a second write to
+                // the same field for no gain.
+                rows.push([`#${number}`, 'not on board', `issue ${action}`]);
+              } else {
+                // A reopened issue is out of both terminal columns and back for
+                // re-triage. Anything already in an active column was moved
+                // there deliberately (by the lead, or by the PR path) and is
+                // left alone — this must not demote work in flight.
+                const want = state === 'CLOSED'
+                  ? terminalFor(stateReason)
+                  : (TERMINAL.includes(before.status) ? BACKLOG : null);
+                const why = state === 'CLOSED'
+                  ? `closed: ${(stateReason || 'unknown').toLowerCase()}`
+                  : 'reopened';
+                if (!want) {
+                  rows.push([`#${number}`, `left in ${before.status || '(none)'}`, why]);
+                } else if (before.status === want.name) {
+                  rows.push([`#${number}`, `already ${want.name}`, why]);
+                } else if (dryRun) {
+                  rows.push([`#${number}`,
+                             `WOULD move ${before.status || '(none)'} -> ${want.name}`, why]);
+                } else {
+                  await move(before.id, want);
+                  rows.push([`#${number}`,
+                             `moved ${before.status || '(none)'} -> ${want.name}`, why]);
+                }
               }
             } else {
               // ---- event: just this PR's linked issues ----------------------

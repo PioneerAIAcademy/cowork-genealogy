@@ -64,6 +64,63 @@ def _print_compliance(result: E2eResult) -> None:
         print(f"    - {text}")
 
 
+# The verdicts that mean the judge actually reached a conclusion.
+#
+# A deliberate local literal, NOT an import from result.py. Gradedness and
+# committability are two different axes — the lead's own words on PR #1239 —
+# and result.py's set is the *committability* one, which #1239 widened to
+# include `ungraded`. Importing it would classify a judge crash as graded, which
+# is exactly backwards: `ungraded` means the judge did NOT reach a conclusion,
+# and is committable only because the tree survived and can be re-graded.
+_GRADED_VERDICTS = ("pass", "partial", "fail")
+
+
+def is_ungraded(result: E2eResult) -> bool:
+    """Whether the judge failed to reach a conclusion on this run.
+
+    Independent of whether the run is *committable*. Today the two coincide;
+    after #1239 a judge crash is committable (the tree exists and can be
+    re-graded later) while still being ungraded, and an operator needs telling
+    about it either way.
+    """
+    return result.verdict not in _GRADED_VERDICTS
+
+
+def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
+    """Why a run produced no grade (#1245).
+
+    The message used to be a single fixed string, "the judge didn't run, so
+    there's nothing to grade or commit". For a judge crash that lands directly
+    under `stop_reason: completed`, and the pair reads as "this run succeeded
+    and produced nothing". Three different causes printed identically, so a
+    batch of 19 gave an operator no way to tell a broken environment from runs
+    that genuinely failed — which is what issue #1245 was reported as.
+
+    **Blindness-safe** (spec §7.4, and the same line `_run_one` walks above):
+    this reads only whether `judge_output` carries an `error` key, never a
+    grade field. A judge crash is a harness fact, like `stop_reason` and
+    `compliance`, not a genealogical conclusion. The prohibition in
+    `result.py` on reading `judge_output` binds `interpret-e2e-result`, whose
+    job is explaining what the agent recovered; it is not a blanket ban.
+
+    Pure and free of I/O so every arm is testable — `_run_one` cannot be, since
+    it drives a live 20-to-60-minute run.
+    """
+    judge_error = (result.judge_output or {}).get("error")
+    if judge_error:
+        return (
+            f"the judge itself failed ({judge_error}) — the agent's work and its "
+            "tree are intact, so this can be re-graded without re-running the "
+            "research"
+        )
+    if skip_judge:
+        return "--skip-judge was passed, so no grade was requested"
+    return (
+        "the agent produced no final tree for the judge to grade — see "
+        "stop_reason above for how it ended"
+    )
+
+
 async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"\n=== Running {fixture_dir.name} ===")
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
@@ -79,22 +136,29 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
     print(f"  result: {paths['result']}")
-    if result.verdict == "ungraded":
+    # Two independent axes, reported separately (#1245). Fusing them is what
+    # made a judge crash unreadable: "the judge didn't run" was printed as a
+    # property of the scratch prefix, so the causes that share that prefix were
+    # indistinguishable. #1239 has now made them stop coinciding — a judge crash
+    # is committable while still being ungraded — so a single `if committable`
+    # branch would say nothing at all about the crash.
+    #
+    # Merged with #1239's own version of this block. Its `elif` meant a run that
+    # produced NO TREE fell through to the generic scratch line and still did
+    # not say why; asking the two questions separately covers that case too.
+    if is_ungraded(result):
         print(
-            "  (judge failed; run committed for re-grading — "
-            "re-run the judge or /grade-e2e-run manually)"
+            f"  no grade: "
+            f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))}"
         )
-    elif not is_committable_run(result.verdict):
-        print(
-            "  (scratch run — gitignored; the judge didn't run, so there's "
-            "nothing to grade or commit)"
-        )
-    else:
+    if is_committable_run(result.verdict):
         print(
             "  Next: /interpret-e2e-result to see what it recovered, then "
             "/grade-e2e-run to grade it.\n"
             "  Commit the run log + its .ann.json together before landing."
         )
+    else:
+        print("  (scratch run — gitignored)")
     return result
 
 
@@ -160,9 +224,11 @@ def main(argv: list[str] | None = None) -> int:
             "Pin the run's reasoning effort via a project-level setting "
             "(.claude/settings.json effortLevel). Session-wide. Default: high "
             "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
-            "the sole working effort lever. Vary it to test whether a runaway-"
-            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
+            "not the only lever — ClaudeAgentOptions.effort also works — but it "
+            "is the one proven to reach subagents. Vary it to test whether a "
+            "runaway-thinking subagent freeze clears (see "
+            "subagents[].runaway_thinking)."
         ),
     )
     parser.add_argument(
@@ -184,10 +250,11 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Override the model for BOTH the parent agent and every staged "
             "subagent (rewrites each agent's `.md` model pin). Default: unset = "
-            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
-            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
-            "run the whole flow under Cowork's model and test whether the "
-            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own "
+            "pin, which for record-extractor is also claude-sonnet-4-6 since "
+            "PR #725 downgraded it to stop the sonnet-5 runaway-thinking freeze. "
+            "Set e.g. claude-sonnet-5 to check whether that freeze reproduces. "
+            "Recorded in the runlog."
         ),
     )
     parser.add_argument(

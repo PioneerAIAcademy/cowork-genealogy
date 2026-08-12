@@ -533,7 +533,7 @@ unintended; the full `vitest` suite and the manifest-drift test
 
 > Any item this PR ends up **deferring** (rather than removing) gets a GitHub
 > issue in the same PR (`gh issue create --label developer` — see `CLAUDE.md`
-> § "Deferring work creates an issue") — e.g. wiring a duplicate-node trigger
+> § "Work you find along the way") — e.g. wiring a duplicate-node trigger
 > for `merge_tree_persons`, if that is not done here.
 
 ---

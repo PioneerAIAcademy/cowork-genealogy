@@ -1,11 +1,18 @@
-"""Retroactive calibration tool for the §7 shadow-mode recency window.
+"""Replay of the §7 shadow-mode recency window over committed e2e runs.
 
-docs/specs/guardrail-enforcement-spec.md §7, GitHub issue #911 — the
-window (`GUARDRAIL_SHADOW_WINDOW` in `e2e/orchestrator.py`) is a first-cut
-default, not yet tuned. Every committed e2e runlog already persists its full
-`tool_calls` list, so `harness.skill_invocation.find_unguarded_protected_writes`
-can be replayed against the whole historical corpus for free — no new API
-spend — rather than waiting on new live runs to accumulate a sample.
+docs/specs/guardrail-enforcement-spec.md §7. Every committed e2e runlog persists
+its full `tool_calls` list, so
+`harness.skill_invocation.find_unguarded_protected_writes` can be replayed
+against the whole historical corpus for free — no new API spend.
+
+**This is no longer a calibration tool, and `GUARDRAIL_SHADOW_WINDOW` is not a
+knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads
+`Skill` entries, which carry launch acknowledgements, and no instrument available
+to the harness observes skill *completion* (spec §7, "What the success gate can
+and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
+barely changes the count from 10 to 150, which was the early tell. What this
+report is still for: reading the shadow signal as measurement, and the §8/§7.5
+stored families below, whose graduations are live questions.
 
 This module adds NO instrumentation to a run (same posture as
 `latency_report.py`); it's pure analysis over already-committed data.
@@ -41,6 +48,7 @@ from harness.skill_invocation import (
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
+    WARNINGS_UNCHECKED_KIND,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -150,7 +158,12 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     return _scan_stored(
         paths,
         lambda v: "detail" in v
-        and v.get("kind") not in (CITATION_NULLING_KIND, PERSON_EVIDENCE_DENY_KIND),
+        and v.get("kind")
+        not in (
+            CITATION_NULLING_KIND,
+            PERSON_EVIDENCE_DENY_KIND,
+            WARNINGS_UNCHECKED_KIND,
+        ),
     )
 
 
@@ -160,6 +173,15 @@ def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
     ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1193 warnings-unchecked shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a new ParentChild/Couple relationship written
+    with no `person_warnings` call). Identified by
+    `kind == WARNINGS_UNCHECKED_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
 
 @dataclass
@@ -353,8 +375,23 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
     )
 
 
+def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
+    """One flat count — a fact about the final tree + tool_calls, not a windowed
+    scan. This is the number the graduation decision (shadow → mandatory
+    person_warnings call in the orchestrator, issue #1193 question b) is gated
+    on."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7 warnings-unchecked check (issue #1193, shadow): "
+        f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
+        f"without calling person_warnings, across {affected} run(s)."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Retroactive §7 shadow-window calibration (issue #911).")
+    ap = argparse.ArgumentParser(
+        description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
+    )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
     ap.add_argument(
         "--windows",
@@ -393,6 +430,9 @@ def main(argv: list[str] | None = None) -> int:
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
+    warnings_unchecked = scan_warnings_unchecked(paths)
+    print(format_warnings_unchecked(warnings_unchecked))
+
     replay = replay_provenance(paths) if args.replay else None
     if replay is not None:
         print(format_provenance_replay(replay))
@@ -406,6 +446,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
+        for v in warnings_unchecked:
             print(f"  {v['fixture']:<35} {v['detail']}")
         if replay is not None:
             print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")
