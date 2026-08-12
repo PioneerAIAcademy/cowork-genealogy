@@ -81,8 +81,35 @@ JUDGE_OUTPUT_SCHEMA: dict[str, Any] = {
                     "matched": {"type": "string", "enum": ["true", "partial", "false"]},
                     "agent_evidence": {"type": "string"},
                     "notes": {"type": "string"},
+                    # The claims the finding makes, each marked against the
+                    # tree. `matched` is DERIVED from these by
+                    # `apply_component_derivation` rather than trusted from the
+                    # model — see that function for why.
+                    "components": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "claim": {"type": "string"},
+                                # `link` — a person-to-person relationship the
+                                # finding asserts, or a date it puts on that
+                                # relationship. `detail` — biography that
+                                # identifies *which* person is meant. Only
+                                # links score; see `derive_matched`.
+                                "kind": {"type": "string", "enum": ["link", "detail"]},
+                                "status": {
+                                    "type": "string",
+                                    "enum": ["supported", "unsupported", "contradicted"],
+                                },
+                            },
+                            "required": ["claim", "kind", "status"],
+                        },
+                    },
                 },
-                "required": ["finding_id", "matched", "agent_evidence", "notes"],
+                "required": [
+                    "finding_id", "matched", "agent_evidence", "notes", "components",
+                ],
             },
         },
         "recall_required": {"type": "number"},
@@ -203,6 +230,52 @@ def _validate_judge_output(parsed: Any) -> dict[str, Any]:
     return parsed
 
 
+def derive_matched(components: list[dict[str, Any]]) -> str | None:
+    """Roll a finding's components up to its `matched` label.
+
+    Same principle as ``derive_verdict`` below: a label that can be computed is
+    not left to the model. The judge decomposes the finding and marks each
+    component — which it does reliably — and the arithmetic happens here.
+
+    **Only ``kind: "link"`` components score.** A relationship finding names the
+    people it links and then describes them ("John Laurie Sr. was the father of
+    John Laurie. Born 1833 in the Gorbals; an iron moulder; died 1910"), and
+    that description identifies *which* John Laurie is meant rather than adding
+    something the agent must file. Scoring the description downgraded twelve
+    findings whose relationship had been recovered exactly right — see the
+    2026-08-10 calibration sweep on #1090. Genealogists grade the link.
+
+    The one thing that is *not* mere description is a date the finding puts on
+    the **relationship itself** — most often a marriage date on a spouse claim.
+    The judge prompt tags those `link` precisely so they land in this tally: a
+    spouse link recovered with no marriage date is `partial`, not full credit for
+    a marriage that was never dated. A linked person's own birth/death dates stay
+    `detail`; promoting those too reproduced the twelve-finding downgrade above
+    under the haiku judge. That classification is the prompt's job — this
+    function only counts what it is given.
+
+    - ``false``   — any link contradicted, or no link supported
+    - ``true``    — every link supported
+    - ``partial`` — anything in between
+
+    Returns ``None`` when the finding carries no link components, so the caller
+    falls back to the model's own label. That covers historical run logs (no
+    ``components`` at all) and any finding the judge described only in details.
+    """
+    links = [c for c in (components or []) if c.get("kind") == "link"]
+    if not links:
+        return None
+    statuses = [c.get("status") for c in links]
+    if "contradicted" in statuses:
+        return "false"
+    supported = sum(1 for s in statuses if s == "supported")
+    if supported == 0:
+        return "false"
+    if supported == len(statuses):
+        return "true"
+    return "partial"
+
+
 def derive_verdict(per_finding: dict[str, str], findings: list[dict[str, Any]]) -> str:
     """Roll per-finding labels up to a pass/partial/fail verdict.
 
@@ -240,6 +313,94 @@ def _recall(labels: dict[str, str], findings: list[dict[str, Any]], *, required_
 
 
 _VERDICT_RANK = {"fail": 0, "partial": 1, "pass": 2}
+
+
+def apply_component_derivation(
+    judge_output: dict[str, Any],
+    *,
+    expected_findings: dict[str, Any],
+) -> dict[str, Any]:
+    """Replace each finding's ``matched`` with the value derived from its own
+    ``components`` (issue #1090).
+
+    Sibling of ``apply_avoid_guard`` below, and for the same reason: the judge
+    is a model, and this is the step it is least reliable at. Measured on the
+    ``manoel-oliveira-daughter`` f1 case, the judge decomposed the finding
+    correctly every time — three relationship components, all unsupported — and
+    wrote "zero components supported, this is 'false'" in its own notes, then
+    emitted ``true``/``partial`` anyway. Four successively more explicit prompt
+    wordings did not bind it, and the labels moved non-monotonically
+    (``true`` -> ``partial`` -> ``partial`` -> ``true``). The decomposition is
+    trustworthy; the label is not. So the label is computed from it here.
+
+    ``avoid`` findings are untouched: for those ``matched: "true"`` means
+    "correctly declined to assert", which is not a component tally, and
+    ``apply_avoid_guard`` owns them.
+
+    Overrides are recorded under ``judge_output["component_derivation"]`` and in
+    the affected findings' ``notes``, and the model's original label is kept as
+    ``matched_model`` — a judge that mislabels its own analysis is the defect
+    this exists to close, so the evidence of it stays in the run log rather than
+    being silently swapped.
+
+    Recall fractions and the verdict are recomputed from the new labels. Unlike
+    ``apply_avoid_guard``'s downgrade-only recompute, this one applies in both
+    directions: that guard is a one-way safety net, whereas this is arithmetic
+    over the judge's own findings, so the derived verdict is simply correct.
+
+    Returns the input unchanged (same object) when there is nothing to do —
+    including when the judge was skipped or errored (no ``per_finding``), and
+    when no finding carried components, so historical run logs and any future
+    schema without them keep working.
+    """
+    if "per_finding" not in judge_output:
+        return judge_output
+    findings = expected_findings.get("findings") or []
+    # Scoped to relationship findings, matching the doctrine in the judge
+    # prompt. A `fact` finding's components are dates and places rather than
+    # links, so the link tally says nothing about it — deriving there
+    # manufactured eleven disagreements in the 2026-08-10 sweep.
+    eligible = {
+        str(f.get("id"))
+        for f in findings
+        if str(f.get("type")) == "relationship"
+        and str(f.get("polarity", "recover")) != "avoid"
+    }
+
+    overrides: list[dict[str, Any]] = []
+    out = copy.deepcopy(judge_output)
+    for entry in out["per_finding"]:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("finding_id")) not in eligible:
+            continue
+        derived = derive_matched(entry.get("components") or [])
+        if derived is None or derived == entry.get("matched"):
+            continue
+        note = (
+            f"[component-derivation] the judge emitted {entry.get('matched')!r} "
+            f"but its own components resolve to {derived!r} — forced to {derived!r}"
+        )
+        overrides.append(
+            {
+                "finding_id": str(entry.get("finding_id")),
+                "model": entry.get("matched"),
+                "derived": derived,
+            }
+        )
+        entry["matched_model"] = entry.get("matched")
+        entry["matched"] = derived
+        entry["notes"] = f"{entry.get('notes', '')} {note}".strip()
+
+    if not overrides:
+        return judge_output
+
+    labels = {str(e.get("finding_id")): str(e.get("matched")) for e in out["per_finding"]}
+    out["recall_required"] = _recall(labels, findings, required_only=True)
+    out["recall_total"] = _recall(labels, findings, required_only=False)
+    out["verdict"] = derive_verdict(labels, findings)
+    out["component_derivation"] = {"overrides": overrides}
+    return out
 
 
 def apply_avoid_guard(
@@ -374,4 +535,9 @@ def run_judge(
         raise JudgeOutputError(
             f"judge output was not valid JSON (stop_reason={msg.stop_reason!r}): {e}"
         ) from e
-    return _validate_judge_output(parsed)
+    validated = _validate_judge_output(parsed)
+    # Derive `matched` from the judge's own components before anyone sees the
+    # output. Applied here rather than at each call site so a new caller cannot
+    # forget it; `apply_avoid_guard` stays caller-applied because it needs the
+    # final tree, which this does not.
+    return apply_component_derivation(validated, expected_findings=expected_findings)

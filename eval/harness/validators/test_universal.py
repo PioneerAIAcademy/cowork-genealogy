@@ -601,6 +601,32 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
             _bare = _t.split("__")[-1] if "__" in _t else _t
             if not _bare[:1].isupper():
                 declared.add(_bare)
+
+    # Widen with the `allowed-tools` of every sub-skill the test declared in
+    # `execution.run_skills`. A `Skill()` callee runs in the caller's session,
+    # so its calls land in this same tool_calls log — legitimate exactly when
+    # the test opted the callee in. Without this the validator reads a working
+    # hand-off as an allowlist violation, which is what it did on the first
+    # run of ut_search_records_026 (`place_search`, `external_links_search`).
+    # Mirrors the sub-skill union in harness.allowed_tools (issue #1012); the
+    # two must widen by the same rule or a legal call fails after the fact.
+    _skills_dir = _repo_root / "packages" / "engine" / "plugin" / "skills"
+    for _callee in (test.get("execution", {}) or {}).get("run_skills", []) or []:
+        _callee_md = _skills_dir / str(_callee) / "SKILL.md"
+        _callee_fm = load_skill_frontmatter(_callee_md)
+        _entries = list(_callee_fm.get("allowed-tools", []) or [])
+        # Plus the callee's own @plugin: agents. compute_allowed_tools grants
+        # these, so omitting them here would flag a legal call as a violation
+        # after the fact — the same mismatch this block was added to fix, one
+        # hop further down (#1225 review).
+        for _agent in agent_refs_for_skill(_callee_md):
+            _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
+            _entries.extend(_agent_fm.get("tools", []) or [])
+        for _t in _entries:
+            _bare = _t.split("__")[-1] if "__" in _t else _t
+            if not _bare[:1].isupper():
+                declared.add(_bare)
+
     if not declared:
         # Skill declared no MCP tools but called some — that's a violation.
         bare = [c["tool"].split("__")[-1] for c in tool_calls]

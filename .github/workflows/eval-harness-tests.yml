@@ -69,14 +69,23 @@ jobs:
           # runlog-only PR is exactly the PR that adds corpus members, so
           # omitting the path meant the one check that covers them never ran.
           #
-          # `^packages/engine/plugin/hooks/` and `^apps/server/app/agent/` are
-          # here for test_write_lockdown_parity.py, which compares the three
-          # copies of the raw-write lockdown. Two of the three live outside every
-          # other branch of this pattern (plugin/skills/ does not cover
-          # plugin/hooks/), so without them a divergence landing in real_agent.py
-          # or guard_project_files.py alone never runs the test that exists to
-          # catch it. Keep in sync with IMPLEMENTATIONS in that module.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/app/agent/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
+          # `^packages/engine/plugin/hooks/` and `^apps/server/` are here for
+          # test_write_lockdown_parity.py, which compares the three copies of the
+          # raw-write lockdown. Two of the three live outside every other branch of
+          # this pattern (plugin/skills/ does not cover plugin/hooks/), so without
+          # them a divergence landing in real_agent.py or guard_project_files.py
+          # alone never runs the test that exists to catch it. Keep in sync with
+          # IMPLEMENTATIONS in that module.
+          #
+          # `^apps/server/` (broadened from `^apps/server/app/agent/`) and
+          # `^eval/triggering/` also gate the repo-wide encoding lint
+          # (tests/unit/test_encoding_lint.py, issue #1285), which AST-scans every
+          # .py in the repo: the job must run whenever a scanned .py under those
+          # trees changes, or a reintroduced bare open()/read_text() there merges
+          # with this check green. All apps/ Python lives under apps/server/, so
+          # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
+          # apps/electron hold no .py.
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
