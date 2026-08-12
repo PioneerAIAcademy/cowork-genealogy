@@ -1346,3 +1346,86 @@ def test_preflight_skips_check_for_negative_only(tmp_path, monkeypatch):
     ])
 
     assert rc == 0
+
+
+def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
+    tmp_path, monkeypatch, capsys
+):
+    """A harness-level exception part-way through saves the tests that finished,
+    exactly as a Ctrl-C does, and exits 1.
+
+    The sibling Ctrl-C test above is the contract this mirrors: same state, same
+    partial dotfile on disk, and until #943 the opposite outcome — the error
+    path returned before promoting it, so every completed test was stranded in a
+    gitignored `.partial_` file nothing surfaced.
+
+    Concurrency is pinned to 1 so exactly one test completes before the raise.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(3):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(spec.id, spec.skill, "pass")
+        raise RuntimeError("boom")  # the harness itself breaks during test 2
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # 1. A harness crash is exit 1 (documented in run_tests.py's exit-code
+    #    docstring and in eval/README.md). Unchanged by #943 — but it is the
+    #    assertion that fails if the promotion block is placed AFTER the
+    #    run-log write, since that path falls through and returns 0.
+    assert rc == 1
+    out_dir = runlogs / "unit" / "skill-a"
+    _out = capsys.readouterr().out
+
+    # 2. The completed test was promoted to a scratch log...
+    scratch = list(out_dir.glob("scratch_*.json"))
+    assert len(scratch) == 1, "completed tests should be promoted to a scratch log"
+    # 3. ...and it is the one test that finished before the raise.
+    assert json.loads(scratch[0].read_text(encoding="utf-8"))["n_tests"] == 1
+    # 4. Promoted, not copied — the dotfile was renamed away.
+    assert list(out_dir.glob(".partial_*")) == []
+    # 5. The operator is told where it went.
+    assert scratch[0].name in _out
+    # 6. We must NOT mint a releasable candidate from a crashed run.
+    assert list(out_dir.glob("v*.json")) == []
