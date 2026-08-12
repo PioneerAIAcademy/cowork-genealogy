@@ -298,6 +298,11 @@ Returns **text only**:
   transcription: string      // faithful full-page OCR (the primary payload)
   found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
+  browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
+    imageGroup: string       // the image-group prefix, e.g. "004261111"
+    distinctImagesRead: number
+    notice: string           // pivot advice; the transcription above is complete regardless
+  }
   metadata: {
     imageId?: string
     ark?: string
@@ -362,6 +367,77 @@ OCR budget would have failed 5 of the 89 healthy calls (~6%) — turning a slow
 page into a lost one mid-sweep. Re-measure before changing it: the analyzer is
 `eval/harness/e2e/latency_report.py`'s source data (`usage.timeline`), and a
 model change can move the whole distribution.
+
+### 5.8 Browse budget
+
+An agent can enter an unbounded page-by-page hunt through a browse-only image
+volume — binary-searching a film for one register page, one OCR round-trip at a
+time — and never leave it. One run did exactly this: 58 `image_transcribe` calls
+bisecting a single image group, no give-up condition, until it burned the harness
+wall-clock cap with no proof written. The per-invocation `image-reader` bound does
+not reach it (nothing counts *across* invocations), and skill prose does not either
+(over half the long hunts run in sessions that never load `search-images`). So the
+budget lives on the tool.
+
+**What it does.** From the `BROWSE_BUDGET_IMAGES + 1`-th (currently the **21st**)
+distinct image transcribed within **one image group in one project**, a successful
+result carries an advisory `browseBudget` field naming the count, the group, and a
+pivot instruction (log the browse with a negative outcome and move to the indexed
+route, or ask the user). The transcription itself is complete and unchanged — the
+field is additive.
+
+**Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
+`` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
+per project; the group is the digits before the underscore in the `imageId`. The map
+is process-lifetime and **never persisted**; re-reading an image already in the set
+does not advance the count. `__clearBrowseBudgetForTests` resets it between tests.
+
+**Key by project, not group alone.** The MCP server process outlives one
+conversation (on the desktop `.mcpb` it lives as long as Claude Desktop runs; the
+hosted path holds one persistent SDK client per session). A group-only key would
+tell a *second* project that opens a volume an earlier project browsed that it has
+already read 20 pages on page one — an argument to abandon a legitimate browse.
+Keying on project prevents that, and a unit test pins it (a same-group read under a
+different `projectPath` starts fresh). What no unit test or `make e2e-run` can
+observe is the intended flip side — that within one live process the count carries
+*across* conversations on the same project — because both start a fresh process; that
+rests on the process-lifetime map and is verified by reading, not by a test.
+
+**Advisory, not a refusal — an ADR-0011 read-tool carve-out.** ADR-0011 lists "an
+advisory instead of a refusal" as a rejected alternative, but that evidence is about
+a *state* gate, where an advisory let a run complete over an unresolved identity
+conflict. A page read persists nothing, so the asymmetry inverts: a wrong refusal
+would hard-block a researcher mid-browse with no way around it but restarting the
+server, and no production telemetry would ever surface that happening
+(`docs/architecture.md` §9.4). A caller-supplied override parameter is ruled out
+separately under ADR-0006 — the caller supplies the input, so a parameter is a
+request, not a constraint. The budget therefore ships as a field on a *successful*
+result and knowingly does nothing if the agent ignores it.
+
+**Why the threshold is 20.** Measured over the committed e2e corpus, distinct
+images per group for every block of ≥8 were 41, 26, 18, 17, 15, 14, 9, 8, 8. At 20,
+exactly two blocks carry a notice, both in one run — which passed, citing no image
+from either block (both yielded only a negative finding, which is the pivot the
+notice asks for, after 41 and 26 pages instead of 20). The highest non-noticing
+block is 18, so the budget does not fire on ordinary reads. Re-measure before
+changing it.
+
+**Two things it knowingly does not do** (accepted trades, not gaps to close here):
+
+- **An advisory cannot make the agent stop.** The motivating run already had a
+  skill-level pivot instruction available and bisected for two hours anyway. This is
+  the price of never blocking a researcher mid-browse.
+- **The delegated path never sees the notice.** The `image-reader` subagent's return
+  contract is a closed enumeration and its verbatim relay only fires when the tool
+  *throws*, so a notice riding a successful transcription dies in the subagent's
+  throwaway context. Corpus-wide about 40% of `image_transcribe` calls are
+  main-thread and see it directly; one measured run is fully delegated and would see
+  nothing. Teaching the agent to relay it is a separate task with its own reviewer
+  and paid eval slot.
+
+**Known limitation — ARK input is not counted.** An ARK carries no image-group
+number, so a hunt driven by `ark` rather than `imageId` never advances the budget.
+Resolving an ARK to its group is deliberately out of scope.
 
 ## 6. OpenRouter integration
 
@@ -588,7 +664,7 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   (lane 1).
 - File any deferred follow-ups (e.g. multi-image batching) as a GitHub issue in
   the same PR that defers them — `gh issue create --label developer`, see
-  `CLAUDE.md` § "Deferring work creates an issue".
+  `CLAUDE.md` § "Work you find along the way".
 
 ## 11. Cost & privacy
 
@@ -706,7 +782,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/specs/image-read-spec.md` — cross-reference
 - `CLAUDE.md` — new per-user config keys in the config table
 - A GitHub issue per deferred follow-up (e.g. multi-image batching), filed in
-  the same PR — see root `CLAUDE.md` § "Deferring work creates an issue"
+  the same PR — see root `CLAUDE.md` § "Work you find along the way"
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

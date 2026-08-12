@@ -316,6 +316,79 @@ avoided). Pair a required `avoid` guard with a required positive
 finding that the agent *documented* the negative conclusion, so a run
 that does nothing at all does not pass by default.
 
+#### 3.4.2 Relationship findings: `matched` is derived, not trusted
+
+For a finding with `"type": "relationship"` (and `polarity` other than
+`avoid`), the judge does **not** get to state the label. It states the
+*analysis*, and the harness computes the label from it
+(`apply_component_derivation` in `e2e/judge.py`, applied inside
+`run_judge` itself so a new call site cannot forget it).
+
+The judge emits a `components` array on each finding — one entry per
+claim, each with `claim` text, a `kind` (`link` / `detail`) and a
+`status` (`supported` / `unsupported` / `contradicted`) marked from the
+final tree only. `derive_matched` then rolls up the `link` entries:
+
+| Links | `matched` |
+|---|---|
+| Any link contradicted | `false` |
+| No link supported | `false` |
+| Some supported, some unsupported | `partial` |
+| All supported | `true` |
+
+**Only `link` components score.** A relationship finding names the people
+it links and then describes them ("Born 1833 in the Gorbals; an iron
+moulder; died 1910"); that description says *which* person is meant, not
+something the agent must file, and scoring it downgraded twelve findings
+whose relationship had been recovered exactly right, measured across the
+committed corpus in the 2026-08-10 calibration sweep. The one exception is a date the finding
+puts on **the relationship itself** — most often a marriage date on a
+spouse claim. The judge prompt tags those `link` so they score: a spouse
+link recovered with no marriage date is `partial`, not full credit for a
+marriage that was never dated. A linked person's *own* birth and death
+dates stay `detail` even when the finding states them precisely; only a
+date on the claimed relationship scores. That boundary is load-bearing —
+a wording that promoted identifying dates too was measured against the
+`claude-haiku-4-5` judge every fixture pins (§3.1) and reproduced exactly
+the twelve-finding downgrade above.
+
+This exists for the same reason as the §3.4.1 avoid-guard: the judge is a
+model, and this is the step it is least reliable at. On
+`manoel-oliveira-daughter` f1 it decomposed the finding correctly every
+time — three relationship components, all unsupported — wrote "zero
+components supported, this is 'false'" in its own notes, and then emitted
+`true`/`partial` anyway. Four successively more explicit prompt wordings
+failed to bind it and the label moved non-monotonically. The
+decomposition is trustworthy; the label is not.
+
+Scope and record-keeping:
+
+- **Relationship findings only.** A `fact` finding's components are dates
+  and places rather than links, so the link tally says nothing about it;
+  deriving there manufactured eleven disagreements in the same sweep.
+  `avoid` findings are also untouched — there `matched: "true"` means
+  "correctly declined to assert", which is not a component tally, and
+  §3.4.1's guard owns them.
+- What was overridden is recorded under
+  `judge_output.component_derivation.overrides` (each with `finding_id`,
+  the model's `model` label and the `derived` one), the model's original
+  label is preserved as `matched_model` on the finding, and the finding's
+  `notes` gain a `[component-derivation]` annotation. A judge that
+  mislabels its own analysis is the defect this exists to close, so the
+  evidence of it stays in the run log rather than being silently swapped.
+- Recall fractions and the verdict are recomputed from the derived
+  labels. Unlike §3.4.1's downgrade-only recompute, this applies in
+  **both** directions: the avoid-guard is a one-way safety net, whereas
+  this is arithmetic over the judge's own analysis, so the derived
+  verdict is simply correct.
+- A finding carrying no `link` components derives to nothing and keeps
+  the model's own label. That is what lets historical run logs — written
+  before `components` existed — keep working unchanged.
+
+Historical verdicts were produced by a judge without this derivation.
+They are not invalidated, but they are **not directly comparable** to
+grades produced with it; the trend view spans that boundary.
+
 ### 3.5 `README.md`
 
 Human notes. Required content:
@@ -850,7 +923,14 @@ as an *agent* failure to act on, not a judge bug to ignore.
       "finding_id": "f1",
       "matched": "true" | "partial" | "false",
       "agent_evidence": "<which tree element supports the match>",
-      "notes": "<short rationale>"
+      "notes": "<short rationale>",
+      "components": [
+        {
+          "claim": "<the single claim this component covers>",
+          "kind": "link" | "detail",
+          "status": "supported" | "unsupported" | "contradicted"
+        }
+      ]
     }
   ],
   "recall_required": 0.75,
@@ -871,7 +951,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | Field | Description |
 |-------|-------------|
 | `per_finding[]` | One entry per `expected_findings` entry |
-| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent |
+| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent. For a non-`avoid` `relationship` finding this is **derived** from `components`, not taken from the judge — see §3.4.2 |
+| `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
+| `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
 | `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
 | `recall_total` | Fraction across all findings |
@@ -890,6 +972,16 @@ additionally carries `avoid_guard.forced_false` (which findings the
 harness overrode, and the matching final-tree person ids), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
+
+Likewise, when §3.4.2's component derivation overrides a relationship
+finding, the persisted `judge_output` carries
+`component_derivation.overrides` (per finding: the model's label and the
+derived one), the finding keeps the model's label as `matched_model`,
+its `notes` gain a `[component-derivation]` annotation, and
+`recall_*`/`verdict` reflect the recompute — in **both** directions, not
+downgrade-only. `matched` on a non-`avoid` `relationship` finding is
+therefore a derived field: read `matched_model` to see what the judge
+itself said.
 
 ### 7.2.1 The three axes
 
@@ -1005,9 +1097,23 @@ Three integrity rules make the agreement number trustworthy:
   human label is independent of the judge under test. Blindness is a property of
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
-  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
-  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
-  deferred to `/interpret-e2e-result`, which is itself blind to them.
+  must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
+  compliance axis, and — when the judge reached no conclusion at all — a
+  `no grade:` line saying which cause it was, and stops there; `verdict`,
+  `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
+  is itself blind to them.
+
+  That third line is on the harness-fact side of this rule, not an exception to
+  it. It distinguishes a judge that raised (quoting the judge's own error text)
+  from an agent that produced no final tree, from `--skip-judge`; none of those
+  is a genealogical conclusion, and the presence of an error says nothing about
+  what the agent recovered. It exists because the previous single fixed string
+  printed the same words for all three, directly beneath
+  `stop_reason: completed`, so a judge crash read as "this run succeeded and
+  produced nothing" — indistinguishable, in a batch, from runs that genuinely
+  failed. **Gradedness is a separate axis from committability**: after a judge
+  crash becomes committable, a run can be ungraded *and* worth committing for
+  re-grading, so the two are reported on their own lines.
 
   > **Caveat on annotations collected before 2026-07-31.** Until then the
   > harness printed the judge's verdict *and* its `proof_quality` score to the
@@ -1139,6 +1245,25 @@ carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
 their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
+
+**A fifth check runs in shadow mode only: the warnings guardrail was never
+consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
+`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
+relationships do not count) for which `person_warnings` — the cheapest, LLM-free
+guardrail — was never successfully called. It keys on the `person_warnings`
+**tool** across all server spellings, not the `check-warnings` skill, so it
+catches a direct-tool path and a skill that launches but fails before reaching the
+tool. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "warnings_unchecked"` for its own bucket
+(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
+diverged only on whether the parentage write was delegated to `proof-conclusion`
+(which carries the check-warnings step) or inlined by the orchestrator (which does
+not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
+check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
+an inlined write is still gated — is gated on reading this fire rate across the
+corpus first**; not decided here.
 
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
