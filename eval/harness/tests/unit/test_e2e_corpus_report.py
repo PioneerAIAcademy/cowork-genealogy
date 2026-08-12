@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 from collections import Counter
 from pathlib import Path
@@ -409,8 +410,14 @@ def test_unreadable_runlogs_are_excluded_from_the_headline_count(tmp_path: Path,
     carry a denominator inflated by files that contributed to nothing."""
     fixture = tmp_path / "fx"
     fixture.mkdir()
-    good = _write(fixture, "run-2026-07-28_10-00-00.json", {"verdict": "pass"})
-    bad = fixture / "run-2026-07-28_11-00-00.json"
+    # Dated relative to today. This is the only test in this file that exercises
+    # the DEFAULT 14-day window (it passes no `--since`), so a hardcoded date
+    # silently ages out of that window and the test starts failing on the
+    # calendar rather than on a regression — which is what a fixed
+    # `run-2026-07-28` did on 2026-08-12.
+    stamp = datetime.date.today().isoformat()
+    good = _write(fixture, f"run-{stamp}_10-00-00.json", {"verdict": "pass"})
+    bad = fixture / f"run-{stamp}_11-00-00.json"
     bad.write_text("{not json", encoding="utf-8")
 
     import e2e.corpus_report as cr
