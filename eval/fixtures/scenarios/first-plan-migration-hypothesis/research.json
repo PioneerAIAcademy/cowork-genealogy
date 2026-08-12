@@ -1,0 +1,126 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine why Michael Sheahan relocated to Schuylkill County, Pennsylvania around 1882",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Michael Sheahan move to Schuylkill County, Pennsylvania around 1882 for anthracite coal-mining work, as family tradition holds?",
+      "rationale": "log_001 places Michael as a farmer in a different county in 1870; log_002 places him in Schuylkill County by 1882 with occupation 'miner'. The occupation and location both changed between these two points, consistent with a work-driven relocation to the anthracite coal region, but nothing yet directly documents the move itself or its cause -- no land purchase, employment record, or correspondence has been found. No plan has yet been written for this question.",
+      "selection_basis": "hypothesis_test",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-06-01"
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-06-01T16:10:00Z",
+      "tool": "record_search",
+      "query": {
+        "recordType": "census",
+        "surname": "Sheahan",
+        "givenName": "Michael",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1870 census: Michael Sheahan, farmer, household outside Schuylkill County. Establishes the 'before' point -- not yet in the coal region and not yet employed in mining."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-06-01T16:20:00Z",
+      "tool": "record_search",
+      "query": {
+        "recordType": "other",
+        "surname": "Sheahan",
+        "givenName": "Michael",
+        "residencePlace": "Schuylkill, Pennsylvania",
+        "residenceYearFrom": 1882,
+        "residenceYearTo": 1882
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1882 city/county directory: Michael Sheahan, occupation 'miner', Schuylkill County, Pennsylvania. Establishes the 'after' point. Neither record explains the move itself -- found incidentally, not part of any plan."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Michael Sheahan relocated to Schuylkill County, Pennsylvania between 1870 and 1882 for anthracite coal-mining employment",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Supported only by the occupation/location change visible across log_001 (1870, farmer, elsewhere) and log_002 (1882, miner, Schuylkill County). No direct record of the move's cause -- no land transaction, employment record, letter, or newspaper item -- has been found yet.",
+      "related_question_ids": ["q_001"]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Pennsylvania, United States",
+      "for_place": "Schuylkill County, Pennsylvania",
+      "time_period": "1870-1882",
+      "jurisdictions": [
+        {
+          "name": "Schuylkill County, Pennsylvania",
+          "date_range": "1811-present"
+        },
+        {
+          "name": "Berks and Northampton Counties (parent jurisdictions)",
+          "date_range": "pre-1811"
+        }
+      ],
+      "quirks": [
+        "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
+        "Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright by laborers.",
+        "Roman Catholic parishes fell under the Diocese of Philadelphia until the Diocese of Scranton was erected in 1868; sacramental registers are held at the parish/diocese, not the county.",
+        "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events are recorded in church, cemetery, and probate records instead.",
+        "Some naturalization and church films for the anthracite coal region are browse-only image groups (volume_search shows ~0% record-searchable) -- browse image-by-image.",
+        "County tax and exoneration lists for this period exist and are reachable via curated external links."
+      ],
+      "guide_markdown": "## Schuylkill County, Pennsylvania - 1870-1882\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906 -- pre-1906 events are recorded in church, cemetery, and probate records instead. Some coal-region naturalization and church films are browse-only. County tax and exoneration lists for this period are reachable via curated external links.",
+      "pages_read": [
+        { "section": "home", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy", "found": true },
+        { "section": "getting_started", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started", "found": true },
+        { "section": "online_records", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records", "found": true },
+        { "section": "research_tips", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Research_Tips", "found": true }
+      ],
+      "source": "locality-guide",
+      "created": "2026-06-01"
+    }
+  ]
+}

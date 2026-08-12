@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_research_plan_h4k",
+    "skill": "research-plan",
+    "name": "First plan for a migration hypothesis must already clear the record-type breadth self-check",
+    "type": "positive",
+    "description": "q_001 asks whether Michael Sheahan moved for coal-mining work -- a migration/hypothesis-test question, not a plain parentage question. This is the FIRST plan for the question. A sound first plan must already include record types beyond census that speak to a work-driven relocation (land/deed, tax, or similarly concrete corroborating types available at this place) -- not just census, and not requiring the user to ask 'was anything missed?' before that breadth appears. Mined from a real alpha feedback case (issue #1319) where first-pass plans looked size-adequate (4-10 items) but were narrow in record-type diversity -- one plan skipped census entirely and went straight to archival requests, newspaper, and tax; breadth items were added only after the tester asked twice.",
+    "tags": ["planning", "breadth", "record-type-selection", "migration", "hypothesis-test", "first-plan-migration-hypothesis"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 -- did Michael Sheahan move to Schuylkill County for coal-mining work?",
+    "scenario": "first-plan-migration-hypothesis"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: a first plan's record-type breadth must already reflect BCG Standard 14/17 (not just census/vital, and not just the record types a literal reading of the question names) -- the plan must clear this on its own, not only after the user separately asks 'did I miss anything?'.",
+    "The plan MUST include a census item (free, indexed, and the most basic corroborating source for a location/occupation change) -- census is the obvious first stop for confirming a relocation window, and a plan that skips it while reaching for costlier or narrower sources (out-of-jurisdiction archival requests, newspaper only) has the same shape as the real defect this test guards against.",
+    "Because the question is specifically about a WORK-DRIVEN migration (not a bare parentage or vital-event question), the plan should also include at least one record type that could directly corroborate or refute the employment/relocation cause itself -- land/deed records (the localities entry notes coal-region land was often company-leased -- a deed search can confirm or rule out this), county tax/exoneration lists (available via the external-links-search-schuylkill fixture, and noted in the localities quirks as corroborating occupation/residence between census years), or church records (also available per collections-search-schuylkill). A plan with ONLY census and/or newspaper items, with no attempt at any of these more direct corroborating types, fails this dimension.",
+    "Grade on the presence of a purposeful rationale connecting each additional record type to the migration/employment hypothesis specifically -- a generic rationale ('more records would help') is a partial, not a pass, per the existing Record type selection rubric.",
+    "Do not penalize the plan for also including additional record types beyond the minimum named above (e.g. naturalization, if the plan reasons Michael may have been an immigrant) -- more breadth than the minimum is not a defect.",
+    "If the plan is narrow (e.g. all-census, or all-one-type, or skips census while going straight to costlier/narrower sources) and the response does not separately flag that more sources should be checked before considering the plan complete, that is the specific failure mode this test exists to catch."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
