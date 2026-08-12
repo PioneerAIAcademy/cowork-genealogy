@@ -1,4 +1,5 @@
 import { getValidToken } from "../auth/refresh.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -273,7 +274,7 @@ export async function personSearchTool(
   const token = await getValidToken();
   const url = buildSearchUrl(input);
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,

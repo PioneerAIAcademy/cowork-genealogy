@@ -49,17 +49,27 @@ def should_continue_run(
     max_nudges: int,
     tool_count: int,
     tool_count_at_last_nudge: int,
+    mcp_unavailable: bool = False,
 ) -> bool:
     """Whether to veto an agent's *voluntary* stop and nudge it onward.
 
     True  → block the Stop: the run is unfinished and a nudge may help.
     False → allow the Stop: the project is complete, the nudge budget is
-            spent, or the previous nudge produced no tool call (the agent
-            isn't making progress, so another nudge won't either).
+            spent, the previous nudge produced no tool call (the agent
+            isn't making progress, so another nudge won't either), or the
+            genealogy MCP surface is gone (issue #941 — see below).
 
     Kept pure so the orchestrator's Stop hook stays a thin wrapper and this
     is unit-testable without a live agent.
     """
+    # #941, ask (3): with no genealogy tools in the session there is nothing to
+    # resume into, and in the 35-minute lost run this hook vetoed the agent's
+    # attempt to give up NINE times. Not the mechanism that ends such a run —
+    # the orchestrator's abort returns from its message loop, and no Stop hook
+    # is dispatched after that — but a hook already in flight when the abort
+    # lands must not nudge the agent back into an empty tool set.
+    if mcp_unavailable:
+        return False
     if project_completed(research):
         return False
     if nudges_used >= max_nudges:
@@ -80,6 +90,11 @@ def derive_stop_reason(
     fired, we want the cap reason in the result even if the agent had
     already set status=completed before the cap.
     """
+    # #941 — first, because outranking `completed` is the whole point: two of
+    # the three runs lost to an absent MCP surface self-declared
+    # project.status == "completed" and were reported as research failures.
+    if sdk_aborted_reason == "mcp_unavailable":
+        return "mcp_unavailable"
     if sdk_aborted_reason == "max_wall_clock_seconds":
         return "timeout"
     if sdk_aborted_reason == "max_tool_calls":

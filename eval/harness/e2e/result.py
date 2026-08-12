@@ -272,7 +272,7 @@ class E2eResult:
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate.
     #
     # SHADOW: deliberately NOT read by __post_init__ below. It must not move
-    # the compliance axis until its false-positive rate is calibrated (#911).
+    # the compliance axis until its false-positive rate is calibrated.
     protected_writes_by_unnamed_delegate: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:

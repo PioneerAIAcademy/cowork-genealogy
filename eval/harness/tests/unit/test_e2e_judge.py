@@ -15,6 +15,8 @@ from e2e.judge import (
     _render_prompt,
     _validate_judge_output,
     apply_avoid_guard,
+    apply_component_derivation,
+    derive_matched,
 )
 
 
@@ -326,3 +328,154 @@ def test_avoid_guard_grades_a_finding_the_judge_never_graded():
     assert out["per_finding"][0]["finding_id"] == "f1"
     assert out["per_finding"][0]["matched"] == "false"
     assert out["verdict"] == "fail"
+
+
+# --- component derivation (issue #1090) ---------------------------------
+#
+# The judge decomposes a finding reliably and labels it unreliably. These
+# pin the arithmetic that replaced the label.
+
+
+def _findings(*, polarity: str = "recover", ftype: str = "relationship"):
+    return {
+        "findings": [
+            {"id": "f1", "required": True, "polarity": polarity, "type": ftype}
+        ]
+    }
+
+
+def _with_components(components, matched="true"):
+    components = [{"kind": "link", **c} for c in components]
+    return _valid_output(
+        per_finding=[
+            {
+                "finding_id": "f1",
+                "matched": matched,
+                "agent_evidence": "",
+                "notes": "",
+                "components": components,
+            }
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "statuses,expected",
+    [
+        ([], None),
+        (["supported"], "true"),
+        (["supported", "supported"], "true"),
+        (["unsupported"], "false"),
+        (["unsupported", "unsupported", "unsupported"], "false"),
+        (["supported", "unsupported"], "partial"),
+        (["contradicted"], "false"),
+        (["supported", "contradicted"], "false"),
+    ],
+)
+def test_derive_matched_rolls_components_up(statuses, expected):
+    components = [{"claim": "c", "kind": "link", "status": s} for s in statuses]
+    assert derive_matched(components) == expected
+
+
+def test_derivation_forces_false_when_no_component_is_supported():
+    """The #1090 case: judge decomposes correctly, then emits `true` anyway."""
+    out = apply_component_derivation(
+        _with_components(
+            [
+                {"claim": "father link", "status": "unsupported"},
+                {"claim": "mother link", "status": "unsupported"},
+                {"claim": "spouse link", "status": "unsupported"},
+            ],
+            matched="true",
+        ),
+        expected_findings=_findings(),
+    )
+    entry = out["per_finding"][0]
+    assert entry["matched"] == "false"
+    assert entry["matched_model"] == "true"
+    assert out["component_derivation"]["overrides"][0]["derived"] == "false"
+    assert "[component-derivation]" in entry["notes"]
+
+
+def test_derivation_recomputes_recall_and_verdict():
+    out = apply_component_derivation(
+        _with_components([{"claim": "father link", "status": "unsupported"}]),
+        expected_findings=_findings(),
+    )
+    assert out["verdict"] == "fail"
+    assert out["recall_required"] == 0.0
+    assert out["recall_total"] == 0.0
+
+
+def test_derivation_leaves_output_untouched_when_label_already_agrees():
+    original = _with_components(
+        [{"claim": "father link", "status": "supported"}], matched="true"
+    )
+    out = apply_component_derivation(original, expected_findings=_findings())
+    assert out is original
+    assert "component_derivation" not in out
+
+
+def test_derivation_ignores_findings_without_components():
+    """Historical run logs predate `components` — their labels must survive."""
+    original = _valid_output()
+    out = apply_component_derivation(original, expected_findings=_findings())
+    assert out is original
+    assert out["per_finding"][0]["matched"] == "true"
+
+
+def test_derivation_skips_avoid_findings():
+    """`true` on an avoid finding means 'correctly declined', not a tally."""
+    original = _with_components(
+        [{"claim": "the wrong Robert Smith", "status": "unsupported"}], matched="true"
+    )
+    out = apply_component_derivation(
+        original, expected_findings=_findings(polarity="avoid")
+    )
+    assert out is original
+    assert out["per_finding"][0]["matched"] == "true"
+
+
+def test_derivation_is_a_noop_when_the_judge_was_skipped():
+    assert apply_component_derivation({}, expected_findings=_findings()) == {}
+
+
+def test_detail_components_never_score():
+    """Biography identifies which person is meant; it is not a claim to file."""
+    out = apply_component_derivation(
+        _with_components(
+            [
+                {"claim": "father link", "kind": "link", "status": "supported"},
+                {"claim": "born 1833 in the Gorbals", "kind": "detail",
+                 "status": "unsupported"},
+                {"claim": "an iron moulder", "kind": "detail", "status": "unsupported"},
+            ],
+            matched="true",
+        ),
+        expected_findings=_findings(),
+    )
+    # Every link supported -> `true`; the two missing details must not lower it.
+    assert out is not None
+    assert out["per_finding"][0]["matched"] == "true"
+
+
+def test_derivation_skips_fact_findings():
+    """A `fact` finding's components are dates and places, not links."""
+    original = _with_components(
+        [{"claim": "birth place", "kind": "link", "status": "unsupported"}],
+        matched="true",
+    )
+    out = apply_component_derivation(
+        original, expected_findings=_findings(ftype="fact")
+    )
+    assert out is original
+    assert out["per_finding"][0]["matched"] == "true"
+
+
+def test_derivation_falls_back_when_only_details_are_listed():
+    original = _with_components(
+        [{"claim": "an iron moulder", "kind": "detail", "status": "unsupported"}],
+        matched="true",
+    )
+    out = apply_component_derivation(original, expected_findings=_findings())
+    assert out is original

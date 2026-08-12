@@ -32,8 +32,14 @@ def test_dev_login_blank_email_defaults():
 def test_dev_login_refused_when_deployed(monkeypatch):
     # Backstop: on an https (deployed) host, dev-login is off even if Google was
     # never configured — so a misconfigured deploy can't become open signup.
-    monkeypatch.setattr(get_settings(), "public_url", "https://example.com")
+    #
+    # The flip happens INSIDE the started client: `with TestClient(app)` runs the
+    # lifespan, whose first statement is config.assert_production_config — and an
+    # https public_url with the suite's dev-default WS_SIGNING_KEY and blank
+    # DATABASE_URL is exactly what that refuses to boot. Both endpoints below read
+    # get_settings() per request, so flipping it after startup tests the same thing.
     with TestClient(app) as client:
+        monkeypatch.setattr(get_settings(), "public_url", "https://example.com")
         assert client.get("/auth/config").json()["devLogin"] is False
         r = client.post("/auth/dev-login", json={"email": "anyone@example.com"})
         assert r.status_code == 403

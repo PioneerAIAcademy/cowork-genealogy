@@ -4,6 +4,7 @@
     "skill": "search-records",
     "name": "Escalate to search-external-sites after FamilySearch census exhaustion",
     "type": "positive",
+    "holdout": true,
     "description": "When a FamilySearch census search returns nil across 3+ name variants for an important plan item and the question remains open, the skill must invoke Skill('search-external-sites') to generate Ancestry/MyHeritage search URLs. FamilySearch's index has no phonetic fallback — a transcription error (e.g. 'Flynn' → 'Flinn') means no variant will ever surface that record on FamilySearch. Other sites fuzzy-match and can recover it, which is exactly why the escalation is triggered by the nil signal here, not planned upfront. search-external-sites is stubbed with a canned response rather than executed: compute_allowed_tools unions the tools of plugin agents referenced via @plugin:<name> but NOT of sub-skills invoked via Skill(...), so the callee runs with neither place_search nor external_links_search and improvises a URL from prose. Measured in v1_2026-07-30_19-24-10, where it said so itself — 'The place_search and external_links_search tools aren't available in this environment' — and produced a URL with no name_x=ps_ps, the phonetic flag this escalation exists to obtain. Stubbing is therefore closer to the real behaviour than running it here, not further from it, until the union gap is fixed in the harness.",
     "tags": [
       "search",
@@ -26,7 +27,8 @@
     "record-search-patrick-flyn-no-results",
     "record-search-variant-any-givenname-flynn-no-results",
     "record-search-variant-father-name-no-results",
-    "record-search-flynn-any-variant-no-results"
+    "record-search-flynn-any-variant-no-results",
+    "record-search-patrick-anysurname-no-results"
   ],
   "execution": {
     "max_turns": 35,

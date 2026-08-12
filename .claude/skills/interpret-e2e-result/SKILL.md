@@ -15,7 +15,7 @@ Each run writes three files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `narration[]`, `usage`, `blocked_tree_reads[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
+| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `narration[]`, `usage`, `blocked_tree_reads[]`, `blocked_context_calls[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — the ground truth for what it recovered |
 | `run-<ts>.final-research.json` | The agent's final `research.json`, including the proof conclusion it wrote |
 
@@ -61,7 +61,8 @@ You have everything the user needs without the judge:
 - **The proof conclusion** — read what the agent *wrote* in `final-research.json`
   (`proof_summaries`). That's the agent's own claim, not a grade.
 - **Why it stopped, what it did** — `stop_reason`, `tool_calls`,
-  `blocked_tree_reads`, `usage` are harness facts, not judge output.
+  `blocked_tree_reads`, `blocked_context_calls`, `usage` are harness facts, not
+  judge output.
 
 ## What to do
 
@@ -120,7 +121,7 @@ confidence/tier it asserted. Report observable characteristics as facts (e.g.
 that's what the user grades blind next. If no proof summary was written, say so;
 it's not itself a failure, just nothing to describe.
 
-### Step 2c — Note any blocked tree-reads
+### Step 2c — Note any blocked tree-reads or context-writes
 
 Check `blocked_tree_reads` in `run-<ts>.json`. The harness blocks
 `person_read` / `person_search` / `person_ancestors` during a run so the
@@ -133,6 +134,20 @@ from records). Each entry is a denied attempt.
   `/research` flow shouldn't reach for `person_read` on the subject during an
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
+
+Then check `blocked_context_calls` — the write-side twin, denied by a different
+guard. Each entry is a main-thread `extraction_append` the harness blocked
+(`blocked_by: "context"`): the `record-extraction` router doing the
+record-extractor subagent's write itself because that subagent failed to spawn
+(#942). Same shape as above (`{tool, args, blocked_by}`), and the denied attempt
+also shows up in `narration[]` with `kind: "blocked"`.
+
+- **Empty** — normal; say nothing.
+- **Non-empty** — the router tried to substitute for a failed spawn and was
+  blocked, so no extracted assertions were written on the main thread. Flag it:
+  it points at a `record-extractor` spawn failure, not a records gap, and any
+  findings the router would have produced this way are correctly absent. Read
+  the matching `narration[]` turn to see where the spawn failed.
 
 ### Step 2d — Note any GPS guardrail bypasses
 
@@ -200,6 +215,17 @@ Translate `stop_reason` into something a researcher can act on:
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
   message and the last `narration` entries for the surrounding context.
+- `mcp_unavailable` — **an environment failure, not a research result.**
+  The genealogy MCP tools were absent from the session, so the agent had
+  no way to search anything. Tell the researcher to **re-run the test —
+  not to re-research the case**, and to run `make e2e-preflight` for the
+  server's own error text.
+  **You will not be handed a run log for this**: such a run writes no
+  files at all (e2e-test-spec.md §6, the retention rule under the
+  `stop_reason` table), so it reaches a genealogist as terminal output.
+  If you are asked to interpret one, the whole interpretation is the
+  paragraph above — do not go looking for missing findings, and do not
+  read the starting tree as the agent's output.
 
 ### Step 4 — Compare expected vs found (when the tree is missing some findings)
 

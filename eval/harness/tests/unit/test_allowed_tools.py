@@ -146,3 +146,256 @@ def test_record_extraction_unions_image_reader_opus_image_read():
 def test_search_images_unions_image_reader_opus_image_read():
     tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
     assert "mcp__genealogy__image_read" in tools
+
+
+# --- Sub-skill union (issue #1012) -----------------------------------------
+#
+# `Skill("<name>")` loads the callee's instructions into the SAME conversation,
+# so the callee's tool calls are checked against the CALLER's allowlist. Before
+# this union, search-external-sites ran inside search-records holding neither
+# place_search nor external_links_search — and the failure was silent: the model
+# invented an Ancestry URL from prose rather than erroring. These run against
+# the real plugin files, not a tmp_path fixture, because the bug was a real gap
+# between two real skills and a synthetic pair would not have caught it.
+
+
+def test_skill_refs_finds_every_declared_callee():
+    from harness.allowed_tools import skill_refs_for_skill
+
+    callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
+    assert callees == [
+        "project-status",
+        "record-extraction",
+        "research-plan",
+        "search-external-sites",
+    ]
+
+
+def test_skill_refs_accepts_both_quote_styles():
+    """Extraction only — `skill_refs_in_text` has no self-filter to exercise.
+
+    Named `..._and_drops_self` until 2026-08-09, which claimed coverage it did
+    not have: the self-filter lives in `skill_refs_for_skill`, one level up,
+    and deleting it left this test green. `test_self_reference_is_dropped`
+    below is the one that actually covers it.
+    """
+    from harness.allowed_tools import skill_refs_in_text
+
+    assert skill_refs_in_text('call Skill("a-skill") then Skill(\'b-skill\')') == [
+        "a-skill",
+        "b-skill",
+    ]
+    assert skill_refs_in_text("Skill( \"spaced\" )") == ["spaced"]
+    assert skill_refs_in_text("prose about Skill and skills") == []
+
+
+def test_self_reference_is_dropped(tmp_path):
+    """`skill_refs_for_skill` drops a skill naming itself, and keeps the rest.
+
+    No plugin body does this today, so the filter can only be covered by a
+    constructed file — which is precisely why it went untested. The name comes
+    from the parent directory, so the fixture has to be a real directory.
+    """
+    from harness.allowed_tools import skill_refs_for_skill
+
+    skill = tmp_path / "search-records"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        '---\nname: search-records\n---\n'
+        'Reachable via Skill("search-records") from the router.\n'
+        'Hands off with Skill("record-extraction") and Skill("research-plan").\n',
+        encoding="utf-8",
+    )
+
+    assert skill_refs_for_skill(skill / "SKILL.md") == [
+        "record-extraction",
+        "research-plan",
+    ]
+
+
+def test_skill_refs_for_missing_file_is_empty(tmp_path):
+    from harness.allowed_tools import skill_refs_for_skill
+
+    assert skill_refs_for_skill(tmp_path / "absent" / "SKILL.md") == []
+
+
+def test_run_skills_callee_brings_its_own_agents_tools():
+    """The union follows the AGENT axis one level down, not just the skill's.
+
+    `record-extraction` delegates to `@plugin:record-extractor`. Union only its
+    `allowed-tools` and the callee runs holding eight fewer tools than it does
+    standalone — and the failure is silent improvisation, not an error, which
+    is the whole bug #1012 closed one level up (#1225 review).
+
+    Asserted against the real plugin rather than a synthetic pair: the gap was
+    between two real files, and a constructed fixture would have passed while
+    production drifted.
+    """
+    as_callee = set(
+        compute_allowed_tools(
+            "search-records", PLUGIN_SKILLS, run_skills={"record-extraction"}
+        )
+    )
+    standalone = set(compute_allowed_tools("record-extraction", PLUGIN_SKILLS))
+
+    assert "mcp__genealogy__extraction_append" in as_callee
+    assert not (standalone - as_callee), (
+        "a run_skills callee must hold every tool it holds standalone; "
+        f"missing: {sorted(t.split('__')[-1] for t in standalone - as_callee)}"
+    )
+
+
+def test_uncovered_callee_fixtures_sees_the_callees_agent_tools(tmp_path):
+    """Grant and preflight must widen by the same rule.
+
+    Granting a tool the fixture check never looks at recreates "permission is
+    not existence": the call resolves to nothing and aborts the CALLER twenty
+    turns in, naming the wrong skill.
+    """
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    caller = tmp_path / "caller"
+    caller.mkdir()
+    (caller / "SKILL.md").write_text(
+        '---\nname: caller\nallowed-tools: []\n---\nHands off via Skill("callee").\n',
+        encoding="utf-8",
+    )
+    callee = tmp_path / "callee"
+    callee.mkdir()
+    (callee / "SKILL.md").write_text(
+        "---\nname: callee\nallowed-tools: [own_tool]\n---\n"
+        "Delegates to @plugin:helper for the heavy lifting.\n",
+        encoding="utf-8",
+    )
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "helper.md").write_text(
+        "---\nname: helper\ntools:\n  - agent_only_tool\n---\nHelper.\n",
+        encoding="utf-8",
+    )
+
+    missing = uncovered_callee_fixtures(
+        "caller",
+        tmp_path,
+        stubbed_skills=set(),
+        registered_tools={"own_tool"},
+        agents_dir=agents,
+    )
+    assert missing == [("callee", "agent_only_tool")]
+
+
+def test_callee_tools_absent_until_the_test_opts_in():
+    """Opt-in, not automatic: every test that does not declare `run_skills`
+    keeps the allowlist it had before #1012.
+
+    Unioning all four of search-records' callees unconditionally would let any
+    of them reach a tool with no fixture, tripping the Phase 2 gate and
+    aborting the CALLER's test — arming a nondeterministic failure on 24 tests
+    to serve the one that wants it.
+    """
+    tools = compute_allowed_tools("search-records", PLUGIN_SKILLS)
+    assert "mcp__genealogy__place_search" not in tools
+    assert "mcp__genealogy__external_links_search" not in tools
+
+
+def test_opting_in_unions_that_callees_tools():
+    tools = compute_allowed_tools(
+        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+    )
+    # The two search-external-sites needs and search-records lacks.
+    assert "mcp__genealogy__place_search" in tools
+    assert "mcp__genealogy__external_links_search" in tools
+    # The caller's own tools survive the union.
+    assert "mcp__genealogy__record_search" in tools
+
+
+def test_opting_in_to_one_callee_does_not_grant_another():
+    tools = compute_allowed_tools(
+        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+    )
+    # volume_search belongs to research-plan / record-extraction, not to
+    # search-external-sites. Declaring one callee must not widen to the rest.
+    assert "mcp__genealogy__volume_search" not in tools
+
+
+def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
+    with pytest.raises(ValueError, match="never invokes"):
+        compute_allowed_tools(
+            "search-records", PLUGIN_SKILLS, run_skills={"timeline"}
+        )
+
+
+# --- Preflight: permission is not existence --------------------------------
+
+
+def test_preflight_flags_a_live_callee_with_no_fixtures():
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills=set(),
+        registered_tools={"record_search"},
+    )
+    pairs = {(c, t) for c, t in missing if c == "search-external-sites"}
+    assert ("search-external-sites", "place_search") in pairs
+    assert ("search-external-sites", "external_links_search") in pairs
+
+
+def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
+    """Derives the stocked set from the callee's own frontmatter rather than
+    hardcoding it.
+
+    The hardcoded version went red the moment main granted the callee a new
+    tool: #1521 added `collections_search` to search-external-sites so it can
+    note FamilySearch's own holdings before recommending a competitor, and this
+    test — which claims "the preflight is satisfied once the fixtures are
+    stocked" — was still describing a two-tool callee. Neither change was
+    wrong; they only broke together, and the test's own subject is that a
+    complete set satisfies the preflight, not which tools happened to be in it
+    on the day it was written.
+    """
+    from harness.allowed_tools import load_skill_frontmatter, uncovered_callee_fixtures
+
+    callee_fm = load_skill_frontmatter(
+        PLUGIN_SKILLS / "search-external-sites" / "SKILL.md"
+    )
+    stocked = {
+        t.rsplit("__", 1)[-1] for t in (callee_fm.get("allowed-tools") or [])
+    } | {"record_search"}
+    assert "collections_search" in stocked, (
+        "sanity: the callee's frontmatter should be the source of this set"
+    )
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills=set(),
+        registered_tools=stocked,
+    )
+    assert [(c, t) for c, t in missing if c == "search-external-sites"] == []
+
+
+def test_preflight_ignores_a_stubbed_callee():
+    """A stubbed callee never executes, so it never calls a tool and needs
+    no fixtures. This is why ut_search_records_018 stays green unchanged."""
+    from harness.allowed_tools import uncovered_callee_fixtures
+
+    missing = uncovered_callee_fixtures(
+        "search-records",
+        PLUGIN_SKILLS,
+        stubbed_skills={"search-external-sites"},
+        registered_tools={"record_search"},
+    )
+    assert all(c != "search-external-sites" for c, _ in missing)
+
+
+def test_preflight_message_names_both_remedies():
+    from harness.allowed_tools import format_uncovered_callee_fixtures
+
+    msg = format_uncovered_callee_fixtures(
+        "ut_x_001", [("search-external-sites", "place_search")]
+    )
+    assert "ut_x_001" in msg
+    assert "place_search" in msg
+    assert "stub_skills" in msg

@@ -1,6 +1,5 @@
 ---
 name: research
-model: claude-sonnet-4-6
 description: >-
   Drives the full GPS research workflow on a research objective, invoking the
   right sub-skills in the right order based on current research.json state.

@@ -284,8 +284,12 @@ nameForms missing                                  →  all four fields omitted
 - Input GedcomX has `preferred: true` on a name → simplified has `preferred: true`
 - Input GedcomX omits `preferred` (or sets it `false`) → simplified omits it
 
-The conversion preserves the order of `names[]` as it appears in the input;
-it does **not** reorder by `preferred`.
+`simplifyPerson` stable-reorders `preferred: true` names to the front so
+`names[0]` upholds the first-position convention (`simplified-gedcomx-spec.md`
+§2) even when FamilySearch orders an alternate (e.g. `AlsoKnownAs`) before the
+preferred name; relative order within the preferred and non-preferred groups is
+preserved. Without this, every `names[0]` consumer (`person_read`,
+`person_ancestors`) can show an alternate as the primary name.
 
 `toGedcomX` is the mirror image: if simplified has `preferred: true`, emit
 `preferred: true` on the GedcomX name; otherwise omit. Never emit
@@ -895,6 +899,7 @@ fall into the `fullText` fallback path and emit a warning.
 | 7 | Mononym `"Plato"` → `given: ""`, `surname: "Plato"`, with `console.warn` | Rule 3 mononym |
 | 8 | `preferred: true` is passed through when set on input; omitted otherwise | Rule 4 |
 | 9 | Multiple names can independently have `preferred: true` | Rule 4 |
+| 9b | Preferred name is moved to `names[0]` when an alternate precedes it | Rule 4 |
 | 10 | `primary: true` is passed through when set on input; omitted otherwise | Rule 5 |
 | 11 | Multiple facts of different types can each be `primary: true` | Rule 5 |
 | 12 | `date.formal` is dropped, only `date.original` surfaces as `date` | Rule 6 |

@@ -176,7 +176,8 @@ def check_runnable(
     # and run-time agree on which names are live: parse_stub_skills applies
     # the same normalization the hook matches against (both entry forms,
     # malformed entries dropped — the JSON Schema is the gate for shape).
-    for name in parse_stub_skills(spec.execution):
+    stubbed = parse_stub_skills(spec.execution)
+    for name in stubbed:
         if not (Path(skills_dir) / name).is_dir():
             return RunnabilityResult(
                 False,
@@ -184,6 +185,37 @@ def check_runnable(
                 f"skill (no directory at {skills_dir}/{name}) — the stub "
                 f"would silently never fire",
             )
+
+    # A callee in BOTH run_skills and stub_skills is the one combination that
+    # is worse than either alone, and the schema's "Mutually exclusive with
+    # stub_skills" prose is not itself a constraint — no `not`/`allOf` backs
+    # it. Gate it here rather than in compute_allowed_tools, beside the sibling
+    # stub check above, so it fails at load time instead of ~20 turns into a
+    # paid run.
+    #
+    # What the combination does: compute_allowed_tools unions the callee's
+    # allowed-tools into the session allowlist, while uncovered_callee_fixtures
+    # skips its fixture preflight (`if callee in stubbed_skills: continue`),
+    # and the hook then denies the launch. The session ends up holding tools
+    # that no fixture backs and no preflight warned about — so the *main
+    # thread* calling one trips `unmatched_tool_call` and aborts the caller,
+    # which is precisely the failure that preflight exists to prevent.
+    #
+    # This is the "silent fourth state" the three-state table in
+    # docs/specs/unit-test-spec.md does not cover; with this gate there are
+    # three states again.
+    both = sorted(set(spec.execution.get("run_skills") or []) & set(stubbed))
+    if both:
+        return RunnabilityResult(
+            False,
+            f"execution declares {', '.join(repr(n) for n in both)} in BOTH "
+            f"run_skills and stub_skills. They are mutually exclusive: "
+            f"run_skills grants the callee's tools and requires a fixture for "
+            f"each, stub_skills denies the launch and waives that requirement. "
+            f"Declaring both grants the tools AND waives the fixture check, so "
+            f"the session holds tools nothing backs. Keep the one you meant — "
+            f"run_skills to execute the callee, stub_skills to deny it.",
+        )
 
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test

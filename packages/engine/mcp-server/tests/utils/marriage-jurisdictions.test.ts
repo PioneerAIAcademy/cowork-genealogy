@@ -99,6 +99,20 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
     expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
   });
 
+  // #1267, and the root cause the `isSubCountryPlace("Co., USA")` symptom pointed
+  // at. `placeParts`' old `\bco\.?\b` left a stray "." on every abbreviated
+  // county, so "Hill Co., Texas" tokenized as ["hill .", "texas"] and `samePlace`
+  // did not match the tree's ["hill", "texas"] — the exclusion silently failed and
+  // the jurisdiction just searched came back as an alternative, sub-places and
+  // all. Reachable in principle (real tree data spells counties this way, and a
+  // fact with no `standard_place` feeds the abbreviated form straight in), though
+  // nothing in the corpus exercises it. Without this test the root cause is
+  // untested and the next refactor of that regex reintroduces it.
+  it("excludes a jurisdiction searched with an abbreviated County qualifier", () => {
+    const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { ...WINDOW, searchedPlace: "Hill Co., Texas" });
+    expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
+  });
+
   it("excludes a narrower tree place when a broader place was searched", () => {
     const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { searchedPlace: "Texas, United States" });
     expect(out.map((c) => c.place).filter((p) => p.includes("Texas"))).toEqual([]);
@@ -281,22 +295,15 @@ describe("isSubCountryPlace", () => {
     expect(isSubCountryPlace("Hill County, Texas")).toBe(true);
   });
 
-  it("KNOWN WART: an abbreviated qualifier leaves punctuation that reads as scoped", () => {
-    // `placeParts` strips `co` out of `co.` and leaves the ".", which survives
-    // the empty-string filter and counts as a locality. So a place that is only
-    // an abbreviated qualifier plus a country reads as sub-country.
+  it("does not mistake an abbreviated County qualifier for a locality", () => {
+    // Was a KNOWN WART asserting `true` until #1267. `\bco\.?\b` could not consume
+    // the dot — after `co.` the trailing `\b` fails and the engine backtracks to
+    // bare `co` — so a "." survived the empty-string filter and counted as a
+    // locality. `\bco\b\.?` asserts the boundary first, then eats the dot.
     //
-    // Worth fixing eventually: the failure mode is exactly the one this guard
-    // exists to prevent, a country-wide search reading as scoped.
-    //
-    // Recorded rather than fixed here, deliberately. `placeParts` also feeds
-    // `placeTokens` -> `samePlace`, i.e. the jurisdiction EXCLUSION and ordering
-    // that the spec flags as load-bearing and requiring a live run to re-verify.
-    // "Co., USA" is not an input any real caller produces — `marriagePlace` and
-    // `recordSubdivision` always carry a name — so the risk of touching ranking
-    // code in a PR about something else is worse than the wart. Also written up
-    // in `docs/specs/record-search-tool-spec-v2.md` § Place matching, so it does
-    // not live only in a test comment.
-    expect(isSubCountryPlace("Co., USA")).toBe(true);
+    // The symptom recorded here was the smaller half. The same stray token fed
+    // `placeTokens` -> `samePlace`, which is what the exclusion test below pins.
+    expect(isSubCountryPlace("Co., USA")).toBe(false);
+    expect(isSubCountryPlace("Hill Co., Texas")).toBe(true);
   });
 });
