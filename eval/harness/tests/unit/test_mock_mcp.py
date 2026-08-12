@@ -314,19 +314,11 @@ def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path)
 # handler take its `_ws is None` short-circuit and return `{"ok": False, ...}`
 # with no node call and no build — fast, and needs no fixtures.
 
-_GATE_SET_TOOLS = [
-    "research_append",
-    "extraction_append",
-    "research_log_append",
-    "tree_edit",
-    "tree_correct",
-    "materialize_facts",
-    "project_context",
-    "research_query",
-]
-
-
-@pytest.mark.parametrize("tool_name", _GATE_SET_TOOLS)
+# Derived from the gate set itself, never hand-copied: a ninth tool added to
+# OK_FALSE_IS_FAILURE_LIVE is exercised here automatically. A parallel list would
+# leave the new tool unasserted while the drift lint below still passed, since
+# that lint pins the set's membership rather than each tool's behaviour.
+@pytest.mark.parametrize("tool_name", sorted(OK_FALSE_IS_FAILURE_LIVE))
 def test_returned_failure_sets_is_error(tool_name):
     """A tool that reports failure by RETURNING must not read as a success."""
     server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR)

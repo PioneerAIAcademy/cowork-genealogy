@@ -31,6 +31,12 @@ describe("writer-tool dispatch wiring", () => {
     /* setParentNodes */ true,
   );
 
+  /** Arm text with comments removed, so a `writerToolResult(` mentioned in a
+   *  comment cannot satisfy — or trip — the assertions below. Theoretical today,
+   *  but the whole point of this test is that the call is really wired. */
+  const stripComments = (text: string): string =>
+    text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+
   /** tool name → source text of the `if` block that handles it. */
   const armBodies = new Map<string, string>();
   const collect = (node: ts.Node): void => {
@@ -44,7 +50,10 @@ describe("writer-tool dispatch wiring", () => {
       // comparison's parent is the `if (…) { … }` whose body we assert on.
       const parent = node.parent;
       if (parent && ts.isIfStatement(parent)) {
-        armBodies.set(node.right.text, parent.thenStatement.getText(indexAst));
+        armBodies.set(
+          node.right.text,
+          stripComments(parent.thenStatement.getText(indexAst)),
+        );
       }
     }
     node.forEachChild(collect);
