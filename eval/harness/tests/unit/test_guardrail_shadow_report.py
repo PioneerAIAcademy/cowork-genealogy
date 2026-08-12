@@ -17,17 +17,23 @@ from e2e.guardrail_shadow_report import (
     _is_result_json,
     all_result_jsons,
     format_citation_nulling,
+    format_conflict_unpersisted,
     format_detail,
     format_summary,
     format_provenance,
     format_provenance_replay,
     replay_provenance,
     scan_citation_nulling,
+    scan_conflict_unpersisted,
     scan_corpus,
     scan_provenance,
     scan_one,
 )
-from harness.skill_invocation import CITATION_NULLING_KIND, PERSON_EVIDENCE_DENY_KIND
+from harness.skill_invocation import (
+    CITATION_NULLING_KIND,
+    CONFLICT_UNPERSISTED_KIND,
+    PERSON_EVIDENCE_DENY_KIND,
+)
 
 
 def _write_run(dir_, name, tool_calls):
@@ -263,6 +269,49 @@ def test_format_citation_nulling_counts_runs_not_just_entries(tmp_path):
     b = _write_result(tmp_path / "fx2", "run-1.json", [_citation_entry("src_003")])
     text = format_citation_nulling(scan_citation_nulling([a, b]))
     assert "3 concluded source(s)" in text
+    assert "across 2 run(s)" in text
+
+
+# --- conflict-unpersisted bucket (issue #1317) -------------------------------
+# Mirrors the citation-nulling trio: its own scan_ picks up only its kind, it is
+# excluded from the #963 provenance bucket (it also carries `detail`), and its
+# formatter counts runs not entries. Without these the scan_/format_/exclusion
+# added by this PR were mutation-provable dead (senior review of #1438).
+
+
+def _conflict_entry(psid="ps_001"):
+    return {
+        "index": -1,
+        "tool": "research.json",
+        "required_skill": "conflict-resolution",
+        "question_id": "q_001",
+        "kind": CONFLICT_UNPERSISTED_KIND,
+        "detail": f"proof_summary {psid} (question q_001) relies on a resolved conflict",
+    }
+
+
+def test_scan_conflict_unpersisted_picks_up_only_conflict_entries(tmp_path):
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _conflict_entry()])
+    out = scan_conflict_unpersisted([p])
+    assert len(out) == 1
+    assert out[0]["kind"] == CONFLICT_UNPERSISTED_KIND
+
+
+def test_scan_provenance_excludes_conflict_unpersisted_entries(tmp_path):
+    """A conflict-unpersisted entry carries `detail` too, but must NOT be counted
+    as a #963 person_evidence-provenance gap (the double-count bug 62e1baa3 fixed
+    once already, guarded here so a merge can't reintroduce it)."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _conflict_entry()])
+    prov = scan_provenance([p])
+    assert len(prov) == 1
+    assert prov[0]["required_skill"] == "person-evidence"
+
+
+def test_format_conflict_unpersisted_counts_runs_not_just_entries(tmp_path):
+    a = _write_result(tmp_path / "fx1", "run-1.json", [_conflict_entry("ps_001"), _conflict_entry("ps_002")])
+    b = _write_result(tmp_path / "fx2", "run-1.json", [_conflict_entry("ps_003")])
+    text = format_conflict_unpersisted(scan_conflict_unpersisted([a, b]))
+    assert "3 concluded question(s)" in text
     assert "across 2 run(s)" in text
 
 

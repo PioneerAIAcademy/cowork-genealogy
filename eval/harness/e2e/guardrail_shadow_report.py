@@ -44,6 +44,7 @@ from e2e.runlog_selection import (
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
+    CONFLICT_UNPERSISTED_KIND,
     find_unguarded_protected_writes,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
@@ -125,10 +126,10 @@ def _scan_stored(
     function of `tool_calls` at a given window, so it can be recomputed for any
     window from a committed log. The stored families are not — the #963
     provenance gap depends on the seed tree and on what the live hook could see;
-    the #1133 citation-nulling class is a post-hoc read of the final
-    research.json. Both share `guardrail_shadow_violations` and are told apart by
-    their keys, so each family passes its own predicate here. Unreadable files
-    are skipped with a stderr note, never raised.
+    the #1133 citation-nulling and #1317 conflict-unpersisted classes are post-hoc
+    reads of the final research.json. All share `guardrail_shadow_violations` and
+    are told apart by their `kind`, so each family passes its own predicate here.
+    Unreadable files are skipped with a stderr note, never raised.
     """
     out: list[dict[str, Any]] = []
     for path in paths:
@@ -151,9 +152,11 @@ def _scan_stored(
 def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
     """The issue-#963 provenance shadow entries STORED in each run's
     `guardrail_shadow_violations` (a `person_evidence` link written with no
-    prior `same_person`). Identified by the `detail` key, which only the stored
-    sources set — but EXCLUDING the #1133 citation-nulling class, which also
-    carries `detail` and is counted separately by `scan_citation_nulling`.
+    prior `same_person`). Identified by the `detail` key, which the stored
+    sources set — but EXCLUDING the other `detail`-carrying kinds counted in
+    their own buckets: #1133 citation-nulling (`scan_citation_nulling`), #1317
+    conflict-unpersisted (`scan_conflict_unpersisted`), and deny-mode provenance
+    (`PERSON_EVIDENCE_DENY_KIND`).
     """
     return _scan_stored(
         paths,
@@ -161,6 +164,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
         and v.get("kind")
         not in (
             CITATION_NULLING_KIND,
+            CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
             WARNINGS_UNCHECKED_KIND,
         ),
@@ -173,6 +177,15 @@ def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
     ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1317 conflict-unpersisted shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a written conclusion relying on a resolved
+    conflict that no `conflicts[]` entry backs). Identified by
+    `kind == CONFLICT_UNPERSISTED_KIND`.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == CONFLICT_UNPERSISTED_KIND)
 
 
 def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
@@ -375,6 +388,18 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
     )
 
 
+def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
+    """One flat count, like the other post-hoc checks: a fact about the final
+    research.json, not a windowed recency scan. This is the number the
+    graduation decision (shadow → hard gate) is gated on for issue #1317."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7.5 conflict-unpersisted check (issue #1317, shadow): "
+        f"{len(violations)} concluded question(s) relying on an unpersisted "
+        f"conflict resolution, across {affected} run(s)."
+    )
+
+
 def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
     """One flat count — a fact about the final tree + tool_calls, not a windowed
     scan. This is the number the graduation decision (shadow → mandatory
@@ -430,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
+    conflict_unpersisted = scan_conflict_unpersisted(paths)
+    print(format_conflict_unpersisted(conflict_unpersisted))
+
     warnings_unchecked = scan_warnings_unchecked(paths)
     print(format_warnings_unchecked(warnings_unchecked))
 
@@ -446,6 +474,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nConflict unpersisted (issue #1317), {len(conflict_unpersisted)}:")
+        for v in conflict_unpersisted:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
         for v in warnings_unchecked:

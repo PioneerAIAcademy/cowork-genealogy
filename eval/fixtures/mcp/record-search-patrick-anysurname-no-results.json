@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all nil for a Patrick query that carries NO surname at all — the 'drop the surname, anchor on givenName plus jurisdiction' lever the skill reaches for late in nil exhaustion, to catch records whose surname was mis-transcribed or omitted by the indexer. Its sibling record-search-flynn-any-variant-no-results absorbs any Fl* SURNAME, but predicate matching requires every key in the predicate to be PRESENT in the args, so a query with no surname key misses it and came back a fixture_not_found ERROR (observed on ut_search_records_018, v1_2026-08-06_22-32-13, where Tool Arguments was scored 2 for it). This absorbs those. Keep it LAST in the test's mcp_fixtures list, after the surname-anchored catch-all — matching is first-match-wins in list order, and this predicate is the loosest of the set, so any earlier position would shadow the specific spellings and erase the expected_args signal Tool Arguments is graded on. Anchored to the given name on purpose: a query whose givenName does not contain 'Patrick' still misses. Be clear about how weak that guard is — matches() (fixtures.py:93) checks only the keys the predicate names and ignores every other arg, so this fires on ANY Patrick query regardless of surname, place, date or collection: {'givenName':'Patrick','surname':'Smith'} matches and nils. Being last and loosest, it therefore makes every Patrick search in ut_search_records_018 return a nil. That is acceptable only because 018 is a nil-exhaustion test where every search nils by design; do not reuse this fixture on a test that returns results.",
+  "args": {
+    "givenName": "~Patrick"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}
