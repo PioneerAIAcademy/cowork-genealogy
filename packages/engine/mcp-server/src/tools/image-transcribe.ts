@@ -13,6 +13,61 @@ import type {
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
+// Browse budget (issue #1081, spec §5.8). From the (N+1)th distinct image in one
+// image group in one project onward, a successful transcription carries an
+// advisory `browseBudget` — the page read still returns in full; nothing is
+// refused (a read persists nothing, so a wrong refusal would hard-block a
+// researcher mid-browse with no reset but a server restart — the ADR-0011
+// read-tool carve-out).
+const BROWSE_BUDGET_IMAGES = 20;
+
+// Distinct imageIds seen per (project, image-group), keyed
+// `${projectPath}\0${imageGroup}`. Keyed by PROJECT too, deliberately: the MCP
+// server process outlives one conversation, so a group-only key would tell a
+// second project it had already browsed 20 pages on its first read. Process-
+// lifetime, never persisted; re-reading an image already in the set does not
+// advance the count. Follows place-search.ts's module-cache precedent.
+const browseBudgetSeen = new Map<string, Set<string>>();
+
+/** Test-only reset — the Map is module-level and persists across `it()` blocks,
+ *  which `vi` mock resets do not clear. Mirrors `__clearPlaceSearchCacheForTests`. */
+export function __clearBrowseBudgetForTests(): void {
+  browseBudgetSeen.clear();
+}
+
+/**
+ * Record this image against the (project, group) browse counter and return the
+ * advisory once the group passes `BROWSE_BUDGET_IMAGES` distinct images.
+ *
+ * Returns `undefined` for an ark-only call: an ARK carries no image-group number,
+ * so a hunt driven by `ark` is never counted (spec §5.8 known limitation).
+ */
+function recordBrowseAndCheckBudget(
+  imageId: string | undefined,
+  projectPath: string | undefined
+): ImageTranscribeResult["browseBudget"] {
+  if (!imageId) return undefined;
+  const imageGroup = imageId.split("_")[0];
+  const key = `${projectPath ?? "<no-project>"}\0${imageGroup}`;
+  let seen = browseBudgetSeen.get(key);
+  if (!seen) {
+    seen = new Set<string>();
+    browseBudgetSeen.set(key, seen);
+  }
+  seen.add(imageId);
+  if (seen.size <= BROWSE_BUDGET_IMAGES) return undefined;
+  return {
+    imageGroup,
+    distinctImagesRead: seen.size,
+    notice:
+      `You have now transcribed ${seen.size} distinct images from image group ` +
+      `${imageGroup} in this project. Page-by-page browsing rarely pays past this ` +
+      `point. Log the browse with a negative outcome (research_log_append) and ` +
+      `pivot to the indexed route — record_search, record_read, or fulltext_search ` +
+      `— or ask the user whether to keep paging.`,
+  };
+}
+
 // VLM OCR on a full page scan is the slowest call this server makes, and the
 // budget has to clear a slow-but-genuine read without waiting out a hung one.
 // Across the committed e2e corpus a healthy transcription runs p90 79s / p95
@@ -177,11 +232,17 @@ export async function imageTranscribeTool(
     }
   }
 
+  const browseBudget = recordBrowseAndCheckBudget(
+    input.imageId,
+    input.projectPath
+  );
+
   const key = input.lookingFor?.trim();
   return {
     transcription,
     ...(key ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
+    ...(browseBudget ? { browseBudget } : {}),
     metadata: {
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
