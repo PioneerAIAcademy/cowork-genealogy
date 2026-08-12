@@ -29,6 +29,32 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: true match.** Both parents' names match exactly (Chresten Nielsen and Birte Kirstine, the tree's spouse being christened "Birte Kirstine Sørensdatter"), the parish (Tyrsted, Vejle) matches every one of the couple's nine other children exactly, and a birth in 1805 fits neatly after the youngest child already in the tree (Rasmus, b. 1801, died in infancy) — a gap of four years, plausible for a couple married in 1790.
+**Resolved: true match, with a re-cited birth record (re-adjudicated under issue #1346).**
 
-Beyond the original 1805 Tyrsted christening entry, a separate confirmation record for Birte Christensdatter independently names her parents as Birte Kirstine Sørensdatter and Christen Nielsen — the same couple (the patronymic-era spelling "Christen" is the same given name as "Chresten" elsewhere in this family's records) — and gives the same location. Two independent record types (baptism and confirmation), agreeing on both parents' names and place, is strong corroboration. The findings in `expected-findings.json` stand as transcribed.
+The daughter is real and the parentage holds. Her 1819 confirmation entry
+(`ark:/61903/1:1:QG8V-2DDT`) independently names her parents as Birte Kirstine
+Sørensd and Christen Nielsen — the same couple (the patronymic-era spelling
+"Christen" is the same given name as "Chresten" elsewhere in this family's
+records) — and carries the birth year 1805. A birth in 1805 fits neatly after
+the youngest child already in the tree (Rasmus, b. 1801, died in infancy) — a
+gap of four years, plausible for a couple married in 1790.
+
+**What changed and why.** The original resolution leaned on "two independent
+record types (baptism and confirmation), agreeing on both parents' names and
+place." Only the confirmation half survives. The christening citation
+(`ark:/61903/1:2:W6M7-SWMM`, transcribed as a 6 Oct 1805 Tyrsted christening)
+is **fabricated** — a live `record_read` returns a United States WWI Draft
+Registration Card for Myrtle B Jackson (b. 1876, Colorado), nothing to do with
+this family. It has been removed as a source, and the day/month/place christening
+claim it alone supplied has been dropped from the finding.
+
+The specific birth date and place — **3 August 1805, Dallerup** — is now sourced
+to a directly-read original church book: the 1805 Dallerup parish register ("Anno
+1805"), row `Aug.3 | Dallerup | Birte | Chresten Nielsen og Birte Kirstine`,
+FamilySearch DGS `007226375`, image `00232`. The confirmation record carries only
+the birth *year*, so this image reading is what establishes the day, month, and
+parish. A `fulltext_search` scoped to image group 007226375 for Birte / Dallerup /
+Tyrsted returned zero results — the volume is not full-text indexed, so no
+resolvable `ark:/61903/3:1:...` exists for the page; it is cited by image ID. The
+literal-ark requirement (issue #970) is satisfied by the confirmation record's
+`ark:/61903/1:1:QG8V-2DDT`.
