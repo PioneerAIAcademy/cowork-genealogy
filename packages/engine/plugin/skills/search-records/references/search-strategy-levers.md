@@ -67,7 +67,7 @@ and expect a specific record.
 | **Boundary changed since the event** | Try the jurisdiction the plan gives you; if it nils and the plan lists a **successor jurisdiction** (research-plan stages historical + present-day from the locality guide — see the item's `rationale`), try that. If none is offered and the nil persists, **bounce to research-plan** — don't look up place history here. | Any place renamed, split, merged, or reassigned since the event. See the note below. |
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
-| Switch event-place | Move place from `birthLikePlace` → `residencePlace` → `marriageLikePlace` → `anyPlace` | Each event occurred in a different place |
+| Switch event-place | Move place from `birthPlace` → `residencePlace` → `marriagePlace` → `anyPlace` | Each event occurred in a different place |
 
 **Boundary changes are a research-plan concern, not a search-records one.** A place's records may be filed under the jurisdiction in force at the event *or* under its present-day jurisdiction — FamilySearch sometimes indexes a collection under the modern country rather than the historical one. Working out that succession (and the right jurisdictions to search, plus any indexing quirks) is `locality-guide`/`research-plan`'s job: they stage the alternatives into the plan, so a plan item may carry a fallback jurisdiction in its `rationale`. Here in search-records the reflex is general: **try the jurisdiction the plan gives you; if a boundary-related nil persists and the plan staged a successor jurisdiction, try it; otherwise bounce back to `research-plan`** rather than guessing per-country rules or looking up place history yourself.
 
@@ -77,7 +77,7 @@ and expect a specific record.
 |---|---|---|
 | Broaden range | Widen `.from`/`.to` to ±5 or ±10 years | Census age inflation/deflation; estimated dates |
 | Drop date | Clear all date parameters | Date is uncertain; pre-1850 ancestors |
-| Switch event type | Move date from `birthLikeDate` → `residenceDate` → `deathLikeDate` | Original event date was wrong type |
+| Switch event type | Move date from `birthYearFrom`/`To` → `residenceYearFrom`/`To` → `deathYearFrom`/`To` | Original event date was wrong type |
 | Use Any event | Switch to `q.anyDate` + `q.anyPlace` | Date known but event type unknown (e.g., immigration year) |
 
 ## Filter levers
