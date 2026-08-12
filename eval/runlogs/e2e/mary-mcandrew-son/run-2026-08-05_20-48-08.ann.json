@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Over-claimed a sixth child. The agent added a new person I1 = John L Mogan (b. ~1880) as a sixth child of Mary (relationship R16), so the tree no longer holds the established five. The specific 1873 avoid-target (John A Morgan, PID 9NJ7-Z6L) is absent — the agent never tested that hint — but f1's pass condition requires no sixth child at all, and one was added. The John L child rests on indirect 1920 co-residence only (widowed Mary enumerated as 'other' in John L Mogan's household; no stated relationship, no birth record).",
+    "f2": "Documented the opposite conclusion. proof_summaries ps_001 (tier 'probable') concludes at least 7 children were born (two-plus beyond the five), citing the 1900 census fertility column '7 born / 4 living' (index-only, ARK M91M-LKB) plus John L Mogan as a probable sixth surviving child. The required negative conclusion — no sixth child established; 1873 birth belongs to a different family — was not reached, and the 1873 hint was never addressed."
+  },
+  "annotator": "developer"
+}

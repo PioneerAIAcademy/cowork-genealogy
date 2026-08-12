@@ -1,0 +1,46 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Person",
+          "surname": "A",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1856",
+          "place": "Germany"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "primary": true,
+          "date": "1935",
+          "place": "Gregory, Gregory, South Dakota, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Find a Grave Index — Person A memorial",
+      "author": "Find a Grave contributor (unidentified)"
+    },
+    {
+      "id": "S2",
+      "title": "South Dakota, Grave Registration Records, 1939-1942 — Person A",
+      "author": "South Dakota state registrar"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Locate Josiah Barnes (b. c. 1818, Massachusetts) and his household in the 1855 Massachusetts State Census",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-10",
+    "updated": "2026-08-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": ["MyHeritage"],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Josiah Barnes enumerated in the 1855 Massachusetts State Census, and who was in his household?",
+      "rationale": "The 1855 Massachusetts State Census is one of the two surviving state schedules and should place the subject's household mid-decade, between the 1850 and 1860 federal censuses.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-10",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Massachusetts, United States",
+          "date_range": "1855",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage indexes the 1855 Massachusetts State Census; the researcher has a MyHeritage subscription, so this search is immediately actionable.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
