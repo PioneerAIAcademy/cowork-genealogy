@@ -18,6 +18,16 @@ name: Check runlog discipline
 #   a correction entry for every (test_id, dimension_source, dimension_name)
 #   triple present in the run log.
 #
+#   Rule 4 (blocking): No two unit-test files share a `test.id`.
+#
+#   Rule 5 (warn-only): No OTHER open PR changes a skill eval snapshot this PR
+#   changes. Two PRs on one skill cannot share a paid eval run, so the second to
+#   land pays its own `make eval-skill` and a full re-annotation. Derived from
+#   real changed paths on both sides, which is what `fill-ready`'s Gate 4 cannot
+#   do — it runs at promotion time off a self-reported `**Touches:**` line.
+#   Warn-only on purpose: two PRs on one skill is sometimes the right call, and
+#   the value is the author hearing about it before paying twice.
+#
 # Scratch runs (scratch_<ts>.json) are gitignored and never reach this
 # workflow.
 
@@ -158,6 +168,17 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
+          # Rule 5 (warn-only) lists the OTHER open PRs' changed paths, to report
+          # when one of them changes a skill eval snapshot this PR also changes.
+          # `pull-requests: read` above is the whole permission it uses — same
+          # token the `scope` step already reads with, no write anything, and no
+          # `pull_request_target`. When the listing is unavailable (a fork
+          # token, a rate limit, no `gh`) rule 5 prints a `::notice::` saying it
+          # was SKIPPED and did not run, which is deliberately distinguishable
+          # from its clean line. PR_NUMBER is what lets it exclude itself from
+          # the listing; without it, it skips rather than collide with itself.
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python eval/harness/scripts/check_runlogs.py
 
       - name: Check skill tool-coverage drift (warn-only)
