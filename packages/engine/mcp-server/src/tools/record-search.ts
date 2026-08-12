@@ -149,10 +149,19 @@ export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInpu
   return out;
 }
 
+// `batchNumber` anchors on its own. The rule exists because unanchored queries
+// are expensive, and a batch is the cheapest filter the API takes — measured
+// live 2026-08-12, a batch alone returns its own extraction (about two thousand
+// records for one, two for another) rather than an open-ended scan. Requiring a
+// second field alongside it was worse than redundant: the natural companion is
+// `recordCountry`, and a WRONG country silently returns 0 — the same signal the
+// docs give for a wrong batch, and shape carries no country at all: a batch
+// tried against five plausible countries returned 0 from each and its true
+// country from none of them.
 export function validateInput(input: RecordSearchInput): void {
-  if (!input.surname && !input.recordCountry) {
+  if (!input.surname && !input.recordCountry && !input.batchNumber) {
     throw new Error(
-      "search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
+      "search needs at least one anchor: surname, recordCountry or batchNumber. Searches without an anchor are too expensive on the FamilySearch API."
     );
   }
 
@@ -882,7 +891,7 @@ export const recordSearchToolSchema = {
   name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname or recordCountry. Other fields " +
+    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
     "narrow ranking. Returns ranked person matches with key facts, " +
     "persistent URLs, source-record details, and Family-Tree-person match " +
     "suggestions. Requires authentication — call the login tool first if " +
@@ -915,7 +924,7 @@ export const recordSearchToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
-      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname` or `recordCountry` must be supplied." },
+      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
       givenName: { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
@@ -975,9 +984,9 @@ export const recordSearchToolSchema = {
       otherSurnameExact: { type: "boolean", description: "When `true`, requires the co-occurring family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
 
       collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
-      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish exhaustively: alone it returns that batch's records, and it combines with a name to search within the batch. A nonexistent batch returns 0 rather than being ignored. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Pass the batch exactly as the source gives it; do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
+      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish exhaustively: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — do not add `recordCountry` to satisfy the anchor rule, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
-      recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
+      recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Do NOT add it to a `batchNumber` search to satisfy the anchor rule (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },

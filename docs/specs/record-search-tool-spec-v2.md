@@ -29,12 +29,34 @@ A search must include at least one of these anchor fields:
 
 - `surname`
 - `recordCountry`
+- `batchNumber`
 
 A search with only `givenName`, only `collectionId`, only a place,
 or only a kin name is rejected. The search service throttles
 unanchored queries because they're expensive — anchoring on
 something that meaningfully narrows the candidate pool keeps the
 tool fast and useful.
+
+`batchNumber` joined the list on 2026-08-12. It was deliberately kept
+off it when the parameter was added a week earlier — that call was made
+before the interaction below was measured, and the measurement reverses
+it. Two findings, live against `/service/search/hr/v2/personas`:
+
+- **A batch anchors on its own.** `q.batchNumber` with no other field
+  is accepted upstream and returns just that batch's extraction —
+  about two thousand records for `B01883-5`, two for `8317102`. It is
+  the cheapest filter the API takes, so the cost rationale above never
+  applied to it.
+- **Requiring a companion field was actively harmful.** The natural
+  companion is `recordCountry`, and a country that does not match the
+  batch returns **0** — the same signal the docs give for a *wrong
+  batch*, so the failure is silent and misreads as an empty parish.
+  Batch shape carries no country information at all — `B01883-5` is a US
+  batch, and nothing in the token says so. The correct country changes nothing
+  (identical counts), so the parameter could only hurt.
+
+Net: send a batch alone. `surname` still narrows within it normally
+(`B01883-5` + `Smith` cuts to about three dozen).
 
 ---
 
@@ -171,7 +193,7 @@ together in a record but doesn't know the formal relationship.
 |-------|------|-------------|
 | `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `"1743384"`). |
 | `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
-| `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. A very strong filter and the canonical way to enumerate one parish exhaustively: alone it returns that batch's records, and it combines with a name to search within the batch. A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Pass the batch exactly as the source gives it; do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
+| `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. A very strong filter and the canonical way to enumerate one parish exhaustively: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It satisfies the anchor rule by itself — do not add `recordCountry` to a batch search, because a country that does not match the batch silently returns 0 (shape carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
@@ -722,7 +744,7 @@ Example:
   name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname or recordCountry. Other fields " +
+    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
     "narrow ranking. Returns ranked person matches with key facts, " +
     "persistent URLs, source-record details, and Family-Tree-person match " +
     "suggestions. Requires authentication — call the login tool first if " +
@@ -733,7 +755,7 @@ Example:
     type: "object",
     properties: {
       // Person fields
-      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname` or `recordCountry` must be supplied." },
+      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
       givenName:             { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt:            { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt:          { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
@@ -801,8 +823,8 @@ Example:
       // Record-source
       collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
       imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
-      batchNumber:           { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish exhaustively: alone it returns that batch's records, and it combines with a name to search within the batch. A nonexistent batch returns 0 rather than being ignored. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Pass the batch exactly as the source gives it; do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
-      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
+      batchNumber:           { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish exhaustively: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — do not add `recordCountry` to satisfy the anchor rule, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Shape varies: a batch may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M01048-5` and all-numeric batches all occur. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
+      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Do NOT add it to a `batchNumber` search to satisfy the anchor rule (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus:         { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
@@ -923,6 +945,7 @@ User-Agent: <browser-like user agent string>
 | `otherSurnameExact=true` | `q.otherSurname.exact=on` |
 | `collectionId` | `f.collectionId` |
 | `imageGroupNumber` | `q.filmNumber` |
+| `batchNumber` | `q.batchNumber` |
 | `recordCountry` | `q.recordCountry` |
 | `recordSubdivision` | `q.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space) |
 | `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7) |
@@ -1213,7 +1236,7 @@ For each `entry` in `response.entries`:
 
 | Condition | Behavior |
 |-----------|----------|
-| No anchor field present | Throw: `"search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."` |
+| No anchor field present | Throw: `"search needs at least one anchor: surname, recordCountry or batchNumber. Searches without an anchor are too expensive on the FamilySearch API."` |
 | `count` outside `[1, 100]` | Throw: `"count must be between 1 and 100."` |
 | `offset` negative | Throw: `"offset must be non-negative."` |
 | `offset + count > 4999` | Throw: `"offset + count must be <= 4999 (FamilySearch search depth limit). Narrow the query instead of paging deeper."` |
@@ -1291,6 +1314,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 3 | Returns results for surname + alt-name UNION (`surnameAlt` only) | Single-alt UNION + auto-pair fills `givenNameAlt` |
 | 4 | Returns results for surname + alt-name UNION (`givenNameAlt` only) | Auto-pair fills `surnameAlt` |
 | 5 | Throws when no anchor is supplied (only givenName + birthPlace) | Anchor rule rejection |
+| 5a | `batchNumber` alone satisfies the anchor rule | Batch anchors by itself |
+| 5b | The anchor error names `batchNumber` | Error must not omit an accepted anchor |
 | 6 | Throws when count > 100 or count < 1 | Bound check |
 | 7 | Throws when offset + count > 4999 | Pagination cap |
 | 8 | Throws when `<event>YearFrom` is supplied without `<event>YearTo` | Range pair validation |
@@ -1311,6 +1336,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 20a | The `.exact=on` **semantics** documented under "What `.exact=on` actually does" are NOT asserted here — the URL-shape rows above check the string the tool builds, never that FamilySearch honors it. Reproduced by `dev/probe-search-qualifiers.ts` against the live API | Live-behavior evidence trail (deliberately outside vitest) |
 | 21b | `imageGroupNumber` maps to `q.filmNumber` | Film-number param mapping |
 | 21c | `imageGroupNumber` accepts split DGS format | Split DGS format passthrough |
+| 21d | `batchNumber` maps to `q.batchNumber` | Batch-number param mapping |
+| 21e | `batchNumber` passes through unaltered whatever shape it is given (letter + 6 digits, dashed, all-numeric, leading zero) | Shape passthrough — the tool must not reformat a batch, and a leading zero must survive |
 | 21 | Throws auth error when not authenticated | Auth propagation |
 | 22 | Throws on 400 with extracted error-body detail | API validation errors |
 | 23 | Falls back to generic 400 message when body isn't parseable | Defensive parsing |

@@ -85,7 +85,7 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Restrict to collection | Add `f.collectionId={id}` | Strong match expected in one collection |
-| Drop all filters, single identifier | Search an uncommon spouse name alone, or a `batchNumber` alone to enumerate one parish's extraction | Brick wall; brute-force exhaustive |
+| Drop all filters, single identifier | Search an uncommon spouse name alone, or a `batchNumber` alone — with no other field, not even `recordCountry` — to enumerate one parish's extraction | Brick wall; brute-force exhaustive |
 
 ## Cluster / FAN club levers
 
