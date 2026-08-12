@@ -1246,7 +1246,33 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
-**A fifth check runs in shadow mode only: the warnings guardrail was never
+**A fifth check runs in shadow mode only: a conclusion relies on a resolved
+conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and, for each
+written `proof_summaries` conclusion, flags a question whose
+`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
+(positive resolution language, not merely the absence of "no conflict" wording —
+a required field that is always populated would otherwise default to firing) that
+**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
+on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
+resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
+stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
+exists at all). A resolved conflict that exists but is linked to nothing fires
+only when the stop-criterion names a `c_` id that is not resolved; when it names
+no id, an existing resolved entry silences the check. So read the count as **"no
+resolved conflict backs this conclusion"** — every firing on the committed corpus
+today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
+viewer's Conflicts section stayed blank because nothing structured was persisted.
+Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "conflict_unpersisted"` for their own bucket
+(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
+structured field, so it ships shadow-first; **promotion to a hard check — or to a
+`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
+written — is gated on reading the fire rate across the corpus first**, not decided
+here.
+
+**A sixth check runs in shadow mode only: the warnings guardrail was never
 consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
 (in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded

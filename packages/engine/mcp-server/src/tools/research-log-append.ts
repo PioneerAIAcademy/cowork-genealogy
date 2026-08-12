@@ -34,6 +34,35 @@ const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 // fulltext-search.ts, external-links-search.ts.
 const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
 
+/** Fire the "logging without persistence" nudge once this many positive-outcome
+ *  searches have been logged while the project still holds zero sources and zero
+ *  assertions. Mirrors research_append's sources-without-assertions threshold. */
+const LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD = 3;
+
+/** Non-blocking nudge (issue #1478, folded-in sibling of research_append's
+ *  sources-without-assertions warning). A session that has logged ≥THRESHOLD
+ *  positive-outcome searches while research.json still holds zero sources AND
+ *  zero assertions is finding records and persisting none of the evidence — the
+ *  feedback bundle-2 shape (26 log entries, 0 sources, 0 assertions). Gated on
+ *  BOTH being empty so it owns a distinct shape from the source-append warning
+ *  (which fires once ≥3 sources exist); self-silences the instant any source or
+ *  assertion lands. Fires per qualifying call while the two-empty state holds.
+ *  Tool-name neutral, and a warning — never a failure. */
+function logWithoutPersistenceWarning(research: any): string | null {
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const assertions = Array.isArray(research.assertions) ? research.assertions : [];
+  if (sources.length > 0 || assertions.length > 0) return null;
+  const log = Array.isArray(research.log) ? research.log : [];
+  const positives = log.filter((e: any) => e?.outcome === "positive").length;
+  if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
+  return (
+    `${positives} search(es) logged with a positive outcome but no sources or ` +
+    `assertions recorded yet. When a search identifies a relevant record, persist ` +
+    `it — the source and the assertions it supports — or record why it could not, ` +
+    `so the evidence is not lost when the session ends.`
+  );
+}
+
 export interface ResearchLogAppendExternalSite {
   site: string;
   urlGenerated: string;
@@ -385,11 +414,15 @@ export async function researchLogAppend(
         return { ok: false, errors: formatIssues(validation.errors) };
       }
       await atomicWriteJson(join(projectPath, "research.json"), research);
+      const persistWarn = logWithoutPersistenceWarning(research);
       return {
         ok: true,
         results,
         filesWritten: ["research.json", ...sidecarsCreated],
-        validation: { valid: true, warnings: [...opWarnings, ...formatIssues(validation.warnings)] },
+        validation: {
+          valid: true,
+          warnings: [...opWarnings, ...(persistWarn ? [persistWarn] : []), ...formatIssues(validation.warnings)],
+        },
       };
     }
 
@@ -432,11 +465,15 @@ export async function researchLogAppend(
     }
     await atomicWriteJson(join(projectPath, "research.json"), research);
 
+    const persistWarn = logWithoutPersistenceWarning(research);
     return {
       ok: true,
       ...result,
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
-      validation: { valid: true, warnings: [...opWarnings, ...formatIssues(validation.warnings)] },
+      validation: {
+        valid: true,
+        warnings: [...opWarnings, ...(persistWarn ? [persistWarn] : []), ...formatIssues(validation.warnings)],
+      },
     };
   } catch (e) {
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
