@@ -1036,10 +1036,11 @@ Three integrity rules make the agreement number trustworthy:
   > ages out as new blind annotations replace them.
   >
   > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
-  > when the combined gate fails, so with compliance clean, `make`'s
-  > error line tells the grader the verdict failed. The exit code is
-  > retained because a batch shell loop has no other signal for failure.
-  > This is a known, accepted residual — not a bug to fix.
+  > when the combined gate fails (fail/skipped/ungraded) and zero when it
+  > passes (pass/partial), so with compliance clean, the exit code leaks
+  > the verdict in both directions. The exit code is retained because a
+  > batch shell loop has no other signal for failure. This is a known,
+  > accepted residual — not a bug to fix.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
