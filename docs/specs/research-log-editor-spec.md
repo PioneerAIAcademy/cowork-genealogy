@@ -275,8 +275,10 @@ turning a lossy-but-recoverable session into an availability regression.
   **zero** assertions, the session is finding records and persisting no evidence
   (feedback bundle-2 shape: 26 log entries, 0 sources, 0 assertions). Gated on
   both being empty so it owns a distinct shape from `research_append`'s
-  sources-without-assertions warning (which fires once sources exist); it
-  self-silences the instant any source or assertion lands. Tool-neutral message.
+  sources-without-assertions warning (which fires once ≥3 sources exist); it
+  self-silences the instant any source or assertion lands, and fires on every
+  qualifying `research_log_append` call while the two-empty state holds.
+  Tool-neutral message.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 

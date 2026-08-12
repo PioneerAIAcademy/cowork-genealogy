@@ -45,8 +45,9 @@ const LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD = 3;
  *  zero assertions is finding records and persisting none of the evidence — the
  *  feedback bundle-2 shape (26 log entries, 0 sources, 0 assertions). Gated on
  *  BOTH being empty so it owns a distinct shape from the source-append warning
- *  (which fires once sources exist); self-silences the instant any source or
- *  assertion lands. Tool-name neutral, and a warning — never a failure. */
+ *  (which fires once ≥3 sources exist); self-silences the instant any source or
+ *  assertion lands. Fires per qualifying call while the two-empty state holds.
+ *  Tool-name neutral, and a warning — never a failure. */
 function logWithoutPersistenceWarning(research: any): string | null {
   const sources = Array.isArray(research.sources) ? research.sources : [];
   const assertions = Array.isArray(research.assertions) ? research.assertions : [];
