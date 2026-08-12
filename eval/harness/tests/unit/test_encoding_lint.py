@@ -62,7 +62,16 @@ def _is_binary_open(call: ast.Call) -> bool:
 
 
 def _has_encoding(call: ast.Call) -> bool:
-    return any(kw.arg == "encoding" for kw in call.keywords)
+    # A present encoding= satisfies the rule -- UNLESS it is a literal
+    # encoding=None. None is the platform default (cp1252 on Windows) this lint
+    # exists to catch, so it must not pass (issue #1285 review). Any non-None
+    # expression (encoding=enc, encoding="utf-8") is left alone; only a constant
+    # None is rejected.
+    return any(
+        kw.arg == "encoding"
+        and not (isinstance(kw.value, ast.Constant) and kw.value.value is None)
+        for kw in call.keywords
+    )
 
 
 def _offenders_in(source: str) -> list[tuple[int, str]]:
@@ -94,10 +103,13 @@ def test_no_bare_text_mode_file_io():
         try:
             hits = _offenders_in(path.read_text(encoding="utf-8"))
         except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
-            # The harness parser is Python 3.11; apps/server is >=3.12. A file we
-            # cannot parse is skipped, not failed -- a parser-version mismatch on
-            # otherwise-valid code must not false-red this lint -- but it is surfaced
-            # as a warning (below) so the coverage hole is never silent.
+            # Defensive skip for a file the harness parser (Python 3.11) genuinely
+            # cannot parse -- e.g. a future apps/server file using 3.12-only syntax
+            # (apps/server targets >=3.12). Today every apps/server file parses
+            # under 3.11, so apps/server IS scanned; this branch guards against a
+            # parser-version mismatch false-redding the lint, it does not mean any
+            # tree is unscanned. Skipped files are surfaced as a warning (below),
+            # never silent.
             unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
             continue
         for lineno, name in hits:
@@ -117,3 +129,14 @@ def test_no_bare_text_mode_file_io():
         'bare text-mode file I/O found -- CLAUDE.md requires encoding="utf-8" on every '
         "read_text/write_text/open:\n  " + "\n  ".join(sorted(offenders))
     )
+
+
+def test_encoding_none_is_flagged():
+    # A literal encoding=None is the platform default (cp1252 on Windows) this
+    # lint exists to catch, so it must be flagged, not waved through by the mere
+    # presence of an encoding= keyword (issue #1285 review).
+    assert _offenders_in("p.read_text(encoding=None)") == [(1, "read_text")]
+    assert _offenders_in("open(f, encoding=None)") == [(1, "open")]
+    # A real encoding -- and any non-None expression -- still passes.
+    assert _offenders_in('p.read_text(encoding="utf-8")') == []
+    assert _offenders_in("open(f, encoding=enc)") == []
