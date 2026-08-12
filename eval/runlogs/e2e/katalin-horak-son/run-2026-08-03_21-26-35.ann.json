@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f3": "Recovered the required part (documents that Katalin Horak cannot be confirmed as Janos's mother, conflict left unresolved rather than dropped), but off-shape versus the fixture's description -- folded into ps_001's narrative rather than a distinct conflict-resolution write-up, and did not reach the deeper 'Szeget' third-name pattern (the tree's own existing son's 1846 baptism naming yet another mother) that a live Cowork debugging run of this same fixture found. That broader pattern was scoped as valuable context, not itself required, when this finding was authored."
+  },
+  "annotator": "Milescia"
+}
