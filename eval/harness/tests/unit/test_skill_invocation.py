@@ -15,11 +15,13 @@ from harness.skill_invocation import (
     CONFLICT_ANALYSIS_FIELDS,
     DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
+    WARNINGS_UNCHECKED_KIND,
     find_citation_nulling_in_conclusions,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
+    find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     owning_skills,
     recently_succeeded,
@@ -1024,3 +1026,115 @@ def test_citation_nulling_tolerates_dangling_and_sourceless_refs():
 def test_citation_nulling_defensive_on_none_and_empty():
     assert find_citation_nulling_in_conclusions(None) == []
     assert find_citation_nulling_in_conclusions({}) == []
+
+
+# --- find_relationship_writes_without_warnings_check (issue #1193, shadow) ----
+# A new ParentChild/Couple relationship written this run with no person_warnings
+# call. Gated on the relationship being NEW (diffed against the starting tree),
+# and keyed on the person_warnings TOOL (not the check-warnings skill), so it
+# catches a direct-tool path and a skill that fails before reaching the tool.
+
+
+def _tree_with_parentchild(child="I3", parent="I1"):
+    return {"relationships": [{"id": "R1", "type": "ParentChild", "parent": parent, "child": child}]}
+
+
+def _person_warnings_call(*, is_error=None):
+    return {"tool": "mcp__genealogy__person_warnings", "args": {"personId": "I3"}, "is_error": is_error}
+
+
+def test_warnings_unchecked_fires_on_new_relationship_with_no_call():
+    """The evidenced #1193 shape: a parentage link written, guardrail never run."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+    v = out[0]
+    assert v["kind"] == WARNINGS_UNCHECKED_KIND
+    assert v["required_skill"] == "check-warnings"
+    # int index + string tool so guardrail_shadow_report's formatters never hit a
+    # None format spec.
+    assert isinstance(v["index"], int) and isinstance(v["tool"], str)
+
+
+def test_warnings_unchecked_silent_when_person_warnings_was_called():
+    """Keyed on the tool: a successful person_warnings call means the guardrail
+    was consulted, whatever skill (or none) reached it."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}, _person_warnings_call()],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_still_fires_when_the_call_errored():
+    """A failed person_warnings call left the tree unchecked, so it does not
+    count as consulting the guardrail."""
+    out = find_relationship_writes_without_warnings_check(
+        [_person_warnings_call(is_error=True)],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
+    """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
+    bridge spellings are recognized too."""
+    for tool in (
+        "mcp__Genealogy_Research__person_warnings",
+        "mcp__remote-devices__Genealogy_Research__person_warnings",
+    ):
+        out = find_relationship_writes_without_warnings_check(
+            [{"tool": tool, "is_error": None}],
+            _tree_with_parentchild(),
+            starting_tree={"relationships": []},
+        )
+        assert out == [], f"{tool} should count as consulting the guardrail"
+
+
+def test_warnings_unchecked_gated_on_a_new_relationship():
+    """A relationship present in the starting tree is not this run's product, so
+    a run that wrote nothing new is not flagged for skipping the check."""
+    seeded = _tree_with_parentchild()
+    out = find_relationship_writes_without_warnings_check([], seeded, starting_tree=seeded)
+    assert out == []
+
+
+def test_warnings_unchecked_fires_on_a_new_couple_relationship():
+    out = find_relationship_writes_without_warnings_check(
+        [],
+        {"relationships": [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I2"}]},
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_ignores_non_parentchild_couple_relationships():
+    """Only ParentChild/Couple writes are the parentage-assertion class #1193 is
+    about; another relationship type is not gated on a warnings check."""
+    out = find_relationship_writes_without_warnings_check(
+        [],
+        {"relationships": [{"id": "R3", "type": "Sibling", "person1": "I1", "person2": "I2"}]},
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_no_relationship_no_finding():
+    """No parent/child write at all → nothing a warnings check should have
+    preceded, so silent even with no person_warnings call."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__record_search", "is_error": None}],
+        {"relationships": []},
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_defensive_on_none():
+    assert find_relationship_writes_without_warnings_check(None, None) == []
+    assert find_relationship_writes_without_warnings_check([], {}) == []

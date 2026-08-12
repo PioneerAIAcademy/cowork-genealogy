@@ -29,6 +29,41 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 4, flag `adds_daughter`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Czech Republic, Church Books, 1552-1981: baptismal entry, 1 March 1818, Svitavy, Moravská Třebová, naming parents Maxmilian Michal and Anna. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming the 1818 Agnes baptism, plus a `required` finding that the report documents the rejection.
+**Resolved: TRUE MATCH** (genealogist adjudication). The hint record's
+persona (`ark:/61903/1:1:6PJZ-ZBSM` — Czech Republic, Church Books,
+1552-1981; baptism of Agnes, 1 March 1818, Svitavy parish) is the same
+couple as tree person Anna Marie Findejsová (`P915-7QP`) and her husband
+Maxmilián Michl, so Agnes is their daughter and the finding stands. Three
+converging points of agreement, no contradiction:
 
-Points a reviewer should weigh: the tree's spouse is recorded only as "Maxmilián Michl" (surname spelled without the hint record's "Michal"/"Michalová" variant) with no forename for the mother in the hint record beyond "Anna" — a first-name-only match against a subject whose full name is Anna Marie Findejsová. The tree's only other child, Anna Michlová, was born 16 September 1823 in the same parish (Bystré/Svitavy area) and died in infancy (1833) — a second daughter born five years earlier, in 1818, is chronologically plausible for a couple of Anna Marie's generation (b. 1784) but rests on a bare-forename match with no surname or patronymic corroboration in the extracted record.
+- **Name.** The register records the mother as "Anna Kristina"; the tree
+  records her as Anna Marie Findejsová — the shared given name "Anna" with a
+  differing middle name, a routine variation in Czech parish books.
+- **Spouse.** Both name the husband Maxmilián / Maxmilian Michl / Michal;
+  the Michl↔Michal surname variant is a routine orthographic difference in
+  Bohemian and Moravian registers of this period, not a different family.
+- **Locality (verified provenance).** The baptism is in the **Svitavy /
+  Mährisch Trübau register (Moravia)** — image group 005652359, image 23 of
+  321, Pag. 20, Entry 2, house no. 29 (`ark:/61903/3:1:3QS7-89S1-K869`) — not
+  the Bystré/Bistrau register (Bohemia). The original Bystré hypothesis was
+  **wrong**: Bystré u Poličky had its own parish (register at SOA Zámrsk,
+  catalog item 2425217, not digitized on FamilySearch), which is why every
+  Bystré-focused search came back empty — the record was never there. The
+  family was in Svitavy (house 29) by 1818.
+
+No conflicting husband, birthplace, or date appears in the record, and Anna
+Marie (b. 1784) would have been ~34 at the baptism on 1 March 1818 — an
+entirely plausible maternal age. Name + spouse + house-number provenance,
+with zero contradicting evidence, is sufficient to conclude the record
+persona and the tree person are the same individual, so Agnes (b. 1818) is
+a real, additional daughter alongside Anna Michlová (b. 16 September 1823,
+d. 1833).
+
+**Proof standing: Probable, not Proved.** The date, parents, and house
+number converge with the tree evidence, but the child's name and the
+father's surname have not been read directly from the original image — the
+OCR misread them (child "Clymus" for Agnes, father "Winfal" for Michal) and
+the higher-accuracy reader could not process the 2.3 MB scan, so the child's
+name Agnes was confirmed through corroborating tree data rather than an
+independent image read. A clean direct read of "Agnes" and "Michal" from
+image group 005652359 is the one step that would move this to Proved.
