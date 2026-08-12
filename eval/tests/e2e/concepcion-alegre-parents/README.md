@@ -52,6 +52,30 @@ into the bride's parent fields by FamilySearch's indexer. The father's name was
 also read off the image directly; FamilySearch's AI transcription of the page
 drops it, rendering the clause as "hija legítima y de la Paz Resquín".
 
+**The father is not machine-readable, so f3 is `required: false` (measured
+2026-08-12).** `image_transcribe` was run once on the register page
+(`ark:/61903/3:1:33SQ-GRG8-9G8C`) with `lookingFor` naming the father. Our own
+VLM transcription drops him the same way FamilySearch's does, rendering the
+clause *"con Concepcion Alegre, soltera de veinte y tres años, de la misma
+naturaleza y vecindad e hija legítima, y de la Paz Berguin"* — a dangling
+"y de" where the father should be. So there is no tool route to Venancio: not
+the index, not full-text search over the transcription, not the transcription
+tool. He is legible only to a human reading the image, which is how this
+fixture's answer was adjudicated. f3 is therefore **bonus credit, not a
+gate** — an agent cannot be failed for missing a name no tool it has can
+surface. f4 (the mother) stays `required: true`: her given name survives
+transcription intact as "de la Paz", though note the surname garbles to
+"Berguin" for Resquín, so grade her on the given name and let the surname
+spelling slide. Two other names on the same act garble the same way
+("Ramona Bagado" for Bagada, "Felipolita Martinez" for Hipólita), which is
+the expected accuracy floor for 1940 Paraguayan parish hand, not a defect.
+
+One caveat for whoever re-measures: the tool's `FOUND` marker came back
+positive and was **wrong**. It is the VLM's own self-report, and the
+`lookingFor` string named both the bride and the father — "Concepción Alegre"
+is on the page, "Venancio" is not. Read the transcription text, not the
+marker.
+
 **What corroborates it.** Three other marriages in the same register name
 Venancio Alegre and María De la Paz Resquín as parents of children surnamed
 Alegre — Benicio (1929), Tomasa (1934), Mónica (1936) — so Concepción is a
@@ -76,10 +100,13 @@ a `polarity: "avoid"` guard (f5) rather than simply deleted, because the wrong
 answer is what FamilySearch actively pushes at the agent: the hint for
 `G384-ZCZ` offers Delgado and Martínez as parents, and an agent that trusts it
 will assert them. The paired required finding (f6) asks the agent to *document*
-the conflict rather than silently route around it. The correct parents (f3, f4)
-are reachable only by reading the register page — full-text search over the
-image group, or the image itself — not from any indexed entry, so this fixture
-tests whether the agent goes past the index when the index is what misled it.
+the conflict rather than silently route around it. Neither correct parent is
+reachable from any indexed entry — both require the register page — so this
+fixture tests whether the agent goes past the index when the index is what
+misled it. The two differ in how far that gets it: the mother (f4) is
+recoverable from the page's transcription and stays required, while the father
+(f3) survives no machine reading of the page at all and is bonus-only (see
+above).
 
 **For the next reader.** Nothing in the index disambiguates witnesses from
 parents; only the register text does. If this fixture is ever re-derived from
