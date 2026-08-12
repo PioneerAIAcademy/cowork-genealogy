@@ -21,6 +21,7 @@
   },
   "mcp_fixtures": [
     "record-search-wilkins-probate-no-results",
+    "record-search-wilkens-variant-no-results",
     "fulltext-search-wilkins-probate-empty"
   ],
   "judge_context": [
