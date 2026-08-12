@@ -31,10 +31,11 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   returned about five thousand records, the same batch plus a surname returned
   79, and a nonexistent batch returns **0** rather than being ignored — so a nil
   under it means the batch is wrong, not that the parish is empty.
-- Batch number format: a letter prefix followed by digits. Both `C050761`
-  (letter + 6 digits) and `M01048-5` (letter + digits + dash + digit) are
-  accepted — an earlier revision of this file said "exactly 6 digits", which the
-  second form contradicts.
+- Batch number shape varies: it may lead with a digit or with a letter (`B`,
+  `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`,
+  `M01048-5` and all-numeric batches all occur. Send what the source gives
+  you; do not reject or reformat a batch on shape, and treat no shape rule
+  here as exhaustive.
 - Submitting a batch number alone (no name) returns that batch's extracted
   records — the canonical way to enumerate a single parish. Combine with a
   surname to search within one parish's extraction.

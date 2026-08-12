@@ -309,7 +309,7 @@ Each name field independently supports wildcards and `.exact=on`.
 | Parameter | Purpose |
 |---|---|
 | `q.sex` | `Male` or `Female` |
-| `q.batchNumber` | IGI batch number *(not reachable through `record_search`)*. Both `C050761` (letter + 6 digits) and `M17288-6` (letter + digits + dash + digit) are accepted — an earlier revision of this file claimed "exactly 6 digits after letter prefix", which the second form contradicts. A very strong filter where it applies: adding one cut a quarter-million-hit search to single digits, and a nonsense batch returns 0 rather than being ignored. (Figures from the original probe session; not reproducible from the committed probe, which has no batch section.) |
+| `q.batchNumber` | IGI batch number — reachable as `batchNumber`. Shape varies: it may lead with a digit or with a letter (`B`, `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`, `M17288-6` and all-numeric batches all occur. Send what the source gives you; do not reject or reformat a batch on shape, and treat no shape rule here as exhaustive. A very strong filter where it applies: adding one cut a quarter-million-hit search to single digits, and a nonsense batch returns 0 rather than being ignored. (Figures from the original probe session; not reproducible from the committed probe, which has no batch section.) |
 | `treeref` | Family Tree PID — binds search to a tree person for downstream Source Linker attachment *(not reachable through `record_search`; pass `subjectId` instead, which ranks results against that tree person)* |
 | `f.collectionId` | Restrict to a specific collection (repeatable for multiple collections) |
 | `count` | Results per page, 1–100 (default 20) |
