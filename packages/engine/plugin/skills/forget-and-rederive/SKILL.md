@@ -17,15 +17,32 @@ removes a chosen slice of the local tree so the question becomes genuine.
 
 ## Prerequisite
 
-`tree_forget` is required. If it is not available (ToolSearch returns no match,
-or calls error with "unknown tool"), **stop and tell the researcher:**
+`tree_forget` is required. **Do not substitute `tree_edit`** under any
+circumstance — `tree_edit` cannot cascade removals, cannot write the restore
+file, and is the mechanism `tree_forget` replaced. Using it here causes the
+data damage this skill exists to prevent.
+
+If `tree_forget` is unavailable or fails, stop immediately and tell the
+researcher why, based on the failure mode:
+
+**If the tool is absent** (ToolSearch returns no match, or a call errors with
+"unknown tool"):
 
 > The `tree_forget` tool is not available in your current MCP server.
 > Rebuild and reinstall the extension from a current repo pull, then retry.
 
-**Do not substitute `tree_edit`.** `tree_edit` cannot cascade removals, cannot
-write the restore file, and is the mechanism `tree_forget` replaced — using it
-here causes the data damage this skill exists to prevent.
+**If the tool is present but returns `{ok: false}`** (most commonly due to
+validation errors in `research.json`):
+
+> `tree_forget` failed with the following error:
+>
+> [Quote the exact error from the tool response]
+>
+> This is often caused by `research.json` entries (assertions,
+> person-evidence, timeline) that reference a person you are trying to
+> remove. Review the error, clear the blocking entries if needed, or
+> choose a narrower slice (fact-level selectors like `birth-of` or
+> `death-of` instead of `person`).
 
 ## The two halves — both are required
 
