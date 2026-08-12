@@ -35,6 +35,7 @@ import json
 import os
 import sys
 import time
+from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Iterator
@@ -410,14 +411,43 @@ _JUDGE_WARNING_KINDS = frozenset({
 
 def _print_summary(rows: list[dict]) -> None:
     print()
-    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10}")
-    print("-" * 76)
+    print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} REASON")
+    print("-" * 96)
     for row in rows:
         print(
-            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10}"
+            f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10} "
+            f"{row.get('reason', '')}"
         )
     print()
+    _print_outcome_counts(rows)
     _print_judge_warnings(rows)
+
+
+# Every outcome the harness can record, per unit-test-spec.md §7 and
+# `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
+# (pass/partial/fail/aborted) silently under-sums a suite containing an
+# xfail/xpass test, and two live proof-conclusion tests declare exactly that.
+_OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
+
+
+def _print_outcome_counts(rows: list[dict]) -> None:
+    """One line saying the shape of the suite, so nobody counts rows by eye.
+
+    Issue #1245 was reported as "19 of 20 aborted" — a number the harness never
+    printed. It also names any outcome outside `_OUTCOMES`, so the totals always
+    reconcile against `len(rows)` rather than quietly dropping a value.
+    """
+    if not rows:
+        return
+    counts = Counter(row["outcome"] for row in rows)
+    parts = [f"{counts[o]} {o}" for o in _OUTCOMES if counts.get(o)]
+    parts += [f"{n} {o}" for o, n in sorted(counts.items()) if o not in _OUTCOMES]
+    print(f"Outcomes: {', '.join(parts)} of {len(rows)} test(s).")
+    aborted = counts.get("aborted", 0)
+    if aborted:
+        reasons = Counter(r.get("reason") or "unrecorded" for r in rows if r["outcome"] == "aborted")
+        detail = ", ".join(f"{n}x {reason}" for reason, n in reasons.most_common())
+        print(f"  aborted reasons: {detail}")
 
 
 def _print_judge_warnings(rows: list[dict]) -> None:
@@ -874,9 +904,16 @@ def main(argv: list[str] | None = None) -> int:
 
                     dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
                     mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                    # Name the abort reason inline. This is the line an operator
+                    # actually watches during a long suite, and a bare "aborted"
+                    # here is what made issue #1245's 19 of 20 unexplainable
+                    # after the fact. The reason is already on the entry.
+                    why = ""
+                    if outcome == "aborted" and entry.get("runs"):
+                        why = f" [{entry['runs'][0].get('aborted_reason') or 'unrecorded'}]"
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
-                        f"— {outcome} ({dur:.0f}s skill)",
+                        f"— {outcome}{why} ({dur:.0f}s skill)",
                         flush=True,
                     )
                 # Persist everything finished so far before blocking on the
@@ -914,6 +951,16 @@ def main(argv: list[str] | None = None) -> int:
                 "test_id": spec.id,
                 "skill": spec.skill,
                 "outcome": entry["outcome"],
+                # Carry the abort reason through to the summary. Without it an
+                # `aborted` row states that nothing happened and not why, and
+                # the operator's only remaining clue is the suite-wide exit
+                # code. That is what left issue #1245's 19 aborts unexplained;
+                # the value was already on the entry, one level up.
+                "reason": (
+                    (entry["runs"][0].get("aborted_reason") or "")
+                    if entry["outcome"] == "aborted" and entry.get("runs")
+                    else ""
+                ),
                 # Judge-rule violations for _print_judge_warnings. The
                 # advisories themselves stay in the run log; the summary
                 # only needs to say which kinds fired and where.

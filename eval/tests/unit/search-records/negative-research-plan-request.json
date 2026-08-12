@@ -4,6 +4,7 @@
     "skill": "search-records",
     "name": "Planning question should route to research-plan",
     "type": "negative",
+    "holdout": true,
     "description": "User asks what to search for next — that is planning, not execution. search-records executes searches that are already in the plan; it does not decide what to search for. This boundary is enforced by the skill description.",
     "tags": [
       "negative",
