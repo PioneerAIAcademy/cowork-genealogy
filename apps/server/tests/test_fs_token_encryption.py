@@ -98,6 +98,9 @@ def test_process_result_value_soft_fails_on_undecryptable():
     assert col.process_result_value(foreign, None) is None
     # A genuine plaintext value (a pre-#1128 row) is likewise not usable.
     assert col.process_result_value("not-ciphertext-at-all", None) is None
+    # A non-ASCII/corrupted value must soft-fail too — .encode("ascii") raises
+    # UnicodeError, which the catch has to cover or the whole row 500s on read.
+    assert col.process_result_value("tökén-with-ümläut", None) is None
     # None stays None on both hooks.
     assert col.process_result_value(None, None) is None
     assert col.process_bind_param(None, None) is None
