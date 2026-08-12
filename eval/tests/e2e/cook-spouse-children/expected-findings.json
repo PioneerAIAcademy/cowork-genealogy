@@ -1,0 +1,53 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary Maria Fuller was Daniel Cook's wife. They married about 1820, and she was the mother of his children, including David Cook and Isaac Cook. She was born about 9 May 1798, likely in New Brunswick.",
+      "details": {
+        "subject_person": "Daniel Cook (PID KWJT-3ZB)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Mary Maria Fuller",
+          "birth": "about 1798, New Brunswick, Canada"
+        }
+      },
+      "supporting_sources": [
+        "U.S. and International Marriage Records, 1560-1900 — 1820 marriage of Daniel Cook and Mary Maria Fuller.",
+        "Compiled Daniel Cook family record naming Mary Maria Fuller as wife and listing their children together."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "David Cook, a son of Daniel Cook, appears with the family in the 1850 U.S. federal census household in Great Salt Lake, Utah Territory — the same year and place the family arrived as pioneer emigrants.",
+      "details": {
+        "subject_person": "David Cook (PID KWJ8-WQ3)",
+        "fact_type": "Census",
+        "date": "1850",
+        "place": "Great Salt Lake, Great Salt Lake, Utah Territory, United States"
+      },
+      "supporting_sources": [
+        "1850 United States Federal Census, Great Salt Lake, Utah Territory — Daniel Cook household."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Isaac Cook, a son of Daniel Cook, appears with the family in the 1850 U.S. federal census household in Great Salt Lake, Utah Territory — the same year and place the family arrived as pioneer emigrants.",
+      "details": {
+        "subject_person": "Isaac Cook (PID KWNX-GQP)",
+        "fact_type": "Census",
+        "date": "1850",
+        "place": "Great Salt Lake, Great Salt Lake, Utah Territory, United States"
+      },
+      "supporting_sources": [
+        "1850 United States Federal Census, Great Salt Lake, Utah Territory — Daniel Cook household.",
+        "1870 United States Census, household of Isaac Cook — separately names Daniel Cook as father."
+      ],
+      "required": true
+    }
+  ]
+}
