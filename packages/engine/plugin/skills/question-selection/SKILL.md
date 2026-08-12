@@ -47,8 +47,8 @@ Either way, identify:
   research the user has already committed to).
 - **Resolved questions** — what has been answered.
 - **Pedigree gaps** — individuals missing a name, specific date, or
-  county/parish-level locality (see `references/pedigree-analysis.md`). That
-  sweep covers the whole tree; discard gaps outside the objective's scope.
+  county/parish-level locality, within the objective's scope (see
+  `references/pedigree-analysis.md`).
 - **Timeline gaps**, **unresolved conflicts** (especially those blocking
   downstream questions), **active hypotheses**, **log coverage**, and the
   current **assertion** landscape.
@@ -135,8 +135,8 @@ sub-question targets a single fact and names that fact, not the record that
 might carry it: "Whom did Thomas Flynn marry?" / "When and where did Thomas
 Flynn die?" — the census or certificate belongs in the plan.
 
-**Priority 5 detail:** `references/pedigree-analysis.md` sweeps the whole tree;
-a gap on the subject's spouse or child is not a Priority 5 signal.
+**Priority 5 detail:** a gap on the subject's spouse or child is not a
+Priority 5 signal.
 
 **Priority 6 detail:** Don't pivot to FAN just because one search returned
 nil — pivot only when all planned direct searches are complete and
@@ -151,10 +151,6 @@ were Thomas Flynn's neighbors in Schuylkill County in 1850?"
 
 See `references/question-formulation.md` for the three criteria (one
 objective, named individual, testable scope) and examples.
-
-Some examples in that reference are phrased record-first ("What does John
-Smith's 1870 death certificate say about his parents?"); phrase the question
-around the fact instead when it stands in for the objective (Step 1c).
 
 Before formulating, verify the starting-point information is sound. Do not
 build a question on unverified claims from compiled sources (online trees,
