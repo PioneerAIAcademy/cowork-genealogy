@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero for the 'Purnall' spelling variant of Purnell. Exists so ut_search_records_020 does not punish the skill for doing what its own rubric rewards: the Search-strategy dimension awards a pass only when a relevant variant or phonetic alternative is tried, while the judge's global rule fails any call matching no fixture. Without this fixture the same query earns credit on one dimension and a deduction on another, and whether the model reaches for the variant on a given run is a coin flip — so the test flakes. Third occurrence of this exact shape: ut_search_records_014 (2026-07-31), ut_search_records_024 ('Wilkens', 2026-08-03, fixed by record-search-wilkens-variant-no-results.json), and 020 here on 2026-08-03, where the judge quoted the rubric override telling it to score 3 and scored 2 in the same sentence. Wording the override harder has now failed three times; stocking the variant is the move that works. This is a narrow, single-spelling nil, NOT a catch-all: a catch-all was tried on 014 and made things worse, because a nil invites the next variant and the run hit its turn cap.",
+  "args": {
+    "surname": "Purnall"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}
