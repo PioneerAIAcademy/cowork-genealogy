@@ -256,6 +256,21 @@ def _is_conflict_resolution_product(conflict: Any) -> bool:
     return any(conflict.get(f) for f in CONFLICT_ANALYSIS_FIELDS)
 
 
+def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
+    """A stable identity for a ParentChild/Couple relationship, for diffing a
+    final tree against its starting tree.
+
+    A ParentChild carries parent/child; a Couple carries person1/person2. Key on
+    the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run, and an `id`
+    key would read that genuinely-re-pointed relationship as seeded — a false
+    negative in the gates that diff against the starting tree. Shared by
+    `find_effects_without_invocation` (§8 hard gate) and
+    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    """
+    return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -327,15 +342,6 @@ def find_effects_without_invocation(
         for p in starting_persons
         if isinstance(p, dict)
     }
-
-    def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
-        # A ParentChild carries parent/child; a Couple carries person1/person2.
-        # Key on the endpoint tuple, never on `id`: 7 fixtures seed a
-        # relationship pointing at a PID-TODO placeholder that the agent resolves
-        # during the run, and an `id` key would read that genuinely-re-pointed
-        # relationship as seeded — a false negative in the one gate that
-        # overrides the judge.
-        return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
     starting_relationship_keys = {
         _relationship_key(r)
@@ -691,7 +697,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     Note what the two layers do and do not compose to. The main-thread half is
     DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
     not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated (#911). So a `general-purpose` delegate's `extraction_append`
+    calibrated. So a `general-purpose` delegate's `extraction_append`
     still succeeds today; what this detector buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
@@ -789,6 +795,25 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
 # count this failure class in its own bucket instead of lumping it with the
 # #963 person_evidence-provenance gaps (both carry a `detail`).
 CITATION_NULLING_KIND = "citation_nulling"
+
+# Marks a #963 provenance entry recorded by a run launched in DENY mode
+# (`--person-evidence-guard deny`, issue #1231). Same list, same `detail` shape,
+# but a different meaning: the write was blocked and retried rather than landing,
+# and the loop valve can record several denials plus a release for one logical
+# gap. `scan_provenance` excludes it so the shadow fire rate the graduation
+# decision reads is not inflated by deny-mode runs. Lives here beside its sibling
+# rather than in `e2e/orchestrator.py` — which sets it — so that
+# `guardrail_shadow_report.py` can read it without importing the orchestrator
+# (and with it the Claude Agent SDK) just to learn one string.
+PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
+
+# Marks a #1193 warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
+# relationship but never called the (free, deterministic) `person_warnings`
+# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# own bucket. Lives here beside its siblings so the report can read it without
+# importing the orchestrator (and the Claude Agent SDK) for one string.
+WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
 
 
 def find_citation_nulling_in_conclusions(
@@ -894,3 +919,87 @@ def find_citation_nulling_in_conclusions(
                 }
             )
     return violations
+
+
+def find_relationship_writes_without_warnings_check(
+    tool_calls: list[dict[str, Any]] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
+    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
+    the cheapest guardrail in the system (deterministic, no LLM — it reads
+    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
+    round-trip). Two runs of the same fixture, same skills, diverged only on
+    whether the parentage write was delegated to ``proof-conclusion`` (which
+    carries the "run check-warnings after tree writes" step) or inlined by the
+    orchestrator (which does not) — and nothing recorded that the guardrail was
+    never consulted. This makes that omission visible.
+
+    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
+    ``Couple`` relationship in the final tree is absent from the starting tree
+    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
+    104 fixtures seed such relationships, so an ungated check would fire on seed
+    state alone; the diff is what limits it to this run's own product. When no
+    starting tree is given, treat everything as new (best-effort), matching
+    ``find_effects_without_invocation``.
+
+    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
+    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
+    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
+    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
+    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
+    even when it fired inside ``check-warnings``. A call counts as consulting the
+    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
+    tree unchecked.
+
+    SHADOW MODE ONLY: returns violation records shaped to share
+    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
+    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
+    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
+    report counts this class in its own bucket). Never fails a run. Promotion to a
+    hard gate — or a mandatory pre/post-write call in the ``/research``
+    orchestrator so an inlined write is still gated — is a deliberate follow-up
+    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    """
+    tree = tree or {}
+    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
+
+    starting_relationship_keys = {
+        _relationship_key(r)
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
+    }
+    new_relationship = any(
+        isinstance(r, dict)
+        and r.get("type") in ("ParentChild", "Couple")
+        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
+        for r in relationships
+    )
+    if not new_relationship:
+        return []  # the gate: nothing was written that a warnings check should have preceded
+
+    consulted = any(
+        isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") == "person_warnings"
+        and not call.get("is_error")
+        for call in (tool_calls or [])
+    )
+    if consulted:
+        return []
+
+    return [
+        {
+            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "tool": "tree.gedcomx.json",
+            "required_skill": "check-warnings",
+            "question_id": None,
+            "kind": WARNINGS_UNCHECKED_KIND,
+            "detail": (
+                "a new ParentChild/Couple relationship was written this run but "
+                "person_warnings (the free deterministic guardrail) was never "
+                "successfully called"
+            ),
+        }
+    ]
