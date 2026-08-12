@@ -124,19 +124,20 @@ a plan item is waiting.
 
 The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-confidence facts and expect to retrieve a specific known record.
 
-**Anchor rule:** Every `record_search` query must include either `surname` or `recordCountry`. The tool rejects anchor-less queries. If neither is known, fall back to a broader plan item or skip.
+**Anchor rule:** Every `record_search` query must include `surname`, `recordCountry`, or `batchNumber`. The tool rejects anchor-less queries. If none is known, fall back to a broader plan item or skip. A `batchNumber` anchors alone — never add `recordCountry` to a batch search to satisfy this rule: a country that does not match the batch returns 0, which is indistinguishable from a wrong batch.
 
 **Search parameter guidance (`record_search`):**
 
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `surname` | tree.gedcomx.json person name | Try the spelling the tree holds first, then variant spellings as separate searches. Anchor — required if `recordCountry` is absent. |
+| `surname` | tree.gedcomx.json person name | Try the spelling the tree holds first, then variant spellings as separate searches. Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. |
 | `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name tends to surface the target as a clear top-scoring outlier. Truncate to first-name-only as a **lever** if it nils (`references/search-strategy-levers.md`), not as the default. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
-| `recordCountry` | Plan item jurisdiction | Anchor — required if `surname` is absent |
+| `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Never add it to a `batchNumber` search** |
+| `batchNumber` | `references/collection-quirks.md`, or a catalog/index page | IGI extraction batch. Anchors alone — send it with no other field to enumerate one parish; add only a `surname` to narrow. Pass as a quoted string exactly as the source gives it; never reformat or pad it |
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |
 | `surnameExact`, `givenNameExact`, `birthPlaceExact`, `marriagePlaceExact`, `birthYearExact`, `marriageYearExact`, `fatherGivenNameExact`, `spouseSurnameExact` (and the same `Exact` suffix on every other name, place, and year field) | — | Boolean. **Leave unset unless a rule below says otherwise.** See "Exact-match qualifiers" |

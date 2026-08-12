@@ -36,12 +36,15 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   `M01048-5` and all-numeric batches all occur. Send what the source gives
   you; do not reject or reformat a batch on shape, and treat no shape rule
   here as exhaustive.
-- Send the batch **alone**, with no other field: that returns the batch's
-  extracted records and is the canonical way to enumerate a single parish. Add
-  a surname to search within one parish's extraction. Do **not** add
-  `recordCountry` — the batch anchors by itself, and a country that does not
-  match it returns 0, which looks exactly like a wrong batch. A batch number
-  carries no country information, so there is nothing to guess it from.
+- Send the batch and it returns that batch's extracted records — the canonical
+  way to enumerate a single parish. Adding a surname searches within that
+  extraction. Do **not** add `recordCountry`: the batch anchors by itself, and
+  a country that does not match it returns 0, which looks exactly like a wrong
+  batch. A batch number carries no country information, so there is nothing to
+  guess it from.
+- Paging stops at `offset + count = 4999`, so a batch larger than that cannot
+  be walked end to end. Partition it by surname — the one field that narrows
+  within a batch without the silent-zero risk — rather than paging deeper.
 - Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ## Mexico Civil Registration
