@@ -1,13 +1,9 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/check-warnings/v1_2026-08-11_14-28-07.ann.json
-  "run_log": "v1_2026-08-11_14-28-07.json",
-========
   "run_log": "v1_2026-08-11_15-26-52.json",
->>>>>>>> origin/main:eval/runlogs/unit/proof-conclusion/v1_2026-08-11_15-26-52.ann.json
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -15,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -23,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -31,39 +27,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_001",
+      "test_id": "ut_proof_conclusion_018",
       "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_001",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
+      "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -71,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -79,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -87,29 +91,88 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_015",
       "dimension_source": "rubric",
-<<<<<<<< HEAD:eval/runlogs/unit/check-warnings/v1_2026-08-11_14-28-07.ann.json
-      "dimension_name": "Actionability",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
       "llm_score": null,
       "corrected_score": null,
-========
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -217,21 +280,17 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
->>>>>>>> origin/main:eval/runlogs/unit/proof-conclusion/v1_2026-08-11_15-26-52.ann.json
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_002",
+      "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/check-warnings/v1_2026-08-11_14-28-07.ann.json
-      "test_id": "ut_check_warnings_009",
-========
       "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
       "dimension_name": "Narrative standalone",
@@ -809,7 +868,6 @@
     },
     {
       "test_id": "ut_proof_conclusion_012",
->>>>>>>> origin/main:eval/runlogs/unit/proof-conclusion/v1_2026-08-11_15-26-52.ann.json
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -817,15 +875,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -833,27 +891,24 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
-<<<<<<<< HEAD:eval/runlogs/unit/check-warnings/v1_2026-08-11_14-28-07.ann.json
-      "dimension_name": "Actionability",
-========
       "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -863,23 +918,19 @@
       "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
       "dimension_name": "Proof-conclusion fit",
->>>>>>>> origin/main:eval/runlogs/unit/proof-conclusion/v1_2026-08-11_15-26-52.ann.json
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_009",
+      "test_id": "ut_proof_conclusion_012",
       "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
+      "dimension_name": "Tree encoding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/check-warnings/v1_2026-08-11_14-28-07.ann.json
-      "test_id": "ut_check_warnings_007",
-========
       "test_id": "ut_proof_conclusion_020",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -945,7 +996,6 @@
     },
     {
       "test_id": "ut_proof_conclusion_001",
->>>>>>>> origin/main:eval/runlogs/unit/proof-conclusion/v1_2026-08-11_15-26-52.ann.json
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -953,7 +1003,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -961,7 +1011,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -969,721 +1019,41 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "rubric",
-      "dimension_name": "Actionability",
+      "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_007",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
+      "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
+      "test_id": "ut_proof_conclusion_001",
       "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_005",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_006",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_013",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_008",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_015",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_014",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_016",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_018",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_017",
-      "dimension_source": "rubric",
-      "dimension_name": "FamilySearch quality reporting",
+      "dimension_name": "Tree encoding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
