@@ -59,19 +59,23 @@ export function buildIndex(
   const map = new Map<string, IndexEntry>()
   if (!research) return map
 
+  // Guard every array with `?? []`. buildIndex runs in the provider's useMemo,
+  // which is ABOVE the section error boundary, so a partial/older research.json
+  // missing any section here would throw and blank the whole viewer with nothing
+  // to catch it (issue #1317).
   const sections: [string, unknown[]][] = [
     ['known_holdings', research.known_holdings ?? []],
-    ['questions', research.questions],
-    ['plans', research.plans],
-    ['log', research.log],
-    ['sources', research.sources],
-    ['assertions', research.assertions],
-    ['person_evidence', research.person_evidence],
-    ['conflicts', research.conflicts],
-    ['hypotheses', research.hypotheses],
-    ['timelines', research.timelines],
-    ['proof_summaries', research.proof_summaries],
-    ['evaluations', research.evaluations]
+    ['questions', research.questions ?? []],
+    ['plans', research.plans ?? []],
+    ['log', research.log ?? []],
+    ['sources', research.sources ?? []],
+    ['assertions', research.assertions ?? []],
+    ['person_evidence', research.person_evidence ?? []],
+    ['conflicts', research.conflicts ?? []],
+    ['hypotheses', research.hypotheses ?? []],
+    ['timelines', research.timelines ?? []],
+    ['proof_summaries', research.proof_summaries ?? []],
+    ['evaluations', research.evaluations ?? []]
   ]
 
   for (const [section, items] of sections) {
@@ -82,9 +86,9 @@ export function buildIndex(
   }
 
   // Also index plan items (nested inside plans)
-  for (const plan of research.plans) {
-    for (const planItem of plan.items) {
-      map.set(planItem.id, { item: planItem, section: 'plan_items' })
+  for (const plan of research.plans ?? []) {
+    for (const planItem of plan.items ?? []) {
+      if (planItem?.id) map.set(planItem.id, { item: planItem, section: 'plan_items' })
     }
   }
 

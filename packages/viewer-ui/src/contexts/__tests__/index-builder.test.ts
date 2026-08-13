@@ -111,6 +111,19 @@ describe('buildIndex', () => {
     expect(index.size).toBe(1)
   })
 
+  it('does not throw on a partial research.json missing whole sections', () => {
+    // buildIndex runs in the provider's useMemo, ABOVE the section error
+    // boundary, so a throw here blanks the entire viewer with nothing to catch
+    // it. An older/partial research.json missing sections must index cleanly
+    // (issue #1317).
+    const partial = { project: { id: 'rp_x' } } as unknown as Parameters<typeof buildIndex>[0]
+    let index: ReturnType<typeof buildIndex> | undefined
+    expect(() => {
+      index = buildIndex(partial, null)
+    }).not.toThrow()
+    expect(index?.get('rp_x')).toBeDefined()
+  })
+
   it('getById logs warning for missing references', () => {
     // This tests the context's getById behavior, but we can verify
     // the index lookup pattern here

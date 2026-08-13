@@ -20,6 +20,7 @@ import TimelinesSection from './components/sections/TimelinesSection'
 import ProofSummariesSection from './components/sections/ProofSummariesSection'
 import EvaluationsSection from './components/sections/EvaluationsSection'
 import SidecarPanel from './components/shared/SidecarPanel'
+import ErrorBoundary from './components/ErrorBoundary'
 import styles from './App.module.css'
 
 const sectionComponents: Record<string, React.ComponentType> = {
@@ -118,7 +119,9 @@ function AppContent({
         <Header />
         <ProgressPipeline />
         <div className={styles.content}>
-          <ActiveSection />
+          <ErrorBoundary resetKey={activeSection} label={`the ${activeSection} section`}>
+            <ActiveSection />
+          </ErrorBoundary>
         </div>
       </div>
       <SidecarPanel />
