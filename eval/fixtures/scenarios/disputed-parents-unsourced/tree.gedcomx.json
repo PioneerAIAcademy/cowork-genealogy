@@ -1,0 +1,44 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Anton", "surname": "Vogt" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1860", "place": "Wisconsin, United States", "standard_place": "Wisconsin, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Johann", "surname": "Vogt" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Maria", "surname": "Vogt" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3",
+      "facts": [
+        { "id": "F2", "type": "Marriage", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    { "id": "R2", "type": "ParentChild", "parent": "I2", "child": "I1" },
+    { "id": "R3", "type": "ParentChild", "parent": "I3", "child": "I1" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "FamilySearch Family Tree, Anton Vogt", "citation": "FamilySearch Family Tree — unverified compiled data for Anton Vogt and the currently attached parents." }
+  ]
+}
