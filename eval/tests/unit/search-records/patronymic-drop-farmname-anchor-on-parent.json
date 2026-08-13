@@ -21,6 +21,7 @@
   },
   "mcp_fixtures": [
     "record-search-moen-surname-nil",
+    "record-search-anders-parent-anchored-hit",
     "record-search-anders-patronymic-hit",
     "rank-search-matches-anders-christening",
     "record-read-anders-9xkt-m2p"
