@@ -23,6 +23,23 @@ score below 3" as "do not score *fail*" and settling one band down. Partial is a
 deduction; if the only blemish is a name-variant fixture miss, there is nothing
 to deduct for. The score is 3.
 
+**Wording alone has not fixed this — stock the variant instead.** The paragraph
+above was strengthened on 2026-07-31 precisely to stop the compromise, and on
+2026-08-03 a judge did it again on ut_search_records_024 (`Wilkens`), quoting
+the override and scoring 2 in the same breath. Treat this section as a
+mitigation, not a guarantee. **The reliable fix is to stock a nil fixture for
+the specific variant a test's name plausibly attracts**, so no
+`fixture_not_found` occurs and the judge has nothing to weigh — that is what
+024 now does with `record-search-wilkens-variant-no-results`. Reach for a
+narrow, single-spelling nil, never the catch-all warned against below.
+It happened a **third** time on 2026-08-03, on ut_search_records_020
+(`Purnall` for Purnell) — the judge quoted this override and scored 2 in the
+same sentence ("Per the rubric override … **However** … Score is partial (2)
+because the variant call failed to match a fixture"). Fixed the same way,
+with `record-search-purnall-variant-no-results`. Three failures of wording
+against two successes of stocking: **do not reword this section again.** If a
+fourth variant flake appears, stock its nil.
+
 This overrides the global "Critical: Tool Usage Errors" rule for this one case,
 under that prompt's own provision for a skill's rubric to claim an axis and be
 deferred to.
@@ -75,6 +92,26 @@ not a verdict**; this dimension grades whether the skill treated it as one.
 reasoning behind it.** Correctness and Completeness must not re-grade the verdict
 band — they grade whether required actions happened and whether stated facts are
 true.
+
+**Do not split the difference.** The failure this guards against is not disagreeing
+with the ownership rule; it is agreeing with it and then deducting anyway. A judge
+that writes "Result triage owns the verdict" and then scores Correctness 2 for the
+same weak verdict has re-graded it. Partial is a deduction. If the only fault is one
+this dimension already owns, Correctness and Completeness have nothing to deduct for
+and the score is 3 — not 2, not 1. Say what you think of the verdict in Result
+triage's rationale, at whatever band it deserves; that is the one place it counts.
+
+**Nil escalation owns the nil-handling verdict on the same terms.** When a search
+returns nothing, how thoroughly the skill worked the levers is Nil escalation's call
+alone. Correctness and Completeness do not restate it.
+
+Two facts worth keeping in view while grading these. Across this skill's whole
+annotated history, Correctness and Completeness are 3 in every corrected grading but
+one, so a 1 or 2 on either is an unusual claim and needs a concrete artifact behind
+it — a wrong persisted value, a false statement, a required action never taken.
+And `orchestrator._compute_outcome` fails a test outright the moment any dimension
+scores 1, so a base-dimension 1 that duplicates a rubric dimension's finding does not
+merely double-count: it converts the run's recorded outcome.
 
 **No numeric threshold is graded.** Match-score bands genuinely overlap: on live
 data a confirmed record scored 0.632 while a *different* same-name man scored

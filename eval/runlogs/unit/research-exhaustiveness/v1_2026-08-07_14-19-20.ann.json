@@ -1,0 +1,726 @@
+{
+  "run_log": "v1_2026-08-07_14-19-20.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly recognized that q_001.exhaustive_declaration.declared was already set to true and accurately summarized the existing declaration, justification, and stop criteria. All claims were grounded in the project state, including the cited evidence sources, probate search result, and resolved conflict. No unsupported or fabricated information was introduced."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the required task. It reported the existing exhaustive declaration status, summarized the justification, reviewed all seven stop-criteria assessments with supporting references, and correctly identified proof-conclusion as the next appropriate step. No required elements were omitted."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This was a report-only response. No MCP tool calls were required because the exhaustive declaration was already complete and no changes to research.json were needed. The absence of tool calls is the correct behavior."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated all five threshold questions and the seven stop criteria using specific project evidence. The assessment was grounded in the relevant log entries and assertions, with concrete references to source types and research actions rather than generic reasoning. The evaluation accurately reflected the project state and was defensible."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly reported the existing exhaustive declaration without attempting to rewrite, inflate, or alter the project state. It accurately acknowledged the probate search result and explained why the conclusion remains supported by the convergence of three independent sources. The response was transparent about limitations and did not mask research gaps."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly included all seven stop criteria with specific, evidence-based assessments. Each criterion was tied to relevant project evidence, log entries, and source classifications rather than generic statements. The summary accurately covered goal alignment, repository breadth, original source access, independent verification, evidence classification, conflict resolution, and overturn risk."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly included all seven required stop criteria and grounded each assessment in the project state. The evaluations referenced specific logs, assertions, and evidence sources rather than using generic statements. The exhaustive declaration accurately reflects the documented research process and supporting evidence."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test by declining to perform the research-exhaustiveness task and routing the request to project-status, which owns status-check requests. The routing decision was accurate, appropriate, and complete. No unnecessary substantive output was produced."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly recognized that a project status update request was outside the scope of research-exhaustiveness and required routing to project-status. The decline and routing were complete and appropriate, with no unnecessary work performed by the wrong skill."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A. This was a negative test where the correct behavior was to decline and route to project-status. No MCP tool calls were expected from the research-exhaustiveness skill because it correctly avoided performing an out-of-scope status update task."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test by declining to perform the research-exhaustiveness task and routing the request to research-plan, which owns research planning decisions. The routing decision was accurate and appropriate for the scenario, with no unnecessary work performed by the wrong skill."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test by declining to perform the research-exhaustiveness task and routing the request to research-plan. Since the request belonged to research planning rather than exhaustiveness evaluation, the routing decision was appropriate and complete. No unnecessary substantive work was performed by the under-test skill."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This was a negative test where the correct behavior was to decline and route to research-plan. No MCP tool calls were expected from the research-exhaustiveness skill because it did not perform its own task. The absence of tool calls is appropriate."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill made a material factual error by inventing an unsearched 2023 death certificate as an exhaustiveness gap. The project state identified only the privacy-sealed 1936 birth certificate (pli_004) as the remaining undone plan item. The skill incorrectly introduced a new research gap, mischaracterized the death certificate as a decisive missing record, and failed to accurately reflect the existing evidence base that already establishes the parents through the 1940/1950 censuses and 1926 marriage record. This unsupported claim affected the exhaustiveness evaluation outcome."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed to evaluate the actual research state. It omitted the documented remaining plan item (pli_004, the sealed 1936 birth certificate) and instead introduced an unsupported death certificate gap. This resulted in an inaccurate exhaustiveness assessment and did not address the key issue: how the sealed-record limitation affects whether the research is reasonably exhaustive. The response relied on a fabricated gap rather than the project evidence."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and no research_append or schema validation calls were expected because the skill did not proceed with writing a declaration. Tool usage is not applicable for this dimension."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill did not properly ground its threshold evaluation in the actual project state. It introduced an unsupported death certificate issue instead of evaluating the documented remaining item (pli_004, the sealed 1936 birth certificate). Because the reasoning was based on a fabricated gap rather than the real research plan and logs, it failed to accurately assess whether the research was reasonably exhaustive under the stated limitations."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill’s refusal to declare the research exhaustive was based on an inaccurate assessment of the project state. It cited a nonexistent death certificate gap instead of addressing the actual remaining item (pli_004, the sealed 1936 birth certificate). Because the sealed record was inaccessible by privacy law and not an outstanding searchable gap, it should not have been used as a blocker. The reasoning was therefore not grounded in the documented research limitations."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill was structurally complete because it included all seven stop criteria with assessments. However, the overall evaluation was weakened by an incorrect foundation for overturn_risk. The assessment relied on an unsupported death certificate gap instead of the actual project state, while the other six criteria were reasonably evaluated against the available evidence. The coverage was present, but the inaccurate blocking premise reduced reliability."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test by declining to perform the research-exhaustiveness task and routing the request to proof-conclusion. It made no unnecessary changes to research.json or tree.gedcomx.json, produced no unsupported analysis, and the routing decision was appropriate."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly handled the negative test by declining to perform the research-exhaustiveness task and routing the request to proof-conclusion. The user’s request required a proof narrative rather than an exhaustiveness evaluation, so the handoff was appropriate. No unnecessary analysis, research updates, or tree changes were performed."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This was a negative test where the correct behavior was to decline and route to another skill. No MCP tool calls were expected because the research-exhaustiveness skill correctly avoided performing its own task. The absence of tool calls is appropriate."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

@@ -328,15 +328,17 @@ A review's `commit_id` is the commit it read. **Compare it to `headRefOid`.** If
 they differ, say which commit the approval read and re-check each note against
 the code as it stands now.
 
-Two ruleset settings decide what a stale approval is worth here, and they pull
-in opposite directions. `dismiss_stale_reviews_on_push: false` means a push does
-**not** clear existing approvals — they keep counting toward the two required,
-and nothing re-requests review. But `require_last_push_approval: true` means at
-least one approval must land **after** the most recent push. So an old approval
-is neither void nor sufficient: a PR approved twice and then pushed to still
-needs a fresh approval, while both old ones still count. Do not tell an author
-their approvals were reset, and do not treat a pre-push approval as clearing the
-gate.
+One ruleset setting decides what a stale approval is worth here, and it is
+permissive. `dismiss_stale_reviews_on_push: false` means a push does **not**
+clear existing approvals — they keep counting toward the two required, and
+nothing re-requests review. **Nothing takes their place.** An approval that read
+a commit three pushes ago still clears the merge gate, and the merge box says
+approved.
+
+So the `commit_id` check above is the only thing standing between a stale
+approval and main. Run it on every approval on the PR, not just the ones you
+doubt, and report each one whose commit is not `headRefOid` — naming what
+landed after it that nobody has read.
 
 ## 8. Write the edits — don't make them
 

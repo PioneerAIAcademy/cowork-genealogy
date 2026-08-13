@@ -316,6 +316,79 @@ avoided). Pair a required `avoid` guard with a required positive
 finding that the agent *documented* the negative conclusion, so a run
 that does nothing at all does not pass by default.
 
+#### 3.4.2 Relationship findings: `matched` is derived, not trusted
+
+For a finding with `"type": "relationship"` (and `polarity` other than
+`avoid`), the judge does **not** get to state the label. It states the
+*analysis*, and the harness computes the label from it
+(`apply_component_derivation` in `e2e/judge.py`, applied inside
+`run_judge` itself so a new call site cannot forget it).
+
+The judge emits a `components` array on each finding — one entry per
+claim, each with `claim` text, a `kind` (`link` / `detail`) and a
+`status` (`supported` / `unsupported` / `contradicted`) marked from the
+final tree only. `derive_matched` then rolls up the `link` entries:
+
+| Links | `matched` |
+|---|---|
+| Any link contradicted | `false` |
+| No link supported | `false` |
+| Some supported, some unsupported | `partial` |
+| All supported | `true` |
+
+**Only `link` components score.** A relationship finding names the people
+it links and then describes them ("Born 1833 in the Gorbals; an iron
+moulder; died 1910"); that description says *which* person is meant, not
+something the agent must file, and scoring it downgraded twelve findings
+whose relationship had been recovered exactly right, measured across the
+committed corpus in the 2026-08-10 calibration sweep. The one exception is a date the finding
+puts on **the relationship itself** — most often a marriage date on a
+spouse claim. The judge prompt tags those `link` so they score: a spouse
+link recovered with no marriage date is `partial`, not full credit for a
+marriage that was never dated. A linked person's *own* birth and death
+dates stay `detail` even when the finding states them precisely; only a
+date on the claimed relationship scores. That boundary is load-bearing —
+a wording that promoted identifying dates too was measured against the
+`claude-haiku-4-5` judge every fixture pins (§3.1) and reproduced exactly
+the twelve-finding downgrade above.
+
+This exists for the same reason as the §3.4.1 avoid-guard: the judge is a
+model, and this is the step it is least reliable at. On
+`manoel-oliveira-daughter` f1 it decomposed the finding correctly every
+time — three relationship components, all unsupported — wrote "zero
+components supported, this is 'false'" in its own notes, and then emitted
+`true`/`partial` anyway. Four successively more explicit prompt wordings
+failed to bind it and the label moved non-monotonically. The
+decomposition is trustworthy; the label is not.
+
+Scope and record-keeping:
+
+- **Relationship findings only.** A `fact` finding's components are dates
+  and places rather than links, so the link tally says nothing about it;
+  deriving there manufactured eleven disagreements in the same sweep.
+  `avoid` findings are also untouched — there `matched: "true"` means
+  "correctly declined to assert", which is not a component tally, and
+  §3.4.1's guard owns them.
+- What was overridden is recorded under
+  `judge_output.component_derivation.overrides` (each with `finding_id`,
+  the model's `model` label and the `derived` one), the model's original
+  label is preserved as `matched_model` on the finding, and the finding's
+  `notes` gain a `[component-derivation]` annotation. A judge that
+  mislabels its own analysis is the defect this exists to close, so the
+  evidence of it stays in the run log rather than being silently swapped.
+- Recall fractions and the verdict are recomputed from the derived
+  labels. Unlike §3.4.1's downgrade-only recompute, this applies in
+  **both** directions: the avoid-guard is a one-way safety net, whereas
+  this is arithmetic over the judge's own analysis, so the derived
+  verdict is simply correct.
+- A finding carrying no `link` components derives to nothing and keeps
+  the model's own label. That is what lets historical run logs — written
+  before `components` existed — keep working unchanged.
+
+Historical verdicts were produced by a judge without this derivation.
+They are not invalidated, but they are **not directly comparable** to
+grades produced with it; the trend view spans that boundary.
+
 ### 3.5 `README.md`
 
 Human notes. Required content:
@@ -851,7 +924,14 @@ as an *agent* failure to act on, not a judge bug to ignore.
       "finding_id": "f1",
       "matched": "true" | "partial" | "false",
       "agent_evidence": "<which tree element supports the match>",
-      "notes": "<short rationale>"
+      "notes": "<short rationale>",
+      "components": [
+        {
+          "claim": "<the single claim this component covers>",
+          "kind": "link" | "detail",
+          "status": "supported" | "unsupported" | "contradicted"
+        }
+      ]
     }
   ],
   "recall_required": 0.75,
@@ -872,7 +952,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | Field | Description |
 |-------|-------------|
 | `per_finding[]` | One entry per `expected_findings` entry |
-| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent |
+| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent. For a non-`avoid` `relationship` finding this is **derived** from `components`, not taken from the judge — see §3.4.2 |
+| `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
+| `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
 | `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
 | `recall_total` | Fraction across all findings |
@@ -892,6 +974,16 @@ harness overrode, and the matching final-tree person ids), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
 
+Likewise, when §3.4.2's component derivation overrides a relationship
+finding, the persisted `judge_output` carries
+`component_derivation.overrides` (per finding: the model's label and the
+derived one), the finding keeps the model's label as `matched_model`,
+its `notes` gain a `[component-derivation]` annotation, and
+`recall_*`/`verdict` reflect the recompute — in **both** directions, not
+downgrade-only. `matched` on a non-`avoid` `relationship` finding is
+therefore a derived field: read `matched_model` to see what the judge
+itself said.
+
 ### 7.2.1 The three axes
 
 A run is graded on **two independent axes**, and reported with a third field
@@ -906,7 +998,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `4` for the shape above — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**; at `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1165,7 +1257,33 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
-**A fifth check runs in shadow mode only: the warnings guardrail was never
+**A fifth check runs in shadow mode only: a conclusion relies on a resolved
+conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and, for each
+written `proof_summaries` conclusion, flags a question whose
+`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
+(positive resolution language, not merely the absence of "no conflict" wording —
+a required field that is always populated would otherwise default to firing) that
+**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
+on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
+resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
+stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
+exists at all). A resolved conflict that exists but is linked to nothing fires
+only when the stop-criterion names a `c_` id that is not resolved; when it names
+no id, an existing resolved entry silences the check. So read the count as **"no
+resolved conflict backs this conclusion"** — every firing on the committed corpus
+today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
+viewer's Conflicts section stayed blank because nothing structured was persisted.
+Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "conflict_unpersisted"` for their own bucket
+(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
+structured field, so it ships shadow-first; **promotion to a hard check — or to a
+`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
+written — is gated on reading the fire rate across the corpus first**, not decided
+here.
+
+**A sixth check runs in shadow mode only: the warnings guardrail was never
 consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
 (in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
@@ -1211,11 +1329,18 @@ means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
 is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
 for. `3` closes that. So:
 
-| Log reads | Has `is_error`? |
-|---|---|
-| `3` | yes — unambiguous |
-| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** |
-| `2` before `4541a4c5`, `1`, or absent | no |
+| Log reads | Has `is_error`? | What `is_error: false` means |
+|---|---|---|
+| `4` | yes — unambiguous | did not throw **and** did not return `{ok: false}` |
+| `3` | yes — unambiguous | did not throw; a **returned** `{ok: false}` still reads false here |
+| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** | as `3` |
+| `2` before `4541a4c5`, `1`, or absent | no | — |
+
+**The `3` → `4` boundary moves far more than the `2` → `3` one.** Widening
+`is_error` to cover returned failures makes ~657 previously-invisible calls
+visible across the measured corpus — three orders of magnitude more than the ~1
+entry above — so the argument below for not splitting the corpus by version rests
+on the `2` → `3` figure and does **not** carry to this boundary.
 
 Zero logs sit in that ambiguous row today — the 555 committed runs are
 `{absent: 551, 1: 4}`, and none carries `is_error` — but the window is open
@@ -1234,17 +1359,21 @@ tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
 is a correctness statement, not a warning of a large shift: measured movement is
-~1 entry in 555 runs. `is_error` is also blind to a writer tool that returns
-`{ok:false}` without throwing and to a skill that launches and then fails
-(`guardrail-enforcement-spec.md` §7), which is why the shift is this small.
+~1 entry in 555 runs. `is_error` *was* also blind to a writer tool that returns
+`{ok:false}` without throwing, until dispatch began marking those as errors; it
+remains blind to a skill that launches and then fails
+(`guardrail-enforcement-spec.md` §7), which is why the shift is this small. Runs
+recorded before that change carry the old classification, and are
+`HARNESS_SCHEMA_VERSION` 3 — the structural tell for it.
 
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
-that always reads zero. Revisit only if writer-tool failures that return (but
-don't throw) become visible in `is_error`, or the corpus accumulates errored
-`same_person`/`Skill` calls. Window calibration is not a pending task at all —
-see `guardrail-enforcement-spec.md` §7, "What the success gate can and cannot
-see."
+that always reads zero. Returned-but-not-thrown writer failures are now visible
+in `is_error`, so that delta will grow as version-4 runs accumulate —
+re-measure before relying on the ~1-entry figure above, and revisit the v-split
+then, or if the corpus accumulates errored `same_person`/`Skill` calls. Window
+calibration is not a pending task at all — see `guardrail-enforcement-spec.md`
+§7, "What the success gate can and cannot see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these

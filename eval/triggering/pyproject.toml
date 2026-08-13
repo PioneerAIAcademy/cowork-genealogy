@@ -9,3 +9,10 @@ requires-python = ">=3.10"
 # provides it without touching the system python3. Not an installable package.
 [tool.uv]
 package = false
+# Copy instead of hardlink when materialising packages into .venv — the OneDrive
+# hardlink failure documented in eval/harness/uv.toml. A no-op today (no
+# dependencies + package = false means uv installs nothing, so there is nothing
+# to hardlink; verified on a OneDrive clone). It is here so that adding the
+# first dependency to this project cannot silently re-arm that failure for a
+# genealogist running eval/OptimizeSkill.bat.
+link-mode = "copy"

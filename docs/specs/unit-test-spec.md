@@ -115,18 +115,28 @@ Both JSON files must conform to their respective schemas (`docs/specs/research-s
 The README.md describes the scenario in terms genealogists understand:
 
 ```markdown
-# mid-research-flynn
+# <scenario-name>
 
-Patrick Flynn parentage research, mid-project. Two questions active (parentage
-and migration), 1850 census searched. Thomas Flynn identified as candidate father
-from census co-residence. 5 assertions, 2 sources, no conflicts yet.
+<Surname> parentage research, mid-project. Two questions active (parentage and
+migration), 1850 census searched. <Candidate> identified as candidate father from
+census co-residence.
+
+- **Sources:** 3 sources (1850 census, 1860 census, death cert)
+- **Assertions:** 7 assertions
 ```
+
+The example is deliberately generic. An illustration that restates a *real*
+fixture's counts becomes a second place for them to drift — this one did, claiming
+"5 assertions, 2 sources" for `mid-research-flynn` long after that fixture had 13
+and 9, and the count lint cannot see it because the sample lives under `docs/`.
+Any count bullet you write in a real scenario README is checked against its
+`research.json`; see the `Sources:` / `Assertions:` form above.
 
 **Ownership:** Junior genealogists own scenario creation. The target state is a CRUD UI that provides form fields for building the research state (adding assertions, sources, plans, etc.) and generates the JSON behind the scenes. Genealogists understand the genealogy — what assertions exist, what sources were consulted, what conflicts are unresolved — and the UI translates that knowledge into valid `research.json` and `tree.gedcomx.json`.
 
 Scenario creation tooling (the form-based UI that generates valid JSON) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, scenarios are dev-authored; until a needed scenario exists, tests that reference it via `scenario_notes` fail the runnability gate (§9).
 
-Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is auto-generated from the scenario contents.
+Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is **hand-authored** — no generator exists, and the file is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count it states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
 
 **When to create a new scenario vs reuse:** If an existing scenario is close to what you need, select it and describe the differences in `scenario_notes`. If 3+ tests need the same modification, promote to a new named scenario.
 
@@ -573,6 +583,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
@@ -597,6 +608,59 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 unable to finish — which under the first form required a judge instruction
 ("do not penalize the skill for not producing Ancestry URLs") to keep the test
 green. A grading patch over a harness gap is the signal you needed `response`.
+
+**`run_skills` — letting a sub-skill really run.** The opposite declaration:
+this test wants the callee to execute. Naming it here unions the callee's
+`allowed-tools` into the session allowlist, because `Skill()` loads the
+callee's instructions into the **same conversation** — its tool calls are
+checked against the caller's allowlist, not one of its own.
+
+Two things must both be true before a callee can work, and they are enforced
+in different places:
+
+| | grants | enforced by | failure |
+|---|---|---|---|
+| `run_skills` | the tool is **permitted** | `compute_allowed_tools` | SDK denies the call |
+| `mcp_fixtures` | the tool **exists** | `mock_mcp.build_manifest` | `unmatched_tool_call` aborts the *caller's* test |
+
+So a test that names a callee in `run_skills` must also stock a fixture for
+each of that callee's tools. The harness checks this **before the run starts**
+and fails with the missing pairs named, rather than letting the callee's first
+call abort the caller twenty turns in. Fixtures stay explicitly declared rather
+than auto-loaded from a per-skill default set: auto-loading would let a test
+pass on fixtures it never named, and a later change to the default set would
+alter that test's behaviour with no diff in the test file.
+
+Opt-in, not automatic. `search-records` names four callees but any one test
+drives at most one, so unioning every `Skill()` reference would arm that abort
+across the whole suite to serve the one test that wants it. A callee that is
+neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
+this field existed — it runs without its own tools.
+
+**The two fields are mutually exclusive for the same callee, and naming one in
+both is refused before the run starts.** The runnability gate
+(`eval/harness/harness/runnability.py`) rejects the test at load time rather
+than letting it start, because the combination is worse than either field
+alone: `run_skills` grants the callee's tools *and* obliges the test to stock a
+fixture for each, while `stub_skills` waives that fixture preflight
+(`uncovered_callee_fixtures` skips a stubbed callee) and then denies the launch.
+Declaring both grants the tools and waives the check, so the session ends up
+holding tools nothing backs and nothing warned about — and the *main thread*
+calling one trips `unmatched_tool_call` and aborts the caller, which is exactly
+what the preflight exists to prevent. That is the silent fourth state the
+three-state table above would otherwise admit; the gate is what keeps the
+states at three. Keep whichever field you meant — `run_skills` to execute the
+callee, `stub_skills` to deny it.
+
+> **Correction (2026-07-31).** This section previously described
+> stubbing as trading away integration coverage at the caller/callee seam.
+> There was no such coverage to trade: until `run_skills` existed, a callee had
+> no way to obtain its tools, so *not* stubbing bought a callee that improvised.
+> `ut_search_records_018` passed for weeks on an Ancestry URL missing
+> `name_x=ps_ps` — the phonetic-match parameter that is the entire reason the
+> escalation exists. Note this is a harness limitation only: production builds
+> no per-skill allowlist (`permission_mode="bypassPermissions"` with no
+> `allowed_tools`), so a real session holds every tool and the callee works.
 
 Assert the hand-off with a deterministic `skills_invoked` validator, not the
 judge, which reads a transcript and can misread it. Note the limit: the harness
