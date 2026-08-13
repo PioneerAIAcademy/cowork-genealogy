@@ -19,7 +19,19 @@ const RMS_SEARCH_URL =
 const FULLTEXT_GROUP_URL =
   "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
 
-const RECORD_TYPE_PLACEHOLDER_RE = /^(concept-id|title):/;
+// `concept-id:…` is an opaque internal id with nothing a reader can use. A
+// `title:…` prefix is different in kind: it marks *provenance* — the type came
+// from the volume's title rather than the concept taxonomy — and the value after
+// it is a real record type, so the prefix is stripped and the value kept.
+// Measured live 2026-08-13 over Malmöhus (SE), Edensor (GB) and Wayne, Ohio (US):
+// every `title:`-prefixed value was a real type (Taxation, Census, Probate
+// records, Military records, Town records, Church records), and those same types
+// also occur unprefixed in the same corpus. Treating them as placeholders
+// discarded 785 of 805 labels (97.5%) across Harjager härad — every Taxation,
+// Census and Probate label among them, which is what hid the Swedish
+// mantalslängder from `volume_search` (issue #572).
+const RECORD_TYPE_OPAQUE_RE = /^concept-id:/;
+const RECORD_TYPE_TITLE_PREFIX_RE = /^title:\s*/;
 
 function validate(input: VolumeSearchInput): void {
   if (!input.standardPlace) {
@@ -126,11 +138,10 @@ function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null 
 function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
   const coverage: SimplifiedCoverage = { place: entry.place ?? "" };
   if (entry.datesOrig != null) coverage.dateRange = entry.datesOrig;
-  if (
-    entry.recordTypeOrig != null &&
-    !RECORD_TYPE_PLACEHOLDER_RE.test(entry.recordTypeOrig)
-  ) {
-    coverage.recordType = entry.recordTypeOrig;
+  const rawType = entry.recordTypeOrig;
+  if (rawType != null && !RECORD_TYPE_OPAQUE_RE.test(rawType)) {
+    const recordType = rawType.replace(RECORD_TYPE_TITLE_PREFIX_RE, "").trim();
+    if (recordType) coverage.recordType = recordType;
   }
   return coverage;
 }

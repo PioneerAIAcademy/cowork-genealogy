@@ -339,23 +339,36 @@ describe("volumeSearchTool", () => {
     });
   });
 
-  // 14. Placeholder recordType filtering
-  it("omits recordType when value starts with concept-id: or title:", async () => {
+  // 14. recordType: opaque concept ids dropped, `title:` provenance prefix stripped
+  it("drops concept-id: values but keeps the type behind a title: prefix", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
         makeGroup({
           coverages: [
             { place: "Edensor", recordTypeOrig: "concept-id:burial" },
-            { place: "Edensor", recordTypeOrig: "title:burial" },
+            { place: "Edensor", recordTypeOrig: "title:Taxation" },
+            { place: "Edensor", recordTypeOrig: "title: Probate records" },
+            { place: "Edensor", recordTypeOrig: "Burial Records" },
+            { place: "Edensor", recordTypeOrig: "title:" },
           ],
         }),
       ]),
       []
     );
     const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
-    expect(result.results[0].coverages[0].recordType).toBeUndefined();
-    expect(result.results[0].coverages[1].recordType).toBeUndefined();
+    const coverages = result.results[0].coverages;
+    // Opaque internal id — nothing a reader can use.
+    expect(coverages[0].recordType).toBeUndefined();
+    // `title:` marks provenance, not a placeholder: the value is a real record
+    // type and every live `title:`-prefixed value observed was one. Dropping
+    // these hid the Swedish mantalslängder from volume_search (issue #572).
+    expect(coverages[1].recordType).toBe("Taxation");
+    expect(coverages[2].recordType).toBe("Probate records");
+    // Unprefixed values are unaffected.
+    expect(coverages[3].recordType).toBe("Burial Records");
+    // A bare prefix leaves nothing behind, so the field stays absent.
+    expect(coverages[4].recordType).toBeUndefined();
   });
 
   // 15. Empty result set
