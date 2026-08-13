@@ -398,6 +398,21 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
     print(f"  transient retries {retries} across {tests_with_retry} test(s)")
 
 
+#: Warning kinds `judge._extract_dimensions` owns — the judge breaking one of
+#: its own prompt rules. `output.warnings` also carries harness-side advisories
+#: from `orchestrator._build_warnings` (`unread_skill_call`,
+#: `missing_tool_usage_dimension`, `uncovered_tool_call`) which are about the
+#: skill or the fixtures, not the judge; those are deliberately not tallied
+#: here. A new kind added in judge.py must be added here too, or it prints
+#: nowhere — which is the state this whole section exists to end.
+_JUDGE_WARNING_KINDS = frozenset({
+    "dropped_unknown_rubric_dimension",
+    "dropped_unknown_base_dimension",
+    "dropped_duplicate_dimension",
+    "coerced_tool_arguments_to_na",
+})
+
+
 def _print_summary(rows: list[dict]) -> None:
     print()
     print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} REASON")
@@ -409,6 +424,7 @@ def _print_summary(rows: list[dict]) -> None:
         )
     print()
     _print_outcome_counts(rows)
+    _print_judge_warnings(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -436,6 +452,40 @@ def _print_outcome_counts(rows: list[dict]) -> None:
         reasons = Counter(r.get("reason") or "unrecorded" for r in rows if r["outcome"] == "aborted")
         detail = ", ".join(f"{n}x {reason}" for reason, n in reasons.most_common())
         print(f"  aborted reasons: {detail}")
+
+
+def _print_judge_warnings(rows: list[dict]) -> None:
+    """Tally the judge's own rule violations, per kind, per test.
+
+    These reach `output.warnings` in the run log and, until now, nowhere a
+    human looks — which makes them useless for exactly the purpose they
+    were added for. #1401's complaint is that an invented dimension cannot
+    be trended; a warning nobody reads does not fix that, and #1406 adds a
+    second kind with the same problem. Print them at the end of a run,
+    next to the outcomes, so a judge that stops following its own prompt
+    is visible without opening a 1 MB JSON file.
+
+    Counts are per TEST, not per occurrence, and the number shown is the
+    length of the same set the names come from. A headline that counts
+    occurrences beside a list that dedupes tests reads as "N tests" and
+    means something else, and the mismatch is invisible until you count
+    the names yourself.
+    """
+    by_kind: dict[str, set[str]] = {}
+    for row in rows:
+        for kind in row.get("judge_warning_kinds") or []:
+            by_kind.setdefault(kind, set()).add(row["test_id"])
+    if not by_kind:
+        return
+    total = sum(len(v) for v in by_kind.values())
+    print(f"Judge rule violations ({total} test-kind pair(s), {len(by_kind)} kind(s)):")
+    for kind in sorted(by_kind):
+        tests = sorted(by_kind[kind])
+        shown = ", ".join(tests[:6])
+        more = len(tests) - 6
+        print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
+    print("  Full advisories are in each run log's output.warnings.")
+    print()
 
 
 def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
@@ -928,6 +978,23 @@ def main(argv: list[str] | None = None) -> int:
                     if entry["outcome"] == "aborted" and entry.get("runs")
                     else ""
                 ),
+                # Judge-rule violations for _print_judge_warnings. The
+                # advisories themselves stay in the run log; the summary
+                # only needs to say which kinds fired and where.
+                #
+                # Filtered to judge-owned kinds. `output.warnings` is a
+                # shared list — orchestrator._build_warnings also puts
+                # `unread_skill_call`, `missing_tool_usage_dimension` and
+                # `uncovered_tool_call` in it, and none of those is the
+                # judge misbehaving. Tallying them under a "Judge rule
+                # violations" header would report a routine unmatched tool
+                # call as a judge fault.
+                "judge_warning_kinds": [
+                    w.get("kind")
+                    for r in entry.get("runs") or []
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    if w.get("kind") in _JUDGE_WARNING_KINDS
+                ],
             }
         )
 

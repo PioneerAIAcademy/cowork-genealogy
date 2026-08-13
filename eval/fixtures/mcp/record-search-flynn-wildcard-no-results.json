@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero for a WILDCARD surname on the Flynn family (`Fl*n`, `Fl?nn`, and the like). Exists because SKILL.md's Step 2 now teaches that wildcards are supported and are a legitimate lever once explicit spelling variants are exhausted — measured behaviour: `*` and `?` both bind, a wildcard survives `.exact`, and the long-standing 'wildcards are disabled in Ellis Island collections' rule was refuted by reading whole result sets. Before this fixture existed, no fixture anywhere in the corpus stocked a wildcard surname, so a skill following that guidance hit fixture_not_found and lost a Tool Arguments point for obeying its own instructions — observed on ut_search_records_011 (surname `Fl*n`, givenName `Barth*`), which passed on re-run, so it presents as flake rather than as the corpus gap it is.\n\nPredicate is the `~Fl` stem, deliberately loose enough to catch any Flynn-family wildcard shape the skill invents (`Fl*n`, `Fl?nn`, `Fly*`) without enumerating them. Keep it LAST in a test's mcp_fixtures list: matching is first-match-wins in list order, and `~Fl` substring-matches every specific Flynn/Flinn/Flyn fixture, so placed earlier it would shadow all of them and erase the expected_args signal Tool Arguments is graded on.\n\nA nil is the truthful answer here: ut_search_records_011 is nil-by-design — no Bartholomew Flynn record exists in the scenario under any spelling — so a wildcard finding nothing is correct, not a fudge. Re-examine this predicate before reusing the fixture on a test that returns results.",
+  "args": {
+    "surname": "~Fl"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}
