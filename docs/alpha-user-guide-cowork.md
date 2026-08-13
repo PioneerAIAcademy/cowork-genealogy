@@ -314,6 +314,7 @@ Being straight with you, so you don't waste time:
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
+| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild the `.mcpb` (step 3), and reinstall it (step 4). |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
 Anything else, or anything alarming: send feedback and describe it. There is no

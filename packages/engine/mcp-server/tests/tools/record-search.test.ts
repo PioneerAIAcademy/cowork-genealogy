@@ -186,6 +186,52 @@ describe("recordSearchTool input validation", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  // `batchNumber` anchors alone (see the anchor-rule note in the spec). This is
+  // the assertion that would have caught the original rule: a batch-only call
+  // is accepted upstream and is the canonical parish enumeration, but
+  // validateInput rejected it, so the one strategy collection-quirks.md
+  // recommends for IGI registers could not be executed.
+  it("5a. accepts batchNumber as the only anchor", () => {
+    expect(() => validateInput({ batchNumber: "B01883-5" })).not.toThrow();
+  });
+
+  // The error message names every anchor. It named two while accepting three,
+  // which tells the model to add a field it must not add: an unmatched
+  // recordCountry on a batch search silently returns 0.
+  it("5b. the anchor error names batchNumber", () => {
+    expect(() => validateInput({ givenName: "John" })).toThrow(/batchNumber/);
+  });
+
+  // The structural half of the batch rule. Prose survives about three
+  // compactions (docs/architecture.md §3.1), and the pairing this rejects is
+  // precisely what a half-remembered "every query needs surname or
+  // recordCountry" produces. Rejecting is free: a MATCHING country returns an
+  // identical count, so the field never buys anything on a batch search.
+  it("5c. rejects batchNumber combined with recordCountry", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordCountry: "England" })
+    ).toThrow(/do not combine batchNumber with recordCountry/);
+  });
+
+  // ...and the permitted narrowing still works, so 5c cannot be satisfied by
+  // rejecting every companion field.
+  it("5d. allows batchNumber combined with surname", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", surname: "Smith" })
+    ).not.toThrow();
+  });
+
+  // `recordSubdivision` is the same class of record-jurisdiction filter and
+  // carries the same silent-zero risk. Without it named here the invariant
+  // still held — batch + subdivision with no country trips "recordSubdivision
+  // requires recordCountry" — but that error points the model at the one field
+  // the batch rule forbids, costing a round-trip to arrive at the same place.
+  it("5e. rejects batchNumber combined with recordSubdivision", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordSubdivision: "Alabama" })
+    ).toThrow(/do not combine batchNumber with recordCountry or recordSubdivision/);
+  });
+
   it("6. throws when count > 100 or count < 1", async () => {
     await expect(
       recordSearchTool({ surname: "Lincoln", count: 200 })
@@ -370,11 +416,23 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.batchNumber=M01048-5");
   });
 
-  // The dashed form is the one the live check used; the older letter + 6 digits
-  // form has to survive too, since the spec documents both.
-  it("21e. batchNumber accepts the letter + 6 digit form", () => {
-    const url = buildSearchUrl({ batchNumber: "C050761", recordCountry: "England" });
-    expect(url).toContain("q.batchNumber=C050761");
+  // Batch shape is open, not a rule: the documented form has been narrowed and
+  // then corrected twice (`exactly 6 digits after a letter prefix`, then `a
+  // letter prefix followed by digits`), and both were too narrow. So the
+  // contract asserted here is passthrough — whatever shape the caller was given
+  // reaches `q.batchNumber` byte-for-byte. A wrong batch returns 0 rather than
+  // erroring, so any reformatting this tool did would be indistinguishable from
+  // an empty parish. Leading zeros are the case that has to survive.
+  it.each([
+    ["letter + 6 digits", "C050761"],
+    ["dashed", "M01048-5"],
+    ["all-numeric", "7501234"],
+    ["leading zero", "0501234"],
+  ])("21e. batchNumber passes the %s form through unaltered", (_shape, batch) => {
+    // Batch only, deliberately: the batch anchors by itself, and adding
+    // `recordCountry` is the one thing the docs tell callers never to do here.
+    const url = buildSearchUrl({ batchNumber: batch });
+    expect(url).toContain(`q.batchNumber=${batch}`);
   });
 });
 
