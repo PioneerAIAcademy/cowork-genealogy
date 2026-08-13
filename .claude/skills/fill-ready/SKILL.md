@@ -34,6 +34,15 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 Each item carries `id` (the item id you need to move it), `content.number`,
 `status`, `assignees`, `title`, `labels`.
 
+**A closed issue counts for nothing, whatever column its card is in.** It fills
+no pool, holds no eval slot (Gate 4), loses no swap, and is never a blocker.
+`gh project item-list` reports the *column*, and the column follows the issue's
+state only when `.github/workflows/project-status-sync.yml` gets to it — so a
+just-closed card can still read `Review` for a while. Ready / In Progress /
+Review are the three active columns; **Done and Not planned are the terminal
+ones, and "outside Backlog" is never the test for anything**, because it counts
+them too.
+
 **Re-read the board immediately before you apply anything.** The lead edits it
 while you work — in one session nine items moved to Ready and 23 assignments
 were cleared between the opening read and the write-back. A snapshot taken at
@@ -500,9 +509,27 @@ Then say it in your report as well, so the lead can hand both to one person.
 
 ### Gate 4 — the skill's eval slot is already taken
 
-**At most one item touching a given skill's eval snapshot may be outside Backlog
-at a time.** If one is already in Ready, In Progress or Review, the next one is
-not Ready — leave it in Backlog and name the holder.
+**At most one item touching a given skill's eval snapshot may be in an active
+column at a time** — Ready, In Progress, or Review. If one is already there, the
+next one is not Ready — leave it in Backlog and name the holder.
+
+**Only an open issue in one of those three columns holds a slot.** Never
+"outside Backlog", which is what this rule used to say and which is wrong in
+both terminal directions: Done and Not planned are outside Backlog too. A closed
+issue holds nothing. Whatever it was going to change, it is not going to change
+it, so nothing is waiting on it and the next item can go.
+
+**When the column and the issue's state disagree, the state wins.** Closing an
+issue does not move its card — `.github/workflows/project-status-sync.yml` does,
+and it is a workflow, not an atomic write. So a card can sit in Review for a
+while after its issue closed, and a pass that reads the column alone will hold a
+whole skill shut on an issue nobody is working. Check `state` on any holder
+before you believe it, and say so when you find one:
+
+```sh
+gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
+  --json number,state,stateReason,title
+```
 
 *Why it is hard rather than soft.* A skill's run log goes inactive the moment any
 file under its snapshot changes, so two such items cannot share a run however they
@@ -907,10 +934,13 @@ list it does not appear in. Add state when it matters.
 6a. **Cross-cutting** — one line per active `cross-cutting` item: who holds it,
    days since it last moved, and any person holding two. Flag any unassigned one
    as a mis-file. Skip the heading when there are none.
-6b. **Skill slots** — one line per skill with anything in flight: the holder, its
-   idle days, and how many are queued behind it. Flag a holder idle ~10 days as a
-   reclaim proposal, and a queue three or more deep as a merge candidate for
-   `/audit-board`. Skip the heading when every slot is free.
+6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
+   in Ready, In Progress or Review: the holder, its idle days, and how many are
+   queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
+   queue three or more deep as a merge candidate for `/audit-board`. A holder
+   whose issue has closed frees the slot immediately — report it as freed, name
+   what is now promotable behind it, and do not wait for the card to move. Skip
+   the heading when every slot is free.
 7. **Grooming** — capped, with verdicts.
 
 Then stop and wait for approval. Apply only what he approves, re-reading the
