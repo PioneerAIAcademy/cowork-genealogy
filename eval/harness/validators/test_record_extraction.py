@@ -168,6 +168,29 @@ def _attribute_matches(assertion, attribute):
     return True
 
 
+def _value_matches(assertion, attribute, expected):
+    """The assertion's value for the matcher's attribute CONTAINS `expected`
+    (case-insensitive). #1108 — pins the fact value, not just its layers.
+
+    Which assertion field is read follows the matcher's `attribute`: `place`
+    OR `standard_place` for attribute "place", `date` for "date", else the
+    human-readable `value`. The check is a case-insensitive substring so
+    place standardization is tolerated ("Pennsylvania" -> "Pennsylvania,
+    United States" still matches "Pennsylvania") while a genuinely wrong
+    value still fails ("Ireland" is not in "Pennsylvania") — which is exactly
+    the ut_013 leak this exists to catch deterministically."""
+    want = str(expected).strip().casefold()
+    if not want:
+        return True
+    if attribute == "place":
+        fields = (assertion.get("place"), assertion.get("standard_place"))
+    elif attribute == "date":
+        fields = (assertion.get("date"),)
+    else:
+        fields = (assertion.get("value"),)
+    return any(f and want in str(f).casefold() for f in fields)
+
+
 def test_expected_classifications(before_state, after_state, test):
     """Fixture-gated: deterministic per-fixture classification ground truth.
 
@@ -266,6 +289,23 @@ def test_expected_classifications(before_state, after_state, test):
                         f"fact_type='{fact}'{attr_desc}): {field}='{got}' — "
                         f"expected {want}"
                     )
+            # `value` pins the fact VALUE, not a classification layer (#1108) —
+            # checked against the attribute-relevant field, case-insensitive
+            # substring. This is what makes the ut_013 "Ireland vs Pennsylvania"
+            # leak deterministic; the layer facets above would pass either way.
+            if "value" in m and not _value_matches(a, attribute, m["value"]):
+                got_val = (
+                    a.get("place") or a.get("standard_place")
+                    if attribute == "place"
+                    else a.get("date")
+                    if attribute == "date"
+                    else a.get("value")
+                )
+                errors.append(
+                    f"assertions[{aid}] (record_role='{role}', "
+                    f"fact_type='{fact}'{attr_desc}): value='{got_val}' — "
+                    f"expected to contain '{m['value']}'"
+                )
 
     assert not errors, (
         "expected_classifications violations:\n  - " + "\n  - ".join(errors)

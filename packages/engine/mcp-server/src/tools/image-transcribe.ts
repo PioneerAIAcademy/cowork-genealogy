@@ -4,6 +4,7 @@ import {
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
 import { saveSourceImage } from "../utils/image-store.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -11,6 +12,69 @@ import type {
 } from "../types/image-transcribe.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+// Browse budget (issue #1081, spec §5.8). From the (N+1)th distinct image in one
+// image group in one project onward, a successful transcription carries an
+// advisory `browseBudget` — the page read still returns in full; nothing is
+// refused (a read persists nothing, so a wrong refusal would hard-block a
+// researcher mid-browse with no reset but a server restart — the ADR-0011
+// read-tool carve-out).
+const BROWSE_BUDGET_IMAGES = 20;
+
+// Distinct imageIds seen per (project, image-group), keyed
+// `${projectPath}\0${imageGroup}`. Keyed by PROJECT too, deliberately: the MCP
+// server process outlives one conversation, so a group-only key would tell a
+// second project it had already browsed 20 pages on its first read. Process-
+// lifetime, never persisted; re-reading an image already in the set does not
+// advance the count. Follows place-search.ts's module-cache precedent.
+const browseBudgetSeen = new Map<string, Set<string>>();
+
+/** Test-only reset — the Map is module-level and persists across `it()` blocks,
+ *  which `vi` mock resets do not clear. Mirrors `__clearPlaceSearchCacheForTests`. */
+export function __clearBrowseBudgetForTests(): void {
+  browseBudgetSeen.clear();
+}
+
+/**
+ * Record this image against the (project, group) browse counter and return the
+ * advisory once the group passes `BROWSE_BUDGET_IMAGES` distinct images.
+ *
+ * Returns `undefined` for an ark-only call: an ARK carries no image-group number,
+ * so a hunt driven by `ark` is never counted (spec §5.8 known limitation).
+ */
+function recordBrowseAndCheckBudget(
+  imageId: string | undefined,
+  projectPath: string | undefined
+): ImageTranscribeResult["browseBudget"] {
+  if (!imageId) return undefined;
+  const imageGroup = imageId.split("_")[0];
+  const key = `${projectPath ?? "<no-project>"}\0${imageGroup}`;
+  let seen = browseBudgetSeen.get(key);
+  if (!seen) {
+    seen = new Set<string>();
+    browseBudgetSeen.set(key, seen);
+  }
+  seen.add(imageId);
+  if (seen.size <= BROWSE_BUDGET_IMAGES) return undefined;
+  return {
+    imageGroup,
+    distinctImagesRead: seen.size,
+    notice:
+      `You have now transcribed ${seen.size} distinct images from image group ` +
+      `${imageGroup} in this project. Page-by-page browsing rarely pays past this ` +
+      `point. Log the browse with a negative outcome (research_log_append) and ` +
+      `pivot to the indexed route — record_search, record_read, or fulltext_search ` +
+      `— or ask the user whether to keep paging.`,
+  };
+}
+
+// VLM OCR on a full page scan is the slowest call this server makes, and the
+// budget has to clear a slow-but-genuine read without waiting out a hung one.
+// Across the committed e2e corpus a healthy transcription runs p90 79s / p95
+// 98s with a 167s maximum, and the image download it follows adds ~7s — so
+// 180s clears every real read with margin while still cutting the 190–316s
+// calls of the one run that hung. Sized in the spec, not guessed.
+const OCR_TIMEOUT_MS = 180_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
@@ -61,7 +125,10 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 export async function imageTranscribeTool(
   input: ImageTranscribeInput
 ): Promise<ImageTranscribeResult> {
-  const { url, label } = resolveFsImageInput(input, "image_transcribe");
+  const { url, label, fallbackUrl } = resolveFsImageInput(
+    input,
+    "image_transcribe"
+  );
 
   // Resolve credentials/config BEFORE fetching the image: a missing key
   // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
@@ -69,37 +136,44 @@ export async function imageTranscribeTool(
   const apiKey = await getOpenRouterApiKey();
   const model = await getOpenRouterModel();
 
-  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(url);
+  const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(
+    url,
+    fallbackUrl
+  );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   const prompt = buildOcrPrompt(input.lookingFor);
 
   let response: Response;
   try {
-    response = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": APP_REFERER,
-        "X-Title": APP_TITLE,
+    response = await fetchWithTimeout(
+      OPENROUTER_URL,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": APP_REFERER,
+          "X-Title": APP_TITLE,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          // Privacy: FamilySearch scans are PII — do not let the provider
+          // retain prompts for training. See spec §11.
+          provider: { data_collection: "deny" },
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+        }),
       },
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        // Privacy: FamilySearch scans are PII — do not let the provider
-        // retain prompts for training. See spec §11.
-        provider: { data_collection: "deny" },
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-      }),
-    });
+      OCR_TIMEOUT_MS
+    );
   } catch (error) {
     const cause = error instanceof Error ? error.message : String(error);
     throw new Error(`Could not reach OpenRouter. (${cause})`);
@@ -158,11 +232,17 @@ export async function imageTranscribeTool(
     }
   }
 
+  const browseBudget = recordBrowseAndCheckBudget(
+    input.imageId,
+    input.projectPath
+  );
+
   const key = input.lookingFor?.trim();
   return {
     transcription,
     ...(key ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
+    ...(browseBudget ? { browseBudget } : {}),
     metadata: {
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
@@ -195,7 +275,13 @@ export const imageTranscribeToolSchema = {
         description:
           "A FamilySearch document-image ARK when no imageId is available — " +
           "ark:/61903/3:1:... or 3:2:... (e.g. fulltext_search's `id`), a bare " +
-          "3:1:.../3:2:... id, a resolver URL for one, or a resolved distribution URL.",
+          "3:1:.../3:2:... id, a resolver URL for one, or a resolved distribution URL. " +
+          "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
+          "film/register — the bare ARK can silently resolve to the WRONG image " +
+          "within that group. If the record was reached via a FamilySearch page " +
+          "URL carrying i=/cc=/groupId= query parameters (e.g. from the browser or " +
+          "a citation), pass the FULL URL including them, not just the bare ARK — " +
+          "those parameters are preserved and select the correct image.",
       },
       lookingFor: {
         type: "string",

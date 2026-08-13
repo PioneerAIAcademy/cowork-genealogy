@@ -316,6 +316,79 @@ avoided). Pair a required `avoid` guard with a required positive
 finding that the agent *documented* the negative conclusion, so a run
 that does nothing at all does not pass by default.
 
+#### 3.4.2 Relationship findings: `matched` is derived, not trusted
+
+For a finding with `"type": "relationship"` (and `polarity` other than
+`avoid`), the judge does **not** get to state the label. It states the
+*analysis*, and the harness computes the label from it
+(`apply_component_derivation` in `e2e/judge.py`, applied inside
+`run_judge` itself so a new call site cannot forget it).
+
+The judge emits a `components` array on each finding — one entry per
+claim, each with `claim` text, a `kind` (`link` / `detail`) and a
+`status` (`supported` / `unsupported` / `contradicted`) marked from the
+final tree only. `derive_matched` then rolls up the `link` entries:
+
+| Links | `matched` |
+|---|---|
+| Any link contradicted | `false` |
+| No link supported | `false` |
+| Some supported, some unsupported | `partial` |
+| All supported | `true` |
+
+**Only `link` components score.** A relationship finding names the people
+it links and then describes them ("Born 1833 in the Gorbals; an iron
+moulder; died 1910"); that description says *which* person is meant, not
+something the agent must file, and scoring it downgraded twelve findings
+whose relationship had been recovered exactly right, measured across the
+committed corpus in the 2026-08-10 calibration sweep. The one exception is a date the finding
+puts on **the relationship itself** — most often a marriage date on a
+spouse claim. The judge prompt tags those `link` so they score: a spouse
+link recovered with no marriage date is `partial`, not full credit for a
+marriage that was never dated. A linked person's *own* birth and death
+dates stay `detail` even when the finding states them precisely; only a
+date on the claimed relationship scores. That boundary is load-bearing —
+a wording that promoted identifying dates too was measured against the
+`claude-haiku-4-5` judge every fixture pins (§3.1) and reproduced exactly
+the twelve-finding downgrade above.
+
+This exists for the same reason as the §3.4.1 avoid-guard: the judge is a
+model, and this is the step it is least reliable at. On
+`manoel-oliveira-daughter` f1 it decomposed the finding correctly every
+time — three relationship components, all unsupported — wrote "zero
+components supported, this is 'false'" in its own notes, and then emitted
+`true`/`partial` anyway. Four successively more explicit prompt wordings
+failed to bind it and the label moved non-monotonically. The
+decomposition is trustworthy; the label is not.
+
+Scope and record-keeping:
+
+- **Relationship findings only.** A `fact` finding's components are dates
+  and places rather than links, so the link tally says nothing about it;
+  deriving there manufactured eleven disagreements in the same sweep.
+  `avoid` findings are also untouched — there `matched: "true"` means
+  "correctly declined to assert", which is not a component tally, and
+  §3.4.1's guard owns them.
+- What was overridden is recorded under
+  `judge_output.component_derivation.overrides` (each with `finding_id`,
+  the model's `model` label and the `derived` one), the model's original
+  label is preserved as `matched_model` on the finding, and the finding's
+  `notes` gain a `[component-derivation]` annotation. A judge that
+  mislabels its own analysis is the defect this exists to close, so the
+  evidence of it stays in the run log rather than being silently swapped.
+- Recall fractions and the verdict are recomputed from the derived
+  labels. Unlike §3.4.1's downgrade-only recompute, this applies in
+  **both** directions: the avoid-guard is a one-way safety net, whereas
+  this is arithmetic over the judge's own analysis, so the derived
+  verdict is simply correct.
+- A finding carrying no `link` components derives to nothing and keeps
+  the model's own label. That is what lets historical run logs — written
+  before `components` existed — keep working unchanged.
+
+Historical verdicts were produced by a judge without this derivation.
+They are not invalidated, but they are **not directly comparable** to
+grades produced with it; the trend view spans that boundary.
+
 ### 3.5 `README.md`
 
 Human notes. Required content:
@@ -480,6 +553,7 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
+   | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
 
    The `caps.*` values are the harness defaults in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
@@ -487,12 +561,61 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
 
+   **`mcp_unavailable` writes no run-log files at all** — the harness prints the
+   error and exits non-zero (`2`, matching the other "this run never happened"
+   exits, not `1` = "a test failed"). None of §8's artifacts is written, no
+   `E2eResult` is constructed, and **the judge is never called**. "This run never
+   happened."
+
+   *Why this retention rule, and not the two obvious alternatives* — a settled
+   decision, 2026-08-02. Every compliance, cost and recall figure in this repo
+   is computed over `eval/runlogs/`, so what a failed run leaves behind is a
+   load-bearing decision:
+
+   - *Rejected — write the log and mark it ungradeable.* This needs
+     `check_e2e_fixtures.py`'s grading exemption widened from *treeless* to
+     *treeless-or-`mcp_unavailable`* **and** a `corpus_report.py` filter: two
+     extra sites where a miss silently skews every number in the repo. Writing
+     nothing needs neither, which is precisely why it was chosen.
+   - *Rejected — treat it like any other run.* That books an environment failure
+     as a genealogical `fail`, which is the confusion this stop reason exists to
+     end, and still pays for an opus judge call. Note the judge's own
+     `final_tree is None` guard does **not** catch this: `build_workspace` copies
+     the fixture's starting tree into the workspace, so an aborted run *has* a
+     tree.
+   - *Cost accepted:* nothing survives for forensics — no `narration`, no
+     `tool_calls`, no run log at all. Root-causing **why** a
+     server fails to start is deliberately out of scope; this reason exists to
+     make the failure legible and cheap, so that the root cause can be chased
+     against clean signal instead of a 90-minute ambiguous `fail`.
+
+   Detection targets **absence, not an error reply.** In the three runs this was
+   built from, the agent made zero `mcp__` calls out of 275 — the tools were
+   simply not in the session, so no "tool not found" was ever returned, and with
+   `ENABLE_TOOL_SEARCH` deferring the genealogy schemas the only visible symptom
+   was `ToolSearch` answering "No matching deferred tools found". Measured on the
+   same CLI: the init message advertises **0** `mcp__genealogy__*` tools even on a
+   perfectly healthy run, so a detector keyed on tool-name presence would fire on
+   every run — the server list is the only sound signal.
+
+   **`pending` is deliberately not an abort**, and that is measured rather than
+   cautious: a *healthy* server's init arrives at ~11s still reading `pending`
+   (it settles to `connected` at ~25s), while a server that died at startup has
+   already settled to `failed` by the time its init arrives. A
+   `status != "connected"` assert would therefore have aborted **every healthy
+   run**. A `pending` that never resolves, or a dead server that settles late,
+   falls through to the `ToolSearch` backstop. The check is also scoped to the
+   `genealogy` server by name: the same list carries the operator's own
+   claude.ai connectors, which routinely report `needs-auth`. Thresholds and
+   their calibration against the incident: `e2e/mcp_health.py`.
+
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
-   is already spent. All **five** `cost_cap` runs in the corpus ended with the
+   is already spent. All **nine** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
-   to **$15.86–$20.84** against a $15 cap. Two things block real enforcement, so
+   to **$15.86–$21.50** (median $17.12) against a $15 cap. Two things block real
+   enforcement, so
    it was left as-is rather than half-built: there is no per-model price table
    for agent models (`judge.py::JUDGE_PRICING` covers judge models only, and a
    run spans the parent plus each subagent on its own `.md` pin), and subagent
@@ -800,7 +923,14 @@ as an *agent* failure to act on, not a judge bug to ignore.
       "finding_id": "f1",
       "matched": "true" | "partial" | "false",
       "agent_evidence": "<which tree element supports the match>",
-      "notes": "<short rationale>"
+      "notes": "<short rationale>",
+      "components": [
+        {
+          "claim": "<the single claim this component covers>",
+          "kind": "link" | "detail",
+          "status": "supported" | "unsupported" | "contradicted"
+        }
+      ]
     }
   ],
   "recall_required": 0.75,
@@ -821,7 +951,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | Field | Description |
 |-------|-------------|
 | `per_finding[]` | One entry per `expected_findings` entry |
-| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent |
+| `matched` | `true` if recovered, `partial` if some details match but key facts diverge, `false` if absent. For a non-`avoid` `relationship` finding this is **derived** from `components`, not taken from the judge — see §3.4.2 |
+| `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
+| `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
 | `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
 | `recall_total` | Fraction across all findings |
@@ -840,6 +972,16 @@ additionally carries `avoid_guard.forced_false` (which findings the
 harness overrode, and the matching final-tree person ids), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
+
+Likewise, when §3.4.2's component derivation overrides a relationship
+finding, the persisted `judge_output` carries
+`component_derivation.overrides` (per finding: the model's label and the
+derived one), the finding keeps the model's label as `matched_model`,
+its `notes` gain a `[component-derivation]` annotation, and
+`recall_*`/`verdict` reflect the recompute — in **both** directions, not
+downgrade-only. `matched` on a non-`avoid` `relationship` finding is
+therefore a derived field: read `matched_model` to see what the judge
+itself said.
 
 ### 7.2.1 The three axes
 
@@ -955,9 +1097,23 @@ Three integrity rules make the agreement number trustworthy:
   human label is independent of the judge under test. Blindness is a property of
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
-  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
-  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
-  deferred to `/interpret-e2e-result`, which is itself blind to them.
+  must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
+  compliance axis, and — when the judge reached no conclusion at all — a
+  `no grade:` line saying which cause it was, and stops there; `verdict`,
+  `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
+  is itself blind to them.
+
+  That third line is on the harness-fact side of this rule, not an exception to
+  it. It distinguishes a judge that raised (quoting the judge's own error text)
+  from an agent that produced no final tree, from `--skip-judge`; none of those
+  is a genealogical conclusion, and the presence of an error says nothing about
+  what the agent recovered. It exists because the previous single fixed string
+  printed the same words for all three, directly beneath
+  `stop_reason: completed`, so a judge crash read as "this run succeeded and
+  produced nothing" — indistinguishable, in a batch, from runs that genuinely
+  failed. **Gradedness is a separate axis from committability**: after a judge
+  crash becomes committable, a run can be ungraded *and* worth committing for
+  re-grading, so the two are reported on their own lines.
 
   > **Caveat on annotations collected before 2026-07-31.** Until then the
   > harness printed the judge's verdict *and* its `proof_quality` score to the
@@ -975,7 +1131,12 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Grading is
+edited after grading) is a hard error: re-grade or delete it. A grade whose
+**fixture was retired** is the same hard error with the same
+remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
+split changes the researcher question and the starting tree, so the run was
+never executed against the fixture it would then be graded under — and leave
+the run log itself; the corpus readers still count it. Grading is
 **same-PR**: every committed run is graded in the PR that commits it (all
 gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
 `check-e2e-fixtures`
@@ -1040,6 +1201,19 @@ checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
 and check 1's exhaustiveness arm reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
+**Check 3 has a live pre-write sibling, and one run mode makes check 3 itself
+vacuous.** The sibling runs in `pretool_hook` and asks the stricter question —
+was the identity scored *before* the link, not anywhere in the run — recording
+into `guardrail_shadow_violations` without denying. It can be switched to a real
+deny for **one** fixture with `make e2e-run TEST=<slug>
+PERSON_EVIDENCE_GUARD=deny` (default `shadow`), which is how the recovery
+evidence its graduation needs gets gathered; it fires in roughly 80% of runs that
+link a person, so this is not a suite-wide setting. **Under `deny`, check 3
+passes vacuously**: the blocked write never lands, so there is no
+`person_evidence` entry left for it to read. `usage.person_evidence_guard`
+records the mode — read it before comparing a run's `compliance` to another's.
+Design, limits, and the loop valve: `docs/specs/guardrail-enforcement-spec.md` §4.
+
 **A fourth check runs in shadow mode only: citation-string
 nulling.** `find_citation_nulling_in_conclusions` (in
 `harness/skill_invocation.py`) reads the final `research.json` and flags a
@@ -1058,8 +1232,11 @@ the judge.
 
 Unlike the three hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
-repository's shadow → measure → graduate posture (same as §7's recency check
-and the `same_person` provenance check). The gate on a `proof_summaries` entry is
+repository's shadow → measure → graduate posture (same as the `same_person`
+provenance check). **Not** the same as §7's recency check, which shares the
+posture but not the prospects: its measure step has no instrument, so it is
+shadow permanently rather than pending — `guardrail-enforcement-spec.md` §7,
+"What the success gate can and cannot see." The gate on a `proof_summaries` entry is
 deliberate: tree citations are populated by `proof-conclusion` at *upload*
 time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
@@ -1069,13 +1246,61 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
+**A fifth check runs in shadow mode only: a conclusion relies on a resolved
+conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and, for each
+written `proof_summaries` conclusion, flags a question whose
+`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
+(positive resolution language, not merely the absence of "no conflict" wording —
+a required field that is always populated would otherwise default to firing) that
+**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
+on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
+resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
+stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
+exists at all). A resolved conflict that exists but is linked to nothing fires
+only when the stop-criterion names a `c_` id that is not resolved; when it names
+no id, an existing resolved entry silences the check. So read the count as **"no
+resolved conflict backs this conclusion"** — every firing on the committed corpus
+today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
+viewer's Conflicts section stayed blank because nothing structured was persisted.
+Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "conflict_unpersisted"` for their own bucket
+(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
+structured field, so it ships shadow-first; **promotion to a hard check — or to a
+`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
+written — is gated on reading the fire rate across the corpus first**, not decided
+here.
+
+**A sixth check runs in shadow mode only: the warnings guardrail was never
+consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
+`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
+relationships do not count) for which `person_warnings` — the cheapest, LLM-free
+guardrail — was never successfully called. It keys on the `person_warnings`
+**tool** across all server spellings, not the `check-warnings` skill, so it
+catches a direct-tool path and a skill that launches but fails before reaching the
+tool. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "warnings_unchecked"` for its own bucket
+(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
+diverged only on whether the parentage write was delegated to `proof-conclusion`
+(which carries the check-warnings step) or inlined by the orchestrator (which does
+not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
+check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
+an inlined write is still gated — is gated on reading this fire rate across the
+corpus first**; not decided here.
+
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
 `not_checked` rather than `pass`, distinguishing pre-detector code by the
 presence of the `guardrail_shadow_violations` key (the two shipped in the same
-commit). Retroactively scoring the corpus is tracked as issue #913, and needs
-the checks replayed at a pinned version to be meaningful.
+commit). **Retroactively scoring the corpus is not currently possible in a way
+worth trusting**, and `not_checked` is the honest label rather than a placeholder
+for work in progress: a replay only means something if the checks are pinned to
+the version each run actually executed, and nothing records that version per run.
+Recording it is the prerequisite for any corpus-wide compliance number.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
@@ -1111,15 +1336,16 @@ until this bump lands, so a run made in it would.
 key at all, at `3` exactly as at `2`.
 
 **Measured blast radius, so nobody over-corrects for this.** Replaying the
-committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
-result, across 66 of the 555 runs — but **none is a `same_person`,
+committed corpus at the time this was taken: 164 of 23,056 `tool_calls` entries
+carry an error-shaped result, across 66 of the 145 runs — but **none is a `same_person`,
 `research_append`, or `extraction_append`**. They are `record_search` (68),
 `external_links_search` (24), `fulltext_search` (20), `Glob`, `Grep`, `Bash` —
 tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
-is a correctness statement, not a warning of a large shift: the numbers issues
-#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
+is a correctness statement, not a warning of a large shift: every shadow-window
+and provenance number on this page moves by ~1 entry across the whole corpus.
+`is_error` is also
 blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
 a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
 is why the shift is this small.
@@ -1127,8 +1353,9 @@ is why the shift is this small.
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
 that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
-calibration itself is #911's.
+visible) or the corpus accumulates errored `same_person`/`Skill` calls. Window
+calibration is not a pending task at all — see
+`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
@@ -1173,6 +1400,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `effort_level` | Pinned via a project setting; default `high`. |
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
+| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
@@ -1180,7 +1408,9 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 
 Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
-alone.
+alone. `person_evidence_guard` is a sixth self-describing field but not a
+reasoning knob — it records an enforcement posture, and is the one field here
+that changes what a *verdict* means rather than what produced it.
 
 #### 8.1.1 `tool_calls[]` — the joined keys
 
@@ -1194,6 +1424,16 @@ A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
 is the parallel structured record, not the only one — which is why an
 `is_error: true` entry is not automatically an upstream failure (§15).
+
+**One denial is deliberately absent from both `blocked_*` lists.** The
+`person_evidence_guard: "deny"` denial records only into
+`guardrail_shadow_violations`, tagged `kind: "person_evidence_deny"`. Neither
+list's meaning fits it — `blocked_tree_reads` is the answer-integrity block
+(§6.1) and `blocked_context_calls` is the per-context tool policy — and its own
+list is where the fire-rate measurement is read from, so a second copy would
+have to be excluded from every count anyway. A reader looking for it should
+filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
+lists.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
@@ -1260,7 +1500,11 @@ is committed. An `ungraded` run (the judge raised an exception — the tree exis
 but was never graded) is also committed because the tree can be re-graded later.
 Only a `skipped` run (the judge never ran — no tree to grade) is written with a
 `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of version control.
-Fixture *validity* is a separate axis
+**A fourth category exists: a run that stops `mcp_unavailable` writes none of
+the files above** — not even a `scratch_` one — because the genealogy tools
+were absent and nothing it produced describes the fixture or the records (see
+the retention rule under §6's `stop_reason` table). Fixture *validity* is a
+separate axis
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
@@ -1504,7 +1748,10 @@ changing anything, because the fix differs completely by cause.
    reasoning in order. Each narration entry is
    `{tool_calls_before, kind, text}` with `kind` one of `assistant` (the
    agent's own prose), `blocked` (a denied tool), or `harness` (a
-   continue-nudge). `tool_calls_before` is how many tool calls had already
+   continue-nudge, or a harness-side status note — every run carries one at
+   `tool_calls_before: 0` recording whether the genealogy MCP surface was
+   present at session start; see §6's `mcp_unavailable` row).
+   `tool_calls_before` is how many tool calls had already
    happened — N means the entry sits between `tool_calls[N-1]` and
    `tool_calls[N]`, 0 means before any tool call — so the two replay as one
    trace. Most failures are obvious here: it stopped, looped, or made the

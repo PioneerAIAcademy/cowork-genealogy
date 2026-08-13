@@ -3,15 +3,17 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Heinrich (Henry) Dewus died on or about 28 August 1936 in Milwaukee, Wisconsin. The tree already carries an undated Death fact; the agent should recover the date (and place) of death.",
+      "description": "Heinrich (Henry) Dewus died on or about 23 August 1936 in Milwaukee, Wisconsin. The tree already carries an undated Death fact; the agent should recover the date (and place) of death. The hint obituary is stamped 28 August 1936, but that is the print date — a separate death notice and a memorial the family published exactly one year later both establish the actual death as 23 August 1936.",
       "details": {
         "subject_person": "Heinrich Dewus (9VX4-1C3)",
         "fact_type": "Death",
-        "date": "on or about 28 August 1936",
+        "date": "on or about 23 August 1936",
         "place": "Milwaukee, Wisconsin, United States"
       },
       "supporting_sources": [
-        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — obituary of 28 Aug 1936, Milwaukee (6906 W. Lloyd St.), jointly indexed under Henry Dewus and Henry Downs"
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — obituary printed 28 Aug 1936, Milwaukee (6906 W. Lloyd St.), jointly indexed under Henry Dewus and Henry Downs (ark:/61903/1:1:Q5SZ-SH29)",
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 'Henry Dewus' persona indexes Death 23 Aug 1936 with obituary 28 Aug 1936, Milwaukee (ark:/61903/1:1:Q5SZ-J9LG)",
+        "A separate death notice and a memorial the family published exactly one year later both give the actual date of death as 23 Aug 1936 (the obituary's 28 Aug 1936 is the print date)"
       ],
       "required": true
     },
@@ -28,7 +30,7 @@
         }
       },
       "supporting_sources": [
-        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names sons Walter and Henry C. (the tree's Heinrich Charles) among the surviving children"
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names sons Walter and Henry C. (the tree's Heinrich Charles) among the surviving children (ark:/61903/1:1:Q5SZ-SH23; joint entry ark:/61903/1:1:Q5SZ-SH29)"
       ],
       "required": true
     },
@@ -45,7 +47,7 @@
         }
       },
       "supporting_sources": [
-        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Ida Dewes among the surviving daughters"
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Ida Dewes among the surviving daughters (ark:/61903/1:1:Q5SZ-SH27; joint entry ark:/61903/1:1:Q5SZ-SH29)"
       ],
       "required": true
     },
@@ -62,7 +64,7 @@
         }
       },
       "supporting_sources": [
-        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Eleanor Downs of Chicago among the surviving daughters"
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Eleanor Downs of Chicago among the surviving daughters (ark:/61903/1:1:Q5SZ-SH2H; joint entry ark:/61903/1:1:Q5SZ-SH29)"
       ],
       "required": false
     }

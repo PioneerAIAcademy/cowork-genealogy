@@ -809,7 +809,7 @@ Consequences for the plan:
 
 Anything deferred out of an implementing PR gets a GitHub issue filed in that
 same PR (`gh issue create --label developer|genealogist` — see `CLAUDE.md`
-§ "Deferring work creates an issue").
+§ "Work you find along the way").
 
 ## 7. Refuted in review — do not re-derive
 

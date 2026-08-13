@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Wrong candidate (John A Morgan, b. 1873, PID 9NJ7-Z6L) is absent from the final tree — no person, no stub, no ParentChild relationship. Agent correctly declined it, but by inaction: the genealogy MCP server never connected, so the agent never touched the tree; the fixture's pre-existing five-child state was left intact.",
+    "f2": "Tree structure is coincidentally correct (five children, no sixth), but the finding requires a DOCUMENTED negative conclusion. final-research.json has empty proof_summaries[], questions[], log[], and assertions[]; project.status is still 'active'. No reasoning was recorded because the MCP server never came online. Not recovered."
+  },
+  "annotator": "developer"
+}

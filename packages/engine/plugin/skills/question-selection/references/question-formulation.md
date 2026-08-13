@@ -11,9 +11,11 @@ These are distinct concepts that must not be conflated:
   It describes what you ultimately want to know (e.g., "Identify the
   parents of John Smith born circa 1820 in Greene County, Ohio").
 - **Research question**: A smaller, focused question nested within
-  the objective. It targets a single discoverable fact that
-  contributes toward the objective (e.g., "What does John Smith's
-  1870 death certificate say about his parents?").
+  the objective. It names a single discoverable fact that
+  contributes toward the objective (e.g., "Who was the mother of
+  John Smith, born circa 1820 in Greene County, Ohio?"). Name the
+  fact sought, not the record that might carry it — which records to
+  search is the research plan's decision.
 
 A single objective typically decomposes into multiple research
 questions. Each question drives its own research plan, search log,
@@ -102,20 +104,26 @@ should verify that premise.
 | Multiple unknowns | "Find parents and birthplace of John" | Split into two questions |
 | Assumes facts not in evidence | "Find John's second wife's maiden name" (no evidence of a second wife) | First establish the second marriage |
 | Untestable | "Trace the family back as far as possible" | Define a specific endpoint |
+| Record-first framing | "What does Reuben's 1900 census entry say about his parents?" | Name the fact: "Who were Reuben's parents?" — the census belongs in the plan |
+| Outside the objective | "When did Reuben's wife emigrate?" (objective is Reuben's parents) | Her facts are a different objective, not a sub-question of this one |
 | Built on unverified claim | "Find birth record for 1815" (1815 comes from an unsourced tree) | First verify the approximate birth year |
 
 ## Decomposing an Objective into Questions
 
-When breaking an objective into sub-questions, consider:
+A single-fact objective does not decompose — it *is* the first
+question, restated with identifying detail. Split only when the
+objective holds more than one independent fact.
 
-1. What vital records (birth, marriage, death) might name the
-   person or their relatives?
-2. What census records span the person's lifetime?
-3. What church, land, probate, or military records exist for the
-   jurisdiction and period?
-4. Which questions are "gatekeeper" questions — ones that must be
+When it does, consider:
+
+1. Which single unknown facts — a name, a relationship, a date, a
+   place — would together establish the objective?
+2. Could each plausibly have been recorded for this jurisdiction and
+   period? (Feasibility only. Which records to search belongs to the
+   research plan, and must not appear in the question.)
+3. Which questions are "gatekeeper" questions — ones that must be
    answered before others can be meaningfully pursued?
-5. Which questions, if answered, would unblock the most downstream
+4. Which questions, if answered, would unblock the most downstream
    questions?
 
 Order questions by priority: gatekeeper questions first, then

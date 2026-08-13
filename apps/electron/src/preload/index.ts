@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('api', {
     email: string
     userPrompt: string
     agentDid: string
+    workedAsExpected: boolean
     agentShouldHave: string
     correctAnswer?: string
     notes?: string
