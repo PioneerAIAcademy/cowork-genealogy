@@ -51,14 +51,16 @@
         "url": "https://www.familysearch.org/search/collection/1804987"
       },
       {
-        "id": "3693000",
-        "title": "United States Census, 1850-1880 (Kentucky)",
-        "dateRange": "1850-1880",
-        "recordCount": 6231540,
-        "personCount": 6231540,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/3693000"
+        "id": "1401638",
+        "title": "United States, Census, 1850",
+        "dateRange": "1850-1850",
+        "recordCount": 20224571,
+        "personCount": 22673969,
+        "imageCount": 489683,
+        "url": "https://www.familysearch.org/search/collection/1401638"
       }
     ]
   }
 }
+
+
