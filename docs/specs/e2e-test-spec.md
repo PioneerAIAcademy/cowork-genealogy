@@ -1242,8 +1242,9 @@ is a correctness statement, not a warning of a large shift: measured movement is
 version.** With the delta measured at ~1 entry, a v-split would add a column
 that always reads zero. Revisit only if writer-tool failures that return (but
 don't throw) become visible in `is_error`, or the corpus accumulates errored
-`same_person`/`Skill` calls; the shadow-mode recency window calibration is the
-prerequisite.
+`same_person`/`Skill` calls. Window calibration is not a pending task at all —
+see `guardrail-enforcement-spec.md` §7, "What the success gate can and cannot
+see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
