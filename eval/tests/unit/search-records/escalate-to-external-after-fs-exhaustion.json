@@ -27,7 +27,8 @@
     "record-search-patrick-flyn-no-results",
     "record-search-variant-any-givenname-flynn-no-results",
     "record-search-variant-father-name-no-results",
-    "record-search-flynn-any-variant-no-results"
+    "record-search-flynn-any-variant-no-results",
+    "record-search-patrick-anysurname-no-results"
   ],
   "execution": {
     "max_turns": 35,
