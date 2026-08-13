@@ -448,8 +448,14 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
       case "facts-after":
       case "facts-between": {
         // personId is OPTIONAL here — omitted means tree-wide, the variant
-        // #1574 asks for alongside the person-scoped form.
-        const pid = entry.personId ? requirePerson(tree, entry.personId, kind) : undefined;
+        // #1574 asks for alongside the person-scoped form. `!== undefined`,
+        // not a truthy check: an explicitly-passed personId: "" must still
+        // reach requirePerson's own "requires personId" error, the same as
+        // every mandatory-personId selector already gives it — not silently
+        // read as "omitted" and fall through to a full tree-wide sweep on
+        // what is otherwise a destructive tool (found by review).
+        const pid =
+          entry.personId !== undefined ? requirePerson(tree, entry.personId, kind) : undefined;
 
         let matches: (earliest: number, latest: number) => boolean;
         let label: string;
@@ -517,9 +523,12 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
       case "fact": {
         if (!entry.factId) throw new TreeForgetError("'fact' requires factId");
         const factId = entry.factId;
-        if (entry.personId) {
+        if (entry.personId !== undefined) {
           // Caller named the owner explicitly — the only way to disambiguate
           // a factId FamilySearch handed to more than one person (#1574).
+          // `!== undefined`, not a truthy check: personId: "" must still
+          // reach requirePerson's error rather than silently falling through
+          // to the ambiguous-owner path below (found by review).
           const pid = requirePerson(tree, entry.personId, kind);
           if (!personOwnsFact(tree, pid, factId)) {
             throw new TreeForgetError(

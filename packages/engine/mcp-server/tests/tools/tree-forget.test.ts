@@ -1035,4 +1035,22 @@ describe("tree_forget", () => {
     expect(wet.removed).toEqual(dry.removed);
     expect(wet.validation.warnings).toEqual(dry.validation.warnings);
   });
+
+  // ─── personId: "" must error, never silently mean "omitted" ───────────────
+  // A destructive tool where an empty personId falls through to "no owner
+  // given" would turn a plausible caller bug (an empty string from bad
+  // templating) into a much bigger, silent deletion than requested.
+
+  it.each([
+    ["facts-before", { selector: "facts-before", personId: "", year: 1850 }],
+    ["facts-after", { selector: "facts-after", personId: "", year: 1850 }],
+    ["facts-between", { selector: "facts-between", personId: "", fromYear: 1840, toYear: 1860 }],
+    ["fact", { selector: "fact", personId: "", factId: "DF1" }],
+  ] as const)("%s treats personId: \"\" as an error, not as omitted", async (_label, selector) => {
+    await writeProject(datedFixture());
+    const r = await treeForget({ projectPath: dir, forget: [selector as any] });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/requires personId/);
+  });
 });
