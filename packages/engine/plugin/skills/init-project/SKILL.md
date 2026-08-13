@@ -209,8 +209,12 @@ here, only the framing changes.
 - **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings
 - Known holdings recorded (if any) and what each contributes
-- What's missing (informs first research question)
-- Suggest next step: "Would you like me to select the first research question?"
+- What's missing (informs first research question) — gaps on people the
+  objective does not cover are context only, not proposed research.
+- Suggest the next step as a plain-language offer, defining "objective" and
+  "research question" on first use — never "use question-selection to…":
+  "Your objective is the overall goal — <restate it>. The next step is the
+  first research question: the single fact we go after first. Shall I?"
 
 ## Example
 
@@ -221,7 +225,9 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
 4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
 5. Write `research.json` with project section, profile, holdings, empty arrays.
-6. Pedigree analysis + summary. Suggest first research question.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — their gaps are noted, not queued. Offer the first research question
+   in plain language.
 
 ## Important rules
 

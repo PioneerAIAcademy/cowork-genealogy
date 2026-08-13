@@ -24,6 +24,7 @@ export interface AppAPI {
     email: string
     userPrompt: string
     agentDid: string
+    workedAsExpected: boolean
     agentShouldHave: string
     correctAnswer?: string
     notes?: string
