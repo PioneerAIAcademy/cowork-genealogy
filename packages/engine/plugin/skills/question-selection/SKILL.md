@@ -166,8 +166,7 @@ place they are working from.** Then frame the first question as a **test of the
 disputed assignment** — e.g. "Do independent records confirm or refute that X
 and Y are the parents of Z?" — never treating the questioned tree as evidence
 for its own conclusion (issue #1471). Under `--autonomous` (no user to answer),
-do **not** block: skip the ask and go straight to the verification-framed
-question.
+skip the ask and go straight to the verification-framed question.
 
 ## 4. Write the question
 

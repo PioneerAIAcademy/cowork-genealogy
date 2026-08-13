@@ -6,7 +6,7 @@ in the tree. Anton Vogt (`I1`) has two parents currently attached — Johann Vog
 (`quality: 1`, unverified compiled data). The objective states the attached
 parents are believed incorrect.
 
-Synthetic (no PII). Used by `ut_question_selection_013`, the regression for
+Synthetic (no PII). Used by `ut_question_selection_014`, the regression for
 issue #1471: when the objective disputes the existing parents, the first
 research question must **test** that assignment (confirm-or-refute against
 independent records), never confirm the tree it came from.

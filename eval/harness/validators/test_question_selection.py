@@ -360,8 +360,12 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
 # question as a TEST of that assignment (confirm-or-refute against independent
 # records), never a bare "identify the parents" that implicitly accepts the
 # attached ones, and never a confirmation of the tree under investigation.
+# Bare "confirm"/"verify" are deliberately excluded: "Confirm that Johann and
+# Maria are the parents" is the exact confirm-the-tree failure #1471 targets, so
+# it must NOT pass. A correctly framed "confirm or refute against independent
+# records" question still matches on "refute"/"independent".
 _VERIFY_SIGNALS = (
-    "verify", "confirm", "refute", "independent", "whether",
+    "refute", "independent", "whether",
     "test ", "re-examine", "reexamine", "disprove", "rule out",
 )
 
