@@ -1365,28 +1365,53 @@ lead you to them:**
 Much of this system has no automated guard, and several of those gaps fail
 *silently* in production while CI stays green.
 
-| Gap | Consequence |
-|---|---|
-| **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) |
-| **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. |
-| **Nothing checks that a new `research.json` field is *written*** (site 8 in §6), and only partly that it is *taught* (site 6). Rendering (site 7) is guarded by `field-render-drift.test.ts`; `research-append-examples.test.ts` covers site 6 for schema-`required` fields only. | An optional field can be legal and rendered while no worked example teaches its shape and no skill emits it. |
-| **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. |
-| **Nothing enforces that a negative routing pair is pinned from *both* directions.** `check_negative_reciprocity.py` reports one-directional edges but never blocks, by design — 45 of the corpus's 79 routing edges have no reciprocal. | A description edit can fix routing `A → B` and break `B → A` with the suite green. The warnings land in the step log and compete for GitHub's per-step annotation-rendering cap (10 at time of writing) against the sibling lints' 73 and 68, so the edge a PR *adds* is not distinguishable from the standing backlog. |
-| **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. |
-| **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. |
-| **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. |
-| **The `places-guidance.md` exemption is existence-only.** | A regression inside `research-plan`'s copy passes silently. |
-| **Nothing blocks prompt-body growth.** `prompt-budget.test.ts` reports the per-file byte delta on every `SKILL.md` and agent body and always passes; the deltas live only in each PR's `vitest` job log, so there is no history to set a ceiling from. | A PR can add 7 KB to the largest prompt in the repo with CI green, which is how `search-records/SKILL.md` reached 54 KB unnoticed. |
-| **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. |
-| **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" |
-| **The compliance detectors are uncalibrated, and no violation *rate* is currently measurable.** Two unnamed false-positive classes, plus a false-negative blind spot: before the three-axis split the violations field was written only when non-empty, so "ran clean" and "did not emit" are indistinguishable and **no post-detector run resolves `pass`** — every one is `fail` or `not_checked`. Separately, `is_error` is populated, but it only observes *tool-level* failure: a `Skill` result is a launch acknowledgement (`Launching skill: <name>`), so "invoke the skill, let it fail, finish the write inline" still reads as a success, and a writer tool that returns `{ok:false}` without throwing does too. | **Do not quote a violation rate**, and do not graduate a gate on one. Run `make e2e-corpus [SINCE=…]`, which reports what is countable and refuses a percentage whose denominator would be doing the work. Counts are also concentrated — read the report's `concentration:` block before quoting any total. |
-| **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. |
-| **No automated check exercises the absent-MCP-surface halt condition.** The halt itself now exists — an e2e run aborts `mcp_unavailable` when the CLI's init message reports the genealogy server unavailable, or when the mid-run `ToolSearch` backstop fires (`eval/harness/e2e/mcp_health.py`). But `make harness-test` covers only its **pure** functions; no job spawns a session, so a break in either `orchestrator.py` call site would stay green. | The live arm is proved by hand with `run_e2e --mcp-server-entry <dead stub>`, and preflight's spawn by `make e2e-preflight`. Neither runs in CI. Was: three runs made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget — raw writes closed once the raw-write lockdown hook shipped, and the silent failure is closed by the halt described here. |
-| **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. |
-| **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. |
-| **Nothing proves the production boot refusal is reachable or legible.** `test_prod_preflight.py` asserts `assert_production_config` and its lifespan wiring offline; no check runs against a real `fly deploy`. | A gate that never fires, or fires with an unreadable message, looks identical to a correctly configured deploy. |
-| **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. |
-| **A shared-fixture edit that leaves a skill's run log stale still exits 0 green.** `check_runlogs.py`'s fixture arm now maps the fixture to its referencing skills, but only **warns** — no blocking check catches it. | The staleness is surfaced as a warning, not caught as a failure, so a green run can still ship a stale run log. |
+**The enumeration is the board's job, not this file's.** A table of them lived
+here and could not be kept honest: a `Tracking` column was deleted 2026-08-05
+because it was edited every time an issue closed, and the rows themselves went
+the same way — one described a lint as existence-only for weeks after it was
+hash-pinned. The register is the `nothing-checks` label — every gap this table
+held carries it, and an issue leaves the register by closing rather than by
+someone remembering to delete a row:
+
+```sh
+gh issue list --state open --label nothing-checks                       # the whole register
+gh issue list --state open --label nothing-checks --search "<mechanism>"  # just yours
+```
+
+**A new gap is a labelled issue, not a row here.** File it
+(`CLAUDE.md` § "Work you find along the way") with `--label nothing-checks`.
+Do not search for the phrase instead of the label: issue titles name the
+mechanism, not the shape, so a text search finds about half of them and returns
+confident near-misses for the rest.
+
+Three of these gaps are **architecture rather than backlog**, because each one
+changes how a correct change is made:
+
+1. **Spelling is not binding.** Nothing proves a declared agent tool actually
+   *binds* at runtime — every lint stops at the name, and the SDK handshake
+   exposes only name/description/model. `make agent-smoke` reads what the runtime
+   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
+   says nothing about whether an agent can call what you granted it; only a live
+   session in the run mode you care about does (§5.2, §8).
+2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
+   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
+   both guards over it are advisory. Production can run weeks-old skills, agents,
+   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
+   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+3. **Every measurement in this repo describes the eval corpus, not production.**
+   There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
+   logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
+   ledger. Every compliance rate, cost figure, and guardrail measurement here is
+   computed over `eval/runlogs/`, so none of them answers "is this getting better
+   for a real user?" **Do not quote a violation rate** and do not graduate a gate
+   on one. The detectors are uncalibrated, and one of their two blind spots is now
+   measured as **unclosable rather than merely unclosed**: nothing available to the
+   harness observes skill *completion*, so the caller-attributed recency check is
+   shadow-only permanently, not pending calibration — do not plan a calibration
+   pass for it (`make e2e-skill-episodes`; `guardrail-enforcement-spec.md`, "What
+   the success gate can and cannot see"). `make e2e-corpus` deliberately reports
+   counts, refusing a percentage whose denominator would be doing the work. Read
+   its `concentration:` block before quoting even a count.
 
 ### If you're asked to…
 
