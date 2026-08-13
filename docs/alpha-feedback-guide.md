@@ -131,14 +131,15 @@ known to be wrong — it's unproven.** That box is for when the agent reached a
 reasoning, so the third box carries the whole report.
 
 If Marta is on the **hosted app**, she clicks **Send Feedback** in the same
-session, and this note is one of four boxes in that form — the zip is
+session, and this note fills that form's text boxes — she answers **No** to
+"Did it work as expected?", which is what reveals the last two — and the zip is
 assembled and sent for her.
 
 If Marta is on **Cowork**, she clicks **Send Feedback** in the **Research
 Viewer**, open on the same project folder — Cowork itself has no feedback UI,
 which is why the Viewer runs alongside it (see
 [`alpha-user-guide-cowork.md`](alpha-user-guide-cowork.md#sending-feedback)).
-The same four boxes, the same submission path, the same zip shape land in the
+The same boxes, the same submission path, the same zip shape land in the
 Drive folder either way, which is why Step 2 onward doesn't need to know
 which surface she used.
 
@@ -300,6 +301,10 @@ That reads the case folder's current `research.json`, `tree.gedcomx.json` and
 Not every report is a skill problem. Using the `results/` files — the real tool
 responses — check:
 
+- Does `_feedback/feedback.json` say `"worked_as_expected": true` (in FEEDBACK.md,
+  **Worked as expected: Yes**)? → **nothing went wrong.** It's a positive report.
+  Note anything useful from it on the issue, close the issue, and stop — there is
+  no fix to make and no test to mine. ✅
 - Did `record_search` **return** the second Robert Schuster, and the skill
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
@@ -576,9 +581,13 @@ You're not in a directory set up by `setup-feedback-case.sh`. Run the setup
 script first, then `cd` into the resulting directory.
 
 **`/compare-state` says feedback.json has empty `<field>`.**
-The user's submission was missing a required field. Ask them to resubmit — that
-field is required by the submission format
-(`apps/electron/docs/feedback-json-spec.md`).
+For `user_prompt` or `agent_did`, the submission really is missing a required
+field — ask them to resubmit (those are required by the submission format,
+`apps/electron/docs/feedback-json-spec.md`). But an empty **`agent_should_have`**
+is legitimate, not a broken submission: `worked_as_expected: true` is a positive
+report (nothing went wrong), and even on a bug the reporter may not have known the
+ideal behavior. Don't ask them to resubmit — read `worked_as_expected` to tell a
+clean report from a problem.
 
 **`/mine-unit-test` can't identify the failing skill.**
 Run it as `/mine-unit-test --skill <name>` and pick the skill you edited.

@@ -3,22 +3,23 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Concepción Alegre was born 1917 in Altos, Cordillera, Paraguay. The tree currently records no birth fact for her.",
+      "description": "Concepción Alegre was born about 1917 in Altos, Cordillera, Paraguay. The tree currently records no birth fact for her. The 1940 parish marriage act states her age as 23 ('soltera de veinte y tres años'), so the year is age-derived rather than stated; anything in the 1916-1917 range is a match.",
       "details": {
         "subject_person": "Concepción Alegre (G384-ZCZ)",
         "fact_type": "Birth",
-        "date": "1917",
+        "date": "about 1917",
         "place": "Altos, Cordillera, Paraguay"
       },
       "supporting_sources": [
-        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera (ark:/61903/1:1:X9PK-5YNN)",
+        "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C)"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Concepción Alegre married Vicente Figueredo on 11 May 1940 in San Lorenzo, Altos, Cordillera. The tree currently records this couple with no marriage date.",
+      "description": "Concepción Alegre married Vicente Figueredo on 11 May 1940 in San Lorenzo, Altos, Cordillera, Paraguay. The tree currently records this couple with no marriage date. The parish act also legitimised a one-year-old son, Marcelino, at the ceremony, which accounts for the couple's children born before this date.",
       "details": {
         "subject_person": "Concepción Alegre (G384-ZCZ)",
         "fact_type": "Marriage",
@@ -26,41 +27,80 @@
         "place": "San Lorenzo, Altos, Cordillera, Paraguay"
       },
       "supporting_sources": [
-        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera (ark:/61903/1:1:X9PK-5YNN)",
+        "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C)"
       ],
       "required": true
     },
     {
       "id": "f3",
       "type": "relationship",
-      "description": "Concepción Alegre's father was Juan Delgado, per the same marriage record.",
+      "description": "Concepción Alegre's father was Venancio Alegre. The 1940 parish marriage act names her 'hija legítima de Venancio Alegre y de la Paz Resquín'. FamilySearch's index of this same act does NOT carry this name — it records the witnesses in the parents' place instead (see f5) — so the father is not recoverable from the indexed entry. He is not recoverable from a machine transcription of the register page either: image_transcribe on ark:/61903/3:1:33SQ-GRG8-9G8C drops him exactly as FamilySearch's own AI transcription does, rendering the clause as 'e hija legítima, y de la Paz Berguin' (measured 2026-08-12, issue #875). The name is legible only to a human eye on the image, so this finding is bonus credit rather than a gate — see required: false.",
       "details": {
         "subject_person": "Concepción Alegre (G384-ZCZ)",
         "relation": "parent",
         "target_person": {
-          "name": "Juan Delgado",
-          "birth": "unknown, likely Paraguay"
+          "name": "Venancio Alegre",
+          "birth": "unknown, of the San Lorenzo de Altos parish, Cordillera, Paraguay"
         }
       },
       "supporting_sources": [
-        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+        "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C) — names the bride as legitimate daughter of Venancio Alegre and de la Paz Resquín",
+        "Corroborating marriages in the same register naming Venancio Alegre and María De la Paz Resquín as parents of children surnamed Alegre: Benicio Alegre (1929), Tomasa Alegre (1934), Mónica Alegre (1936)"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f4",
       "type": "relationship",
-      "description": "Concepción Alegre's mother was Hipólita Martínez, per the same marriage record.",
+      "description": "Concepción Alegre's mother was María de la Paz Resquín, named in the 1940 parish marriage act as 'de la Paz Resquín'. As with the father, FamilySearch's index of this act records a witness in the mother's place instead (see f5), so she is recoverable only from the register page.",
       "details": {
         "subject_person": "Concepción Alegre (G384-ZCZ)",
         "relation": "parent",
         "target_person": {
-          "name": "Hipólita Martínez",
-          "birth": "unknown, likely Paraguay"
+          "name": "María de la Paz Resquín",
+          "birth": "unknown, of the San Lorenzo de Altos parish, Cordillera, Paraguay"
         }
       },
       "supporting_sources": [
-        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+        "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C)",
+        "Corroborating marriages in the same register naming Venancio Alegre and María De la Paz Resquín as parents of children surnamed Alegre: Benicio Alegre (1929), Tomasa Alegre (1934), Mónica Alegre (1936)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Concepción Alegre's parents were Juan Delgado and Hipólita Martínez. FamilySearch's index of the 1940 marriage record lists that couple in the bride's parent fields, and its record hint for G384-ZCZ propagates the error — but the register page shows they are the marriage WITNESSES ('siendo testigos Juan Delgado y su esposa Hipólita Martínez'), a married couple standing for the bride and groom. The naming evidence points the same way: Concepción is recorded under the surname Alegre, and two of her children appear in the tree as 'Figueredo Alegre', so her paternal surname is Alegre and cannot be Delgado. Pass = the final tree contains no parent relationship from Concepción to a Juan Delgado or a Hipólita Martínez, and no stub persons representing them as her parents (or they appear only as an explicitly rejected hypothesis, or correctly as witnesses).",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "relation": "parent",
+        "wrong_candidate": {
+          "name": "Juan Delgado and Hipólita Martínez, the married couple who witnessed the 11 May 1940 marriage",
+          "note": "indexed into the bride's parent fields in error; the register page names them as testigos, and names her actual parents as Venancio Alegre and de la Paz Resquín"
+        }
+      },
+      "supporting_sources": [
+        "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C) — the disproving record, naming Juan Delgado and Hipólita Martínez as witnesses",
+        "Paraguay, Catholic Church Records, 1754-2015 — the indexed entry carrying the error (ark:/61903/1:1:X9PK-5YNN)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f6",
+      "type": "fact",
+      "description": "The agent should document that the indexed parent names attached to this record are unreliable, and say what it did about it: that Juan Delgado and Hipólita Martínez are witnesses rather than parents, and that the parentage conclusion rests on the register page rather than on the index. A run that recovers the correct parents without ever noting the conflict with the index it was hinted from has not resolved the conflict, it has stepped around it.",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented rejection of the indexed parent names in favour of the register page",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Conflict between the indexed parent fields and the register text of one and the same act, resolved in favour of the register"
       ],
       "required": true
     }

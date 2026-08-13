@@ -93,6 +93,26 @@ reasoning behind it.** Correctness and Completeness must not re-grade the verdic
 band — they grade whether required actions happened and whether stated facts are
 true.
 
+**Do not split the difference.** The failure this guards against is not disagreeing
+with the ownership rule; it is agreeing with it and then deducting anyway. A judge
+that writes "Result triage owns the verdict" and then scores Correctness 2 for the
+same weak verdict has re-graded it. Partial is a deduction. If the only fault is one
+this dimension already owns, Correctness and Completeness have nothing to deduct for
+and the score is 3 — not 2, not 1. Say what you think of the verdict in Result
+triage's rationale, at whatever band it deserves; that is the one place it counts.
+
+**Nil escalation owns the nil-handling verdict on the same terms.** When a search
+returns nothing, how thoroughly the skill worked the levers is Nil escalation's call
+alone. Correctness and Completeness do not restate it.
+
+Two facts worth keeping in view while grading these. Across this skill's whole
+annotated history, Correctness and Completeness are 3 in every corrected grading but
+one, so a 1 or 2 on either is an unusual claim and needs a concrete artifact behind
+it — a wrong persisted value, a false statement, a required action never taken.
+And `orchestrator._compute_outcome` fails a test outright the moment any dimension
+scores 1, so a base-dimension 1 that duplicates a rubric dimension's finding does not
+merely double-count: it converts the run's recorded outcome.
+
 **No numeric threshold is graded.** Match-score bands genuinely overlap: on live
 data a confirmed record scored 0.632 while a *different* same-name man scored
 0.716, and two dateless obituary stubs differing only by a middle initial scored

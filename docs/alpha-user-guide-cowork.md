@@ -248,16 +248,19 @@ would for any project folder.
 
 1. **What you asked the agent to do.**
 2. **What the agent did.** What actually happened.
-3. **What it should have done.** This is the one that turns a complaint into a
-   fix.
-4. **If it reached a wrong conclusion: the correct answer and its evidence.**
-   Optional, and only relevant when the *answer* was wrong rather than the
-   method. Fill it in and we can build a test from your case without coming
-   back to ask you. Leave it blank when the problem was how it worked, not
-   what it concluded.
+3. **Did it work as expected? Yes or No.** Required. Answer **Yes** and you're
+   done — a report about something that went well is worth sending, and there is
+   nothing more to fill in.
+4. **What it should have done.** Appears when you answer **No**, and it's
+   optional — leave it blank if you aren't sure what the right behavior was.
+5. **If it reached a wrong conclusion: the correct answer and its evidence.**
+   Also only on **No**, and also optional. Only relevant when the *answer* was
+   wrong rather than the method. Fill it in and we can build a test from your
+   case without coming back to ask you. Leave it blank when the problem was how
+   it worked, not what it concluded.
 
 There's also your email, and a free-text **Notes** box for anything that
-doesn't fit the four.
+doesn't fit the boxes above.
 
 **Send feedback while it's fresh**, right after it happened, from the Viewer
 open on that same project folder — the bundle captures that folder's current
@@ -311,6 +314,7 @@ Being straight with you, so you don't waste time:
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
+| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild the `.mcpb` (step 3), and reinstall it (step 4). |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
 Anything else, or anything alarming: send feedback and describe it. There is no

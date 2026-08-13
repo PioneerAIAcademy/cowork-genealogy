@@ -11,6 +11,14 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
 export interface FSTreeSearchPerson {
   id?: string;
   identifiers?: Record<string, string[]>;
+  // FamilySearch sends far more per person than this tool reads — `gender`,
+  // `names`, `display`, `facts`. Typing only the consumed fields is the right
+  // default, but without an index signature a *realistic* fixture becomes
+  // untypeable: an object literal carrying the real payload's other keys fails
+  // excess-property checking, which is what two person-search tests hit.
+  // Declaring the overflow as `unknown` keeps typo-checking on `id` /
+  // `identifiers` (still declared above) while admitting the rest exists.
+  [key: string]: unknown;
 }
 
 export interface FSTreeSearchGedcomx {
