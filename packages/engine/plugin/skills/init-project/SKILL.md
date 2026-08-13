@@ -160,7 +160,7 @@ Write using data from `person_read`. Follow `references/simplified-gedcomx-summa
 
 **Simplified GedcomX is NOT the same as full GedcomX.** `person_read` returns full GedcomX — you must convert. Key differences: top-level array is `sources` (NOT `sourceDescriptions`); persons have no `fsid` or `extracted` fields; use snake_case for all field names (`standard_place`, not `standardPlace`). Structure: `{ "persons": [], "relationships": [], "sources": [] }`.
 
-**Include:** subject person (names, facts, source references), all relatives (parents, spouse, children), all relationships, all source descriptions.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`.
 
 **ID conventions (overrides the reference doc):** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`….
 
@@ -198,7 +198,7 @@ Write using `templates/research.json`.
 
 **Project section:** `id`: `rp_001`; `objective`: from Step 1; `subject_person_ids`: local GedcomX ID of primary subject (e.g. `["I1"]`); `status`: `active`; `created`/`updated`: today (ISO 8601); `title`: concise 3-6 word session name (e.g. "Patrick Flynn's parents").
 
-**`researcher_profile`:** `experience_level`, `subscriptions`, `narration_guidance` from the interview.
+**`researcher_profile`:** Scan the opening message for a stated experience level and subscriptions before writing. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). Write all three. When the message supplied answers, never persist the `intermediate` / `["none"]` default.
 
 **`known_holdings`:** one entry per reported item — `id` (`kh_001`…), `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in tree.gedcomx.json; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`), `created` (today ISO 8601). If no holdings, write `known_holdings: []`.
 
@@ -253,6 +253,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+- **Never persist a default `researcher_profile` when the opening message stated experience or subscriptions.** Normalize per the interview tables before writing `research.json`.
 
 ## Re-invocation behavior
 
