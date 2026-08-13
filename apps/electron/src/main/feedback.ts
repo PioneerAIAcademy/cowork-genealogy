@@ -493,10 +493,12 @@ function renderFeedbackMarkdown(args: {
     sections.push('', '## Notes', '', fields.notes)
   }
 
-  // Always state the session log's status — never silently omit the section.
-  // A Cowork session has no Claude Code transcript on this machine (the agent
-  // runs in Cowork's VM), so an absent log is expected, not missing; saying so
-  // keeps triage from hunting for a file that was never written (issue #1481).
+  // Always state the session log's status — never silently omit the section
+  // (issue #1481). Which "no log" state a submission lands in is decided in the
+  // assembly above: a Cowork bundle submits with the log requested and finds
+  // nothing on the host (the agent ran in Cowork's VM) → requested-but-empty;
+  // not-requested happens only when a transcript was available and the submitter
+  // unticked it. The wording of each branch follows that, not the reverse.
   sections.push('', '## Session log', '')
   if (sessionLogStatus === 'included') {
     sections.push(
@@ -504,17 +506,18 @@ function renderFeedbackMarkdown(args: {
     )
   } else if (sessionLogStatus === 'not-requested') {
     sections.push(
-      'No Claude Code session log was included. For a Cowork session this is expected — ' +
-        "the agent runs in Cowork's own VM, so there is no Claude Code transcript on this " +
-        'machine to attach (see `docs/alpha-user-guide-cowork.md`). The `results/` sidecars ' +
-        'carry the search/step record instead.'
+      'No Claude Code session log was included — the submitter unticked "Include Claude ' +
+        'Code session log" while a transcript was available on their machine. Ask them ' +
+        'for it if the transcript is needed to diagnose this case.'
     )
   } else {
     // requested-but-empty
     sections.push(
       'A Claude Code session log was requested but none was found under `~/.claude/projects`. ' +
-        'For a Cowork session that is expected (the agent ran in Cowork’s VM); for a Claude ' +
-        'Code session, the transcript that should be here is missing.'
+        "For a Cowork session that is expected — the agent runs in Cowork's own VM, so there " +
+        'is no Claude Code transcript on this machine to attach (see ' +
+        '`docs/alpha-user-guide-cowork.md`); the `results/` sidecars carry the search/step ' +
+        'record instead. For a Claude Code session, the transcript that should be here is missing.'
     )
   }
 

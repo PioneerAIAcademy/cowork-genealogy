@@ -360,20 +360,22 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
     return zip.file('FEEDBACK.md')!.async('string')
   }
 
-  it('explains an absent log as expected for a Cowork session when none was requested', async () => {
+  it('says the submitter opted out when the log was not requested', async () => {
     const md = await feedbackMarkdown(makeOptions(folder)) // includeSessionLog: false by default
     expect(md).toContain('## Session log')
     expect(md).toContain('No Claude Code session log was included')
-    expect(md).toContain('Cowork')
+    expect(md).toContain('unticked')
     expect(md).not.toContain('See `_feedback/session-log.jsonl`')
   })
 
-  it('flags a requested-but-missing log rather than silently dropping the section', async () => {
+  it('flags a requested-but-missing log as expected for Cowork rather than dropping the section', async () => {
     // The tmp folder has no matching ~/.claude/projects/<hash> dir, so
-    // readSessionLog finds nothing even though a log was requested.
+    // readSessionLog finds nothing even though a log was requested — the state a
+    // real Cowork bundle lands in, so the Cowork explanation belongs here.
     const md = await feedbackMarkdown({ ...makeOptions(folder), includeSessionLog: true })
     expect(md).toContain('## Session log')
     expect(md).toContain('requested but none was found')
+    expect(md).toContain('Cowork')
     expect(md).not.toContain('See `_feedback/session-log.jsonl`')
   })
 
