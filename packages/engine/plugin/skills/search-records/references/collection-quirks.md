@@ -31,13 +31,20 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   returned about five thousand records, the same batch plus a surname returned
   79, and a nonexistent batch returns **0** rather than being ignored — so a nil
   under it means the batch is wrong, not that the parish is empty.
-- Batch number format: a letter prefix followed by digits. Both `C050761`
-  (letter + 6 digits) and `M01048-5` (letter + digits + dash + digit) are
-  accepted — an earlier revision of this file said "exactly 6 digits", which the
-  second form contradicts.
-- Submitting a batch number alone (no name) returns that batch's extracted
-  records — the canonical way to enumerate a single parish. Combine with a
-  surname to search within one parish's extraction.
+- Batch number shape varies: it may lead with a digit or with a letter, and may
+  carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5` and the
+  all-numeric `8317102`. Send what the source gives
+  you; do not reject or reformat a batch on shape, and treat no shape rule
+  here as exhaustive.
+- Send the batch and it returns that batch's extracted records — the canonical
+  way to enumerate a single parish. Adding a surname searches within that
+  extraction. The tool **rejects** `batchNumber` + `recordCountry`/`recordSubdivision`: the batch
+  anchors by itself, and a country that does not match it returns 0, which
+  looks exactly like a wrong batch. A batch number carries no country
+  information, so there is nothing to guess it from.
+- Paging stops at `offset + count = 4999`, so a batch larger than that cannot
+  be walked end to end. Partition it by surname — the one field that narrows
+  within a batch without the silent-zero risk — rather than paging deeper.
 - Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ## Mexico Civil Registration
