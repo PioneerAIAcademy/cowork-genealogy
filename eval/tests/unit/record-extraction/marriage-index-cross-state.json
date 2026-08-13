@@ -47,24 +47,28 @@
     {
       "record_role": "father_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "evidence_type": "direct",
+      "information_quality": "primary"
     },
     {
       "record_role": "mother_of_groom",
       "fact_type": "name",
-      "evidence_type": "direct"
+      "evidence_type": "direct",
+      "information_quality": "primary"
     },
     {
       "record_role": "father_of_bride",
       "fact_type": "name",
       "optional": true,
-      "evidence_type": "direct"
+      "evidence_type": "direct",
+      "information_quality": "primary"
     },
     {
       "record_role": "mother_of_bride",
       "fact_type": "name",
       "optional": true,
-      "evidence_type": "direct"
+      "evidence_type": "direct",
+      "information_quality": "primary"
     }
   ]
 }

@@ -28,12 +28,12 @@ the two who are not are listed under "Does not post standup" below.
 | Key | Posts as | GitHub | Role | Senior |
 |---|---|---|---|---|
 | christopher | Christopher Edeson | `chrisedeson` | developer | |
-| mercy | Mercy Okum | `mercyokum` | genealogist | |
+| mercy | Mercy Okum | `mercyokum` | genealogist | **senior** |
 | israel | Israel, Israel Ayomikun Asimi | `Asimi1234` | developer | |
 | florence | Florence Taburu | `florencemashipei` | genealogist | **senior** |
 | tife | Tife | `T-FEH` | developer | **senior** |
 | isaac | Isaac Boateng | `Paaboat` | genealogist | |
-| jude | Ebigide Jude | `jud-sdev` | developer | |
+| jude | Ebigide Jude | `jud-sdev` | developer | **senior** |
 | collins | Cia, Collins | `Cia-3` | genealogist | |
 | ernest | Ernest Jacob, Ernest | `aghadiayeamayanvboernest` | developer | |
 | solomon | Solomon Baidoo | `kofiatinka12` | genealogist | |
@@ -47,7 +47,7 @@ the two who are not are listed under "Does not post standup" below.
 | ikennaya | Ikennaya Mbadiwe | `Ikennaya1` | genealogist | |
 | precious | Precious Onotu | `clack391` | developer | **senior** |
 | edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** |
-| pascal | Pascal Okezie | `Gennecis` | developer | |
+| pascal | Pascal Okezie | `Gennecis` | developer | **senior** |
 | marc | Marc Mangum | `MMagnum` | developer | |
 | richard | Richard | `chesworthrm` | developer | **senior** |
 
@@ -70,10 +70,11 @@ roster gap.
 ## What a senior genealogist's approval means
 
 **It is a genealogical-quality signal, not just a process step.** When a fixture
-or adjudication PR carries an approval from any of the five — Clorinda,
-Shaunese, Florence, John, or Edmund — that is a stronger claim than an ordinary
-teammate's. It cuts both ways: when one of them approves something that turns
-out wrong, that is a finding about the doctrine, not just about the author.
+or adjudication PR carries an approval from any of the six — Clorinda,
+Shaunese, Florence, John, Edmund, or Mercy — that is a stronger claim than an
+ordinary teammate's. It cuts both ways: when one of them approves something
+that turns out wrong, that is a finding about the doctrine, not just about the
+author.
 
 ## Known identity quirks
 

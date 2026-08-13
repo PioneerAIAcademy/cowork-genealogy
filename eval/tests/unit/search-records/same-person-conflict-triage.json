@@ -4,6 +4,7 @@
     "skill": "search-records",
     "name": "High match score must not override a qualitative conflict",
     "type": "positive",
+    "holdout": true,
     "description": "record_search (with projectPath) returns one Patrick Flynn result with correct name/age/place, ranked inline (attachments folded in) re-ranks it to matchRank 1 with a high match score (0.85) because name, date, and place align. But the record lists him as HEAD of household in 1850 — impossible, he is 5 years old. The skill must apply its Step-4 logical cross-check, catch the impossible household role, flag a conflict, and NOT treat this as a confirmed match despite the high score.",
     "tags": [
       "search",

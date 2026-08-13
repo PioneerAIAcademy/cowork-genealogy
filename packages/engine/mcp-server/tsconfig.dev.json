@@ -1,0 +1,31 @@
+{
+  // Typecheck-only config for `dev/`.
+  //
+  // The main tsconfig.json is the BUILD config: `rootDir: "./src"` and
+  // `include: ["src/**/*"]`, because dev scripts must not be compiled into
+  // build/ or shipped in the .mcpb. The side effect was that
+  // `tsc --noEmit -p tsconfig.json` exited 0 no matter what dev/ contained —
+  // it never opened those files. A broken edit to the ~5,000-line qualifier
+  // probe (a reference to an identifier declared inside a different section's
+  // function) passed a "typecheck clean" check that had never looked at it,
+  // and would have thrown at runtime after several minutes of live API calls.
+  //
+  // So: same strictness, no emit, dev/ only. Run via `npm run typecheck:dev`,
+  // which `pretest` invokes so it cannot be forgotten.
+  //
+  // `tests/` is deliberately NOT included, and adding it is not the one-line
+  // change it looks like. vitest transpiles without typechecking, so the suite
+  // has never been type-clean: adding "tests/**/*.ts" here surfaces dozens of
+  // pre-existing errors (assertions narrowing a union they have not discriminated
+  // — `collection-read`, `extraction-append`, `fulltext-search`, others) and,
+  // because `pretest` runs this, would block `npm test` repo-wide until every one
+  // is fixed. That is a real gap and worth closing on its own, with its own
+  // review; it is not a rider on a probe change.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "rootDir": "."
+  },
+  "include": ["dev/**/*.ts"]
+}
