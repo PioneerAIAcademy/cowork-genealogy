@@ -149,10 +149,32 @@ export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInpu
   return out;
 }
 
+// `batchNumber` anchors on its own. The rule exists because unanchored queries
+// are expensive, and a batch is the cheapest filter the API takes: a batch alone
+// returns just its own extraction, not an open-ended scan. Requiring a second
+// field alongside it was worse than redundant — the natural companion is
+// `recordCountry`, a matching one is inert, and a MISMATCHED one silently
+// returns 0, the same signal a wrong batch gives. Totals are not quoted here
+// (they drift between runs); `dev/probe-batch-anchor.ts` reproduces all five
+// legs and derives each verdict from its own run.
 export function validateInput(input: RecordSearchInput): void {
-  if (!input.surname && !input.recordCountry) {
+  if (!input.surname && !input.recordCountry && !input.batchNumber) {
     throw new Error(
-      "search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."
+      "search needs at least one anchor: surname, recordCountry or batchNumber. Searches without an anchor are too expensive on the FamilySearch API."
+    );
+  }
+
+  // Structural anchor for the rule above, not a second opinion on it.
+  // A record-jurisdiction filter on a batch search is inert at best and
+  // destructive at worst, and the destructive case is silent — a mismatched country returns 0,
+  // which is the same signal a wrong batch gives. Five prose surfaces say not to
+  // pair them; prose survives about three compactions (docs/architecture.md
+  // §3.1), and the pairing is exactly what a half-remembered "every query needs
+  // surname or recordCountry" produces. Rejecting costs nothing because a
+  // MATCHING country changes no result — measured, see probe-batch-anchor.ts.
+  if (input.batchNumber && (input.recordCountry || input.recordSubdivision)) {
+    throw new Error(
+      "do not combine batchNumber with recordCountry or recordSubdivision: a batch anchors on its own, and a record-jurisdiction filter that does not match the batch silently returns 0 (indistinguishable from a wrong batch). Drop them and send the batch alone; narrow with surname if needed."
     );
   }
 
@@ -302,6 +324,14 @@ export function buildSearchUrl(input: RecordSearchInput): string {
 
   if (input.collectionId !== undefined) add("f.collectionId", input.collectionId);
   if (input.imageGroupNumber) add("q.filmNumber", input.imageGroupNumber);
+  // Verified live 2026-08-11: `q.batchNumber=M01048-5` returns several thousand
+  // records, a nonsense batch returns 0 rather than being ignored, and it
+  // combines with a surname to search within one batch. Totals are not quoted:
+  // no committed probe section produces them, so a figure here would trace to
+  // nothing. The parameter existed upstream all along; the tool simply
+  // never exposed it, so the parish-enumeration strategy the collection-quirks
+  // reference documents was unexecutable from this skill.
+  if (input.batchNumber) add("q.batchNumber", input.batchNumber);
   if (input.recordCountry) add("q.recordCountry", input.recordCountry);
   if (input.recordSubdivision && input.recordCountry) {
     add(
@@ -874,78 +904,102 @@ export const recordSearchToolSchema = {
   name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname or recordCountry. Other fields " +
+    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
     "narrow ranking. Returns ranked person matches with key facts, " +
     "persistent URLs, source-record details, and Family-Tree-person match " +
     "suggestions. Requires authentication — call the login tool first if " +
     "not logged in. For ambiguous place names, call the places tool first. " +
     "To scope to a specific record collection, call the collections tool " +
     "first to find the right collectionId.",
+  // The `*Exact` descriptions below deliberately state what each qualifier does
+  // to the result COUNT rather than to retrieval. Measured live against
+  // /service/search/hr/v2/personas 2026-08-04 (issue #1093), re-done over
+  // COMPLETE result sets on 2026-08-10/11: `.exact` REMOVES records and
+  // REORDERS the ones it keeps. On the two enumerable `surname` marriage pools
+  // (Brazil/Bochenek 521 -> 81, England/Pocklington 469 -> 423) the exact set
+  // held 0 records absent from the fuzzy set, so it is a strict SUBSET and
+  // cannot surface a record a fuzzy search buried — but 54 shared records moved
+  // in the second pool, the largest by 34 positions, and 6 of those crossed
+  // rows carrying a different relevance score, against a same-query noise floor
+  // of 0. Count inflation is a separate totals-only argument: Zsigmondy
+  // (108,848 -> 634, 172x), Mingazzini (40,908 -> 1,796, 23x), Geach
+  // (roughly 18.5 million -> about 23,200, 799x). No displacement diff was run for places; what
+  // was measured there is one target's rank — a county-scoped marriage search
+  // measured about 35,500 fuzzy vs 2 exact with the target ranked first in both, and
+  // the WRONG county returned the same total as the right one to within 0.1%
+  // (about 35,500 each). `surnameExact` is additionally harmful: on a
+  // record indexed `Neill`, surname `Neal` + surnameExact returns 0 where fuzzy
+  // returns the record. A relative anchor NARROWS: holding a query constant,
+  // adding `fatherGivenName` moved 948 -> 886. The 947 -> 1,478 "widening" in
+  // issue #1088 was a confounded comparison — the marriage-year range was
+  // dropped in the same call. Full figures and method:
+  // docs/specs/record-search-tool-spec-v2.md.
   inputSchema: {
     type: "object",
     properties: {
-      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname` or `recordCountry` must be supplied." },
+      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
       givenName: { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact: { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants). Applies to `surnameAlt` too when both are set." },
-      givenNameExact: { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants). Applies to `givenNameAlt` too when both are set." },
+      surnameExact: { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count and reorders the records it keeps; measured over complete sets it only ever removes records, never surfaces one the fuzzy search buried. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
+      givenNameExact: { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count and reorders the records it keeps; it is not a way to surface a record the fuzzy search buried. Expected to exclude diminutives a period record may use (`Betty` for `Elizabeth`) — the default's reach to them is measured, the exclusion is not; pass a variant as a separate `givenName` instead. Applies to `givenNameAlt` too." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched exactly (no fuzz around the bounds)." },
+      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched hard, not fuzzed. It is meant to exclude records dated just outside the range, though that fuzz is only weakly evidenced. What it does to records carrying no indexed year is NOT established, and neither is whether an unqualified range keeps them — so do not rely on a year range, set or unset, to include or exclude undated records. Whether it drops in-range approximate dates is NOT established either. Use only with a firm date." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      birthPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions (it still descends to child localities). Large effect on the count; its effect on ordering was not measured beyond a single target, which ranked first with and without it; an unqualified county total is not a usable exhaustiveness signal. Set it when the count must mean something." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
+      deathYearExact: { type: "boolean", description: "As `birthYearExact`, for the death-year range." },
       deathPlace: { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      deathPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      deathPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       marriageYearFrom: { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
       marriageYearTo: { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
+      marriageYearExact: { type: "boolean", description: "As `birthYearExact`, for the marriage-year range." },
       marriagePlace: { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      marriagePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      marriagePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
+      residenceYearExact: { type: "boolean", description: "As `birthYearExact`, for the residence-year range." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      residencePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      residencePlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       anyYearFrom: { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
       anyYearTo: { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact: { type: "boolean", description: "When `true`, the any-event year range is matched exactly." },
+      anyYearExact: { type: "boolean", description: "As `birthYearExact`, for the any-event year range (never measured on this family)." },
       anyPlace: { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      anyPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      anyPlaceExact: { type: "boolean", description: "When `true`, stops upward expansion to parent jurisdictions. Same behaviour and caution as `birthPlaceExact`: changes the count; its effect on ordering was not measured." },
 
       spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
       spouseSurname: { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
+      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires the spouse's given name to be present and match exactly — measured on two marriage populations read in full, where every spouse-silent record is dropped and a spouse-bearing control survives. Same trade-off as `fatherGivenNameExact`." },
+      spouseSurnameExact: { type: "boolean", description: "When `true`, requires the spouse's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
       fatherSurname: { type: "string", description: "Father's family name." },
-      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
+      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires the father's given name to be present and match exactly. Unqualified it keeps records where the father is not indexed while still excluding a different father; setting it drops those, plus variant forms the fuzzy search did reach. Rarely worth it." },
+      fatherSurnameExact: { type: "boolean", description: "When `true`, requires the father's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
       motherSurname: { type: "string", description: "Mother's family name." },
-      motherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
+      motherGivenNameExact: { type: "boolean", description: "When `true`, requires the mother's given name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
+      motherSurnameExact: { type: "boolean", description: "When `true`, requires the mother's family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
       parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent." },
       parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
+      parentGivenNameExact: { type: "boolean", description: "When `true`, requires the parent's given name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
+      parentSurnameExact: { type: "boolean", description: "When `true`, requires the parent's family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
       otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate)." },
       otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship." },
-      otherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
-      otherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
+      otherGivenNameExact: { type: "boolean", description: "When `true`, requires the co-occurring given name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
+      otherSurnameExact: { type: "boolean", description: "When `true`, requires the co-occurring family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
 
       collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
+      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
-      recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
+      recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },

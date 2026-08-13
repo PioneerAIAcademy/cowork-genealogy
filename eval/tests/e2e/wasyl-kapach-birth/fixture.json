@@ -4,7 +4,7 @@
   "genre": "record-hint",
   "source_pid": "L17M-W4Q",
   "captured": "2026-07-24",
-  "researcher_question": "When and where in Ukraine was Wasyl Kapach born, and when did he immigrate to Canada?",
+  "researcher_question": "When and where was Wasyl Kapach born, and when did he immigrate to Canada?",
   "tags": {
     "question_type": "birth_date",
     "era": "1880s",
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 32, flags adds_daughter/adds_birth, confidence 3). Draft transcribed from a 1926 Canadian census record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 32, flags adds_daughter/adds_birth, confidence 3). Resolved 2026-08-12 as outcome (b) answerable-but-differently: identity is a true match (hint ark:/61903/1:1:QPR9-YLYV is Wasyl Kapach L17M-W4Q), but the hint's 1883 birth year is wrong — born 1879 per headstone/obituary/Find a Grave memorial 113540812. Immigration 1906 stands (census ark is its only source). Census 1883 guarded by an avoid finding (f3). Find a Grave evidence has no FS ark and is bundled at provided-documents/findagrave-kapach-captures.pdf (spec 6.2). See README Notes for reviewers."
 }
