@@ -14,9 +14,19 @@ Did the skill correctly prioritize among competing next-question candidates? Unr
 
 Is the research question specific and answerable? "Learn more about Patrick" is not a research question. "What is Patrick Flynn's birthplace?" is.
 
+Specificity is about naming the **fact** precisely — the person, the period, the fact sought. It is *not* about narrowness, and naming a record set is not a way to earn it: scope is graded separately below, and a question can pass here while failing Objective scope match.
+
 - **pass:** Question is concrete enough that a follow-up search could be designed to answer it; names specific persons, time periods, or facts being sought.
 - **partial:** Question is mostly specific but has a fuzzy edge ("What more can we learn about Patrick's early life?" — better than "learn more about Patrick" but still vague on what facts).
 - **fail:** Question is too broad to drive a search ("Who is Patrick Flynn?", "Learn about the Flynn family").
+
+## Objective scope match
+
+Does the question cover exactly the objective's scope — neither narrowed to a single record nor widened to a person the objective does not cover? This is distinct from specificity: a question can name its fact perfectly and still be scoped wrong. Score `null` (N/A) when the invocation correctly adds no new question.
+
+- **pass:** The question names a fact inside the objective's scope and names no record set. Where the objective is already a single fact, the question restates it at that scope with identifying detail; where the objective holds several independent facts, the question is one of them. Any question concerning a relative states in its rationale how the answer is evidence about the objective's subject.
+- **partial:** Scope is broadly right but drifts at one edge — the question names a record alongside the fact ("Who were Patrick's parents according to the 1850 census?"), or it stays on the subject but folds in a second independent fact.
+- **fail:** The question is scoped to a record rather than the fact ("Where was Patrick Flynn in the 1850 census?" under an objective of identifying his parents), or it targets a person the objective does not cover — typically the subject's own spouse or children — with no stated evidentiary bearing on the subject.
 
 ## Dependency awareness
 

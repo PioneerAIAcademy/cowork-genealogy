@@ -1,9 +1,8 @@
 {
   "tool": "record_search",
-  "description": "record_search for Job Purnell's baptism in Trowbridge returns ONLY a same-named decoy: a Job Purnell baptised 1821, son of Samuel Purnall & Eliza Crabb. Strong on name + place, but the birth year (1821) conflicts with the known subject (b. ~1826) by ~5 years. Feeds ut_search_records_019 (identity-drift guard). primaryId P1 matches rank-search-matches-purnell-1821-decoy. Matched loosely on surname/given so it fires for any Job Purnell baptism/church search.",
+  "description": "record_search for Job Purnell's baptism in Trowbridge returns ONLY a same-named decoy: a Job Purnell baptised 1821, son of Samuel Purnall & Eliza Crabb. Strong on name + place, but the birth year (1821) conflicts with the known subject (b. ~1826) by ~5 years. Feeds ut_search_records_020 (identity-drift guard). primaryId P1 matches rank-search-matches-purnell-1821-decoy. Matched on surname ALONE so it fires for any Purnell baptism/church search. It used to pin givenName '~Job' as well, which was safe only while an unmatched query failed loudly: once record-search-purnell-any-variant-no-results was added below it, a query that dropped givenName to widen — a move the nil-exhaustion doctrine rewards — fell past this fixture to that catch-all and got a clean nil, so the skill never saw the decoy the test grades it on rejecting, while the judge context still asserted one result was returned. Do not re-pin givenName without also revisiting that catch-all.",
   "args": {
-    "surname": "~Purnell",
-    "givenName": "~Job"
+    "surname": "~Purnell"
   },
   "response": {
     "query": { "surname": "Purnell", "givenName": "Job" },

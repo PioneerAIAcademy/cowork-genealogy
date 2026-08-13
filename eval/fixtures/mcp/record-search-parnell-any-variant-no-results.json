@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "Sibling of record-search-purnell-any-variant-no-results covering the a-spelling branch of the same name (Parnell, Parnall, Parnel). Predicate values are plain substrings, not fuzzy matches, so one stem cannot span both Purn* and Parn* — hence two fixtures. Purnell/Parnell is a documented English variant pair, so the skill inventing it is exactly the thoroughness Search strategy rewards; without this it would come back a fixture_not_found ERROR and cost Tool Arguments a point. Only the decoy exists in this scenario, so a nil on every other spelling is the truthful answer. Keep it LAST in the test's mcp_fixtures list alongside its sibling — matching is first-match-wins in list order.",
+  "args": {
+    "surname": "~parn"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}
