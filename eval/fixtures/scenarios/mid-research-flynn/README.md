@@ -6,8 +6,15 @@ Patrick Flynn parentage research, mid-project.
 - **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)
 - **Plans:** pl_001 (1850 census search, completed), pl_002 (parentage evidence, active)
 - **Log:** 5 entries — 1850 census on FamilySearch/Ancestry/MyHeritage, 1860 census, death cert
-- **Sources:** 4 sources (1850 census FS, 1850 census Ancestry, 1860 census, death cert)
-- **Assertions:** 13 assertions across 4 sources
+- **Sources:** 9 sources. Four are logged and extracted — src_001 (1850 census FS),
+  src_002 (1850 census Ancestry), src_003 (1860 census), src_004 (death cert). Five
+  were added later and are deliberately unworked: src_005 (St. Mary's baptism, 1845),
+  src_006 (Thomas Flynn will, 1881), src_007 (Mary Elizabeth Flynn birth cert, 1905),
+  src_008 (Thomas → Patrick deed, 1881), src_009 (Patrick Flynn obituary, 1908). Each
+  of those five has `log_entry_id: null` and no extracted assertions — that is the
+  intended mid-research state, **not** a missing or fabricated source.
+- **Assertions:** 13 assertions, all drawn from the four logged sources (src_001 ×5,
+  src_002 ×2, src_003 ×3, src_004 ×3). src_005–src_009 have none yet.
 - **Person evidence:** 6 links (Patrick → I1, Thomas → I2)
 - **Conflicts:** 1 resolved (birthplace: Ireland vs Pennsylvania)
 - **Hypotheses:** h_001 (Thomas is Patrick's father, supported)
