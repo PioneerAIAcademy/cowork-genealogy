@@ -116,10 +116,12 @@ describe("tree_forget", () => {
     // FamilySearch carries parentage twice — as ParentChild links AND as a
     // `Parents` fact on the child's record (issue #1314). This is a real FS
     // person-level fact type, not a fixture invention: confirmed in the
-    // feedback-2026-08-03T15-36-45 session log, person GRN6-4MQ, where a
-    // `{ type: "Parents", value: "Geo[illegible] Wilcox - Caroline E Woodruff" }`
-    // sits in `facts[]` beside Birth/Death (the tree.gedcomx.json export is
-    // privacy-redacted to empty facts; the session log preserves the raw data).
+    // feedback-2026-08-03T15-36-45 session log, in a `person_read` RESULT (so
+    // upstream output, not a value the agent wrote) carrying an FS-native UUID
+    // fact id — `{ type: "Parents", value: "Geo[illegible] Wilcox - Caroline E
+    // Woodruff" }` on GRNX-DFF, and the same type on GRN6-4MQ. The zip is not
+    // in the repo, so that log is the only place this can be re-checked; the
+    // committed corpus has zero `Parents` facts.
     // Add that fact to I1.
     const tree: any = family();
     tree.persons[0].facts.push({

@@ -82,7 +82,7 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // `EVENT_TREE_TYPES` lists further
 // couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
 // is NOT yet confirmed — see issue #1549 before extending this set.
-const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 85 such facts across committed snapshot trees
+const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 90 person-level Marriage facts across committed snapshot trees (2026-08-14); Divorce/Annulment have no corpus evidence yet — see #1549
 const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
 
 export interface ForgetSelector {

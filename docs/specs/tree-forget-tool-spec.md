@@ -118,9 +118,11 @@ rather than erroring. Reported as `factsByType`, a kind not a value.
 child, whom `children-of` removes wholesale.
 
 **Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
-at scale: measured over committed snapshot trees, 25 of the 82 persons carrying a
-person-level `Marriage` fact have no `Couple` relationship, so for those `spouses-of`
-shifts from erroring to deleting facts. That is the sole-carrier case working as
+at scale: measured over committed snapshot trees (2026-08-14, scanning
+`eval/**/*.gedcomx.json`), 27 of the 86 persons carrying a person-level `Marriage`
+fact have no `Couple` relationship, so for those `spouses-of` shifts from erroring
+to deleting facts. The ratio drifts as the corpus grows — re-measure rather than
+quoting these figures. That is the sole-carrier case working as
 designed — the fact is the only record of the conclusion — and `removed.factsByType`
 names what went, so the deletion is not silent.
 
