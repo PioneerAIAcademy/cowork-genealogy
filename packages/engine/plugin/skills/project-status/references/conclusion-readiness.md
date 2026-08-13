@@ -108,8 +108,9 @@ point to:
   Schuylkill County, Pennsylvania")
 - A specific conflict to resolve ("birthplace contradiction between
   the death certificate and census records")
-- A specific skill to invoke ("use question-selection to define a
-  research question for the 1860-1908 gap")
+- A specific next action in plain language ("settle the research question
+  for the 1860-1908 gap, then work out which records to search for it").
+  Name what will happen, never the skill that does it.
 
 Vague recommendations like "continue researching" provide no value
 to the user and violate the GPS principle that research should be

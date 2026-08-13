@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -88,7 +89,7 @@ export async function recordReadTool(
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",

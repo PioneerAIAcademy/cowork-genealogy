@@ -1,6 +1,5 @@
 ---
 name: conflict-resolution
-model: claude-sonnet-4-6
 allowed-tools:
   - place_search
   - place_search_all
@@ -352,6 +351,22 @@ records, corroborating relationships or named associates), never by
 the alternative candidate's disappearance. If you cannot place your
 subject with positive evidence, the conflict is unresolved — defer
 and name the record that would decide it.
+
+**An inherited surname is parentage evidence.** Where the naming
+system passes a parent's surname to the child — Spanish and
+Portuguese compound surnames (paternal first, then maternal:
+children of *Juan García* and *María Ramos* are *García Ramos*), and
+the patronymics above — a candidate parent whose surname cannot
+produce the child's is disqualified on that ground alone — both
+parents under the Iberian system, the father only under a
+patronymic — before any record names the parents outright. Weigh
+this hardest against **indexed** parent fields: an index naming a
+parent whose surname is absent from the child's is likelier
+mis-indexed than correct, and the page image is what settles it.
+The chain is rebuttable —
+adoption, a natural child, a stepfather's name in use, a woman
+recorded under a married surname — so name the convention you are
+applying and confirm it held in that place and era.
 
 **Resolution of identity conflicts** (record only the `conflicts`
 section here; recommend the owning skill for any person/link work):

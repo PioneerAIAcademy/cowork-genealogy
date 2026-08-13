@@ -1,6 +1,5 @@
 ---
 name: init-project
-model: claude-sonnet-4-6
 description: Initializes a new genealogy research project with GPS-conformant
   file structures. Creates research.json (GPS audit trail) and
   tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch
@@ -106,9 +105,11 @@ Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsu
 
 ### 1. Get the research objective
 
-Get from the user: a FamilySearch person ID (preferred), or name + known facts for `person_search`; and the research objective in one sentence.
+**This step blocks — unlike the profile and holdings interviews below, do NOT proceed past it without an explicit objective.** Before calling `person_read`, building the tree, or doing any pedigree analysis, you need BOTH: (a) a FamilySearch person ID (preferred) or name + known facts for `person_search`, AND (b) the research objective in the user's own words.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If the user provides just an ID, formulate a default objective from what's missing. If no ID, search by name (see below). If too vague (no named individual), ask for clarification.
+If the user gives a PID (or a name) with no stated objective, STOP and ask: "What would you like to research about this person?" **Do not call `person_read` first to learn the person's name for the question — asking about "this person" needs no lookup, and fetching anything before the objective is the exact failure this step blocks.** Do NOT invent, assume, or default an objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — a wrong assumption sends the whole project in a direction the user didn't ask for. This is the one interview question in this skill that is blocking; the researcher-profile and known-holdings questions below are not.
+
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below) — but still confirm the objective before or alongside the name search, not after. If too vague (no named individual), ask for clarification.
 
 ### Searching by name
 
@@ -118,7 +119,7 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 
 ### 2. Fetch person data
 
-Call `person_read({ personId: "<id>" })` with exactly that single argument (no optional flags). Returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, source descriptions. Auth error → tell user to log in.
+Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
 
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
@@ -195,24 +196,40 @@ Analyze imported data before presenting results:
 - Holding disagrees with tree → flag as discrepancy (never frame user's holding as error).
 - `oral_knowledge` lead → surface early; oral sources are cheapest and most perishable.
 
+**When the objective disputes the existing relationship** — phrasing like
+"correct parents", "the right parents", "parents are not correct" — do NOT
+present the imported relationship as established. Frame the current
+parent-child (or other disputed) assignment as **the relationship under
+investigation**: an *unverified* (`quality: 1`) tree assertion that is the
+hypothesis to be tested this project, not a settled fact. Say so in the tree
+summary and findings, and never confirm it from the tree it came from
+(issue #1471). Recording and testing the doubt is question-selection's job —
+here, only the framing changes.
+
 **Present to the user:**
 - Research objective
 - **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings
 - Known holdings recorded (if any) and what each contributes
-- What's missing (informs first research question)
-- Suggest next step: "Would you like me to select the first research question?"
+- What's missing (informs first research question) — gaps on people the
+  objective does not cover are context only, not proposed research.
+- Suggest the next step as a plain-language offer, defining "objective" and
+  "research question" on first use — never "use question-selection to…":
+  "Your objective is the overall goal — <restate it>. The next step is the
+  first research question: the single fact we go after first. Shall I?"
 
 ## Example
 
 User: "Start a new research project for person KWCJ-RN4. I want to identify his parents."
 
-1. Call `person_read({ personId: "KWCJ-RN4" })`
-2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret.
+1. Call `person_read({ personId: "KWCJ-RN4", relatives: true, sourceDescriptions: true })`
+2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
 4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
 5. Write `research.json` with project section, profile, holdings, empty arrays.
-6. Pedigree analysis + summary. Suggest first research question.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — their gaps are noted, not queued. Offer the first research question
+   in plain language.
 
 ## Important rules
 

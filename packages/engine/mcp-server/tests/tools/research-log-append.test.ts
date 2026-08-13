@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -196,9 +197,9 @@ describe("research_log_append", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.logId).toBe("log_001");
-    expect(result.resultsRef).toBe("results/log_001.json");
-    expect(result.returnedCount).toBe(2);
+    expect(single(result).logId).toBe("log_001");
+    expect(single(result).resultsRef).toBe("results/log_001.json");
+    expect(single(result).returnedCount).toBe(2);
     expect(result.filesWritten).toEqual(["research.json", "results/log_001.json"]);
 
     // sidecar materialized; staged file consumed.
@@ -231,8 +232,8 @@ describe("research_log_append", () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.resultsRef).toBeNull();
-    expect(result.returnedCount).toBeNull();
+    expect(single(result).resultsRef).toBeNull();
+    expect(single(result).returnedCount).toBeNull();
     expect(result.filesWritten).toEqual(["research.json"]);
     const research = await readJson("research.json");
     expect(research.log[0].results_ref).toBeNull();
@@ -392,7 +393,7 @@ describe("research_log_append", () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.logId).toBe("log_010");
+    expect(single(result).logId).toBe("log_010");
   });
 
   it("is append-only: existing entries are byte-unchanged", async () => {
@@ -573,5 +574,224 @@ describe("research_log_append", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors.join(" ")).toMatch(/non-empty/);
+  });
+
+  // Retention gap: a staging-capable search that HAD results and kept none.
+  // Observed across 10 alpha feedback bundles (2026-08-05..08-07): 16 of 32
+  // logged record_search entries had results_available > 0 and results_ref null,
+  // so the verbatim response was unrecoverable at triage time.
+  describe("unretained-results warning", () => {
+    const warnOf = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "");
+
+    it("warns when a search reports available results but retains none", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Ward" },
+        outcome: "positive",
+        resultsExamined: 5,
+        resultsAvailable: 42,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).toMatch(/retained none/);
+      expect(warnOf(result)).toMatch(/log_001/);
+      // The entry is still written — the warning must not cost the log line.
+      const research = await readJson("research.json");
+      expect(research.log).toHaveLength(1);
+      expect(research.log[0].results_ref).toBeNull();
+    });
+
+    it("stays silent for a nil search — nothing was available to retain", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Nobody" },
+        outcome: "negative",
+        resultsExamined: 0,
+        resultsAvailable: 0,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent when resultsAvailable is absent", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Unknown" },
+        outcome: "negative",
+        resultsExamined: 0,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent when the results were staged and retained", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Ward" }, results: [{ recordId: "A" }] },
+      });
+
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 42,
+        planItemId: null,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("stays silent for a non-staging tool", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_read",
+        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 1,
+        planItemId: null,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
+    });
+
+    it("(batch) surfaces one warning per offending op", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          {
+            tool: "record_search",
+            query: { surname: "A" },
+            outcome: "positive",
+            resultsExamined: 2,
+            resultsAvailable: 10,
+            planItemId: null,
+          },
+          {
+            tool: "fulltext_search",
+            query: { text: "B" },
+            outcome: "positive",
+            resultsExamined: 3,
+            resultsAvailable: 7,
+            planItemId: null,
+          },
+          {
+            tool: "record_search",
+            query: { surname: "C" },
+            outcome: "negative",
+            resultsExamined: 0,
+            resultsAvailable: 0,
+            planItemId: null,
+          },
+        ],
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const retention = result.validation.warnings.filter((w) => /retained none/.test(w));
+      expect(retention).toHaveLength(2);
+      expect(retention[0]).toMatch(/log_001/);
+      expect(retention[1]).toMatch(/log_002/);
+    });
+  });
+});
+
+describe("research_log_append — logging-without-persistence nudge (#1478)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-1478-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const write = async (research: any, tree: any = minimalTree) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  };
+  const pos = (n: number) => ({ ...logEntry(n), outcome: "positive" });
+  const warnOf = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "");
+  const NUDGE = /logged with a positive outcome but no sources or assertions/;
+
+  it("warns once ≥3 positive searches are logged with no sources or assertions", async () => {
+    // Two positive searches already logged; this call makes the third.
+    await write(baseResearch([pos(1), pos(2)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).toMatch(NUDGE);
+    expect(warnOf(r)).toContain("3 search(es)");
+    // never blocks: the log entry still lands
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.log).toHaveLength(3);
+  });
+
+  it("stays silent below the threshold", async () => {
+    await write(baseResearch([pos(1)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+
+  it("stays silent once a source has been persisted", async () => {
+    const validSource = {
+      id: "src_001",
+      gedcomx_source_description_id: "SD-001",
+      citation: "1850 U.S. Census",
+      citation_detail: {
+        who: "Census enumerator",
+        what: "1850 U.S. Census",
+        when_created: "1850",
+        when_accessed: "2026-01-01",
+        where: "Schuylkill County, Pennsylvania",
+        where_within: "dwelling 201",
+      },
+      source_classification: "original",
+      repository: "NARA",
+      access_date: "2026-01-01",
+    };
+    const treeWithSD = { persons: [], relationships: [], sources: [{ id: "SD-001", title: "1850 U.S. Census" }] };
+    await write({ ...baseResearch([pos(1), pos(2), pos(3)]), sources: [validSource] }, treeWithSD);
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
   });
 });

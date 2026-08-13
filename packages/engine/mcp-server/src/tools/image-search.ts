@@ -1,5 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
@@ -31,7 +32,7 @@ async function resolveGroupId(
 
   let response: Response;
   try {
-    response = await fetch(
+    response = await fetchWithTimeout(
       `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
       { headers: headers(token) }
     );
@@ -57,7 +58,7 @@ async function fetchChildren(
 ): Promise<ChildrenNamesResponse> {
   let response: Response;
   try {
-    response = await fetch(
+    response = await fetchWithTimeout(
       `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(groupId)}/children/names`,
       { headers: headers(token) }
     );

@@ -10,6 +10,14 @@ Did the plan target appropriate record types for the research question? Census, 
 - **partial:** Plan items target reasonable record types but at least one rationale is generic ("more records would help") without naming what specific information the type provides.
 - **fail:** Plan items target record types that wouldn't advance the question (e.g., land records when no property is implied; church records in a jurisdiction where they aren't kept).
 
+## Objective scope containment
+
+Do the plan items stay inside the question's scope? A FAN item earns its place by what it would reveal about the **question's subject**, not by a relative's presence in the tree — so this dimension grades the purpose each item serves, not how many relatives it touches.
+
+- **pass:** Every item's rationale ties it to evidence about the question's subject. Where an item targets a relative's records (a parent's marriage, a witness, a neighbor), the rationale states what it would reveal about the subject. No item's deliverable is a relative's own missing facts.
+- **partial:** An item is defensible on its face but its rationale leaves the link implicit — it names a relative's record without saying what that record would show about the subject.
+- **fail:** One or more items pursue a relative's own record for its own sake — the spouse's birth date, a child's baptism, "restore the wife's records" — or a FAN item appears with no stated bearing on the subject, i.e. a quota filled rather than a purpose served.
+
 ## Sequencing logic
 
 Are plan items ordered logically? Free/indexed sources before paid/unindexed. Broad searches before narrow. Fallbacks identified for items that might fail.

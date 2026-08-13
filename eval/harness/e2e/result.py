@@ -84,6 +84,30 @@ from typing import Any
 #       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
 #       which also explains why `e2e/guardrail_shadow_report.py` does not split
 #       its corpus by version (#911 / #1176 / #1231 read that number).
+#   4 — `tool_calls[].is_error` widens from "the tool THREW" to "the tool threw
+#       OR returned `{ok: false}`". The dispatch set `isError` only from its
+#       `catch` arms, so a tool that reports failure by returning — the eight
+#       writers plus `convert_calendar` / `research_query` / `project_context`,
+#       named in `OK_FALSE_IS_FAILURE` (`src/tool-result.ts`) — emitted a normal
+#       MCP success, and a rejected write read as a successful call.
+#
+#       This is the same shape as entry 3 and needs a bump for the same reason:
+#       the key keeps its name and its bool type while its MEANING changes, and
+#       the payload carries no tell. A `3` log and a `4` log with identical
+#       `is_error: false` entries do not mean the same thing — at `3` it means
+#       "did not throw", at `4` it means "did not throw AND did not return a
+#       failure". Nothing in the entry distinguishes them, which is exactly the
+#       trap entry 3 records `2` falling into.
+#
+#       How much moves. Across the 140-run corpus measured when this shipped,
+#       ~657 calls returned `ok: false` and were invisible: `research_append`
+#       444/3071 (14%), `extraction_append` 102/386 (26%), `tree_edit` 89/476
+#       (19%), `research_log_append` 19/1510, `tree_correct` 2/70,
+#       `materialize_facts` 1/455. That is three orders of magnitude more than
+#       entry 3's ~1 entry, so §7.5's argument for NOT splitting the corpus by
+#       version rests on entry 3's figure and does not carry to this boundary.
+#       `merge_warnings` is deliberately excluded — its `ok: false` is a dry-run
+#       verdict about a merge, not the tool failing — so its 16/25 do not move.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -91,9 +115,9 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entry 2 above is exactly it: `response_summary` stays a string, and only
-# what that string means changes.
-HARNESS_SCHEMA_VERSION = 3
+# and entries 2 and 4 above are exactly it: `response_summary` stays a string and
+# `is_error` stays a bool, and only what each one means changes.
+HARNESS_SCHEMA_VERSION = 4
 
 
 @dataclass
@@ -272,7 +296,7 @@ class E2eResult:
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate.
     #
     # SHADOW: deliberately NOT read by __post_init__ below. It must not move
-    # the compliance axis until its false-positive rate is calibrated (#911).
+    # the compliance axis until its false-positive rate is calibrated.
     protected_writes_by_unnamed_delegate: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:

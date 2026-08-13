@@ -1,6 +1,5 @@
 ---
 name: proof-conclusion
-model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
   (Statement/Summary/Argument), and writes a self-contained narrative
@@ -230,6 +229,7 @@ is already persisted.
 - **Cite everything; acknowledge limitations.** State what was not searched, what conflicts remain, what assumptions are made. A well-written "Not Proved" is better than a fabricated "Proved."
 - **Never assert unresolvability without testing it.** Before writing that resolving X "requires direct examination of [source]" or that [source] is "the only path," explicitly ask: what other record types could independently establish this same fact? If alternatives exist that were not searched, name them as unsearched alternatives rather than claiming the fact is unresolvable. Asserting unresolvability that was never tested embeds a GPS Component 1 gap inside the GPS Component 5 narrative.
   - **The distinction is between the evidence and the fact.** It is correct to write that X "is not established by the evidence gathered so far" or "remains unresolved pending [named record types]" — a claim about the *current* record set. It is forbidden to write that X "cannot be established," "cannot be inferred, assumed, or assigned," is "indeterminable," or "unobtainable" while any relevant record type is unsearched — a claim about the *fact itself*. The first invites the next search; the second forecloses it. When a target fact is unresolved, every sentence that states so **must**, in the same breath, name at least one specific unsearched record type that could still establish it (e.g. "…remains unresolved pending a premarital census or a birth/baptism record"). A bare "cannot be determined from the record" with no such pairing is a fail, even when the tier (Not Proved / Possible) is otherwise correct.
+- **A "record not found" search result is not a conclusion — tier on the indirect evidence.** When a record type was searched but returned no results because the repository does not index it or it is not accessible, the narrative must (1) explicitly state what was searched and not found, naming the repository and its coverage limitation, and (2) tier the conclusion at the level the available indirect evidence supports. Do not collapse to `not_proved` when indirect evidence allows a higher tier. Do not write "cannot prove or disprove." This is the §2 documented-negative doctrine applied at the conclusion step.
 - **Do not resolve conflicts here** — recommend conflict-resolution. Do not evaluate exhaustiveness here — reference the existing declaration and tier accordingly.
 
 ## Re-invocation behavior

@@ -233,6 +233,59 @@ def test_stub_skills_gate_is_inert_when_nothing_is_declared(execution):
     assert _stub_check(execution).runnable is True
 
 
+@pytest.mark.parametrize(
+    "stub_entry",
+    ["search-external-sites", {"skill": "search-external-sites"}],
+    ids=["bare-string-form", "canned-response-form"],
+)
+def test_blocks_a_callee_declared_in_both_run_skills_and_stub_skills(stub_entry):
+    """The one combination worse than either alone.
+
+    `run_skills` unions the callee's allowed-tools into the session allowlist
+    and makes the fixture preflight demand a fixture for each. `stub_skills`
+    denies the launch and waives that demand — `uncovered_callee_fixtures`
+    skips a stubbed callee outright. Declared together they compose into
+    neither: the tools are granted, the fixture check is skipped, and the
+    callee never runs to need them. The main thread can then call one, find no
+    fixture, and abort the caller with `unmatched_tool_call` ~20 turns in.
+
+    The schema calls the two "mutually exclusive" in prose but has no
+    `not`/`allOf` enforcing it, so before this gate a test could declare both
+    and nothing complained. Both stub forms are gated because
+    `parse_stub_skills` normalizes them to the same name.
+    """
+    result = _stub_check(
+        {"run_skills": ["search-external-sites"], "stub_skills": [stub_entry]}
+    )
+    assert result.runnable is False
+    assert "search-external-sites" in result.reason
+    assert "BOTH" in result.reason
+    assert "run_skills" in result.reason and "stub_skills" in result.reason
+
+
+def test_allows_run_skills_and_stub_skills_naming_different_callees():
+    """Both fields on one test is fine — the constraint is per callee, not per
+    test. search-records delegates to several skills and a test may reasonably
+    execute one and deny another."""
+    result = _stub_check(
+        {"run_skills": ["search-external-sites"], "stub_skills": ["record-extraction"]}
+    )
+    assert result.runnable is True
+
+
+@pytest.mark.parametrize(
+    "execution",
+    [
+        {"run_skills": ["search-external-sites"]},
+        {"run_skills": [], "stub_skills": ["search-external-sites"]},
+        {"run_skills": [], "stub_skills": []},
+    ],
+    ids=["run-only", "empty-run-list", "both-empty"],
+)
+def test_exclusivity_gate_is_inert_without_an_actual_overlap(execution):
+    assert _stub_check(execution).runnable is True
+
+
 def _invariant_test_dict(tags):
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"

@@ -29,12 +29,37 @@ A search must include at least one of these anchor fields:
 
 - `surname`
 - `recordCountry`
+- `batchNumber`
 
 A search with only `givenName`, only `collectionId`, only a place,
 or only a kin name is rejected. The search service throttles
 unanchored queries because they're expensive — anchoring on
 something that meaningfully narrows the candidate pool keeps the
 tool fast and useful.
+
+`batchNumber` joined the list on 2026-08-12. It was deliberately kept
+off it when the parameter was added a week earlier — that call was made
+before the interaction below was measured, and the measurement reverses
+it. Two findings, live against `/service/search/hr/v2/personas` and
+reproducible with `dev/probe-batch-anchor.ts` (which derives every
+verdict below from its own run, and prints NOT MEASURED rather than a
+direction when a leg fails):
+
+- **A batch anchors on its own.** `q.batchNumber` with no other field
+  is accepted upstream and returns just that batch's extraction —
+  about two thousand records for `B01883-5`, two for `8317102`. It is
+  the cheapest filter the API takes, so the cost rationale above never
+  applied to it.
+- **Requiring a companion field was actively harmful.** The natural
+  companion is `recordCountry`, and a country that does not match the
+  batch returns **0** — the same signal the docs give for a *wrong
+  batch*, so the failure is silent and misreads as an empty parish.
+  Batch shape carries no country information at all — `B01883-5` is a US
+  batch, and nothing in the token says so. The correct country changes nothing
+  (identical counts), so the parameter could only hurt.
+
+Net: send a batch alone. `surname` still narrows within it normally
+(`B01883-5` + `Smith` cuts to about three dozen).
 
 ---
 
@@ -52,8 +77,8 @@ but the anchor rule above must be satisfied.
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
-| `surnameExact` | boolean | When `true`, only records with the exact surname spelling match. By default the search uses fuzzy matching (nicknames, spelling variants). When `surnameAlt` is also set, the strict-match toggle applies to both the primary and the alternate. |
-| `givenNameExact` | boolean | Same idea for given name. Applies to `givenNameAlt` too when both are set. |
+| `surnameExact` | boolean | When `true`, only records with the exact surname spelling match. By default the search uses fuzzy matching (nicknames, spelling variants). When `surnameAlt` is also set, the strict-match toggle applies to both the primary and the alternate. **Narrows the count, reorders the records it keeps, and it can drop the target** — read over complete sets, the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). See "What `.exact=on` actually does" under the API reference before recommending it. |
+| `givenNameExact` | boolean | Same idea for given name. Applies to `givenNameAlt` too when both are set. Expected to exclude period diminutives, though only the fuzzy direction was measured (see the `givenName` row below); same caveat as `surnameExact`. |
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
 set includes records that match the primary name AND records that
@@ -99,6 +124,33 @@ year range and a place, with corresponding `Exact` toggles.
 Year inputs are 4-digit years. The search engine ignores month and
 day even if supplied.
 
+**The `*Exact` toggles in this table change the result count.** A place toggle
+stops upward expansion to parent jurisdictions
+(it still descends to child localities); a year toggle removes the fuzz
+around the range bounds, excluding records whose indexed year falls just
+outside it — though that fuzz is only weakly evidenced: 3 of 300 sampled
+records fell outside an unqualified single-year range on 2026-08-08 and every
+one carried an *approximate* date ("about 1848"), while on a pool small enough
+to read to the end just 1 of 22 classifiable rows fell outside, and that row
+survived `.exact` too, which is not the shape of fuzz. How a year range
+treats records carrying **no indexed year** is **not established**, in
+either direction: neither that an unqualified range keeps them, nor that
+`.exact` drops them. The instrument that produced both readings could not
+tell a record with no indexed year from one whose year the result payload
+merely does not expose, so both were withdrawn rather than reversed. The
+practical consequence is that a year range — set or unset — cannot be
+relied on to include or exclude undated records. Neither toggle was measured surfacing a
+record a fuzzy search buried, and for the `surname` family — the only one
+diffed over complete sets — it cannot: the exact result there is a strict
+subset of the fuzzy one. What `.exact` *does* do to the records it keeps is
+reorder them (see the section-B table below). For the place toggle the only
+ranking observation is a single target, which ranked first with and without
+it; that is narrower than a statement about ranking in general. Unqualified place
+expansion is aggressive enough that a county scope barely discriminates —
+which is what makes these toggles useful mainly where a total has to mean
+something, such as an exhaustiveness claim. Measured figures are under
+"What `.exact=on` actually does" in the API reference.
+
 ### Family member fields
 
 | Field | Type | Description |
@@ -124,6 +176,17 @@ day even if supplied.
 | `otherGivenNameExact` | boolean | Strict match on the other given name. |
 | `otherSurnameExact` | boolean | Strict match on the other family name. |
 
+**A relative name does not require the relative to be present.** Left
+unqualified, these fields keep records that match, keep records where
+that relative was never indexed, and drop records naming a *different*
+relative. That is deliberate — absence in an index is not disconfirming,
+and sparse entries frequently omit parents — but it means a
+father-anchored hit may contain no father at all. Setting the
+corresponding `*Exact` requires the relative to be present and match,
+which drops the silent records along with variant forms the unqualified
+search did reach. Measured
+figures are under "What `.exact=on` actually does" in the API reference.
+
 `other*` is for cases where the caller knows two names appear
 together in a record but doesn't know the formal relationship.
 
@@ -132,7 +195,8 @@ together in a record but doesn't know the formal relationship.
 | Field | Type | Description |
 |-------|------|-------------|
 | `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `"1743384"`). |
-| `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `image_search` tool first to find the image group number. |
+| `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `volume_search` tool first to find the image group number. |
+| `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It satisfies the anchor rule by itself — combining it with `recordCountry` or `recordSubdivision` is rejected by `validateInput`, because a country that does not match the batch silently returns 0 (shape carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. `C050761` appears in older documentation as a letter + 6 digits example and is not attested here; the tool validates nothing, so this list bounds the evidence, not the input. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
@@ -463,6 +527,50 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 
 #### Place matching
 
+> **Live-run exemption for tokenizer-only changes.** The mandate above — treat a
+> ranking change as behavioural and re-verify against a live run — has one
+> measured exception. A `placeParts`/tokenizer change is exempt when **nothing a
+> run would actually feed to `placeParts` tokenizes differently** before and after.
+> That is exactly two input classes, and the criterion must be checked against
+> both:
+>
+> 1. **Tree facts** — `place`/`standard_place` in every
+>    `eval/tests/e2e/*/starting-tree.gedcomx.json` (what the harness stages) **and**
+>    every `*.final-tree.gedcomx.json` in `eval/runlogs/` (the run's *mutable* tree
+>    is what `record_search` reads, not the starting one). Note `standard_place ||
+>    place` — the standardized form wins where both exist.
+> 2. **Recorded search arguments** — `marriagePlace` and `recordSubdivision` in
+>    `eval/runlogs/e2e/`, which is where `searchedPlace` comes from.
+>
+> Deliberately **not** in the criterion: `unstripped-tree.gedcomx.json` (an
+> authoring artifact, never staged into a run), `research.json` assertion places,
+> README prose, and transcript text. A change may move those and still qualify —
+> which is exactly what happened below, so read the two classes above as the whole
+> test, not as a summary of a wider scan.
+>
+> Applied once, for the `\bco\.?\b` fix below, and the numbers are the criterion
+> run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
+> `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
+> **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
+> Exempt.
+>
+> Seven strings *did* change elsewhere in `eval/` — run-log outputs, one fixture
+> README line, and two `unstripped-tree.gedcomx.json` files. That is why the
+> criterion is scoped to the two input classes rather than to a corpus-wide diff: a
+> wider scan is the wrong test and would have refused an exemption that is correct.
+> A live run here would have sampled run-to-run jitter rather than the change.
+>
+> **Unexercised is not unreachable, and the distinction is the whole point.** Real
+> FamilySearch tree data does spell counties this way — `ruse-children`'s
+> `unstripped-tree.gedcomx.json` carries `place: "Seneca Co., O."` and
+> `mcaloney-mother`'s carries `"Hants Co.,Nova Scotia,Canada"` — so a fact whose
+> `standard_place` is absent would put the abbreviated form straight into
+> `placeParts` (`marriage-jurisdictions.ts` reads `standard_place || place`). That
+> has not happened in the corpus: of the 10,730 placed facts across every tree
+> file, the 150 with no `standard_place` contain no `co` token. A change that moves
+> a tokenized value any fixture actually feeds to `samePlace` still needs the live
+> run. This exemption is not a general licence to skip one.
+
 `searchedPlace` is the caller's `marriagePlace` when given, otherwise
 `recordSubdivision` + `recordCountry` joined — the caller usually scopes a marriage
 search with the latter pair, and reading only `marriagePlace` left the exclusion
@@ -480,17 +588,30 @@ string — so it would let TypeScript narrow an `else` to `undefined`. Callers t
 need the string narrowed test `!== undefined` themselves; that explicit check is
 what makes `jurisdictionHints.searchedPlace` a sound required `string`.
 
-**Known wart, recorded rather than fixed.** `isSubCountryPlace("Co., USA")` returns
-`true`. `placeParts` strips `co` out of `co.` and leaves the bare `"."`, which
-survives the empty-string filter and counts as a locality. The failure mode is
-precisely the one this guard exists to prevent — a country-wide search reading as
-scoped — so it is worth an eventual fix. It is left alone here because `placeParts`
-also feeds `placeTokens` → `samePlace`, i.e. the jurisdiction **exclusion and
-ordering** this spec flags as load-bearing and requiring a live run to re-verify,
-and because no real caller produces that input (`marriagePlace` and
-`recordSubdivision` always carry a name). Pinned by a `KNOWN WART` test in
-`tests/utils/marriage-jurisdictions.test.ts` so a future change to `placeParts`
-surfaces it.
+**The `Co.` qualifier, and why the first spelling of the regex was wrong.**
+`placeParts` drops `County`/`Co.` with `/\bcounty\b|\bco\b\.?/`. The abbreviation's
+dot is part of the qualifier and must be consumed with it. The original
+`\bco\.?\b` could not: after matching `co.` the trailing `\b` fails, so the engine
+backtracks and matches bare `co`, leaving a `"."` that survives the empty-string
+filter and counts as a locality. `\bco\b\.?` asserts the boundary first, then eats
+the dot.
+
+That stray token had two effects, and the reported one was the smaller. It made
+`isSubCountryPlace("Co., USA")` return `true`, so a country-wide search read as
+scoped — the failure this guard exists to prevent. More importantly it made
+`placeParts("Hill Co., Texas")` return `["hill .", "texas"]`, so `samePlace` did
+not match a tree place of `"Hill, Texas, United States"`: the **exclusion** failed
+and the jurisdiction a search had just come back empty on was offered back as an
+alternative (with its sub-places alongside it). It also split one jurisdiction into
+two candidates, since `placeTokens(...).join("|")` is the dedupe key.
+
+Reachable in principle — real tree data spells counties this way, and a fact with
+no `standard_place` feeds the abbreviated form straight into `placeParts` — though
+nothing in the corpus exercises it, which is why the fix qualified for the live-run
+exemption at the top of this section. Pinned by two tests in
+`tests/utils/marriage-jurisdictions.test.ts`: the `isSubCountryPlace` case, and an
+exclusion case scoped `"Hill Co., Texas"` that pins the root cause rather than the
+symptom.
 
 It is compared to each candidate on comma-separated tokens, lowercased, with
 `County`/`Co.` dropped and the country term dropped unless it is all that remains.
@@ -536,10 +657,132 @@ Each `RecordSearchResult`:
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
 | `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
+| `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
 inputs are year-only.
+
+### `relativeTerms` — whether the relative you anchored on is actually there
+
+A relative-name term is sent with `m.queryRequireDefault=on`, which FamilySearch
+reads as **must not contradict**, not *must carry*. A record that names no
+father at all therefore survives a father-anchored search. That is correct —
+absence in an index is not disconfirming, and sparse entries routinely omit
+parents — but it means a hit can be *consistent with* William while saying
+nothing about him, and nothing in the response used to distinguish the two. The
+write-up then reads "confirming her father William" on a record that never
+mentions him: false, and filed as though well-sourced. `relativeTerms` carries
+the distinction as data.
+
+Emitted only for prefixes the caller supplied a **name** for, and omitted
+entirely when none were. The `*Exact` booleans do not count — `fatherGivenNameExact`
+with no `fatherGivenName` sends no father constraint, so there is nothing to
+report on.
+
+```jsonc
+"relativeTerms": {
+  "father": { "status": "present", "name": "Wm. Neal" },
+  "mother": { "status": "absent" }
+}
+```
+
+| Status | Meaning |
+|---|---|
+| `present` | The record names a relative in this role. `name` carries theirs. |
+| `absent` | The record names no such relative. **The case this field exists for.** |
+| `unknown` | Could not be determined. Never guessed. |
+
+**`present` is not a match verdict.** The tool does not re-run FamilySearch's
+fuzzy matcher and must not claim to have. It reports that a relative in this
+role exists and gives the name, so `Wm.` against a query of `William` is visible
+and checkable by the caller. A status word asserting a match the tool never
+performed would recreate this field's own failure mode one layer up.
+
+**`unknown` beats a wrong `absent`, always.** A wrongly denied relative reads as
+*disconfirming* evidence, which is worse than silence. Four situations return
+`unknown`:
+
+1. The persona could not be identified inside the graph (no `primaryId`).
+2. The persona was matched by the `principal === true` fallback rather than by
+   ARK. A live probe showed this anchor turns a silent record into an
+   apparently contradicting one when the search matched the relative themselves:
+   resolving "the father of the principal" returns the searched person.
+3. The entry carries no relationship graph — `gedcomx` absent, `relationships`
+   absent, **or** `relationships: []`. An empty array is not "resolves cleanly
+   and yields nobody"; it cannot be told apart from relationships never being
+   returned.
+4. A parent exists whose sex is not provably `Male` or `Female` — see below.
+
+**Resolution rules**, all anchored on the matched persona:
+
+| Prefix | Rule |
+|---|---|
+| `father` | ParentChild parent whose `gender` is exactly `"Male"` |
+| `mother` | ParentChild parent whose `gender` is exactly `"Female"` |
+| `parent` | Any ParentChild parent, regardless of sex — mirrors `q.parentGivenName` |
+| `spouse` | The **other** endpoint of a Couple row in which the persona is an endpoint |
+| `other` | Any co-person whose **name** matches the query — no relationship role exists to resolve against |
+
+`father` and `mother` are **sex-derived**, and resolve in three ordered
+branches: `present` if a parent of that sex is on the record; else `unknown` if
+any parent's sex is indeterminate (`gender` absent, the literal `"Unknown"` that
+`simplifyGender` emits for a non-Male/Female URI, or an endpoint id naming
+nobody in `persons[]`); else `absent`.
+
+The order is the safety property, and both halves of it are load-bearing.
+Checking indeterminacy *before* absence means "we could not establish the sex"
+never becomes a denial. But `absent` must stay reachable: **a record naming only
+the mother genuinely is evidence that no father was indexed**, and that is the
+signal this field exists to surface. Collapsing the rule to a single "not
+provably Male → unknown" predicate destroys it on exactly the records carrying
+the most information — 20 of 384 surveyed real results sit in that cell.
+
+For `parent` and `spouse`, an endpoint that is missing or resolves to no entry
+in `persons[]` yields `unknown`, not `absent`.
+
+`spouse` reports the endpoint that is **not** the persona; a Couple row is
+symmetric and the persona may be either `person1` or `person2`, so reading a
+fixed side would report the searched person as their own spouse. When both
+endpoints are the persona, the answer is `unknown`. When two rows qualify, the
+first in document order wins — `name` is one name, not a list.
+
+`name` is joined from `names[0]`'s `given` and `surname` (`simplifyName` writes
+no `fullText`, so the parts must be joined) and tolerates a missing half. If the
+join yields nothing the status is still `present` **without** a `name`: presence
+is established by the relationship, not by the name.
+
+**`other` is the exception to all of the above, and its status vocabulary is
+genuinely narrower.** `q.otherGivenName` names a co-occurring person of
+*unspecified* relationship, so there is no relationship role to resolve against
+and the only available question is whether some co-person's **name** answers the
+query. Names are compared exactly, ignoring case and punctuation (`Wm.` matches
+` wm `, but not `William`).
+
+That asymmetry is deliberate. "Some other person is on this record" would be a
+useless rule — every one of the 384 surveyed real results is multi-person, since
+search entries carry the whole household — and would make `other` a constant
+`present` naming an arbitrary bystander.
+
+| Status | When |
+|---|---|
+| `present` | A co-person's name matches. A real positive; `name` says who. |
+| `unknown` | Co-people exist, none matches by name. |
+| `absent` | The record carries **no** co-person at all. Rare, but legal. |
+
+A name miss is `unknown`, never `absent`: we compare exactly while FamilySearch
+matched fuzzily, so a `Wm.`-vs-`William` miss means "could not confirm", not
+"not on this record". The `absent` that *is* reachable for `father`/`mother`/
+`spouse` rests on the record positively naming someone else in that role, and no
+such evidence exists here — so no such denial is offered.
+
+`other` reads `persons[]` rather than the relationship graph, so `unknown`
+trigger 3 (no graph) does not apply to it: a record with no `relationships` can
+still answer an `other` term.
+
+**Survives staging.** Resolved inside `mapEntry` before the staged slim block
+deletes `gedcomx`, so it reaches both the inline stub and the sidecar payload.
+`rank_search_matches` carries it onto the ranked stub verbatim.
 
 Each `Event`:
 
@@ -626,7 +869,7 @@ Example:
   name: "record_search",
   description:
     "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname or recordCountry. Other fields " +
+    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
     "narrow ranking. Returns ranked person matches with key facts, " +
     "persistent URLs, source-record details, and Family-Tree-person match " +
     "suggestions. Requires authentication — call the login tool first if " +
@@ -637,13 +880,13 @@ Example:
     type: "object",
     properties: {
       // Person fields
-      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname` or `recordCountry` must be supplied." },
+      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
       givenName:             { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt:            { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt:          { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex:                   { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact:          { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants). Applies to `surnameAlt` too when both are set." },
-      givenNameExact:        { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants). Applies to `givenNameAlt` too when both are set." },
+      surnameExact:          { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count and reorders the records it keeps; measured over complete sets it only ever removes records, never surfaces one the fuzzy search buried. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
+      givenNameExact:        { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count and reorders the records it keeps; it is not a way to surface a record the fuzzy search buried. Expected to exclude diminutives a period record may use (`Betty` for `Elizabeth`) — the default's reach to them is measured, the exclusion is not. Applies to `givenNameAlt` too." },
 
       // Birth event
       birthYearFrom:         { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
@@ -704,8 +947,9 @@ Example:
 
       // Record-source
       collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
-      imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `image_search` tool first to find the image group number for a place and date range." },
-      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname` or `recordCountry` must be supplied." },
+      imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
+      batchNumber:           { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
+      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus:         { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
@@ -765,7 +1009,7 @@ User-Agent: <browser-like user agent string>
 
 | Flag | Value | Purpose |
 |-----|------|---------|
-| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. |
+| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. **This flag is the only "required" mechanism the API offers** — there is no per-field qualifier. `q.<field>.required=on` is rejected outright (`400 {"errors":["Unable to map supplied value=required to term modifier"]}`), so a caller cannot make one term required and another optional. Because the tool sends the flag unconditionally, **every supplied `q.*` term is already a hard requirement** — but "required" means the record must not *contradict* the term, not that it must carry it. For the searched person's own name, which the index virtually always holds, that collapses to *must match*, which is why a nil result means one of the terms **on the person you searched** did not match. For a field a record can omit, silence is not a contradiction and those records are kept: an unmatchable `fatherGivenName` still returned about 441,000 of a roughly 456,000 baseline, dropping only the records that named a *different* father. See "Relative names keep records where the relative is absent" below. `f.*` filters apply either way; only `q.*` terms are governed by the switch. Verified live 2026-08-04 on `q.surname=Zsigmondy&q.surname.exact=on` (634 hits): adding a gibberish given name, an impossible 1700–1710 birth range, or Alaska as the birthplace returned **6 / 4 / 4** with the flag and **634 / 634 / 634 — unchanged** without it. Each added term was ignored outright. |
 | `m.defaultFacets` | `off` | Tells the server not to compute facet aggregations. The tool doesn't consume facet data; turning them off speeds up broad queries by up to 9×. |
 
 **Tool input → API parameter mapping:**
@@ -826,6 +1070,7 @@ User-Agent: <browser-like user agent string>
 | `otherSurnameExact=true` | `q.otherSurname.exact=on` |
 | `collectionId` | `f.collectionId` |
 | `imageGroupNumber` | `q.filmNumber` |
+| `batchNumber` | `q.batchNumber` |
 | `recordCountry` | `q.recordCountry` |
 | `recordSubdivision` | `q.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space) |
 | `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7) |
@@ -866,6 +1111,118 @@ pattern: `q.<term>.<modifier>` and `q.<term>.<modifier>.<cardinality>`.
 
 Modifiers stack with cardinality. Example: `q.surname.exact.1=on`
 applies exact matching to the alternate surname.
+
+The suffix order matters and only one form works: `q.surname.exact.1=on`
+is accepted, while `q.surname.1.exact=on` is rejected
+(`400 {"errors":["Unable to map supplied value=1 to term modifier"]}`).
+One subtlety the tool already handles: setting only the primary exact
+alongside a `surnameAlt` reverts to the fully fuzzy count (measured
+31,606 against 445), which is why `surnameExact` emits both
+`q.surname.exact=on` and `q.surname.exact.1=on` when an alternate is set.
+
+**What `.exact=on` actually does — measured, not inferred:**
+
+Live measurements against `/service/search/hr/v2/personas`, 2026-08-04,
+re-measured 2026-08-08 and — for the legs that were re-done over complete
+result sets rather than samples — 2026-08-10/11, reproducible via
+`packages/engine/mcp-server/dev/probe-search-qualifiers.ts` — **with four
+exceptions the script has no section for**, which were measured during the
+original probe session under query shapes it does not run: the `14,095 → 51`
+pool pair and the `251,867 → 3` batch-number pair (both quoted in
+`search-strategy-levers.md` / `collection-quirks.md`, not here), and the
+`31,606 vs 445` alternate-surname pair above. Each *behaviour* was re-verified live on
+2026-08-08 (a batch number still cuts a multi-million-hit search to double
+digits and a nonsense batch still returns 0 rather than being ignored; a
+primary `.exact` alongside an untagged `surnameAlt` still reverts to the fuzzy
+count exactly). Only the figures are unreproducible from this script — do not
+cite them as probe output.
+These are the figures the tool's schema descriptions in
+`src/tools/record-search.ts` summarize, and they contradict the
+intuition the qualifier family invites.
+
+**`.exact=on` REMOVES records and REORDERS the ones it keeps.** Measured
+over COMPLETE result sets on pools small enough to read to the end
+(`dev/probe-search-qualifiers.ts` section B), scoring each shared record's
+position among the shared set in fuzzy order against its position in the
+exact list — both run 1..N, so removal cannot itself move anything:
+
+| Population (`surname`, marriage) | Fuzzy → exact rows | Exact-only rows | Records displaced |
+|---|---|---|---|
+| Brazil / `Bochenek` | 521 → 81 | **0** | **0** |
+| England / `Pocklington` | 469 → 423 | **0** | **54**, the largest by 34 positions; 6 of them cross rows carrying a *different* relevance score |
+
+Exact-only is 0 in both: every record the exact search returns is already
+in the fuzzy set, so `.exact` is a strict **subset** and cannot surface a
+record a fuzzy search buried. That half is settled — but only for the
+`surname` qualifier, and only in marriage populations. The reordering half
+is real too: 54 records move against a same-query noise floor of 0, so any
+prose claiming the qualifier leaves the order alone is contradicted here.
+
+Count inflation is a separate, totals-only argument (no enumeration
+required): `Zsigmondy` 108,848 → 634 (172×), `Mingazzini` 40,908 → 1,796
+(23×), `Geach` roughly 18.5 million → about 23,200 (**799×**).
+
+For places, no displacement diff was run. What section C recorded is one
+target's rank: a county-scoped marriage search measured **about 35,500 fuzzy
+against 2 exact, with the target ranked first in both** (rank measured by
+record id, not by name). Read that as a single-target observation, not as a
+general statement about place ranking.
+
+**Consequences per family:**
+
+| Family | Unqualified behavior | What `.exact=on` costs |
+|---|---|---|
+| `surname` | Filters, and expands loosely to spelling neighbours | **Can drop the target.** On a record indexed `Neill`, `q.surname=Neal` returns it and `q.surname=Neal&q.surname.exact=on` returns **0**. Fuzzy matching is the mechanism that bridges an index misspelling — the commonest reason a record cannot be found |
+| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
+| relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*` and `spouse*` only, on marriage records in two countries; `mother*`, `parent*` and `other*` are assumed to follow, not measured | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
+| `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
+| `<event>Year` | Fuzz around the range bounds — weakly evidenced (see above). Whether an unqualified range requires an indexed year is **not established**: the instrument that addressed it could not tell a record with no indexed year from one whose year the result payload merely does not expose, so no direction is recorded. Do not quote a share of tolerated silence, and do not rely on an unqualified range to include undated records. `any` was never tested at all | Meant to exclude records whose indexed year falls just outside the range, though the enumerated check found one out-of-range row SURVIVING it, so do not rely on the exclusion being complete. Whether it also drops records carrying no indexed year, or in-range *approximate* dates, is **not established** — so it cannot be relied on to exclude undated records either. Use only with a firm date |
+| `recordCountry` | **Already strict** — `q.recordCountry=Narnia` returns 0 rather than being ignored | No flag exists and none is needed |
+| `recordSubdivision` | **Already strict**, measured the same way as `recordCountry`: a nonexistent subdivision returns 0 rather than being ignored, and a real one (`Alabama`) cut a 14,035,394 country total to 342,439. Note the scope — this establishes only that the value is *honoured*, not how a place scope EXPANDS. Whether dropping to a state-level scope rescues a search that nils at county level is a separate, unfinished place investigation and is not answered here | No flag exists and, on this evidence, none is needed |
+
+**Relative names keep records where the relative is absent.** This is
+correct as designed, and worth stating because it is invisible to the
+caller. A 300-result survey on the father's given name — **SAMPLED**, from a
+pool far too large to enumerate, so read the columns as indicative and the
+enumerated version below as the finding:
+
+| Query | Results naming a father | Top father names |
+|---|---|---|
+| baseline (no father term) | 262 | `John:54 William:22 James:17` |
+| `q.fatherGivenName=William` | 283 | `William:192 Wm:52 Wm.:31` |
+| …plus `.exact=on` | 295 | `William:294` (no `Wm`/`Wm.`) |
+| real but rare (`Zachariah`) | 7 | `Zachariah:2 Zachie:1 Zacharius:1` |
+| gibberish father name | **1** | `Jno:1` |
+
+Re-measured 2026-08-08. The earlier figures (104 / 287 / 300 / **0**) were
+artifacts of the probe's father detection falling back to a role regex —
+`person.gender` is an object, so a string comparison against it never fired.
+The column counts records that *name* a father, which is a lower bound on
+father-bearing: a record can carry an indexed parent with no readable name.
+Measured the same day, the gibberish row names no father in 299 of 300 but
+only 292 carry no indexed parent at all.
+
+The gibberish row — 1 father-bearing result of 300 sampled — points the
+same way, and the question was then settled by enumeration rather than
+sampling. Reading whole result sets to the end on two marriage populations
+(Brazil / `Bochenek`, 521 rows; England / `Pocklington`, 469 rows) and on the
+`father` and `spouse` families only: an unmatchable name left **zero** records
+naming a different relative, retained exactly the records the baseline was
+silent about, and a real name drawn from the data returned matching records.
+Retention therefore equals the baseline's silent share — 70.2% against a 70.1%
+silent share and 92.8% against 92.8% for `father`, 10.2% against 9.8% and 81%
+against 81% for `spouse`. That is what makes the father/spouse difference an
+artifact of how often each is indexed, not a property of the parameter.
+
+So an unqualified relative name keeps matching records, keeps records where
+that relative was never indexed, and drops contradicting ones — the right
+trade, since absence in an index is not disconfirming and sparse entries
+often omit parents. **A caller cannot currently tell the first case from the
+second:** a father-anchored hit may contain no father at all.
+
+These semantics are **not** unit-testable — the URL-shape tests assert
+the string the tool builds, never that FamilySearch honors it. They are
+reproduced by `dev/probe-search-qualifiers.ts`.
 
 **Response shape:**
 
@@ -1004,7 +1361,8 @@ For each `entry` in `response.entries`:
 
 | Condition | Behavior |
 |-----------|----------|
-| No anchor field present | Throw: `"search needs at least one anchor: surname or recordCountry. Searches without an anchor are too expensive on the FamilySearch API."` |
+| No anchor field present | Throw: `"search needs at least one anchor: surname, recordCountry or batchNumber. Searches without an anchor are too expensive on the FamilySearch API."` |
+| `batchNumber` combined with `recordCountry` or `recordSubdivision` | Throw: `"do not combine batchNumber with recordCountry or recordSubdivision: a batch anchors on its own, and a record-jurisdiction filter that does not match the batch silently returns 0 (indistinguishable from a wrong batch). Drop them and send the batch alone; narrow with surname if needed."` |
 | `count` outside `[1, 100]` | Throw: `"count must be between 1 and 100."` |
 | `offset` negative | Throw: `"offset must be non-negative."` |
 | `offset + count > 4999` | Throw: `"offset + count must be <= 4999 (FamilySearch search depth limit). Narrow the query instead of paging deeper."` |
@@ -1043,6 +1401,14 @@ API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 `TreeMatch`, `RecordSearchToolResponse`).
 
+### `packages/engine/mcp-server/src/types/relative-terms.ts`
+
+`KinPrefix`, `KinTerm`, `RelativeTermStatus`,
+`RelativeTermFinding`, `RelativeTerms`. A third module rather than either
+tool's own types file: `types/record-search.ts` already imports from
+`types/rank-search-matches.ts`, which imports nothing, so declaring these in
+either and importing from the other would make the two mutually importing.
+
 ### `packages/engine/mcp-server/src/tools/record-search.ts`
 
 - `recordSearchToolSchema` — MCP tool schema (the JSON above).
@@ -1056,11 +1422,20 @@ types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
 - `buildSearchUrl(input)` — query-parameter builder. Maps each
   input field to its `q.*` / `f.*` parameter, applies `.exact`
   modifiers, encodes values, applies the default `m.*` flags.
-- `mapEntry(entry)` — `FSSearchEntry → RecordSearchResult` mapping (the
-  11-step procedure above).
+- `mapEntry(entry, terms?)` — `FSSearchEntry → RecordSearchResult` mapping
+  (the 11-step procedure above). `terms` is the `KinTerm[]` from
+  `suppliedKinTerms` — a prefix plus the names the caller gave, which `other`
+  resolves against; omitted, no `relativeTerms` is emitted.
 - `extractEvent(fact)` — `FSFact → RecordSearchEvent`.
-- `findRepresentedPerson(entry)` — the persona-by-ark match used in
-  step 1 of mapping.
+- `findRepresentedPerson(entry)` — the persona match used in step 1 of mapping.
+  Returns `{ person, anchor }`, where `anchor` is `"ark"` for a positive
+  identification and `"principal"` for the fallback guess. `relativeTerms`
+  refuses to resolve on a `"principal"` anchor.
+- `suppliedKinTerms(input)` — which relative terms the caller supplied a *name*
+  for, and the names. Ignores the `*Exact` booleans. `other` needs the names
+  themselves; the four role-based prefixes ignore them.
+- `resolveRelativeTerms(gedcomx, primaryId, terms, anchor)` — pure resolver
+  over the simplified doc. See the `relativeTerms` section above.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
 
@@ -1082,6 +1457,11 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 3 | Returns results for surname + alt-name UNION (`surnameAlt` only) | Single-alt UNION + auto-pair fills `givenNameAlt` |
 | 4 | Returns results for surname + alt-name UNION (`givenNameAlt` only) | Auto-pair fills `surnameAlt` |
 | 5 | Throws when no anchor is supplied (only givenName + birthPlace) | Anchor rule rejection |
+| 5a | `batchNumber` alone satisfies the anchor rule | Batch anchors by itself |
+| 5b | The anchor error names `batchNumber` | Error must not omit an accepted anchor |
+| 5c | Rejects `batchNumber` combined with `recordCountry` | Structural anchor for the pairing rule — prose alone decays (architecture.md §3.1) |
+| 5e | Rejects `batchNumber` combined with `recordSubdivision` | Same class of jurisdiction filter, same silent-zero risk; caught in one step rather than via the requires-recordCountry detour |
+| 5d | Allows `batchNumber` combined with `surname` | 5c must not be satisfied by rejecting every companion field |
 | 6 | Throws when count > 100 or count < 1 | Bound check |
 | 7 | Throws when offset + count > 4999 | Pagination cap |
 | 8 | Throws when `<event>YearFrom` is supplied without `<event>YearTo` | Range pair validation |
@@ -1099,8 +1479,11 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 18 | `recordSubdivision` is composed into `q.recordSubcountry=<country>,<subdivision>` | Subdivision composition |
 | 19 | `recordType="marriage"` maps to `f.recordType=1` | Record-type enum mapping |
 | 20 | Default flags `m.queryRequireDefault=on` and `m.defaultFacets=off` are sent on every request | Default flag enforcement |
+| 20a | The `.exact=on` **semantics** documented under "What `.exact=on` actually does" are NOT asserted here — the URL-shape rows above check the string the tool builds, never that FamilySearch honors it. Reproduced by `dev/probe-search-qualifiers.ts` against the live API | Live-behavior evidence trail (deliberately outside vitest) |
 | 21b | `imageGroupNumber` maps to `q.filmNumber` | Film-number param mapping |
 | 21c | `imageGroupNumber` accepts split DGS format | Split DGS format passthrough |
+| 21d | `batchNumber` maps to `q.batchNumber` | Batch-number param mapping |
+| 21e | `batchNumber` passes through unaltered whatever shape it is given (letter + 6 digits, dashed, all-numeric, leading zero) | Shape passthrough — the tool must not reformat a batch, and a leading zero must survive |
 | 21 | Throws auth error when not authenticated | Auth propagation |
 | 22 | Throws on 400 with extracted error-body detail | API validation errors |
 | 23 | Falls back to generic 400 message when body isn't parseable | Defensive parsing |
@@ -1112,6 +1495,30 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
 | 31 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
+| 35 | `father: absent` when the record names only the mother | **The issue's case.** `absent` must stay reachable |
+| 36 | `father: absent` when the record names no parents at all | The other route to `absent` |
+| 37 | `father: present` with the parent's name | Positive path |
+| 38 | `unknown`, not `absent`, when the parent carries no `gender` key | False-denial guard (shape 1) |
+| 39 | `unknown`, not `absent`, when `gender` is the literal `"Unknown"` | False-denial guard (shape 2) |
+| 40 | The sex gate does not leak into the sex-agnostic `parent` prefix | Prefix isolation |
+| 41 | `unknown` for every prefix when the persona has no id | `unknown` trigger 1 |
+| 42 | `unknown` for every prefix on the `principal` anchor fallback | `unknown` trigger 2 |
+| 43 | `unknown` when `relationships` is missing **or** `[]` | `unknown` trigger 3 |
+| 44 | `mother` is not satisfied by a male parent | Sex discrimination |
+| 45 | `spouse` reports the *other* Couple endpoint, not the persona | Couple symmetry |
+| 46 | `spouse: unknown` when both endpoints are the persona | Degenerate Couple row |
+| 47 | `spouse: absent` when there is no Couple row | Negative path |
+| 48 | `name` joins given + surname and tolerates a missing surname | Name derivation |
+| 49 | `relativeTerms` emitted only when a relative *name* was supplied | `*Exact` alone does not count |
+| 50 | `other` resolves by name match against co-people | No relationship role exists |
+| 51 | `other` is `unknown`, not `absent`, when no co-person name matches | Exact compare vs FS's fuzzy one |
+| 52 | `other` matches across case and punctuation | `Wm.` vs ` wm ` |
+| 53 | `other` is `absent` only when the record has no co-person | The one reachable denial |
+| 54 | `other` still answers when the relationship graph is missing | It reads `persons[]`, not the graph |
+| 55 | Survives the staged slim block, inline **and** in the sidecar on disk | The integration the design turns on |
+
+Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
+after this table was last extended. Cases 35–55 cover `relativeTerms`.
 
 ### Smoke-test script
 
@@ -1171,11 +1578,13 @@ the headline changes:
    `/service/search/hr/v2/personas`. Reasons: 100× corpus,
    `f.collectionId` works, cleaner errors. Trade-off: leaner
    per-entry shape, browser-UA requirement.
-2. **Anchor rule replaces "surname required"**: any of surname,
-   collectionId, recordCountry, maritalStatus, year-range, or
-   non-empty requireFields qualifies. Reflects the API contract
-   (any q.* term required) plus the throttling concern (cheap
-   anchors required).
+2. **Anchor rule replaces "surname required"**: `surname`,
+   `recordCountry` or `batchNumber` qualifies — and nothing else.
+   Reflects the throttling concern (cheap anchors required). An
+   earlier draft of this list also named `collectionId`,
+   `maritalStatus`, a year-range and `requireFields`; none of those
+   was ever accepted by `validateInput`, and the canonical statement
+   is the "Anchor rule (design note)" section above.
 3. **`collectionId` is a first-class input** (single value only,
    not array — multi-collection results aren't balanced).
 4. **`requireFields` modifier input added**. Upgrades any

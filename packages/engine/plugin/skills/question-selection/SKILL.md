@@ -1,6 +1,5 @@
 ---
 name: question-selection
-model: claude-sonnet-4-6
 description: Selects the next research question (writing it to research.json) based on current project
   state — timeline gaps, unresolved conflicts, hypothesis tests, or
   exhausted direct evidence requiring FAN pivot. Also derives the first
@@ -42,13 +41,14 @@ can't be silently stale. Re-read `research.json` (and persons in
 sub-skill or the user changed the file in a way you don't already have.
 Either way, identify:
 
-- **Objective** — the overarching goal; every question must trace back to it.
+- **Objective** — the overarching goal and the scope boundary (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
   (`plan_items[].status == "in_progress"` on an open question — in-flight
   research the user has already committed to).
 - **Resolved questions** — what has been answered.
 - **Pedigree gaps** — individuals missing a name, specific date, or
-  county/parish-level locality (see `references/pedigree-analysis.md`).
+  county/parish-level locality, within the objective's scope (see
+  `references/pedigree-analysis.md`).
 - **Timeline gaps**, **unresolved conflicts** (especially those blocking
   downstream questions), **active hypotheses**, **log coverage**, and the
   current **assertion** landscape.
@@ -99,6 +99,17 @@ step, not tier-chasing. The line: any *unanswered* objective fact → select the
 appropriate question (decompose, or FAN-pivot when direct evidence is spent);
 another source for a fact *already concluded* at a defensible tier → stop.
 
+### 1c. Scope the question to the objective
+
+When nothing in `questions[]` covers the objective yet, the question you write
+*is* the user's framing: name the fact sought, not the record that might carry
+it — record choice is `research-plan`'s. A single-fact objective **is** that
+question; restate it with identifying detail rather than narrowing it. Once a
+question at the objective's scope is open, your job is the next sub-question
+beneath it — verify an unsound premise, test a named source, decompose a part —
+and that one may be narrower and may name a record. An existing objective-scope
+question is never a reason to add nothing; only Step 1b stops the project.
+
 ## 2. Identify the highest-value question
 
 Apply these priorities in order. When multiple candidates exist at the same
@@ -110,26 +121,31 @@ priority level, prefer the one that unblocks the most downstream questions.
 | 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies | `objective_decomposition` |
+| 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** | `objective_decomposition` |
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
 **Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
 timeline gaps do not trigger it.
 
-**Priority 4 detail:** Each sub-question targets a single fact (one identity,
-relationship, or event). Example decomposition of "Identify the parents of
-Patrick Flynn": "Where was Patrick Flynn in the 1850 census?" / "What does
-his death certificate say about his parents?" / "Did Thomas Flynn leave a
-will naming his children?"
+**Priority 4 detail:** Fires for the first question on a single-fact objective
+too — there the "decomposition" is one question at the objective's own scope.
+Split only when the objective holds more than one independent fact. Each
+sub-question targets a single fact and names that fact, not the record that
+might carry it: "Whom did Thomas Flynn marry?" / "When and where did Thomas
+Flynn die?" — the census or certificate belongs in the plan.
+
+**Priority 5 detail:** a gap on the subject's spouse or child is not a
+Priority 5 signal.
 
 **Priority 6 detail:** Don't pivot to FAN just because one search returned
 nil — pivot only when all planned direct searches are complete and
 unresolved. If the primary question's `exhaustive_declaration.declared` is
 `true`, the researcher has declared direct evidence exhausted: take that as
-the FAN signal and do NOT propose additional direct-evidence paths. FAN
-examples: "Who witnessed Thomas Flynn's land deeds?" / "Who were his
-neighbors in the 1850 census?"
+the FAN signal and do NOT propose additional direct-evidence paths. A FAN
+question's answer must be evidence about the objective's subject. Examples:
+"Who witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who
+were Thomas Flynn's neighbors in Schuylkill County in 1850?"
 
 ## 3. Formulate the question
 
@@ -140,6 +156,17 @@ Before formulating, verify the starting-point information is sound. Do not
 build a question on unverified claims from compiled sources (online trees,
 unsourced genealogies). If the premise is unverified, the first question
 should verify it.
+
+**When the objective signals the user doubts an existing assignment** —
+phrasing like "correct parents", "the right X", "not correct" — the current
+tree assignment is the premise *under doubt*, not a starting fact. **In
+interactive mode, before formulating, ask the user two things: (1) what
+evidence led them to doubt the current assignment, and (2) the birth date and
+place they are working from.** Then frame the first question as a **test of the
+disputed assignment** — e.g. "Do independent records confirm or refute that X
+and Y are the parents of Z?" — never treating the questioned tree as evidence
+for its own conclusion (issue #1471). Under `--autonomous` (no user to answer),
+skip the ask and go straight to the verification-framed question.
 
 ## 4. Write the question
 
@@ -188,10 +215,17 @@ plan items complete.
 
 ## 5. Present
 
-- The question selected and why (the rationale).
-- What it depends on and what it unblocks.
-- Suggest next step: "Would you like me to plan the research for this
-  question?" (research-plan).
+Never report only the id — "q_001 written." has no referent for a user who
+cannot see `research.json`. Give:
+
+- The question in full, quoted as written, and its id glossed on first use:
+  "saved as `q_001` (this project's label for it)".
+- On the project's first question, one sentence separating the two terms: the
+  objective is the overall goal; the question is the single fact pursued next.
+- The rationale, and what it depends on / unblocks — naming any other `q_` by
+  its question text, not by id alone.
+- The next step as a plain-language offer ("Would you like me to work out which
+  records to search for this?"), never a skill name.
 
 ## Rules
 
@@ -200,21 +234,29 @@ plan items complete.
   question's plan items are `in_progress` (see Step 1a).
 - **Sound basis required.** Don't build questions on unsound assumptions —
   if the premise is unverified, verify it first.
-- **Objectives vs. questions.** Never write an objective as a question;
-  questions are narrow, single-fact, testable sub-problems.
+- **Objectives vs. questions.** Never write a **multi-fact** objective as a
+  question. A single-fact objective already *is* one: restate it, don't narrow
+  it to a record. See Step 1c.
+- **Stay inside the objective's scope.** A spouse's or child's own missing
+  facts are a different objective, except on a Priority 6 FAN pivot.
 - **Don't declare exhaustiveness here.** Closing questions is the
   `research-exhaustiveness` skill's job — this skill only creates them.
-- **Never delete a question.** To retire one, `research_append`
-  `op: "update"` its `status` (`superseded` / `answered`); the id is
-  preserved. Never write a second `q_` for a question that already exists —
-  update its status instead.
+- **Never delete a question, and never change an existing question's `status`
+  here.** `question_status` ∈ `open` | `in_progress` | `exhaustive_declared` |
+  `resolved`. This skill owns none of those transitions —
+  `exhaustive_declared` is `research-exhaustiveness`'s, `resolved` is
+  `proof-conclusion`'s — so there is no way to retire a question here, and none
+  is needed: an overtaken question stays as it is. Never write a second `q_` for
+  a question that already exists.
 - **Historical context matters.** Factor in jurisdictional boundary changes,
   migration, wars, and record availability for the time and place.
 
 ## Edge cases
 
-- **Fresh project, no clear gaps:** default to Priority 4 (decompose the
-  objective into sub-questions).
+- **Fresh project, no clear gaps:** default to Priority 4. If the objective
+  holds several independent facts, decompose it into sub-questions; if it is
+  already a single fact, the first question is that objective restated with
+  identifying detail — not a narrower record-scoped one (Step 1c).
 - **All questions blocked:** identify the root blocker and formulate a
   question to resolve it — even if that means a conflict with no formal
   `conflicts[]` entry yet.
@@ -228,11 +270,11 @@ plan items complete.
 
 ## Re-invocation behavior
 
-**Writes:** entries in the `questions` section of `research.json` (`q_` ids)
-and their `status`, via `research_append`.
+**Writes:** new entries in the `questions` section of `research.json` (`q_`
+ids), via `research_append`. Not their `status` after creation — see the Rules
+above.
 
-**On repeat invocation:** re-evaluate which question is next. Update an
-existing question's `status` in place (`op: "update"` — e.g. mark it
-`answered` or `superseded`; the id is preserved, never deleted), or select a
-question already present. Add a new `q_` only when the next question isn't
-already in the section — never write a second `q_` for the same question.
+**On repeat invocation:** re-evaluate which question is next, and either select
+a question already present or add a new `q_` when the next question isn't
+already in the section — never write a second `q_` for the same question, and
+never revise an existing question's `status`.

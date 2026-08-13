@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_r7k",
+    "skill": "proof-conclusion",
+    "name": "Review flags a proof narrative that is not self-contained",
+    "type": "positive",
+    "description": "Second review-mode test, required by issue #1392 so the §9 review checklist has more than one test to prove against. The flynn-proof-bare-ids scenario is byte-identical to mid-research-flynn except for one field: ps_001.narrative_markdown refers to its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001/003/004, plan_001), describes none of the underlying records in prose, and carries no inline or appended citations. The user asks the same GPS-review question as ut_proof_conclusion_007, so narrative quality is the only variable between the two tests. This test measures whether the review systematically performs the self-containment check — not which verdict it reaches.",
+    "tags": [
+      "proof",
+      "parentage",
+      "gps-review",
+      "GPS-step-5",
+      "no-new-proof-expected",
+      "narrative-self-containment"
+    ]
+  },
+  "input": {
+    "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.",
+    "scenario": "flynn-proof-bare-ids"
+  },
+  "judge_context": [
+    "GROUND TRUTH: in this scenario ps_001.narrative_markdown names its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001). It describes none of the underlying records in prose — no census years, no dwelling/family numbers, no informant, no repository — and carries no inline citations and no citations section. The proof_summaries entry's structured fields (tier probable, vehicle summary, supporting_assertion_ids, resolved_conflict_ids, exhaustive_search_summary) are unchanged from mid-research-flynn.",
+    "This is a REVIEW-mode test (`no-new-proof-expected`): apply the rubric's (review) branch on every dimension. No new narrative is produced, so do not grade the reply as though it were a proof narrative.",
+    "Narrative standalone — PASS (3) requires that the assessment explicitly evaluates whether ps_001's narrative is self-contained: whether each assertion and conflict it cites is described in prose rather than left as a bare ID, and whether citations are present inline throughout. PARTIAL (2) if it touches standalone readability only in passing or catches one issue and misses the other. FAIL (1) if the assessment never addresses standalone readability at all.",
+    "Completeness — PASS (3) requires all three of: (a) the assessment walks all five GPS components and names each; (b) it states whether ps_001's form (summary) still fits the shape of the evidence; (c) it states, for the research.json sources not cited by ps_001, whether incorporating them could change the tier. PARTIAL (2) if one of the three is missing or only implied.",
+    "NEUTRALITY — grade the systematic coverage of the checks above, NOT the verdict reached. A review that works through the self-containment check and judges the narrative adequate is not penalized; a review that reaches the 'right' verdict without ever performing the check does not pass. Do not require any particular adjective about narrative quality.",
+    "Must NOT write a new proof_summaries entry, and must not create a second entry for q_001 — the prompt asks for an assessment, not a rewrite. Rewriting or updating ps_001 in place is out of scope for this prompt; note it if it happens.",
+    "Tool Arguments: the specific assertions cited by ps_001 are fetched with research_query scoped by sourceId or questionId. research_query does NOT support a per-assertion `assertionId` filter. A run that attempts an unsupported filter, receives the error, and recovers with a supported one should be noted but not failed on that basis alone; repeated unsupported calls with no recovery is a fail.",
+    "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment. An assessment that collapses into a bare 'the file is schema-valid' report is a fail — schema validity is not the GPS."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

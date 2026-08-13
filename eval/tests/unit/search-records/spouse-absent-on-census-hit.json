@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_records_027",
+    "skill": "search-records",
+    "name": "Spouse-anchored hit that names no spouse: write it up as consistent with, never as confirming",
+    "type": "positive",
+    "description": "Executing a spouse-anchored search for George Ackerman's 1860 census entry (spouseGivenName Catherine), the single hit returns the household — George, Henry, Margaret — and names NO wife. record_search reports relativeTerms.spouse = absent and rank_search_matches emits relativeTermNote. FamilySearch keeps a record that does not CONTRADICT the named spouse, so an absent-spouse record is indistinguishable from a confirming one without that field. This test guards the one failure #1324 exists to prevent: writing up such a hit as confirming the marriage to Catherine. Every other relativeTerms fixture is a `present` case, so nothing else in the corpus exercises the absent branch behaviourally.",
+    "tags": [
+      "search",
+      "census",
+      "relative-terms",
+      "absent-relative",
+      "evidence-language",
+      "gps-reasoning"
+    ]
+  },
+  "input": {
+    "user_message": "Search the 1860 census for George Ackerman in Pennsylvania, anchored on his wife Catherine, and tell me what the record shows about the marriage.",
+    "scenario": "census-household-absent-spouse"
+  },
+  "mcp_fixtures": [
+    "record-search-ackerman-1860-spouse-absent",
+    "rank-search-matches-ackerman-1860-spouse-absent"
+  ],
+  "judge_context": [
+    "CORE (Correctness): the returned record names NO spouse. record_search reports `relativeTerms.spouse: { status: \"absent\" }` and rank_search_matches returns a `relativeTermNote` saying so. Score Correctness 1 if the skill writes, in its narrative, its log notes, or any table, that the record CONFIRMS the marriage, confirms Catherine, or verifies George's wife. That claim is the exact failure this field exists to prevent: FamilySearch keeps records that do not contradict the named spouse, so a spouse-silent record survives a spouse-anchored search and looks identical to a confirming one.",
+    "Why that is Correctness's call and not Result triage's, per this rubric's ownership rule: 'confirms the marriage' is a FALSE STATEMENT about what the record contains — the concrete artifact the rubric asks for before a base-dimension 1 — not a promising / needs-review / not-relevant verdict. The two are separable and both can occur in one run: calling this hit promising FOR GEORGE is a triage verdict and is correct, while saying it confirms Catherine is untrue of the document. Grade only the second here. Do not deduct on Correctness for anything about the verdict band; that is Result triage's alone.",
+    "The outcome consequence is intended. A dimension scoring 1 fails the test outright, and that is the point of this test: an agent that writes 'confirms' on a record naming no spouse has produced the well-sourced-looking false claim the field exists to stop. If the skill does NOT make that claim, Correctness is 3 — this test has no middle band for the write-up, so do not reach for 2.",
+    "CORE (Correctness): score 3 if the skill states that this record does not name a spouse, and characterises it as CONSISTENT with the marriage rather than evidence for it. Wording is free — 'does not name a wife', 'consistent with but does not confirm', 'no spouse enumerated in this household' are all correct. Do NOT require the literal phrase 'consistent with'.",
+    "Do NOT penalise the skill for still triaging the record as a promising or likely match for GEORGE. Absent is a statement about the spouse term only, not a disqualifier: the record is still a candidate on name, place and date, and the skill is right to keep it and to keep searching. Marking the record `needs-review`, or continuing to another search, is correct behaviour and not a defect.",
+    "Do NOT penalise the skill for noticing that Catherine is absent from a household George heads in 1860 and raising it as an identity or research question. That is sound practice given the scenario tree (Catherine is joined to George by Couple R1 and carries no death fact). It is a bonus, not a requirement, and it must never be resolved by renaming or overwriting Catherine.",
+    "Completeness: reporting the hit, its absent-spouse status, and logging the search is a complete answer. Do NOT require extraction, attachment, or a second search.",
+    "Tool Arguments: the record_search call must carry a spouse anchor (spouseGivenName 'Catherine' and/or spouseSurname) — that is what makes record_search report relativeTerms at all. A call with projectPath + subjectId is preferred since it folds in ranking, but its absence is not a Tool Arguments defect on its own.",
+    "record_read is NOT stocked for this test. If the skill calls it and receives fixture_not_found, that is a test-fixture gap and NOT a Tool Arguments defect — score Tool Arguments on the record_search call's arguments only."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

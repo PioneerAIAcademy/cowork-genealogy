@@ -602,6 +602,14 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
+/* Restore paragraph spacing the global reset (viewer-ui global.css) zeroes.
+   Without this, two text blocks joined with a blank line render on consecutive
+   lines with no gap — the paragraph break #1312 requires never reaches the
+   screen. The first/last-child rules below then trim the outer margins so the
+   bubble keeps tight top/bottom padding. */
+.msgText p {
+  margin: 0.6em 0;
+}
 .msgText :first-child {
   margin-top: 0;
 }
@@ -610,6 +618,33 @@ button {
 }
 .msgText.msgError {
   color: var(--danger);
+}
+/* The model's private reasoning. Deliberately unmistakable as NOT the answer:
+   a tinted, dashed-border, italic block a tester cannot read as something the
+   agent told them. The old muted low-contrast disclosure sat flush against the
+   answer text and four of thirteen alpha reports quoted thinking as the reply
+   (#1312 defect 2). Collapsed by default; the summary says what it is. */
+.thinkingBlock {
+  margin: 4px 0;
+  padding: 6px 10px;
+  background: var(--accent-gold-soft);
+  border: 1px dashed var(--accent-soft);
+  border-left-width: 3px;
+  border-radius: 6px;
+}
+.thinkingBlock > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+.thinkingBlock .thinkingBody {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--ink-soft);
 }
 .msgText code {
   background: var(--bg-code);

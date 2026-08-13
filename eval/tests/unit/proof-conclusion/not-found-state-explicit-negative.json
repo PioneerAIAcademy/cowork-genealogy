@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_n9f",
+    "skill": "proof-conclusion",
+    "name": "When the requested record type is not found, state the negative explicitly alongside the indirect evidence",
+    "type": "positive",
+    "description": "person-a-death-cert-not-indexed: two FamilySearch searches for an indexed South Dakota death certificate returned negative. Two independent indirect sources (a Find a Grave index entry, secondary/derivative, direct; a WPA Grave Registration record, original, secondary, with an age-at-death calculation constraining to a window within 1935) support the death year. The skill must explicitly state that no death certificate was found in accessible FamilySearch-indexed records, identify what indirect evidence is available, state where the certificate could be found (e.g. SD State Archives), and tier the conclusion at the level the available evidence supports — NOT collapse to not_proved or present the result as 'cannot prove or disprove.' Tiering at possible or a bounded probable (indirect-evidence-only) is expected. Mined from alpha feedback case feedback-2026-08-06T22-05-43-863344Z (issue #1474).",
+    "tags": ["from-cowork", "person-a-death-cert-not-indexed", "death", "not-found", "indirect-evidence-only", "explicit-negative", "GPS-step-5"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for question q_001 — did Person A leave an accessible South Dakota death certificate, and when did Person A die?",
+    "scenario": "person-a-death-cert-not-indexed"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "The conclusion MUST explicitly state that no South Dakota death certificate was found in accessible FamilySearch-indexed records after two searches with surname spelling variants — this is a core requirement, not optional context.",
+    "The conclusion must distinguish between what was NOT found (the death certificate, the specifically requested record type) and what WAS found (indirect evidence: Find a Grave index and the WPA Grave Registration record). Both must appear in the narrative.",
+    "The indirect evidence — Find a Grave (secondary/derivative, direct) stating death year 1935 in Gregory, SD, and the Grave Registration (original, secondary) giving age 79 which constrains death to 26 March through 31 December 1935 — supports a positive conclusion at an honest tier (possible or bounded probable). The conclusion must NOT be collapsed to not_proved or presented as 'I cannot prove or disprove this.'",
+    "The narrative must state where the death certificate could be found if it exists — for example, the South Dakota State Archives, the South Dakota Department of Health vital records, or unindexed FamilySearch microfilm — giving the researcher an actionable next step.",
+    "FAIL if the skill's output presents the result as unresolvable, says it cannot prove or disprove, or writes not_proved without acknowledging the available indirect evidence. The presence of indirect evidence supporting a specific year and place means a positive (possible or better) conclusion is warranted."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
