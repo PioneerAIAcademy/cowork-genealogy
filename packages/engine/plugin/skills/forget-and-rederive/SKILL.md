@@ -69,7 +69,7 @@ Each entry in `forget` is `{ selector, … }`:
 | `death-of` | `personId` | that person's death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |
 | `person` | `personId` | one person, cascading their relationships |
-| `fact` | `factId` | one specific fact |
+| `fact` | `factId`, optional `personId` | one specific fact; add `personId` if the tool reports the id exists on more than one owner |
 | `relationship` | `relationshipId` | one specific relationship |
 
 **Show the researcher the dry-run counts and get their agreement before

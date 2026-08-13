@@ -192,39 +192,58 @@ function personOwnsFact(tree: SimplifiedGedcomX, personId: string, factId: strin
   return (person?.facts ?? []).some((f) => f.id === factId);
 }
 
+/** A person and a relationship are two different id spaces — nothing in the
+ *  tree or its validator guarantees they stay disjoint (a relationship's own
+ *  id is never checked against person ids). factKey below carries this so an
+ *  id shared across the two spaces can't collide the same way a bare factId
+ *  did across persons (#1574). */
+type OwnerKind = "person" | "relationship";
+
+interface FactOwner {
+  kind: OwnerKind;
+  id: string;
+}
+
 /**
- * Every person or relationship id whose facts array contains a fact with
- * this literal id. FamilySearch does not guarantee a fact id is unique
- * across persons (#1574) — more than one owner here is the collision this
- * function exists to surface, not a bug in this function.
+ * Every person or relationship whose facts array contains a fact with this
+ * literal id. FamilySearch does not guarantee a fact id is unique across
+ * persons (#1574) — more than one owner here is the collision this function
+ * exists to surface, not a bug in this function.
  */
-function findFactOwners(tree: SimplifiedGedcomX, factId: string): string[] {
-  const owners: string[] = [];
+function findFactOwners(tree: SimplifiedGedcomX, factId: string): FactOwner[] {
+  const owners: FactOwner[] = [];
   for (const p of persons(tree)) {
-    if ((p.facts ?? []).some((f) => f.id === factId)) owners.push(p.id ?? "");
+    if ((p.facts ?? []).some((f) => f.id === factId)) owners.push({ kind: "person", id: p.id ?? "" });
   }
   for (const r of relationships(tree)) {
-    if ((r.facts ?? []).some((f) => f.id === factId)) owners.push(r.id ?? "");
+    if ((r.facts ?? []).some((f) => f.id === factId)) {
+      owners.push({ kind: "relationship", id: r.id ?? "" });
+    }
   }
   return owners;
 }
 
 /**
- * Encodes an (ownerId, factId) pair as one Set entry. JSON-encoded so no
- * delimiter choice can collide with a real id's own content (#1574: facts
- * are removed by OWNER + id now, never by a bare id shared across owners).
+ * Encodes an (ownerKind, ownerId, factId) triple as one Set entry.
+ * JSON-encoded so no delimiter choice can collide with a real id's own
+ * content. ownerKind is load-bearing, not decoration: a person and a
+ * relationship can share a literal id (nothing checks the two id spaces
+ * against each other), so (ownerId, factId) alone would silently reunite the
+ * exact cross-owner leak this scoping exists to prevent, just across a
+ * different pair of fields (#1574).
  */
-function factKey(ownerId: string, factId: string): string {
-  return JSON.stringify([ownerId, factId]);
+function factKey(ownerKind: OwnerKind, ownerId: string, factId: string): string {
+  return JSON.stringify([ownerKind, ownerId, factId]);
 }
 
 // ─── selector resolution ─────────────────────────────────────────────────────
 
 interface Targets {
   persons: Set<string>;
-  /** (ownerId, factId) pairs, each encoded by factKey. Owner-scoped so a
-   *  fact id FamilySearch handed to more than one person (#1574) is only
-   *  ever removed from the owner a selector actually resolved. */
+  /** (ownerKind, ownerId, factId) triples, each encoded by factKey.
+   *  Owner-scoped so a fact id FamilySearch handed to more than one person
+   *  (#1574) is only ever removed from the owner a selector actually
+   *  resolved. */
   facts: Set<string>;
   relationships: Set<string>;
 }
@@ -273,7 +292,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'${kind}' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(factKey(pid, f)));
+        ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
         break;
       }
       case "facts-of": {
@@ -288,7 +307,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'facts-of' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(factKey(pid, f)));
+        ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
         break;
       }
       case "person": {
@@ -307,19 +326,23 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
               `'fact' factId '${factId}' does not belong to person '${pid}'.`,
             );
           }
-          t.facts.add(factKey(pid, factId));
+          t.facts.add(factKey("person", pid, factId));
         } else {
           const owners = findFactOwners(tree, factId);
           if (owners.length > 1) {
+            const named = owners.map((o) => `${o.id} (${o.kind})`).join(", ");
             throw new TreeForgetError(
-              `'fact' factId '${factId}' exists on more than one owner ` +
-                `(${owners.join(", ")}) — add personId to target one of them.`,
+              `'fact' factId '${factId}' exists on more than one owner: ${named} — ` +
+                `add personId to target whichever one is a person.`,
             );
           }
           // owners.length === 0 uses the "" sentinel: no real owner has that
           // id, so applyForget's existing "not in the tree" check still
-          // fires below, unchanged. owners.length === 1 resolves unambiguously.
-          t.facts.add(factKey(owners[0] ?? "", factId));
+          // fires below, unchanged. owners.length === 1 resolves unambiguously,
+          // carrying its real kind so it can't be confused with a same-id
+          // owner of the other kind.
+          const owner = owners[0];
+          t.facts.add(factKey(owner?.kind ?? "person", owner?.id ?? "", factId));
         }
         break;
       }
@@ -361,12 +384,12 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
   const factsByType: Record<string, number> = {};
   const unmatched = new Set(t.facts);
 
-  const pruneFacts = (owner: { id?: string; facts?: SimplifiedFact[] }): void => {
+  const pruneFacts = (ownerKind: OwnerKind) => (owner: { id?: string; facts?: SimplifiedFact[] }): void => {
     if (owner.facts === undefined) return;
     const ownerId = owner.id ?? "";
     owner.facts = owner.facts.filter((f) => {
       const fid = f.id ?? "";
-      const key = factKey(ownerId, fid);
+      const key = factKey(ownerKind, ownerId, fid);
       if (!t.facts.has(key)) return true;
       const ftype = f.type ?? "Unknown";
       factsByType[ftype] = (factsByType[ftype] ?? 0) + 1;
@@ -374,13 +397,31 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
       return false;
     });
   };
-  keptPersons.forEach(pruneFacts);
-  keptRels.forEach(pruneFacts);
+  keptPersons.forEach(pruneFacts("person"));
+  keptRels.forEach(pruneFacts("relationship"));
+
+  // A fact selector can target a fact whose owner is ALSO being wholesale-
+  // removed by a person/relationship selector in the same call (e.g. `person:
+  // I1` + `fact: <I1's own Birth fact>`). pruneFacts only ever visits KEPT
+  // owners, so that fact's key is never touched above — but the request is
+  // already satisfied, since the owner and everything on it is going away
+  // regardless. Treating it as "not in the tree" would be wrong: the fact
+  // unambiguously existed the instant before this call. Not counted in
+  // factsByType either, consistent with a removed owner's OTHER facts, which
+  // were never individually counted to begin with.
+  for (const key of [...unmatched]) {
+    const [ownerKind, ownerId] = JSON.parse(key) as [OwnerKind, string, string];
+    const ownerAlsoRemoved =
+      (ownerKind === "person" && t.persons.has(ownerId)) ||
+      (ownerKind === "relationship" && deadRels.has(ownerId));
+    if (ownerAlsoRemoved) unmatched.delete(key);
+  }
 
   if (unmatched.size > 0) {
-    // t.facts holds factKey-encoded (ownerId, factId) pairs — decode back to
-    // the bare factId for the message, matching the pre-#1574 wording.
-    const danglingFactIds = [...unmatched].map((k) => JSON.parse(k)[1] as string);
+    // t.facts holds factKey-encoded (ownerKind, ownerId, factId) triples —
+    // decode back to the bare factId for the message, matching the
+    // pre-#1574 wording.
+    const danglingFactIds = [...unmatched].map((k) => JSON.parse(k)[2] as string);
     throw new TreeForgetError(
       `these fact ids are not in the tree: ${danglingFactIds.sort().join(", ")}`,
     );

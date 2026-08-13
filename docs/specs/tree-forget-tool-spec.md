@@ -104,6 +104,13 @@ therefore resolves and removes by **(owner, factId)**, never by a bare factId:
 removing one person's fact never touches another owner's fact that happens to
 carry the same id, even when both are kept.
 
+"Owner" carries its own kind (person or Couple relationship), not just an id.
+Nothing in the tree or its validator guarantees a person id and a relationship
+id stay disjoint — a relationship's own id is never checked against person
+ids — so a bare `(ownerId, factId)` pair would reunite the exact cross-owner
+leak this scoping exists to prevent, just across a different pair of fields,
+the moment a person and a relationship happened to share a literal id.
+
 For `birth-of`/`death-of`/`facts-of` this is transparent — the selector already
 names the owning `personId`. For the bare `fact` selector, which historically took
 only a `factId`, the tool resolves ownership at call time:
@@ -111,13 +118,20 @@ only a `factId`, the tool resolves ownership at call time:
 - Exactly one owner has that id → proceeds, scoped to them (the common case,
   unchanged from before this fix).
 - No owner has it → the existing "not in the tree" error.
-- More than one owner has it → a new error naming the candidate owners and
-  asking for `personId` to pick one. Passing `personId` for `fact` scopes
+- More than one owner has it → a new error naming every candidate and its kind,
+  and asking for `personId` to pick one. Passing `personId` for `fact` scopes
   removal to that person's copy specifically; if that person does not in fact
-  own the id, that is its own error rather than a silent no-op.
+  own the id, that is its own error rather than a silent no-op. If one of the
+  candidates is a relationship rather than a person, it cannot currently be
+  targeted this way — the error only offers `personId` as the disambiguator.
 
-`relationship` is unaffected: a relationship id names one relationship record
-directly, and no evidence of the same collision exists for relationship ids.
+A fact selector combined with a selector that removes the fact's own owner in
+the same call (e.g. `person: <id>` alongside `fact: <that person's own fact>`,
+or a relative selector whose cascade takes the fact's owning relationship with
+it) is satisfied by that removal — the fact unambiguously existed the instant
+before the call, so it is not reported as missing. It is not counted in
+`removed.factsByType` either, consistent with a removed owner's other facts,
+which were never individually counted to begin with.
 
 ### 2.2 Cascade
 

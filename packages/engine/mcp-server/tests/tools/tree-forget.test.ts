@@ -373,6 +373,118 @@ describe("tree_forget", () => {
     );
   });
 
+  it("death-of removes only the target person's fact, even when another person shares the literal fact id", async () => {
+    const tree = collidingFacts();
+    tree.persons[0].facts.push({ id: "SHARED_DEATH", type: "Death", date: "1850" });
+    tree.persons[1].facts.push({ id: "SHARED_DEATH", type: "Death", date: "1900" });
+    await writeProject(tree);
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "death-of", personId: "C1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const t = await readTree();
+    expect(
+      t.persons.find((p: any) => p.id === "C1").facts.some((f: any) => f.id === "SHARED_DEATH"),
+    ).toBe(false);
+    expect(
+      t.persons.find((p: any) => p.id === "C2").facts.some((f: any) => f.id === "SHARED_DEATH"),
+    ).toBe(true);
+  });
+
+  it("a person and a relationship sharing the same literal id are scoped independently, even when their facts also share an id", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "X",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "F4", type: "Residence", date: "1900" }],
+        },
+        {
+          id: "Y",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+        },
+      ],
+      relationships: [
+        {
+          id: "X", // deliberately the same literal id as the person above
+          type: "Couple",
+          person1: "X",
+          person2: "Y",
+          facts: [{ id: "F4", type: "Marriage", date: "1920" }],
+        },
+      ],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "fact", factId: "F4", personId: "X" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "X").facts).toEqual([]);
+    // The relationship (also id "X") is a different owner — its same-id
+    // Marriage fact must survive.
+    expect(
+      tree.relationships.find((x: any) => x.id === "X").facts.map((f: any) => f.id),
+    ).toEqual(["F4"]);
+  });
+
+  // ─── a fact selector alongside a selector removing its own owner ───────────
+  // pruneFacts only visits KEPT owners, so a fact selector targeting a fact
+  // whose owner is ALSO being wholesale-removed in the same call must be
+  // recognized as already satisfied, not reported as missing.
+
+  it("fact + person removing that fact's own owner is satisfied by the removal, not an error", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "person", personId: "I1" },
+        { selector: "fact", factId: "F1" }, // I1's own Birth fact
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.persons.map((p: any) => p.id)).not.toContain("I1");
+  });
+
+  it("fact + a relative selector that cascades the fact's owning relationship is satisfied by the cascade", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "parents-of", personId: "I1" }, // cascades R5 (I2+I3's marriage)
+        { selector: "fact", factId: "F4" }, // F4 lives on R5
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.relationships.map((x: any) => x.id)).not.toContain("R5");
+  });
+
+  it("fact + relationship removing that fact's own owning relationship is satisfied by the removal", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "relationship", relationshipId: "R5" },
+        { selector: "fact", factId: "F4" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.relationships.map((x: any) => x.id)).not.toContain("R5");
+  });
+
   // ─── dry run ───────────────────────────────────────────────────────────────
 
   it("dryRun reports the identical summary and writes nothing", async () => {
