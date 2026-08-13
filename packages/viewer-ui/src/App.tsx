@@ -64,13 +64,23 @@ function WelcomeScreen(): React.JSX.Element {
   )
 }
 
-function WaitingScreen(): React.JSX.Element {
+function WaitingScreen({ folderPath }: { folderPath: string | null }): React.JSX.Element {
   return (
     <div className={styles.welcome}>
       <div className={styles.welcomeContent}>
-        <p className={styles.waitingText}>Waiting for research to begin...</p>
+        <p className={styles.waitingText}>No research data in this folder yet</p>
+        {/* Name the folder being watched. If the agent wrote to a different
+            folder (a real failure mode — issue #1317), showing the path here is
+            what lets a mismatch be noticed instead of reading as "nothing has
+            happened yet." */}
+        {folderPath && (
+          <p className={styles.welcomeHint}>
+            Watching <code>{folderPath}</code>
+          </p>
+        )}
         <p className={styles.welcomeHint}>
-          The viewer will update automatically when research.json is created
+          The viewer updates automatically when <code>research.json</code> appears here. If your
+          research is somewhere else, open that folder instead.
         </p>
       </div>
     </div>
@@ -104,7 +114,7 @@ function AppContent({
         <Sidebar showThemeToggle={showThemeToggle} />
         <div className={styles.main}>
           <Header />
-          <WaitingScreen />
+          <WaitingScreen folderPath={folderPath} />
         </div>
       </div>
     )
