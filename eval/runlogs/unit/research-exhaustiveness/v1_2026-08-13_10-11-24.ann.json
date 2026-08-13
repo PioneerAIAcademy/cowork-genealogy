@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-07-22_10-11-56.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "run_log": "v1_2026-08-13_10-11-24.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_exhaustiveness_006",
@@ -195,7 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -219,7 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "rubric",
       "dimension_name": "Threshold reasoning",
       "llm_score": 3,
@@ -227,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "rubric",
       "dimension_name": "Declaration honesty",
       "llm_score": 3,
@@ -235,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_013",
+      "test_id": "ut_research_exhaustiveness_015",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
@@ -363,6 +363,54 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_exhaustiveness_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -404,6 +452,102 @@
     },
     {
       "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Threshold reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
