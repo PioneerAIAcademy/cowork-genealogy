@@ -75,13 +75,15 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // These lists are a DELIBERATE, EVIDENCE-BACKED SUBSET, not the full couple/parent
 // fact family. Add a type here only after confirming FS actually echoes it
 // person-level in real data — never on assumption. (#1314's `Parents` matcher
-// was nearly merged targeting an "undefined" type until the feedback-2026-08-03
-// session log confirmed it is real; do not repeat that in reverse by adding
-// unverified types.) `materialize-facts.ts`'s `EVENT_TREE_TYPES` lists further
+// was nearly merged targeting an "undefined" type until a `person_read` RESULT
+// in the feedback-2026-08-03 session log confirmed FS emits it — an upstream
+// fact with an FS-native UUID id, not a value the agent wrote; do not repeat
+// that in reverse by adding unverified types.) `materialize-facts.ts`'s
+// `EVENT_TREE_TYPES` lists further
 // couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
 // is NOT yet confirmed — see issue #1549 before extending this set.
 const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 85 such facts across committed snapshot trees
-const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed: feedback-2026-08-03 session log, person GRN6-4MQ
+const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
 
 export interface ForgetSelector {
   selector: ForgetSelectorKind;

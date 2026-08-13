@@ -117,6 +117,13 @@ rather than erroring. Reported as `factsByType`, a kind not a value.
 `children-of` needs no such sweep: the redundant `Parents` fact lives on the
 child, whom `children-of` removes wholesale.
 
+**Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
+at scale: measured over committed snapshot trees, 25 of the 82 persons carrying a
+person-level `Marriage` fact have no `Couple` relationship, so for those `spouses-of`
+shifts from erroring to deleting facts. That is the sole-carrier case working as
+designed — the fact is the only record of the conclusion — and `removed.factsByType`
+names what went, so the deletion is not silent.
+
 ### 2.2 Cascade
 
 Removing a person removes **every relationship touching them**, or the tree is
