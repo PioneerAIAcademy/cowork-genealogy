@@ -49,9 +49,18 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   })
   const [userPrompt, setUserPrompt] = useState('')
   const [agentDid, setAgentDid] = useState('')
+  const [workedAsExpected, setWorkedAsExpected] = useState<boolean | null>(null)
   const [agentShouldHave, setAgentShouldHave] = useState('')
   const [correctAnswer, setCorrectAnswer] = useState('')
   const [notes, setNotes] = useState('')
+
+  // "It worked" is a positive report: hide the two "what went wrong" fields and
+  // clear them so no stale bug-text rides along. Only reachable via the Yes radio.
+  const markWorked = useCallback(() => {
+    setWorkedAsExpected(true)
+    setAgentShouldHave('')
+    setCorrectAnswer('')
+  }, [])
 
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -103,10 +112,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     emailValid &&
     userPrompt.trim().length > 0 &&
     agentDid.trim().length > 0 &&
-    agentShouldHave.trim().length > 0 &&
+    workedAsExpected !== null &&
     overLimitFields.length === 0
 
   const handleSend = useCallback(async () => {
+    if (workedAsExpected === null) return
     setSendState('sending')
     setErrorMsg('')
     try {
@@ -122,6 +132,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         email: trimmedEmail,
         userPrompt: userPrompt.trim(),
         agentDid: agentDid.trim(),
+        workedAsExpected,
         agentShouldHave: agentShouldHave.trim(),
         correctAnswer: correctAnswer.trim() || undefined,
         notes: notes.trim() || undefined
@@ -138,7 +149,9 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     email,
     userPrompt,
     agentDid,
+    workedAsExpected,
     agentShouldHave,
+    correctAnswer,
     notes,
     onClose,
     submitFeedback
@@ -215,38 +228,68 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           </div>
 
           <div className={styles.field}>
-            <label className={styles.fieldLabel} htmlFor="feedback-should">
-              What it should have done
-            </label>
-            <textarea
-              id="feedback-should"
-              className={styles.textarea}
-              placeholder="What you expected instead..."
-              value={agentShouldHave}
-              onChange={(e) => setAgentShouldHave(e.target.value)}
-              disabled={sendState === 'sending'}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.fieldLabel} htmlFor="feedback-answer">
-              If the agent reached a <em>wrong conclusion</em>: what is the correct answer, and
-              what evidence supports it? <span className={styles.optional}>(optional)</span>
-            </label>
-            <textarea
-              id="feedback-answer"
-              className={styles.textarea}
-              placeholder="e.g. His father was Robert Smith (b. ~1820, Augusta Co., VA) — 1850 census, Robert's household, and the 1872 probate naming John as heir."
-              value={correctAnswer}
-              onChange={(e) => setCorrectAnswer(e.target.value)}
-              disabled={sendState === 'sending'}
-            />
-            <div className={styles.fieldHint}>
-              Skip this if the problem was how the agent worked rather than the answer it
-              reached. When you do fill it in, we can turn this case into a regression test
-              without coming back to ask you.
+            <span className={styles.fieldLabel}>Did it work as expected?</span>
+            <div className={styles.radioGroup}>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="worked-as-expected"
+                  checked={workedAsExpected === true}
+                  onChange={markWorked}
+                  disabled={sendState === 'sending'}
+                />
+                <span>Yes</span>
+              </label>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="worked-as-expected"
+                  checked={workedAsExpected === false}
+                  onChange={() => setWorkedAsExpected(false)}
+                  disabled={sendState === 'sending'}
+                />
+                <span>No</span>
+              </label>
             </div>
           </div>
+
+          {workedAsExpected === false && (
+            <>
+              <div className={styles.field}>
+                <label className={styles.fieldLabel} htmlFor="feedback-should">
+                  What it should have done <span className={styles.optional}>(optional)</span>
+                </label>
+                <textarea
+                  id="feedback-should"
+                  className={styles.textarea}
+                  placeholder="What you expected instead — leave blank if you're not sure..."
+                  value={agentShouldHave}
+                  onChange={(e) => setAgentShouldHave(e.target.value)}
+                  disabled={sendState === 'sending'}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.fieldLabel} htmlFor="feedback-answer">
+                  If the agent reached a <em>wrong conclusion</em>: what is the correct answer, and
+                  what evidence supports it? <span className={styles.optional}>(optional)</span>
+                </label>
+                <textarea
+                  id="feedback-answer"
+                  className={styles.textarea}
+                  placeholder="e.g. His father was Robert Smith (b. ~1820, Augusta Co., VA) — 1850 census, Robert's household, and the 1872 probate naming John as heir."
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  disabled={sendState === 'sending'}
+                />
+                <div className={styles.fieldHint}>
+                  Skip this if the problem was how the agent worked rather than the answer it
+                  reached. When you do fill it in, we can turn this case into a regression test
+                  without coming back to ask you.
+                </div>
+              </div>
+            </>
+          )}
 
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-notes">

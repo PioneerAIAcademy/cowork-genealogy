@@ -1,6 +1,5 @@
 ---
 name: init-project
-model: claude-sonnet-4-6
 description: Initializes a new genealogy research project with GPS-conformant
   file structures. Creates research.json (GPS audit trail) and
   tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch
@@ -118,7 +117,7 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 
 ### 2. Fetch person data
 
-Call `person_read({ personId: "<id>" })` with exactly that single argument (no optional flags). Returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, source descriptions. Auth error → tell user to log in.
+Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.
 
 **User-stated facts vs. FamilySearch conflicts:**
 - **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
@@ -200,19 +199,25 @@ Analyze imported data before presenting results:
 - **Tree summary table** — one row per person: local ID, full name, gender, key facts. Example: `| I1 | Patrick Flynn | Male | Birth ~1845 Ireland · Death 1908 Schuylkill Co PA |`
 - Pedigree analysis findings
 - Known holdings recorded (if any) and what each contributes
-- What's missing (informs first research question)
-- Suggest next step: "Would you like me to select the first research question?"
+- What's missing (informs first research question) — gaps on people the
+  objective does not cover are context only, not proposed research.
+- Suggest the next step as a plain-language offer, defining "objective" and
+  "research question" on first use — never "use question-selection to…":
+  "Your objective is the overall goal — <restate it>. The next step is the
+  first research question: the single fact we go after first. Shall I?"
 
 ## Example
 
 User: "Start a new research project for person KWCJ-RN4. I want to identify his parents."
 
-1. Call `person_read({ personId: "KWCJ-RN4" })`
-2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret.
+1. Call `person_read({ personId: "KWCJ-RN4", relatives: true, sourceDescriptions: true })`
+2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
 4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
 5. Write `research.json` with project section, profile, holdings, empty arrays.
-6. Pedigree analysis + summary. Suggest first research question.
+6. Pedigree analysis + summary. Mary Kelly and the children are tree context
+   only — their gaps are noted, not queued. Offer the first research question
+   in plain language.
 
 ## Important rules
 

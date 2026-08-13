@@ -35,42 +35,21 @@ ls releases/
 ## Git hooks
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
-double-click **`eval\InstallHooks.bat`**. Both install the same two hooks:
-`post-checkout` sets up new worktrees — links the shared files, installs the
-pnpm workspace — and `commit-msg` warns (never blocks) when a commit lacks a
-**human** `Co-authored-by:` trailer.
+double-click **`eval\InstallHooks.bat`**. Both install `post-checkout`, which
+sets up new worktrees: it links the shared files and installs the pnpm
+workspace.
 
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
 installer only when a *new* hook is added to the list.
 
-### Crediting a co-author
-
-Nearly every PR here is paired work, but the co-author usually goes unrecorded —
-that's what the `commit-msg` hook is there to catch. We squash-merge, and GitHub
-folds the `Co-authored-by:` trailers from a PR's commits into the squash commit,
-so your local commits are the only place that credit can come from. When you
-pair, add the other contributor's **GitHub username** as the last line of the
-commit message:
-
-```
-Co-authored-by: their-github-username
-```
-
-The bare username is deliberate: it's the key our contribution-evaluation agents
-read out of `git log`, and it keeps personal email addresses out of the repo.
-Don't "fix" it by adding an address. Claude/AI co-authors don't satisfy the
-check — the whole point is recording the human you worked with.
-
-The local hook fires at commit time on stderr, which is easy to miss (and
-invisible when commits are made through a wrapper). So a CI counterpart,
-`.github/workflows/check-coauthor.yml`, re-emits the same nudge as a **warning
-annotation on the PR** when *none* of the PR's commits carry a human
-`Co-authored-by:` trailer. It uses the identical "human" definition and, like
-the hook, only warns — it never blocks merge. It's a per-PR check (not
-per-commit) because the squash-merge folds every commit's trailers together, so
-credit survives as long as one commit records it.
+The one thing the hook does **not** set up is the compiled engine
+(`packages/engine/mcp-server/build/`). Run the Python suites through
+`make harness-test`, which builds the engine first; a bare `pytest` in a fresh
+worktree fails on the missing build and looks like a regression. Do not symlink
+`build/` into a worktree — a worktree on an engine branch would then silently
+test `main`'s compiled output.
 
 ## Smoke-test tools against live APIs
 
@@ -142,11 +121,19 @@ issue is easy to create and easy to forget; a PR that closes the gap it found
 needs nothing else to remember it. File a new issue instead of fixing it here
 only when at least one of these holds, and say which in the PR description:
 the fix needs a different reviewer or skill (a code fix found during fixture
-work, or vice versa); it would blow this PR's own scope enough to slow its
-review meaningfully; it depends on a decision only the lead can make; or it's
-a different skill's eval slot and bundling it would force a second paid run.
+work, or vice versa); it depends on a decision only the lead can make; it's
+a different skill's eval slot and bundling it would force a second paid run;
+or it is too big for this PR — **and you have opened the call sites and
+counted**, and can say how many files and roughly how many lines. "It feels
+out of scope" is not a measurement, and asserting scope instead of measuring it
+is the usual way a foldable fix turns into an orphaned ticket.
 "I noticed it in passing" is not one of these — on its own it's a reason to
 fix it now, not to file it.
+
+**And if it's a nit, drop it.** A wording preference, a tidier structure, a
+test you'd like but nothing is broken without — say nothing and move on. A
+filed nit costs triage every morning for as long as it stays open, and the
+board is where it will stay. Not every gap you notice needs a record.
 
 For whatever you do decide to defer: **file each one as a GitHub issue in the
 same PR that defers it.** Ask Claude to do it; it is one command and needs no
@@ -193,12 +180,30 @@ gh issue create --label developer --title "…" --body "…"
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
-**File it even if you think it might be a duplicate.** Deciding how a new issue
-fits against the ~180 already open is not your job and cannot be done well from
-inside one PR — the overlap is usually at a line number, not a title. File it;
-the lead's weekly `/audit-board` pass merges, rewrites and drops issues across the
-whole pool, which is the only vantage point from which duplicates are visible. A
-duplicate costs one comment to close. An unfiled finding costs a rediscovery.
+**Search once before you file, then stop.** Filing is the last resort in a
+four-step order: fix it in this PR; drop it if it's a nit; comment on an
+existing issue that covers it; file (with `--label icebox` when no decision sits
+behind it). The search is one command — `gh issue list --state open --search
+"<path or symbol>"`, plus a grep of the `**Touches:**` lines — because the
+overlap is usually at a line number, not a title, and a comment on the issue
+that already owns the file beats a second issue against it.
+
+**Filing prompts the lead.** `gh issue create` is gated by a `PreToolUse` hook
+(`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`,
+which Claude Code reads straight from the checkout — nothing to install) that
+stops the call and puts the four steps in front of him before anything is
+filed. It's a prompt, not a refusal —
+approving it files the issue. Answer it by saying which exemption applies.
+It costs about 15 ms per Bash call and fails open, so a crash in the gate can
+never block a command you were entitled to run. `python3
+scripts/claude-hooks/test-gate-issue-create.py` proves it fires on the real
+shapes (including inside a compound command) and stays quiet on
+`gh issue list`, `gh pr create`, and malformed input.
+
+Do not agonise past that one search. `/audit-board` merges, rewrites and drops
+issues across the whole pool weekly, which is the only vantage point from which
+every duplicate is visible. A duplicate costs one comment to close; an unfiled
+finding costs a rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an
@@ -221,9 +226,12 @@ since mid-2026 was verified without one. Verification is automated:
    fastest way to debug a tool in isolation.
 2. **MCP Inspector** — verifies the tool registers and behaves with
    no/dummy/real input.
-3. **The eval harness** (`make test`, `eval/tests/e2e/`) — verifies the
-   tool description is good enough that the LLM picks it from natural
-   language, and that the skills using it still pass.
+3. **The eval harness** (`make harness-test` for the harness's own suite,
+   `make eval-skill SKILL=<name>` and `eval/tests/e2e/` for behaviour) —
+   verifies the tool description is good enough that the LLM picks it from
+   natural language, and that the skills using it still pass. **Not `make
+   test`**, which is `test-js` + `server-test` and reaches neither the
+   harness nor the engine.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
@@ -528,7 +536,15 @@ fly volumes destroy workbench_data    # if a volume lingers from a pre-Neon depl
 On boot `init_db()` creates the schema on Neon and seeds the allowlist. Non-secret
 config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=e2b`,
 `FAMILYSEARCH_WEB_ENABLED=true`, `PUBLIC_URL`, …); there is **no `[mounts]` block** — nothing persistent remains on
-`DATA_DIR` once the DB is on Neon. The agent runs on **E2B**, not in this container
+`DATA_DIR` once the DB is on Neon.
+
+`WIKI_API_URL` and `POP_STATS_URL` belong in that `[env]` block too. They point
+hosted sessions at the wiki-query and Pop Stats services; leave them unset and
+the engine uses its compiled-in defaults, which name one developer's tailnet
+host. Changing one reaches existing sessions on their next connect — no need to
+recreate a project.
+
+The agent runs on **E2B**, not in this container
 (the `genealogy-agent` image is a separate artifact — see `make sandbox-image`).
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a

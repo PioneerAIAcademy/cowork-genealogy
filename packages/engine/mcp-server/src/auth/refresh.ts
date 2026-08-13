@@ -6,6 +6,7 @@ import {
   HOSTED_REAUTH_INSTRUCTION,
 } from "./config.js";
 import { loadTokens, saveTokens, isExpired } from "./tokenManager.js";
+import { fetchWithTimeout } from "../utils/http.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
 
 // The instruction the LLM gets when there is no usable FamilySearch session.
@@ -19,7 +20,7 @@ async function reauthInstruction(desktopMessage: string): Promise<string> {
 async function postTokenEndpoint(
   body: URLSearchParams
 ): Promise<FSTokenResponse> {
-  const response = await fetch(TOKEN_URL, {
+  const response = await fetchWithTimeout(TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

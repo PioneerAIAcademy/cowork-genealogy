@@ -64,6 +64,12 @@
       "fact_type": "relationship",
       "optional": true,
       "evidence_type": "direct"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "optional": true,
+      "information_quality": "primary"
     }
   ]
 }
