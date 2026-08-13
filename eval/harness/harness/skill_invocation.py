@@ -256,6 +256,21 @@ def _is_conflict_resolution_product(conflict: Any) -> bool:
     return any(conflict.get(f) for f in CONFLICT_ANALYSIS_FIELDS)
 
 
+def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
+    """A stable identity for a ParentChild/Couple relationship, for diffing a
+    final tree against its starting tree.
+
+    A ParentChild carries parent/child; a Couple carries person1/person2. Key on
+    the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
+    a PID-TODO placeholder that the agent resolves during the run, and an `id`
+    key would read that genuinely-re-pointed relationship as seeded — a false
+    negative in the gates that diff against the starting tree. Shared by
+    `find_effects_without_invocation` (§8 hard gate) and
+    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    """
+    return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -327,15 +342,6 @@ def find_effects_without_invocation(
         for p in starting_persons
         if isinstance(p, dict)
     }
-
-    def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
-        # A ParentChild carries parent/child; a Couple carries person1/person2.
-        # Key on the endpoint tuple, never on `id`: 7 fixtures seed a
-        # relationship pointing at a PID-TODO placeholder that the agent resolves
-        # during the run, and an `id` key would read that genuinely-re-pointed
-        # relationship as seeded — a false negative in the one gate that
-        # overrides the judge.
-        return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
     starting_relationship_keys = {
         _relationship_key(r)
@@ -801,6 +807,14 @@ CITATION_NULLING_KIND = "citation_nulling"
 # (and with it the Claude Agent SDK) just to learn one string.
 PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
+# Marks a #1193 warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
+# relationship but never called the (free, deterministic) `person_warnings`
+# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# own bucket. Lives here beside its siblings so the report can read it without
+# importing the orchestrator (and the Claude Agent SDK) for one string.
+WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
+
 
 def find_citation_nulling_in_conclusions(
     research: dict[str, Any] | None,
@@ -905,3 +919,290 @@ def find_citation_nulling_in_conclusions(
                 }
             )
     return violations
+
+
+# Marks a conflict-not-persisted shadow entry in the shared
+# `guardrail_shadow_violations` list, told apart from the citation-nulling and
+# #963 person_evidence buckets by this `kind` in `guardrail_shadow_report.py`.
+CONFLICT_UNPERSISTED_KIND = "conflict_unpersisted"
+
+# Substrings in a `conflict_resolution` stop-criterion that mean "there was no
+# conflict to persist" — checked before firing so an honest "no conflicts" note
+# is not read as an unpersisted resolution.
+_NO_CONFLICT_SUBSTRINGS = (
+    "no conflict",
+    "no material conflict",
+    "no remaining conflict",
+    "no unresolved conflict",
+    "no discrepanc",  # "no discrepancy" / "no discrepancies"
+    "without conflict",
+)
+# Whole-field values (stripped, lowercased) that mean the same thing. Matched
+# exactly rather than as substrings so a bare "none"/"n/a" can't false-negative
+# a real resolution sentence that merely contains those letters.
+_NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
+
+# `stop_criteria.conflict_resolution` is a REQUIRED field on every declared
+# exhaustive_declaration (research.schema.json), so it is always populated —
+# "doesn't match the negative list" therefore defaults to FIRE, which over-fires
+# badly on the real corpus (senior review of PR #1438: 18 of 38 firing strings
+# explicitly negated a resolution — "UNRESOLVED.", "Not met —", …). So the check
+# requires POSITIVE resolution language rather than the mere ABSENCE of negative
+# language: an opener that negates a resolution is skipped, and a field with no
+# resolution marker at all is skipped. The `\b` on the marker is what stops
+# `resolved` matching inside `unresolved`.
+_RESOLUTION_MARKER_RE = re.compile(
+    r"\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?"
+    r"|adjudicated|preferred assertion)\b",
+    re.I,
+)
+_NON_RESOLUTION_OPENER_RE = re.compile(
+    r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
+)
+# `c_NNN` ids named in a stop-criterion's prose, e.g. "resolved (c_001, preferred
+# a_019 …)". Used to tell a conclusion that names the conflict it relied on from
+# one that names none — a resolved conflicts[] entry the conclusion *names* backs
+# it even when it is not cited on resolved_conflict_ids (senior review, PR #1438).
+_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I)
+
+
+def find_unpersisted_conflict_resolutions(
+    research: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on
+    a conflict it says was resolved, but no structured ``conflicts[]`` entry backs
+    it — the resolution lives only in prose, so the viewer's Conflicts section is
+    blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
+    the conflict-side sibling of ``find_citation_nulling_in_conclusions``.
+
+    THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
+    with 25 assertions and 2 ``proof_summaries`` whose narrative carried a full
+    "Conflict Discussion" and whose ``exhaustive_declaration.stop_criteria.
+    conflict_resolution`` read "Ella Chase marriage conflict resolved …" — yet
+    ``conflicts`` was ``[]`` and every ``resolved_conflict_ids`` was ``[]``. The
+    conflict was reasoned through by ``proof-conclusion`` / ``research-exhaustiveness``
+    and never routed to ``conflict-resolution`` (the sole writer of ``conflicts[]``,
+    per ``docs/specs/research-schema-spec.md`` §155), so nothing was persisted.
+
+    GATED ON A WRITTEN CONCLUSION. Fires only when a ``proof_summaries`` entry
+    exists — a run that legitimately stops before concluding has an empty
+    ``conflicts[]`` by design and must not fire. For each concluded question, the
+    reliance signal is a non-trivial ``conflict_resolution`` stop-criterion on that
+    question's ``exhaustive_declaration`` (a *structured* field with bounded
+    vocabulary — deliberately NOT the free ``narrative_markdown``, which cannot be
+    parsed reliably). A ``conflict_resolution`` that says there was no conflict
+    (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
+
+    The reliance is BACKED, and no violation fires, when a ``status == "resolved"``
+    ``conflicts[]`` entry is linked to the conclusion any of four ways: cited on the
+    proof_summary's ``resolved_conflict_ids``; naming this question in its own
+    ``blocks_question_ids``; NAMED (its ``c_`` id) in the stop-criterion prose; or —
+    when the prose names no ``c_`` id at all — simply existing. Each means the
+    conflict was written to ``conflicts[]``, so the viewer's Conflicts section is
+    populated and this is not the #1317 miss. A fire therefore means **no resolved
+    conflict backs this conclusion**: either ``conflicts[]`` holds no resolved entry
+    at all, or the stop-criterion names a ``c_`` id that is not resolved. The fourth
+    way is what keeps that true — ``blocks_question_ids`` is schema-required but
+    legitimately empty, so without it a resolved conflict could exist, populate the
+    viewer, and still be reported as unpersisted.
+
+    SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
+    (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
+    fails a run. Because the reliance signal is a text heuristic on one structured
+    field, this ships shadow-first to measure the fire rate before any promotion to
+    a hard gate — exactly how the citation-nulling detector (#1358) is staged.
+    """
+    research = research or {}
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # the gate: no written conclusion, nothing is held to a conflict record
+
+    questions = research.get("questions") if isinstance(research.get("questions"), list) else []
+    conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
+    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict) and q.get("id")}
+    resolved_conflict_ids = {
+        c.get("id")
+        for c in conflicts
+        if isinstance(c, dict) and c.get("status") == "resolved" and c.get("id")
+    }
+    # A resolved conflict can back a question WITHOUT being cited on the
+    # proof_summary's resolved_conflict_ids — via its own schema field
+    # conflicts[].blocks_question_ids. Reading only resolved_conflict_ids (senior
+    # review of PR #1438) fired on runs that had correctly written the resolved
+    # conflict[] entry — the viewer's Conflicts section populated, exactly what
+    # #1317 asks for — and then emitted a factually false "no resolved entry backs
+    # it". So a question blocked by a resolved conflict counts as backed too.
+    resolved_blocked_qids = {
+        q
+        for c in conflicts
+        if isinstance(c, dict) and c.get("status") == "resolved"
+        for q in (c.get("blocks_question_ids") or [])
+    }
+
+    def _resolution_claimed(question: dict[str, Any]) -> str | None:
+        """The stop-criterion text if it asserts a resolution, else None."""
+        decl = question.get("exhaustive_declaration")
+        if not isinstance(decl, dict):
+            return None
+        crit = decl.get("stop_criteria")
+        if not isinstance(crit, dict):
+            return None
+        cr = crit.get("conflict_resolution")
+        if not isinstance(cr, str):
+            return None
+        crl = cr.strip().lower()
+        if crl in _NO_CONFLICT_EXACT:
+            return None
+        if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):
+            return None
+        if _NON_RESOLUTION_OPENER_RE.match(crl):
+            return None  # text opens by negating a resolution ("UNRESOLVED.", "Not met —")
+        if not _RESOLUTION_MARKER_RE.search(crl):
+            return None  # no positive resolution language — not a resolution claim
+        return cr
+
+    violations: list[dict[str, Any]] = []
+    seen: set[tuple[Any, Any]] = set()  # one entry per (conclusion, question)
+    for ps in proof_summaries:
+        if not isinstance(ps, dict):
+            continue
+        ps_id = ps.get("id")
+        qid = ps.get("question_id")
+        rcids = (
+            ps.get("resolved_conflict_ids")
+            if isinstance(ps.get("resolved_conflict_ids"), list)
+            else []
+        )
+        question = questions_by_id.get(qid)
+        if not isinstance(question, dict):
+            continue  # no linked question to read a reliance signal from
+        claimed = _resolution_claimed(question)
+        if claimed is None:
+            continue  # no conflict claimed (or explicitly "no conflicts") — nothing owed
+        # A resolved conflicts[] entry backs this conclusion when it is cited on the
+        # proof_summary, blocks this question, is NAMED in the conclusion's prose (a
+        # resolved c_ id in the stop-criterion text), or — when the prose names no
+        # conflict id at all — simply exists. Any of these means the conflict was
+        # written to conflicts[] and the viewer's Conflicts section is populated, so
+        # the #1317 miss this detector catches (nothing persisted) does not apply.
+        # blocks_question_ids alone is too weak: it is schema-required but
+        # legitimately empty, so most resolved conflicts do not carry it (senior
+        # review, PR #1438 — mary-dwyer-father / jimmie-jewel-neal wrote a resolved
+        # c_001 with blocks_question_ids: [] and were wrongly reported as unpersisted).
+        named_ids = set(_CONFLICT_ID_RE.findall(claimed))
+        if (
+            any(rc in resolved_conflict_ids for rc in rcids)
+            or qid in resolved_blocked_qids
+            or bool(named_ids & resolved_conflict_ids)
+            or (not named_ids and bool(resolved_conflict_ids))
+        ):
+            continue  # a resolved conflicts[] entry backs it — persisted, not the #1317 miss
+        key = (ps_id, qid)
+        if key in seen:
+            continue
+        seen.add(key)
+        violations.append(
+            {
+                "index": -1,  # post-hoc final-state read; there is no tool-call index
+                "tool": "research.json",
+                "required_skill": "conflict-resolution",
+                "question_id": qid,
+                "kind": CONFLICT_UNPERSISTED_KIND,
+                "detail": (
+                    f"proof_summary {ps_id} (question {qid}) relies on a resolved "
+                    "conflict per its exhaustive_declaration.stop_criteria."
+                    "conflict_resolution, but no resolved conflicts[] entry is linked "
+                    "to it (not cited on resolved_conflict_ids, not named in the "
+                    "stop-criterion, and no resolved conflict blocks this question)"
+                ),
+            }
+        )
+    return violations
+
+
+def find_relationship_writes_without_warnings_check(
+    tool_calls: list[dict[str, Any]] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
+    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
+    the cheapest guardrail in the system (deterministic, no LLM — it reads
+    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
+    round-trip). Two runs of the same fixture, same skills, diverged only on
+    whether the parentage write was delegated to ``proof-conclusion`` (which
+    carries the "run check-warnings after tree writes" step) or inlined by the
+    orchestrator (which does not) — and nothing recorded that the guardrail was
+    never consulted. This makes that omission visible.
+
+    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
+    ``Couple`` relationship in the final tree is absent from the starting tree
+    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
+    104 fixtures seed such relationships, so an ungated check would fire on seed
+    state alone; the diff is what limits it to this run's own product. When no
+    starting tree is given, treat everything as new (best-effort), matching
+    ``find_effects_without_invocation``.
+
+    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
+    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
+    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
+    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
+    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
+    even when it fired inside ``check-warnings``. A call counts as consulting the
+    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
+    tree unchecked.
+
+    SHADOW MODE ONLY: returns violation records shaped to share
+    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
+    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
+    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
+    report counts this class in its own bucket). Never fails a run. Promotion to a
+    hard gate — or a mandatory pre/post-write call in the ``/research``
+    orchestrator so an inlined write is still gated — is a deliberate follow-up
+    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    """
+    tree = tree or {}
+    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
+
+    starting_relationship_keys = {
+        _relationship_key(r)
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
+    }
+    new_relationship = any(
+        isinstance(r, dict)
+        and r.get("type") in ("ParentChild", "Couple")
+        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
+        for r in relationships
+    )
+    if not new_relationship:
+        return []  # the gate: nothing was written that a warnings check should have preceded
+
+    consulted = any(
+        isinstance(call, dict)
+        and bare_tool_name(call.get("tool") or "") == "person_warnings"
+        and not call.get("is_error")
+        for call in (tool_calls or [])
+    )
+    if consulted:
+        return []
+
+    return [
+        {
+            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "tool": "tree.gedcomx.json",
+            "required_skill": "check-warnings",
+            "question_id": None,
+            "kind": WARNINGS_UNCHECKED_KIND,
+            "detail": (
+                "a new ParentChild/Couple relationship was written this run but "
+                "person_warnings (the free deterministic guardrail) was never "
+                "successfully called"
+            ),
+        }
+    ]

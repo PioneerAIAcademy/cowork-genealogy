@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_locality_guide_026",
+    "skill": "locality-guide",
+    "name": "Massachusetts 1820-1850 — town-level vital registration and adjoining jurisdictions across a state line",
+    "type": "positive",
+    "description": "Locality survey for a Berkshire County, Massachusetts family in 1820-1850, a window that straddles the 1841 statewide vital-registration act. Guards the two defects reported in issue #1321: (a) asserting a bare 'Massachusetts didn't require vital registration until 1841' from model memory, which is wrong because town clerks were ordered to record births, marriages, and deaths in 1639, and (b) naming only the bordering states instead of the adjoining counties and towns across the border, when Massachusetts and parts of New York created records at both town and county level. Also checks that wiki-derived availability claims carry the source_url the wiki tools returned. Note the catch-all wiki fixtures state only the generic 'many jurisdictions did not require civil registration until the late 1800s or early 1900s' — over-applying that generic line to Massachusetts is the failure this test is built to catch.",
+    "tags": [
+      "locality",
+      "massachusetts",
+      "berkshire",
+      "record-availability",
+      "registration-level",
+      "adjoining-jurisdictions",
+      "wiki-citation",
+      "issue-1321"
+    ]
+  },
+  "input": {
+    "user_message": "I'm researching a family who lived in Berkshire County, Massachusetts between 1820 and 1850. Their town is close to both the New York and Vermont lines. What records are available for births, marriages, and deaths in that period, and where should I look?",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "mcp_fixtures": [
+    "place-search-massachusetts",
+    "collections-search-massachusetts",
+    "volume-search-massachusetts",
+    "wiki-search-massachusetts-colonial-records",
+    "place-search-all-any",
+    "external-links-search-any",
+    "place-population-any",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "Must NOT assert that Massachusetts had no vital registration requirement before 1841, and must not otherwise present 1841 as the date the state began requiring births, marriages, and deaths to be recorded. This is the exact reported defect (issue #1321): Massachusetts town clerks were ordered by the General Court to record vital events in 1639, and New England has a deep body of pre-statewide town records. A guide that sends the researcher only to church and cemetery records for 1820-1850 'because civil registration had not begun' has failed this test.",
+    "When the guide gives any date for when registration was required, it must name the LEVEL that date applies to — town/parish, county, or statewide. '1841 is when STATEWIDE registration began, town clerks recorded vital events long before that' is correct handling. A bare year with no level attached is the failure mode, whichever year is chosen.",
+    "Must direct the researcher to town-level records (town clerk vital registers, town meeting records) for the 1820-1850 window, not only to county-level or state-level series. Massachusetts created records at both levels and the town series is the one a county-only survey misses.",
+    "Must recommend searching adjoining jurisdictions ACROSS the state line — the adjoining counties and, where relevant, the towns on the New York and Vermont sides — not merely note that Massachusetts is bordered by New York and Vermont. Naming the bordering states alone is the reported defect; the credit is for telling the researcher to search the neighbouring towns/counties over the border, at both town and county level. Do not require specific county names the tool output does not supply — the graded behavior is the cross-border search instruction, not recall of which counties adjoin.",
+    "Wiki-derived claims about record availability must carry the page URL the wiki tools returned (source_url on wiki_search results, url from wiki_read and wiki_place_page), not just the article title. A bare article title with no URL is a partial miss on this dimension.",
+    "The catch-all wiki fixtures return only generic, jurisdiction-neutral guidance ('civil registration dates differ by jurisdiction', 'many jurisdictions did not require civil registration until the late 1800s or early 1900s') and say nothing specific about Massachusetts. Correct handling is either to name the registration level with the citation that supports it, or to state plainly that the wiki result does not specify Massachusetts' start dates and that the researcher should check the Massachusetts wiki page directly. Silently converting the generic late-1800s line into a specific Massachusetts claim is a fabrication and should be graded as one.",
+    "Should still do the ordinary locality work: name concrete FamilySearch collections from collections_search rather than generic record-type names, classify the volume_search results by how searchable they are, and note repositories beyond FamilySearch (town clerk offices, the Massachusetts State Archives, county courthouse, local historical societies)."
+  ]
+}

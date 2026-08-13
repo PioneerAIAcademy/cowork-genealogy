@@ -1,0 +1,864 @@
+{
+  "project": {
+    "id": "rp_katalin_horak_son",
+    "objective": "Did Katalin Hor\u00e1k and her husband Istv\u00e1n Bany\u00e1ri of K\u013eak, Nov\u00e1 Ba\u0148a, Slovakia have a son named J\u00e1nos, baptized 1 September 1844?",
+    "subject_person_ids": [
+      "LDSJ-SXL"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does the baptismal register for the K\u013eak (Klak) parish, Bars County, Kingdom of Hungary, contain an entry recording the baptism of J\u00e1nos Bany\u00e1ri, son of Istv\u00e1n Bany\u00e1ri and Katalin Hor\u00e1k, on 1 September 1844?",
+      "rationale": "The objective asks whether a specific baptism occurred. The answer lies in surviving Catholic (or other church) baptismal registers for the K\u013eak parish, ca. 1844. This is a single testable fact \u2014 presence or absence of the entry \u2014 and the primary record type is the parish register, which FamilySearch has microfilmed for many Slovak/Hungarian localities. No prior questions need to be resolved before this one can be pursued.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-08-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Klak (K\u013eak), Bars County, Kingdom of Hungary",
+          "date_range": "1844",
+          "repository": "FamilySearch",
+          "rationale": "Hungary, Catholic Church Records, 1636-1895 (collection 1743180) is fully indexed and complete for all of Hungary including Bars County. Search for J\u00e1nos Bany\u00e1ri baptized 1 September 1844, with parents Istv\u00e1n Bany\u00e1ri and Katalin Hor\u00e1k. Try surname variants Banyari, Banjari, Hor\u00e1k/Horak. A positive hit provides indexed access to the baptism entry confirming (or refuting) the specific 1 September 1844 date. Per loc_001: records are in Latin (possibly Hungarian post-1827); the Klak/K\u013eak parish register 1758\u20131896 (catalog #1162429) is held at \u0160t\u00e1tny okresn\u00fd arch\u00edv v Banskej Bystrici.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Klak (K\u013eak), Bars County, Kingdom of Hungary",
+          "date_range": "1844",
+          "repository": "FamilySearch",
+          "rationale": "Hungary Baptisms, 1734-1895 (collection 1804226) is a separate indexed baptism collection that may have different parish coverage from collection 1743180. Search for J\u00e1nos Bany\u00e1ri ca. 1844 with surname variants. Execute if collection 1743180 returns no result for this person.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Slovakia / Bars County, Kingdom of Hungary",
+          "date_range": "1844",
+          "repository": "FamilySearch",
+          "rationale": "Slovakia, Church and Synagogue Books, 1592-1935 (collection 1554443) holds 19 million indexed records for Slovak territory (formerly Hungarian). Search for J\u00e1nos Bany\u00e1ri in Bars County 1844. This collection spans both the indexed and browse-only image holdings; an indexed hit here would confirm the baptism without requiring page-by-page browsing.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Klak (K\u013eak), Bars County, Kingdom of Hungary",
+          "date_range": "1844",
+          "repository": "FamilySearch",
+          "rationale": "Definitive browse-only check: FamilySearch Catalog #1162429 (Cirkev\u0148\u00e1 matrika, 1758-1896, K\u013eak) covers 1844 and must be read page by page via collection 1554443 (browse: Roman Catholic \u2192 Bars \u2192 Klak \u2192 Krsty). 'Krsty' = baptisms. This is the primary original source for K\u013eak and the authoritative check even if indexed searches are negative. Route to search-images skill for image browsing.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Klak (K\u013eak), Bars County, Kingdom of Hungary",
+          "date_range": "1830-1844",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage of Istv\u00e1n Bany\u00e1ri and Katalin Hor\u00e1k in Bars County, pre-dating the 1844 baptism. Per BCG Standard 14 and the record-type guide, a parentage question requires a dedicated parents\u2019-marriage search: (a) confirms the couple as a unit, (b) supplies the mother's maiden name, and (c) corroborates any baptism entry naming them as parents. The marriage would appear in the same Klak catalog #1162429 (Manzelstv\u00e1 = marriages) or in the indexed Hungary Catholic Church Records (collection 1743180). Search both Bany\u00e1ri/Banyari and Hor\u00e1k/Horak variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Klak (K\u013eak), Bars County, Kingdom of Hungary",
+          "date_range": "1844",
+          "repository": "Ancestry",
+          "rationale": "Paid fallback: Hungary, Select Catholic Church Records, 1636-1895 (Ancestry collection 9891) is a separate indexed compilation that may contain Bars County parish entries not in the FamilySearch equivalents. Execute if all FamilySearch indexed searches (items 1-3) return no result for J\u00e1nos Bany\u00e1ri 1844.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T21:00:45.780Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1743180",
+        "surname": "Bany\u00e1ri",
+        "givenName": "J\u00e1nos",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1845,
+        "fatherGivenName": "Istv\u00e1n",
+        "motherGivenName": "Katalin"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 30,
+      "notes": "30 results returned but all are phonetic neighbours (Kaj\u00e1ri, Baj\u00e1ri, Bagy\u00e1ri, Foj\u00e1ri) \u2014 none are Bany\u00e1ri or a recognisable variant. All scores identical (2.807), events arrays empty. No confident match. Retrying with unaccented surname and without parent filters."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T21:01:12.810Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1743180",
+        "surname": "Banyari",
+        "givenName": "J\u00e1nos",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1845
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 31,
+      "notes": "Unaccented surname variant. Top result is Kajari Janos baptised 1844 in Szeged, Csongr\u00e1d \u2014 wrong county entirely. All other results lack date/place data. No Bany\u00e1ri/Banyari entries visible. Retrying with parent-name pivot: search the father Istv\u00e1n Bany\u00e1ri as principal to see if child entries exist under his name."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T21:02:05.534Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1743180",
+        "surname": "Bany\u00e1ri",
+        "givenName": "Istv\u00e1n",
+        "anyPlace": "Bars"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 193,
+      "notes": "Father-pivot search: top 2 'Banyari Istvan' entries read via record_read \u2014 both from Mohol, B\u00e1cs-Bodrog county (1892 and 1894), mother Julianna Toth. Wrong county, wrong family entirely. Collection 1743180 does not appear to hold indexed entries for the Bany\u00e1ri family of Klak, Bars County. Advancing to pli_002 (Hungary Baptisms 1734-1895, collection 1804226)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T21:02:32.365Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1804226",
+        "surname": "Bany\u00e1ri",
+        "givenName": "J\u00e1nos",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1845,
+        "fatherGivenName": "Istv\u00e1n",
+        "motherGivenName": "Katalin"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Collection 1804226 (Hungary Baptisms 1734-1895) contains no indexed entry for J\u00e1nos Bany\u00e1ri 1843-1845 with these parents."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T21:02:32.365Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1804226",
+        "surname": "Banyari",
+        "givenName": "J\u00e1nos"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Broadened to unaccented surname, no year or parent filters. Still zero results. Collection 1804226 does not index Bany\u00e1ri/Banyari baptisms for the Klak/Bars County area."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-03T21:03:15.428Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bany\u00e1ri",
+        "givenName": "J\u00e1nos",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1845,
+        "collectionId": "1554443",
+        "fatherGivenName": "Istv\u00e1n",
+        "motherGivenName": "Katalin"
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 9,
+      "notes": "Top result (score 7.11, far above all others): J\u00e1nos Bany\u00e1ri, baptism 01 Sep 1844, K\u013eak, Nov\u00e1 Ba\u0148a, Slovakia \u2014 exact place and date match. Father: Istv\u00e1n Bany\u00e1ri (confirmed). HOWEVER, mother is indexed as K\u00e1ti Liskovics \u2014 NOT Katalin Hor\u00e1k as the research objective assumes. K\u00e1ti is a diminutive of Katalin but Liskovics and Hor\u00e1k are different surnames. This is a material discrepancy requiring resolution. Record: ark:/61903/1:1:KDVC-BPB. Additional family member records also returned (pli_003 rank 2\u20133: Joannes Bany\u00e1ri as father of Catharina and Anna Bany\u00e1ri \u2014 likely the same man at a later date). Passing primary record to extraction."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:17:24.240Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hor\u00e1k",
+        "givenName": "Katalin",
+        "spouseSurname": "Bany\u00e1ri",
+        "spouseGivenName": "Istv\u00e1n",
+        "collectionId": "1554443",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1843,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Exact bride+groom names with diacritics in Slovakia Church Books, marriage 1815-1843. No parents marriage record indexed for this couple."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:17:24.240Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bany\u00e1ri",
+        "givenName": "Istv\u00e1n",
+        "spouseSurname": "Hor\u00e1k",
+        "spouseGivenName": "Katalin",
+        "collectionId": "1743180",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1843,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Exact groom+bride names in Hungary Catholic Church Records, marriage 1815-1843. No parents marriage record indexed here either."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:17:24.241Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hor\u00e1k",
+        "givenName": "Katalin",
+        "collectionId": "1554443",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1843,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 38,
+      "notes": "Dropped spouse filter; searched Katalin Hor\u00e1k alone in collection 1554443, marriage 1815-1843. 38 results returned \u2014 all brides marrying men with other surnames (Kadlecz, Boskovits, Kozicz, Vi\u0161novsk\u00fd, Harga\u0161, etc.). No Bany\u00e1ri groom appears in any result. Top ranked match score 0.056 against LDSJ-SXL (no dated facts on subject so ranking is weak). Negative finding for the parents marriage."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:17:24.262Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bany\u00e1ri",
+        "givenName": "Istv\u00e1n",
+        "collectionId": "1554443",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1843,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2,
+      "notes": "Searched Istv\u00e1n Bany\u00e1ri marriage alone in collection 1554443, 1815-1843. Only 2 results \u2014 both for 'Steph Bajori' born 1785, a different person and era. LDSJ-SX2 has no dated facts so ranking was withheld. Negative."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T21:17:24.270Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Liskovics",
+        "givenName": "Katalin",
+        "collectionId": "1554443",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1843,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 129,
+      "notes": "Tested alternative hypothesis: searched Katalin Liskovics (the mother surname from the baptism index) for a marriage in collection 1554443, 1815-1843. 129 results with phonetic '-kovics' variants (Blaskovits, Broskovics, Greskovics, Riskovics, Florkovics, etc.) \u2014 none named Liskovics marrying a Bany\u00e1ri. The Liskovics marriage is equally unindexed. This neither confirms nor refutes the Liskovics hypothesis. Negative for indexed evidence."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KDVC-BPB : accessed 03 Aug 2026), Entry for J\u00e1nos Bany\u00e1ri and Istv\u00e1n Bany\u00e1ri, 01 Sep 1844.",
+      "citation_detail": {
+        "who": "J\u00e1nos Bany\u00e1ri (subject), Istv\u00e1n Bany\u00e1ri (father), K\u00e1ti Liskovics (mother)",
+        "what": "Baptism register entry, Roman Catholic parish, K\u013eak (Klak), Bars County, Kingdom of Hungary",
+        "when_created": "01 Sep 1844",
+        "when_accessed": "03 Aug 2026",
+        "where": "FamilySearch, Slovakia, Church and Synagogue Books, 1592-1935 (collection 1554443)",
+        "where_within": "Entry for J\u00e1nos Bany\u00e1ri and Istv\u00e1n Bany\u00e1ri, 01 Sep 1844; image ARK ark:/61903/3:1:33SQ-GTMD-9MWZ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KDVC-BPB",
+      "notes": "FamilySearch index entry (transcription). Original parish register image (ark:/61903/3:1:33SQ-GTMD-9MWZ) was not examined \u2014 image is browse-only and could not be transcribed (no OCR key available at time of extraction). Original not examined. Discrepancy: the index gives the mother's surname as 'Liskovics'; the research premise names the mother as 'Katalin Hor\u00e1k' (tree person LDSJ-SXL). The given name 'K\u00e1ti' is consistent with 'Katalin' (Hungarian diminutive), but 'Liskovics' \u2260 'Hor\u00e1k'. Original-image confirmation of the mother's surname is an outstanding step required before identity can be established.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448918",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "J\u00e1nos Bany\u00e1ri",
+      "structured_value": {
+        "given": "J\u00e1nos",
+        "surname": "Bany\u00e1ri"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448918",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448918",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized 01 Sep 1844 at K\u013eak, Nov\u00e1 Ba\u0148a, Slovakia",
+      "date": "01 Sep 1844",
+      "date_certainty": "exact",
+      "place": "K\u013eak, Nov\u00e1 Ba\u0148a, Slovakia",
+      "standard_place": "K\u013eak, \u017darnovica, Slovakia",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448918",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Istv\u00e1n Bany\u00e1ri (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship inferred from the record's father column (as indexed by FamilySearch). The indexer derived the ParentChild edge from the register's structure; this is not an explicitly stated relationship claim in the way a post-1880 census relationship column would be. Classified indirect per baptismal record conventions.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448918",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of K\u00e1ti Liskovics (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship inferred from the record's mother column (as indexed by FamilySearch). Note: the indexed mother's surname 'Liskovics' conflicts with the research premise naming the mother as 'Katalin Hor\u00e1k' (tree LDSJ-SXL). Original-image confirmation required before this link can be accepted. Do not conflate 'K\u00e1ti Liskovics' with 'Katalin Hor\u00e1k' on the basis of this derivative source alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448916",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Istv\u00e1n Bany\u00e1ri",
+      "structured_value": {
+        "given": "Istv\u00e1n",
+        "surname": "Bany\u00e1ri"
+      },
+      "information_quality": "primary",
+      "informant": "Istv\u00e1n Bany\u00e1ri",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father likely present at the baptism and supplied his own name. Proximity set to household_member per baptismal record conventions (the specific presenter cannot be confirmed from this derivative source).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448916",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Istv\u00e1n Bany\u00e1ri",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448916",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of K\u00e1ti Liskovics (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Couple relationship inferred from co-listing as father and mother in the baptism entry. The register names them jointly as parents but does not explicitly record a marriage; the spousal link is the researcher's structural inference.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448917",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "K\u00e1ti Liskovics",
+      "structured_value": {
+        "given": "K\u00e1ti",
+        "surname": "Liskovics"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "CRITICAL DISCREPANCY: The index gives the mother's surname as 'Liskovics'. The research premise names the mother as 'Katalin Hor\u00e1k' (tree person LDSJ-SXL). The given name 'K\u00e1ti' is the Hungarian diminutive of 'Katalin' and is consistent, but 'Liskovics' differs entirely from 'Hor\u00e1k'. This derivative source (index/transcription) could reflect a misreading of the original register. The original parish register image (ark:/61903/3:1:33SQ-GTMD-9MWZ) was not examined. Original-image confirmation of the mother's surname is an outstanding required step before any identity link between this persona and Katalin Hor\u00e1k (LDSJ-SXL) can be accepted. Value recorded as indexed \u2014 'Liskovics' is not substituted with 'Hor\u00e1k'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448917",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:KDVC-BPB",
+      "record_persona_id": "p_14157448917",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Istv\u00e1n Bany\u00e1ri (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Couple relationship inferred from co-listing as mother and father in the baptism entry. The register names them jointly as parents but does not explicitly record a marriage; the spousal link is the researcher's structural inference.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Record found by targeted search (givenName J\u00e1nos, surname Bany\u00e1ri, birth 1843\u20131845, fatherGivenName Istv\u00e1n, motherGivenName Katalin, collection 1554443). Result: J\u00e1nos Bany\u00e1ri baptized 01 Sep 1844 at K\u013eak \u2014 name, date, place all match the research question exactly. I1 minted from this persona via materialize_facts.",
+      "match_score": null,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) of the child persona. Same identification basis as a_001 \u2014 targeted search, exact match.",
+      "match_score": null,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Christening fact (01 Sep 1844, K\u013eak) of the child persona. Same identification basis as a_001. This fact directly answers q_001.",
+      "match_score": null,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: I1 is a child of Istv\u00e1n Bany\u00e1ri (inferred from father column of derivative baptism index). Bears on I1 as the child. Probable rather than confident because the inference from the column structure is indirect and the original register image has not been examined.",
+      "match_score": null,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: I1 is a child of K\u00e1ti Liskovics (inferred from mother column). Bears on I1 as the child. Probable for the same indirect-inference reason. Mother identity is separately unresolved (Liskovics vs. Hor\u00e1k surname conflict); this link concerns I1's relationship, not the mother persona's identity.",
+      "match_score": null,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "LDSJ-SX2",
+      "confidence": "probable",
+      "rationale": "a_004 bears on LDSJ-SX2 as the named father. Match: name Istv\u00e1n Bany\u00e1ri (diacritic variant only), Male, already positioned as husband of Katalin Hor\u00e1k and parent of LDSJ-SXK christened K\u013eak 15 Apr 1846 \u2014 same village, same surname, consistent era. Three other Istv\u00e1n candidates eliminated: LDSJ-SXK (born 1846 \u2014 chronologically impossible as 1844 father), GGCQ-1B6 (born 1938), GGC7-K79 (whose child was born 1938). same_person score 0.0013 (disclosed; structurally near-zero because the father persona carries no event facts).",
+      "match_score": 0.0013,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "LDSJ-SX2",
+      "confidence": "probable",
+      "rationale": "Name assertion (Istv\u00e1n Bany\u00e1ri) for the father persona, bearing on LDSJ-SX2. Same identification basis as pe for a_004. same_person score 0.0013 (disclosed).",
+      "match_score": 0.0013,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "LDSJ-SX2",
+      "confidence": "probable",
+      "rationale": "Sex (Male) assertion for the father persona, bearing on LDSJ-SX2. Same identification basis as pe for a_004. same_person score 0.0013 (disclosed).",
+      "match_score": 0.0013,
+      "created": "2026-08-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "LDSJ-SX2",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion (LDSJ-SX2 was spouse of K\u00e1ti Liskovics, inferred from co-listing as parents in the baptism). Bears on LDSJ-SX2. Linked at probable. The identity of K\u00e1ti Liskovics relative to tree person Katalin Hor\u00e1k (LDSJ-SXL) is unresolved \u2014 'Liskovics' \u2260 'Hor\u00e1k'; a conflict entry will be created. same_person score 0.0013 (disclosed).",
+      "match_score": 0.0013,
+      "created": "2026-08-03",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "The Slovakia Church and Synagogue Books index (src_001) names the mother of J\u00e1nos Bany\u00e1ri as 'K\u00e1ti Liskovics'. The research question and tree name the mother as 'Katalin Hor\u00e1k' (LDSJ-SXL). 'K\u00e1ti' is the standard Hungarian diminutive of 'Katalin' \u2014 given name consistent. 'Liskovics' vs. 'Hor\u00e1k' are entirely different surnames. Two explanations: (1) volunteer indexer transcription error from the original Gothic-script Catholic register; (2) the mother is genuinely Katalin Liskovics, a different woman, meaning LDSJ-SXL is misidentified in the tree as Istv\u00e1n Bany\u00e1ri's wife. Original-image examination (ark:/61903/3:1:33SQ-GTMD-9MWZ) is decisive but was blocked by missing OpenRouter API key. A parents' marriage record search (pli_005) may independently confirm or refute the Hor\u00e1k identification.",
+      "disputed_attribute": "mother_surname",
+      "identity_question": "Is the 'K\u00e1ti Liskovics' named as mother in the 01 Sep 1844 K\u013eak baptism record (ark:/61903/1:1:KDVC-BPB) the same person as Katalin Hor\u00e1k (LDSJ-SXL) in the tree?",
+      "competing_assertion_ids": [
+        "a_009"
+      ],
+      "independence_analysis": "The conflict rests on a single derivative source (src_001, the FamilySearch volunteer index of the Slovakia Church Books). No independent original-source assertion for the mother's surname has been recovered. With only one source family, no independence analysis is possible \u2014 there is nothing to weigh against a_009 except the research premise.",
+      "weighing_analysis": "a_009 ('K\u00e1ti Liskovics') comes from a derivative indexed source, which carries an inherent risk of transcription error from the original Gothic-script Catholic register. The counter-proposition (mother is Katalin Hor\u00e1k, LDSJ-SXL) derives from the research premise and tree, unsupported by any extracted original-source assertion. No original-image assertion exists. The derivative source cannot be given full weight against the research premise when original-image verification was attempted but blocked. Equally, the research premise cannot override the indexed value without original-source confirmation. The weighing is therefore inconclusive: neither value can be preferred on available evidence alone.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "Conflict closed for the purpose of this research run as analytically inconclusive. The original register image (ark:/61903/3:1:33SQ-GTMD-9MWZ) is the required arbiter. Its examination was attempted but blocked by a missing OpenRouter API key (a resource constraint). The uncertainty is fully reflected in the proof summary ps_001, which is tiered 'possible' precisely because of this conflict. A future run with image-reading capability should treat this conflict as immediately re-opened and examine the image before any conclusion upgrade.",
+      "status": "resolved",
+      "blocks_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "LDSJ-SXK (Istv\u00e1n Banyari, christened 15 Apr 1846 at Kl'ak) is the Istv\u00e1n Bany\u00e1ri named as father in the 01 Sep 1844 K\u013eak baptism entry (ark:/61903/1:1:KDVC-BPB).",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_006"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "Chronologically impossible: LDSJ-SXK was christened 15 Apr 1846 \u2014 two years AFTER the 1844 baptism in question. A person born after the child cannot be that child's father.",
+      "notes": null,
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_002",
+      "claim": "GGCQ-1B6 (Istv\u00e1n Bany\u00e1ri, born 1938, Mohol, India) is the Istv\u00e1n Bany\u00e1ri named as father in the 01 Sep 1844 K\u013eak baptism entry.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_006"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "Wrong era: GGCQ-1B6 was born in 1938, nearly a century after the 1844 baptism. Eliminated with certainty.",
+      "notes": null,
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_003",
+      "claim": "GGC7-K79 (Istv\u00e1n Bany\u00e1ri, whose only known child GGCQ-1B6 was born 1938) is the Istv\u00e1n Bany\u00e1ri named as father in the 01 Sep 1844 K\u013eak baptism entry.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_006"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "Implausible era: GGC7-K79's recorded child was born 1938 in Mohol, India, placing this person in the 20th century. same_person score 0.000005 (essentially zero). Eliminated on era grounds.",
+      "notes": null,
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_009"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Three FamilySearch indexed collections searched for the baptism: Hungary Catholic Church Records 1636\u20131895 (collection 1743180, negative), Hungary Baptisms 1734\u20131895 (collection 1804226, negative), Slovakia Church and Synagogue Books 1592\u20131935 (collection 1554443, positive \u2014 record ark:/61903/1:1:KDVC-BPB). Five marriage search configurations run for the parents (Hor\u00e1k \u00d7 Bany\u00e1ri, Bany\u00e1ri \u00d7 Hor\u00e1k, Katalin Hor\u00e1k alone, Istv\u00e1n Bany\u00e1ri alone, Katalin Liskovics as alternative) in collections 1554443 and 1743180, all negative. Original parish register image (ark:/61903/3:1:33SQ-GTMD-9MWZ) not examined \u2014 blocked by missing OpenRouter API key. Ancestry fallback (pli_006) skipped as unnecessary once the baptism was found in FamilySearch. Bars County civil registration did not begin until 1895; no civil vital records exist for this event.",
+      "narrative_markdown": "## J\u00e1nos Bany\u00e1ri \u2014 Baptism at Kl'ak, 1 September 1844\n\n### Conclusion\n\nA son named **J\u00e1nos Bany\u00e1ri** was baptized on **1 September 1844** at **Kl'ak, Bars County** (present-day Kl'ak, \u017darnovica, Slovakia), with **Istv\u00e1n Bany\u00e1ri** named as father. This is directly supported by an entry in the Slovakia, Church and Synagogue Books, 1592\u20131935 (FamilySearch ark:/61903/1:1:KDVC-BPB). The overall conclusion is tiered **possible** because while the child's baptism is directly proved, the question's specific attribution to *Katalin Hor\u00e1k* as mother cannot be established from the current evidence: the baptism index names the mother as 'K\u00e1ti Liskovics,' a conflict (c_001) that remains unresolved.\n\n### Evidence\n\n**Direct evidence (primary information) \u2014 child's baptism (a_001\u2013a_003):** The Slovakia Church and Synagogue Books entry directly records J\u00e1nos Bany\u00e1ri's name, sex, and christening date/place. These facts answer whether a son named J\u00e1nos was baptized at Kl'ak on 01 Sep 1844 without inference.\n\n**Indirect evidence \u2014 father identity (a_004, a_006\u2013a_007; pe_006\u2013pe_009):** The entry names Istv\u00e1n Bany\u00e1ri as father, inferred from the father column. This was linked to tree person LDSJ-SX2 at probable confidence: name matches (diacritic variant only), same village, same family. Three other tree persons named Istv\u00e1n Bany\u00e1ri were eliminated by hypothesis analysis (hyp_001\u2013hyp_003).\n\n**Unresolved conflict \u2014 mother's name (c_001; a_009):** The baptism index names the mother as **K\u00e1ti Liskovics** (a_009). The research question presupposes **Katalin Hor\u00e1k** (LDSJ-SXL). 'K\u00e1ti' is the standard Hungarian diminutive of 'Katalin' (given name consistent), but 'Liskovics' \u2260 'Hor\u00e1k'. Two interpretations: (1) volunteer-indexer transcription error from the Gothic-script register; (2) the mother is genuinely Katalin Liskovics. The original register image (ark:/61903/3:1:33SQ-GTMD-9MWZ) would resolve this but was blocked by a missing OpenRouter key.\n\n### Next Step\n\nConfigure an OpenRouter API key and read the original parish image via the image-reader skill. If it confirms 'Hor\u00e1k', upgrade the proof tier to 'probable' or 'proved'. If it confirms 'Liskovics', tree correction is required and the question as stated cannot be proved."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "consider_addressing",
+      "timestamp": "2026-08-03T21:17:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-08-03T21-17-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-03T22:05:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-03T22-05-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Slovakia",
+      "for_place": "K\u013eak (Klak), Bars County, Kingdom of Hungary",
+      "time_period": "1844",
+      "jurisdictions": [
+        {
+          "name": "Klak, Bars County, Kingdom of Hungary",
+          "date_range": "before 1918"
+        },
+        {
+          "name": "K\u013eak, Czechoslovakia",
+          "date_range": "1918\u20131993"
+        },
+        {
+          "name": "K\u013eak, \u017darnovica, Slovakia",
+          "date_range": "1993\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1554443",
+          "title": "Slovakia, Church and Synagogue Books, 1592-1935",
+          "date_range": "1592-1935"
+        },
+        {
+          "id": "1743180",
+          "title": "Hungary, Catholic Church Records, 1636-1895",
+          "date_range": "1636-1895"
+        },
+        {
+          "id": "1804226",
+          "title": "Hungary Baptisms, 1734-1895",
+          "date_range": "1734-1895"
+        },
+        {
+          "id": "4133831",
+          "title": "Hungary, Church Books, 1624-1950",
+          "date_range": "1624-1950"
+        },
+        {
+          "id": "1986782",
+          "title": "Slovakia, Census, 1869",
+          "date_range": "1869-1869"
+        }
+      ],
+      "quirks": [
+        "Hungarian civil registration began 1 October 1895 \u2014 all 1844 vital records are church records only.",
+        "The Klak parish register (FamilySearch Catalog #1162429, 1758\u20131896, held by \u0160t\u00e1tny okresn\u00fd arch\u00edv v Banskej Bystrici) covers 1844 and is available as browse-only images \u2014 must be read page by page; no name index.",
+        "Access browse-only images via Slovakia, Church and Synagogue Books (collection 1554443): browse \u2192 Roman Catholic \u2192 Bars \u2192 Klak \u2192 Krsty (baptisms).",
+        "Also search the indexed Hungary, Catholic Church Records, 1636\u20131895 (collection 1743180) first \u2014 it is fully indexed and complete and may include Klak entries.",
+        "Record language for 1844 Catholic baptisms is likely Latin; use Hungarian and Latin genealogical word lists.",
+        "Hungarian place name is Klak; Slovak is K\u013eak \u2014 search both spellings in FamilySearch catalog and indexes.",
+        "Surname variants to try: Bany\u00e1ri / Banyari / Banjari; Hor\u00e1k / Horak \u2014 diacritics are often dropped in indexes.",
+        "Nearby Nov\u00e1 Ba\u0148a-area parishes to check if Klak records are incomplete: Vyhne (catalog 1674\u20131909), Horn\u00e9 H\u00e1mry (1784\u20131921), Tekovsk\u00e1 Breznica (1784\u20131896)."
+      ],
+      "guide_markdown": "# Locality Guide: K\u013eak (Klak), Bars County, Kingdom of Hungary (1844)\n\n## Jurisdiction overview\n- **Historical name:** Klak, Bars County, Kingdom of Hungary\n- **Modern name:** K\u013eak, \u017darnovica District, Slovakia\n- **Parent jurisdiction:** Bars County, Kingdom of Hungary \u2192 Austro-Hungarian Empire\n- **Economy:** Agriculture; nearby Nov\u00e1 Ba\u0148a was a historic gold/silver mining town\n- **Ethnic composition:** Predominantly Slovak-speaking; Hungarian-administered county\n- **Religious denominations:** Roman Catholic (dominant); minority Lutheran presence possible\n- **Key note:** Hungarian civil registration began 1 October 1895 \u2014 all 1844 vital events recorded exclusively by the church\n\n## Primary record set\n- **Cirkevn\u00e1 matrika, 1758\u20131896** \u2014 FamilySearch Catalog #1162429; held by \u0160t\u00e1tny okresn\u00fd arch\u00edv v Banskej Bystrici; **browse-only images** (no name index); covers 1844 \u2713\n- Browse via collection 1554443 (Slovakia Church & Synagogue Books): Roman Catholic \u2192 Bars \u2192 Klak \u2192 Krsty\n\n## Indexed collections to search first\n- Hungary, Catholic Church Records, 1636\u20131895 (FS collection 1743180) \u2014 indexed, complete\n- Hungary Baptisms, 1734\u20131895 (FS collection 1804226) \u2014 indexed\n- Hungary, Church Books, 1624\u20131950 (FS collection 4133831) \u2014 indexed & images\n\n## Research tips\n- Search indexed collections first; if no hit, browse catalog 1162429 page by page\n- Language: Latin (possibly Hungarian post-1827)\n- Search both Klak (Hungarian) and K\u013eak (Slovak) spellings\n- Surname variants: Bany\u00e1ri/Banyari/Banjari; Hor\u00e1k/Horak\n- Fallback parishes: Vyhne, Horn\u00e9 H\u00e1mry, Tekovsk\u00e1 Breznica (all in Nov\u00e1 Ba\u0148a area)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Slovakia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-03"
+    }
+  ]
+}
