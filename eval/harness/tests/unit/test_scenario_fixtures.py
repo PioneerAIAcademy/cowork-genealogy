@@ -152,6 +152,10 @@ README_COUNT_LABELS = {
     "Proof summary": "proof_summaries",
     "Evaluations": "evaluations",
     "Evaluation": "evaluations",
+    "Localities": "localities",
+    "Locality": "localities",
+    "Known holdings": "known_holdings",
+    "Known holding": "known_holdings",
 }
 
 # A count in these fixtures is a small array length. A leading 4-digit number is
