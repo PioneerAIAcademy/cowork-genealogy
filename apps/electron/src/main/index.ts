@@ -116,6 +116,7 @@ function setupIPC(): void {
         email: string
         userPrompt: string
         agentDid: string
+        workedAsExpected: boolean
         agentShouldHave: string
         correctAnswer?: string
         notes?: string
@@ -134,6 +135,7 @@ function setupIPC(): void {
           email: payload.email,
           userPrompt: payload.userPrompt,
           agentDid: payload.agentDid,
+          workedAsExpected: payload.workedAsExpected,
           agentShouldHave: payload.agentShouldHave,
           correctAnswer: payload.correctAnswer,
           notes: payload.notes
