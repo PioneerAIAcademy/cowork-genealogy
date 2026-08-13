@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_person_evidence_n7v",
+    "skill": "person-evidence",
+    "name": "A record-search-sourced parent persona matching an existing tree candidate must be scored with same_person, not linked on narrative correlation alone",
+    "type": "positive",
+    "description": "Mined from eval/runlogs/e2e/sebastiano-mingazzini-son/run-2026-08-04_00-14-29: person-evidence linked a marriage record's father_of_groom and mother_of_groom personas directly to existing tree persons at 'confident' confidence via narrative reasoning alone, never calling same_person anywhere in the session, despite both personas carrying a non-null record_persona_id (record-search-sourced). The father's surname was not indexed on the record. This scenario fictionalizes the same shape: a_006 (father_of_groom, 'Thomas [surname not indexed]', persona F1) and a_008 (mother_of_groom, 'Bridget Sheehy', persona M1) both carry non-null record_persona_id and each names a person already in the tree (I1, I2).",
+    "tags": ["person-evidence", "same-person", "unindexed-surname", "household-relative-match", "from-e2e"]
+  },
+  "input": {
+    "user_message": "person-evidence: I've extracted the 1887 marriage record for John Flynn (assertions a_001-a_009), including his stated parents. Link these assertions to persons in the tree, including his parents.",
+    "scenario": "flynn-marriage-parent-match"
+  },
+  "mcp_fixtures": [
+    "same-person-flynn-father-unindexed-surname",
+    "same-person-flynn-mother-distinctive-surname"
+  ],
+  "judge_context": [
+    "a_006 (father_of_groom, given name 'Thomas', surname not indexed, record_persona_id F1) and a_008 (mother_of_groom, 'Bridget Sheehy', record_persona_id M1) both carry a non-null record_persona_id — they are record-search-sourced personas from the same marriage record — and each names a person matching an existing tree candidate: I1 (Thomas Flynn) and I2 (Bridget Sheehy).",
+    "Per SKILL.md Step 2, when an assertion is record-search-sourced and a serious tree candidate exists, person-evidence must resolve the persona from the log entry's results sidecar, build a tree-subset matching mob for the candidate, and call same_person before creating the person_evidence link. Narrative correlation alone ('the given name matches; the surname is implied from the groom's own surname') is not a substitute when a machine score is obtainable — this is the exact failure the source run committed.",
+    "The father's surname was never indexed — an unaccounted-for name element. Per Step 3's threshold table this caps the link's confidence and must be named explicitly in the rationale; it does not license a 'confident' link on narrative correlation alone. A 'probable' (or lower) confidence for a_006's link, with the missing surname disclosed, is the ceiling absent a corroborating same_person score that independently supports more.",
+    "The mother's name ('Bridget Sheehy') is an exact, distinctive match with no missing elements, so a 'confident' link is defensible for a_008 — but only once a same_person score has actually been obtained and disclosed in the rationale (match_score populated, not null). Assuming the match without ever calling the tool is the failure this test guards against, regardless of whether the resulting confidence happens to look reasonable.",
+    "John Flynn (the groom, persona G1) has no existing tree candidate — he is a new person. Materializing him via materialize_facts and linking a_001-a_005 needs no same_person call; do not penalize skipping the tool on that half of the record.",
+    "If either a_006's or a_008's resulting person_evidence entry is created with match_score null, or if same_person is never invoked at all despite the existing I1/I2 candidates, that is the core failure this test targets — the source run created exactly this pattern: two confident-tier links to existing tree persons built entirely from narrative correlation, with same_person never called anywhere in the session.",
+    "Tool Arguments: when same_person is called for the father or mother, primaryId1 should be the persona id (F1 or M1, resolved from the results/log_001.json sidecar) and primaryId2 should be the matching tree candidate (I1 or I2 respectively)."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}

@@ -53,3 +53,8 @@ Makefile @PioneerAIAcademy/senior-developers
 
 # Run logs and their .ann.json calibration annotations.
 /eval/runlogs/ @PioneerAIAcademy/senior-genealogists
+
+# The judge prompt — grading doctrine applied to every unit eval run. No
+# extension rule matches it (.md has none above) and no other path-prefix
+# rule does either, so before this line it required no senior review at all.
+/eval/harness/judge/ @PioneerAIAcademy/senior-genealogists
