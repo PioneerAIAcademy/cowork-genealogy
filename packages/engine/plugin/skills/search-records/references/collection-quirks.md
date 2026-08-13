@@ -3,6 +3,13 @@
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
+Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
+`record_search` takes **camelCase**: `q.surname` → `surname`,
+`q.fatherSurname` → `fatherSurname`, `q.fatherGivenName` →
+`fatherGivenName`, `q.motherGivenName` / `q.motherSurname` →
+`motherGivenName` / `motherSurname`, `f.collectionId` → `collectionId`.
+`q.batchNumber` → `batchNumber`.
+
 ## US Federal Censuses (1790–1940)
 
 - Indexed by community volunteers; mostly accurate but cursive
@@ -19,14 +26,19 @@ Quirks affect how queries should be constructed for that collection.
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation:** Search by IGI batch number (`q.batchNumber`)
-  to enumerate a parish exhaustively; cross-check with FreeREG and
-  FindMyPast
-- Batch number format: letter prefix + exactly 6 digits (e.g.,
-  `C050761`). Left-pad with zeros if needed.
-- Submitting batch number alone (no name) returns all extracted
-  records in alphabetical order — canonical way to enumerate every
-  christening or marriage from a single parish
+- **Compensation: the IGI batch number, via `batchNumber`.** It enumerates a
+  parish exhaustively and is a very strong filter. Verified live: a batch alone
+  returned about five thousand records, the same batch plus a surname returned
+  79, and a nonexistent batch returns **0** rather than being ignored — so a nil
+  under it means the batch is wrong, not that the parish is empty.
+- Batch number format: a letter prefix followed by digits. Both `C050761`
+  (letter + 6 digits) and `M01048-5` (letter + digits + dash + digit) are
+  accepted — an earlier revision of this file said "exactly 6 digits", which the
+  second form contradicts.
+- Submitting a batch number alone (no name) returns that batch's extracted
+  records — the canonical way to enumerate a single parish. Combine with a
+  surname to search within one parish's extraction.
+- Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ## Mexico Civil Registration
 
@@ -46,10 +58,15 @@ Quirks affect how queries should be constructed for that collection.
 
 ## Ellis Island Passenger Lists
 
-- **Wildcards are explicitly disabled** in these collections
-- **Compensation:** Try multiple specific spellings; search by
-  ship name + arrival year via other parameters; use external
-  Stephen Morse one-step tools
+- ~~**Wildcards are explicitly disabled** in these collections~~ —
+  **refuted by measurement.** Scoped to the Ellis Island passenger
+  collection, a one-character wildcard on a rare surname returns both
+  spellings it can match, and every record of the bound spelling turns up
+  in the wildcard's results — both sets read in full rather than sampled.
+  Wildcards work here; use them like anywhere else.
+- **Still useful:** multiple specific spellings, ship name + arrival year
+  via other parameters, and the external Stephen Morse one-step tools —
+  passenger-list indexing is rough regardless of whether wildcards work.
 
 ## United States SSDI (Social Security Death Index)
 

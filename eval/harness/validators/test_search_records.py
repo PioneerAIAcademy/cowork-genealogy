@@ -227,3 +227,52 @@ def test_escalates_to_external_sites_after_fs_exhaustion(skills_invoked, test):
         "invoke Skill('search-external-sites'). Offering it in prose is not "
         f"escalating. skills_invoked={skills_invoked}"
     )
+
+
+def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
+    """Tag-gated (live-callee): a test that lets `search-external-sites`
+    execute must show it was actually delegated to, and that it then called
+    its own tools.
+
+    This is the entire point of `execution.run_skills` (issue #1012). Before
+    the sub-skill union the callee held neither `place_search` nor
+    `external_links_search`, and the failure was silent — it invented an
+    Ancestry URL from prose rather than erroring. A regression would look
+    identical: plausible links, no tool call behind them.
+
+    Deterministic rather than judged, for the same reason
+    test_escalates_to_external_sites_after_fs_exhaustion is. Asked to verify
+    URL provenance against a tool response, the judge has been wrong in both
+    directions on this exact question: it scored Correctness=1 on 2026-07-31
+    for "placeholder URLs" that were relayed verbatim, and again on
+    2026-08-03 claiming Ancestry collection 1276 "does not appear in the
+    returned results" when it is the fifth entry in the fixture it was
+    reading. `tool_calls` is the harness's own record and cannot be misread.
+    """
+    if "live-callee" not in test.get("tags", []):
+        pytest.skip("only the live-callee seam test")
+    # Delegation first: without it the tool assert below is satisfiable the
+    # wrong way. `run_skills` puts `external_links_search` in the SESSION
+    # allowlist and stocks its fixture, so `search-records` can call it on the
+    # main thread, never invoke Skill(), and still show the tool in
+    # `tool_calls` — the seam this test exists for would be untested and green.
+    #
+    # Nothing else covers it: this test's own `judge_context` forbids the judge
+    # from grading delegation, and the validator it defers to
+    # (test_escalates_to_external_sites_after_fs_exhaustion) gates on the
+    # `familysearch-exhausted` tag, which ut_search_records_026 does not carry
+    # — it skips, and a skipped validator is recorded `passed: true`.
+    assert "search-external-sites" in skills_invoked, (
+        "the callee was declared under execution.run_skills, so this test's "
+        "whole subject is the caller/callee seam — but Skill("
+        "'search-external-sites') was never invoked. Calling its tools "
+        "directly from the main thread is the failure this asserts against, "
+        f"not a pass. skills_invoked={skills_invoked}"
+    )
+    called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
+    assert "external_links_search" in called, (
+        "search-external-sites was allowed to run, so it had to reach its own "
+        "tools — external_links_search is what turns a place into real "
+        "third-party collection links. Absent, the skill can only have "
+        f"invented any URLs it presented. tools called: {sorted(called)}"
+    )

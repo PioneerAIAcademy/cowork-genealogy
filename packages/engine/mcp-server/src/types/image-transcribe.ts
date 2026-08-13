@@ -21,6 +21,17 @@ export interface ImageTranscribeResult {
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
+  /** Present only from the (N+1)th distinct image in one image group in one
+   *  project onward. Advisory only — the transcription above is complete and
+   *  unaffected. See spec §5.8. */
+  browseBudget?: {
+    /** The image-group prefix, e.g. "004261111". */
+    imageGroup: string;
+    /** Distinct images transcribed from this group in this project so far. */
+    distinctImagesRead: number;
+    /** The advisory the caller should act on (pivot to indexed search). */
+    notice: string;
+  };
   metadata: {
     imageId?: string;
     ark?: string;
