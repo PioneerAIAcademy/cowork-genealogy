@@ -157,6 +157,17 @@ build a question on unverified claims from compiled sources (online trees,
 unsourced genealogies). If the premise is unverified, the first question
 should verify it.
 
+**When the objective signals the user doubts an existing assignment** —
+phrasing like "correct parents", "the right X", "not correct" — the current
+tree assignment is the premise *under doubt*, not a starting fact. **In
+interactive mode, before formulating, ask the user two things: (1) what
+evidence led them to doubt the current assignment, and (2) the birth date and
+place they are working from.** Then frame the first question as a **test of the
+disputed assignment** — e.g. "Do independent records confirm or refute that X
+and Y are the parents of Z?" — never treating the questioned tree as evidence
+for its own conclusion (issue #1471). Under `--autonomous` (no user to answer),
+skip the ask and go straight to the verification-framed question.
+
 ## 4. Write the question
 
 Persisting the question is the point of this skill — describing it in prose

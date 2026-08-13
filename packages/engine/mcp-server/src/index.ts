@@ -101,6 +101,9 @@ import {
   type ResearchQueryInput,
 } from "./tools/research-query.js";
 import { allToolSchemas } from "./tool-schemas.js";
+// Tools that report failure by RETURNING `{ ok: false }` rather than throwing
+// need `isError` set explicitly — the catch arms below cannot see them.
+import { writerToolResult } from "./tool-result.js";
 
 const server = new Server(
   { name: "genealogy-mcp", version: "0.1.0" },
@@ -615,7 +618,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as MergeTreePersonsInput;
       const result = await mergeTreePersons(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -625,7 +628,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as MaterializeFactsInput;
       const result = await materializeFacts(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -635,7 +638,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ResearchLogAppendInput;
       const result = await researchLogAppend(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -645,7 +648,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ConvertCalendarInput;
       const result = convertCalendar(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -655,7 +658,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeEditInput;
       const result = await treeEdit(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -665,7 +668,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeCorrectInput;
       const result = await treeCorrect(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -675,7 +678,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeForgetInput;
       const result = await treeForget(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -687,7 +690,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ResearchAppendOptions. Dispatch passes only the tool arguments.
       const args = request.params.arguments as unknown as ResearchAppendInput;
       const result = await extractionAppend(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -697,7 +700,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ResearchAppendInput;
       const result = await researchAppend(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -717,7 +720,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ProjectContextInput;
       const result = await projectContext(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -727,7 +730,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ResearchQueryInput;
       const result = await researchQuery(args);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };

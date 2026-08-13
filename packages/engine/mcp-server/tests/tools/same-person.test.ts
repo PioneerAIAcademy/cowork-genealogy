@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { samePerson } from "../../src/tools/same-person.js";
+import { notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
 
@@ -73,12 +74,12 @@ describe("samePerson", () => {
         json: async () => matchResponse,
       });
 
-      const result = await samePerson({
+      const result = notHaving(await samePerson({
         gedcomx1: makeGedcomx("I1", QUERY_ARK),
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }), "matchRelatives");
 
       expect(result.matched).toBe(true);
       expect(result.confidence).toBe(5);
@@ -95,12 +96,12 @@ describe("samePerson", () => {
         json: async () => noMatchResponse,
       });
 
-      const result = await samePerson({
+      const result = notHaving(await samePerson({
         gedcomx1: makeGedcomx("I1", QUERY_ARK),
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", "https://familysearch.org/ark:/61903/4:1:NONMATCH"),
         primaryId2: "I1",
-      });
+      }), "matchRelatives");
 
       expect(result.matched).toBe(false);
       expect(result.confidence).toBeUndefined();
@@ -464,12 +465,12 @@ describe("samePerson", () => {
         json: async () => matchResponse,
       });
 
-      const result = await samePerson({
+      const result = notHaving(await samePerson({
         gedcomx1: makeGedcomx("I1", QUERY_ARK),
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
     });
@@ -483,12 +484,12 @@ describe("samePerson", () => {
         }),
       });
 
-      const result = await samePerson({
+      const result = notHaving(await samePerson({
         gedcomx1: makeGedcomx("I1", QUERY_ARK),
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:MMMM-MMM");
     });

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -121,7 +122,7 @@ describe("tree_edit", () => {
 
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.assignedIds?.fact).toBe("F2");
+    expect(single(r).assignedIds?.fact).toBe("F2");
     expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
 
     const tree = await readTree();
@@ -171,7 +172,7 @@ describe("tree_edit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const tree = await readTree();
-    const added = tree.persons[0].facts.find((f: any) => f.id === r.assignedIds?.fact);
+    const added = tree.persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
     expect(added.place).toBe("West Bromwich, Staffordshire, England");
     expect(added.standard_place).toBeUndefined();
     expect(r.validation.warnings.some((w: string) => w.includes("contradicts place"))).toBe(true);
@@ -201,7 +202,7 @@ describe("tree_edit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const tree = await readTree();
-    const added = tree.persons[0].facts.find((f: any) => f.id === r.assignedIds?.fact);
+    const added = tree.persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
     expect(added.standard_place).toBeUndefined();
     expect(r.validation.warnings.some((w: string) => w.includes("contradicts place"))).toBe(true);
   });
@@ -214,7 +215,7 @@ describe("tree_edit", () => {
       personId: "I1",
       name: { given: "Johnny", surname: "Smith", preferred: true },
     });
-    expect(r.ok && r.assignedIds?.name).toBe("N2");
+    expect(r.ok && single(r).assignedIds?.name).toBe("N2");
     const names = (await readTree()).persons[0].names;
     expect(names).toHaveLength(2);
     expect(names.find((n: any) => n.id === "N1").preferred).toBeUndefined();
@@ -230,8 +231,8 @@ describe("tree_edit", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.assignedIds?.person).toBe("I2");
-    expect(r.assignedIds?.names).toEqual(["N2"]);
+    expect(single(r).assignedIds?.person).toBe("I2");
+    expect(single(r).assignedIds?.names).toEqual(["N2"]);
     const tree = await readTree();
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
   });
@@ -309,7 +310,7 @@ describe("tree_edit", () => {
       operation: "add_relationship",
       relationship: { type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
     });
-    expect(r.ok && r.assignedIds?.relationship).toBe("R1");
+    expect(r.ok && single(r).assignedIds?.relationship).toBe("R1");
     expect((await readTree()).relationships[0]).toMatchObject({ id: "R1", type: "Couple", person1: "I1", person2: "I2" });
   });
 
@@ -331,7 +332,7 @@ describe("tree_edit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     // Tool assigns the fact id; F1 is taken by I1's birth, so the next free is F2.
-    expect(r.assignedIds?.facts).toEqual(["F2"]);
+    expect(single(r).assignedIds?.facts).toEqual(["F2"]);
     const rel = (await readTree()).relationships[0];
     expect(rel.facts[0]).toMatchObject({ id: "F2", type: "Marriage", date: "12 May 1843" });
   });
@@ -484,7 +485,7 @@ describe("tree_edit", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.assignedIds?.source).toBe("S1");
+    expect(single(r).assignedIds?.source).toBe("S1");
     expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
 
     const tree = await readTree();
@@ -507,9 +508,9 @@ describe("tree_edit", () => {
   it("add_source twice: ids increment S1 -> S2 (nextId is S-aware)", async () => {
     await writeProject(onePerson());
     const r1 = await treeEdit({ projectPath: dir, operation: "add_source", source: { title: "First" } });
-    expect(r1.ok && r1.assignedIds?.source).toBe("S1");
+    expect(r1.ok && single(r1).assignedIds?.source).toBe("S1");
     const r2 = await treeEdit({ projectPath: dir, operation: "add_source", source: { title: "Second" } });
-    expect(r2.ok && r2.assignedIds?.source).toBe("S2");
+    expect(r2.ok && single(r2).assignedIds?.source).toBe("S2");
     expect((await readTree()).sources.map((s: any) => s.id)).toEqual(["S1", "S2"]);
   });
 
