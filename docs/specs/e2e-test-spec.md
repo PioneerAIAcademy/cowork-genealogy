@@ -1116,14 +1116,17 @@ Three integrity rules make the agreement number trustworthy:
   crash becomes committable, a run can be ungraded *and* worth committing for
   re-grading, so the two are reported on their own lines.
 
-  > **Caveat on annotations collected before 2026-08-05.** The roll-up has
+  > **Caveat on annotations collected before this change merged.** The roll-up has
   > printed verdict-bearing output since the harness's first commit
   > (`git show d371694a:eval/harness/e2e/report.py`). On 2026-07-31, the
   > separation of compliance from verdict removed the per-run verdict print
   > but left the end-of-suite roll-up intact — recall summary, overall gate,
-  > and by-tag breakdowns all restated the verdict. On 2026-08-05, blind
-  > grading enforcement removed those lines. Any `.ann.json` committed before
-  > that date was drawn with some form of the verdict on screen.
+  > and by-tag breakdowns all restated the verdict. Blind-grading enforcement —
+  > the change this section describes — is what removes those lines, so the
+  > cut-off is the date **it merges**, not any earlier one: the roll-up kept
+  > printing verdicts until then, and annotations kept arriving meanwhile. Any
+  > `.ann.json` committed before that merge was drawn with some form of the
+  > verdict on screen.
   > `calibrate_judge` does not exclude these rows; the bias is accepted and
   > ages out as new blind annotations replace them.
   >
@@ -1307,8 +1310,11 @@ never subject to them, and two runs from the days after predate later
 additions to the check set. `axes_from_runlog` reports all of them
 `not_checked` rather than `pass`, distinguishing pre-detector code by the
 presence of the `guardrail_shadow_violations` key (the two shipped in the same
-commit). Retroactively scoring the historical corpus needs the checks replayed
-at a pinned version to be meaningful.
+commit). **Retroactively scoring the corpus is not currently possible in a way
+worth trusting**, and `not_checked` is the honest label rather than a placeholder
+for work in progress: a replay only means something if the checks are pinned to
+the version each run actually executed, and nothing records that version per run.
+Recording it is the prerequisite for any corpus-wide compliance number.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
