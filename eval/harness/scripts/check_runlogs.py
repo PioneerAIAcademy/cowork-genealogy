@@ -36,8 +36,8 @@ HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
 from harness.snapshot import (  # noqa: E402
-    _collect_refs,
     agent_refs_in_text,
+    collect_refs,
     diff_snapshot_vs_disk,
     hash_file,
 )
@@ -207,7 +207,7 @@ def skills_referencing_fixtures(tests_root: Path) -> dict[tuple[str, str], set[s
     matching FIXTURE_PATH_RE's first group — so a scenario and an mcp fixture
     that happen to share a bare name never collide.
 
-    Resolution is delegated to ``snapshot._collect_refs``, the single place the
+    Resolution is delegated to ``snapshot.collect_refs``, the single place the
     reference contract lives (``input.scenario`` for scenarios, bare entries in
     ``mcp_fixtures[]`` for mcp fixtures). Keeping one implementation is what
     guarantees the gate resolves fixtures exactly the way the snapshot embedded
@@ -220,7 +220,7 @@ def skills_referencing_fixtures(tests_root: Path) -> dict[tuple[str, str], set[s
     for skill_dir in sorted(tests_root.iterdir()):
         if not skill_dir.is_dir():
             continue
-        refs = _collect_refs(skill_dir, None)
+        refs = collect_refs(skill_dir, None)
         for name in refs["scenarios"]:
             mapping.setdefault(("scenarios", name), set()).add(skill_dir.name)
         for name in refs["fixtures"]:
