@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right person and both parent-child relationships recovered and sourced (R11/R12 to S1). But birth year (~1859 vs. expected 1860), birthplace (Castel Bolognese vs. expected Faenza), and death (4 Jan 1933, Solarolo — absent entirely from the tree) don't match the expected finding as transcribed — the agent worked from the marriage-bann index only and never recovered the death record."
+  },
+  "annotator": "EdmondOware"
+}

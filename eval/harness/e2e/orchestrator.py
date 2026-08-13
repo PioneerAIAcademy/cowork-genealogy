@@ -52,6 +52,7 @@ from harness.skill_invocation import (
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
+    find_unpersisted_conflict_resolutions,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
@@ -2018,14 +2019,35 @@ async def _run_agent(
     # shadow report counts it in its own bucket. Logs; never fails the run.
     # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
     # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
+    final_research_for_shadow = read_research_json(workspace)
     citation_nulling_shadow = find_citation_nulling_in_conclusions(
-        read_research_json(workspace)
+        final_research_for_shadow
     )
     if citation_nulling_shadow:
         guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
         _emit(
             f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
             "with a null/empty citation string (shadow mode — not failed)"
+        )
+
+    # SHADOW MODE ONLY (issue #1317) — the conflict-side sibling of the citation
+    # detector above: a written conclusion asserts a resolved conflict (in its
+    # exhaustive_declaration.stop_criteria.conflict_resolution) that no structured
+    # conflicts[] entry backs, so the resolution lives only in prose and the
+    # viewer's Conflicts section stays blank. Same already-plumbed field,
+    # discriminated by `kind`. Logs; never fails the run. Promotion to a hard gate
+    # is gated on measuring this fire rate across the corpus.
+    conflict_unpersisted_shadow = find_unpersisted_conflict_resolutions(
+        final_research_for_shadow
+    )
+    if conflict_unpersisted_shadow:
+        guardrail_shadow_violations = (
+            guardrail_shadow_violations + conflict_unpersisted_shadow
+        )
+        _emit(
+            f"[guardrail-shadow] {len(conflict_unpersisted_shadow)} concluded "
+            "question(s) relying on an unpersisted conflict resolution "
+            "(shadow mode — not failed)"
         )
 
     return (
