@@ -383,10 +383,16 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_place_page",
       "wiki_search",
     ],
-    denies: [],
+    denies: ["fulltext_search", "person_read", "record_search"],
   },
-  "image-reader-opus.md": { tools: ["image_read"], denies: [] },
-  "image-reader.md": { tools: ["image_transcribe"], denies: [] },
+  "image-reader-opus.md": {
+    tools: ["image_read"],
+    denies: ["image_transcribe", "record_read", "record_search"],
+  },
+  "image-reader.md": {
+    tools: ["image_transcribe"],
+    denies: ["configure_openrouter", "record_read", "record_search"],
+  },
   "record-extractor.md": {
     tools: [
       "extraction_append",
@@ -398,7 +404,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_record_matches",
       "research_log_append",
     ],
-    denies: ["research_append"],
+    denies: ["materialize_facts", "research_append", "tree_edit"],
   },
 };
 

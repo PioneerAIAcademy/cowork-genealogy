@@ -130,9 +130,16 @@ Then open <http://localhost:3000>. The CRUD UI reads + writes the same `eval/` t
 ### Harness exit codes
 
 - `0` — every test passed or was an expected xfail.
-- `1` — harness crash, or any test failed or unexpectedly passed.
+- `1` — harness crash, or any test failed or unexpectedly passed. On a crash,
+  submission stops but every still-running test is allowed to finish, and the
+  completed tests are saved as a `scratch_<ts>.json` run log per skill with the
+  path printed.
 - `2` — any test aborted with `not_runnable` (corpus issue — missing scenario, fixture, or rubric).
 - `3` — any test aborted for an execution reason (max turns, timeout, etc.).
+- `130` — interrupted with Ctrl-C. Completed tests are saved as a
+  `scratch_<ts>.json` per skill, but in-flight tests are **not** cancelled — the
+  pool joins them — and their results are discarded. A run cut short never
+  writes a releasable `v{N}`.
 
 ## Running tests
 

@@ -3,17 +3,67 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Wasyl Kapach (recorded in the census as Wasyl Capach) was born 1883 in Ukraine and immigrated to Canada in 1906, per the 1926 Prairie Provinces census (Athabasca, Alberta). The tree currently has no birth fact for him.",
+      "description": "Wasyl Kapach was born in 1879 in Ukraine. The tree currently has no birth fact for him. 1879 (not the hint's 1926-census estimate of 1883) is the correct year — see f3.",
       "details": {
         "subject_person": "Wasyl Kapach (L17M-W4Q)",
         "fact_type": "Birth",
-        "date": "1883",
+        "date": "1879",
         "place": "Ukraine"
       },
       "supporting_sources": [
-        "Canada, Prairie Provinces, Census, 1926 — household entry for Wasyl Capach, Athabasca, Alberta"
+        "Find a Grave memorial #113540812 for Wasyl \"William\" Kapach (b. 1879, d. 5 Dec 1948) — bundled at provided-documents/findagrave-kapach-captures.pdf",
+        "Shared Kapach headstone, Eldorena Ukrainian Catholic Church Cemetery: \"MARIA 1893-1966 / WASYL 1879-1948\" — same bundled capture",
+        "Edmonton Journal obituary, 7 Dec 1948 — age 69 at a 5 Dec 1948 death, bracketing birth 6 Dec 1878 - 5 Dec 1879 — same bundled capture"
       ],
       "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Wasyl Kapach immigrated to Canada in 1906.",
+      "details": {
+        "subject_person": "Wasyl Kapach (L17M-W4Q)",
+        "fact_type": "Immigration",
+        "date": "1906",
+        "place": "Canada"
+      },
+      "supporting_sources": [
+        "Canada, Prairie Provinces, Census, 1926 — household entry for Wasyl Capach, Athabasca, Alberta (ark:/61903/1:1:QPR9-YLYV) — the sole source for the 1906 immigration year, indexed under the C-initial 'Capach' transliteration"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "polarity": "avoid",
+      "description": "The agent must NOT conclude that Wasyl Kapach was born in 1883. That figure is a lone 1926-census age estimate (recorded age 43) that under-ages the whole household in the same direction (wife Mary 1894 vs 1893, daughter Natalka 1914 vs 1913), and it is contradicted by his headstone (WASYL 1879-1948) and the 7 Dec 1948 Edmonton Journal obituary (age 69 at a 5 Dec 1948 death). Recording 1883 only as an explicitly rejected alternative to 1879 is correct behaviour and scores as matched.",
+      "details": {
+        "subject_person": "Wasyl Kapach (L17M-W4Q)",
+        "fact_type": "Birth",
+        "wrong_value": "1883",
+        "correct_value": "1879 (see f1)"
+      },
+      "supporting_sources": [
+        "Source of the wrong year: Canada, Prairie Provinces, Census, 1926 age estimate (ark:/61903/1:1:QPR9-YLYV)",
+        "Contradicted by Find a Grave memorial #113540812, the shared headstone (1879), and the 1948 Edmonton Journal obituary — bundled at provided-documents/findagrave-kapach-captures.pdf"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "fact",
+      "description": "Wasyl Kapach died 5 December 1948 at Smoky Lake, Alberta, and was buried at Eldorena Ukrainian Catholic Church Cemetery, plot 72. Bonus — not part of the birth/immigration question, but recoverable from the same bundled capture.",
+      "details": {
+        "subject_person": "Wasyl Kapach (L17M-W4Q)",
+        "fact_type": "Death",
+        "date": "5 December 1948",
+        "place": "Smoky Lake, Alberta, Canada",
+        "burial": "Eldorena Ukrainian Catholic Church Cemetery, plot 72"
+      },
+      "supporting_sources": [
+        "Find a Grave memorial #113540812 for Wasyl \"William\" Kapach — bundled at provided-documents/findagrave-kapach-captures.pdf; cites Alberta Vital Statistics death registration #007-198"
+      ],
+      "required": false
     }
   ]
 }

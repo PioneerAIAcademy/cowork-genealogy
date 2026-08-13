@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero for the 'Wilkens' spelling variant of Wilkins. Exists so ut_search_records_024 does not punish the skill for doing what its own rubric rewards: the Search-strategy dimension awards a pass only when 'at least one relevant variant or phonetic alternative is included', while the judge's global rule fails any call matching no fixture. Without this fixture the same query earns credit on one dimension and a deduction on another, and whether the model reaches for the variant on a given run is a coin flip — so the test flakes. This is a narrow, single-spelling nil, NOT a catch-all: a catch-all was tried on ut_search_records_014 and made things worse, because a nil invites the next variant and the run hit its turn cap. 024 has room (35 turns, 19 used) and one extra nil ends the variant branch rather than opening it.",
+  "args": {
+    "surname": "Wilkens"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

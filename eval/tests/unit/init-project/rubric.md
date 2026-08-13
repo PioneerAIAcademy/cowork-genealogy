@@ -35,7 +35,8 @@ FamilySearch-derived facts are sourced to a tree source (`S1`) at
 Is `research.json` initialized with the correct shape — `project` block
 filled (id, objective, subject_person_ids, status, created/updated, title),
 and every other section present as an empty array (or populated where the
-skill is meant to populate it)? Does the project validate clean?
+skill is meant to populate it)? Does the written file conform to the
+schema on inspection?
 
 Grade on the **content the skill actually wrote** (the written files /
 file diff), not on whether the chat summary re-displays every field. A
@@ -46,8 +47,12 @@ objective is fine. Only a genuinely restated full-sentence title (the whole
 objective copied into the title field) is a weakness.
 
 - **pass:** `project` block complete and sensible; all required sections
-  present (empty arrays where nothing was gathered); `validate_research_schema`
-  passes (or is attempted and the only failures are pre-existing).
+  present (empty arrays where nothing was gathered); the written
+  `research.json` conforms to the schema on inspection (required fields,
+  correct types, no extraneous fields) — init-project has no
+  schema-validation tool in its `allowed-tools`, so this is graded by
+  reading the file against the schema, not by expecting a
+  `validate_research_schema` call.
 - **partial:** Project initializes, but one metadata field is genuinely weak
   or missing (e.g. the title is the full objective sentence verbatim, or
   `updated` is missing).

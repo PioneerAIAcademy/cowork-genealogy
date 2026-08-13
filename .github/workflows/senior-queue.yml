@@ -82,12 +82,17 @@ name: senior-queue
 # writes — so a dispatch dry run is the way to check a readiness change against
 # the live board before letting it label or resolve anything.
 #
-# THE EVENTS ALONE CANNOT KEEP THE QUEUE CURRENT. `check_suite` never fires here
-# (see the trigger below), so nothing observes CI turning green; a PR approved
-# while CI is still running gets its last event at approval time and is never
-# re-evaluated. The events are the fast path, the schedule is what makes the
-# queue converge. If you remove the schedule, something else must answer "what
-# re-checks a PR after CI finishes?"
+# THE SCHEDULE IS WHAT MAKES THE QUEUE CONVERGE, and it now carries both of the
+# two things that make a PR ready. `check_suite` never fires here (see the
+# trigger below), so nothing observes CI turning green, and there is no approval
+# trigger either (see below), so nothing observes the peer review landing. The
+# `pull_request_target` events are a fast path for open/push only. If you remove
+# the schedule, something else must answer "what re-checks a PR after CI
+# finishes, and after someone approves it?" — and the answer cannot be an
+# approval event.
+#
+# WHAT THIS COSTS: up to 30 minutes between the approval that makes a PR ready
+# and the label that puts it in a senior's queue.
 
 # TRIGGER CHOICE: `pull_request_target`, because developers without write access
 # contribute from forks and a `pull_request` run gets a read-only token there,
@@ -98,12 +103,24 @@ name: senior-queue
 # so nothing fork-authored ever executes; and the script is read from the base
 # branch, so a fork cannot edit the readiness rules in its own PR. Adding a
 # checkout of PR content would turn this into a pwn-request vector.
+#
+# NO APPROVAL TRIGGER, and do not add one back. `pull_request_review` was listed
+# here and was removed on 2026-08-13: GitHub has no `_target` variant of it, so
+# on a fork-authored PR it hands the run a read-only token no matter what the
+# `permissions:` block below asks for, and the label write 403s with "Resource
+# not accessible by integration". Verified on PR #1564 (fork `chrisedeson`):
+# the review run logged `Issues: read`, the `pull_request_target` run on the
+# same PR logged `Issues: write`.
+#
+# It survived undetected for as long as it did because the failure needs a fork
+# PR that is READY — a review run on a PR still blocked by changes-requested
+# returns before it ever writes, and goes green. So it only reddened on the
+# approval that mattered, and the sweep 30 minutes later applied the label
+# anyway, leaving a red X on a PR that was correctly queued.
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
-  pull_request_review:
-    types: [submitted, dismissed]
   check_suite:
     # DEAD TRIGGER, kept only to document that it is dead. Every check suite here
     # is created by an Actions workflow using `GITHUB_TOKEN`, and GitHub does not

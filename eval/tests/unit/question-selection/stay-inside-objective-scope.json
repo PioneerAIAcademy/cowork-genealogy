@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_question_selection_013",
+    "skill": "question-selection",
+    "name": "Do not propose research on the subject's spouse or child when the objective is his parentage",
+    "type": "positive",
+    "description": "The job-purnell-parents-identity scenario pairs a narrow objective ('Identify the parents of Job Purnell') with a tree that also holds his wife Serena Deacon and his son Samuel Jesse Purnell. Both relatives have obvious pedigree gaps, so the whole-tree sweep in references/pedigree-analysis.md surfaces them and Priority 5 can fire on work the user never asked for — the reported 'it kept wanting to restore the relationships and records for wife and child, despite that being outside the parameters'. Correct behavior: q_001 already covers the objective at its own scope and its plan item pli_001 is still `planned`, so no new question is warranted — recommend executing the planned baptism search. Guards SKILL.md Step 1c's 'not wider' rule and the Priority 5 scope filter.",
+    "tags": [
+      "question-selection",
+      "objective-scope-match",
+      "out-of-scope-relatives",
+      "pedigree-sweep-filtering",
+      "spouse-and-child-in-tree",
+      "question-selection-no-new-question",
+      "scope-excludes-serena-deacon",
+      "scope-excludes-samuel-jesse-purnell",
+      "scope-excludes-serena",
+      "scope-excludes-samuel"
+    ]
+  },
+  "input": {
+    "user_message": "What should I research next?",
+    "scenario": "job-purnell-parents-identity"
+  },
+  "judge_context": [
+    "The objective is 'Identify the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire, England; married Serena Deacon 1849)'. Serena Deacon (his wife) and Samuel Jesse Purnell (his son) appear in the tree but are NOT in the objective's scope. Their own missing dates, marriages, baptisms and records belong to a different objective.",
+    "SCOPE — the primary thing under test. Any new question whose subject is Serena or Samuel is a FAIL on Objective scope match, however well-formed it is otherwise: 'What was Serena Deacon's birth date?', 'Where was Samuel Jesse Purnell baptized?', or anything framed as completing/restoring the wife's or child's records. A question may draw on a relative's records only if it states how the answer is evidence about Job's parentage.",
+    "EXPECTED OUTCOME — no new question. q_001 ('Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?') already covers the objective at its own scope, and per the Rules the skill must never write a second `q_` for a question that already exists. Its plan pl_001 has pli_001 (church records, Trowbridge) still at status `planned`, and direct evidence is therefore nowhere near exhausted, so no FAN pivot is due either. The skill should recommend executing pli_001 — referencing it by ID — rather than adding anything.",
+    "Do NOT treat the pedigree gaps on Serena and Samuel as a Priority 5 signal. Priority 5 fires only on missing data inside the objective's scope; the reference sweep covers the whole tree and its output is a candidate list, not a work list.",
+    "If the skill does note the relatives' gaps, observing them as context is acceptable — proposing research on them, or implying the project will pursue them, is not.",
+    "PRESENTATION: the recommendation should name pli_001 and say in plain language what happens next, not name the research-plan or search-records skills."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all nil for ANY Purnell-family surname spelling, whatever the other parameters. Same problem and same shape as record-search-flynn-any-variant-no-results — read that fixture's note for the full rationale. ut_search_records_020 stocks one decoy result under '~Purnell'; when the skill went on to try 'Purnall' (which the Search strategy dimension rewards it for doing) the call matched nothing and came back a fixture_not_found ERROR, and Tool Arguments was scored 2 even though the judge's own rationale said the override permitted 3. This absorbs any remaining Purn* query and returns the honest nil instead: only the decoy exists in this scenario, so a nil on every other spelling is the truthful answer. Keep it LAST in the test's mcp_fixtures list — matching is first-match-wins in list order, so an earlier catch-all would shadow the decoy fixture and break the test outright. Anchored to the name stem on purpose: a search on a surname outside the Purn* stem still misses and is still caught as a real defect. Note the limit of that guard — matches() (fixtures.py:93) checks only the keys the predicate names and ignores every other arg, so this fires on ANY query whose surname contains 'purn', whatever the given name, place, date or collection. That is why record-search-purnell-1821-decoy must match on surname alone: while the decoy also pinned givenName, a widened Purnell query fell past it to this fixture and nilled, hiding the decoy the test grades the skill on rejecting.",
+  "args": {
+    "surname": "~purn"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}
