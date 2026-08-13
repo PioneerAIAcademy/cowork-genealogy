@@ -218,6 +218,10 @@ export type FeedbackReport = {
   email: string
   userPrompt: string
   agentDid: string
+  /** The "Did it work as expected?" answer. true = positive report; the dialog
+   *  then sends empty agentShouldHave/correctAnswer. Not a text field — it skips
+   *  normalizeAndValidate's char-limit loop and is threaded straight to the renderers. */
+  workedAsExpected: boolean
   agentShouldHave: string
   /** Ground truth, when the agent reached a wrong conclusion. Optional. */
   correctAnswer?: string
@@ -373,6 +377,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     'FEEDBACK.md',
     renderFeedbackMarkdown({
       fields: normalized,
+      workedAsExpected: report.workedAsExpected,
       timestamp,
       projectFolder: folderResolved,
       viewerVersion,
@@ -386,6 +391,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     '_feedback/feedback.json',
     renderFeedbackJson({
       fields: normalized,
+      workedAsExpected: report.workedAsExpected,
       submittedAt: timestamp,
       viewerVersion,
       projectFolderPath: folderResolved
@@ -412,6 +418,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
 
 function renderFeedbackJson(args: {
   fields: NormalizedFields
+  workedAsExpected: boolean
   submittedAt: string
   viewerVersion: string
   projectFolderPath: string
@@ -425,6 +432,7 @@ function renderFeedbackJson(args: {
     project_folder_path: args.projectFolderPath,
     user_prompt: args.fields.userPrompt,
     agent_did: args.fields.agentDid,
+    worked_as_expected: args.workedAsExpected,
     agent_should_have: args.fields.agentShouldHave,
     correct_answer: args.fields.correctAnswer,
     notes: args.fields.notes
@@ -434,6 +442,7 @@ function renderFeedbackJson(args: {
 
 function renderFeedbackMarkdown(args: {
   fields: NormalizedFields
+  workedAsExpected: boolean
   timestamp: string
   projectFolder: string
   viewerVersion: string
@@ -443,6 +452,7 @@ function renderFeedbackMarkdown(args: {
 }): string {
   const {
     fields,
+    workedAsExpected,
     timestamp,
     projectFolder,
     viewerVersion,
@@ -458,6 +468,7 @@ function renderFeedbackMarkdown(args: {
     `- **When:** ${timestamp}`,
     `- **Viewer version:** ${viewerVersion}`,
     `- **Project folder:** ${projectFolder}`,
+    `- **Worked as expected:** ${workedAsExpected ? 'Yes' : 'No'}`,
     '',
     '## What I asked',
     '',
@@ -465,12 +476,14 @@ function renderFeedbackMarkdown(args: {
     '',
     '## What the agent did',
     '',
-    fields.agentDid,
-    '',
-    '## What it should have done',
-    '',
-    fields.agentShouldHave
+    fields.agentDid
   ]
+
+  // Omitted on a positive report and when a bug reporter didn't know the ideal
+  // behavior (both send it empty) — the "Worked as expected" line carries the signal.
+  if (fields.agentShouldHave) {
+    sections.push('', '## What it should have done', '', fields.agentShouldHave)
+  }
 
   if (fields.correctAnswer) {
     sections.push('', '## The correct answer, and the evidence for it', '', fields.correctAnswer)

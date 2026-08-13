@@ -28,6 +28,7 @@ function makeOptions(folder: string, overrides: Partial<FeedbackOptions['report'
       email: 'User@Example.com',
       userPrompt: 'Find a marriage record for John Smith.',
       agentDid: 'It searched 1860 census and stopped.',
+      workedAsExpected: false,
       agentShouldHave: 'It should have tried 1870 and 1880.',
       notes: undefined,
       ...overrides
@@ -65,12 +66,26 @@ describe('buildFeedbackZip — feedback.json', () => {
       'project_folder_path',
       'user_prompt',
       'agent_did',
+      'worked_as_expected',
       'agent_should_have',
       'notes'
     ]) {
       expect(payload, `missing field: ${key}`).toHaveProperty(key)
     }
     expect(payload.notes).toBe('')
+  })
+
+  it('stores worked_as_expected as the boolean from the report', async () => {
+    const positive = await readFeedbackJson(
+      (await buildFeedbackZip(makeOptions(folder, { workedAsExpected: true, agentShouldHave: '' })))
+        .zipBase64
+    )
+    expect(positive.worked_as_expected).toBe(true)
+
+    const negative = await readFeedbackJson(
+      (await buildFeedbackZip(makeOptions(folder, { workedAsExpected: false }))).zipBase64
+    )
+    expect(negative.worked_as_expected).toBe(false)
   })
 
   it('round-trips text fields verbatim and lowercases/trims email', async () => {

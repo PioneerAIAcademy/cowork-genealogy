@@ -1,0 +1,248 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm whether John Flynn, groom in an 1887 marriage record, was a son of Thomas Flynn and Bridget Sheehy of Schuylkill County, Pennsylvania",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-01",
+    "updated": "2026-08-01"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was John Flynn (1887 marriage record) a son of Thomas Flynn and Bridget Sheehy?",
+      "rationale": "An indexed marriage record names a groom John Flynn whose stated parents match Thomas Flynn and Bridget Sheehy, already in the tree.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1887",
+          "repository": "FamilySearch",
+          "rationale": "A marriage record naming the groom's parents could confirm or extend the Flynn family.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Flynn", "given": "John", "collection": "Pennsylvania marriages" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "1887 marriage record for John Flynn naming his parents as 'Thomas [surname not indexed]' and 'Bridget Sheehy'.",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Pennsylvania, County Marriages, 1885-1950, entry for John Flynn and [spouse], 1887; digital image, FamilySearch.org, accessed 1 August 2026.",
+      "citation_detail": {
+        "who": "County clerk, Schuylkill County",
+        "what": "Marriage record",
+        "when_created": "1887",
+        "when_accessed": "2026-08-01",
+        "where": "FamilySearch.org",
+        "where_within": "Entry for John Flynn"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "url_archived": null,
+      "notes": "Father's surname was not indexed; implied only from the groom's own surname.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "groom",
+      "record_persona_id": "G1",
+      "fact_type": "name",
+      "value": "John Flynn",
+      "structured_value": { "given": "John", "surname": "Flynn" },
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "groom",
+      "record_persona_id": "G1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "groom",
+      "record_persona_id": "G1",
+      "fact_type": "marriage",
+      "value": "married 12 June 1887, Schuylkill County, Pennsylvania",
+      "date": "1887-06-12",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania, United States",
+      "information_quality": "primary",
+      "informant": "county clerk, Schuylkill County",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "groom",
+      "record_persona_id": "G1",
+      "fact_type": "relationship",
+      "value": "child of Thomas [surname not indexed]",
+      "structured_value": { "relationship_type": "child", "related_person_role": "father_of_groom" },
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "groom",
+      "record_persona_id": "G1",
+      "fact_type": "relationship",
+      "value": "child of Bridget Sheehy",
+      "structured_value": { "relationship_type": "child", "related_person_role": "mother_of_groom" },
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "father_of_groom",
+      "record_persona_id": "F1",
+      "fact_type": "name",
+      "value": "Thomas [surname not indexed]",
+      "structured_value": { "given": "Thomas", "surname": "[not indexed]" },
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom declared his father's given name as Thomas. No surname was indexed; 'Flynn' is implied from the groom's own surname but is not confirmed by the index entry.",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "father_of_groom",
+      "record_persona_id": "F1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "mother_of_groom",
+      "record_persona_id": "M1",
+      "fact_type": "name",
+      "value": "Bridget Sheehy",
+      "structured_value": { "given": "Bridget", "surname": "Sheehy" },
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+      "record_role": "mother_of_groom",
+      "record_persona_id": "M1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "John Flynn",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -332,11 +332,17 @@ Two ruleset settings decide what a stale approval is worth here, and they pull
 in opposite directions. `dismiss_stale_reviews_on_push: false` means a push does
 **not** clear existing approvals — they keep counting toward the two required,
 and nothing re-requests review. But `require_last_push_approval: true` means at
-least one approval must land **after** the most recent push. So an old approval
-is neither void nor sufficient: a PR approved twice and then pushed to still
-needs a fresh approval, while both old ones still count. Do not tell an author
-their approvals were reset, and do not treat a pre-push approval as clearing the
-gate.
+least one approval must land **after** the most recent push **and come from
+someone other than whoever pushed it**. So an old approval is neither void nor
+sufficient: a PR approved twice and then pushed to still needs a fresh approval,
+while both old ones still count. Do not tell an author their approvals were
+reset, and do not treat a pre-push approval as clearing the gate.
+
+**Senior developers are exempt.** Pushing a small fix rather than asking the
+author for it is the fast path, and it stays fast: the `last-push-approval`
+ruleset lists `senior-developers` as a bypass actor, so a senior who pushes the
+last commit can still merge. Anyone else who pushes needs an approval from
+someone who didn't.
 
 ## 8. Write the edits — don't make them
 
