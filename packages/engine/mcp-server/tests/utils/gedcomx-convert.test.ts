@@ -251,8 +251,10 @@ describe("gedcomx-convert — transformation rules", () => {
       ],
     });
     expect(warnSpy).toHaveBeenCalled();
-    const messages = warnSpy.mock.calls.map((args) => String(args[0]));
-    expect(messages.some((m) => m.includes("Nickname"))).toBe(true);
+    // Annotated because `warnSpy` is declared `ReturnType<typeof vi.spyOn>`,
+    // which erases the call-argument tuple and leaves these implicitly `any`.
+    const messages = warnSpy.mock.calls.map((args: unknown[]) => String(args[0]));
+    expect(messages.some((m: string) => m.includes("Nickname"))).toBe(true);
   });
 
   // Test 6 — Rule 3 fallback: fullText only, with warning

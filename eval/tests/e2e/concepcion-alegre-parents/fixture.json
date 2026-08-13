@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 25, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Draft transcribed from a Paraguayan parish record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 25, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Adjudicated 2026-08-12 (issue #875): the hinted marriage is correct, but its indexed parent names are the marriage witnesses, promoted into the bride's parent fields in error. Birth and marriage are kept; the indexed parents are encoded as a polarity:avoid guard; the real parents (Venancio Alegre, María de la Paz Resquín) are recoverable only from the register page, not the index."
 }
