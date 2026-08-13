@@ -11,7 +11,7 @@
     "user_message": "init-project: Start a new project to find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF. About me: I'm a professional genealogist, and I subscribe to ancestry.com and Newspapers.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
+  "mcp_fixtures": ["person-read-flynn"],
   "judge_context": [
     "`researcher_profile.experience_level` should be `professional`",
     "`researcher_profile.subscriptions` should be normalized to the canonical enum: `[\"Ancestry\", \"Newspapers.com\"]` (case-folded, alias-mapped from 'ancestry.com' and 'Newspapers')",
