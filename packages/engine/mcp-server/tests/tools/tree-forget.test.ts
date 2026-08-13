@@ -288,6 +288,43 @@ describe("tree_forget", () => {
     ).toContain("SHARED1");
   });
 
+  it("birth-of warns when the removed fact id also exists on another owner, without treating it as an error", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "birth-of", personId: "C1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Birth fact 'SHARED1' also exists on: C2/),
+    ]);
+  });
+
+  it("facts-of warns when the removed fact id also exists on another owner", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-of", personId: "C1", factType: "Birth" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Birth fact 'SHARED1' also exists on: C2/),
+    ]);
+  });
+
+  it("birth-of does not warn when the fact id is genuinely unique", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "birth-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings).toEqual([]);
+  });
+
   it("fact selector errors when the bare id exists on more than one owner, instead of guessing", async () => {
     await writeProject(collidingFacts());
     const r = await treeForget({

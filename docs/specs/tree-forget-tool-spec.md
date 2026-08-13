@@ -111,9 +111,17 @@ ids — so a bare `(ownerId, factId)` pair would reunite the exact cross-owner
 leak this scoping exists to prevent, just across a different pair of fields,
 the moment a person and a relationship happened to share a literal id.
 
-For `birth-of`/`death-of`/`facts-of` this is transparent — the selector already
-names the owning `personId`. For the bare `fact` selector, which historically took
-only a `factId`, the tool resolves ownership at call time:
+For `birth-of`/`death-of`/`facts-of`, ownership is already unambiguous — the
+selector names the owning `personId` directly — so removal proceeds without
+asking anything. But the same id can still exist on a different owner the
+call is not touching, and `validation.warnings` says so (§3.1's ids-only rule
+applies): one line per resolved fact naming every other owner and its kind.
+Not an error; removal is correct regardless. It is a fact about the data worth
+telling the researcher.
+
+For the bare `fact` selector, which historically took only a `factId`, there is
+no already-given owner to be unambiguous against, so the tool resolves
+ownership at call time instead:
 
 - Exactly one owner has that id → proceeds, scoped to them (the common case,
   unchanged from before this fix).

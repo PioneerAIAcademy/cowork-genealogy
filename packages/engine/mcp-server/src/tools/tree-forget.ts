@@ -224,6 +224,29 @@ function findFactOwners(tree: SimplifiedGedcomX, factId: string): FactOwner[] {
 }
 
 /**
+ * For a person's own resolved fact ids: which of them ALSO exist on some
+ * OTHER owner not being touched by this call. `birth-of`/`death-of`/
+ * `facts-of` already remove correctly scoped to `pid` regardless — this is a
+ * heads-up that the id is not unique, not a sign anything is wrong (#1574).
+ */
+function notesSharedFactIds(
+  tree: SimplifiedGedcomX,
+  pid: string,
+  ids: Iterable<string>,
+  label: string,
+): string[] {
+  const notices: string[] = [];
+  for (const f of ids) {
+    const others = findFactOwners(tree, f).filter((o) => !(o.kind === "person" && o.id === pid));
+    if (others.length > 0) {
+      const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
+      notices.push(`${label} fact '${f}' also exists on: ${named}`);
+    }
+  }
+  return notices;
+}
+
+/**
  * Encodes an (ownerKind, ownerId, factId) triple as one Set entry.
  * JSON-encoded so no delimiter choice can collide with a real id's own
  * content. ownerKind is load-bearing, not decoration: a person and a
@@ -246,10 +269,20 @@ interface Targets {
    *  resolved. */
   facts: Set<string>;
   relationships: Set<string>;
+  /** Advisory only — removal above is already correctly scoped regardless.
+   *  One entry per resolved fact (birth-of/death-of/facts-of) whose literal
+   *  id ALSO exists on a different owner not being touched by this call
+   *  (#1574). */
+  factSharingNotices: string[];
 }
 
 function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Targets {
-  const t: Targets = { persons: new Set(), facts: new Set(), relationships: new Set() };
+  const t: Targets = {
+    persons: new Set(),
+    facts: new Set(),
+    relationships: new Set(),
+    factSharingNotices: [],
+  };
 
   for (let i = 0; i < forget.length; i++) {
     const entry = forget[i];
@@ -293,6 +326,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           );
         }
         ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
+        t.factSharingNotices.push(...notesSharedFactIds(tree, pid, ids, factType));
         break;
       }
       case "facts-of": {
@@ -308,6 +342,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           );
         }
         ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
+        t.factSharingNotices.push(...notesSharedFactIds(tree, pid, ids, factType));
         break;
       }
       case "person": {
@@ -486,7 +521,13 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       remaining: { persons: persons(tree).length, relationships: relationships(tree).length },
       filesWritten: [],
       restoreFile: null,
-      validation: { valid: true, warnings: sanitized.warnings },
+      // factSharingNotices resolved against the PRE-removal tree (targets was
+      // built before applyForget mutated it), which is the only point a fact
+      // still on its "other" owner is visible to check for (#1574).
+      validation: {
+        valid: true,
+        warnings: [...sanitized.warnings, ...targets.factSharingNotices],
+      },
     };
     if (dryRun) return result;
 
@@ -538,6 +579,12 @@ export const treeForgetSchema = {
     "forgetting a father can cut siblings, his own parents, and his marriage " +
     "(reported as `relationshipsCascaded`). Fact-level selectors (birth-of, " +
     "death-of, facts-of, fact) never cascade.\n" +
+    "\n" +
+    "FamilySearch does not guarantee a fact id is unique across owners. " +
+    "Removal is always scoped correctly to the owner a selector resolved — " +
+    "but if a birth-of/death-of/facts-of/fact selector's id ALSO exists on a " +
+    "different owner not being touched, `validation.warnings` says so (ids " +
+    "only, never a value). Not an error; just tell the researcher.\n" +
     "\n" +
     "Validates the whole project before writing; on failure nothing is written " +
     "and `{ok: false, errors}` comes back — most often because research.json " +
