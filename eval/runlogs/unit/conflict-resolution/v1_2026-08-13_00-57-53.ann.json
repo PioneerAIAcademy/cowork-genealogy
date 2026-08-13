@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-07-16_20-51-17.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v1_2026-08-13_00-57-53.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
   "corrections": [
     {
       "test_id": "ut_conflict_resolution_001",
@@ -294,16 +294,16 @@
       "test_id": "ut_conflict_resolution_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 1,
+      "corrected_score": 1,
       "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 1,
+      "corrected_score": 1,
       "comment": null
     },
     {
