@@ -1,6 +1,6 @@
-# This repo's working copy lives in a OneDrive-synced folder (deliberately —
-# the user syncs across devices). uv's default install mode hardlinks packages
-# from its cache into .venv, and OneDrive rejects that:
+# Some working copies of this repo live in a OneDrive-synced folder (the
+# Windows-based genealogist team syncs across devices). uv's default install
+# mode hardlinks packages from its cache into .venv, and OneDrive rejects that:
 #
 #   failed to hardlink file ... The cloud operation cannot be performed on a
 #   file with incompatible hardlinks. (os error 396)
@@ -19,4 +19,10 @@
 # Keep this file committed; it must not be re-lost. Observed and fixed
 # 2026-07-30, silently lost before landing, recurred 2026-08-03 on the
 # `anthropic` 0.112.0 -> 0.120.2 upgrade.
+#
+# Severity is uv-version-dependent: those dates were on an older uv, which hard
+# -errored. On uv >= 0.11 the same install degrades to a warning plus a
+# full-copy fallback, and uv names `link-mode=copy` as the remedy itself — so
+# on today's uv this suppresses that warning and avoids the partial-hardlink
+# path rather than unblocking a hard stop.
 link-mode = "copy"
