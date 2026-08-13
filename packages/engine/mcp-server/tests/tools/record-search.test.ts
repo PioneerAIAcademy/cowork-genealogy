@@ -27,6 +27,7 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import type { KinPrefix, KinTerm } from "../../src/types/relative-terms.js";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -682,8 +683,13 @@ describe("recordSearchTool response shape", () => {
         },
       },
     };
-    const person = findRepresentedPerson(entry);
-    expect(person?.display?.name).toBe("Second Person");
+    const represented = findRepresentedPerson(entry);
+    expect(represented?.person.display?.name).toBe("Second Person");
+    // Matched by ark, not by the `principal` fallback — both persons here are
+    // flagged principal, so only the ark match can pick the right one. #1324
+    // refuses to resolve relatives on a `principal` anchor, which makes this
+    // distinction load-bearing rather than cosmetic.
+    expect(represented?.anchor).toBe("ark");
   });
 
   it("30. sets hasMore=true when links.next exists", async () => {
@@ -1358,5 +1364,364 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     expect(serialized.indexOf('"rankingSkipped"')).toBeLessThan(
       serialized.indexOf('"results"'),
     );
+  });
+});
+
+// ─── #1324: relativeTerms ────────────────────────────────────────────────────
+//
+// A relative-anchored search keeps records that name no such relative, because
+// FamilySearch reads the term as "must not contradict". These pin the per-result
+// field that tells the two apart. The `absent` / `unknown` boundary is asserted
+// from BOTH sides on purpose: two review rounds broke it in opposite directions
+// — one reporting `absent` where the sex was merely unrecorded, the other making
+// `absent` unreachable whenever the record named the other parent.
+
+const GIVEN_URI = "http://gedcomx.org/Given";
+const SURNAME_URI = "http://gedcomx.org/Surname";
+
+function rawName(given: string, surname?: string) {
+  const parts: { type: string; value: string }[] = [
+    { type: GIVEN_URI, value: given },
+  ];
+  if (surname !== undefined) parts.push({ type: SURNAME_URI, value: surname });
+  return { nameForms: [{ parts }] };
+}
+
+type ParentOpt = false | "male" | "female" | "no-gender" | "unknown-gender";
+
+/**
+ * A multi-person entry shaped like a real staged result: persona + ParentChild
+ * parents + a Couple row. Every other fixture in this file is a lone person with
+ * no relationships, on which every assertion would trivially resolve `unknown` —
+ * so without this the suite cannot fail for any reason that matters.
+ */
+function householdEntry(opts?: {
+  father?: ParentOpt;
+  mother?: ParentOpt;
+  spouses?: 0 | 1 | 2;
+  spouseIsSelf?: boolean;
+  personaHasId?: boolean;
+  relationships?: "omit" | "empty";
+}): FSSearchEntry {
+  const father = opts?.father ?? "male";
+  const mother = opts?.mother ?? "female";
+  const spouses = opts?.spouses ?? 1;
+  const personaHasId = opts?.personaHasId ?? true;
+
+  const genderFor = (o: ParentOpt) =>
+    o === "male"
+      ? { type: "http://gedcomx.org/Male" }
+      : o === "female"
+        ? { type: "http://gedcomx.org/Female" }
+        : o === "unknown-gender"
+          ? { type: "http://gedcomx.org/Intersex" }
+          : undefined; // "no-gender" → no gender key at all
+
+  const persons: Record<string, unknown>[] = [
+    {
+      principal: true,
+      ...(personaHasId ? { id: "p_kid" } : {}),
+      names: [rawName("Elisabetha", "Sugecz")],
+      identifiers: {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:1:HHHH-1111",
+        ],
+      },
+    },
+  ];
+  const relationships: Record<string, unknown>[] = [];
+
+  if (father !== false) {
+    const g = genderFor(father);
+    persons.push({
+      id: "p_dad",
+      names: [rawName("Wm.", "Neal")],
+      ...(g ? { gender: g } : {}),
+    });
+    relationships.push({
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p_dad" },
+      person2: { resource: "#p_kid" },
+    });
+  }
+  if (mother !== false) {
+    const g = genderFor(mother);
+    persons.push({
+      id: "p_mom",
+      names: [rawName("Anna", "Kovacs")],
+      ...(g ? { gender: g } : {}),
+    });
+    relationships.push({
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p_mom" },
+      person2: { resource: "#p_kid" },
+    });
+  }
+  for (let i = 0; i < spouses; i++) {
+    const id = `p_spouse${i}`;
+    persons.push({ id, names: [rawName(`Spouse${i}`, "Toth")] });
+    relationships.push({
+      type: "http://gedcomx.org/Couple",
+      // Persona deliberately on person2: a Couple row is symmetric, and reading
+      // a fixed side would report the searched person as their own spouse.
+      person1: opts?.spouseIsSelf
+        ? { resource: "#p_kid" }
+        : { resource: `#${id}` },
+      person2: { resource: "#p_kid" },
+    });
+  }
+
+  return {
+    id: "HHHH-1111",
+    content: {
+      gedcomx: {
+        persons,
+        ...(opts?.relationships === "omit"
+          ? {}
+          : opts?.relationships === "empty"
+            ? { relationships: [] }
+            : { relationships }),
+      },
+    },
+  } as unknown as FSSearchEntry;
+}
+
+/** Run an entry through mapEntry and hand back just the resolved terms.
+ *
+ * Accepts bare prefixes for the four role-based terms (which ignore the queried
+ * names) and full `{prefix, given, surname}` objects for `other`, which has no
+ * relationship role and can only be answered by comparing names.
+ */
+function termsFor(
+  entry: FSSearchEntry,
+  terms: (KinPrefix | KinTerm)[],
+) {
+  const normalized: KinTerm[] = terms.map((t) =>
+    typeof t === "string" ? { prefix: t } : t,
+  );
+  return mapEntry(entry, normalized)?.relativeTerms;
+}
+
+describe("#1324 relativeTerms", () => {
+  it("35. reports father absent when the record names only the mother", () => {
+    // The issue's exact case. The record DOES name a parent and it is provably
+    // not the father, so this is real evidence no father was indexed — not an
+    // inability to tell. Degrading it to `unknown` would destroy the signal on
+    // the 20 surveyed results that sit in this cell.
+    expect(termsFor(householdEntry({ father: false }), ["father"])).toEqual({
+      father: { status: "absent" },
+    });
+  });
+
+  it("36. reports father absent when the record names no parents at all", () => {
+    expect(
+      termsFor(householdEntry({ father: false, mother: false }), ["father"]),
+    ).toEqual({ father: { status: "absent" } });
+  });
+
+  it("37. reports father present with the parent's name", () => {
+    expect(termsFor(householdEntry(), ["father"])).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+    });
+  });
+
+  it("38. reports unknown, not absent, when the parent carries no gender key", () => {
+    expect(
+      termsFor(householdEntry({ father: "no-gender" }), ["father"]),
+    ).toEqual({ father: { status: "unknown" } });
+  });
+
+  it("39. reports unknown, not absent, when the parent's gender is the literal Unknown", () => {
+    // `simplifyGender` emits the string "Unknown" for any non-Male/Female URI.
+    // Such a parent HAS a gender, so a rule phrased as "carries no gender"
+    // misses it entirely and lands on `absent`.
+    expect(
+      termsFor(householdEntry({ father: "unknown-gender" }), ["father"]),
+    ).toEqual({ father: { status: "unknown" } });
+  });
+
+  it("40. does not let the sex gate leak into the sex-agnostic parent prefix", () => {
+    // Mother removed deliberately: with her present, `parent` would resolve on
+    // her whether or not the gate leaked, and this would prove nothing.
+    for (const father of ["no-gender", "unknown-gender"] as const) {
+      expect(
+        termsFor(householdEntry({ father, mother: false }), ["parent"]),
+      ).toEqual({ parent: { status: "present", name: "Wm. Neal" } });
+    }
+  });
+
+  it("41. reports unknown for every prefix when the persona has no id", () => {
+    // Relationships intact — otherwise the no-graph rule alone would satisfy
+    // this, and an implementation missing the primaryId short-circuit passes.
+    expect(
+      termsFor(householdEntry({ personaHasId: false }), ["father", "spouse"]),
+    ).toEqual({ father: { status: "unknown" }, spouse: { status: "unknown" } });
+  });
+
+  it("42. reports unknown for every prefix when the anchor is the principal fallback", () => {
+    const entry = householdEntry();
+    // Break the ark match so only the `principal === true` fallback can fire.
+    (entry as unknown as { id: string }).id = "ZZZZ-9999";
+    expect(termsFor(entry, ["father", "mother"])).toEqual({
+      father: { status: "unknown" },
+      mother: { status: "unknown" },
+    });
+  });
+
+  it("43. reports unknown when relationships are missing or empty", () => {
+    // An empty array is not "resolves cleanly and yields nobody" — it cannot be
+    // told apart from relationships never being returned. Both shapes occur.
+    for (const relationships of ["omit", "empty"] as const) {
+      expect(termsFor(householdEntry({ relationships }), ["father"])).toEqual({
+        father: { status: "unknown" },
+      });
+    }
+  });
+
+  it("44. does not satisfy mother with a male parent", () => {
+    expect(termsFor(householdEntry({ mother: false }), ["mother"])).toEqual({
+      mother: { status: "absent" },
+    });
+  });
+
+  it("45. reports the other Couple endpoint as the spouse, not the persona", () => {
+    expect(termsFor(householdEntry(), ["spouse"])).toEqual({
+      spouse: { status: "present", name: "Spouse0 Toth" },
+    });
+  });
+
+  it("46. reports spouse unknown when both Couple endpoints are the persona", () => {
+    expect(termsFor(householdEntry({ spouseIsSelf: true }), ["spouse"])).toEqual(
+      { spouse: { status: "unknown" } },
+    );
+  });
+
+  it("47. reports spouse absent when there is no Couple row", () => {
+    expect(termsFor(householdEntry({ spouses: 0 }), ["spouse"])).toEqual({
+      spouse: { status: "absent" },
+    });
+  });
+
+  it("48. joins name from given + surname and tolerates a missing surname", () => {
+    const entry = householdEntry();
+    const gx = entry.content!.gedcomx as unknown as {
+      persons: Record<string, unknown>[];
+    };
+    const dad = gx.persons.find((p) => p.id === "p_dad")!;
+    dad.names = [rawName("Wm.")];
+    expect(termsFor(entry, ["father"])).toEqual({
+      father: { status: "present", name: "Wm." },
+    });
+  });
+
+  it("49. emits relativeTerms only when a relative NAME was supplied", async () => {
+    mockFetch.mockResolvedValue(
+      makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+    );
+
+    const withTerm = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenName: "Wm.",
+    });
+    expect(withTerm.results[0].relativeTerms).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+    });
+
+    const withoutTerm = await recordSearchTool({ surname: "Sugecz" });
+    expect(withoutTerm.results[0].relativeTerms).toBeUndefined();
+
+    // An `*Exact` boolean alone sends no q.fatherGivenName, so no father
+    // constraint was applied and there is nothing to report on.
+    const exactOnly = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenNameExact: true,
+    });
+    expect(exactOnly.results[0].relativeTerms).toBeUndefined();
+  });
+
+  it("50. resolves `other` by name match against co-people on the record", async () => {
+    mockFetch.mockResolvedValue(
+      makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+    );
+    const result = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenName: "Wm.",
+      otherGivenName: "Anna",
+      otherSurname: "Kovacs",
+    });
+    expect(result.results[0].relativeTerms).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
+  });
+
+  it("51. reports `other` unknown, not absent, when no co-person's name matches", () => {
+    // We compare names exactly while FamilySearch matched fuzzily, so a miss
+    // means "could not confirm", never "not on this record". Reporting `absent`
+    // here would be the false disconfirmation this whole field exists to stop.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "Jozsef" }]),
+    ).toEqual({ other: { status: "unknown" } });
+  });
+
+  it("52. matches `other` across case and punctuation", () => {
+    // `Wm.` vs `wm` is the same indexed person spelled differently; an exact
+    // string compare would call that a miss and downgrade a real positive.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "  wm ", surname: "NEAL" }]),
+    ).toEqual({ other: { status: "present", name: "Wm. Neal" } });
+  });
+
+  it("53. reports `other` absent only when the record carries no co-person", () => {
+    expect(
+      termsFor(householdEntry({ father: false, mother: false, spouses: 0 }), [
+        { prefix: "other", given: "Anna" },
+      ]),
+    ).toEqual({ other: { status: "absent" } });
+  });
+
+  it("54. answers `other` even when the relationship graph is missing", () => {
+    // `other` reads persons[], not the relationship graph, so the no-graph
+    // trigger that blinds the four role-based prefixes does not blind it.
+    expect(
+      termsFor(householdEntry({ relationships: "omit" }), [
+        "father",
+        { prefix: "other", given: "Anna", surname: "Kovacs" },
+      ]),
+    ).toEqual({
+      father: { status: "unknown" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
+  });
+
+  it("55. survives the staged slim block, inline and in the sidecar on disk", async () => {
+    // The integration the whole design turns on: `gedcomx` is deleted from the
+    // staged rows and relativeTerms must outlive it in BOTH copies. Asserting a
+    // surviving `unknown` here would prove nothing, so this asserts `present`.
+    const dir = await mkdtemp(join(tmpdir(), "rt-"));
+    try {
+      mockFetch.mockResolvedValue(
+        makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+      );
+      const result = await recordSearchTool({
+        surname: "Sugecz",
+        fatherGivenName: "Wm.",
+        projectPath: dir,
+      });
+
+      expect(result.results[0].gedcomx).toBeUndefined();
+      expect(result.results[0].relativeTerms).toEqual({
+        father: { status: "present", name: "Wm. Neal" },
+      });
+
+      const staged = JSON.parse(
+        await readFile(join(dir, result.staged!.resultsRef), "utf-8"),
+      );
+      expect(staged.payload.results[0].relativeTerms).toEqual({
+        father: { status: "present", name: "Wm. Neal" },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

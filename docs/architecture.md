@@ -448,6 +448,19 @@ Architecturally:
   call with CI green; that is now a CI failure. A commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
+- **If your tool signals failure by RETURNING `{ ok: false }` rather than
+  throwing** — a fifth site, conditional on that shape, and the count above does
+  not include it. Add the tool to `OK_FALSE_IS_FAILURE` in `src/tool-result.ts`
+  and route its dispatch arm through `writerToolResult`. The dispatch sets
+  `isError` only from its `catch`, so a returned failure otherwise reads to the
+  model — and to the eval harness's guardrail detectors — as a *successful call*.
+  `tests/packaging/writer-tool-results.test.ts` pins every arm already in the
+  list, but nothing can pin a tool never added to it, which is why this bullet
+  exists. Mirror it in `mock_mcp.py`'s `OK_FALSE_IS_FAILURE_LIVE` too if the tool
+  is live in the unit harness; a drift lint there fails if you don't. Exclude a
+  tool only when `ok: false` is its **answer about its subject** rather than its
+  own failure — `merge_warnings`, whose dry run reports that a merge *would* be
+  rejected, is the only such tool today.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),

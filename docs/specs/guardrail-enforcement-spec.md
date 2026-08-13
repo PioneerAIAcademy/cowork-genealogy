@@ -452,10 +452,12 @@ Design points that were paid for and should not be re-derived:
     an unknown-skill-name launch failure and nothing else. **The
     invoke-then-let-it-fail evasion named at the top of this bullet stays open**,
     and the next block explains why it cannot be closed from here.
-  - **MCP writer tools — thrown errors only.** `src/index.ts` sets `isError`
-    from its `catch`; `research_append`'s `fail()` helper *returns* `{ok:false}`
-    without throwing, so a rejected write still records `is_error: false`
-    (issue #1282).
+  - **MCP writer tools — thrown errors, and returned `{ok:false}`.** `src/index.ts`
+    sets `isError` from its `catch`, and since #1282 also from a returned
+    `{ok:false}` on the writer arms listed in `src/tool-result.ts`'s
+    `OK_FALSE_IS_FAILURE` — so `research_append`'s `fail()` helper, which
+    *returns* rather than throws, now records `is_error: true`. Runs predating
+    that change carry the old classification and are `HARNESS_SCHEMA_VERSION` 3.
   - **What it does gate today:** MCP tools that throw — an errored
     `same_person` no longer enters `find_person_evidence_missing_same_person`'s
     `scored_ids`, and an errored `tree_edit` no longer counts as a protected
