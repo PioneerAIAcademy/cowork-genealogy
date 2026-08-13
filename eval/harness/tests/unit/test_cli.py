@@ -1066,6 +1066,95 @@ def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
     assert rc == 0
 
 
+# --- an aborted row must say why (#1245) ------------------------------
+#
+# Issue #1245 was reported as "19 of 20 tests came back aborted" with no cause
+# available. The cause was on the entry the whole time; the summary just never
+# printed it, and there was no count line to read "19 of 20" from either.
+
+
+def _summary(rows, capsys):
+    run_tests._print_summary(rows)
+    return capsys.readouterr().out
+
+
+def test_summary_prints_the_abort_reason(capsys):
+    out = _summary(
+        [{"test_id": "ut_a", "skill": "citation", "outcome": "aborted",
+          "reason": "sdk_stream_silence"}],
+        capsys,
+    )
+    assert "REASON" in out
+    assert "sdk_stream_silence" in out
+
+
+def test_summary_tolerates_a_row_with_no_reason_key(capsys):
+    # Rows are built in one place, but a caller (or an older partial) may not
+    # carry the key; a summary that raises would lose the whole suite's output.
+    out = _summary([{"test_id": "ut_a", "skill": "citation", "outcome": "pass"}], capsys)
+    assert "ut_a" in out
+
+
+def test_summary_counts_every_outcome_and_reconciles(capsys):
+    rows = [
+        {"test_id": "a", "skill": "s", "outcome": "pass", "reason": ""},
+        {"test_id": "b", "skill": "s", "outcome": "xfail", "reason": ""},
+        {"test_id": "c", "skill": "s", "outcome": "xpass", "reason": ""},
+        {"test_id": "d", "skill": "s", "outcome": "aborted", "reason": "error"},
+    ]
+    out = _summary(rows, capsys)
+    # xfail/xpass are real outcomes; a four-value tally would under-sum here.
+    for token in ("1 pass", "1 xfail", "1 xpass", "1 aborted", "of 4 test(s)"):
+        assert token in out, token
+
+
+def test_summary_groups_the_abort_reasons(capsys):
+    rows = [
+        {"test_id": f"t{i}", "skill": "s", "outcome": "aborted", "reason": "error"}
+        for i in range(19)
+    ] + [{"test_id": "t19", "skill": "s", "outcome": "pass", "reason": ""}]
+    out = _summary(rows, capsys)
+    assert "19 aborted" in out and "of 20 test(s)" in out
+    assert "19x error" in out
+
+
+def test_summary_names_an_outcome_outside_the_known_set(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "surprise", "reason": ""}], capsys
+    )
+    assert "1 surprise" in out, "an unknown outcome must not vanish from the tally"
+
+
+def test_summary_records_an_abort_that_carried_no_reason(capsys):
+    out = _summary(
+        [{"test_id": "a", "skill": "s", "outcome": "aborted", "reason": ""}], capsys
+    )
+    assert "unrecorded" in out
+
+
+def test_the_live_progress_line_names_the_abort_reason(tmp_path, monkeypatch, capsys):
+    """The surface an operator actually watches during a long suite.
+
+    `_print_summary` lands after every test has finished; this line is the only
+    thing visible while a 20-test suite is still running, and a bare `aborted`
+    here is what left issue #1245 undiagnosable in real time. The existing
+    exit-code tests already drive this path, so without an output assertion a
+    regression to a bare `aborted` would stay green.
+    """
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "— aborted [max_turns]" in out, (
+        "the progress line must carry the reason, not just the outcome"
+    )
+
+
+def test_the_end_of_suite_tally_names_the_abort_reason_too(tmp_path, monkeypatch, capsys):
+    rc = _run_with_stubbed_outcomes(tmp_path, monkeypatch, ["pass", "aborted_exec"])
+    out = capsys.readouterr().out
+    assert rc == 3
+    assert "1 pass, 1 aborted of 2 test(s)" in out
+    assert "1x max_turns" in out
 def _stub_keyed_auth(monkeypatch, key="sk-test-key"):
     from harness.auth import AuthConfig
     monkeypatch.setattr(
@@ -1257,3 +1346,222 @@ def test_preflight_skips_check_for_negative_only(tmp_path, monkeypatch):
     ])
 
     assert rc == 0
+
+
+# --- judge-rule-violation summary (#1401, #1406) -------------------------
+#
+# `_extract_dimensions` records a warning when the judge breaks one of its
+# own prompt rules — an invented rubric dimension (#1361/#1401), or a Tool
+# Arguments score on a run that made no MCP calls (#1406). Those land in
+# the run log's output.warnings and, before this, nowhere a human reads.
+
+
+def _row(test_id, *kinds):
+    return {
+        "test_id": test_id,
+        "skill": "search-records",
+        "outcome": "pass",
+        "judge_warning_kinds": list(kinds),
+    }
+
+
+def test_summary_tallies_judge_warnings(capsys):
+    run_tests._print_summary([
+        _row("ut_a_001", "dropped_unknown_rubric_dimension"),
+        _row("ut_a_002", "coerced_tool_arguments_to_na"),
+        _row("ut_a_003", "dropped_unknown_rubric_dimension"),
+        _row("ut_a_004"),
+    ])
+    out = capsys.readouterr().out
+    assert "Judge rule violations (3 test-kind pair(s), 2 kind(s)):" in out
+    assert "dropped_unknown_rubric_dimension: 2 — ut_a_001, ut_a_003" in out
+    assert "coerced_tool_arguments_to_na: 1 — ut_a_002" in out
+    # The clean test must not appear in the tally section.
+    tally = out.split("Judge rule violations")[1]
+    assert "ut_a_004" not in tally
+
+
+def test_summary_silent_when_no_judge_warnings(capsys):
+    """The common case. A header printed on every clean run trains people
+    to skip the section, which defeats the point of printing it."""
+    run_tests._print_summary([_row("ut_a_001"), _row("ut_a_002")])
+    out = capsys.readouterr().out
+    assert "ut_a_001" in out          # the normal outcome table still prints
+    assert "Judge rule violations" not in out
+
+
+def test_summary_survives_rows_without_the_key(capsys):
+    """Defensive: a row built by an older path has no
+    `judge_warning_kinds`. Printing the summary must not be the thing that
+    crashes a finished run."""
+    run_tests._print_summary([
+        {"test_id": "ut_a_001", "skill": "s", "outcome": "pass"},
+    ])
+    assert "Judge rule violations" not in capsys.readouterr().out
+
+
+def test_summary_reads_warnings_off_the_real_entry(tmp_path, monkeypatch, capsys):
+    """End-to-end through main(): a judge warning on the ENTRY must reach
+    the printed tally.
+
+    The three tests above call `_print_summary` with a hand-built row, so
+    they all still pass if the row-building loop stops reading
+    `runs[].output.warnings` — verified by mutation. This is the one that
+    covers that hop, which is the half that actually breaks.
+    """
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyless_auth(monkeypatch)
+
+    def _entry_with_warning(spec, **k):
+        entry = _stub_log(spec.id, spec.skill, "pass")
+        entry["runs"][0]["output"] = {
+            "warnings": [
+                {"kind": "coerced_tool_arguments_to_na",
+                 "advisory": "scored 3 on a run with zero MCP calls",
+                 "name": "Tool Arguments", "score": 3, "rationale": "..."},
+            ]
+        }
+        return entry
+
+    monkeypatch.setattr(run_tests, "run_one_test", _entry_with_warning)
+    monkeypatch.setattr(run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename, **kwargs:
+                            Path(runlogs_root) / filename)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--allow-missing-judge",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Judge rule violations (1 test-kind pair(s), 1 kind(s)):" in out
+    assert "coerced_tool_arguments_to_na: 1 — ut_a_000" in out
+
+
+def test_summary_ignores_non_judge_warning_kinds():
+    """`output.warnings` is a shared list. orchestrator._build_warnings also
+    puts `unread_skill_call`, `missing_tool_usage_dimension` and
+    `uncovered_tool_call` in it — none of which is the judge misbehaving.
+    Tallying those under a "Judge rule violations" header would report a
+    routine unmatched tool call as a judge fault."""
+    assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
+    assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
+    assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
+    # And every kind judge.py actually emits IS in the set, or it prints
+    # nowhere — which is the state this whole section exists to end.
+    from pathlib import Path as _P
+    src = (_P(__file__).resolve().parents[2] / "harness/judge.py").read_text(
+        encoding="utf-8"
+    )
+    import re as _re
+    emitted = set(_re.findall(r'"kind": "([a-z_]+)"', src))
+    assert emitted <= run_tests._JUDGE_WARNING_KINDS, (
+        f"judge.py emits warning kind(s) the summary will never print: "
+        f"{sorted(emitted - run_tests._JUDGE_WARNING_KINDS)}"
+    )
+
+
+def test_summary_count_matches_the_names_it_shows(capsys):
+    """One test tripping the same kind twice is one test, not two. The
+    headline counted occurrences while the list deduped, so it read as two
+    and showed one name, with no '+N more' to explain the gap."""
+    run_tests._print_summary([
+        {"test_id": "ut_x_001", "skill": "s", "outcome": "pass",
+         "judge_warning_kinds": ["dropped_unknown_rubric_dimension"] * 2},
+    ])
+    out = capsys.readouterr().out
+    line = next(l for l in out.splitlines() if "dropped_unknown" in l)
+    count = int(line.split(":")[1].split("—")[0].strip())
+    names = [n.strip() for n in line.split("—")[1].split("(+")[0].split(",")]
+    assert count == len(names) == 1, line
+
+
+def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
+    tmp_path, monkeypatch, capsys
+):
+    """A harness-level exception part-way through saves the tests that finished,
+    exactly as a Ctrl-C does, and exits 1.
+
+    The sibling Ctrl-C test above is the contract this mirrors: same state, same
+    partial dotfile on disk, and until #943 the opposite outcome — the error
+    path returned before promoting it, so every completed test was stranded in a
+    gitignored `.partial_` file nothing surfaced.
+
+    Concurrency is pinned to 1 so exactly one test completes before the raise.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(3):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(spec.id, spec.skill, "pass")
+        raise RuntimeError("boom")  # the harness itself breaks during test 2
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # 1. A harness crash is exit 1 (documented in run_tests.py's exit-code
+    #    docstring and in eval/README.md). Unchanged by #943 — but it is the
+    #    assertion that fails if the promotion block is placed AFTER the
+    #    run-log write, since that path falls through and returns 0.
+    assert rc == 1
+    out_dir = runlogs / "unit" / "skill-a"
+    _out = capsys.readouterr().out
+
+    # 2. The completed test was promoted to a scratch log...
+    scratch = list(out_dir.glob("scratch_*.json"))
+    assert len(scratch) == 1, "completed tests should be promoted to a scratch log"
+    # 3. ...and it is the one test that finished before the raise.
+    assert json.loads(scratch[0].read_text(encoding="utf-8"))["n_tests"] == 1
+    # 4. Promoted, not copied — the dotfile was renamed away.
+    assert list(out_dir.glob(".partial_*")) == []
+    # 5. The operator is told where it went.
+    assert scratch[0].name in _out
+    # 6. We must NOT mint a releasable candidate from a crashed run.
+    assert list(out_dir.glob("v*.json")) == []

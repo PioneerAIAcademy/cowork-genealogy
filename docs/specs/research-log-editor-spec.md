@@ -260,6 +260,28 @@ clerical work.
 | Merge of appended entry fails project validation | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }` |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 
+### 8.1 Non-blocking warnings (never fail the op)
+
+Two advisories ride `validation.warnings` on a successful write. Both are
+warnings, not preconditions — they never touch `ok`, because a hard block here
+would trip the false-deny asymmetry (`guardrail-enforcement-spec.md` §10),
+turning a lossy-but-recoverable session into an availability regression.
+
+- **Unretained results:** a `STAGING_CAPABLE_TOOLS` search that reported
+  `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
+  response. Fires per offending entry.
+- **Logging without persistence:** once **≥3** positive-outcome
+  searches have been logged while the project still holds **zero** sources and
+  **zero** assertions, the session is finding records and persisting no evidence
+  (feedback bundle-2 shape: 26 log entries, 0 sources, 0 assertions). Gated on
+  both being empty so it owns a distinct shape from `research_append`'s
+  sources-without-assertions warning (which fires once ≥3 sources exist); it
+  self-silences the instant any source or assertion lands, and fires on every
+  qualifying `research_log_append` call while the two-empty state holds.
+  Tool-neutral message.
+  It cannot reach a session that logs nothing at all (bundle 3) — that shape has
+  no tool-boundary trigger.
+
 ---
 
 ## 9. Test plan (vitest)
@@ -285,6 +307,12 @@ clerical work.
   `research.json` commit (step 4) leaves an orphan sidecar; `validate_research_schema`
   flags it; a re-run allocates a fresh `log_id` and succeeds with no orphan left.
 - **camelCase→snake_case** — persisted entry uses snake_case keys throughout.
+- **Non-blocking warnings (§8.1)** — the unretained-results warning fires when a
+  staging-capable search reports `resultsAvailable > 0` with no `stagedResultsRef`
+  and stays silent for a nil search; the logging-without-persistence nudge fires
+  once ≥3 positive searches are logged with zero sources and zero assertions,
+  stays silent below the threshold, and stays silent once any source or assertion
+  exists. Both keep `ok: true` and leave the log entry written.
 
 ---
 

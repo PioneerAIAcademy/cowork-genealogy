@@ -1,0 +1,69 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-08-01T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "John"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "FLYN-MARR",
+        "personName": "John Flynn",
+        "score": 0.9,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+        "collectionId": "2032861",
+        "collectionTitle": "Pennsylvania, County Marriages, 1885-1950",
+        "recordTitle": "John Flynn marriage, Schuylkill County, 1887",
+        "treeMatches": [],
+        "primaryId": "G1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "G1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "John", "surname": "Flynn", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Marriage", "date": "1887-06-12", "place": "Schuylkill County, Pennsylvania, United States" }
+              ]
+            },
+            {
+              "id": "F1",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Thomas", "surname": "[not indexed]", "type": "BirthName" }
+              ],
+              "facts": []
+            },
+            {
+              "id": "M1",
+              "gender": "Female",
+              "names": [
+                { "id": "N3", "preferred": true, "given": "Bridget", "surname": "Sheehy", "type": "BirthName" }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "ParentChild", "parent": "F1", "child": "G1" },
+            { "id": "R2", "type": "ParentChild", "parent": "M1", "child": "G1" }
+          ]
+        }
+      }
+    ]
+  }
+}

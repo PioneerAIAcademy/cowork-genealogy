@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the marriage record's father_of_groom persona (given name only, surname not indexed) scored against the tree's Thomas Flynn. Moderate score reflecting the missing surname.",
+  "args": {
+    "primaryId1": "F1",
+    "primaryId2": "I1"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 6,
+    "score": 0.58,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:QRST-1234",
+    "apiTitle": "Matches for ark:/61903/1:1:FLYN-MARR",
+    "updated": "2026-08-01T00:00:00Z"
+  }
+}
