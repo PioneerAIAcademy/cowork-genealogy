@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 26, flags adds_father/adds_mother/adds_son, confidence 3). Draft transcribed from a Philippine Catholic church record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 26, flags adds_father/adds_mother/adds_son, confidence 3). Resolved as a false match: the christening record's grandparent entries (José Macatangay, Bernardina Cabrera) match the already-recorded parents of a different tree person, PM25-VHQ, not this fixture's subject GV6J-VZC, who has no parents on file. See README \"Notes for reviewers.\""
 }
