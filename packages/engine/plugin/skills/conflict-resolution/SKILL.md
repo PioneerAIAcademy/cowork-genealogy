@@ -357,11 +357,13 @@ system passes a parent's surname to the child — Spanish and
 Portuguese compound surnames (paternal first, then maternal:
 children of *Juan García* and *María Ramos* are *García Ramos*), and
 the patronymics above — a candidate parent whose surname cannot
-produce the child's is disqualified on that ground alone, before any
-record names the parents outright. Weigh this hardest against
-**indexed** parent fields: an index naming a parent whose surname is
-absent from the child's is likelier mis-indexed than correct, and
-the page image is what settles it. The chain is rebuttable —
+produce the child's is disqualified on that ground alone — both
+parents under the Iberian system, the father only under a
+patronymic — before any record names the parents outright. Weigh
+this hardest against **indexed** parent fields: an index naming a
+parent whose surname is absent from the child's is likelier
+mis-indexed than correct, and the page image is what settles it.
+The chain is rebuttable —
 adoption, a natural child, a stepfather's name in use, a woman
 recorded under a married surname — so name the convention you are
 applying and confirm it held in that place and era.
