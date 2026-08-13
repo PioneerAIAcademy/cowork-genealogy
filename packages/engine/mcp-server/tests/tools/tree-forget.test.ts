@@ -865,7 +865,7 @@ describe("tree_forget", () => {
     expect(r.errors[0]).toMatch(/matched nothing/);
   });
 
-  it("a tree-wide date-range selector still scopes removal to the correct owner when a fact id collides", async () => {
+  it("a person-scoped date-range selector still scopes removal to the correct owner when a fact id collides", async () => {
     await writeProject({
       persons: [
         {
@@ -900,5 +900,139 @@ describe("tree_forget", () => {
     expect(r.validation.warnings).toEqual([
       expect.stringMatching(/Residence fact 'SHARED' also exists on: E2/),
     ]);
+  });
+
+  it("a genuinely tree-wide date-range selector (no personId) removes each qualifying owner's own copy of a shared fact id", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1840" }],
+        },
+        {
+          id: "E2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1841" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // No personId: both E1's and E2's copy of "SHARED" confidently qualify,
+    // and each is removed from its own owner — not double-counted, not
+    // conflated by the shared literal id.
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "E1").facts).toEqual([]);
+    expect(tree.persons.find((p: any) => p.id === "E2").facts).toEqual([]);
+  });
+
+  it("a tree-wide date-range selector matches a fact that lives only on a Couple relationship", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+        },
+        {
+          id: "E2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+        },
+      ],
+      relationships: [
+        {
+          id: "RE1",
+          type: "Couple",
+          person1: "E1",
+          person2: "E2",
+          facts: [{ id: "MF1", type: "Marriage", standard_date: "1845" }],
+        },
+      ],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Marriage: 1 });
+    const tree = await readTree();
+    expect(tree.relationships.find((x: any) => x.id === "RE1").facts).toEqual([]);
+  });
+
+  it("facts-before does not remove a fact dated exactly on the threshold year", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "B1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "ONYEAR", type: "Residence", standard_date: "1850" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "B1", year: 1850 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
+  });
+
+  it("facts-after does not remove a fact dated exactly on the threshold year", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "B2",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "ONYEAR", type: "Residence", standard_date: "1850" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-after", personId: "B2", year: 1850 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
+  });
+
+  it("a date-range selector reports the same result under dryRun as for real", async () => {
+    await writeProject(datedFixture());
+    const dry = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "D1", year: 1850 }],
+      dryRun: true,
+    });
+    expect(dry.ok).toBe(true);
+    if (!dry.ok) return;
+    expect(dry.filesWritten).toEqual([]);
+    const wet = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "D1", year: 1850 }],
+    });
+    expect(wet.ok).toBe(true);
+    if (!wet.ok) return;
+    expect(wet.removed).toEqual(dry.removed);
+    expect(wet.validation.warnings).toEqual(dry.validation.warnings);
   });
 });

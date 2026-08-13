@@ -321,6 +321,17 @@ function datedFacts(
   let skipped = 0;
   const consider = (ownerKind: OwnerKind, ownerId: string, facts: SimplifiedFact[] | undefined) => {
     for (const fact of facts ?? []) {
+      // An id-less fact could never be targeted by factKey (its id would
+      // collapse to the same "" as every other id-less fact on this owner),
+      // so it must never become a match candidate here either — the same
+      // guard factIdsOfType already applies for birth-of/facts-of. Not
+      // currently reachable (validate-before-persist requires every fact to
+      // carry an id), but this keeps the two resolution paths' guarantees
+      // identical rather than relying on that being true forever.
+      if (!fact.id) {
+        skipped += 1;
+        continue;
+      }
       const std = getStandardDate(fact);
       const earliest = std === null ? null : earliestYear(std);
       const latest = std === null ? null : latestYear(std);
