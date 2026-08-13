@@ -1,8 +1,72 @@
 {
-  "run_log": "v1_2026-08-11_14-30-45.json",
-  "annotator": "eruth937@gmail.com",
+  "run_log": "v1_2026-08-13_13-24-51.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
       "test_id": "ut_init_project_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -68,8 +132,48 @@
     },
     {
       "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
       "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -85,37 +189,13 @@
     {
       "test_id": "ut_init_project_005",
       "dimension_source": "rubric",
-      "dimension_name": "Researcher-profile interview & normalization",
+      "dimension_name": "Known-holdings capture",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_init_project_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_005",
+      "test_id": "ut_init_project_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,9 +203,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_005",
+      "test_id": "ut_init_project_003",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -139,15 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_003",
+      "test_id": "ut_init_project_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -157,7 +229,7 @@
     {
       "test_id": "ut_init_project_009",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -171,14 +243,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_009",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_init_project_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -244,8 +308,48 @@
     },
     {
       "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
       "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -261,47 +365,7 @@
     {
       "test_id": "ut_init_project_001",
       "dimension_source": "rubric",
-      "dimension_name": "Researcher-profile interview & normalization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Known-holdings capture",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -324,16 +388,16 @@
     },
     {
       "test_id": "ut_init_project_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_init_project_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -372,8 +436,48 @@
     },
     {
       "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
       "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -389,47 +493,7 @@
     {
       "test_id": "ut_init_project_006",
       "dimension_source": "rubric",
-      "dimension_name": "Researcher-profile interview & normalization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Known-holdings capture",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -438,8 +502,8 @@
       "test_id": "ut_init_project_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -478,8 +542,8 @@
       "test_id": "ut_init_project_007",
       "dimension_source": "rubric",
       "dimension_name": "Researcher-profile interview & normalization",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {

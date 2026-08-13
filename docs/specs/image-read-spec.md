@@ -65,10 +65,11 @@ returns an HTML shell, not the image — so `ark` only accepts `3:1:`/
 **Not every `3:1:`/`3:2:` ARK is self-sufficient.** Some are waypoints
 into a multi-image film/register rather than a single page, and the
 bare resolver redirect can land on an arbitrary image within that
-group instead of the one the caller means — **confirmed live
-(2026-08-03)**: a bare ARK for a multi-image entry did not resolve to
-any document at all (FamilySearch returned a no-match search page),
-while the browser's page URL for the same document carried `i=`
+group instead of the one the caller means — **observed live
+(2026-08-03)**: a bare ARK for a multi-image entry returned a no-match
+search page rather than the document, though the same ARK returned
+`200` on later checks (08-05/07/10) — the resolver's behavior here is
+not stable — while the browser's page URL for the same document carried `i=`
 (image index), `cc=` (collection id), and `groupId=` (image group id)
 query parameters that were required to reach the correct page. When
 the caller's `ark` is a full URL carrying any of `i`/`cc`/`groupId`,
@@ -78,6 +79,58 @@ have the bare ARK (no browser/citation URL) get the pre-existing
 best-effort behavior, which may resolve to the wrong image for a
 multi-image document. The tool's `ark` description tells callers to
 pass the full URL when one is available, precisely to avoid this trap.
+
+**Is there an autonomous route to the correct page?**
+An autonomous run holds only what the tools give it for such a record —
+the `1:1:` index ARK, `record_read`'s `sources[]`, and the bare `3:1:`
+image ARK — never the browser page URL with its `i=`/`cc=`/`groupId=`.
+**Investigated live (2026-08-07, re-verified 2026-08-10): the route exists,
+but nothing reaches it yet — the bare ARK's own resolver metadata names a
+clean `imageId` for the correct page, and no shipped tool fetches it (last
+bullet).**
+
+- Fetching the bare ARK's resolver URL (`ark:/61903/3:1:9392-9ZVZ-X`) with
+  `Accept: application/json` (rather than `image/*`, which returns bytes)
+  exposes structured metadata — `npx tsx dev/probe-image-read-ark-resolver.ts
+  ark:/61903/3:1:9392-9ZVZ-X` returned
+  `{"name":"004707850_00113","apid":"TH-1-18040-16514-50",
+  "link":[…{"rel":"parents"}…]}`. `name` is a clean
+  `{imageGroupNumber}_{sequence}` `imageId`, directly usable by `image_read`
+  / `image_search`.
+- That `imageId` is the **correct** page, not an arbitrary one:
+  `image_transcribe 004707850_00113` returns the 1887 baptism-register
+  spread containing the target entry (#44, 19 Oct 1887). The `i=`/`cc=`/
+  `groupId=` values a browser URL carries are a *different* ID system (image
+  index and collection/group ids), not the DGS `{group}_{sequence}` that
+  names one image — so the two values differing is *expected*, not a mismatch.
+  The JSON `name` route needs no browser URL; the bare-ARK **byte** path still
+  needs the `i=`/`cc=`/`groupId=` forwarding `arkToImageUrl` does (above), so
+  this is not licence to drop it. (Verified on this one reproduction ARK — a
+  strong data point, not a proof for every multi-image ARK.)
+- **The resolver is not stable over time.** The 2026-08-03 observation above
+  (bare ARK → no-match page) did not reproduce on 08-05/07/10, when the same
+  ARK returned `200` — but *which image those bytes were was not checked*. The
+  fixture's own notes and a scored run show the bare-ARK bytes landing on the
+  wrong (1881) page, which is exactly why the byte path needs the
+  `i=`/`cc=`/`groupId=` forwarding above. The JSON `name` is the more reliable
+  signal because it names the image explicitly rather than depending on redirect
+  behavior.
+- **No tool surfaces the JSON route today.** `image_read`/`arkToImageUrl`
+  request `image/*` and get bytes only, never the JSON `name`/`parents`;
+  `record_read`'s output carries no `imageGroupNumber`/`imageId`/`i=`/`cc=`/
+  `groupId` (only the bare `3:1:` ARK); `image_search` takes an
+  `imageGroupNumber` and returns *every* image in a group, with no ARK
+  lookup and no page pointer; `volume_search` maps a place to groups but
+  takes no ARK. `imageGroupNumber` is input-only on both search tools
+  (`record-search.ts`, `fulltext-search.ts`), never returned.
+
+**Bounded follow-up (a tool-contract change, not a skill edit):** have
+`record_read` (or the resolver) read the ARK's JSON and surface `name` —
+giving an autonomous run a direct, unambiguous `imageId` for the correct
+page without the browser URL. It changes a tool's output shape and the
+simplified-GedcomX surface, so it is a separate senior task. The instrument
+for this finding is the live API plus a human reviewer; no CI check can
+grade it (`docs/architecture.md` §9.4).
 
 Fetching requires a valid FamilySearch bearer token.
 
