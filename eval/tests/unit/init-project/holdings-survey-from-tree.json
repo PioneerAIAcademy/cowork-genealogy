@@ -11,7 +11,7 @@
     "user_message": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents — though I'm not sure how accurate that one is.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
+  "mcp_fixtures": ["person-read-flynn"],
   "judge_context": [
     "Should create both research.json and tree.gedcomx.json, seeding a stub for Patrick Flynn from the person-read-flynn fixture (Birth ~1845 Ireland, Death 1908 Schuylkill County PA), sourced to FamilySearch at quality 1",
     "Should record at least two `known_holdings` entries — one for the death certificate and one for the aunt's typed family history — using the researcher's own words in `description`. Holdings are user-reported; do not invent any the user did not state",

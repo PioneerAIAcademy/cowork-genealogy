@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-07-20_15-38-22.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-08-10_13-17-12.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_exhaustiveness_006",
+      "test_id": "ut_search_images_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
@@ -11,295 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_002",
+      "test_id": "ut_search_images_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
@@ -307,23 +19,63 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_002",
+      "test_id": "ut_search_images_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_008",
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -331,15 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_007",
+      "test_id": "ut_search_images_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -347,23 +91,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_007",
+      "test_id": "ut_search_images_001",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -371,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -379,39 +115,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
+      "dimension_name": "Volume selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
+      "dimension_name": "Browse execution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_009",
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -419,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_009",
+      "test_id": "ut_search_images_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -427,39 +163,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_009",
+      "test_id": "ut_search_images_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_009",
+      "test_id": "ut_search_images_003",
       "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
+      "dimension_name": "Volume selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_009",
+      "test_id": "ut_search_images_003",
       "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
+      "dimension_name": "Browse execution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_010",
+      "test_id": "ut_search_images_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -467,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_010",
+      "test_id": "ut_search_images_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -475,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_010",
+      "test_id": "ut_search_images_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -483,31 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_011",
+      "test_id": "ut_search_images_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -515,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_011",
+      "test_id": "ut_search_images_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -523,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_011",
+      "test_id": "ut_search_images_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -531,7 +243,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -539,7 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -547,7 +259,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -555,25 +315,169 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_004",
       "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
+      "dimension_name": "Volume selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_004",
       "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
+      "dimension_name": "Browse execution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_012",
+      "test_id": "ut_search_images_004",
       "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

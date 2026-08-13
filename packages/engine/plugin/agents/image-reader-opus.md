@@ -10,6 +10,21 @@ tools:
   - mcp__genealogy__image_read
   - mcp__remote-devices__Genealogy_Research__image_read
   - mcp__Genealogy_Research__image_read
+# This agent has one tool — image_read — and only that. image_transcribe
+# belongs to the sibling image-reader agent (contrasted below, not called
+# here); pivoting to an indexed record is the caller's job. The deny is
+# enforced even under `bypassPermissions` (issue #695) and must carry all
+# three server spellings for the same reason the allow-list above does.
+disallowedTools:
+  - mcp__genealogy__image_transcribe
+  - mcp__remote-devices__Genealogy_Research__image_transcribe
+  - mcp__Genealogy_Research__image_transcribe
+  - mcp__genealogy__record_read
+  - mcp__remote-devices__Genealogy_Research__record_read
+  - mcp__Genealogy_Research__record_read
+  - mcp__genealogy__record_search
+  - mcp__remote-devices__Genealogy_Research__record_search
+  - mcp__Genealogy_Research__record_search
 ---
 
 # Image Reader (Opus)
