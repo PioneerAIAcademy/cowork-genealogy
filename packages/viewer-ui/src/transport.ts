@@ -11,6 +11,11 @@ export interface FeedbackPayload {
   email: string
   userPrompt: string
   agentDid: string
+  /** The required "Did it work as expected?" answer. `true` is a positive report:
+   *  the dialog hides and clears agentShouldHave/correctAnswer, so both arrive empty. */
+  workedAsExpected: boolean
+  /** Only meaningful when workedAsExpected is false; empty otherwise (and also empty
+   *  when the tester hit a bug but didn't know the ideal behavior). */
   agentShouldHave: string
   /** Ground truth — the right answer plus its evidence — when the agent reached a
    *  wrong *conclusion*. Optional: most feedback is about process, not answers. */
