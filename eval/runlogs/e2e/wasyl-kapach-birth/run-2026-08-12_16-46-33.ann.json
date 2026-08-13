@@ -1,0 +1,16 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false",
+    "f3": "true",
+    "f4": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Birth year ~1879 recovered from the bundled Find a Grave memorial; birthplace (Ukraine) absent from the birth fact and declared unresolved in ps_001 — year-only, half the finding.",
+    "f2": "No immigration fact in the tree and tier not_proved; the 1926 census (sole source for 1906) was never found — searched Kapach/Kopach variants only, missed the C-initial 'Capach' indexing.",
+    "f3": "Correctly declined the 1883 census estimate — tree asserts ~1879 and 1883 appears nowhere.",
+    "f4": "Death 5 Dec 1948 / Smoky Lake and burial town 'Eldorena' recovered; specific cemetery (Eldorena UCC Cemetery) and plot 72 not recorded — burial-precision call."
+  },
+  "annotator": "EdmondOware"
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_cook_spouse_children",
+    "objective": "Who was Daniel Cook's wife, and what do the family's 1850 census entries show about his sons David and Isaac?",
+    "subject_person_ids": [
+      "KWJT-3ZB"
+    ],
+    "status": "active",
+    "created": "2026-08-12",
+    "updated": "2026-08-12"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -14,3 +14,5 @@
 # Extensionless scripts (git hooks) are covered separately, next to the hooks
 # themselves.
 *.sh text eol=lf
+
+*.bat text eol=crlf
