@@ -351,11 +351,17 @@ def test_successful_call_carries_no_is_error(tmp_path):
         [], FIXTURES_DIR, workspace=tmp_path
     )
     (tmp_path / "research.json").write_text(
-        json.dumps({"project": {"id": "rp_x"}}), encoding="utf-8"
+        json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8"
     )
-    result = _invoke(tools_by_name, "research_query", {"section": "project"})
-    if _extract_response_dict(result).get("ok") is not False:
-        assert "is_error" not in result
+    result = _invoke(tools_by_name, "research_query", {"section": "questions"})
+    # Assert the call SUCCEEDED before asserting anything about a success. Guarding
+    # the assertion on `ok is not False` instead makes the test vacuous the moment
+    # the call starts failing — `section: "project"` is not a valid section, so this
+    # test passed without ever executing its assertion.
+    assert (
+        _extract_response_dict(result).get("ok") is True
+    ), "the call must succeed for this test to be asserting anything"
+    assert "is_error" not in result
 
 
 def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():

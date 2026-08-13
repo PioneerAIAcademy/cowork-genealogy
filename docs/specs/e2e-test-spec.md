@@ -1352,15 +1352,19 @@ returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
 is a correctness statement, not a warning of a large shift: every shadow-window
 and provenance number on this page moves by ~1 entry across the whole corpus.
-`is_error` is also
-blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
-a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
-is why the shift is this small.
+`is_error` was also
+blind to a writer tool that returns `{ok:false}` without throwing until #1282
+closed that half; it remains blind to a skill that launches and then fails
+(`guardrail-enforcement-spec.md` §7), which is why the shift is this small.
+Runs recorded before that change still carry the old classification — they are
+`HARNESS_SCHEMA_VERSION` 3, which is the structural tell for it.
 
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
-that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls. Window
+that always reads zero. #1282 has since landed, so returned `{ok:false}` writer
+failures are now visible and the delta will grow as version-4 runs accumulate —
+re-measure it before relying on the ~1-entry figure above, and revisit the
+v-split then or if the corpus accumulates errored `same_person`/`Skill` calls. Window
 calibration is not a pending task at all — see
 `guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see."
 
