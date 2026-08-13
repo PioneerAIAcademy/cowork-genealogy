@@ -121,7 +121,7 @@ describe("tree_forget", () => {
     // sits in `facts[]` beside Birth/Death (the tree.gedcomx.json export is
     // privacy-redacted to empty facts; the session log preserves the raw data).
     // Add that fact to I1.
-    const tree = family();
+    const tree: any = family();
     tree.persons[0].facts.push({
       id: "FP",
       type: "Parents",
@@ -224,7 +224,7 @@ describe("tree_forget", () => {
     // FamilySearch carries a marriage twice — as the Couple relationship's own
     // facts AND as a `Marriage` fact on the subject's record (issue #1417).
     // Both present here: I1 has the Couple link to I5 and a person-level fact.
-    const tree = family();
+    const tree: any = family();
     tree.persons[0].facts.push({ id: "FM", type: "Marriage", date: "1875", place: "Cork" } as any);
     await writeProject(tree);
 
@@ -284,7 +284,7 @@ describe("tree_forget", () => {
   });
 
   it("spouses-of also sweeps person-level `Divorce` and `Annulment` facts", async () => {
-    const tree = family();
+    const tree: any = family();
     tree.persons[0].facts.push(
       { id: "FD", type: "Divorce", date: "1890" } as any,
       { id: "FA", type: "Annulment", date: "1892" } as any,
