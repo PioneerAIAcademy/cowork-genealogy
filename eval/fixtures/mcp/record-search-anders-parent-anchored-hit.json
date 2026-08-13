@@ -1,0 +1,118 @@
+{
+  "tool": "record_search",
+  "description": "Same christening hit as record-search-anders-patronymic-hit, but for the parent-ANCHORED form of the search — the caller supplied motherGivenName, so record_search reports relativeTerms. Must be listed BEFORE record-search-anders-patronymic-hit in a test's mcp_fixtures: matching is first-match-wins (mock_mcp.py:321-327), and the generic fixture's predicate (givenName~Anders) also matches this call. Why two fixtures rather than adding relativeTerms to the generic one: the field appears only when the caller anchored on a relative name, and the generic fixture deliberately also serves non-relative anchors (recordCountry Norway, birthPlace Ringsaker) — baking relativeTerms into it would report a relative check that was never requested. relativeTerms here is DERIVED, not authored: applying the resolver's rules to this fixture's own gedcomx, P1 is the persona, CR2 makes P3 (gender Female) a ParentChild parent of P1, so mother resolves present with P3's name. A father-anchored variant would fall through to the generic fixture; add a sibling predicate if a test needs one.",
+  "args": {
+    "givenName": "~Anders",
+    "motherGivenName": "~Marit"
+  },
+  "response": {
+    "query": {
+      "givenName": "Anders",
+      "motherGivenName": "Marit",
+      "recordCountry": "Norway",
+      "birthYearFrom": 1868,
+      "birthYearTo": 1868
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "9XKT-M2P",
+        "recordId": "9XKT-M2P",
+        "personName": "Anders",
+        "score": 0.91,
+        "sex": "Male",
+        "birthDate": "15 November 1868",
+        "birthPlace": "Ringsaker, Hedmark, Norway",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:9XKT-M2P",
+        "collectionId": "4237104",
+        "collectionTitle": "Norway, Church Books, 1815-1930",
+        "recordTitle": "Christening of Anders, son of Hans Olsen and Marit Pedersdatter",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "relativeTerms": {
+          "mother": {
+            "status": "present",
+            "name": "Marit Pedersdatter"
+          }
+        },
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anders",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Christening",
+                  "date": "15 November 1868",
+                  "place": "Ringsaker, Hedmark, Norway"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "October 1868",
+                  "place": "Ringsaker, Hedmark, Norway"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Hans",
+                  "surname": "Olsen",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Marit",
+                  "surname": "Pedersdatter",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

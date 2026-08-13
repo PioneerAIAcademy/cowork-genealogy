@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -196,9 +197,9 @@ describe("research_log_append", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.logId).toBe("log_001");
-    expect(result.resultsRef).toBe("results/log_001.json");
-    expect(result.returnedCount).toBe(2);
+    expect(single(result).logId).toBe("log_001");
+    expect(single(result).resultsRef).toBe("results/log_001.json");
+    expect(single(result).returnedCount).toBe(2);
     expect(result.filesWritten).toEqual(["research.json", "results/log_001.json"]);
 
     // sidecar materialized; staged file consumed.
@@ -231,8 +232,8 @@ describe("research_log_append", () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.resultsRef).toBeNull();
-    expect(result.returnedCount).toBeNull();
+    expect(single(result).resultsRef).toBeNull();
+    expect(single(result).returnedCount).toBeNull();
     expect(result.filesWritten).toEqual(["research.json"]);
     const research = await readJson("research.json");
     expect(research.log[0].results_ref).toBeNull();
@@ -392,7 +393,7 @@ describe("research_log_append", () => {
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.logId).toBe("log_010");
+    expect(single(result).logId).toBe("log_010");
   });
 
   it("is append-only: existing entries are byte-unchanged", async () => {

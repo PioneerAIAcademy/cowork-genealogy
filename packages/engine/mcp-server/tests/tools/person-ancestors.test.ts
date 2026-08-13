@@ -94,7 +94,12 @@ function rawPerson(
   surname: string,
   genderType: string,
   extra: Record<string, unknown> = {},
-): FSAncestryResponse["persons"] extends (infer P)[] ? P : never {
+): NonNullable<FSAncestryResponse["persons"]>[number] {
+  // `persons` is optional, so the old
+  // `FSAncestryResponse["persons"] extends (infer P)[] ? P : never` distributed
+  // over `FSAncestryPerson[] | undefined` and collapsed to `never` on the
+  // undefined arm — making every return value unassignable. NonNullable +
+  // indexed access says "an element of persons" without that trap.
   return {
     id,
     living: false,
