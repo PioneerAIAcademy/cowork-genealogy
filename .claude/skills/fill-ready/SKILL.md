@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every developer issue it moves through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -634,20 +634,29 @@ auto-add workflow that sets nothing else — a freshly filed issue that belongs 
 Ready still needs this move. (The exception is a `feedback` item, which the same
 workflow files directly into Ready and which you never move at all.)
 
-**Gate the unassigned `developer` shortlist through `/review-ready` before you
-promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
-that skill fans out one agent per item to check the same call against the cited
-code, the architecture guide's site list, and the board's what-nothing-checks
-issues —
-which is where a "junior-safe" item turns out to hide an open API decision.
+**Gate every `developer` issue you are moving into Ready through `/review-ready`
+before you promote it — not just the ones you rank as junior.** Your seniority
+test (§1) is a pre-filter read off the issue body; that skill fans out one agent
+per item to check the same call against the cited code, the architecture guide's
+site list, and the board's what-nothing-checks issues — which is where a
+"junior-safe" item turns out to hide an open API decision.
+
+**"Every" means every one you move, including a `senior`-labeled item.** A senior
+item's body is stale in exactly the ways a junior item's is, and it is the more
+expensive one to hand out wrong. The only issue that skips the gate is one that
+already carries the `reviewed` label from a previous pass **and** has not been
+edited since — check `updatedAt` against the reviewed marker's date. Re-running
+the gate on an unchanged issue pays for the same deep read twice
+(`docs/specs/task-review-spec.md` §2); skipping it on a changed one is how a
+refuted premise reaches a junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
-`needs-a-decision` verdict is a §1 miss caught in time — it stays in Backlog and
-never enters the junior pool. **The two get different labels** (`senior` vs
-`needs-decision`, §6), and the verdict tells you which: `needs-a-decision` means
-one answer unblocks it, `senior` means it is hard regardless. Running the gate
-after promotion instead works, but pays for the same deep read twice — see
-`docs/specs/task-review-spec.md` §2.
+`needs-a-decision` verdict on an item you had ranked junior is a §1 miss caught
+in time — it stays in Backlog and never enters the junior pool. **The two get
+different labels** (`senior` vs `needs-decision`, §6), and the verdict tells you
+which: `needs-a-decision` means one answer unblocks it, `senior` means it is hard
+regardless. Running the gate after promotion instead works, but pays for the same
+deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
