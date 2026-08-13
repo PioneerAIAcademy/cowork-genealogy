@@ -64,6 +64,7 @@ related additions (manifest, screenshots) go inside `_feedback/`.
   "email": "user@example.com",
   "user_prompt": "Find a marriage record for John Smith born 1850 in Ohio.",
   "agent_did": "The agent searched the 1860 census and reported no results, then stopped.",
+  "worked_as_expected": false,
   "agent_should_have": "The agent should have tried the 1870 and 1880 censuses, and should have searched marriage records in Ohio counties.",
   "correct_answer": "",
   "notes": "",
@@ -89,7 +90,8 @@ identical.
 | `email` | string | yes | May be empty string for anonymous submissions. Not used by the workflow's automation; included so devs can follow up. |
 | `user_prompt` | string | yes | Verbatim text of the prompt the user typed when the bad result occurred. The Claude Code session re-issues this verbatim in §3.2 of the workflow spec. |
 | `agent_did` | string | yes | The user's free-text description of what the agent actually did wrong. Read by `/compare-state --against=what-went-wrong` to confirm repro. |
-| `agent_should_have` | string | yes | The user's free-text description of what the agent should have done. Read by `/compare-state --against=desired` to verify fixes and by `/mine-unit-test` as the starting-point rubric. |
+| `worked_as_expected` | boolean | yes | The "Did it work as expected?" answer. `true` is a positive report — the agent did the job. On `true` the viewer sends `agent_should_have` and `correct_answer` empty, so triage reads **this flag** — not field emptiness — to tell a clean report from a problem. Added in schema_version 1 without a bump (§5: new fields old consumers ignore don't bump). |
+| `agent_should_have` | string | yes | The user's free-text description of what the agent should have done. Always present; **empty string when `worked_as_expected` is true, and also empty when a bug reporter did not know the ideal behavior — so, like `correct_answer`, an empty value is legitimate and must not be treated as a malformed submission.** Read by `/compare-state --against=desired` to verify fixes and by `/mine-unit-test` as the starting-point rubric. |
 | `notes` | string | yes | Free-text notes ("first time this happened", "had this same issue last week", etc.). Always present; empty string when the user left the field blank. Same model as `email`. |
 | `project_folder_path` | string | yes | Absolute path of the project folder the user was working in when they submitted. Lets devs disambiguate when one user has multiple projects open and helps correlate with the user's filesystem layout. Mild PII; included because the diagnostic value outweighs the leak (the same path is already in `FEEDBACK.md` today). Empty string if the viewer cannot determine it. |
 | `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |

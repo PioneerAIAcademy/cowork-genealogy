@@ -22,6 +22,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
@@ -3027,5 +3028,84 @@ describe("research_append — negative evidence role invariant", () => {
       ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
     });
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("research_append — sources-without-assertions nudge (#1478)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-1478-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A project with n sources and m assertions, all valid. Sources carry
+  // gedcomx_source_description_id "SD-001" (present in baseTree), which also
+  // keeps source-reuse auto-detection from engaging on the appended source —
+  // reuse needs a source append with NO S id plus an assertion in the same
+  // batch (§3.4.1), neither of which these single-source appends do.
+  const researchWith = (nSources: number, nAssertions: number) => ({
+    ...baseResearch(),
+    sources: Array.from({ length: nSources }, (_, i) => validSource(`src_${String(i + 1).padStart(3, "0")}`)),
+    assertions: Array.from({ length: nAssertions }, (_, i) =>
+      validAssertion(`a_${String(i + 1).padStart(3, "0")}`, "src_001"),
+    ),
+  });
+  const write = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const WARN = /source\(s\) recorded but zero assertions drawn from them/;
+  const warned = (warnings: string[]) => warnings.some((w) => WARN.test(w));
+
+  it("warns when a source lands leaving ≥3 sources and 0 assertions — and never blocks", async () => {
+    await write(researchWith(3, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // never blocks: the source still persisted
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(4);
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn, "expected the sources-without-assertions warning").toBeTruthy();
+    expect(warn).toContain("4 source(s)"); // post-write total, not the batch count
+  });
+
+  it("stays silent below the threshold (2 sources, 0 assertions)", async () => {
+    await write(researchWith(1, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent when any assertion already exists", async () => {
+    await write(researchWith(5, 1));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag an unrelated write that adds no source", async () => {
+    await write(researchWith(5, 0));
+    const { id: _o, created: _c, ...q } = validQuestion("x");
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("fires through extraction_append with a tool-neutral message", async () => {
+    await write(researchWith(3, 0));
+    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn).toBeTruthy();
+    // record-extractor is denied research_append — the nudge must not name it
+    expect(warn).not.toContain("research_append");
   });
 });

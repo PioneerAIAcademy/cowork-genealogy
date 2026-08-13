@@ -1,0 +1,19 @@
+{
+  "id": "cook-spouse-children",
+  "name": "Daniel Cook",
+  "genre": "strip",
+  "source_pid": "KWJT-3ZB",
+  "captured": "2026-08-12",
+  "researcher_question": "Who was Daniel Cook's wife, and what do the family's 1850 census entries show about his sons David and Isaac?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1820s-1850s",
+    "geography": "US-UT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Regression fixture for issue #1473 (forget-and-rederive strips relationships and never restores them). Starting tree omits the wife entirely and strips two sons' 1850 census facts, mirroring the reported over-broad removal (spouse + children's facts) from a real forget-and-rederive run on this same PID. Recovering all three demonstrates that research actually reasserts what a forget step removed, not only the one fact the researcher originally asked about."
+}
