@@ -31,14 +31,14 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   returned about five thousand records, the same batch plus a surname returned
   79, and a nonexistent batch returns **0** rather than being ignored — so a nil
   under it means the batch is wrong, not that the parish is empty.
-- Batch number shape varies: it may lead with a digit or with a letter (`B`,
-  `C`, `I`, `M` seen), and may carry a trailing `-digit` — `C050761`,
-  `M01048-5` and all-numeric batches all occur. Send what the source gives
+- Batch number shape varies: it may lead with a digit or with a letter, and may
+  carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5` and the
+  all-numeric `8317102`. Send what the source gives
   you; do not reject or reformat a batch on shape, and treat no shape rule
   here as exhaustive.
 - Send the batch and it returns that batch's extracted records — the canonical
   way to enumerate a single parish. Adding a surname searches within that
-  extraction. The tool **rejects** `batchNumber` + `recordCountry`: the batch
+  extraction. The tool **rejects** `batchNumber` + `recordCountry`/`recordSubdivision`: the batch
   anchors by itself, and a country that does not match it returns 0, which
   looks exactly like a wrong batch. A batch number carries no country
   information, so there is nothing to guess it from.

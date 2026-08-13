@@ -221,6 +221,17 @@ describe("recordSearchTool input validation", () => {
     ).not.toThrow();
   });
 
+  // `recordSubdivision` is the same class of record-jurisdiction filter and
+  // carries the same silent-zero risk. Without it named here the invariant
+  // still held — batch + subdivision with no country trips "recordSubdivision
+  // requires recordCountry" — but that error points the model at the one field
+  // the batch rule forbids, costing a round-trip to arrive at the same place.
+  it("5e. rejects batchNumber combined with recordSubdivision", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordSubdivision: "Alabama" })
+    ).toThrow(/do not combine batchNumber with recordCountry or recordSubdivision/);
+  });
+
   it("6. throws when count > 100 or count < 1", async () => {
     await expect(
       recordSearchTool({ surname: "Lincoln", count: 200 })
