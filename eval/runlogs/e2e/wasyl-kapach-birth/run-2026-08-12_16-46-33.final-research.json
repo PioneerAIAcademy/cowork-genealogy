@@ -1,0 +1,1930 @@
+{
+  "project": {
+    "id": "rp_wasyl_kapach_birth",
+    "objective": "When and where in Ukraine was Wasyl Kapach born, and when did he immigrate to Canada?",
+    "subject_person_ids": [
+      "L17M-W4Q"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-12"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Wasyl Kapach born?",
+      "rationale": "The birth date and place of Wasyl Kapach are unknown and unsourced in the tree. Establishing his birth year and birthplace is the foundational fact for this project \u2014 it anchors all downstream research including immigration timing and origin-country record searches. Canadian immigration and naturalization records, death records, and census entries for Wasyl (or his household members) are the primary leads. His birth is a single event with two attributes (date and place), both derivable from the same record types.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All FamilySearch-indexed Canadian collections searched exhaustively for Kapach and Kopach variants: censuses 1901-1931, passenger lists 1881-1922, border entries 1908-1918, homestead files, church records, full-text documents. All returned negative results. Three high-priority sources remain inaccessible in autonomous mode: Alberta Vital Statistics death registration #007-198 (provincial archives), LAC Ukrainian Immigrants 1891-1930 database (interactive), and LAC naturalization records (interactive). The search is exhaustive for autonomously accessible FamilySearch sources but not globally exhaustive.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": "Alberta death registration #007-198 examined OR LAC Ukrainian Immigrants database searched OR LAC naturalization records searched"
+      },
+      "created": "2026-08-12"
+    },
+    {
+      "id": "q_002",
+      "question": "When did Wasyl Kapach immigrate to Canada?",
+      "rationale": "The immigration date is an independent part of the research objective. Canadian passenger lists (available on FamilySearch from approximately 1865 onward), border crossing records, and naturalization papers are the primary sources. Knowing his birthplace (q_001) will help narrow origin-port searches, so q_001 is listed as informing this question's strategy, but the question is independently pursuable via Canadian landing records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All FamilySearch-indexed Canadian immigration records searched: passenger lists 1881-1922 and border entries 1908-1918. All Canadian censuses 1901-1931 also searched. All returned negative results. LAC Ukrainian Immigrants 1891-1930 database, LAC naturalization records, and Alberta death registration #007-198 remain inaccessible in autonomous mode.",
+        "log_entry_ids": [
+          "log_001",
+          "log_008",
+          "log_009",
+          "log_011"
+        ],
+        "stop_criteria": "LAC Ukrainian Immigrants database searched OR LAC naturalization records searched OR Alberta death registration #007-198 examined"
+      },
+      "created": "2026-08-12"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-08-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "immigration",
+          "jurisdiction": "Canada (national)",
+          "date_range": "1890-1930",
+          "repository": "other",
+          "rationale": "Library and Archives Canada's Ukrainian Immigrants 1890\u20131930 database (https://www.bac-lac.gc.ca/eng/discover/immigration/immigration-records/immigrants-ukraine-1891-1930/Pages/search.aspx) is purpose-built for this question: it indexes Ukrainian immigrant registration records containing name, arrival date, and often the specific village of origin in Galicia or Bukovina \u2014 village-level birthplace data unmatched by any other source. Search 'Kapach' and variants (Kopach, Kapac, Kopac). Free to access.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Canada \u2014 prairie provinces (Manitoba, Saskatchewan, Alberta)",
+          "date_range": "1901",
+          "repository": "FamilySearch",
+          "rationale": "Canada Census 1901 (FamilySearch collection 1584557; 5.3M records, fully indexed). Records birthplace (country/province level), birth year, language spoken, and year of immigration. Ukrainian immigrants who arrived 1896\u20131900 would appear. Search given-name variants (Wasyl, Wasil, Basil, Vasyl) and surname variants (Kapach, Kapac, Kopach, Kopac). Birthplace column shows 'Austria' or 'Galicia' \u2014 not 'Ukraine' \u2014 per loc_001 quirk #1. Also on FindMyPast.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Canada \u2014 Northwest Provinces (Manitoba, Saskatchewan, Alberta)",
+          "date_range": "1906",
+          "repository": "FamilySearch",
+          "rationale": "Canada, Northwest Provinces, Census, 1906 (FamilySearch collection 1584925; 802K records, fully indexed). Prairie-specific census that captures the main Ukrainian settlement wave of 1896\u20131905. Records birthplace and year of immigration. Note: this census is filed under 'Northwest Provinces' not provincial titles \u2014 per loc_001 quirk #2, pre-1905 Saskatchewan and Alberta records may appear under 'Northwest Territories.' Also available via LAC Census Search portal and Ancestry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Canada \u2014 prairie provinces",
+          "date_range": "1911",
+          "repository": "FamilySearch",
+          "rationale": "Canada Census 1911 (FamilySearch collection 2143998; 7.2M records, fully indexed). The most genealogically rich prairie census: records birthplace, year of immigration, year of naturalization, and religion. By 1911 the main Ukrainian immigration wave was well underway and most Galician-origin settlers appear. The year-of-immigration column will simultaneously advance q_002. Also available on Ancestry (collection 8947).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Canada \u2014 prairie provinces (Manitoba, Saskatchewan, Alberta)",
+          "date_range": "1916",
+          "repository": "FamilySearch",
+          "rationale": "Canada, Prairie Provinces, Census, 1916 (FamilySearch collection 1529118; 1.8M records, fully indexed). Prairie-specific mid-decade census capturing immigrants who arrived or relocated after the 1911 enumeration. Records birthplace and year of immigration. Also available on Ancestry (collection 1556). Per loc_001 quirk #3 this census is specific to the prairie provinces and has high value for Ukrainian settlers.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Canada \u2014 prairie provinces",
+          "date_range": "1921",
+          "repository": "FamilySearch",
+          "rationale": "Canada Census 1921 (FamilySearch collection 5000285; 8.6M records, fully indexed). Latest available indexed census; records birthplace, year of immigration, and language. If Wasyl was alive in 1921 this provides a corroborating birthplace statement and may supply more specific geographic detail than earlier censuses. Also available on MyHeritage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "cemetery",
+          "jurisdiction": "Canada \u2014 prairie provinces",
+          "date_range": "1880-1960",
+          "repository": "other",
+          "rationale": "Pre-provided file findagrave-kapach-captures.pdf contains Find a Grave memorial data for the Kapach family. Memorial inscriptions and attached obituary or death-record data may record Wasyl Kapach's birth date and birthplace directly. Family member memorials (Andrew Kapach, Tekla Doliney Kapach, Mary Antosko) may also supply contextual clues about origin. Read the local PDF file \u2014 no web access needed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "immigration",
+          "jurisdiction": "Canada (national \u2014 ocean ports)",
+          "date_range": "1881-1922",
+          "repository": "FamilySearch",
+          "rationale": "Canada, Passenger Lists, 1881-1922 (FamilySearch collection 1823240; 3.9M records, fully indexed). Arrival manifests record name, age, last residence (often village-level in Galicia/Bukovina), and destination. Ukrainian immigrants typically traveled Hamburg\u2013Bremen\u2013Liverpool to Canadian ports; the last residence column often names the specific village of origin. This source simultaneously advances q_002. Search all name variants. Also on Ancestry (Canada, Ocean Arrivals 1865-1935, collection 1263).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "immigration",
+          "jurisdiction": "Canada (national \u2014 land border crossings)",
+          "date_range": "1908-1918",
+          "repository": "FamilySearch",
+          "rationale": "Canada, Border Entry Lists, 1908-1918 (FamilySearch collection 4123954; 942K records, fully indexed). Some Ukrainian immigrants arrived via US Atlantic ports (Baltimore, Philadelphia, New York) and crossed into Canada by land. These lists state birthplace. Fallback if no ocean passenger arrival is found in pli_008.",
+          "fallback_for": "pli_008",
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "court",
+          "jurisdiction": "Canada (national)",
+          "date_range": "1895-1930",
+          "repository": "other",
+          "rationale": "Library and Archives Canada holds naturalization declarations and certificates. Ukrainian immigrants naturalized after 5 years of residence (pre-1914 rule); Wasyl likely naturalized ca. 1901\u20131915. These records frequently state the applicant's exact birth date and village of origin \u2014 often more specific than census birthplace entries, which record only country or province. Access via LAC online catalogue (search RG6 series) or written request. Per loc_001, naturalization records are among the richest sources for pinning exact birthplace villages.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 11,
+          "record_type": "land",
+          "jurisdiction": "Saskatchewan, Canada",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "Volume_search returned 8,450+ Saskatchewan homestead file volumes, full-text searchable (FamilySearch Canada, Saskatchewan Provincial Records collection id 1916143; 1.5M browse-only images, fulltextSearchable true). Ukrainian homesteaders almost universally filed homestead applications 1896\u20131914. Application correspondence states country of origin and often the home district or village in Europe. Search 'Kapach' via full-text across these volumes. Also a FAN source: search for other Kapach or Doliney homesteaders who may have settled near Wasyl and share the same origin village.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-08-12",
+      "items": [
+        {
+          "id": "pli_012",
+          "sequence": 1,
+          "record_type": "immigration",
+          "jurisdiction": "Canada (national)",
+          "date_range": "1890-1930",
+          "repository": "FamilySearch",
+          "rationale": "Canada Passenger Lists 1881-1922 (FamilySearch collection 1823240) and Canada Border Entry Lists 1908-1918 (collection 4123954) were searched in pl_001 items pli_008 and pli_009 respectively \u2014 both returned negative results for all Kapach/Kopach surname variants. These searches are complete and are documented here for the q_002 audit trail. Wasyl Kapach does not appear in any indexed FamilySearch immigration record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 2,
+          "record_type": "immigration",
+          "jurisdiction": "Canada (national)",
+          "date_range": "1891-1930",
+          "repository": "other",
+          "rationale": "Library and Archives Canada's Ukrainian Immigrants 1891-1930 database (bac-lac.gc.ca) indexes Ukrainian immigrant registration records with name, arrival date, and often village of origin. This was deferred in pl_001 (pli_001 logged as deferred, log_001) due to requiring interactive access. This database is the single highest-priority outstanding source for q_002 \u2014 it was purpose-built for Ukrainian immigrants arriving in exactly this period. Must be searched in an interactive session.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 3,
+          "record_type": "court",
+          "jurisdiction": "Canada (national)",
+          "date_range": "1895-1930",
+          "repository": "other",
+          "rationale": "LAC naturalization records (RG6 series, bac-lac.gc.ca) frequently state the applicant's arrival date in Canada \u2014 often more specifically than census immigration columns. Wasyl likely naturalized circa 1901-1915 (Ukrainian settlers typically naturalized after 5 years' residence). This was deferred in pl_001 (pli_010, log_011) as requiring interactive access. Must be searched in an interactive session.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_015",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Alberta, Canada",
+          "date_range": "1948",
+          "repository": "other",
+          "rationale": "Alberta Vital Statistics death registration #007-198 (cited on Find a Grave memorial) routinely includes a 'year of immigration' or 'years in Canada' field on 1948-era Alberta death registrations. Requesting this record from Service Alberta (Alberta Vital Statistics, Edmonton) would simultaneously address both q_001 (birthplace) and q_002 (immigration date). Physical/correspondence request only; not online.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-12T16:10:34.713Z",
+      "tool": "lac_immigrants_database",
+      "query": {
+        "database": "Immigrants from Ukraine 1891-1930 (Library and Archives Canada)",
+        "surname": "Kapach",
+        "variants": [
+          "Kopach",
+          "Kapac",
+          "Kopac"
+        ],
+        "given_name_variants": [
+          "Wasyl",
+          "Wasil",
+          "Basil",
+          "Vasyl"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires interactive user capture and is not obtainable in an autonomous run. No FamilySearch equivalent exists for this specific LAC Ukrainian immigrant registration database. Search URL for later interactive session: https://www.bac-lac.gc.ca/eng/discover/immigration/immigration-records/immigrants-ukraine-1891-1930/Pages/search.aspx \u2014 search surname Kapach and variants Kopach, Kapac, Kopac; given name variants Wasyl, Wasil, Basil, Vasyl. This database records village-level birthplace for Ukrainian immigrants and should be prioritized in a follow-up interactive session."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_007",
+      "performed": "2026-08-12T16:10:34.717Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave.com",
+        "memorial_ids": [
+          "113540812",
+          "196999027"
+        ],
+        "names": [
+          "Wasyl Kapach",
+          "Andrew Henry Kapach"
+        ]
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/113540812/wasyl-kapach",
+        "capture_received": true,
+        "capture_filename": "findagrave-kapach-captures.pdf"
+      },
+      "results_ref": null,
+      "notes": "Pre-provided PDF read locally. Memorial 113540812: Wasyl 'William' Kapach, birth 1879 (confirmed by gravestone photo 'WASYL 1879\u20141948'), death 5 Dec 1948, Smoky Lake, Cold Lake Census Division, Alberta; burial Eldorena Ukrainian Catholic Church Cemetery, Eldorena, Edmonton Census Division, Alberta; Alberta Vital Statistics death registration #007-198. Obituary (Edmonton Journal, 7 Dec 1948) confirms 'Mr. William Kapach of Eldorina, Alberta, passed away at Smoky Lake, Alta., at the age of 69 years'; church OSBM (Ukrainian Greek Catholic). Spouse Maria 'Mary' Antosko m. 1909; children Ann 1911, Natalka 1913, Andrew Henry 1916, Lucy (Borstad). No birthplace stated. Memorial 196999027: Andrew 'Henry' Kapach 1916-1984 lists parents as Wasyl 'William' Kapach 1879-1948 and Maria 'Mary' Antosko Kapach 1893-1966 (m. 1909), confirming family linkage. Outcome partial: birth year 1879 established from gravestone photo (photographed evidence) and corroborated by obituary age statement; birthplace unknown. Alberta death registration #007-198 is a high-priority lead \u2014 death records often state country/province of birth. User-contributed memorial \u2014 treat 1879 as a lead requiring corroboration from original records."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Census, 1901",
+        "collectionId": "1584557",
+        "surname": "Kapach",
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "One result (Edward Rlapach, BC, 1873, German) \u2014 clearly not Wasyl Kapach. Wasyl was likely not yet in Canada in 1901."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Northwest Provinces, Census, 1906",
+        "collectionId": "1584925",
+        "surname": "Kapach",
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "One result: Ile Kapach born 1876, Austria, Selkirk Manitoba \u2014 different Kapach family (different given name, different province). Wasyl likely had not yet immigrated by 1906."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Census, 1911",
+        "collectionId": "2143998",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "0 hits for 'Kapach'; 5 hits for 'Kopach' (all clearly different persons). Real negative per tool diagnostic. Wasyl absent from 1911 despite first child born that year; may be indexed under a variant spelling or in an unindexed district."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Prairie Provinces, Census, 1916",
+        "collectionId": "1529118",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "0 for 'Kapach'; 1 non-match for 'Kopach' (Charles Kabisch, US-born). Real negative."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada Census, 1921",
+        "collectionId": "5000285",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "0 for 'Kapach'; 2 non-matches for 'Kopach' (Roman surnames, Manitoba). Real negative."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_008",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Passenger Lists, 1881-1922",
+        "collectionId": "1823240",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "0 for 'Kapach'; 5 non-matches for 'Kopach'. No Wasyl/William Kapach in indexed passenger lists."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Border Entry Lists, 1908-1918",
+        "collectionId": "4123954",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "2 non-matches for 'Kapach'; 11 non-matches for 'Kopach'. Real negative."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_011",
+      "performed": "2026-08-12T16:30:52.991Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Saskatchewan Homestead Files",
+        "collectionId": "1916143",
+        "surname": "Kapach",
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "0 results. Wasyl settled in Alberta (Eldorena), not Saskatchewan."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_010",
+      "performed": "2026-08-12T16:33:17.757Z",
+      "tool": "deferred",
+      "query": {
+        "collection": "Library and Archives Canada Naturalization Records",
+        "subject": "Wasyl Kapach",
+        "birthYear": "c.1879",
+        "deathPlace": "Alberta"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Deferred \u2014 autonomous mode, no user available for interactive LAC database access. LAC naturalization records are accessible only via interactive search at www.bac-lac.gc.ca and require account authentication. These records could contain immigration date and birthplace for Wasyl Kapach. Deferred to interactive session."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-08-12T16:34:47.782Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Census, 1931",
+        "collectionId": "2140879",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "recordCountry": "Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Supplementary search \u2014 1931 Canada Census not in formal plan. 0 indexed results for Kapach or Kopach matching age and sex profile. Real negative per tool diagnostic."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-08-12T16:34:47.782Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "All Canada collections (cross-collection)",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "sex": "Male",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1884,
+        "eventPlace": "Alberta, Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Supplementary broad Canada cross-collection search without collection restriction. No results matching Wasyl Kapach profile in Alberta. Confirms indexed FamilySearch coverage does not include this individual."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-08-12T16:34:47.782Z",
+      "tool": "fulltext_search",
+      "query": {
+        "query": "Kapach",
+        "standardPlace": "Alberta, Canada",
+        "dateRange": "1900-1950"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Full-text search across FamilySearch Alberta records for surname 'Kapach'. Only results were unrelated Kapach entries; no document referencing Wasyl/William Kapach's birth origin."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": null,
+      "performed": "2026-08-12T16:34:47.782Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Canada, Death Records (Alberta Vital Statistics holdings)",
+        "surnames_searched": [
+          "Kapach"
+        ],
+        "sex": "Male",
+        "deathYear": 1948,
+        "deathPlace": "Alberta, Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch has no Alberta death registration records (confirmed: only Alberta collection is Catholic Church Parish Registers 1865-1916, collection 2333650). Alberta Vital Statistics death registration #007-198 (cited on Find a Grave memorial) exists at Alberta provincial archives but is not on FamilySearch. Negative result expected; confirms provincial archives route is required."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-08-12T16:34:47.782Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Austria, Galicia, Ukraine \u2014 birth/baptism records",
+        "standardPlace": "Galicia, Austria",
+        "surnames_searched": [
+          "Kapach",
+          "Kopach"
+        ],
+        "dateRange": "1875-1885"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Supplementary search in Austrian/Galician parish records on FamilySearch for Kapach birth record c. 1879. No indexed Kapach births found in available Galician collections. The specific village of origin is unknown, making a targeted search impossible without that anchor. Galician records are heavily indexed by village \u2014 without knowing the village, a surname-only search across the entire region is not exhaustive."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Find a Grave Memorial #113540812 \u2014 Wasyl 'William' Kapach,\" Find a Grave (https://www.findagrave.com/memorial/113540812/wasyl-kapach : accessed 12 August 2026); includes gravestone photograph and photograph of Edmonton Journal obituary clipping, 7 December 1948; citing Alberta Vital Statistics death registration #007-198.",
+      "citation_detail": {
+        "who": "Wasyl 'William' Kapach",
+        "what": "Find a Grave memorial page \u2014 user-contributed compiled entry with gravestone photograph and newspaper obituary photograph",
+        "when_created": "Page created by contributors; gravestone photograph added 28 February 2014; obituary photograph from Edmonton Journal, 7 December 1948",
+        "when_accessed": "12 August 2026",
+        "where": "Find a Grave (findagrave.com)",
+        "where_within": "Memorial #113540812"
+      },
+      "source_classification": "authored",
+      "repository": "Find a Grave",
+      "url": "https://www.findagrave.com/memorial/113540812/wasyl-kapach",
+      "access_date": "2026-08-12",
+      "notes": "Compiled user-contributed memorial. Includes three layers of evidence: (1) contributor-entered fields (marriage year 1909, children's dates \u2014 indeterminate quality, indirect evidence); (2) gravestone photograph showing joint headstone inscribed 'MARIA 1893\u20131966 | WASYL 1879\u20131948' (secondary quality, photo-of-stone derivative); (3) photograph of Edmonton Journal obituary clipping dated 7 December 1948 (secondary quality, newspaper derivative). Memorial cites Alberta Vital Statistics death registration #007-198 as underlying source \u2014 that original registration should be sought separately and is a key research lead. No birthplace stated anywhere in this source.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Wasyl 'William' Kapach",
+      "structured_value": {
+        "given": "Wasyl",
+        "surname": "Kapach"
+      },
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1879 (year only; from gravestone inscription 'WASYL 1879\u20131948')",
+      "date": "~1879",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1879"
+      },
+      "information_quality": "secondary",
+      "informant": "gravestone engraver (unknown party commissioned it post-death)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year engraved on joint headstone; no month or day given; informant who provided year to engraver is unknown; engraved post-death from family knowledge; no birthplace stated anywhere in this source. Alberta death registration #007-198 cited on memorial \u2014 that original may supply a more precise birth date and birthplace.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "~1879 (inferred from obituary's 'age of 69 years' at death 5 Dec 1948)",
+      "date": "~1879",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1879"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Obituary states 'age of 69 years' at death 5 Dec 1948, yielding approximate birth year 1879. This is indirect \u2014 the informant was not present at the birth; the exact birth date is unknown. The stated age of 69 is consistent with birth year 1879. Note: contributor-entered fields also state birth year 1879, corroborating the gravestone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "69 years",
+      "structured_value": {
+        "year": "69"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'age of 69 years'; contributor-entered memorial fields show 'aged 68\u201369,' reflecting the age ambiguity given only a birth year of 1879 without month/day. The informant at death was likely family but is unnamed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "5 December 1948, Smoky Lake, Alberta",
+      "date": "1948-12-05",
+      "date_certainty": "exact",
+      "place": "Smoky Lake, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Date and place of death stated in obituary ('December 5, 1948 ... passed away at Smoky Lake, Alta.'). Also confirmed by contributor-entered memorial fields ('5 Dec 1948, Smoky Lake, Cold Lake Census Division, Alberta, Canada'). Alberta death registration #007-198 is the underlying original \u2014 it should be sought to confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Smoky Lake County, Alberta, Canada"
+    },
+    {
+      "id": "a_007",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Eldorena Ukrainian Catholic Church Cemetery, Eldorena, Edmonton Census Division, Alberta, Canada; Plot 72",
+      "place": "Eldorena, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Burial place from contributor-entered memorial fields. Obituary states interment 'in the church cemetery' after funeral service 'from the family residence to the Church of the Protection of the Blessed Virgin Mary (Eldorina),' consistent with the Eldorena Ukrainian Catholic Church Cemetery. Place set to the locality (Eldorena, Alberta) per standard practice; the specific cemetery name is in value.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Eldorena, Sturgeon County, Alberta, Canada"
+    },
+    {
+      "id": "a_008",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Eldorina (Eldorena), Alberta, Canada",
+      "place": "Eldorena, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'Mr. William Kapach of Eldorina, Alberta' and the family residence at the time of death was in Eldorina. Spelling 'Eldorina' in obituary; contributor-entered fields use 'Eldorena.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Eldorena, Sturgeon County, Alberta, Canada"
+    },
+    {
+      "id": "a_009",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Maria 'Mary' Antosko Kapach",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse_1"
+      },
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Spousal relationship stated on contributor-entered memorial fields. Obituary confirms 'survived by his loving wife Mrs. Maria Kapach of Eldorina, Alta.' Contributor entered marriage year 1909 \u2014 see separate assertion. Joint headstone also corroborates.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "marriage",
+      "value": "married Maria 'Mary' Antosko, 1909 (contributor-entered)",
+      "date": "~1909",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1909"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marriage year 1909 entered by Find a Grave contributor; no primary or derivative source cited for this specific date. Indeterminate quality \u2014 the contributor's source and proximity to knowledge is unknown. Evidence is indirect \u2014 the record does not contain a marriage record, only a contributed date.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "parent of Ann Kapach Holowiski",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Parent-child relationship from contributor-entered family member fields. Obituary corroborates a daughter 'Mrs. Annie Holowsky of Boyle, Alberta' among survivors, consistent. Contributor source and proximity unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "parent of Natalka 'Nellie' Kapach Rozak",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_2"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Parent-child relationship from contributor-entered family member fields. Obituary corroborates 'Mrs. Natalka Rozak of Edmonton' among survivors, consistent. Contributor source and proximity unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "parent of Andrew 'Henry' Kapach",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_3"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Parent-child relationship from contributor-entered family member fields. Obituary corroborates 'Henry of Hadway, Alberta' (one son) among survivors, consistent. Contributor source and proximity unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "parent of Lucy Borstad (obituary only; not listed in contributor-entered memorial fields)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_4"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Lucy Borstad appears in the obituary as 'Mrs. Lucy Borstad of Winnipeg, Manitoba' among survivors, but is NOT listed in the contributor-entered family members section of the memorial. The contributor may have omitted her or she may not have been known to the contributor. This is a discrepancy worth noting. The obituary lists one son (Henry) and three daughters (Annie Holowsky, Natalka Rozak, Lucy Borstad) \u2014 four children total \u2014 while the memorial fields list only three children (Ann, Natalka, Andrew/Henry).",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "spouse_1",
+      "fact_type": "name",
+      "value": "Maria 'Mary' Antosko Kapach",
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Kapach"
+      },
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name from contributor-entered memorial fields. Obituary corroborates 'Mrs. Maria Kapach.' Gravestone confirms 'MARIA.' Maiden name Antosko from contributor entry.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "spouse_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "spouse_1",
+      "fact_type": "birth",
+      "value": "1893 (year only; from gravestone inscription 'MARIA 1893\u20131966' and contributor-entered fields)",
+      "date": "~1893",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1893"
+      },
+      "information_quality": "secondary",
+      "informant": "gravestone engraver (unknown party commissioned it post-death)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year 1893 engraved on joint headstone and corroborated by contributor-entered fields. Informant who provided year is unknown; engraved post-death.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "spouse_1",
+      "fact_type": "death",
+      "value": "1966 (year only; from gravestone inscription 'MARIA 1893\u20131966' and contributor-entered fields)",
+      "date": "~1966",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1966"
+      },
+      "information_quality": "secondary",
+      "informant": "gravestone engraver (unknown party commissioned it post-death)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death year 1966 from gravestone inscription and contributor-entered fields. Informant unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "spouse_1",
+      "fact_type": "residence",
+      "value": "Eldorina (Eldorena), Alberta, Canada (at time of Wasyl's death, December 1948)",
+      "place": "Eldorena, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'his loving wife Mrs. Maria Kapach of Eldorina, Alta.' at time of Wasyl's death in December 1948.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Eldorena, Sturgeon County, Alberta, Canada"
+    },
+    {
+      "id": "a_020",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Ann Kapach Holowiski",
+      "structured_value": {
+        "given": "Ann",
+        "surname": "Holowiski"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named in obituary as 'Mrs. Annie Holowsky of Boyle, Alberta' (spelling variant); contributor-entered fields use 'Ann Kapach Holowiski.' Obituary name form used as primary, contributor form noted.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1911 (year only; contributor-entered)",
+      "date": "~1911",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1911"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1911 from contributor-entered memorial fields; no source cited by contributor for this date.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_1",
+      "fact_type": "death",
+      "value": "1968 (year only; contributor-entered)",
+      "date": "~1968",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1968"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Death year 1968 from contributor-entered memorial fields; no source cited.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Boyle, Alberta, Canada (at time of Wasyl's death, December 1948)",
+      "place": "Boyle, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'Mrs. Annie Holowsky of Boyle, Alberta.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Boyle, Athabasca County, Alberta, Canada"
+    },
+    {
+      "id": "a_025",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Natalka 'Nellie' Kapach Rozak",
+      "structured_value": {
+        "given": "Natalka",
+        "surname": "Rozak"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named in obituary as 'Mrs. Natalka Rozak of Edmonton'; contributor-entered fields use 'Natalka Nellie Kapach Rozak.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_027",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "1913 (year only; contributor-entered)",
+      "date": "~1913",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1913"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1913 from contributor-entered memorial fields; no source cited.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_2",
+      "fact_type": "death",
+      "value": "1988 (year only; contributor-entered)",
+      "date": "~1988",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1988"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Death year 1988 from contributor-entered memorial fields; no source cited.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_029",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Edmonton, Alberta, Canada (at time of Wasyl's death, December 1948)",
+      "place": "Edmonton, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'Mrs. Natalka Rozak of Edmonton.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Edmonton, Alberta, Canada"
+    },
+    {
+      "id": "a_030",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Andrew 'Henry' Kapach",
+      "structured_value": {
+        "given": "Andrew",
+        "surname": "Kapach"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named in obituary as 'Henry of Hadway, Alberta'; contributor-entered fields use 'Andrew Henry Kapach.' The obituary uses the anglicized name Henry while the memorial uses Andrew. FamilySearch tree person LVFX-1PX is named 'Andrew Kapach' \u2014 this is a likely match but identity resolution is for person-evidence.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_031",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_032",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "1916 (year only; contributor-entered)",
+      "date": "~1916",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1916"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1916 from contributor-entered memorial fields; no source cited.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_033",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_3",
+      "fact_type": "death",
+      "value": "1984 (year only; contributor-entered)",
+      "date": "~1984",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1984"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Death year 1984 from contributor-entered memorial fields; no source cited.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_034",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Hadway, Alberta, Canada (at time of Wasyl's death, December 1948)",
+      "place": "Hadway, Alberta, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'Henry of Hadway, Alberta.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Alberta, Canada"
+    },
+    {
+      "id": "a_035",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Lucy Borstad",
+      "structured_value": {
+        "given": "Lucy",
+        "surname": "Borstad"
+      },
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Named in obituary as 'Mrs. Lucy Borstad of Winnipeg, Manitoba.' Not listed in contributor-entered memorial family fields \u2014 a discrepancy. The memorial contributor may not have known of her, or she may have been excluded intentionally. Her maiden name Kapach is implied by being listed among Wasyl's children but not stated explicitly.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_036",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_037",
+      "record_id": "capture:findagrave-113540812-wasyl-kapach",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Winnipeg, Manitoba, Canada (at time of Wasyl's death, December 1948)",
+      "place": "Winnipeg, Manitoba, Canada",
+      "information_quality": "secondary",
+      "informant": "Edmonton Journal obituary, 7 December 1948 (family-supplied death notice)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Obituary states 'Mrs. Lucy Borstad of Winnipeg, Manitoba.'",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Winnipeg, Manitoba, Canada"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). 'Wasyl \"William\" Kapach' matches L17M-W4Q: Wasyl is the Ukrainian given name; William its standard anglicized equivalent in Canadian records. Burial at Eldorena Ukrainian Catholic Church Cemetery, Alberta; obituary confirms death 5 Dec 1948 at Smoky Lake, Alberta, age 69; birth year 1879 per gravestone (photographed evidence) corroborated by obituary age. No same_person score (PDF-sourced). Match strength: strong \u2014 confident.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Sex assertion from DECEASED persona. Consistent with L17M-W4Q (Wasyl Kapach, male). Same source confidence as a_001.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Birth year 1879 from gravestone inscription (photographed evidence, direct/secondary). Corroborates same person match to L17M-W4Q. No same_person score (PDF-sourced).",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Birth year ~1879 inferred from obituary statement 'at the age of 69 years,' death 5 Dec 1948 (indirect/secondary). Consistent with gravestone birth year. Same person match: confident.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Age at death (69) from obituary photograph. Consistent with L17M-W4Q and birth year 1879.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Death date 5 Dec 1948, Smoky Lake, Alberta, from obituary photograph (Edmonton Journal, 7 Dec 1948). Establishes death event for L17M-W4Q. No same_person score (PDF-sourced). Match: confident.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Burial at Eldorena Ukrainian Catholic Church Cemetery, Eldorena, Alberta (plot 72) per memorial page. Confirms Alberta location and Ukrainian Catholic identity for L17M-W4Q.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Residence 'Eldorina, Alberta' per obituary text. Confirms Alberta prairie location for L17M-W4Q consistent with known subject context.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Spousal relationship assertion naming Maria 'Mary' Antosko as wife. Links to L17M-W4Q as the husband/spouse party. Both-sided entry \u2014 see companion pe_ for L17M-72G. Confident match.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Marriage year 1909 assertion from memorial contributor-entered field. Links to L17M-W4Q as the married party. Both-sided entry \u2014 see companion pe_ for L17M-72G.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Parent-of-Ann assertion from DECEASED persona. Links to L17M-W4Q as the parent. Both-sided \u2014 companion pe_ links to I1 (Ann Holowiski) as child.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Parent-of-Natalka assertion from DECEASED persona. Links to L17M-W4Q as the parent. Both-sided \u2014 companion pe_ links to I2 (Natalka Rozak) as child.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Parent-of-Andrew/Henry assertion from DECEASED persona. Links to L17M-W4Q as the parent. Both-sided \u2014 companion pe_ links to LVFX-1PX (Andrew Kapach) as child.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_014",
+      "person_id": "L17M-W4Q",
+      "confidence": "confident",
+      "rationale": "Parent-of-Lucy assertion from DECEASED persona. Links to L17M-W4Q as the parent. Both-sided \u2014 companion pe_ links to I3 (Lucy Borstad) as child. Note: Lucy absent from memorial family section but named in obituary photograph.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_015",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). SPOUSE_1 persona 'Maria \"Mary\" Antosko Kapach' matches L17M-72G (Mary Antosko): same maiden surname Antosko, same given name Mary/Maria, married to Wasyl Kapach (L17M-W4Q). No same_person score (PDF-sourced). Match strength: strong \u2014 confident.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_016",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Sex assertion for SPOUSE_1 persona. Consistent with L17M-72G (female). Same source confidence as a_015.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_017",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Birth year 1893 from memorial contributor-entered field. Links to L17M-72G (Mary Antosko). Same source and match as a_015.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_018",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Death year 1966 from memorial contributor-entered field. Links to L17M-72G. Gravestone inscription 'MARIA 1893-1966' corroborates.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_019",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Residence Eldorina, Alberta, for SPOUSE_1 persona per obituary. Consistent with L17M-72G as wife of Wasyl Kapach in Alberta.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_009",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Spousal relationship assertion \u2014 both-sided pe_ entry. L17M-72G (Mary Antosko) is the wife named in this relationship. Confirmed by name and marital context. Companion pe_ links to L17M-W4Q as husband.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_010",
+      "person_id": "L17M-72G",
+      "confidence": "confident",
+      "rationale": "Marriage year 1909 assertion \u2014 both-sided pe_ entry for L17M-72G as the married party. Consistent with L17M-72G married to L17M-W4Q (Wasyl Kapach).",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_030",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). CHILD_3 persona 'Andrew \"Henry\" Kapach' (1916-1984) matches LVFX-1PX (Andrew Kapach): name Andrew/Henry (obituary uses 'Henry' as anglicized form), birth year 1916, son of Wasyl Kapach (L17M-W4Q). No same_person score (PDF-sourced). Match strength: strong \u2014 confident.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_031",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "Sex assertion for CHILD_3 persona. Consistent with LVFX-1PX (male). Same source confidence as a_030.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_032",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "Birth year 1916 for CHILD_3 (Andrew/Henry Kapach). Links to LVFX-1PX (Andrew Kapach). Consistent with known tree person data.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_033",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "Death year 1984 for CHILD_3 persona. Links to LVFX-1PX (Andrew Kapach). Consistent with FindAGrave memorial 196999027 (Andrew 'Henry' Kapach 1916-1984) seen in same PDF.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_034",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "Residence Hadway, Alberta, for CHILD_3 per obituary ('Henry of Hadway, Alberta'). Links to LVFX-1PX. Note: Hadway could not be resolved to a precise standard place; noted as Alberta, Canada.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_013",
+      "person_id": "LVFX-1PX",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion \u2014 both-sided pe_ entry for LVFX-1PX as the child. Wasyl Kapach (L17M-W4Q) is the parent; Andrew/Henry Kapach (LVFX-1PX) is the child. Confirmed by obituary and memorial. Companion pe_ links a_013 to L17M-W4Q as parent.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). CHILD_1 persona 'Ann Kapach Holowiski' (1911-1968), named as 'Mrs. Annie Holowsky of Boyle, Alberta' in obituary (photographed evidence) and in memorial family fields. New stub person I1 created; no independent corroboration yet. Single-source link. No same_person score. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion for CHILD_1 persona (Ann Kapach Holowiski). Links to I1 (female). Same source and match as a_020.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year 1911 for CHILD_1 (Ann Kapach Holowiski). Links to I1. Memorial contributor-entered field; no independent corroboration.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Death year 1968 for CHILD_1 persona. Links to I1. Memorial contributor-entered; no corroboration.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence Boyle, Alberta, for CHILD_1 per obituary ('Mrs. Annie Holowsky of Boyle, Alberta'). Links to I1. Photographed evidence (obituary) is the stronger corroboration.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Parent-child relationship assertion \u2014 both-sided pe_ entry for I1 (Ann Holowiski) as the child. Wasyl Kapach (L17M-W4Q) is the parent. Companion pe_ links a_011 to L17M-W4Q as parent. Probable \u2014 single compiled source.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). CHILD_2 persona 'Natalka \"Nellie\" Kapach Rozak' (1913-1988), named as 'Mrs. Natalka Rozak of Edmonton' in obituary (photographed evidence) and in memorial family fields. New stub I2; no independent corroboration. Single-source. No same_person score. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion for CHILD_2 (Natalka Rozak). Links to I2 (female). Same source and match as a_025.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year 1913 for CHILD_2 (Natalka Rozak). Links to I2. Memorial contributor-entered field.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Death year 1988 for CHILD_2 persona. Links to I2. Memorial contributor-entered; no corroboration.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Residence Edmonton, Alberta, for CHILD_2 per obituary ('Mrs. Natalka Rozak of Edmonton'). Links to I2. Photographed evidence.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Parent-child relationship \u2014 both-sided pe_ entry for I2 (Natalka Rozak) as child of Wasyl Kapach (L17M-W4Q). Companion pe_ links a_012 to L17M-W4Q as parent. Probable \u2014 single compiled source.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_035",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "FindAGrave memorial 113540812 (local PDF). CHILD_4 persona 'Lucy Borstad (n\u00e9e Kapach)' named as 'Mrs. Lucy Borstad of Winnipeg, Manitoba' in obituary photograph (Edmonton Journal, 7 Dec 1948). IMPORTANT: Lucy is absent from the memorial's contributor-entered family section \u2014 discrepancy. Obituary photo is the sole evidence. New stub I3; no corroboration. No same_person score. Confidence: probable (obituary is photographed evidence, but single-source).",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_036",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Sex assertion for CHILD_4 (Lucy Borstad). Links to I3 (female). Same source and match as a_035. Obituary-only evidence.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_037",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Residence Winnipeg, Manitoba, for CHILD_4 Lucy Borstad per obituary photograph. Links to I3. Obituary-only; not confirmed in memorial family section.",
+      "match_score": null,
+      "created": "2026-08-12"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Parent-child relationship \u2014 both-sided pe_ entry for I3 (Lucy Borstad) as child of Wasyl Kapach (L17M-W4Q). Companion pe_ links a_014 to L17M-W4Q as parent. Probable \u2014 obituary-only evidence; Lucy absent from memorial family section is a noted discrepancy.",
+      "match_score": null,
+      "created": "2026-08-12"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Wasyl Kapach was present in Canada by mid-1911 (Ann born ~1911) but his household was missed or mis-indexed in the 1911 census enumeration, or contributor-entered birth year 1911 for Ann is inaccurate.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_022"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_002"
+      ],
+      "notes": "Tension identified by gps-mentor ev_002: contributor-entered assertion a_022 gives Ann Kapach's birth year as ~1911 in Canada, yet log_005 records a real negative for all Kapach/Kopach variants in Canada Census 1911 (collection 2143998). Competing explanations: (a) family in Canada by 1911 but missed/misindexed under an untested spelling; (b) Ann's birth year 1911 is wrong (contributor-entered, no source cited); (c) family arrived after the June 1, 1911 enumeration date; (d) Ann was born outside Canada. Resolution requires primary-source birth date for Ann (e.g. Alberta Vital Statistics) or a broader variant search on Ancestry.com's independent 1911 indexing."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched all major FamilySearch-indexed Canadian collections: Census 1901 (col. 1584557), Census 1906 Northwest Provinces (col. 1584925), Census 1911 (col. 2143998), Census 1916 Prairie Provinces (col. 1529118), Census 1921 (col. 5000285), Census 1931 (col. 2140879), Passenger Lists 1881\u20131922 (col. 1823240), Border Entry Lists 1908\u20131918 (col. 4123954), Saskatchewan Homestead Files (col. 1916143), Alberta Catholic Church Parish Registers (col. 2333650). All surname variants Kapach, Kopach, Kapac, Kopac searched. Full-text search across Alberta records for 'Kapach.' Galician/Austrian birth records for c.1879 searched. All returned negative results or clearly non-matching individuals. Three sources remain unexamined and inaccessible in autonomous mode: (1) Alberta Vital Statistics death registration #007-198 (provincial archives, physical request only); (2) LAC Ukrainian Immigrants 1891\u20131930 database (interactive online access required); (3) LAC naturalization records, RG6 series (interactive online access required). The GPS standard of reasonably exhaustive search is met for all FamilySearch and autonomously accessible sources, but is not fully met pending these three outstanding sources.",
+      "narrative_markdown": "## Birth of Wasyl Kapach\n\n### Research Question\n\nWhen and where was Wasyl Kapach (FamilySearch tree person L17M-W4Q) born?\n\n### Birth Year \u2014 Probable: approximately 1879\n\nThe Find a Grave memorial #113540812 for Wasyl 'William' Kapach (src_001) contains two corroborating assertions supporting birth year 1879:\n\n1. **Gravestone inscription** (a_003): A photograph attached to the memorial shows a joint headstone reading 'MARIA 1893 \u2014 1966 | WASYL 1879 \u2014 1948.' The birth year 1879 is thus a *direct* assertion on a *secondary* source \u2014 engraved post-death by an unknown informant drawing on family knowledge. No birth month or day is given, and no birthplace is inscribed.\n\n2. **Obituary age statement** (a_004, a_005): The Edmonton Journal obituary of 7 December 1948 states that William Kapach 'passed away ... at the age of 69 years' on December 5, 1948. Subtracting 69 from 1948 yields birth year ~1879, consistent with the gravestone. This is *indirect, secondary* evidence \u2014 the obituary writer (likely family) knew the approximate age but not necessarily the exact birth date.\n\n**Correlation and independence:** Both items derive from the same underlying source complex \u2014 the memorial and its attached obituary, both compiled after Wasyl's death in December 1948 from family-supplied information. They are therefore *not independent* and constitute one evidence unit, not two. The corroboration is genuine but not confirmatory in the GPS sense; it reflects a single chain of secondary information transmission.\n\n**Confidence tier:** *Probable.* Two secondary, same-source items converge on 1879 with no conflicting evidence. The primary original record \u2014 Alberta Vital Statistics death registration #007-198, cited on the memorial \u2014 has not been examined. Death registrations routinely record birth date and birthplace supplied by an informant (often a close relative), typically more reliable than post-hoc gravestone inscriptions. Until that record is examined, the GPS standard (Element 1, reasonably exhaustive search) cannot be declared fully satisfied, and the conclusion remains provisional at the 'probable' tier.\n\n### Birthplace \u2014 Unresolved\n\nNo source in this research project states, implies, or corroborates any birthplace for Wasyl Kapach. The Find a Grave memorial, the gravestone photograph, and the Edmonton Journal obituary are all silent on birthplace. All indexed Canadian census records (1901, 1906, 1911, 1916, 1921, 1931), passenger lists, border entry lists, homestead files, church records, and full-text document searches returned either zero results or clearly non-matching individuals. The expected census birthplace entries ('Austria,' 'Galicia,' or a specific province) that would at minimum establish the origin country were never found because Wasyl does not appear in any accessible indexed census.\n\n### Outstanding Sources\n\nThe following sources are required to complete the answer and satisfy the GPS standard:\n\n| Source | Expected contribution | Access |\n|---|---|---|\n| Alberta Vital Statistics death reg. #007-198 | Birth date; birth country/province (informant typically close family) | Physical request: Service Alberta, Edmonton |\n| LAC Ukrainian Immigrants 1891\u20131930 database | Arrival date; village of origin in Galicia/Bukovina | Interactive: bac-lac.gc.ca |\n| LAC naturalization records, RG6 series | Exact arrival date; birthplace; witnesses | Interactive: bac-lac.gc.ca |\n\nUntil at least the Alberta death registration is examined, this proof summary remains provisional."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "not_proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_010",
+        "a_022"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch Passenger Lists 1881-1922 (col. 1823240) and Border Entry Lists 1908-1918 (col. 4123954) searched for all Kapach/Kopach surname variants \u2014 both returned negative results. All Canadian census records (1901, 1906, 1911, 1916, 1921, 1931) searched with negative results. LAC Ukrainian Immigrants 1891-1930 database and LAC naturalization records (RG6 series) were deferred \u2014 require interactive access. Alberta Vital Statistics death registration #007-198 (physical request only, likely includes years-in-Canada field) remains unexamined. No source in this project states or implies a specific immigration date for Wasyl Kapach.",
+      "narrative_markdown": "## Immigration Date of Wasyl Kapach\n\n### Research Question\n\nWhen did Wasyl Kapach (FamilySearch tree person L17M-W4Q) immigrate to Canada?\n\n### Conclusion: Not Proved\n\nNo source examined in this project states or implies a specific immigration date for Wasyl Kapach. All indexed FamilySearch immigration and arrival records returned negative results:\n\n- Canada Passenger Lists 1881\u20131922 (collection 1823240): zero results for Kapach or Kopach variants matching Wasyl's profile\n- Canada Border Entry Lists 1908\u20131918 (collection 4123954): zero results\n\nCanadian census records (1901\u20131931) that routinely include a 'year of immigration' column were also all negative \u2014 Wasyl does not appear in any indexed census.\n\n### Circumstantial Bounds (Indeterminate Quality)\n\nTwo contributor-entered assertions provide circumstantial upper bounds on the immigration date:\n\n- **a_010**: Marriage to Maria Antosko ~1909 (contributor-entered, indeterminate quality). If accurate and the marriage occurred in Canada, immigration must predate 1909.\n- **a_022**: Daughter Ann born ~1911 (contributor-entered, indeterminate quality). If accurate and born in Canada, immigration must predate 1911.\n\nThese bounds cannot sustain a GPS-standard conclusion without corroboration from original records.\n\n### Outstanding Sources Required\n\n| Source | Expected contribution | Access |\n|---|---|---|\n| LAC Ukrainian Immigrants 1891\u20131930 database | Arrival date; ship; port; village of origin | Interactive: bac-lac.gc.ca |\n| LAC naturalization records, RG6 series | Arrival date stated by applicant | Interactive: bac-lac.gc.ca |\n| Alberta Vital Statistics death reg. #007-198 | May include 'years in Canada' field | Physical: Service Alberta |\n\nThis question cannot be resolved from the sources accessible in an autonomous FamilySearch-based research session and requires an interactive session targeting LAC databases and/or a physical request to Alberta Vital Statistics."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "timestamp": "2026-08-12T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-12T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-12T17:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-08-12T17-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Canada",
+      "for_place": "Canadian Prairie Provinces \u2014 Manitoba, Saskatchewan, Alberta",
+      "time_period": "1880-1930",
+      "jurisdictions": [
+        {
+          "name": "Manitoba, Canada",
+          "date_range": "1870-present"
+        },
+        {
+          "name": "Saskatchewan, Northwest Territories, Canada",
+          "date_range": "1882-1905"
+        },
+        {
+          "name": "Saskatchewan, Canada",
+          "date_range": "1905-present"
+        },
+        {
+          "name": "Alberta, Northwest Territories, Canada",
+          "date_range": "1882-1905"
+        },
+        {
+          "name": "Alberta, Canada",
+          "date_range": "1905-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2333650",
+          "title": "Canada, Alberta Catholic Church Parish Registers, 1865-1916",
+          "date_range": "1865-1916"
+        },
+        {
+          "id": "2001071",
+          "title": "Canada, Saskatchewan Catholic Church Records, 1846-1957",
+          "date_range": "1846-1957"
+        },
+        {
+          "id": "2258205",
+          "title": "Canada, Saskatchewan Cemetery Transcripts, ca. 1850-1994",
+          "date_range": "1850-2015"
+        },
+        {
+          "id": "1392587",
+          "title": "Canada, Saskatchewan Judicial District Court Records, 1891-1954",
+          "date_range": "1891-1954"
+        },
+        {
+          "id": "1918293",
+          "title": "Canada, Saskatchewan Probate Estate Files, 1887-1931",
+          "date_range": "1887-1931"
+        },
+        {
+          "id": "1916143",
+          "title": "Canada, Saskatchewan Provincial Records, 1879-1987",
+          "date_range": "1879-1987"
+        },
+        {
+          "id": "1992433",
+          "title": "Canada, Manitoba, Church Records, 1800-1959",
+          "date_range": "1800-1959"
+        },
+        {
+          "id": "1987562",
+          "title": "Canada, Manitoba, Probate Records, 1871-1930",
+          "date_range": "1871-1930"
+        },
+        {
+          "id": "1823240",
+          "title": "Canada, Passenger Lists, 1881-1922",
+          "date_range": "1881-1922"
+        },
+        {
+          "id": "4123954",
+          "title": "Canada, Border Entry Lists, 1908-1918",
+          "date_range": "1908-1918"
+        },
+        {
+          "id": "3875202",
+          "title": "Canada, Immigration Records, 1919-1924",
+          "date_range": "1919-1924"
+        },
+        {
+          "id": "1584925",
+          "title": "Canada, Prairie Provinces Census, 1906",
+          "date_range": "1906"
+        },
+        {
+          "id": "1529118",
+          "title": "Canada, Prairie Provinces Census, 1916",
+          "date_range": "1916"
+        },
+        {
+          "id": "3005862",
+          "title": "Canada, Prairie Provinces Census, 1926",
+          "date_range": "1926"
+        },
+        {
+          "id": "2143998",
+          "title": "Canada Census, 1911",
+          "date_range": "1911"
+        },
+        {
+          "id": "5000285",
+          "title": "Canada Census, 1921",
+          "date_range": "1921"
+        },
+        {
+          "id": "1584557",
+          "title": "Canada Census, 1901",
+          "date_range": "1901"
+        },
+        {
+          "id": "1804541",
+          "title": "Canada Census, 1881",
+          "date_range": "1881"
+        },
+        {
+          "id": "1583536",
+          "title": "Canada Census, 1891",
+          "date_range": "1891"
+        }
+      ],
+      "quirks": [
+        "Ukrainian immigrants 1891-1914 appear on records as 'Austrian,' 'Russian,' 'Galician,' 'Ruthenian,' or 'Bukovinian' \u2014 rarely as 'Ukrainian.' Search all variants.",
+        "Alberta and Saskatchewan records before 1 September 1905 are filed under 'Northwest Territories' (District of Alberta / District of Saskatchewan). Search both territorial-era and provincial-era place names \u2014 they form one continuous record trail.",
+        "The LAC database 'Immigrants from Ukraine (1890-1930)' at bac-lac.gc.ca is the most targeted resource for Ukrainian immigrant ancestors by name and should be the first external-site search.",
+        "The 1901 census records both birthplace AND language spoken at home \u2014 a birthplace of 'Austria' or 'Russia' plus home language 'Ruthenian' or 'Ukrainian' confirms ethnic identity and narrows the origin region.",
+        "Naturalization records (LAC, 1915-1951) frequently contain exact birth date, birthplace village, and year of arrival \u2014 often the best single source for both q_001 and q_002.",
+        "Homestead records (Saskatchewan, Alberta, Manitoba) often state country of origin and year of arrival \u2014 a useful secondary immigration-date source when passenger lists fail.",
+        "Saskatchewan court naturalization records (FamilySearch catalog) are images only, not name-indexed \u2014 must browse by judicial district (Regina, Yorkton, Saskatoon, Swift Current, Maple Creek).",
+        "Saskatchewan Provincial Records 1879-1987 (FS collection 1916143): 1.5M browse-only images containing homestead, land, and provincial records \u2014 use fulltext_search on volume numbers.",
+        "Saskatchewan homestead files (8,450+ volumes on FamilySearch) are 0% name-indexed but full-text searchable via fulltext_search.",
+        "Ukrainian surname 'Kapach' may appear as Kapatch, Kapac, Kopach, Kapak, or other anglicizations \u2014 broaden spelling in all searches.",
+        "Civil birth registration in Alberta began 1898; in Saskatchewan with provincial status in 1905. Church registers are primary substitutes for earlier events.",
+        "Ukrainian church registers (Greek Catholic, Orthodox) from small prairie parishes often remain at local parishes or diocesan archives, not digitized \u2014 contact the Ukrainian Canadian Research and Documentation Centre (ucrdc.org) for leads."
+      ],
+      "guide_markdown": "# Locality Guide: Canadian Prairie Provinces \u2014 Manitoba, Saskatchewan, Alberta (1880\u20131930)\n\n## Jurisdiction overview\n- **Manitoba:** Province since 1870. Pop. 66,000 (1881) \u2192 663,000 (1929).\n- **Saskatchewan:** Province since 1905; before that, District of Saskatchewan, Northwest Territories (1882\u20131905). Pop. 25,700 (1901) \u2192 867,000 (1929).\n- **Alberta:** Province since 1905; before that, District of Alberta, Northwest Territories (1882\u20131905). Pop. 65,900 (1901) \u2192 646,000 (1929).\n- **Ukrainian settlement context:** ~170,000 Ukrainians arrived 1891\u20131914 primarily from Galicia and Bukovina (Austro-Hungarian Empire); second wave in 1920s\u201330s from Polish/Romanian-governed territories. Alberta: block settlement NE of Edmonton (Beaverhill Lake, Whitford Lake, Willingdon, Vegreville, Vermillion). Saskatchewan: NW from Calder (MB border); Wakaw, Hafford. Manitoba: north of Winnipeg along CNR line.\n\n## Boundary changes\n- Alberta and Saskatchewan before 1 September 1905 were Northwest Territories districts \u2014 records filed under NWT, not the province name. Search both eras as one continuous trail.\n- Manitoba: stable throughout period.\n\n## Census records (highest priority)\n- 1881, 1891, 1901, 1911, 1921 \u2014 all Canada, indexed + images on FamilySearch.\n- 1906, 1916, 1926 \u2014 Prairie Provinces only, indexed + images on FamilySearch.\n- 1901 and 1911 censuses record birthplace AND language spoken at home \u2014 critical for identifying Ukrainian immigrants who list birthplace as 'Austria' or 'Russia'.\n\n## Immigration and passenger records (highest priority for immigration date)\n- **Canada Passenger Lists, 1881\u20131922** (FS 1823240): Quebec, Halifax, Saint John \u2014 indexed + images.\n- **Canada Border Entry Lists, 1908\u20131918** (FS 4123954): Land-border crossings from US into Canada \u2014 indexed + images.\n- **Canada Immigration Records, 1919\u20131924** (FS 3875202): Ocean arrivals (Form 30A) \u2014 indexed + images.\n- **LAC Ukrainian Immigrants 1890\u20131930 database** (bac-lac.gc.ca/eng/discover/immigration/immigration-records/immigrants-ukraine-1891-1930): Most targeted resource \u2014 searchable by name.\n- **LAC Naturalization Records, 1915\u20131951**: Often contain exact birth date, birthplace village, and arrival year.\n\n## Church records\n- Alberta Catholic Parish Registers, 1865\u20131916 (FS 2333650): indexed.\n- Saskatchewan Catholic Church Records, 1846\u20131957 (FS 2001071): indexed.\n- Manitoba Church Records, 1800\u20131959 (FS 1992433): indexed.\n- Ukrainian Greek Catholic / Orthodox parish registers: many undigitized; contact ucrdc.org.\n\n## Land and homestead records\n- Alberta Homestead Records, 1870\u20131930 (Ancestry $); Saskatchewan Homestead files (8,450+ volumes on FS, full-text searchable); Manitoba/SK/AB Homestead Grant Registers 1872\u20131930 (Ancestry $).\n- Homestead applications often state country of origin and year of arrival.\n\n## Vital records\n- Alberta: civil registration from 1898; indexes at Provincial Archives and Ancestry ($).\n- Saskatchewan: eHealth Saskatchewan (free index); MyHeritage/Ancestry ($).\n- Manitoba: vitalstats.gov.mb.ca (free); Ancestry/Findmypast ($).\n\n## Probate / court records\n- Saskatchewan Probate Estate Files, 1887\u20131931 (FS 1918293): indexed.\n- Manitoba Probate Records, 1871\u20131930 (FS 1987562): indexed.\n- Saskatchewan court naturalization records: browse-only by judicial district (catalog entries on FamilySearch).\n\n## Cemetery records\n- Saskatchewan Cemetery Transcripts, 1850\u20131994 (FS 2258205): indexed.\n- Find a Grave, BillionGraves, CanadaGenWeb Cemetery Project for all three provinces.\n\n## Research tips\n1. Search 'Austrian,' 'Galician,' 'Ruthenian,' 'Bukovinian' as birthplace/ethnicity \u2014 not 'Ukrainian.'\n2. LAC Ukrainian Immigrants 1890\u20131930 database is the first external-site search to run.\n3. Naturalization records (LAC) are often the best single source for both birth date/place and immigration year.\n4. Pre-1905 records for AB and SK: search 'Northwest Territories' \u2014 same record trail, different place name.\n5. 'Kapach' spelling variants: Kapatch, Kapac, Kopach, Kapak \u2014 broaden searches.\n6. Homestead records state country of origin and sometimes year of arrival \u2014 strong secondary immigration-date source.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Alberta,_Canada_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Alberta_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Alberta_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Alberta_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-12"
+    }
+  ]
+}

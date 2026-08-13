@@ -181,6 +181,27 @@
   gap: var(--spacing-xs);
 }
 
+.radioGroup {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.radioLabel input[type='radio'] {
+  accent-color: var(--accent-gold);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
 .fieldLabel {
   font-size: 0.85rem;
   font-weight: 500;
