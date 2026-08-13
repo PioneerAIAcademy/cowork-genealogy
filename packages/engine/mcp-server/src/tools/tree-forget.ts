@@ -37,6 +37,8 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-io.js";
 import { formatIssues } from "./merge-shared.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { getStandardDate } from "../utils/fact-helpers.js";
+import { earliestYear, latestYear } from "../utils/date-helpers.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -50,6 +52,9 @@ export type ForgetSelectorKind =
   | "birth-of"
   | "death-of"
   | "facts-of"
+  | "facts-before"
+  | "facts-after"
+  | "facts-between"
   | "person"
   | "fact"
   | "relationship";
@@ -61,6 +66,9 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "birth-of",
   "death-of",
   "facts-of",
+  "facts-before",
+  "facts-after",
+  "facts-between",
   "person",
   "fact",
   "relationship",
@@ -72,6 +80,11 @@ export interface ForgetSelector {
   factType?: string;
   factId?: string;
   relationshipId?: string;
+  /** facts-before/facts-after: the year threshold. */
+  year?: number;
+  /** facts-between: the inclusive range bounds. */
+  fromYear?: number;
+  toYear?: number;
 }
 
 export interface TreeForgetInput {
@@ -224,11 +237,28 @@ function findFactOwners(tree: SimplifiedGedcomX, factId: string): FactOwner[] {
 }
 
 /**
- * For a person's own resolved fact ids: which of them ALSO exist on some
- * OTHER owner not being touched by this call. `birth-of`/`death-of`/
- * `facts-of` already remove correctly scoped to `pid` regardless — this is a
- * heads-up that the id is not unique, not a sign anything is wrong (#1574).
+ * Whether a resolved fact's id ALSO exists on some OTHER owner not being
+ * touched by this call — a heads-up that the id is not unique, not a sign
+ * anything is wrong; removal is already correctly scoped to (ownerKind,
+ * ownerId) regardless (#1574). Null when the id is unique to this owner.
  */
+function noteIfFactShared(
+  tree: SimplifiedGedcomX,
+  ownerKind: OwnerKind,
+  ownerId: string,
+  factId: string,
+  label: string,
+): string | null {
+  const others = findFactOwners(tree, factId).filter(
+    (o) => !(o.kind === ownerKind && o.id === ownerId),
+  );
+  if (others.length === 0) return null;
+  const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
+  return `${label} fact '${factId}' also exists on: ${named}`;
+}
+
+/** noteIfFactShared over a batch of ids resolved for one person — the
+ *  `birth-of`/`death-of`/`facts-of` shape, where every id shares one owner. */
 function notesSharedFactIds(
   tree: SimplifiedGedcomX,
   pid: string,
@@ -237,11 +267,8 @@ function notesSharedFactIds(
 ): string[] {
   const notices: string[] = [];
   for (const f of ids) {
-    const others = findFactOwners(tree, f).filter((o) => !(o.kind === "person" && o.id === pid));
-    if (others.length > 0) {
-      const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
-      notices.push(`${label} fact '${f}' also exists on: ${named}`);
-    }
+    const notice = noteIfFactShared(tree, "person", pid, f, label);
+    if (notice) notices.push(notice);
   }
   return notices;
 }
@@ -257,6 +284,67 @@ function notesSharedFactIds(
  */
 function factKey(ownerKind: OwnerKind, ownerId: string, factId: string): string {
   return JSON.stringify([ownerKind, ownerId, factId]);
+}
+
+// ─── date-range selectors (#1574) ───────────────────────────────────────────
+//
+// `forget-and-rederive/SKILL.md` tells the agent NOT to read tree.gedcomx.json
+// — the file holds the very answer it is about to go looking for. A date
+// cutoff like "before 1850" therefore has to resolve to fact ids INSIDE the
+// tool, never by the agent reading dates itself. These three selectors are
+// that resolution: the year the caller passes is their own input, not tree
+// data, so echoing it back in an error is not a redaction violation; a fact's
+// OWN date value is never read into anything the caller receives.
+
+interface DatedFact {
+  ownerKind: OwnerKind;
+  ownerId: string;
+  fact: SimplifiedFact;
+  earliest: number;
+  latest: number;
+}
+
+/**
+ * Every fact in scope that has a parseable date, with its earliest/latest
+ * possible year. Scoped to one person's own facts when personId is given,
+ * or every person AND relationship in the tree otherwise (the "tree-wide
+ * variant" #1574 asks for). `skipped` counts facts in scope whose date
+ * could not be parsed at all — they never match any date predicate, and the
+ * caller is told the count (not which facts) so a dry run's silence about
+ * them is never mistaken for "there were none."
+ */
+function datedFacts(
+  tree: SimplifiedGedcomX,
+  personId: string | undefined,
+): { entries: DatedFact[]; skipped: number } {
+  const entries: DatedFact[] = [];
+  let skipped = 0;
+  const consider = (ownerKind: OwnerKind, ownerId: string, facts: SimplifiedFact[] | undefined) => {
+    for (const fact of facts ?? []) {
+      const std = getStandardDate(fact);
+      const earliest = std === null ? null : earliestYear(std);
+      const latest = std === null ? null : latestYear(std);
+      if (earliest === null || latest === null) {
+        skipped += 1;
+        continue;
+      }
+      entries.push({ ownerKind, ownerId, fact, earliest, latest });
+    }
+  };
+  if (personId !== undefined) {
+    consider("person", personId, persons(tree).find((p) => p.id === personId)?.facts);
+  } else {
+    for (const p of persons(tree)) consider("person", p.id ?? "", p.facts);
+    for (const r of relationships(tree)) consider("relationship", r.id ?? "", r.facts);
+  }
+  return { entries, skipped };
+}
+
+function requireYear(value: unknown, sel: string, field: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new TreeForgetError(`'${sel}' requires a numeric ${field}`);
+  }
+  return value;
 }
 
 // ─── selector resolution ─────────────────────────────────────────────────────
@@ -343,6 +431,72 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
         t.factSharingNotices.push(...notesSharedFactIds(tree, pid, ids, factType));
+        break;
+      }
+      case "facts-before":
+      case "facts-after":
+      case "facts-between": {
+        // personId is OPTIONAL here — omitted means tree-wide, the variant
+        // #1574 asks for alongside the person-scoped form.
+        const pid = entry.personId ? requirePerson(tree, entry.personId, kind) : undefined;
+
+        let matches: (earliest: number, latest: number) => boolean;
+        let label: string;
+        if (kind === "facts-before") {
+          const year = requireYear(entry.year, kind, "year");
+          // Confident match only: the fact's LATEST possible year must be
+          // before the threshold, or a date that might actually be at/after
+          // it would be swept by a selector named "before" — the same
+          // over-broad-removal shape #1574 exists to eliminate, just moved
+          // from id-collision onto date uncertainty.
+          matches = (_earliest, latest) => latest < year;
+          label = `before ${year}`;
+        } else if (kind === "facts-after") {
+          const year = requireYear(entry.year, kind, "year");
+          matches = (earliest, _latest) => earliest > year;
+          label = `after ${year}`;
+        } else {
+          const fromYear = requireYear(entry.fromYear, kind, "fromYear");
+          const toYear = requireYear(entry.toYear, kind, "toYear");
+          if (fromYear > toYear) {
+            throw new TreeForgetError(`'facts-between' requires fromYear <= toYear`);
+          }
+          // Confident match: the fact's entire possible range must fit
+          // inside [fromYear, toYear], not merely overlap it.
+          matches = (earliest, latest) => earliest >= fromYear && latest <= toYear;
+          label = `between ${fromYear} and ${toYear}`;
+        }
+
+        const { entries, skipped } = datedFacts(tree, pid);
+        const matched = entries.filter((e) => matches(e.earliest, e.latest));
+        if (matched.length === 0) {
+          throw new TreeForgetError(
+            `'${kind}' matched nothing${pid ? ` for ${pid}` : ""} — no fact's date is ` +
+              `confidently ${label}.`,
+          );
+        }
+        for (const m of matched) {
+          const factId = m.fact.id ?? "";
+          t.facts.add(factKey(m.ownerKind, m.ownerId, factId));
+          // The fact's own type here, not the predicate label — consistent
+          // with birth-of/facts-of's notices, and reads naturally ("Residence
+          // fact ... also exists on"), whereas the predicate belongs in the
+          // "matched nothing" error above, where restating it explains why.
+          const notice = noteIfFactShared(
+            tree,
+            m.ownerKind,
+            m.ownerId,
+            factId,
+            m.fact.type ?? "Unknown",
+          );
+          if (notice) t.factSharingNotices.push(notice);
+        }
+        if (skipped > 0) {
+          t.factSharingNotices.push(
+            `${skipped} fact(s) in scope had no parseable date and were not ` +
+              `considered for '${kind}'.`,
+          );
+        }
         break;
       }
       case "person": {
@@ -578,13 +732,24 @@ export const treeForgetSchema = {
     "removing a person also removes every relationship touching them, so " +
     "forgetting a father can cut siblings, his own parents, and his marriage " +
     "(reported as `relationshipsCascaded`). Fact-level selectors (birth-of, " +
-    "death-of, facts-of, fact) never cascade.\n" +
+    "death-of, facts-of, facts-before, facts-after, facts-between, fact) " +
+    "never cascade.\n" +
     "\n" +
     "FamilySearch does not guarantee a fact id is unique across owners. " +
     "Removal is always scoped correctly to the owner a selector resolved — " +
-    "but if a birth-of/death-of/facts-of/fact selector's id ALSO exists on a " +
-    "different owner not being touched, `validation.warnings` says so (ids " +
-    "only, never a value). Not an error; just tell the researcher.\n" +
+    "but if a resolved fact's id ALSO exists on a different owner not being " +
+    "touched, `validation.warnings` says so (ids only, never a value). Not " +
+    "an error; just tell the researcher.\n" +
+    "\n" +
+    "For a date-bounded request ('forget everything before 1850'), use " +
+    "facts-before/facts-after/facts-between with a year, NOT your own reading " +
+    "of tree.gedcomx.json's dates — the whole point of these selectors is " +
+    "that the year threshold is your own input, never a value read off the " +
+    "tree. Only a fact whose date is CONFIDENTLY inside the requested range " +
+    "is removed; an uncertain or ranged date that only partly overlaps the " +
+    "boundary is left alone rather than guessed. A fact with no parseable " +
+    "date is never matched either; validation.warnings reports how many " +
+    "were skipped this way (a count, not which ones).\n" +
     "\n" +
     "Validates the whole project before writing; on failure nothing is written " +
     "and `{ok: false, errors}` comes back — most often because research.json " +
@@ -617,6 +782,9 @@ export const treeForgetSchema = {
                 "birth-of",
                 "death-of",
                 "facts-of",
+                "facts-before",
+                "facts-after",
+                "facts-between",
                 "person",
                 "fact",
                 "relationship",
@@ -624,7 +792,11 @@ export const treeForgetSchema = {
               description:
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
                 "them (cascades). birth-of/death-of: that person's Birth/Death facts. " +
-                "facts-of: that person's facts of one type (needs factType). person: one " +
+                "facts-of: that person's facts of one type (needs factType). " +
+                "facts-before/facts-after: that person's facts confidently before/after a " +
+                "year (needs year). facts-between: that person's facts confidently within " +
+                "an inclusive year range (needs fromYear, toYear). All three date selectors " +
+                "omit personId to apply tree-wide instead of to one person. person: one " +
                 "person, cascading every relationship touching them. fact: one fact by id " +
                 "(add personId if that id exists on more than one person). relationship: " +
                 "one relationship by id.",
@@ -636,7 +808,8 @@ export const treeForgetSchema = {
                 "parents-of, children-of, spouses-of, birth-of, death-of, facts-of, person. " +
                 "Optional for fact: FamilySearch does not guarantee a fact id is unique " +
                 "across persons, so pass this to say which person's copy to remove when " +
-                "the tool reports the id exists on more than one.",
+                "the tool reports the id exists on more than one. Optional for " +
+                "facts-before/facts-after/facts-between: omit to apply tree-wide.",
             },
             factType: {
               type: "string",
@@ -647,6 +820,20 @@ export const treeForgetSchema = {
             relationshipId: {
               type: "string",
               description: "Relationship id — required for the `relationship` selector.",
+            },
+            year: {
+              type: "number",
+              description:
+                "Year threshold for facts-before (strictly before) or facts-after (strictly " +
+                "after). Your own input, not a value read from the tree.",
+            },
+            fromYear: {
+              type: "number",
+              description: "facts-between: inclusive start year of the range.",
+            },
+            toYear: {
+              type: "number",
+              description: "facts-between: inclusive end year of the range. Must be >= fromYear.",
             },
           },
           required: ["selector"],

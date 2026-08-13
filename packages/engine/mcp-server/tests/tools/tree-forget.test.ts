@@ -718,4 +718,187 @@ describe("tree_forget", () => {
     expect(await readTree()).toEqual(before);
     expect(await exists(RESTORE_FILE)).toBe(false);
   });
+
+  // ─── date-range selectors: facts-before / facts-after / facts-between ─────
+  // (#1574's date-range half.) `standard_date` is set directly in these
+  // fixtures rather than relying on the free-text `date` parser — these
+  // tests are about tree-forget's own before/after/between logic, not about
+  // stdDate()'s text parsing, which is already covered elsewhere.
+
+  const datedFixture = () => ({
+    persons: [
+      {
+        id: "D1",
+        gender: "Male",
+        names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+        facts: [
+          { id: "DF1", type: "Residence", standard_date: "1840" },
+          { id: "DF2", type: "Residence", standard_date: "1860" },
+          { id: "DF3", type: "Residence" }, // no date field at all: unparseable
+          { id: "DF4", type: "Residence", standard_date: "Bet 1845 and 1855" },
+        ],
+      },
+      {
+        id: "D2",
+        gender: "Female",
+        names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+        facts: [{ id: "DF5", type: "Residence", standard_date: "1830" }],
+      },
+    ],
+    relationships: [],
+    sources: [],
+  });
+
+  it("facts-before removes only facts confidently before the year, skips unparseable and straddling ones", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "D1", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // DF1 (1840) is confidently before 1850. DF2 (1860) is not. DF4
+    // ("Bet 1845 and 1855") straddles 1850 — its latest possible year, 1855,
+    // is not before 1850, so it must NOT be swept.
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    const tree = await readTree();
+    const d1 = tree.persons.find((p: any) => p.id === "D1");
+    expect(d1.facts.map((f: any) => f.id)).toEqual(["DF2", "DF3", "DF4"]);
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/1 fact\(s\).*no parseable date.*facts-before/),
+    ]);
+  });
+
+  it("facts-after removes only facts confidently after the year", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-after", personId: "D1", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    const tree = await readTree();
+    expect(
+      tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
+    ).toEqual(["DF1", "DF3", "DF4"]);
+  });
+
+  it("facts-between removes only facts fully contained in the range, not merely overlapping it", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-between", personId: "D1", fromYear: 1830, toYear: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // DF1 (1840) is fully inside [1830, 1850]. DF4 ("Bet 1845 and 1855")
+    // overlaps but is not fully contained (1855 > 1850), so it survives.
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    const tree = await readTree();
+    expect(
+      tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
+    ).toEqual(["DF2", "DF3", "DF4"]);
+  });
+
+  it("facts-between removes a straddling fact once the range is wide enough to fully contain it", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-between", personId: "D1", fromYear: 1840, toYear: 1860 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Now [1840, 1860] fully contains DF1 (1840), DF2 (1860), and DF4
+    // (1845..1855). Only DF3 (unparseable) survives.
+    expect(r.removed.factsByType).toEqual({ Residence: 3 });
+    const tree = await readTree();
+    expect(
+      tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
+    ).toEqual(["DF3"]);
+  });
+
+  it("facts-between rejects fromYear > toYear", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-between", personId: "D1", fromYear: 1860, toYear: 1840 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/fromYear <= toYear/);
+  });
+
+  it("facts-before requires a numeric year", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "D1", year: "1850" as any }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/requires a numeric year/);
+  });
+
+  it("facts-before with no personId matches tree-wide, across more than one person", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // D1's DF1 (1840) and D2's DF5 (1830) are both confidently before 1850.
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "D2").facts).toEqual([]);
+  });
+
+  it("a date-range selector is an error, not a no-op, when nothing qualifies", async () => {
+    await writeProject(datedFixture());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "D2", year: 1800 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
+  });
+
+  it("a tree-wide date-range selector still scopes removal to the correct owner when a fact id collides", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1840" }],
+        },
+        {
+          id: "E2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1841" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "E1", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "E1").facts).toEqual([]);
+    // E2's same-id, also-qualifying fact must survive — this selector only
+    // resolved E1 in scope (personId was given), so E2 was never a target.
+    expect(
+      tree.persons.find((p: any) => p.id === "E2").facts.map((f: any) => f.id),
+    ).toEqual(["SHARED"]);
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Residence fact 'SHARED' also exists on: E2/),
+    ]);
+  });
 });

@@ -68,6 +68,9 @@ Each entry in `forget` is `{ selector, … }`:
 | `birth-of` | `personId` | that person's birth facts |
 | `death-of` | `personId` | that person's death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |
+| `facts-before` | `year`, optional `personId` | facts confidently before `year`; tree-wide without `personId` |
+| `facts-after` | `year`, optional `personId` | facts confidently after `year`; tree-wide without `personId` |
+| `facts-between` | `fromYear`, `toYear`, optional `personId` | facts confidently within the range; tree-wide without `personId` |
 | `person` | `personId` | one person, cascading their relationships |
 | `fact` | `factId`, optional `personId` | one specific fact; add `personId` if the tool reports the id exists on more than one owner |
 | `relationship` | `relationshipId` | one specific relationship |

@@ -5,6 +5,8 @@
 // A selector is `kind:arg[:arg]`, matching how SKILL.md talks about them:
 //   parents-of:I1  children-of:I1  spouses-of:I1  birth-of:I1  death-of:I1
 //   facts-of:I1:Marriage  person:I2  fact:F4[:personId]  relationship:R1
+//   facts-before:1850[:personId]  facts-after:1850[:personId]
+//   facts-between:1840:1860[:personId]
 //
 // Defaults to a DRY RUN. Pass --apply to actually write — this deletes tree
 // persons and cascades their relationships, so point it at a scratch copy.
@@ -20,7 +22,7 @@ if (!projectPath || rest.length === 0) {
 }
 
 const forget: ForgetSelector[] = rest.map((raw) => {
-  const [kind, a, b] = raw.split(":");
+  const [kind, a, b, c] = raw.split(":");
   const sel = kind as ForgetSelectorKind;
   switch (sel) {
     case "facts-of":
@@ -29,6 +31,11 @@ const forget: ForgetSelector[] = rest.map((raw) => {
       return { selector: sel, factId: a, personId: b };
     case "relationship":
       return { selector: sel, relationshipId: a };
+    case "facts-before":
+    case "facts-after":
+      return { selector: sel, year: Number(a), personId: b || undefined };
+    case "facts-between":
+      return { selector: sel, fromYear: Number(a), toYear: Number(b), personId: c || undefined };
     default:
       return { selector: sel, personId: a };
   }

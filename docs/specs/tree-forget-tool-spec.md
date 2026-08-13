@@ -81,6 +81,9 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
+| `facts-before` | `year`, optional `personId` | facts confidently dated before `year` (§2.1.2); tree-wide when `personId` is omitted |
+| `facts-after` | `year`, optional `personId` | facts confidently dated after `year`; tree-wide when `personId` is omitted |
+| `facts-between` | `fromYear`, `toYear`, optional `personId` | facts confidently within the inclusive range `[fromYear, toYear]`; tree-wide when `personId` is omitted |
 | `person` | `personId` | one person, cascading every relationship touching them |
 | `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.1) |
 | `relationship` | `relationshipId` | one specific relationship |
@@ -140,6 +143,45 @@ it) is satisfied by that removal — the fact unambiguously existed the instant
 before the call, so it is not reported as missing. It is not counted in
 `removed.factsByType` either, consistent with a removed owner's other facts,
 which were never individually counted to begin with.
+
+#### 2.1.2 Date-range selectors resolve internally, never by the caller reading dates
+
+`forget-and-rederive/SKILL.md` tells the agent not to read `tree.gedcomx.json` —
+the file holds the very answer it is about to go looking for. A request like
+"forget everything before 1850" therefore cannot be satisfied by the agent
+reading dates and hand-picking fact ids; `facts-before`, `facts-after`, and
+`facts-between` resolve that internally instead. The year (or year range) the
+caller passes is their own input, never a value read off the tree, so it is
+not subject to the redaction contract the way a fact's own date is.
+
+Each fact's comparable range comes from `getStandardDate` (prefers
+`standard_date`, falls back to parsing `date`) and then `earliestYear`/
+`latestYear` on that canonical string — the same utilities `person_warnings`
+already uses, not a new parser. A fact with no parseable date at all is never
+matched by any of the three selectors; the count of how many were skipped this
+way is reported in `validation.warnings` (a count, never which facts).
+
+Matching is **confident, not merely overlapping**:
+
+- `facts-before(year)`: the fact's *latest* possible year must be strictly
+  before `year`.
+- `facts-after(year)`: the fact's *earliest* possible year must be strictly
+  after `year`.
+- `facts-between(fromYear, toYear)`: the fact's entire possible range must fit
+  inside `[fromYear, toYear]`, not merely intersect it.
+
+An uncertain or ranged date that only partly overlaps the boundary (e.g. `Bet
+1845 and 1855` against `facts-before(1850)`) is left alone rather than guessed
+at. This is deliberate: a looser "any overlap counts" rule would recreate the
+same over-broad-removal shape this whole fix exists to eliminate, just moved
+from id collision onto date uncertainty.
+
+`personId` is optional on all three. Given, the selector matches only that
+person's own facts. Omitted, it matches tree-wide — every person's and every
+Couple relationship's facts — which is the variant the original date-range
+request needed and the owner-scoping fix above makes safe to offer, since
+every match is still resolved and removed through the same (ownerKind,
+ownerId, factId) scoping as every other selector.
 
 ### 2.2 Cascade
 
