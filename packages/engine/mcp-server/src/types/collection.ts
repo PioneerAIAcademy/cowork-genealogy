@@ -65,6 +65,7 @@ export interface FSDocument {
 }
 
 export interface FSCollectionDetailResponse {
+  id?: string; // the collection id, echoed at the document root
   description?: string; // GEDCOMX "#id" ref into sourceDescriptions
   sourceDescriptions?: FSSourceDescription[];
   collections?: FSCollectionData[];
