@@ -82,7 +82,7 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
 | `person` | `personId` | one person, cascading every relationship touching them |
-| `fact` | `factId` | one specific fact, wherever it lives (person or Couple relationship) |
+| `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.1) |
 | `relationship` | `relationshipId` | one specific relationship |
 
 Selection is **structural, never by name**. The caller passes ids; the tool
@@ -94,6 +94,30 @@ matched nothing — …"`. Re-running a selector whose target is already gone
 therefore fails loudly, which reads as "this was already forgotten." An unknown
 `personId` is likewise an error, phrased to distinguish a tree person id from a
 FamilySearch PID.
+
+#### 2.1.1 A fact id is not guaranteed unique across owners
+
+FamilySearch does not guarantee a fact id is unique across persons — a real
+compiled tree returned the same literal Birth fact id for six distinct people.
+Every fact-producing selector (`birth-of`, `death-of`, `facts-of`, `fact`)
+therefore resolves and removes by **(owner, factId)**, never by a bare factId:
+removing one person's fact never touches another owner's fact that happens to
+carry the same id, even when both are kept.
+
+For `birth-of`/`death-of`/`facts-of` this is transparent — the selector already
+names the owning `personId`. For the bare `fact` selector, which historically took
+only a `factId`, the tool resolves ownership at call time:
+
+- Exactly one owner has that id → proceeds, scoped to them (the common case,
+  unchanged from before this fix).
+- No owner has it → the existing "not in the tree" error.
+- More than one owner has it → a new error naming the candidate owners and
+  asking for `personId` to pick one. Passing `personId` for `fact` scopes
+  removal to that person's copy specifically; if that person does not in fact
+  own the id, that is its own error rather than a silent no-op.
+
+`relationship` is unaffected: a relationship id names one relationship record
+directly, and no evidence of the same collision exists for relationship ids.
 
 ### 2.2 Cascade
 

@@ -4,7 +4,7 @@
 //
 // A selector is `kind:arg[:arg]`, matching how SKILL.md talks about them:
 //   parents-of:I1  children-of:I1  spouses-of:I1  birth-of:I1  death-of:I1
-//   facts-of:I1:Marriage  person:I2  fact:F4  relationship:R1
+//   facts-of:I1:Marriage  person:I2  fact:F4[:personId]  relationship:R1
 //
 // Defaults to a DRY RUN. Pass --apply to actually write — this deletes tree
 // persons and cascades their relationships, so point it at a scratch copy.
@@ -26,7 +26,7 @@ const forget: ForgetSelector[] = rest.map((raw) => {
     case "facts-of":
       return { selector: sel, personId: a, factType: b };
     case "fact":
-      return { selector: sel, factId: a };
+      return { selector: sel, factId: a, personId: b };
     case "relationship":
       return { selector: sel, relationshipId: a };
     default:

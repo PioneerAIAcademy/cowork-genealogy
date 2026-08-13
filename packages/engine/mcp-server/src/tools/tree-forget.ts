@@ -187,10 +187,44 @@ function factIdsOfType(
   );
 }
 
+function personOwnsFact(tree: SimplifiedGedcomX, personId: string, factId: string): boolean {
+  const person = persons(tree).find((p) => p.id === personId);
+  return (person?.facts ?? []).some((f) => f.id === factId);
+}
+
+/**
+ * Every person or relationship id whose facts array contains a fact with
+ * this literal id. FamilySearch does not guarantee a fact id is unique
+ * across persons (#1574) — more than one owner here is the collision this
+ * function exists to surface, not a bug in this function.
+ */
+function findFactOwners(tree: SimplifiedGedcomX, factId: string): string[] {
+  const owners: string[] = [];
+  for (const p of persons(tree)) {
+    if ((p.facts ?? []).some((f) => f.id === factId)) owners.push(p.id ?? "");
+  }
+  for (const r of relationships(tree)) {
+    if ((r.facts ?? []).some((f) => f.id === factId)) owners.push(r.id ?? "");
+  }
+  return owners;
+}
+
+/**
+ * Encodes an (ownerId, factId) pair as one Set entry. JSON-encoded so no
+ * delimiter choice can collide with a real id's own content (#1574: facts
+ * are removed by OWNER + id now, never by a bare id shared across owners).
+ */
+function factKey(ownerId: string, factId: string): string {
+  return JSON.stringify([ownerId, factId]);
+}
+
 // ─── selector resolution ─────────────────────────────────────────────────────
 
 interface Targets {
   persons: Set<string>;
+  /** (ownerId, factId) pairs, each encoded by factKey. Owner-scoped so a
+   *  fact id FamilySearch handed to more than one person (#1574) is only
+   *  ever removed from the owner a selector actually resolved. */
   facts: Set<string>;
   relationships: Set<string>;
 }
@@ -239,7 +273,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'${kind}' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(f));
+        ids.forEach((f) => t.facts.add(factKey(pid, f)));
         break;
       }
       case "facts-of": {
@@ -254,7 +288,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'facts-of' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(f));
+        ids.forEach((f) => t.facts.add(factKey(pid, f)));
         break;
       }
       case "person": {
@@ -263,7 +297,30 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
       }
       case "fact": {
         if (!entry.factId) throw new TreeForgetError("'fact' requires factId");
-        t.facts.add(entry.factId);
+        const factId = entry.factId;
+        if (entry.personId) {
+          // Caller named the owner explicitly — the only way to disambiguate
+          // a factId FamilySearch handed to more than one person (#1574).
+          const pid = requirePerson(tree, entry.personId, kind);
+          if (!personOwnsFact(tree, pid, factId)) {
+            throw new TreeForgetError(
+              `'fact' factId '${factId}' does not belong to person '${pid}'.`,
+            );
+          }
+          t.facts.add(factKey(pid, factId));
+        } else {
+          const owners = findFactOwners(tree, factId);
+          if (owners.length > 1) {
+            throw new TreeForgetError(
+              `'fact' factId '${factId}' exists on more than one owner ` +
+                `(${owners.join(", ")}) — add personId to target one of them.`,
+            );
+          }
+          // owners.length === 0 uses the "" sentinel: no real owner has that
+          // id, so applyForget's existing "not in the tree" check still
+          // fires below, unchanged. owners.length === 1 resolves unambiguously.
+          t.facts.add(factKey(owners[0] ?? "", factId));
+        }
         break;
       }
       case "relationship": {
@@ -304,14 +361,16 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
   const factsByType: Record<string, number> = {};
   const unmatched = new Set(t.facts);
 
-  const pruneFacts = (owner: { facts?: SimplifiedFact[] }): void => {
+  const pruneFacts = (owner: { id?: string; facts?: SimplifiedFact[] }): void => {
     if (owner.facts === undefined) return;
+    const ownerId = owner.id ?? "";
     owner.facts = owner.facts.filter((f) => {
       const fid = f.id ?? "";
-      if (!t.facts.has(fid)) return true;
+      const key = factKey(ownerId, fid);
+      if (!t.facts.has(key)) return true;
       const ftype = f.type ?? "Unknown";
       factsByType[ftype] = (factsByType[ftype] ?? 0) + 1;
-      unmatched.delete(fid);
+      unmatched.delete(key);
       return false;
     });
   };
@@ -319,8 +378,11 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
   keptRels.forEach(pruneFacts);
 
   if (unmatched.size > 0) {
+    // t.facts holds factKey-encoded (ownerId, factId) pairs — decode back to
+    // the bare factId for the message, matching the pre-#1574 wording.
+    const danglingFactIds = [...unmatched].map((k) => JSON.parse(k)[1] as string);
     throw new TreeForgetError(
-      `these fact ids are not in the tree: ${[...unmatched].sort().join(", ")}`,
+      `these fact ids are not in the tree: ${danglingFactIds.sort().join(", ")}`,
     );
   }
 
@@ -475,14 +537,18 @@ export const treeForgetSchema = {
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
                 "them (cascades). birth-of/death-of: that person's Birth/Death facts. " +
                 "facts-of: that person's facts of one type (needs factType). person: one " +
-                "person, cascading every relationship touching them. fact/relationship: one " +
-                "specific entity by id.",
+                "person, cascading every relationship touching them. fact: one fact by id " +
+                "(add personId if that id exists on more than one person). relationship: " +
+                "one relationship by id.",
             },
             personId: {
               type: "string",
               description:
                 "Tree person id (the `id` field, not a FamilySearch PID) — required for " +
-                "parents-of, children-of, spouses-of, birth-of, death-of, facts-of, person.",
+                "parents-of, children-of, spouses-of, birth-of, death-of, facts-of, person. " +
+                "Optional for fact: FamilySearch does not guarantee a fact id is unique " +
+                "across persons, so pass this to say which person's copy to remove when " +
+                "the tool reports the id exists on more than one.",
             },
             factType: {
               type: "string",

@@ -226,6 +226,153 @@ describe("tree_forget", () => {
     expect(r.ok).toBe(true);
   });
 
+  // ─── owner-scoped fact removal (#1574) ──────────────────────────────────────
+  // FamilySearch does not guarantee a fact id is unique across persons — the
+  // real case that motivated this: six distinct people sharing one literal
+  // Birth fact id. Removal must be scoped to the owner a selector actually
+  // resolved, never to every kept person/relationship that happens to carry
+  // a fact with that id.
+
+  const collidingFacts = () => ({
+    persons: [
+      {
+        id: "C1",
+        gender: "Male",
+        names: [{ id: "N1", given: "Daniel", surname: "Cook", preferred: true }],
+        facts: [{ id: "SHARED1", type: "Birth", date: "1798" }],
+      },
+      {
+        id: "C2",
+        gender: "Male",
+        names: [{ id: "N2", given: "David", surname: "Cook", preferred: true }],
+        facts: [
+          { id: "SHARED1", type: "Birth", date: "1828" },
+          { id: "OWN1", type: "Residence", date: "1850" },
+        ],
+      },
+    ],
+    relationships: [],
+    sources: [],
+  });
+
+  it("birth-of removes only the target person's fact, even when another person shares the literal fact id", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "birth-of", personId: "C1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Birth: 1 });
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "C1").facts).toEqual([]);
+    // The bug this guards against: C2's same-id Birth fact must survive.
+    expect(tree.persons.find((p: any) => p.id === "C2").facts.map((f: any) => f.id)).toEqual([
+      "SHARED1",
+      "OWN1",
+    ]);
+  });
+
+  it("facts-of removes only the target person's fact of that type, even when another person shares the literal fact id", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-of", personId: "C1", factType: "Birth" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "C1").facts).toEqual([]);
+    expect(
+      tree.persons.find((p: any) => p.id === "C2").facts.map((f: any) => f.id),
+    ).toContain("SHARED1");
+  });
+
+  it("fact selector errors when the bare id exists on more than one owner, instead of guessing", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "fact", factId: "SHARED1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/more than one owner/);
+    expect(r.errors[0]).toContain("C1");
+    expect(r.errors[0]).toContain("C2");
+    // Nothing written on the ambiguity path.
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "C1").facts).toEqual([
+      { id: "SHARED1", type: "Birth", date: "1798" },
+    ]);
+  });
+
+  it("fact selector with personId removes only that owner's copy of a shared fact id", async () => {
+    await writeProject(collidingFacts());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "fact", factId: "SHARED1", personId: "C1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "C1").facts).toEqual([]);
+    expect(
+      tree.persons.find((p: any) => p.id === "C2").facts.map((f: any) => f.id),
+    ).toContain("SHARED1");
+  });
+
+  it("fact selector with a personId that doesn't own that fact id is an error, not a silent no-op", async () => {
+    await writeProject(collidingFacts());
+    // OWN1 belongs only to C2 — naming C1 forces a genuine mismatch.
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "fact", factId: "OWN1", personId: "C1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/does not belong to person/);
+  });
+
+  it("a person's fact and a relationship's fact sharing the same literal id are pruned independently", async () => {
+    await writeProject({
+      persons: [
+        {
+          id: "P1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "X1", type: "Residence", date: "1900" }],
+        },
+        {
+          id: "P2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+        },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "P1",
+          person2: "P2",
+          facts: [{ id: "X1", type: "Marriage", date: "1920" }],
+        },
+      ],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-of", personId: "P1", factType: "Residence" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "P1").facts).toEqual([]);
+    // R1's same-id Marriage fact is a different owner — must survive.
+    expect(tree.relationships.find((x: any) => x.id === "R1").facts.map((f: any) => f.id)).toEqual(
+      ["X1"],
+    );
+  });
+
   // ─── dry run ───────────────────────────────────────────────────────────────
 
   it("dryRun reports the identical summary and writes nothing", async () => {
