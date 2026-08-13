@@ -3,35 +3,51 @@
     {
       "id": "f1",
       "type": "relationship",
-      "polarity": "avoid",
-      "description": "The agent must NOT attach the 16 October 1915 christening record for Miguel Macatangay Sisquinto (Philippines, Catholic Church Records, 1520-2014) to Victoriano Macatangay (GV6J-VZC) as evidence of his parents or of an additional son. The record's grandparent-relationship entries name José Macatangay and Bernardina Cabrera as grandparents of the christened child — and those two names are already recorded as the parents of a different existing FamilySearch tree person, PM25-VHQ, a distinct \"Victorino/Victoriano Macatangay.\" GV6J-VZC has no parents on file at all, so nothing on his own profile ties him to José and Bernardina. FamilySearch's own hint is a false match for this fixture's subject: the record's true father-of-record is PM25-VHQ, not GV6J-VZC. Pass = the final tree/research does not assert José Macatangay or Bernardina Cabrera as GV6J-VZC's parents, and does not add Miguel Macatangay Sisquinto as GV6J-VZC's son (or such claims appear only as an explicitly rejected hypothesis).",
+      "description": "Victoriano Macatangay's father was José, per a 1915 christening record for his son Miguel.",
       "details": {
         "subject_person": "Victoriano Macatangay (GV6J-VZC)",
         "relation": "parent",
-        "wrong_candidate": {
-          "name": "José Macatangay and Bernardina Cabrera, asserted as GV6J-VZC's parents via Miguel's 1915 christening record",
-          "note": "the christening record's grandparent entries match the parents already attached to a different tree person, PM25-VHQ, not GV6J-VZC; GV6J-VZC has no parents on file"
+        "target_person": {
+          "name": "José",
+          "birth": "unknown, likely Batangas, Philippines"
         }
       },
       "supporting_sources": [
-        "Philippines, Catholic Church Records, 1520-2014 — christening entry, 16 Oct 1915, Batangas City, for Miguel Macatangay Sisquinto, naming parents Victorino Macatangay/Gabina Sisquinto and grandparents José Macatangay, Bernardina Cabrera, Domingo, and María Dapal (ark:/61903/1:1:6664-TBR7) — the disproving record: its grandparent linkage matches the parents already recorded for tree person PM25-VHQ, not GV6J-VZC"
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry for Miguel Macatangay Sisquinto, 16 Oct 1915, Batangas City, naming grandparents"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "fact",
-      "description": "Having reviewed Victoriano Macatangay's (GV6J-VZC) own FamilySearch profile directly — Birth and Christening are both unfilled, and none of his 16 attached sources (1920-1949) name a parent — the agent should document a negative conclusion: this christening record does not establish GV6J-VZC's parents or an additional son. FamilySearch's own hint instead matches a different existing tree person, PM25-VHQ, whose already-recorded parents (José Macatangay, Bernardina Cabrera) match the record's grandparent entries exactly. No source on GV6J-VZC's profile, and no fresh search run for this fixture, establishes parents for him.",
+      "type": "relationship",
+      "description": "Victoriano Macatangay's mother was Bernardina Cabrera, per the same christening record.",
       "details": {
         "subject_person": "Victoriano Macatangay (GV6J-VZC)",
-        "relation": "research conclusion",
+        "relation": "parent",
         "target_person": {
-          "name": "documented negative conclusion: this record does not establish GV6J-VZC's parents",
-          "birth": "n/a"
+          "name": "Bernardina Cabrera",
+          "birth": "unknown, likely Batangas, Philippines"
         }
       },
       "supporting_sources": [
-        "GV6J-VZC's own FamilySearch profile (Vitals and Sources tabs, reviewed directly): Birth and Christening both unfilled with 0 sources; none of his 16 attached sources (1920-1949) name a parent. No fresh search of the Philippines Catholic Church Records collection was run for this fixture — the negative evidence is the absence of any parent claim on his existing profile, not an executed search returning empty."
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry for Miguel Macatangay Sisquinto, 16 Oct 1915, Batangas City"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Victoriano Macatangay and Gabina Sisquinto had a son, Miguel Macatangay Sisquinto, born 28 September 1915 and christened 16 October 1915 in Batangas City, in addition to their six children already in the tree (b. 1904-1929).",
+      "details": {
+        "subject_person": "Victoriano Macatangay (GV6J-VZC)",
+        "relation": "child",
+        "target_person": {
+          "name": "Miguel Macatangay Sisquinto",
+          "birth": "28 September 1915, Batangas City, Batangas, Philippines"
+        }
+      },
+      "supporting_sources": [
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry, 16 Oct 1915, Batangas City, naming parents Victorino Macatangay and Gabina Sisquinto"
       ],
       "required": true
     }
