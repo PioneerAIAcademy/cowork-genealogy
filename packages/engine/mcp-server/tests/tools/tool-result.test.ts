@@ -6,14 +6,20 @@ import {
 
 describe("writerToolResult", () => {
   it("sets isError on a returned failure", () => {
-    const out = writerToolResult({ ok: false, errors: ["bad"] });
+    // Bound to a const, not passed inline: `OkFalseResult` is deliberately
+    // index-signature-free (see tool-result.ts), so an inline literal carrying
+    // a tool's own payload fields trips excess-property checking. Real callers
+    // pass a concrete result value, which this mirrors.
+    const result = { ok: false, errors: ["bad"] };
+    const out = writerToolResult(result);
     expect(out.isError).toBe(true);
   });
 
   it("leaves isError unset on success, so a successful envelope is unchanged", () => {
     // Unset rather than `false`: the pre-change arms emitted no `isError` key at
     // all, and anything reading a successful result must not see a new shape.
-    const out = writerToolResult({ ok: true, filesWritten: ["research.json"] });
+    const result = { ok: true, filesWritten: ["research.json"] };
+    const out = writerToolResult(result);
     expect(out.isError).toBeUndefined();
     expect("isError" in out).toBe(false);
   });
