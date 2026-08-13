@@ -230,8 +230,15 @@ table and contextual factors checklist.
   to the candidate father, and add items for records that name her
   parents directly (her own birth/baptism, probate, a sibling's record).
   Never plan a household search keyed on a surname taken off a single
-  marriage record — that surname may be a prior married name, not her
-  birth name. Where no remarriage is suspected, the marriage record's
+  marriage record as though it were settled — that surname may be a
+  prior married name, not her birth name. A cheap, quick household check
+  against that surname is fine to include (a free, indexed census costs
+  nothing to rule in or out), but its own rationale must say the surname
+  is unconfirmed, not describe it as her maiden name — and the plan as a
+  whole must not treat that check as sufficient by itself: it needs a
+  companion item, anywhere in the sequence, that tests whether the
+  surname is even hers (an earlier-marriage search) or that names her
+  parents directly (probate, a sibling's record). Where no remarriage is suspected, the marriage record's
   date relative to the child's birth still corroborates a parent named
   only by indirect or derivative evidence (a death certificate, a single
   census co-residence) — but it does **not**, by itself, establish that

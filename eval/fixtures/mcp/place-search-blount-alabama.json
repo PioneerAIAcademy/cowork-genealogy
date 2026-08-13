@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Blount County, Alabama",
+  "args": {
+    "placeName": "~Blount"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Blount, Alabama, United States",
+        "type": "County",
+        "dateRange": "+1818/",
+        "latitude": 33.98,
+        "longitude": -86.57,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Blount%2C+Alabama&focusedId=41"
+      }
+    ]
+  }
+}
