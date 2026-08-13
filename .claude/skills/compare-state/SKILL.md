@@ -49,14 +49,23 @@ Verify:
 - The file exists and parses as JSON.
 - `schema_version` is `1`.
 - `user_prompt` is a non-empty string.
-- The target field (`agent_did` for `what-went-wrong`,
-  `agent_should_have` for `desired`) is present and non-empty.
+- For `--against=what-went-wrong`: `agent_did` is present and non-empty.
+- For `--against=desired`: `agent_should_have` is present and a string. It may
+  legitimately be **empty** — `worked_as_expected: true` is a positive report
+  (nothing went wrong), and even on a bug the reporter may not have known the
+  ideal behavior. An empty value is NOT a malformed fixture.
 
-If any check fails, abort with a message that names the specific
-field and points the user at
-`apps/electron/docs/feedback-json-spec.md` §3. Do not proceed to the LLM
-comparison — surfacing a bad case fixture here is much better than
-a downstream judgment producing nonsense.
+If any of the above fails — missing/unparseable file, wrong `schema_version`,
+empty `user_prompt`, empty `agent_did` for `what-went-wrong`, or a
+missing/non-string target field — abort with a message that names the specific
+field and points the user at `apps/electron/docs/feedback-json-spec.md` §3. Do not
+proceed to the LLM comparison — surfacing a bad case fixture here is much better
+than a downstream judgment producing nonsense.
+
+**Exception, not an abort:** for `--against=desired` when `agent_should_have` is
+empty, stop with a plain result — there is no desired-state description to compare
+against (note it is a positive report when `worked_as_expected` is true). This is
+the "nothing to report" case the format distinguishes from a substantive answer.
 
 ### 2. Read the current state
 
