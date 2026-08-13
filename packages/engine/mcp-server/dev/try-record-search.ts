@@ -51,7 +51,9 @@ function parseArgs(argv: string[]): RecordSearchInput {
         input.recordSubdivision = argv[++i];
         break;
       case "--collection":
-        input.collectionId = parseInt(argv[++i], 10);
+        // Collection ids are strings ("2469233"), not numbers — parseInt here
+        // silently produced a number the tool would reject.
+        input.collectionId = argv[++i];
         break;
       case "--birth-year": {
         const y = parseInt(argv[++i], 10);

@@ -8,6 +8,7 @@ src/
 tests/
 dev/
 tsconfig.json
+tsconfig.dev.json
 vitest.config.ts
 
 # Declaration files and source maps have no runtime purpose.

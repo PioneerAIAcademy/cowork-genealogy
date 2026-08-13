@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the marriage record's mother_of_groom persona (Bridget Sheehy, fully indexed) scored against the tree's Bridget Sheehy. High score on an exact, distinctive-surname match.",
+  "args": {
+    "primaryId1": "M1",
+    "primaryId2": "I2"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.89,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:QRST-5678",
+    "apiTitle": "Matches for ark:/61903/1:1:FLYN-MARR",
+    "updated": "2026-08-01T00:00:00Z"
+  }
+}
