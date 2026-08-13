@@ -701,14 +701,27 @@ report; the genealogist one is newer and easier to forget.
 ### Reporting — your job is the arithmetic, not the routing
 
 ```sh
-# `needs-decision`, split by whether a ruling has been recorded. A ruling is an
-# issue comment carrying a bold `**Ruling` marker (the convention
-# `/find-big-wins` owns). Match the marker anywhere in the body, not just at
-# character zero: real ruling comments put a heading above it and number it
-# (`## Lead rulings` … `**Ruling 1 — …`), which an exact-prefix test misses.
+# `needs-decision`, split by whether a ruling has been recorded.
+#
+# MATCH BOTH WORDS, AND BOTH MARKUPS. We are instructed to write `**Ruling:**`,
+# but this query does not read what we wrote — it reads what the LEAD wrote, and
+# he writes `## Decision:` and `**Decision (lead, <date>)`. A `**Ruling`-only
+# test called two answered items WAITING on 2026-08-13 (issues #1331 and #1394,
+# both ruled that afternoon), which is the exact inverse of the defect this
+# split exists to catch: it hides a dropped item by reporting the lead as the
+# bottleneck. Bold marker or ATX heading, "Ruling" or "Decision".
+#
+# Match anywhere in the body, not at character zero: real ruling comments put a
+# heading above the marker and number it (`## Lead rulings` … `**Ruling 1 — …`),
+# which an exact-prefix test misses.
+#
+# Prove it before trusting a change to this pattern — run it against a known
+# answered issue and a known waiting one and watch the two land in different
+# buckets. A pattern that matches nothing reports a clean board forever.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,updatedAt,comments \
-  -q '.[] | (if ([.comments[].body | test("\\*\\*Ruling")] | any)
+  -q '.[] | (if ([.comments[].body
+                 | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
