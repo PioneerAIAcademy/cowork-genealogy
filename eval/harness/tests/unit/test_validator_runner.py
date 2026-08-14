@@ -566,6 +566,100 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
         )
 
 
+# --- compound birth assertions (year smuggled into a birthplace value) ---
+
+
+def _run_birth_year_rule(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (
+            r
+            for r in results
+            if r.name == "test_birth_place_value_has_no_embedded_year"
+        ),
+        None,
+    )
+    assert result is not None, (
+        "test_birth_place_value_has_no_embedded_year did not run"
+    )
+    return result
+
+
+def _birth_assertion(**overrides):
+    base = {
+        "id": "a_1",
+        "record_role": "child_1",
+        "fact_type": "birth",
+        "value": "Ohio",
+        "place": "Ohio, United States",
+        "date": None,
+        "evidence_type": "direct",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_birth_year_rule_flags_dateless_compound_value():
+    """The defect (#1407): a place-keyed `direct` birth assertion carrying a
+    year in `value` and NO structured `date` — two facts in one assertion,
+    invisible to every structured matcher."""
+    result = _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio")]
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "1845", "child_1"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_birth_year_rule_passes_on_a_bare_birthplace():
+    assert _run_birth_year_rule([_birth_assertion()]).passed is True
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "January 1845",  # ut_026 — stated month-year mirrored in `date`
+        "Born 11 July 1817, Stavanger, Norway",  # ut_016
+        "born Ireland, circa 1845",  # ut_005
+        "born ca. 1845, Ireland",  # ut_006
+    ],
+)
+def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value):
+    """The four shapes measured across the 8 committed/recoverable run logs
+    that carry a year in `value` and are NOT the defect: each populates
+    `date`, so the year mirrors a structured fact. Flagging any of them
+    would redden a correct test — the plan's explicit acceptance bar."""
+    result = _run_birth_year_rule(
+        [_birth_assertion(value=value, date="1845")]
+    )
+    assert result.passed is True, (
+        f"false positive on a date-backed value: {result.error}"
+    )
+
+
+def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
+    """Scope guards: the rule examines only place-keyed `direct` births."""
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="about 1845", place=None, date="about 1845",
+                          evidence_type="indirect")]
+    ).passed is True
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio",
+                          evidence_type="indirect")]
+    ).passed is True
+
+
 # --- record_persona_id corruption signature (shared persona across roles) ---
 
 _PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"

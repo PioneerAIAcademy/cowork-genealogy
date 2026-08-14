@@ -194,11 +194,9 @@ never rediscover it.
 
 List every person mentioned and assign a `record_role`:
 - Naming convention: `head_of_household`, `wife`, `child_1`, `child_2`,
-  `deceased`, `groom`, `bride`, `informant`, `father_of_bride`,
-  `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_1`,
-  `witness_1`, `godparent_1`. Number roles sequentially.
-- On a marriage record the two parties are `groom` and `bride` — never
-  `head_of_household`/`wife`, on a full return and a bare index alike.
+  `deceased`, `informant`, `father_of_bride`, `mother_of_groom`,
+  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`.
+  Number roles sequentially.
 - Negative evidence uses `absent` — the exact string, lowercase, no
   prefix or qualifier. Never invent variants (`subject_absent`,
   `not_listed`, `missing`): downstream validators and skills key off the
@@ -542,8 +540,8 @@ the record establishes about who spoke.
   `unknown` / `unknown`, never the index compiler or the cemetery.
 
 **Marriage record informants** — the parties speak for themselves:
-- **Groom and bride:** informants for their own identifying facts (age,
-  birthplace, parents, occupation), proximity `self`. **Every fact the
+- **Groom and bride:** informants for their own identifying facts (name,
+  sex, age, birthplace, parents, occupation), proximity `self`. **Every fact the
   parties state — their own name/age/birthplace/occupation/residence AND
   their parents' names — is `direct`; the record states each outright.**
   Information quality for the party's own parents' names is `primary` —
@@ -557,11 +555,6 @@ the record establishes about who spoke.
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**
-- **A bare marriage index does not become informant-less.** On a sparse
-  index (names + year + county, no parents recorded) the parties still
-  supplied the license information: proximity `self`, not `unknown`. The
-  `unknown`/`unknown` index rule is scoped to burial/cemetery indexes and
-  does not transfer to a marriage index.
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
@@ -673,11 +666,9 @@ misreadings to avoid, in both directions:
   `indirect` — same as their birthplaces, and for the same reason (the
   informant-knowledge test above). Marking a `father_of_deceased` or
   `mother_of_deceased` name `direct` because "a name assertion is always
-  direct" is one error this paragraph exists to prevent. This holds on
-  **every** death or burial record, not just a certificate that names an
-  informant: on a burial or cemetery index the informant is `unknown` and
-  the parentage is still `indirect` — an unknown informant is not a
-  reason to promote it to `direct`.
+  direct" is one error this paragraph exists to prevent. It holds on a
+  burial or cemetery index too, where the informant is `unknown`: an
+  unknown informant is not grounds to promote the parentage to `direct`.
 - **Do not extend it to the subject's _other_ facts.** Being the record
   subject makes the subject's `name` direct; it does nothing for their
   age, birth date, birthplace, or parents. On a death certificate those

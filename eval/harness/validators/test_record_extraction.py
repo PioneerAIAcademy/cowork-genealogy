@@ -335,9 +335,16 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     `expected_classifications` never looks (ut_022 scored a false pass on
     `Assertion atomicity` eight times over).
 
-    Scoped exactly as the issue specifies: `birth` + `place` populated +
-    `evidence_type: direct`. A year in a *date*-keyed birth assertion is the
-    fact itself, not a leak, so those are not examined.
+    Scoped as `birth` + `place` populated + `evidence_type: direct` + **no
+    structured `date` of its own**. That last clause is the discriminator,
+    and it is not optional: measured over the 8 committed/recoverable run
+    logs, 362 assertions are birth+place+direct and 23 carry a 4-digit year
+    in `value`, of which only ut_028's `date: null` rows are the defect.
+    The other four shapes — ut_026 `"January 1845"`, ut_016 `"Born 11 July
+    1817, Stavanger…"`, ut_005 `"born Ireland, circa 1845"`, ut_006
+    `"born ca. 1845, Ireland"` — all populate `date`, so the year in `value`
+    mirrors a structured fact rather than smuggling one. Flagging any of
+    those four would redden a correct test and make the corpus worse.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -356,6 +363,8 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
             continue
         if not (a.get("place") or a.get("standard_place")):
             continue
+        if a.get("date"):
+            continue  # year mirrors a structured date — not a leak
         value = str(a.get("value") or "")
         found = _EMBEDDED_YEAR_RE.search(value)
         if found:
