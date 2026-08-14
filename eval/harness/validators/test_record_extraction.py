@@ -23,6 +23,8 @@ sit at the bottom; they gate on `test["tags"]` so they only fire on
 the specific scenario they describe.
 """
 
+import re
+
 import pytest
 
 from validators_lib import (
@@ -309,6 +311,65 @@ def test_expected_classifications(before_state, after_state, test):
 
     assert not errors, (
         "expected_classifications violations:\n  - " + "\n  - ".join(errors)
+    )
+
+
+_EMBEDDED_YEAR_RE = re.compile(r"\b(1[5-9]\d{2}|20\d{2})\b")
+
+
+def test_birth_place_value_has_no_embedded_year(before_state, after_state):
+    """A place-keyed `birth` assertion must not smuggle a birth YEAR into its
+    `value` string (#1407).
+
+    The defect this catches is atomicity, not classification: a run that
+    persists
+
+        {"fact_type": "birth", "value": "born about 1845, Ohio",
+         "place": "Ohio, United States", "date": null,
+         "evidence_type": "direct"}
+
+    has put TWO facts in one assertion. The birthplace is `direct` (stated)
+    while a year derived from a stated age is `indirect`, so one assertion
+    cannot carry a correct `evidence_type` for both — and every structured
+    matcher is blind to it, because the year lives in free text where
+    `expected_classifications` never looks (ut_022 scored a false pass on
+    `Assertion atomicity` eight times over).
+
+    Scoped exactly as the issue specifies: `birth` + `place` populated +
+    `evidence_type: direct`. A year in a *date*-keyed birth assertion is the
+    fact itself, not a leak, so those are not examined.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if not _fact_type_matches(a.get("fact_type"), "birth"):
+            continue
+        if a.get("evidence_type") != "direct":
+            continue
+        if not (a.get("place") or a.get("standard_place")):
+            continue
+        value = str(a.get("value") or "")
+        found = _EMBEDDED_YEAR_RE.search(value)
+        if found:
+            errors.append(
+                f"assertions[{a.get('id', '?')}] (record_role="
+                f"'{a.get('record_role')}'): direct birth/place assertion "
+                f"has the year {found.group(1)} embedded in value={value!r} "
+                f"— a birth year belongs in its own indirect assertion, not "
+                f"in the birthplace's value"
+            )
+
+    assert not errors, (
+        "Compound birth assertions (year smuggled into a birthplace "
+        "value):\n  - " + "\n  - ".join(errors)
     )
 
 

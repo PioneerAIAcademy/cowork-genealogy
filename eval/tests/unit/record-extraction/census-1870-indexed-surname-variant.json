@@ -42,6 +42,7 @@
       "record_role": "head_of_household",
       "fact_type": "birth",
       "attribute": "place",
+      "value": "Bavaria",
       "evidence_type": "direct",
       "information_quality": "indeterminate"
     },
@@ -53,9 +54,39 @@
       "information_quality": "indeterminate"
     },
     {
+      "record_role": "wife",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Bavaria",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
       "record_role": "child_1",
       "fact_type": "birth",
       "attribute": "place",
+      "value": "Ohio",
       "optional": true,
       "evidence_type": "direct",
       "information_quality": "indeterminate"
@@ -74,6 +105,121 @@
       "optional": true,
       "evidence_type": "indirect",
       "informant_proximity": "researcher"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ohio",
+      "optional": true,
+      "evidence_type": "direct",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "information_quality": "indeterminate"
     },
     {
       "record_role": "head_of_household",
