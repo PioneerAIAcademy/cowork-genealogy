@@ -3,7 +3,7 @@ REM Windows equivalent of: make server-dev
 REM REAL agent, dev-login (no FamilySearch), port 8000 — needs ANTHROPIC_API_KEY
 REM Pair with: scripts\web-dev.bat
 setlocal
-cd /d "%~dp0.."
+cd /d "%~dp0..\.."
 call "%~dp0engine-build.bat"
 if errorlevel 1 exit /b 1
 if "%ANTHROPIC_API_KEY%"=="" (

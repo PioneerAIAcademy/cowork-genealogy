@@ -2,7 +2,7 @@
 REM Windows equivalent of: make agent-smoke
 REM Live check that hosted path registers plugin agents (no model call, bills nothing)
 setlocal
-cd /d "%~dp0.."
+cd /d "%~dp0..\.."
 call "%~dp0engine-build.bat"
 if errorlevel 1 exit /b 1
 if "%ANTHROPIC_API_KEY%"=="" (

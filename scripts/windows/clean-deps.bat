@@ -2,7 +2,7 @@
 REM Windows equivalent of: make clean-deps
 REM Removes ALL node_modules so the next install is from scratch
 setlocal
-cd /d "%~dp0.."
+cd /d "%~dp0..\.."
 echo Removing node_modules...
 for %%d in (
     node_modules
