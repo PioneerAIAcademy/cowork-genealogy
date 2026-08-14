@@ -648,6 +648,69 @@ def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value):
     )
 
 
+def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
+    """The ut_028 shape, from the 2026-08-14 paid run. The party gets TWO
+    atomic birth assertions — a `direct` place-claim whose label redundantly
+    repeats the year, beside an `indirect` date-claim that states it
+    structurally. Atomicity is correct and nothing is lost, so this must not
+    fail; the pre-fix rule reddened it."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1",
+                record_role="groom",
+                value="about 1887, Cincinnati, Ohio",
+                place="Cincinnati, Ohio",
+                date=None,
+                evidence_type="direct",
+            ),
+            _birth_assertion(
+                id="a_2",
+                record_role="groom",
+                value="about 1887",
+                place=None,
+                date="~1887",
+                evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is True, f"false positive on an atomic pair: {result.error}"
+
+
+def test_birth_year_rule_still_fires_when_the_sibling_states_another_year():
+    """The exemption is year-specific and role-specific, so it cannot be used
+    to wave through a genuinely orphaned year: a sibling stating 1890 does not
+    excuse 1845 appearing only in a birthplace label."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1",
+                record_role="groom",
+                value="born about 1845, Ohio",
+                date=None,
+            ),
+            _birth_assertion(
+                id="a_2",
+                record_role="groom",
+                value="about 1890",
+                place=None,
+                date="~1890",
+                evidence_type="indirect",
+            ),
+            _birth_assertion(
+                id="a_3",
+                record_role="bride",
+                value="about 1845",
+                place=None,
+                date="~1845",
+                evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is False
+    assert "a_1" in (result.error or "")
+
+
 def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
     """Scope guards: the rule examines only place-keyed `direct` births."""
     assert _run_birth_year_rule(

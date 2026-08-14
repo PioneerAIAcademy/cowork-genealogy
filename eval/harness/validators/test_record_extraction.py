@@ -335,16 +335,26 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     `expected_classifications` never looks (ut_022 scored a false pass on
     `Assertion atomicity` eight times over).
 
-    Scoped as `birth` + `place` populated + `evidence_type: direct` + **no
-    structured `date` of its own**. That last clause is the discriminator,
-    and it is not optional: measured over the 8 committed/recoverable run
-    logs, 362 assertions are birth+place+direct and 23 carry a 4-digit year
-    in `value`, of which only ut_028's `date: null` rows are the defect.
-    The other four shapes — ut_026 `"January 1845"`, ut_016 `"Born 11 July
-    1817, Stavanger…"`, ut_005 `"born Ireland, circa 1845"`, ut_006
-    `"born ca. 1845, Ireland"` — all populate `date`, so the year in `value`
-    mirrors a structured fact rather than smuggling one. Flagging any of
-    those four would redden a correct test and make the corpus worse.
+    The defect is **information loss**, so the rule fires only when the year
+    is recoverable from nowhere but that free-text string. Two exemptions,
+    both measured rather than guessed:
+
+    1. **The assertion carries its own structured `date`.** ut_026
+       `"January 1845"`, ut_016 `"Born 11 July 1817, Stavanger…"`, ut_005
+       `"born Ireland, circa 1845"` and ut_006 `"born ca. 1845, Ireland"` all
+       populate `date`, so the year in `value` mirrors a structured fact.
+    2. **A sibling `birth` assertion for the same `record_role` carries the
+       year in its `date`.** This is the ut_028 case, and it is why the
+       first exemption alone is not enough: the run persists TWO atomic
+       assertions per party — `place='Cincinnati, Ohio'` / `date=None`
+       (`direct`) beside `date='~1887'` / `place=None` (`indirect`) — so
+       atomicity is correct and only the place assertion's human-readable
+       label is redundant. The year is not smuggled; it is stated twice.
+       Failing that shape reddens a structurally-correct extraction.
+
+    So a `value` naming a year is graded against the assertion **set**, not
+    the assertion alone. What survives both exemptions is the real defect:
+    a year that exists only inside a birthplace's prose.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -352,11 +362,21 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
         pytest.skip("Missing research.json for diff")
 
     before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
+
+    # Years any sibling `birth` assertion states structurally, per record_role.
+    # Exemption 2: a year captured on a sibling's `date` is stated twice, not
+    # smuggled — the assertion set is atomic even though this label is verbose.
+    sibling_years = {}
+    for a in new:
+        if not _fact_type_matches(a.get("fact_type"), "birth"):
+            continue
+        role = _normalize_classification_token(a.get("record_role"))
+        for year in _EMBEDDED_YEAR_RE.findall(str(a.get("date") or "")):
+            sibling_years.setdefault(role, set()).add(year)
 
     errors = []
-    for a in after.get("assertions", []):
-        if a.get("id") in before_ids:
-            continue
+    for a in new:
         if not _fact_type_matches(a.get("fact_type"), "birth"):
             continue
         if a.get("evidence_type") != "direct":
@@ -364,9 +384,13 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
         if not (a.get("place") or a.get("standard_place")):
             continue
         if a.get("date"):
-            continue  # year mirrors a structured date — not a leak
+            continue  # exemption 1 — year mirrors this assertion's own date
         value = str(a.get("value") or "")
         found = _EMBEDDED_YEAR_RE.search(value)
+        if found and found.group(1) in sibling_years.get(
+            _normalize_classification_token(a.get("record_role")), set()
+        ):
+            continue  # exemption 2 — a sibling birth assertion states it
         if found:
             errors.append(
                 f"assertions[{a.get('id', '?')}] (record_role="
