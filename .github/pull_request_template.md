@@ -60,9 +60,9 @@
      GitHub's merge button is the actual enforcement. -->
 
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
-      <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
-           paid per-skill eval run, not this gate. On Windows, say so here and
-           lean on CI, which runs the same suites. -->
+      <!-- On Windows without Git Bash: `scripts\windows\test-all.bat` runs the
+           same suites. Not `eval\RunTests.bat` — that is the paid per-skill
+           eval run, not this gate. -->
       <!-- Note: every suite in it is offline and free — nothing here calls a
            model, which is what keeps it around 30s. Keep it that way. -->
 

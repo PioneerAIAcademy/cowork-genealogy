@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 28, flag adds_daughter, confidence 3). Draft transcribed from a Hungarian Catholic church record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 28, flag adds_daughter, confidence 3). Resolved: FALSE MATCH — the hinted baptismal record (ark:/61903/1:1:XZ6D-FZY; manuscript image ark:/61903/3:1:9Q97-YS8R-ZWF, entry 48) names the mother as Rozál Száz, not Rozál Sármán; the two surnames admit no transcription path, so the record belongs to a different couple (Kiszombor house 269). Agent must decline the daughter Viktoria. See README 'Notes for reviewers'."
 }
