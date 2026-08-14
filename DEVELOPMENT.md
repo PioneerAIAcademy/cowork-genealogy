@@ -51,8 +51,11 @@ through the double-clickable scripts in `eval\` instead — see
 
 The wrappers reimplement each recipe rather than shelling out to `make`, so a
 recipe change has to be made in both places. `windows-wrappers.test.ts` (under
-`make engine-test`) checks that every wrapper names a live target and that the
-index matches the directory; it cannot check that the commands still match.
+`make engine-test`) checks that every wrapper names a live target, resolves the
+repo root, calls its siblings and `npm`/`pnpm` correctly, and that the index
+matches the directory; it cannot check that the commands still match. Before
+editing a wrapper, read the "Changing these" rules in
+[`scripts/windows/README.md`](./scripts/windows/README.md).
 
 ## Git hooks
 

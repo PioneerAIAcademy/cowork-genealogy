@@ -27,14 +27,14 @@ if not errorlevel 1 set "NEED_INSTALL="
 if defined NEED_INSTALL (
     echo [engine-build] Installing engine node_modules ^(lockfile changed or first run^)...
     pushd "%ENGINE%"
-    npm ci
+    call npm ci
+    if errorlevel 1 ( popd & echo ERROR: engine npm ci failed & exit /b 1 )
     popd
-    if errorlevel 1 ( echo ERROR: engine npm ci failed & exit /b 1 )
     copy /y "%ENGINE%\package-lock.json" "%STAMP%" >nul
 )
 
 pushd "%ENGINE%"
-npm run build
+call npm run build
+if errorlevel 1 ( popd & echo ERROR: engine build failed & exit /b 1 )
 popd
-if errorlevel 1 ( echo ERROR: engine build failed & exit /b 1 )
 echo [engine-build] Done.

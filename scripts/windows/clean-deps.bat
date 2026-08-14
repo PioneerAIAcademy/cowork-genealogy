@@ -18,4 +18,4 @@ REM Also remove pnpm workspace package node_modules
 for /d %%p in (packages\* apps\*) do (
     if exist "%%p\node_modules" ( echo   removing %%p\node_modules & rmdir /s /q "%%p\node_modules" )
 )
-echo Done. Run scripts\install.bat to reinstall from scratch.
+echo Done. Run scripts\windows\install.bat to reinstall from scratch.

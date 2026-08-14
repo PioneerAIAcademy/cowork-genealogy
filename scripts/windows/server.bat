@@ -1,7 +1,7 @@
 @echo off
 REM Windows equivalent of: make server
 REM REAL agent + FamilySearch login, local sandboxes, port 1837
-REM Pair with: scripts\web.bat
+REM Pair with: scripts\windows\web.bat
 setlocal
 cd /d "%~dp0..\.."
 call "%~dp0engine-build.bat"

@@ -5,7 +5,7 @@ setlocal
 cd /d "%~dp0..\.."
 
 echo [install] Installing pnpm workspace...
-pnpm install
+call pnpm install
 if errorlevel 1 ( echo ERROR: pnpm install failed & exit /b 1 )
 
 echo [install] Installing server Python venv...
@@ -18,9 +18,9 @@ if errorlevel 1 exit /b 1
 
 echo [install] Installing eval-ui node_modules...
 pushd eval\app
-npm install
+call npm install
+if errorlevel 1 ( popd & echo ERROR: eval-ui npm install failed & exit /b 1 )
 popd
-if errorlevel 1 ( echo ERROR: eval-ui npm install failed & exit /b 1 )
 
 REM NOTE: git hooks are NOT installed here, because eval\InstallHooks.bat
 REM prompts and pauses -- wrong for a non-interactive install. Run it once

@@ -4,4 +4,4 @@ REM Runs genealogy engine unit tests (vitest)
 setlocal
 cd /d "%~dp0..\.."
 cd packages\engine\mcp-server
-npm test
+call npm test

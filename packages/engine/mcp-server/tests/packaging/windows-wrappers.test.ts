@@ -62,6 +62,17 @@ const EVAL_OWNED: Record<string, string> = {
  */
 const EVAL_NOT_A_TARGET = new Set(["Setup.bat"]);
 
+/**
+ * `.bat` files allowed to stay in `scripts/` rather than `scripts/windows/`.
+ * Both take the zip or case directory as an argument, so neither wraps a make
+ * target. Anything else in `scripts/` is a wrapper that escaped the directory
+ * this guard reads.
+ */
+const SCRIPTS_ROOT_BAT = new Set([
+  "reset-feedback-case.bat",
+  "setup-feedback-case.bat",
+]);
+
 const makefile = read(join(projectRoot, "Makefile"));
 const makeTargets = new Set(
   [...makefile.matchAll(/^([a-zA-Z0-9_-]+):/gm)].map((m) => m[1]),
@@ -158,5 +169,45 @@ describe("Windows wrapper drift", () => {
       .map(([, target, bat]) => `README says ${bat} = make ${target}`);
     expect(mispaired).toEqual([]);
     expect(rows.length).toBe(wrappers.length);
+  });
+
+  it("every wrapper resolves the repo root, not scripts/", () => {
+    const wrong = wrappers.filter((f) => {
+      const cd = read(join(windowsDir, f)).match(/^cd \/d "%~dp0(.*)"/m);
+      return cd !== null && cd[1] !== "..\\..";
+    });
+    expect(wrong).toEqual([]);
+  });
+
+  it("every sibling wrapper call goes through %~dp0", () => {
+    const stale = wrappers.flatMap((f) =>
+      [
+        ...read(join(windowsDir, f)).matchAll(/^call\s+(?!"?%~dp0)(\S*\.bat)/gm),
+      ].map((m) => `${f}: call ${m[1]}`),
+    );
+    expect(stale).toEqual([]);
+  });
+
+  it("no wrapper escapes into scripts/ instead of scripts/windows/", () => {
+    const stray = readdirSync(join(projectRoot, "scripts"))
+      .filter((f) => f.endsWith(".bat") && !SCRIPTS_ROOT_BAT.has(f))
+      .sort();
+    expect(stray).toEqual([]);
+  });
+
+  /**
+   * `npm`/`pnpm`/`npx` resolve to `.cmd` batch files. cmd.exe REPLACES the
+   * running script when one batch file invokes another without `call`, so a
+   * bare `npm ci` ends the wrapper: everything below it — the errorlevel
+   * check, `npm run build`, the stamp write — silently never runs. Every
+   * `eval\*.bat` already uses `call` for this reason.
+   */
+  it("every npm/pnpm/npx invocation goes through `call`", () => {
+    const bare = wrappers.flatMap((f) =>
+      [
+        ...read(join(windowsDir, f)).matchAll(/^\s*(?:npm|pnpm|npx)\s+\S.*$/gm),
+      ].map((m) => `${f}: ${m[0].trim()}`),
+    );
+    expect(bare).toEqual([]);
   });
 });

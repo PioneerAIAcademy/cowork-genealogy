@@ -72,3 +72,12 @@ Each wrapper reimplements its recipe rather than shelling out to `make`, so a
 recipe change has to be made in both places. The wrappers do not reproduce
 make's staleness tracking — `engine-build.bat` reinstalls on a lockfile change
 and otherwise always rebuilds, where make skips work that is already current.
+
+Two rules the guard enforces, because breaking either fails silently:
+
+- Run `npm`, `pnpm` and `npx` through `call` — `call npm ci`, never `npm ci`.
+  They are `.cmd` batch files, and cmd.exe *replaces* the running script when
+  one batch file invokes another without `call`, so every line below a bare
+  `npm ci` is skipped with no error.
+- Call a sibling wrapper by its own location — `call "%~dp0install.bat"`, not
+  `call scripts\install.bat`, which breaks the moment the directory moves.

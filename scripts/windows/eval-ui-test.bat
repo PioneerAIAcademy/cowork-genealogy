@@ -6,8 +6,8 @@ cd /d "%~dp0..\.."
 if not exist "eval\app\node_modules" (
     echo Installing eval-ui deps...
     pushd eval\app
-    npm install
+    call npm install
     popd
 )
 cd eval\app
-npm test
+call npm test
