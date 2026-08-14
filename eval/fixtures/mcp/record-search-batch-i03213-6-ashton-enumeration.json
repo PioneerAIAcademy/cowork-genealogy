@@ -1,0 +1,140 @@
+{
+  "tool": "record_search",
+  "description": "The batch-anchored follow-up: `batchNumber: \"I03213-6\"` sent ALONE, enumerating the Ashton-under-Lyne parish christening extraction. CAPTURED LIVE 2026-08-13, trimmed only by dropping each row's `gedcomx`. Fires on any call carrying that batch (predicate keys are a subset of the actual args), so a skill that wrongly pairs it with recordCountry/recordSubdivision still lands here rather than going unmatched — the pairing is rejected by the real tool's validateInput, and the judge context is what grades it, not fixture dispatch. totalMatches 4045 against returned 6 with hasMore true is verbatim, and is the point: one page is not the batch. A skill that reports the register worked off this single response has misread it.",
+  "args": {
+    "batchNumber": "I03213-6"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "I03213-6",
+      "count": 6
+    },
+    "totalMatches": 4045,
+    "paginationCappedAt": 4999,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NFCY-748",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Sep 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Thomas McAdden",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Thomas McAdden, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KWM",
+        "primaryId": "p_12036523721",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFZD-1BH",
+        "events": [],
+        "treeMatches": [],
+        "personName": "William Hope",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473015",
+        "collectionTitle": "England Marriages, 1538–1973",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473015",
+        "recordTitle": "Entry for William Hope, \"England Marriages, 1538–1973\"",
+        "recordArk": "ark:/61903/1:2:9Q5K-XC1",
+        "primaryId": "p_12036950948",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFZD-BTB",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Christopher Abbot",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473015",
+        "collectionTitle": "England Marriages, 1538–1973",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473015",
+        "recordTitle": "Entry for Christopher Abbot, \"England Marriages, 1538–1973\"",
+        "recordArk": "ark:/61903/1:2:9Q5K-X71",
+        "primaryId": "p_12036950008",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-7VX",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "9 Oct 1831",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anne Bevan",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Bevan, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KDB",
+        "primaryId": "p_12036524054",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-Q78",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "4 Dec 1831",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hannah Ashton Bevan",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Hannah Ashton Bevan, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KMD",
+        "primaryId": "p_12036522761",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-WHG",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Oct 1831",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Thomas Williams",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Thomas Williams, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KKK",
+        "primaryId": "p_12036524662",
+        "batchNumber": "I03213-6"
+      }
+    ]
+  }
+}
