@@ -38,10 +38,23 @@ interface StagingEnvelope {
  * retained. Throws on an I/O failure; the caller treats that as non-fatal
  * (results still returned, `staged: null` + a stagingError note).
  */
-export async function stageSearchResults(args: {
+export async function stageSearchResults<TResponse extends { results?: unknown[] }>(args: {
   projectPath: string;
   tool: string;
-  response: { results?: unknown[] };
+  // Generic, not a closed `{ results?: unknown[] }`. This function persists the
+  // response verbatim (`payload: response` below) and reads only `results`, for
+  // a count — the spec says it "persists exactly what it is handed and knows
+  // nothing about any caller's field names" (search-result-staging-spec.md § 1).
+  // A closed type contradicted that: an object literal carrying the
+  // `query`/`totalMatches` keys every real caller sends failed excess-property
+  // checking. Named interfaces slipped through (they are exempt from that
+  // check), which is why only tests tripped it — and nothing typechecked tests.
+  //
+  // Two rejected alternatives: `Record<string, unknown>` demands an index
+  // signature that interfaces like `FulltextSearchResponse` lack; a bare
+  // `object` compiles but hides `results` from callers that legitimately read
+  // the staged argument back (three external-links-search tests do).
+  response: TResponse;
 }): Promise<StagedHandle | null> {
   const { projectPath, tool, response } = args;
   const results = Array.isArray(response.results) ? response.results : [];

@@ -397,7 +397,20 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             f"the PR.",
         )
         return 1
-    ann = json.loads(ann_path.read_text(encoding="utf-8"))
+    # Guarded because an unparseable annotation used to kill the whole check
+    # with a raw JSONDecodeError traceback — no file named, no rule reported,
+    # every later skill unchecked. Rule 5 catches these corpus-wide before we
+    # get here, so this is the belt to its braces: it keeps a single bad file
+    # from taking the run down if it ever arrives by another route.
+    try:
+        ann = json.loads(ann_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        gh_error(
+            f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
+            f"({exc}). Restore the last valid version from git, or delete it "
+            f"and re-annotate in the CRUD UI — never hand-edit it.",
+        )
+        return 1
     corrections = ann.get("corrections") or []
     # Guard against malformed / hand-written corrections before building the
     # reviewed-set. Annotations must come from the CRUD UI; a hand-edited or
@@ -492,6 +505,51 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
         )
         fails += 1
     return fails
+
+
+def rule5_annotations_parse(runlogs_dir: Path) -> int:
+    """Rule 5 (blocking): every committed unit `.ann.json` is valid JSON.
+
+    Corpus-wide, not per-touched-skill, and deliberately so. Rules 2 + 3 only
+    ever open the *latest* run log's annotation, so a malformed older one is
+    invisible to every check — which is how two files carrying unresolved git
+    conflict markers reached `main` and sat there
+    (`research-plan/v1_2026-08-04_22-21-46`,
+    `search-records/v1_2026-08-06_01-03-04`, both restored in the PR that added
+    this rule).
+
+    Cheap enough to run unconditionally: a few hundred small files, parse only.
+
+    A conflict marker is called out by name because it is the likeliest cause
+    and the least obvious from a bare `JSONDecodeError` — the run-log rename
+    heuristic makes these files collide on any merge where both sides ran the
+    harness (the harness prunes old candidates while adding a new one, and git
+    reads that delete+add pair as a rename).
+    """
+    bad = 0
+    for path in sorted(runlogs_dir.rglob("*.ann.json")):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            gh_error(f"annotation `{rel}` could not be read: {exc}")
+            bad += 1
+            continue
+        if "<<<<<<<" in text or ">>>>>>>" in text:
+            gh_error(
+                f"annotation `{rel}` contains unresolved git conflict markers. "
+                f"Do not hand-edit it: restore the last valid version from git "
+                f"(`git show <commit>:{rel}`), or delete it and re-annotate in "
+                f"the CRUD UI.",
+            )
+            bad += 1
+            continue
+        try:
+            json.loads(text)
+        except json.JSONDecodeError as exc:
+            gh_error(f"annotation `{rel}` is not valid JSON: {exc}")
+            bad += 1
+    return bad
 
 
 def main() -> int:
@@ -627,6 +685,10 @@ def main() -> int:
     if not RUNLOGS_DIR.is_dir():
         print(f"No runlogs directory at {RUNLOGS_DIR}; skipping rules 2 + 3.")
         return 1 if fails else 0
+
+    # Rule 5 sweeps the whole annotation corpus, not just touched skills —
+    # see its docstring for why per-skill scoping is exactly what hid the bug.
+    fails += rule5_annotations_parse(RUNLOGS_DIR)
 
     for skill in sorted(touched_skills):
         skill_dir = RUNLOGS_DIR / skill

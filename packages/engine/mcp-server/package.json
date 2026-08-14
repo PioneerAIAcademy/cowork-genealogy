@@ -12,10 +12,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "pretest": "npm run build && npm run typecheck:dev",
+    "typecheck": "tsc --project tsconfig.typecheck.json",
+    "pretest": "npm run build && npm run typecheck",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck:dev": "tsc --noEmit -p tsconfig.dev.json"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
