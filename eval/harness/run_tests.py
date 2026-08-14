@@ -785,32 +785,60 @@ def main(argv: list[str] | None = None) -> int:
     def _flush_partials() -> None:
         """(Over)write the partial scratch envelope for every skill that has
         at least one completed test. Cheap relative to a minutes-long test;
-        called after each completion and once more on interrupt."""
+        called after each completion and once more on interrupt.
+
+        Never raises. It is called from inside the drain loop, whose `try` only
+        catches KeyboardInterrupt, so anything escaping here would unwind past
+        the summary, the promote-to-scratch block and the return — discarding
+        every finished test into a gitignored dotfile. That is exactly how a
+        single bad `judge_cost_usd` took down a whole suite: `build_run_log`
+        validates, and a schema violation on one test killed the other nine.
+        The save step must not be the thing that loses the work it is saving,
+        so a failure here is recorded and reported, not propagated.
+        """
+        nonlocal harness_error
         by_skill: dict[str, list[dict]] = {}
         for i, sp in enumerate(specs):
             e = results_by_index.get(i)
             if e is not None:
                 by_skill.setdefault(sp.skill, []).append(e)
         for skill, entries in by_skill.items():
-            log = build_run_log(
-                skill=skill,
-                version=None,
-                released=False,
-                releasable=False,
-                invocation=mode,
-                timestamp=invocation_timestamp,
-                harness_version=HARNESS_VERSION,
-                model=DEFAULT_MODEL,
-                judge_prompt_hash=judge_hash,
-                snapshot=_snapshot_for(skill),
-                tests=entries,
-            )
-            partial_paths[skill] = write_partial_runlog(
-                log,
-                runlogs_root=paths.runlogs_root,
-                skill=skill,
-                timestamp=invocation_timestamp,
-            )
+            try:
+                log = build_run_log(
+                    skill=skill,
+                    version=None,
+                    released=False,
+                    releasable=False,
+                    invocation=mode,
+                    timestamp=invocation_timestamp,
+                    harness_version=HARNESS_VERSION,
+                    model=DEFAULT_MODEL,
+                    judge_prompt_hash=judge_hash,
+                    snapshot=_snapshot_for(skill),
+                    tests=entries,
+                )
+                partial_paths[skill] = write_partial_runlog(
+                    log,
+                    runlogs_root=paths.runlogs_root,
+                    skill=skill,
+                    timestamp=invocation_timestamp,
+                )
+            except Exception as e:  # noqa: BLE001 — the save step must not lose the save
+                # Loudly, and on stderr: a silently-skipped partial write looks
+                # identical to a healthy run right up until the results are gone.
+                # Per skill, because one skill's bad entry must not suppress
+                # another's partial — the remaining skills still write below.
+                print(
+                    f"    ✗ HARNESS ERROR writing partial run log for {skill}: "
+                    f"{type(e).__name__}: {e}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                # Recorded so the run reports a failure and exits 1 rather than
+                # claiming success; the existing harness_error path already
+                # promotes whatever partials did land and prints the reason.
+                if harness_error is None:
+                    harness_error = e
 
     def _budget_blocks_next(spec) -> bool:
         """True (and flips stop_submitting) when a suite cap would be

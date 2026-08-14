@@ -1165,8 +1165,10 @@ def test_compute_cost_for_known_model():
     )
     response = SimpleNamespace(usage=usage)
     cost = judge._compute_cost(response, "claude-haiku-4-5-20251001")
-    # 200 fresh input * $1/M + 800 cached * $0.10/M + 500 output * $5/M
-    expected = (200 * 1.0 + 800 * 0.10 + 500 * 5.0) / 1_000_000
+    # 1000 fresh input * $1/M + 800 cached * $0.10/M + 500 output * $5/M.
+    # `input_tokens` already excludes cache reads, so the two token counts are
+    # summed rather than differenced — see the disjointness note in _compute_cost.
+    expected = (1000 * 1.0 + 800 * 0.10 + 500 * 5.0) / 1_000_000
     assert cost == pytest.approx(expected)
 
 
@@ -1584,3 +1586,31 @@ def test_create_message_omits_temperature_when_none():
         grading_tool=judge.GRADING_TOOL, temperature=None,
     )
     assert "temperature" not in client.calls[0]
+
+
+def test_compute_cost_counts_cached_tokens_alongside_input_not_inside_it():
+    """The API reports `input_tokens` and `cache_read_input_tokens` DISJOINTLY —
+    `input_tokens` already excludes cache reads.
+
+    Subtracting `cached` from `input` therefore double-counts the discount, and on
+    a warm cache the fresh-input term goes negative. When the output term is too
+    small to cover it the whole cost goes negative, `judge_cost_usd`'s `minimum: 0`
+    rejects the run log, and the suite dies mid-run having persisted nothing.
+
+    The numbers here are a real shape from the corpus: cache reads exceeding the
+    fresh-input count is the common case, not an edge case — it held on 276 of
+    1870 committed judge draws.
+    """
+    usage = SimpleNamespace(
+        input_tokens=1885,
+        cache_read_input_tokens=5004,
+        output_tokens=939,
+    )
+    response = SimpleNamespace(usage=usage)
+    cost = judge._compute_cost(response, "claude-haiku-4-5-20251001")
+
+    expected = (1885 * 1.0 + 5004 * 0.10 + 939 * 5.0) / 1_000_000
+    assert cost == pytest.approx(expected)
+    # The property the schema enforces, stated directly: every term is a
+    # non-negative count times a non-negative rate, so no clamp is needed.
+    assert cost > 0
