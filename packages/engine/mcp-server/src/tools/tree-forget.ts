@@ -269,40 +269,67 @@ function findFactOwners(tree: SimplifiedGedcomX, factId: string): FactOwner[] {
   return owners;
 }
 
-/**
- * Whether a resolved fact's id ALSO exists on some OTHER owner not being
- * touched by this call — a heads-up that the id is not unique, not a sign
- * anything is wrong; removal is already correctly scoped to (ownerKind,
- * ownerId) regardless (#1574). Null when the id is unique to this owner.
- */
-function noteIfFactShared(
-  tree: SimplifiedGedcomX,
+/** A request to check, later, whether a resolved fact's id ALSO exists on
+ *  some other owner. Deferred rather than resolved on the spot: at the point
+ *  any one selector resolves, the full removal set is not known yet, and an
+ *  "other" owner sharing this id can turn out to be removed too, by a later
+ *  match in the same tree-wide sweep or by a different selector in the same
+ *  call (found by review — checking only against the pre-removal tree named
+ *  an owner as untouched when this same call was also removing its copy). */
+interface PendingFactNotice {
+  ownerKind: OwnerKind;
+  ownerId: string;
+  factId: string;
+  label: string;
+}
+
+function pendingFactNotice(
   ownerKind: OwnerKind,
   ownerId: string,
   factId: string,
   label: string,
-): string | null {
-  const others = findFactOwners(tree, factId).filter(
-    (o) => !(o.kind === ownerKind && o.id === ownerId),
-  );
-  if (others.length === 0) return null;
-  const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
-  return `${label} fact '${factId}' also exists on: ${named}`;
+): PendingFactNotice {
+  return { ownerKind, ownerId, factId, label };
 }
 
-/** noteIfFactShared over a batch of ids resolved for one person — the
+/** pendingFactNotice over a batch of ids resolved for one person — the
  *  `birth-of`/`death-of`/`facts-of`/`parents-of`/`spouses-of` shape, where
  *  every id shares one owner. */
-function notesSharedFactIds(
-  tree: SimplifiedGedcomX,
+function pendingFactNoticesForIds(
   pid: string,
   ids: Iterable<string>,
   label: string,
+): PendingFactNotice[] {
+  const notices: PendingFactNotice[] = [];
+  for (const f of ids) {
+    notices.push(pendingFactNotice("person", pid, f, label));
+  }
+  return notices;
+}
+
+/**
+ * Turns each pending check into a final "also exists on" notice. Called
+ * against the tree AFTER removal is fully applied (persons/relationships
+ * reassigned to their kept sets, matched facts already pruned from every
+ * survivor), so `findFactOwners` only ever finds an owner that genuinely
+ * still has its own copy — an owner also removed this same call, whether by
+ * this selector's own batch or a different one, has already lost its copy
+ * by this point and cannot be named (found by review; see PendingFactNotice
+ * for why this can't be resolved any earlier). Advisory only — removal
+ * above is already correctly scoped regardless (#1574).
+ */
+function resolveFactSharingNotices(
+  tree: SimplifiedGedcomX,
+  pending: readonly PendingFactNotice[],
 ): string[] {
   const notices: string[] = [];
-  for (const f of ids) {
-    const notice = noteIfFactShared(tree, "person", pid, f, label);
-    if (notice) notices.push(notice);
+  for (const { ownerKind, ownerId, factId, label } of pending) {
+    const others = findFactOwners(tree, factId).filter(
+      (o) => !(o.kind === ownerKind && o.id === ownerId),
+    );
+    if (others.length === 0) continue;
+    const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
+    notices.push(`${label} fact '${factId}' also exists on: ${named}`);
   }
   return notices;
 }
@@ -402,10 +429,13 @@ interface Targets {
    *  resolved. */
   facts: Set<string>;
   relationships: Set<string>;
-  /** Advisory only — removal above is already correctly scoped regardless.
-   *  One entry per resolved fact (birth-of/death-of/facts-of) whose literal
-   *  id ALSO exists on a different owner not being touched by this call
-   *  (#1574). */
+  /** One entry per resolved fact (birth-of/death-of/facts-of/parents-of/
+   *  spouses-of/facts-before/facts-after/facts-between) whose literal id
+   *  might also exist on a different owner. Not resolved to a final notice
+   *  until every selector's removals are known (see PendingFactNotice). */
+  pendingFactNotices: PendingFactNotice[];
+  /** Advisory strings already final at the point they're added (e.g. the
+   *  skipped-date count) — these need no later resolution. */
   factSharingNotices: string[];
 }
 
@@ -414,6 +444,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
     persons: new Set(),
     facts: new Set(),
     relationships: new Set(),
+    pendingFactNotices: [],
     factSharingNotices: [],
   };
 
@@ -466,7 +497,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         // Parents/Marriage/Divorce/Annulment fact id is not guaranteed
         // unique to this person either.
         const redundantLabel = kind === "parents-of" ? "Parents" : "Marriage/Divorce/Annulment";
-        t.factSharingNotices.push(...notesSharedFactIds(tree, pid, redundantFactIds, redundantLabel));
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, redundantFactIds, redundantLabel));
         break;
       }
       case "birth-of":
@@ -480,7 +511,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           );
         }
         ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
-        t.factSharingNotices.push(...notesSharedFactIds(tree, pid, ids, factType));
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, ids, factType));
         break;
       }
       case "facts-of": {
@@ -496,7 +527,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           );
         }
         ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
-        t.factSharingNotices.push(...notesSharedFactIds(tree, pid, ids, factType));
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, ids, factType));
         break;
       }
       case "facts-before":
@@ -554,14 +585,9 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           // with birth-of/facts-of's notices, and reads naturally ("Residence
           // fact ... also exists on"), whereas the predicate belongs in the
           // "matched nothing" error above, where restating it explains why.
-          const notice = noteIfFactShared(
-            tree,
-            m.ownerKind,
-            m.ownerId,
-            factId,
-            m.fact.type ?? "Unknown",
+          t.pendingFactNotices.push(
+            pendingFactNotice(m.ownerKind, m.ownerId, factId, m.fact.type ?? "Unknown"),
           );
-          if (notice) t.factSharingNotices.push(notice);
         }
         if (skipped > 0) {
           t.factSharingNotices.push(
@@ -628,7 +654,12 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
  * Remove the targets in place, cascading relationships off removed persons.
  * Returns the redacted summary — how many of what kind went, never a value.
  */
-function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
+interface ApplyForgetResult {
+  removed: TreeForgetRemoved;
+  factSharingNotices: string[];
+}
+
+function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
   // A removed person takes every relationship touching them, or the tree is
   // left with links pointing at people who no longer exist.
   const cascaded = new Set(
@@ -694,11 +725,22 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
   tree.persons = keptPersons;
   tree.relationships = keptRels;
 
+  // Resolved against the tree AS IT NOW STANDS, post-removal — see
+  // resolveFactSharingNotices for why that is the point every pending check
+  // must wait for.
+  const factSharingNotices = [
+    ...resolveFactSharingNotices(tree, t.pendingFactNotices),
+    ...t.factSharingNotices,
+  ];
+
   return {
-    persons: removedPersons,
-    relationships: removedRels,
-    relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
-    factsByType,
+    removed: {
+      persons: removedPersons,
+      relationships: removedRels,
+      relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
+      factsByType,
+    },
+    factSharingNotices,
   };
 }
 
@@ -732,7 +774,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const research = await readJson(projectPath, "research.json");
 
     const targets = resolveSelectors(tree, forget);
-    const removed = applyForget(tree, targets);
+    const { removed, factSharingNotices } = applyForget(tree, targets);
 
     // Validate the WHOLE project before persisting. The realistic failure is a
     // dangling person reference from research.json (person_evidence,
@@ -750,12 +792,9 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       remaining: { persons: persons(tree).length, relationships: relationships(tree).length },
       filesWritten: [],
       restoreFile: null,
-      // factSharingNotices resolved against the PRE-removal tree (targets was
-      // built before applyForget mutated it), which is the only point a fact
-      // still on its "other" owner is visible to check for (#1574).
       validation: {
         valid: true,
-        warnings: [...sanitized.warnings, ...targets.factSharingNotices],
+        warnings: [...sanitized.warnings, ...factSharingNotices],
       },
     };
     if (dryRun) return result;

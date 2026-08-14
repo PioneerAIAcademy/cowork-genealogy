@@ -1190,6 +1190,47 @@ describe("tree_forget", () => {
     const tree = await readTree();
     expect(tree.persons.find((p: any) => p.id === "E1").facts).toEqual([]);
     expect(tree.persons.find((p: any) => p.id === "E2").facts).toEqual([]);
+    // Neither should warn "also exists on" the other: both copies are gone
+    // by the end of this same call, so there is no untouched owner left to
+    // name (found by review — checking only the pre-removal tree would name
+    // each as the other's still-there copy, when both are actually leaving).
+    expect(r.validation.warnings).toEqual([]);
+  });
+
+  it("still warns when the other owner sharing a fact id genuinely survives the call", async () => {
+    // Same shape as above, but E3's copy is dated after the threshold, so it
+    // does not qualify and is never touched. The suppression above must not
+    // over-reach and silence a real, still-true warning.
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1840" }],
+        },
+        {
+          id: "E3",
+          gender: "Female",
+          names: [{ id: "N3", given: "E", surname: "F", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1900" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Residence fact 'SHARED' also exists on: E3/),
+    ]);
+    const e3 = (await readTree()).persons.find((p: any) => p.id === "E3");
+    expect(e3.facts.map((f: any) => f.id)).toEqual(["SHARED"]);
   });
 
   it("a tree-wide date-range selector matches a fact that lives only on a Couple relationship", async () => {
