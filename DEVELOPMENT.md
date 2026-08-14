@@ -32,6 +32,31 @@ After building, both artifacts land in `releases/`:
 ls releases/
 ```
 
+### On Windows
+
+Without Git Bash or WSL there is no `make`. Native `cmd.exe` wrappers for the
+developer targets live in `scripts\windows\` — the same commands, one file per
+target:
+
+```
+scripts\windows\install.bat     REM == make install
+scripts\windows\test-all.bat    REM == make test-all, the pre-PR gate
+```
+
+[`scripts/windows/README.md`](./scripts/windows/README.md) lists all of them.
+Running e2e fixtures, skill evals, and building the shipped artifacts go
+through the double-clickable scripts in `eval\` instead — see
+[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) and
+[docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md).
+
+The wrappers reimplement each recipe rather than shelling out to `make`, so a
+recipe change has to be made in both places. `windows-wrappers.test.ts` (under
+`make engine-test`) checks that every wrapper names a live target, resolves the
+repo root, calls its siblings and `npm`/`pnpm` correctly, and that the index
+matches the directory; it cannot check that the commands still match. Before
+editing a wrapper, read the "Changing these" rules in
+[`scripts/windows/README.md`](./scripts/windows/README.md).
+
 ## Git hooks
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
@@ -648,6 +673,9 @@ A match means the new code is built; no match means the build is stale.
 make test-all        # `./scripts/test.sh` is the same command — the target delegates to it
 ```
 
+On Windows without Git Bash, `scripts\windows\test-all.bat` runs the same
+suites in the same order.
+
 It runs every suite (never stopping at the first failure) and exits non-zero if
 any failed:
 
@@ -661,7 +689,8 @@ any failed:
 | Eval harness | `eval/harness/` | pytest | Harness internals, **including** the `e2e`-marked contract test (a real billed Anthropic call; skips itself with no key) |
 
 To run one suite, use `make engine-test` / `make harness-test` / `make test-js`
-/ `make server-test` / `make eval-ui-test` — see
+/ `make server-test` / `make eval-ui-test` (Windows: the same names under
+[`scripts\windows\`](./scripts/windows/README.md)) — see
 [`docs/architecture.md`](./docs/architecture.md) §9.1 for exactly what each
 covers and misses.
 
