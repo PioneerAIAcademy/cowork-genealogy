@@ -36,3 +36,9 @@ pythonpath = ["."]
 
 [tool.uv]
 package = false
+# Copy instead of hardlink when materialising packages into .venv. OneDrive
+# rejects uv's default hardlinking ("os error 396"), and a partially-synced
+# dist-info then surfaces as an intermittent "Access is denied" (os error 5) on
+# the next `uv run` — which reads like a stray file lock and gets retried away.
+# Full write-up in eval/harness/uv.toml. Costs nothing off OneDrive.
+link-mode = "copy"

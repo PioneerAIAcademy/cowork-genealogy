@@ -63,6 +63,12 @@ disallowedTools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
+  - mcp__genealogy__tree_edit
+  - mcp__remote-devices__Genealogy_Research__tree_edit
+  - mcp__Genealogy_Research__tree_edit
+  - mcp__genealogy__materialize_facts
+  - mcp__remote-devices__Genealogy_Research__materialize_facts
+  - mcp__Genealogy_Research__materialize_facts
 ---
 
 # Record Extractor
@@ -383,11 +389,12 @@ every co-resident / household member** — one per person, exactly as you
 emit each persona's `name` assertion — never only for the head or
 searched persona and then dropped for the rest (setting it on the first
 persona alone is the known failure mode, the same trap called out for
-`record_persona_id`). It matters because `materialize_facts` reads a
-persona's `sex`/`gender` assertions to set the gender of any tree person
-it mints — omit it and every household member, spouse, or relative that
-person-evidence later mints from this record is silently created
-`gender: "Unknown"`, even when the record states the sex plainly.
+`record_persona_id`). It matters because person-evidence's later
+tree-minting step reads a persona's `sex`/`gender` assertions to set the
+gender of any tree person it mints — omit it and every household member,
+spouse, or relative that person-evidence later mints from this record is
+silently created `gender: "Unknown"`, even when the record states the sex
+plainly.
 Classify it with the same three layers as that persona's `name` assertion
 on this record (same informant and proximity; `direct` where the record
 states it outright).

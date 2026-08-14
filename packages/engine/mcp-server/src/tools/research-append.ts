@@ -64,6 +64,13 @@ interface SectionConfig {
 
 const CREATED_DATE = { field: "created", kind: "date" } as const;
 
+/** Fire the "sources without assertions" nudge only once a project has
+ *  accumulated this many sources with still-zero assertions. 1–2 sources before
+ *  any assertion is the normal record-then-extract rhythm; ≥3 with none drawn is
+ *  the reported pathology (issue #1478 bundle 1: 13 sources, 0 assertions).
+ *  Tunable; mirrors research-log-append's `resultsAvailable > 0` warn gate. */
+const SOURCES_WITHOUT_ASSERTIONS_WARN_THRESHOLD = 3;
+
 const SECTIONS: Record<string, SectionConfig> = {
   // Phase 1
   sources: { prefix: "src_" },
@@ -210,6 +217,35 @@ function personEvidenceScoreWarnings(entry: any): string[] {
       `leave match_score null and keep the confidence your correlation analysis supports — do ` +
       `not lower it to silence this. The link was still written — this is a warning, not a rejection.`,
   ];
+}
+
+/** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
+ *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
+ *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
+ *  moment of sourcing and never nags an unrelated write in an already-imbalanced
+ *  project, and self-silences the instant one assertion lands. The `op:"append"`
+ *  gate covers the real reported shape: the composite `sourceDescription` persist
+ *  requires exactly one `sources` append op, while a source-reuse fold converts it
+ *  to `op:"update"` (which does not grow `sources.length`) and is correctly
+ *  skipped. Tool-name neutral on purpose — it also fires for `extraction_append`
+ *  (which routes through researchAppend), whose `record-extractor` caller is
+ *  denied `research_append`, so it must not name a specific write tool. */
+function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): string | null {
+  const appendedSource = applied.some(
+    (a) => a.section === "sources" && a.op === "append" && !a.noop,
+  );
+  if (!appendedSource) return null;
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const assertions = Array.isArray(research.assertions) ? research.assertions : [];
+  if (assertions.length > 0 || sources.length < SOURCES_WITHOUT_ASSERTIONS_WARN_THRESHOLD) {
+    return null;
+  }
+  return (
+    `${sources.length} source(s) recorded but zero assertions drawn from them. ` +
+    `Each source should support at least one assertion extracted from the record ` +
+    `(a name, date, place, or relationship), or you should record why it could not. ` +
+    `Append the assertions this evidence supports before continuing.`
+  );
 }
 
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
@@ -1643,7 +1679,13 @@ export async function researchAppend(
       ).catch(() => {});
     }
 
-    const validationBlock = { valid: true as const, warnings: [...validationWarnings, ...opWarnings] };
+    // Persistence nudge (#1478): sources landing with no assertions drawn.
+    // Non-blocking — rides validation.warnings, never touches `ok`.
+    const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
+    const validationBlock = {
+      valid: true as const,
+      warnings: [...validationWarnings, ...opWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+    };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;

@@ -264,11 +264,19 @@ finding, and finding them is the *first* thing a `decisions` run does:
 ```sh
 # answered, never closed out. Should be EMPTY. Anything here is a session that
 # heard an answer and walked away — fix it now, before preparing new questions.
+#
 # `test` and not `startswith`: a real ruling comment carries a heading above the
 # marker and a number after it, so an exact-prefix match reports zero forever.
+#
+# BOTH WORDS, BOTH MARKUPS. This reads what the LEAD wrote, not what we were
+# told to write. We write `**Ruling:**`; he writes `## Decision:` and
+# `**Decision (lead, <date>)`. A `**Ruling`-only test missed two real rulings on
+# 2026-08-13 (issues #1331, #1394) — and here a miss is silent, because this
+# query reports emptiness as health.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,comments \
-  -q '.[] | select([.comments[].body | test("\\*\\*Ruling")] | any)
+  -q '.[] | select([.comments[].body
+                   | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
       | "#\(.number)  \(.title)"'
 ```
 

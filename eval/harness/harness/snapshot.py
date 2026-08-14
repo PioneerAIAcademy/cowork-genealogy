@@ -171,7 +171,7 @@ def build_snapshot(
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
     _embed_tree(snapshot, tests_dir, repo_root)
 
-    refs = _collect_refs(tests_dir, test_ids)
+    refs = collect_refs(tests_dir, test_ids)
 
     for scenario in sorted(refs["scenarios"]):
         scenario_dir = repo_root / "eval" / "fixtures" / "scenarios" / scenario
@@ -284,7 +284,7 @@ def _embed_tree(snapshot: dict[str, str], directory: Path, repo_root: Path) -> N
         snapshot[rel] = normalize(rel, path.read_bytes())
 
 
-def _collect_refs(
+def collect_refs(
     tests_dir: Path, test_ids: Iterable[str] | None
 ) -> dict[str, set[str]]:
     scenarios: set[str] = set()

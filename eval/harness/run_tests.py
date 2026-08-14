@@ -7,15 +7,19 @@ Selection modes (mutually exclusive except --tag, which repeats):
 
 Exit codes:
   0  every selected test resolved to pass / partial / xfail
-  1  the harness itself crashed, OR any test resolved to fail or xpass
+  1  the harness itself crashed, OR any test resolved to fail or xpass.
+     On a crash, submission stops but every still-running test is allowed to
+     finish, and the completed tests are saved as a partial `scratch_<ts>.json`
+     run log per skill.
   2  any test was aborted for a test-corpus reason
      (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
      that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error)
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
-     saved as a partial `scratch_<ts>.json` run log per skill; in-flight
-     tests are terminated and discarded. Conventional 128 + SIGINT(2).
+     saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
+     are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
+     their results are discarded. Conventional 128 + SIGINT(2).
 
 Note on unmatched tool calls (Phase 2):
   - Type 1 (tool doesn't exist): aborts with unmatched_tool_call (exit 2)
@@ -394,6 +398,21 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
     print(f"  transient retries {retries} across {tests_with_retry} test(s)")
 
 
+#: Warning kinds `judge._extract_dimensions` owns — the judge breaking one of
+#: its own prompt rules. `output.warnings` also carries harness-side advisories
+#: from `orchestrator._build_warnings` (`unread_skill_call`,
+#: `missing_tool_usage_dimension`, `uncovered_tool_call`) which are about the
+#: skill or the fixtures, not the judge; those are deliberately not tallied
+#: here. A new kind added in judge.py must be added here too, or it prints
+#: nowhere — which is the state this whole section exists to end.
+_JUDGE_WARNING_KINDS = frozenset({
+    "dropped_unknown_rubric_dimension",
+    "dropped_unknown_base_dimension",
+    "dropped_duplicate_dimension",
+    "coerced_tool_arguments_to_na",
+})
+
+
 def _print_summary(rows: list[dict]) -> None:
     print()
     print(f"{'TEST ID':<40} {'SKILL':<24} {'OUTCOME':<10} REASON")
@@ -405,6 +424,7 @@ def _print_summary(rows: list[dict]) -> None:
         )
     print()
     _print_outcome_counts(rows)
+    _print_judge_warnings(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -432,6 +452,40 @@ def _print_outcome_counts(rows: list[dict]) -> None:
         reasons = Counter(r.get("reason") or "unrecorded" for r in rows if r["outcome"] == "aborted")
         detail = ", ".join(f"{n}x {reason}" for reason, n in reasons.most_common())
         print(f"  aborted reasons: {detail}")
+
+
+def _print_judge_warnings(rows: list[dict]) -> None:
+    """Tally the judge's own rule violations, per kind, per test.
+
+    These reach `output.warnings` in the run log and, until now, nowhere a
+    human looks — which makes them useless for exactly the purpose they
+    were added for. #1401's complaint is that an invented dimension cannot
+    be trended; a warning nobody reads does not fix that, and #1406 adds a
+    second kind with the same problem. Print them at the end of a run,
+    next to the outcomes, so a judge that stops following its own prompt
+    is visible without opening a 1 MB JSON file.
+
+    Counts are per TEST, not per occurrence, and the number shown is the
+    length of the same set the names come from. A headline that counts
+    occurrences beside a list that dedupes tests reads as "N tests" and
+    means something else, and the mismatch is invisible until you count
+    the names yourself.
+    """
+    by_kind: dict[str, set[str]] = {}
+    for row in rows:
+        for kind in row.get("judge_warning_kinds") or []:
+            by_kind.setdefault(kind, set()).add(row["test_id"])
+    if not by_kind:
+        return
+    total = sum(len(v) for v in by_kind.values())
+    print(f"Judge rule violations ({total} test-kind pair(s), {len(by_kind)} kind(s)):")
+    for kind in sorted(by_kind):
+        tests = sorted(by_kind[kind])
+        shown = ", ".join(tests[:6])
+        more = len(tests) - 6
+        print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
+    print("  Full advisories are in each run log's output.warnings.")
+    print()
 
 
 def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
@@ -805,12 +859,14 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 inflight[fut] = (idx, spec)
 
-        # A single Ctrl-C terminates the in-flight tests (the terminal
-        # delivers SIGINT to the whole process group, including the `claude`
-        # subprocesses each worker is blocked on) and unwinds here. We catch
-        # it so the completed results that _flush_partials() already wrote
-        # survive, instead of crashing past the save step. A second Ctrl-C
-        # during the shutdown join re-raises and exits via __main__.
+        # A single Ctrl-C unwinds here: the terminal delivers SIGINT to the
+        # whole process group, including the `claude` subprocesses each worker
+        # is blocked on. It does NOT terminate the in-flight tests — #1016
+        # watched them run to completion on Windows while the parent waited
+        # (see the shutdown call below, which cannot cancel a running future).
+        # We catch it so the completed results that _flush_partials() already
+        # wrote survive, instead of crashing past the save step. A second
+        # Ctrl-C during the shutdown join re-raises and exits via __main__.
         try:
             _fill()
             while inflight:
@@ -874,19 +930,30 @@ def main(argv: list[str] | None = None) -> int:
             interrupted = True
             stop_submitting = True
             print(
-                "\n  ! interrupted (Ctrl-C) — terminating in-flight tests and "
-                "saving completed results...",
+                "\n  ! interrupted (Ctrl-C) — saving completed results. "
+                "In-flight tests are not cancelled; this waits for them.",
                 file=sys.stderr,
                 flush=True,
             )
-            # Drop not-yet-started tests; in-flight worker subprocesses already
-            # got SIGINT from the terminal and are exiting. Don't wait on them.
+            # Drops not-yet-STARTED tests only. `cancel_futures=True` cannot
+            # cancel a future that is already running, and `wait=False` does not
+            # get us out either: the enclosing `with` block joins the pool on
+            # exit regardless. So in-flight tests run to completion and this
+            # returns after them — #1016 measured ~2 minutes on Windows. Their
+            # results are then discarded, because nothing reads those futures.
+            #
+            # The previous comment here claimed the opposite ("already got
+            # SIGINT and are exiting. Don't wait on them"), which is what made
+            # the wait look like a hang rather than the documented behavior.
             ex.shutdown(wait=False, cancel_futures=True)
             _flush_partials()
 
-    # A harness exception is fatal regardless of the other results.
-    if harness_error is not None:
-        return 1
+    # A harness exception used to return 1 right here, before the summary and
+    # before the partial promotion below — so a crash on test 23 of 24 threw
+    # away all 22 finished tests into a gitignored `.partial_` dotfile nothing
+    # surfaced, while a Ctrl-C in the identical state kept them (#943). It now
+    # falls through to the shared save-and-report block, which is safe: nothing
+    # between here and there writes a run log.
 
     # Rebuild per-skill entries + summary rows in selection order (completion
     # order is nondeterministic under concurrency). Specs skipped by a budget
@@ -911,6 +978,23 @@ def main(argv: list[str] | None = None) -> int:
                     if entry["outcome"] == "aborted" and entry.get("runs")
                     else ""
                 ),
+                # Judge-rule violations for _print_judge_warnings. The
+                # advisories themselves stay in the run log; the summary
+                # only needs to say which kinds fired and where.
+                #
+                # Filtered to judge-owned kinds. `output.warnings` is a
+                # shared list — orchestrator._build_warnings also puts
+                # `unread_skill_call`, `missing_tool_usage_dimension` and
+                # `uncovered_tool_call` in it, and none of those is the
+                # judge misbehaving. Tallying them under a "Judge rule
+                # violations" header would report a routine unmatched tool
+                # call as a judge fault.
+                "judge_warning_kinds": [
+                    w.get("kind")
+                    for r in entry.get("runs") or []
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    if w.get("kind") in _JUDGE_WARNING_KINDS
+                ],
             }
         )
 
@@ -923,14 +1007,26 @@ def main(argv: list[str] | None = None) -> int:
         print("Some tests skipped due to suite-level budget cap.")
     if interrupted:
         print("Run interrupted with Ctrl-C — keeping the tests that finished.")
+    if harness_error is not None:
+        print(
+            "Run stopped by a harness error — keeping the tests that finished. "
+            f"({type(harness_error).__name__}: {harness_error})"
+        )
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
 
-    # Interrupted run: the completed tests are already in the partial dotfiles.
-    # Promote each to a recognized (gitignored) scratch run log the CRUD UI can
-    # open, then exit 130. We never write a releasable v{N} from a partial run.
-    if interrupted:
+    # Cut short, either way: the completed tests are already in the partial
+    # dotfiles. Promote each to a recognized (gitignored) scratch run log the
+    # CRUD UI can open, name the path, and stop. We never write a releasable
+    # v{N} from a run that did not finish.
+    #
+    # Exit code: the crash wins when both hold. A harness error stops
+    # submission but the drain loop keeps going with no shutdown call, so an
+    # operator watching a crashed suite sit there presses Ctrl-C and sets both
+    # — and "the harness broke" is the more actionable of the two facts. This
+    # also preserves the pre-#943 code, which returned 1 for that state.
+    if interrupted or harness_error is not None:
         promoted = False
         for skill, pp in partial_paths.items():
             if pp.exists():
@@ -938,8 +1034,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  → wrote {_format_path(sp)} (partial)")
                 promoted = True
         if not promoted:
-            print("  (no tests finished before the interrupt — nothing to save)")
-        return 130
+            print("  (no tests finished — nothing to save)")
+        return 1 if harness_error is not None else 130
 
     # --- Write one run log per skill --------------------------------------
     written_paths: list[Path] = []

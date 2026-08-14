@@ -1,0 +1,39 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranks the single Ackerman 1860 census hit against subject I1 and carries relativeTerms onto the stub, plus the relativeTermNote the ranker emits when any RETURNED match is spouse-absent. Covers the second consumer: the note exists because matchScore measures name/date/place agreement and never looks at the relationship, so a record merely CONSISTENT with Catherine can top the ranking and read as best-evidenced. Text matches buildRelativeTermNote's output for one absent spouse. Pairs with record-search-ackerman-1860-spouse-absent.",
+  "args": {
+    "subjectId": "~I1"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "relativeTermNote": "Of the 1 matches returned, 1 name no spouse (`relativeTerms`). The match score does not account for this — it measures name, date and place agreement only. Those records are CONSISTENT with the relative you searched for, not evidence of them, so do not write them up as confirming the relationship.",
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "M7QZ-8KD",
+        "primaryId": "P1",
+        "personName": "George Ackerman",
+        "sex": "Male",
+        "birthDate": "about 1818",
+        "birthPlace": "Pennsylvania, United States",
+        "collectionTitle": "United States Census, 1860",
+        "candidateFactCount": 2,
+        "recordArk": "https://www.familysearch.org/ark:/61903/1:1:M7QZ-8KD",
+        "matchScore": 0.9412,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
+      }
+    ]
+  }
+}
