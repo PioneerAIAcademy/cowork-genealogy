@@ -40,6 +40,19 @@ does belong to Victoriano Macatangay (`GV6J-VZC`), and the three draft
 findings (father José, mother Bernardina Cabrera, additional son Miguel)
 are confirmed as written.
 
+**Ark note:** this one baptismal record has a separate persona-ark for
+every person in it. `6664-TBR7` is Victorino Macatangay's own persona —
+the one FamilySearch's hint targeted, which is why the fixture cites it.
+`6664-TBRQ` is Miguel's persona (the child being baptized), which
+FamilySearch's own auto-generated citation uses as the record's
+default reference — so a compliant agent run may cite `6664-TBRQ`
+instead. Confirmed live (`record_read`, see
+`eval/runlogs/e2e/victoriano-macatangay-parents/run-2026-08-13_23-24-54.json`):
+both arks share the same source document
+(`https://www.familysearch.org/ark:/61903/1:2:413C-YC2Q`) and the same
+underlying image. They are not two different records — one document,
+two people's personas within it.
+
 The record is unusually structured for this batch — rather than a simple
 parent-child baptismal entry, it carries several
 `http://familysearch.org/types/relationships/Grandparent` relationship
