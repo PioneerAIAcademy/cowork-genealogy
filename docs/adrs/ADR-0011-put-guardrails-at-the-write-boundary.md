@@ -94,7 +94,11 @@ measured rather than argued.
    researcher from finishing correct work with no way around it, while a wrong
    allow leaves us exactly where we already are. Check only what is mechanically
    checkable, scope it conservatively, and write down what it knowingly lets
-   through.
+   through. #1572 applied this to the write gate itself: validating the whole
+   project and refusing every writer tool on a pre-existing drifted section —
+   even a call that never touched it — was a false deny reaching the researcher,
+   so the gate now blocks only on errors the call introduces
+   (`validation/introduced-errors.ts`).
 2. **Satisfiability is a precondition, not a follow-up.** State which call shape
    satisfies the gate and how often agents actually produce it, *before*
    shipping the deny. ADR-0009's sixth `same_person` constraint disqualified a

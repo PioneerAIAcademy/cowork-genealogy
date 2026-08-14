@@ -20,7 +20,7 @@ import type {
 } from "../types/merge-warnings.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "./person-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -72,7 +72,10 @@ export async function mergeWarnings(
     //     would reject is surfaced here as { ok: false } rather than reported
     //     as clean. research.json is read but never written.
     const research = await readProjectJson(projectPath, "research.json");
-    const validation = await validateParsed(research, merged, { projectPath });
+    // Dry-run: the before-project is the on-disk (research, tree); the after is
+    // (research, merged). A drift-only failure the merge did not introduce thus
+    // resolves to { ok: true } with the drift as a warning (#1572).
+    const validation = await validateIntroduced({ research, tree }, { research, tree: merged }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }

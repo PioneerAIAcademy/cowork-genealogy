@@ -958,7 +958,10 @@ search tool → disk → log-append and never round-trips through the model**
 `research_append` (and its lane-scoped variant `extraction_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
-memory and write nothing on failure.** The tools assign all ids; callers never
+memory and block only on errors the call itself introduces** — pre-existing
+schema drift in a section the call does not touch is demoted to a warning rather
+than freezing the write (`validation/introduced-errors.ts`); a call that
+introduces an error still writes nothing. The tools assign all ids; callers never
 predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the

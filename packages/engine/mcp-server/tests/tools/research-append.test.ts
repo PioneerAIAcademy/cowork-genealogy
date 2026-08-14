@@ -113,6 +113,30 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  it("a pre-existing unrelated drift does not block a write; it rides as a warning (#1572)", async () => {
+    // `project` carries a legacy additionalProperties key this call never touches
+    // (the call updates an assertion). Before #1572 the whole-document validation
+    // froze the write; now it succeeds and the drift is surfaced as a warning.
+    const research = baseResearch();
+    (research.project as any).legacy_field = "legacy drift";
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { date: "1850" },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/pre-existing/);
+    expect(r.validation.warnings.join(" ")).toMatch(/legacy_field/);
+    // the update landed
+    expect((await readResearch()).assertions.find((a: any) => a.id === "a_001").date).toBe("1850");
+  });
+
   // Same class as record_search's recordType: `SECTIONS[section]` and
   // `EXAMPLES[section]` walk the prototype chain, so "constructor" indexed out
   // `Object` — truthy, so `!config` failed to reject — and the rejection path
