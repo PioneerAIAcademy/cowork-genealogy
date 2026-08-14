@@ -195,8 +195,8 @@ never rediscover it.
 List every person mentioned and assign a `record_role`:
 - Naming convention: `head_of_household`, `wife`, `child_1`, `child_2`,
   `deceased`, `informant`, `father_of_bride`, `mother_of_groom`,
-  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`.
-  Number roles sequentially.
+  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`,
+  `consent_signer_1`. Number roles sequentially.
 - Negative evidence uses `absent` — the exact string, lowercase, no
   prefix or qualifier. Never invent variants (`subject_absent`,
   `not_listed`, `missing`): downstream validators and skills key off the
@@ -242,6 +242,29 @@ List every person mentioned and assign a `record_role`:
   child. Neighbors, friends, pallbearers, and caregivers named in an
   obituary are FAN associates (`neighbor_1`, `friend_1`) — never role them
   as kin without a stated relationship.
+
+- **Marriage records — capture marriage order and consent, not just the
+  couple.** Both settle a bride's surname, which is otherwise an unsound
+  assumption:
+  - **Order / prior status.** A `marital_status` assertion per party
+    whenever the record designates one — "second marriage", "previously
+    married", "widow", "widower", or a marital-status column reading
+    anything other than single. `direct` when stated. A prior-marriage
+    designation means a woman's recorded surname may be a **former
+    husband's**, not her parents' — capture the designation so the
+    downstream surname question has the evidence, and never silently treat
+    her recorded surname as her birth surname.
+  - **Parental consent signer.** When consent for an underage party is
+    signed, role the signer `consent_signer_1` and give them a mandatory
+    `name` assertion. Record the relationship **as stated**. A signer whose
+    surname differs from the party's is evidence of a **stepfather or
+    guardian**, not the father — never assert `father_of_bride` /
+    `father_of_groom` from a consent signature alone.
+  - **The consent signature is usually on the reverse of the license and is
+    usually absent from the index.** Look for it on the image. When it is
+    not there, that is **absence of evidence** — record it as such
+    (`record_role: "absent"`, per the negative-evidence rule) and never
+    read silence as evidence that the parents shared the party's surname.
 
 **Extraction policy (BCG Standard 27):** extract all facts relevant to
 any open research question, plus identifying facts (name, age/birth,
