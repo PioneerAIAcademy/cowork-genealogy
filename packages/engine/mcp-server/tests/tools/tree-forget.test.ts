@@ -112,6 +112,90 @@ describe("tree_forget", () => {
     expect(tree.relationships.map((x: any) => x.id)).toEqual(["R6", "R7"]);
   });
 
+  it("parents-of also strips the subject's own `Parents` documentary fact", async () => {
+    // FamilySearch carries parentage twice — as ParentChild links AND as a
+    // `Parents` fact on the child's record (issue #1314). This is a real FS
+    // person-level fact type, not a fixture invention: confirmed in the
+    // feedback-2026-08-03T15-36-45 session log, in a `person_read` RESULT (so
+    // upstream output, not a value the agent wrote) carrying an FS-native UUID
+    // fact id — `{ type: "Parents", value: "Geo[illegible] Wilcox - Caroline E
+    // Woodruff" }` on GRNX-DFF, and the same type on GRN6-4MQ. The zip is not
+    // in the repo, so that log is the only place this can be re-checked; the
+    // committed corpus has zero `Parents` facts.
+    // Add that fact to I1.
+    const tree: any = family();
+    tree.persons[0].facts.push({
+      id: "FP",
+      type: "Parents",
+      date: "1850",
+      value: "Michael Ryan - Mary Doyle",
+    } as any);
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // The relationships still go as before, and the `Parents` fact goes too.
+    expect(r.removed.persons).toBe(2);
+    expect(r.removed.factsByType).toEqual({ Parents: 1 });
+
+    const after = await readTree();
+    const i1 = after.persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.type)).not.toContain("Parents");
+    // No parent name leaked into the redacted result.
+    expect(JSON.stringify(r)).not.toContain("Michael");
+    expect(JSON.stringify(r)).not.toContain("Doyle");
+  });
+
+  it("parents-of succeeds on a `Parents` fact alone, with no parent relationship", async () => {
+    // The reported case: the established parents were never added as tree
+    // persons — the parentage survives ONLY as a `Parents` fact. parents-of
+    // must still succeed here rather than erroring "matched nothing" (#1314).
+    const tree: any = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Caroline", surname: "Wilcox", preferred: true }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1839", primary: true },
+            { id: "FP", type: "Parents", date: "1839", value: "Geo Wilcox - Caroline Woodruff" },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    };
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed).toMatchObject({ persons: 0, relationships: 0, factsByType: { Parents: 1 } });
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toEqual(["F1"]);
+  });
+
+  it("parents-of still errors when there is neither a parent link nor a `Parents` fact", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      // I5 is only a spouse: no parent links, no `Parents` fact.
+      forget: [{ selector: "parents-of", personId: "I5" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
+  });
+
   it("children-of removes the child and its link", async () => {
     await writeProject(family());
     const r = await treeForget({
@@ -136,6 +220,102 @@ describe("tree_forget", () => {
     const tree = await readTree();
     expect(tree.persons.map((p: any) => p.id)).not.toContain("I5");
     expect(tree.relationships.map((x: any) => x.id)).not.toContain("R6");
+  });
+
+  it("spouses-of also strips the subject's own person-level `Marriage` fact", async () => {
+    // FamilySearch carries a marriage twice — as the Couple relationship's own
+    // facts AND as a `Marriage` fact on the subject's record (issue #1417).
+    // Both present here: I1 has the Couple link to I5 and a person-level fact.
+    const tree: any = family();
+    tree.persons[0].facts.push({ id: "FM", type: "Marriage", date: "1875", place: "Cork" } as any);
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // The spouse and couple relationship still go, and the person-level
+    // `Marriage` fact goes too.
+    expect(r.removed.persons).toBe(1);
+    expect(r.removed.factsByType).toEqual({ Marriage: 1 });
+
+    const after = await readTree();
+    expect(after.persons.map((p: any) => p.id)).not.toContain("I5");
+    const i1 = after.persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.type)).not.toContain("Marriage");
+    // No spouse name or marriage value leaked into the redacted result.
+    expect(JSON.stringify(r)).not.toContain("Ellen");
+    expect(JSON.stringify(r)).not.toContain("Walsh");
+    expect(JSON.stringify(r)).not.toContain("1875");
+  });
+
+  it("spouses-of succeeds on a person-level `Marriage` fact alone, with no couple relationship", async () => {
+    // The reported case: the spouse was never added as a tree person — the
+    // marriage survives ONLY as a `Marriage` fact on the subject. spouses-of
+    // must still succeed here rather than erroring "matched nothing" (#1417).
+    const tree: any = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Patrick", surname: "Ryan", preferred: true }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1850", primary: true },
+            { id: "FM", type: "Marriage", date: "1875", value: "Ellen Walsh" },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    };
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed).toMatchObject({ persons: 0, relationships: 0, factsByType: { Marriage: 1 } });
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toEqual(["F1"]);
+  });
+
+  it("spouses-of also sweeps person-level `Divorce` and `Annulment` facts", async () => {
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FD", type: "Divorce", date: "1890" } as any,
+      { id: "FA", type: "Annulment", date: "1892" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Divorce: 1, Annulment: 1 });
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.type)).not.toContain("Divorce");
+    expect(i1.facts.map((f: any) => f.type)).not.toContain("Annulment");
+  });
+
+  it("spouses-of still errors when there is neither a spouse link nor a marriage-class fact", async () => {
+    await writeProject(family());
+    const r = await treeForget({
+      projectPath: dir,
+      // I4 is a sibling only: no couple relationship, no Marriage/Divorce/Annulment fact.
+      forget: [{ selector: "spouses-of", personId: "I4" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
   });
 
   it("birth-of removes only the Birth fact and never cascades", async () => {
