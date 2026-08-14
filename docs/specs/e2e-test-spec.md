@@ -479,8 +479,9 @@ the suite isn't N variations of the same shape:
 | `geography` | Country (`US`) or US state/county (`US-VA`, `US-NY-Albany`) |
 
 Authors may add more tag dimensions as the suite grows
-(`record_type`, `ambiguity_level`, etc.). The roll-up report (§9)
-groups results by each dimension.
+(`record_type`, `ambiguity_level`, etc.). Tags are cross-run reporting
+metadata consumed by `make e2e-corpus` (§9); the per-invocation console
+roll-up does not display them (§7.4 blind-grading constraint).
 
 ---
 
@@ -997,7 +998,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `4` for the shape above — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**; at `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1115,13 +1116,26 @@ Three integrity rules make the agreement number trustworthy:
   crash becomes committable, a run can be ungraded *and* worth committing for
   re-grading, so the two are reported on their own lines.
 
-  > **Caveat on annotations collected before 2026-07-31.** Until then the
-  > harness printed the judge's verdict *and* its `proof_quality` score to the
-  > console the moment a run finished. Any `.ann.json` written by someone who
-  > watched their own run was drawn with the judge's answer already on screen —
-  > `proof_quality_score` most directly, since the console printed the very
-  > number the annotator then records. Treat pre-2026-07-31 proof-quality
-  > agreement as an upper bound, not a clean measurement.
+  > **Caveat on annotations collected before this change merged.** The roll-up has
+  > printed verdict-bearing output since the harness's first commit
+  > (`git show d371694a:eval/harness/e2e/report.py`). On 2026-07-31, the
+  > separation of compliance from verdict removed the per-run verdict print
+  > but left the end-of-suite roll-up intact — recall summary, overall gate,
+  > and by-tag breakdowns all restated the verdict. Blind-grading enforcement —
+  > the change this section describes — is what removes those lines, so the
+  > cut-off is the date **it merges**, not any earlier one: the roll-up kept
+  > printing verdicts until then, and annotations kept arriving meanwhile. Any
+  > `.ann.json` committed before that merge was drawn with some form of the
+  > verdict on screen.
+  > `calibrate_judge` does not exclude these rows; the bias is accepted and
+  > ages out as new blind annotations replace them.
+  >
+  > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
+  > when the combined gate fails (fail/skipped/ungraded) and zero when it
+  > passes (pass/partial), so with compliance clean, the exit code leaks
+  > the verdict in both directions. The exit code is retained because a
+  > batch shell loop has no other signal for failure. This is a known,
+  > accepted residual — not a bug to fix.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
@@ -1246,7 +1260,33 @@ their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
 fourth check is gated on reading that shadow fire rate across the corpus first**
 — not decided here.
 
-**A fifth check runs in shadow mode only: the warnings guardrail was never
+**A fifth check runs in shadow mode only: a conclusion relies on a resolved
+conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
+`harness/skill_invocation.py`) reads the final `research.json` and, for each
+written `proof_summaries` conclusion, flags a question whose
+`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
+(positive resolution language, not merely the absence of "no conflict" wording —
+a required field that is always populated would otherwise default to firing) that
+**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
+on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
+resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
+stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
+exists at all). A resolved conflict that exists but is linked to nothing fires
+only when the stop-criterion names a `c_` id that is not resolved; when it names
+no id, an existing resolved entry silences the check. So read the count as **"no
+resolved conflict backs this conclusion"** — every firing on the committed corpus
+today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
+viewer's Conflicts section stayed blank because nothing structured was persisted.
+Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
+`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
+entries carry `kind: "conflict_unpersisted"` for their own bucket
+(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
+structured field, so it ships shadow-first; **promotion to a hard check — or to a
+`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
+written — is gated on reading the fire rate across the corpus first**, not decided
+here.
+
+**A sixth check runs in shadow mode only: the warnings guardrail was never
 consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
 (in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
@@ -1295,11 +1335,18 @@ means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
 is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
 for. `3` closes that. So:
 
-| Log reads | Has `is_error`? |
-|---|---|
-| `3` | yes — unambiguous |
-| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** |
-| `2` before `4541a4c5`, `1`, or absent | no |
+| Log reads | Has `is_error`? | What `is_error: false` means |
+|---|---|---|
+| `4` | yes — unambiguous | did not throw **and** did not return `{ok: false}` |
+| `3` | yes — unambiguous | did not throw; a **returned** `{ok: false}` still reads false here |
+| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** | as `3` |
+| `2` before `4541a4c5`, `1`, or absent | no | — |
+
+**The `3` → `4` boundary moves far more than the `2` → `3` one.** Widening
+`is_error` to cover returned failures makes ~657 previously-invisible calls
+visible across the measured corpus — three orders of magnitude more than the ~1
+entry above — so the argument below for not splitting the corpus by version rests
+on the `2` → `3` figure and does **not** carry to this boundary.
 
 Zero logs sit in that ambiguous row today — the 555 committed runs are
 `{absent: 551, 1: 4}`, and none carries `is_error` — but the window is open
@@ -1317,19 +1364,22 @@ carry an error-shaped result, across 66 of the 145 runs — but **none is a `sam
 tools no gate keys on, which the detectors already skipped via `owning_skills`
 returning empty. Entries any of the five gates would actually shed: **one
 errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
-is a correctness statement, not a warning of a large shift: every shadow-window
-and provenance number on this page moves by ~1 entry across the whole corpus.
-`is_error` is also
-blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
-a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
-is why the shift is this small.
+is a correctness statement, not a warning of a large shift: measured movement is
+~1 entry in 555 runs. `is_error` *was* also blind to a writer tool that returns
+`{ok:false}` without throwing, until dispatch began marking those as errors; it
+remains blind to a skill that launches and then fails
+(`guardrail-enforcement-spec.md` §7), which is why the shift is this small. Runs
+recorded before that change carry the old classification, and are
+`HARNESS_SCHEMA_VERSION` 3 — the structural tell for it.
 
 **`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
 version.** With the delta measured at ~1 entry, a v-split would add a column
-that always reads zero. Revisit only if #1282 lands (writer-tool failures become
-visible) or the corpus accumulates errored `same_person`/`Skill` calls. Window
-calibration is not a pending task at all — see
-`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see."
+that always reads zero. Returned-but-not-thrown writer failures are now visible
+in `is_error`, so that delta will grow as version-4 runs accumulate —
+re-measure before relying on the ~1-entry figure above, and revisit the v-split
+then, or if the corpus accumulates errored `same_person`/`Skill` calls. Window
+calibration is not a pending task at all — see `guardrail-enforcement-spec.md`
+§7, "What the success gate can and cannot see."
 
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
@@ -1492,26 +1542,19 @@ change before diffing across it — see §15, "Evidence to read, in order", step
 ## 9. Roll-up Report
 
 At the end of a `run_e2e.py` invocation the harness prints a console summary of
-the run. The roll-up is shaped to aggregate across fixtures — grouping by the
-`tags` dimensions — because it also serves a shell loop that runs several
-fixtures back to back (§6: there is no built-in sweep):
+the run. Only **compliance** and **cost/duration** are shown — verdict-bearing
+lines (recall summary, overall gate, by-tag breakdowns) are deliberately
+omitted to preserve blind grading (§7.4):
 
 ```
-E2E suite: 1/1 recall pass
   compliance: 0/1 clean — 1 guardrail bypass (isabel-carvajal-daughter)
-  overall gate: 0/1 pass
-  by question_type:  parents 1/1
   avg cost: $3.40 / run     avg wall-clock: 28 min / run
 ```
 
-The recall line, the compliance line and the gate line are always all three
-printed — a silent compliance line puts us back to one number meaning two
-things (§7.2.1).
-
-**This roll-up is per-invocation, and an invocation is one fixture** (§6:
-there is no built-in sweep), so it always reports `n/1`. The by-tag
-breakdowns exist for a shell loop that runs several fixtures back to back,
-but each iteration prints its own roll-up — the loop does not aggregate.
+The compliance line is always printed — a silent compliance line puts us back
+to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+gate, by-tag) are available via `make e2e-corpus` (below), which reads
+committed run logs and is not part of the grading path.
 
 For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in

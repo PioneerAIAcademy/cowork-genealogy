@@ -34,10 +34,11 @@
     "volume-search-schuylkill"
   ],
   "judge_context": [
-    "The plan must include at least one FAN-pivot item: a search that targets associates, neighbors, or witnesses rather than Patrick Flynn directly. Examples: census neighbors sharing the Flynn surname in 1850, witnesses on Thomas Flynn's documents, fellow parishioners mentioned in church burial or baptism records near Flynn entries.",
-    "Each FAN item's rationale must explain the FAN connection — how this person or record type expands the evidence network to address the parentage question.",
-    "The plan should NOT repeat record types already covered in the first plan (1850 census, death certificate). New plan items must add new evidence pathways.",
-    "Sequencing: FAN searches that require a prior source to complete (e.g., finding a witness name from a death certificate before searching for that witness) should reflect that dependency in their rationale or sequence."
+    "Background on what the test author was looking for. None of it is a dimension. Grade what it describes inside the dimensions you were given, and do not add one named after anything below.",
+    "The author expected at least one FAN-pivot item, meaning a search aimed at associates, neighbors or witnesses rather than at Patrick Flynn directly. Census neighbors sharing the Flynn surname in 1850, witnesses on Thomas Flynn's documents, and fellow parishioners near Flynn entries in church burial or baptism records are all examples of that shape.",
+    "The author also expected each FAN item's rationale to explain the FAN connection, so a reader can see how that person or record type widens the evidence network around the parentage question. A FAN item with no stated connection is thinner than one that has it.",
+    "The first plan already covered the 1850 census and the death certificate. The author's intent was that new items open new evidence pathways rather than repeat those two record types.",
+    "On sequencing: some FAN searches depend on a prior source finishing first — finding a witness name on a death certificate, for instance, before searching for that witness. The author expected that dependency to show up in the rationale or in the ordering."
   ],
   "judge_reads_files": true,
   "execution": {

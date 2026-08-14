@@ -187,11 +187,33 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 **Which changes mark a skill "touched"** (rules 2 + 3) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
 
+**Fixture arm of rule 2 (warn-only).** A run log's snapshot embeds the
+`eval/fixtures/scenarios/<name>/**` and `eval/fixtures/mcp/<name>.json` files
+its tests referenced, so editing a shared fixture invalidates the snapshot of
+every skill whose tests reference it — yet a fixture edit does not touch those
+skills' dirs, so rules 2/3 never fired and the stale run log passed green
+(#987/#1094). `check_runlogs.py` now maps a changed fixture to its referencing
+skills — `skills_referencing_fixtures`, resolving a scenario by **directory
+name** (a test's `input.scenario`) and an mcp fixture by **bare name**, i.e.
+`.json` stripped (a bare entry in a test's `mcp_fixtures[]`) — and emits a
+`::warning::` for each whose latest run log is now stale. This arm is
+**warn-only: it never blocks** (`rule2_fixture_touched`). Blocking was
+rejected: ~20 of ~25 skills' latest run logs are already stale on `main` from
+prior fixture drift, and `mid-research-flynn` alone is referenced by 20 skills,
+so the first fixture-only PR under a blocking gate would fire a ~$160–240 /
+20-annotation re-run wave — and the cheapest way out would be
+`eval-cosmetic-skip`, which is documented for behavior-neutral edits only. A
+gate too expensive to satisfy trains people to bypass it on exactly the edits
+that are *not* neutral, which is worse than no gate. Blocking only on *new*
+staleness (warning the pre-existing baseline, blocking a fixture edit that
+newly breaks a previously-active skill) is the named target end-state; it needs
+a frozen-baseline anchor not yet designed, tracked as #1242.
+
 The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). **The bypass expires on every new push**, so it can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed.
 
 That expiry is decided **from the event, not from the label**: on a `synchronize` the workflow sets `COSMETIC_SKIP=0` without reading the labels API at all. Deciding it this way needs no write token, which is what makes it hold on a PR from a fork. The label *is* still removed on a push — by `.github/workflows/cosmetic-skip-strip.yml`, a separate `pull_request_target` workflow — but only so the PR's UI matches; nothing enforcing rule 2 depends on it. Until 2026-07-31 the removal was the enforcement, done inside `check-runlogs.yml` and then re-read; on a fork PR that job holds a read-only token, so the removal 403'd, `|| true` swallowed it, and the bypass silently survived every later push. Don't reintroduce a label read on the `synchronize` path. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
-**Orchestrator-skill exemption.** Skills listed in `RUNLOG_GATE_EXEMPT_SKILLS` in `check_runlogs.py` are dropped from the per-skill rules (2 + 3). These are orchestrator skills (currently `research`) validated by e2e GPS fixtures rather than unit tests, so by design they have no `eval/tests/unit/<skill>/` scaffolding and no `eval/runlogs/unit/<skill>/` dir. Without the exemption a skill-body edit hard-fails with "no run logs", and `eval-cosmetic-skip` can't clear it (that label only relaxes rule 2 *after* a runlog dir exists). Adding a unit suite for such a skill later means removing it from the set.
+**Orchestrator-skill exemption.** Skills listed in `RUNLOG_GATE_EXEMPT_SKILLS` in `check_runlogs.py` are dropped from the per-skill rules (2 + 3). These are orchestrator skills (currently `research`) validated by e2e GPS fixtures rather than unit tests, so by design they have no `eval/tests/unit/<skill>/` scaffolding and no `eval/runlogs/unit/<skill>/` dir. Without the exemption a skill-body edit hard-fails with "no run logs", and `eval-cosmetic-skip` can't clear it (that label only relaxes rule 2 *after* a runlog dir exists). The exemption is keyed on directory existence, not name (the `exempt_suiteless` filter in `main`): a skill in the set that later gains an `eval/tests/unit/<skill>/` dir stops being exempt automatically, so adding a unit suite arms the gate with no second edit to the set — pruning the now-suited entry is optional tidiness.
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 

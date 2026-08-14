@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -21,6 +22,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
@@ -55,7 +57,26 @@ const validAssertion = (id: string, sourceId = "src_001") => ({
   extracted_for_question_ids: [],
 });
 
-function baseResearch() {
+// Explicitly typed: with a bare `return { ... }` TypeScript infers every
+// empty-array field as `never[]`, so a test that later assigns a real entry
+// (`research.person_evidence = [{ ... }]`) fails to assign to `never`. The
+// arrays are heterogeneous fixture shapes rather than the strict schema types,
+// so `Record<string, unknown>[]` is the honest annotation — it says "objects,
+// shape checked by the validator under test", which is what these fixtures are.
+function baseResearch(): {
+  project: Record<string, unknown>;
+  questions: Record<string, unknown>[];
+  plans: Record<string, unknown>[];
+  log: Record<string, unknown>[];
+  sources: Record<string, unknown>[];
+  assertions: Record<string, unknown>[];
+  person_evidence: Record<string, unknown>[];
+  conflicts: Record<string, unknown>[];
+  hypotheses: Record<string, unknown>[];
+  timelines: Record<string, unknown>[];
+  proof_summaries: Record<string, unknown>[];
+  evaluations: Record<string, unknown>[];
+} {
   return {
     project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
@@ -130,7 +151,7 @@ describe("research_append (Phase 1)", () => {
     const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("src_002");
+    expect(singleOk(r).entryId).toBe("src_002");
     expect(r.filesWritten).toEqual(["research.json"]);
     const research = await readResearch();
     expect(research.sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
@@ -152,7 +173,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.ok, `${supplied} should append`).toBe(true);
       if (!r.ok) continue;
       const research = await readResearch();
-      const persisted = research.sources.find((s: any) => s.id === r.entryId);
+      const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
   });
@@ -161,7 +182,7 @@ describe("research_append (Phase 1)", () => {
     await writeProject();
     const { id: _omit, ...assertionNoId } = validAssertion("x", "src_001");
     const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: assertionNoId });
-    expect(r.ok && r.entryId).toBe("a_002");
+    expect(r.ok && singleOk(r).entryId).toBe("a_002");
   });
 
   it("normalizes a GedcomX date object ({original}) on an appended assertion to a plain string", async () => {
@@ -179,7 +200,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const appended = (await readResearch()).assertions.find((a: any) => a.id === r.entryId);
+    const appended = (await readResearch()).assertions.find((a: any) => a.id === singleOk(r).entryId);
     expect(appended.date).toBe("~1818");
   });
 
@@ -226,7 +247,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok, `${supplied} should append`).toBe(true);
       if (!r.ok) continue;
-      const persisted = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const persisted = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(persisted.fact_type, `${supplied} → ${expected}`).toBe(expected);
     }
   });
@@ -250,7 +271,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
@@ -266,7 +287,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
@@ -297,7 +318,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("pe_001");
+    expect(singleOk(r).entryId).toBe("pe_001");
     const pe = (await readResearch()).person_evidence[0];
     expect(pe.person_id).toBe("I1");
     expect(typeof pe.created).toBe("string"); // tool-stamped
@@ -322,7 +343,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("loc_001");
+    expect(singleOk(r).entryId).toBe("loc_001");
     const loc = (await readResearch()).localities[0];
     expect(loc.place).toBe("Norway");
     expect(loc.source).toBe("locality-guide");
@@ -336,7 +357,7 @@ describe("research_append (Phase 1)", () => {
     await writeProject(research);
     const { id: _omit, ...sourceNoId } = validSource("x");
     const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
-    expect(r.ok && r.entryId).toBe("src_004");
+    expect(r.ok && singleOk(r).entryId).toBe("src_004");
   });
 
   it("updates a field on an existing entry, preserving the id", async () => {
@@ -367,7 +388,7 @@ describe("research_append (Phase 1)", () => {
       op: "append",
       entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "stronger match", superseded_by: null },
     });
-    expect(appended.ok && appended.entryId).toBe("pe_002");
+    expect(appended.ok && singleOk(appended).entryId).toBe("pe_002");
 
     const superseded = await researchAppend({
       projectPath: dir,
@@ -509,7 +530,7 @@ describe("research_append (Phase 2)", () => {
     await writeProject();
     const { id: _o, created: _c, ...q } = validQuestion("x");
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
-    expect(r.ok && r.entryId).toBe("q_002");
+    expect(r.ok && singleOk(r).entryId).toBe("q_002");
     const created = (await readResearch()).questions.find((x: any) => x.id === "q_002").created;
     expect(typeof created).toBe("string");
   });
@@ -546,7 +567,7 @@ describe("research_append (Phase 2)", () => {
     await writeProject();
     const { id: _o, ...plan } = validPlan("x", "q_001", "active");
     const first = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan });
-    expect(first.ok && first.entryId).toBe("pl_001");
+    expect(first.ok && singleOk(first).entryId).toBe("pl_001");
 
     const { id: _o2, ...plan2 } = validPlan("y", "q_001", "active");
     const second = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
@@ -584,7 +605,7 @@ describe("research_append (Phase 2)", () => {
       planId: "pl_001",
       entry: validPlanItem(),
     });
-    expect(r.ok && r.entryId).toBe("pli_001");
+    expect(r.ok && singleOk(r).entryId).toBe("pli_001");
     const items = (await readResearch()).plans[0].items;
     expect(items).toHaveLength(1);
     expect(items[0].id).toBe("pli_001");
@@ -601,7 +622,7 @@ describe("research_append (Phase 2)", () => {
   it("appends a fact conflict referencing two assertions", async () => {
     await writeProject();
     const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry: validConflict() });
-    expect(r.ok && r.entryId).toBe("c_001");
+    expect(r.ok && singleOk(r).entryId).toBe("c_001");
   });
 
   it("rejects resolving a conflict without the resolution analysis fields", async () => {
@@ -757,7 +778,7 @@ describe("research_append (Phase 3)", () => {
       op: "append",
       entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [] },
     });
-    expect(r.ok && r.entryId).toBe("t_001");
+    expect(r.ok && singleOk(r).entryId).toBe("t_001");
     const t = (await readResearch()).timelines[0];
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
@@ -778,7 +799,7 @@ describe("research_append (Phase 3)", () => {
         narrative_markdown: "## Conclusion\n...",
       },
     });
-    expect(r.ok && r.entryId).toBe("ps_001");
+    expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
@@ -889,7 +910,7 @@ describe("research_append (Phase 3)", () => {
         narrative_markdown: "## Conclusion\n...",
       },
     });
-    expect(r.ok && r.entryId).toBe("ps_001");
+    expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
   it("does not re-trigger the tier guardrail on an unrelated update to an already-proved entry", async () => {
@@ -942,7 +963,7 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("ev_001");
+    expect(singleOk(r).entryId).toBe("ev_001");
     expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
   });
 
@@ -954,7 +975,7 @@ describe("research_append (Phase 3)", () => {
       op: "append",
       entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
     });
-    expect(r.ok && r.entryId).toBe("kh_001");
+    expect(r.ok && singleOk(r).entryId).toBe("kh_001");
     const kh = (await readResearch()).known_holdings[0];
     expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
   });
@@ -984,7 +1005,7 @@ describe("research_append (project singleton section)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("project"); // singleton echoes the section name
+    expect(singleOk(r).entryId).toBe("project"); // singleton echoes the section name
     expect(r.filesWritten).toEqual(["research.json"]);
     const research = await readResearch();
     expect(research.project.status).toBe("completed");
@@ -2462,7 +2483,7 @@ describe("research_append — person_evidence epistemic gate", () => {
     await write(researchWith([uncertain("a_010", "rec_A")]));
     const r = await researchAppend(link("a_010", "confident"));
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/uncertain reading/i);
+    expect(failure(r).errors?.join(" ")).toMatch(/uncertain reading/i);
   });
 
   it("allows 'probable' on the same uncertain, uncorroborated reading", async () => {
@@ -2712,7 +2733,7 @@ describe("research_append — worked examples are themselves valid", () => {
           }
         : {}),
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
   });
 
@@ -2735,7 +2756,7 @@ describe("research_append — worked examples are themselves valid", () => {
       },
     } as any);
     expect(r.ok).toBe(false);
-    const joined = (r.errors ?? []).join("\n");
+    const joined = (failure(r).errors ?? []).join("\n");
     expect(joined).toMatch(/worked example for 'evaluations'/);
     expect(joined).toMatch(/file_path/);
   });
@@ -2812,7 +2833,7 @@ describe("research_append — evaluations verdict composite", () => {
       entry: pointer(),
       verdict: VERDICT,
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
 
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -2838,7 +2859,7 @@ describe("research_append — evaluations verdict composite", () => {
       verdict: VERDICT,
     } as any);
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/use one/i);
+    expect(failure(r).errors?.join(" ")).toMatch(/use one/i);
   });
 
   it("rejects verdict on a non-evaluations section", async () => {
@@ -2860,7 +2881,7 @@ describe("research_append — evaluations verdict composite", () => {
       verdict: VERDICT,
     } as any);
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/only valid on an `evaluations` append/);
+    expect(failure(r).errors?.join(" ")).toMatch(/only valid on an `evaluations` append/);
   });
 
   // The failure mode the composite exists to prevent: a rejected call must not
@@ -2886,7 +2907,7 @@ describe("research_append — evaluations verdict composite", () => {
       op: "append",
       entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
   });
 });
@@ -3007,5 +3028,84 @@ describe("research_append — negative evidence role invariant", () => {
       ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
     });
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("research_append — sources-without-assertions nudge (#1478)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-1478-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A project with n sources and m assertions, all valid. Sources carry
+  // gedcomx_source_description_id "SD-001" (present in baseTree), which also
+  // keeps source-reuse auto-detection from engaging on the appended source —
+  // reuse needs a source append with NO S id plus an assertion in the same
+  // batch (§3.4.1), neither of which these single-source appends do.
+  const researchWith = (nSources: number, nAssertions: number) => ({
+    ...baseResearch(),
+    sources: Array.from({ length: nSources }, (_, i) => validSource(`src_${String(i + 1).padStart(3, "0")}`)),
+    assertions: Array.from({ length: nAssertions }, (_, i) =>
+      validAssertion(`a_${String(i + 1).padStart(3, "0")}`, "src_001"),
+    ),
+  });
+  const write = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const WARN = /source\(s\) recorded but zero assertions drawn from them/;
+  const warned = (warnings: string[]) => warnings.some((w) => WARN.test(w));
+
+  it("warns when a source lands leaving ≥3 sources and 0 assertions — and never blocks", async () => {
+    await write(researchWith(3, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // never blocks: the source still persisted
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(4);
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn, "expected the sources-without-assertions warning").toBeTruthy();
+    expect(warn).toContain("4 source(s)"); // post-write total, not the batch count
+  });
+
+  it("stays silent below the threshold (2 sources, 0 assertions)", async () => {
+    await write(researchWith(1, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent when any assertion already exists", async () => {
+    await write(researchWith(5, 1));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag an unrelated write that adds no source", async () => {
+    await write(researchWith(5, 0));
+    const { id: _o, created: _c, ...q } = validQuestion("x");
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("fires through extraction_append with a tool-neutral message", async () => {
+    await write(researchWith(3, 0));
+    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn).toBeTruthy();
+    // record-extractor is denied research_append — the nudge must not name it
+    expect(warn).not.toContain("research_append");
   });
 });

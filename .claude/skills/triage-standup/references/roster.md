@@ -18,9 +18,16 @@ routes review authority by: `senior-genealogists` owns skills, agents, eval
 fixtures/tests/runlogs and `docs/`; `senior-developers` owns the code and
 infrastructure paths.
 
-**It is review authority only — never an assignment tier.** A senior developer
-still takes work from the junior pool and works with Claude Code. The lead is
-the only person `fill-ready` assigns senior-required *work* to.
+**The `Senior` column is review authority.** A senior developer still takes work
+from the junior pool and works with Claude Code, so being on the list is not a
+promotion out of that pool.
+
+**It is also who a `senior`-labeled issue goes to.** The lead takes no issues at
+all, so senior-required work is handed to a senior in its own lane — a
+`developer`+`senior` issue to a `senior-developers` member, a
+`genealogist`+`senior` issue to a `senior-genealogists` member. `fill-ready`
+labels those and reports the queue; it sets no assignee on anything, and the lead
+hands them out at standup.
 
 Everyone in this table is expected to post a standup update, seniors included —
 the two who are not are listed under "Does not post standup" below.
@@ -28,7 +35,7 @@ the two who are not are listed under "Does not post standup" below.
 | Key | Posts as | GitHub | Role | Senior |
 |---|---|---|---|---|
 | christopher | Christopher Edeson | `chrisedeson` | developer | |
-| mercy | Mercy Okum | `mercyokum` | genealogist | |
+| mercy | Mercy Okum | `mercyokum` | genealogist | **senior** |
 | israel | Israel, Israel Ayomikun Asimi | `Asimi1234` | developer | |
 | florence | Florence Taburu | `florencemashipei` | genealogist | **senior** |
 | tife | Tife | `T-FEH` | developer | **senior** |
@@ -70,10 +77,11 @@ roster gap.
 ## What a senior genealogist's approval means
 
 **It is a genealogical-quality signal, not just a process step.** When a fixture
-or adjudication PR carries an approval from any of the five — Clorinda,
-Shaunese, Florence, John, or Edmund — that is a stronger claim than an ordinary
-teammate's. It cuts both ways: when one of them approves something that turns
-out wrong, that is a finding about the doctrine, not just about the author.
+or adjudication PR carries an approval from any of the six — Clorinda,
+Shaunese, Florence, John, Edmund, or Mercy — that is a stronger claim than an
+ordinary teammate's. It cuts both ways: when one of them approves something
+that turns out wrong, that is a finding about the doctrine, not just about the
+author.
 
 ## Known identity quirks
 

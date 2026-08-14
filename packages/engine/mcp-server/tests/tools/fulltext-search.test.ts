@@ -324,9 +324,14 @@ describe("fulltextSearchTool error propagation", () => {
         throw new Error("no body");
       },
     });
-    const err = await fulltextSearchTool({ keywords: "Flynn" }).catch(
+    const settled = await fulltextSearchTool({ keywords: "Flynn" }).catch(
       (e) => e as Error
     );
+    // Assert it actually rejected before reading `.message`. Without this the
+    // union `FulltextSearchResponse | Error` is never narrowed, and a run that
+    // wrongly RESOLVED would compare `undefined` against the regex and pass.
+    expect(settled).toBeInstanceOf(Error);
+    const err = settled as Error;
     expect(err.message).toMatch(/rejected the query \(400\)/);
     expect(err.message).not.toContain("Detail:");
   });

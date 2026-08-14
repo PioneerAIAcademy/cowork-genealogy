@@ -51,6 +51,7 @@ def test_feedback_context_and_drive_upload(monkeypatch):
             json={
                 "sessionId": sid, "email": "Tester@Example.com",
                 "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
+                "workedAsExpected": True,
             },
         )
         assert r.status_code == 200 and r.json()["ok"] is True
@@ -72,6 +73,8 @@ def test_feedback_context_and_drive_upload(monkeypatch):
         assert meta["schema_version"] == 1
         assert meta["platform"] == "web"
         assert meta["user_prompt"] == "x"
+        # Read from the body, not the False default — proves the field is plumbed.
+        assert meta["worked_as_expected"] is True
 
         client.delete(f"/api/sessions/{sid}")
 

@@ -3,6 +3,7 @@
 
 import type { SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
+import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 
 export interface FSDisplay {
@@ -185,6 +186,8 @@ export interface RecordSearchInput {
 
   collectionId?: string;
   imageGroupNumber?: string;
+  /** IGI batch number, e.g. `M01048-5`. Sent as `q.batchNumber`. */
+  batchNumber?: string;
   recordCountry?: string;
   recordSubdivision?: string;
   recordType?: string;
@@ -241,6 +244,12 @@ export interface RecordSearchResult {
   // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
   // `same_person` as primaryId1/primaryId2.
   primaryId?: string;
+  // Whether the relative(s) the caller anchored the search on are actually
+  // named on this record. Present only when a relative NAME was supplied.
+  // Survives the staged slim block that strips `gedcomx`, which is the point:
+  // without it a father-anchored hit that names no father is indistinguishable
+  // from one that confirms him (#1324).
+  relativeTerms?: RelativeTerms;
 }
 
 export interface RecordSearchToolResponse {

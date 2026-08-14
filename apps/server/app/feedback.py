@@ -282,6 +282,11 @@ class FeedbackBody(BaseModel):
     email: str = ""
     userPrompt: str = ""
     agentDid: str = ""
+    # The "Did it work as expected?" answer. Defaults False so a malformed request
+    # (a client omitting it) surfaces as a bug for triage rather than a silent
+    # positive; the viewer always sends a real value. Bypasses _norm — it is a bool,
+    # not text, and _norm's .strip()/len() would raise.
+    workedAsExpected: bool = False
     agentShouldHave: str = ""
     # Ground truth, when the agent reached a *wrong conclusion* rather than just
     # working badly. Optional and always shown in the UI — the app can't tell
@@ -328,6 +333,7 @@ def _feedback_markdown(
     project_label: str,
     session_log: bool,
     viewer_version: str,
+    worked_as_expected: bool,
     dropped: list[str] | None = None,
     redacted_living: int = 0,
 ) -> str:
@@ -338,6 +344,7 @@ def _feedback_markdown(
         f"- **When:** {submitted_at}",
         f"- **Viewer version:** {viewer_version}",
         f"- **Project:** {project_label}",
+        f"- **Worked as expected:** {'Yes' if worked_as_expected else 'No'}",
         "",
         "## What I asked",
         "",
@@ -346,11 +353,11 @@ def _feedback_markdown(
         "## What the agent did",
         "",
         f["agentDid"],
-        "",
-        "## What it should have done",
-        "",
-        f["agentShouldHave"],
     ]
+    # Omitted on a positive report and when a bug reporter didn't know the ideal
+    # behavior (both send it empty) — the "Worked as expected" line carries the signal.
+    if f["agentShouldHave"]:
+        parts += ["", "## What it should have done", "", f["agentShouldHave"]]
     if f["correctAnswer"]:
         parts += ["", "## The correct answer, and the evidence for it", "", f["correctAnswer"]]
     if f["notes"]:
@@ -426,6 +433,7 @@ async def submit_feedback(
         "project_folder_path": body.sessionId,  # web analog of the local folder
         "user_prompt": fields["userPrompt"],
         "agent_did": fields["agentDid"],
+        "worked_as_expected": body.workedAsExpected,
         "agent_should_have": fields["agentShouldHave"],
         "correct_answer": fields["correctAnswer"],
         "notes": fields["notes"],
@@ -446,6 +454,7 @@ async def submit_feedback(
                 project.title,
                 bool(session_log),
                 viewer_version,
+                body.workedAsExpected,
                 dropped,
                 redacted_living,
             ),

@@ -1,0 +1,2238 @@
+{
+  "schema_version": 3,
+  "skill": "project-status",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-08-11_19-00-27",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "30747842dbdfcdff202d93d99ea66de1c10b451448690694462a40baa86d2a3e",
+  "snapshot": {
+    "packages/engine/plugin/skills/project-status/references/conclusion-readiness.md": "c5fc68f6865c0990aa8e5a7755b430f313326c07a06e5287f9ba99bb58a57365",
+    "packages/engine/plugin/skills/project-status/references/project-exhaustiveness.md": "d4d8233ad53a2259442355d02c021da0b936a2bf7b6fd728ac0659c8d28a0233",
+    "packages/engine/plugin/skills/project-status/SKILL.md": "bab8fc9d64c6d3cb6bd190c9be05f4426484c59211f042bcebdc8bbb78657358",
+    "eval/tests/unit/project-status/blocked-by-conflicts.json": "eef89abb7f7827686bd1828fdcb88cff9bf83bac277e4847fc1bcaa41f4a254e",
+    "eval/tests/unit/project-status/both-summaries.json": "22270c874227e2f6b7eba218189f611131c70f2958a3a15c9d7e73f4ad53ebcf",
+    "eval/tests/unit/project-status/broken-fk-person-evidence.json": "415a12843111f65722831f7983eb2d1b8773fc215d48c4b0ad3a8b01eff92309",
+    "eval/tests/unit/project-status/broken-fk-subject-timeline.json": "75a000660ce846b17ebdd507945f05d54cf590554ad21bdbbdcfc835af85e7e0",
+    "eval/tests/unit/project-status/completed-project-summary.json": "71939554108a844a6a51429fe679e7730d45c80e552e012fd8bd447b9afd88b3",
+    "eval/tests/unit/project-status/empty-folder-redirects-to-init.json": "b7c882263faa68818036163bf95fa00125fe4435d9217bd5cf7fc8196f597867",
+    "eval/tests/unit/project-status/mid-project-summary.json": "72cdb6731d2e1d7d1e353c0c70184a218e3f0a20a0a868db85fe3c8eedc05e22",
+    "eval/tests/unit/project-status/negative-execute-step.json": "7e28bf81c5d1ec0443a27503f132e350b8cf4d0556ac9cf0ec3f116ef19d2d63",
+    "eval/tests/unit/project-status/negative-proof-writing.json": "b87376871942b1a31b9917ee3214999bfda7f861d1bab5fcbdb013883a50f37a",
+    "eval/tests/unit/project-status/negative-question-selection.json": "534f808a950a6c39f67341a6828cc1fd69f8fcbb3cfc4071a868b80a83e53943",
+    "eval/tests/unit/project-status/rubric.md": "92d1b2567d0bae8b63a6aeba1e182b6112b3be40a7d9229efc1708676f782d30",
+    "eval/tests/unit/project-status/stale-plan.json": "cd095ad69fa5d02b79cc1d7b448474bff858cc821585130c00c60ea46f4dfe18",
+    "eval/fixtures/scenarios/empty-folder-no-project/README.md": "1cdd34da59a1860660fd904b5752dc2e232102b1471c3df6d2951c26dda285cb",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "7bcab5f17b9f0a9fc2b42486736cf8667f2c8980de25b28bba88119b3d5e2341",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "68aa353547bc9645c44ab08aa836e005255edc52e60c3e3d4b0168fc2f1b9a2c",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-resolved/README.md": "ac925a6fc1693e61f8b3238313289aa0c1227df574179a8b44bdd58bff3a622b",
+    "eval/fixtures/scenarios/flynn-resolved/research.json": "249c12e761a8428b05573d4b6c25e38217ad6b178921ed19e0607f940e9b8380",
+    "eval/fixtures/scenarios/flynn-resolved/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "4edb212273a8162dcf646b1ea43c54b774f0f885cc20f37b748ba523b16ded22",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "8ec8f1927ff467c125a40c1e40ad66f452739526f4121b346f29626f192f4c9d",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk/README.md": "4a8cb0460eb97b07d3668cb37130e5b31e0f548521a41e8c325c20aebc694e95",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk/research.json": "b5b870f297896a38f5c4a93fa6c37aabf1b9fc9bed07cbe3c8e0a04f312e9498",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk/tree.gedcomx.json": "ada4613fd3d3482cec928dd6ac74290c9b373bf86c70ccebab8008652aa4d45b",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk-refs/README.md": "ccf45bc3c73940b08575672e39447c7c132a10d8f7bf1e24beadbfc1f463b41a",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk-refs/research.json": "742f58bbbf588ed24d1cbba2ed738c6b69e6e876dc130305c1934397dd2179bb",
+    "eval/fixtures/scenarios/mid-research-flynn-broken-fk-refs/tree.gedcomx.json": "ada4613fd3d3482cec928dd6ac74290c9b373bf86c70ccebab8008652aa4d45b",
+    "eval/fixtures/scenarios/mid-research-flynn-stale-plan/README.md": "372d0600d017c5b2a89284570c3ec38d5d62166e8673c01560d91bcdb5cade0e",
+    "eval/fixtures/scenarios/mid-research-flynn-stale-plan/research.json": "594200671ce1988bf3153208be917c17877e1b6991f091697cd0e9a5b97e0958",
+    "eval/fixtures/scenarios/mid-research-flynn-stale-plan/tree.gedcomx.json": "ada4613fd3d3482cec928dd6ac74290c9b373bf86c70ccebab8008652aa4d45b"
+  },
+  "tests": [
+    {
+      "test_id": "ut_project_status_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-multi-conflict",
+      "mcp_fixtures": [],
+      "outcome": "partial",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "partial"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The skill's narrative and GPS-state summary are factually accurate regarding the research state, sources, and conflicts. However, there is a critical data integrity issue flagged by the skill itself: src_001 and src_002 both map to gedcomx_source_description_id S1, which the skill correctly identifies as a potential problem. More significantly, the skill notes that ps_001 lists c_001 in resolved_conflict_ids while c_001 is marked unresolved in the conflicts section \u2014 this is a real contradiction in the input state that the skill correctly surfaces. The skill does not fabricate material, but the existence of this unresolved contradiction in the persisted state (which the skill accurately reports) represents a correctness issue with the underlying project data that the skill appropriately flags rather than ignores."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: it provided both a narrative summary and a detailed GPS-state report covering all GPS elements (questions, plans, search log, evidence, conflicts, hypotheses, conclusions, timeline). It explicitly named both c_001 (birthplace fact conflict) and c_002 (identity conflict) as blockers of q_001, distinguished their types (fact vs. identity), reported on all 4 sources, 13 assertions, 5 log entries, 1 hypothesis, and the active plan. Empty sections were noted (e.g., speculative person links = 0). The skill did not silently omit any required coverage."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this execution. The skill read the existing research.json and tree.gedcomx.json state and produced a summary without invoking any tools. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Completeness of summary",
+            "score": 3,
+            "rationale": "The skill reported on all GPS elements present in the research state: questions (q_001, q_002 with statuses), plans (pl_002 with 3 items and their statuses), search log (5 entries with counts of positive/negative outcomes), evidence (4 sources with classification and counts), conflicts (c_001 and c_002 both explicitly named and described), hypotheses (h_001 with supporting/contradicting assertions), and conclusions (ps_001 with readiness assessment). Empty sections were explicitly noted (e.g., 'Speculative person links: 0'). No GPS element was silently omitted."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "All counts and statuses match the input state: 4 sources (3 original, 1 derivative), 13 assertions (2 primary, 2 secondary, 9 indeterminate), 5 log entries (4 positive, 1 nil), 3 confident person links, 3 probable person links, 2 unresolved conflicts, 1 resolved question (q_002), 1 in-progress question (q_001), 1 hypothesis, 1 active plan with 3 items (2 completed, 1 in progress). The skill correctly reports c_001 and c_002 as both unresolved and both blocking q_001. The 48-year gap (1860\u20131908) is accurately identified. The skill's integrity warnings about the shared GEDCOM source ID and the ps_001/c_001 discrepancy are factually correct observations about the input state."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "The skill provided a specific, well-reasoned next step: 'Resolve conflict c_002 first (identity)' with clear reasoning that the identity of Patrick Flynn must be established before parentage can be concluded, and that searching 1870/1880/1900 census records would anchor the identity and potentially resolve the birthplace conflict simultaneously. This recommendation is grounded in the actual research state (two Patrick Flynns of similar age in 1850, the 48-year gap, and the two open conflicts) and explains why this step is prioritized over others."
+          },
+          {
+            "source": "rubric",
+            "name": "Both summaries present",
+            "score": 3,
+            "rationale": "The skill produced both required outputs: (1) a plain-language narrative summary ('The Story So Far') that explains the research in conversational terms, the evidence found, the two open issues, and the 48-year gap without GPS jargon; and (2) a detailed GPS-state summary with structured tables covering project status, research questions, GPS element status, log statistics, sources, assertions, conflicts, hypotheses, timeline, exhaustiveness assessment, and conclusion readiness. The two summaries serve distinct audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists \u2014 and are clearly separated."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 225187.9170000002,
+        "duration_api_ms": 284801.0,
+        "judge_duration_ms": 14467.712900000151,
+        "wall_clock_ms": 242768.97025108337,
+        "num_turns": 11,
+        "input_tokens": 921,
+        "cached_input_tokens": 154274,
+        "output_tokens": 7226,
+        "judge_input_tokens": 5371,
+        "judge_cached_input_tokens": 4235,
+        "judge_output_tokens": 1270,
+        "skill_cost_usd": 0.24538169999999998,
+        "judge_cost_usd": 0.0079095,
+        "total_cost_usd": 0.2532912
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_003_2026-08-11_19-00-27_0",
+          "outcome": "partial",
+          "aborted_reason": null,
+          "duration_ms": 225187.9170000002,
+          "duration_api_ms": 284801.0,
+          "num_turns": 11,
+          "skill_attempts": 1,
+          "input_tokens": 921,
+          "cached_input_tokens": 154274,
+          "output_tokens": 7226,
+          "skill_cost_usd": 0.24538169999999998,
+          "output": {
+            "text_response": "Now I have everything I need. Let me check one integrity detail \u2014 `src_002` shares a GEDCOM source ID with `src_001`.\n\n---\n\n## The Story So Far\n\n**Who we're researching:** Patrick Flynn, born about 1845, died 12 March 1908 in Schuylkill County, Pennsylvania. The goal is to identify his parents.\n\n**What we've found:** Three records point toward the same candidate father:\n\n1. **1850 census** \u2014 Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn in Schuylkill County. The two censuses available (1850 and 1860) don't state relationships \u2014 that column wasn't added until 1880 \u2014 but his position and shared surname strongly suggest a parent-child relationship.\n2. **1860 census** \u2014 Patrick (now 15) is still in Thomas Flynn's household in the same county, consistent with the 1850 enumeration.\n3. **1908 death certificate** \u2014 Patrick's death certificate names \"Thomas Flynn\" as his father. The catch: the informant was James Brown, Patrick's son-in-law, who was reporting what he was told \u2014 not something he witnessed firsthand.\n\n**The evidence strongly suggests Patrick was Thomas Flynn's son**, but we're not at \"proved\" yet, and two open issues need to be cleared up first:\n\n- **Who exactly was this Patrick Flynn?** Two Patrick Flynns of similar age appear in Schuylkill County in 1850 (one in household 84, age 5; one in household 197, age 6). We haven't yet established that the Patrick in Thomas's household is the same person who died in 1908.\n- **Where was he born?** The 1850 and 1860 censuses say **Ireland**; the 1908 death certificate says **Pennsylvania**. These conflict, and the contradiction needs a formal resolution (the census-era records are likelier to be right, since the son-in-law reporting in 1908 had no firsthand knowledge of an event 63 years prior \u2014 but this needs to be written up).\n\nThere's also a significant **48-year gap** in the record (1860\u20131908): no marriage record, no 1870/1880/1900 census entries, no land or probate records yet. A search of Thomas Flynn's probate/will records is currently underway.\n\n**What's next:** Settle the identity question (c_002 \u2014 is this the right Patrick Flynn?), then formally resolve the birthplace conflict (c_001). After that, search the 1870, 1880, and 1900 censuses to fill the 48-year gap and look for Thomas Flynn in probate records \u2014 a will naming Patrick as a son would significantly strengthen the conclusion.\n\n---\n\n## Detailed GPS-State Summary\n\n### Project\n**Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908, Schuylkill County, PA)\n**Status:** Active | 1 of 2 questions resolved\n\n---\n\n### \u26a0\ufe0f Integrity Warnings\n\n1. **`src_001` and `src_002` share `gedcomx_source_description_id = \"S1\"`** in `tree.gedcomx.json`. These are two different sources (FamilySearch original vs. Ancestry derivative index), but they both map to the same GEDCOM source node. If intentional (treating them as the same underlying original), this should be noted; if unintentional, `src_002` needs its own GEDCOM source entry.\n\n2. **`ps_001` lists `c_001` in `resolved_conflict_ids`**, but `c_001` is still marked `\"status\": \"unresolved\"` in the conflicts section. The proof summary was apparently written while the conflict was open \u2014 the narrative addresses the birthplace contradiction in prose, but the data record disagrees. This discrepancy should be reconciled.\n\n---\n\n### Research Questions\n\n| ID | Question | Status | Exhaustive? |\n|---|---|---|---|\n| q_002 | Where was Patrick in the 1850 census? | \u2705 Resolved | \u2705 Declared |\n| q_001 | Who were Patrick's parents? | \ud83d\udd04 In Progress | \u274c Not declared |\n\n---\n\n### GPS Element Status \u2014 q_001 (primary objective)\n\n| GPS Element | Status | Notes |\n|---|---|---|\n| 1. Reasonably exhaustive search | \u274c **Preliminary** | Only 2 record types; 1870/1880/1900 census unsearched; 48-yr high-severity gap |\n| 2. Complete & accurate citations | \u2705 Met | 4 sources, Evidence Explained\u2013style citations documented |\n| 3. Analysis & correlation | \u26a0\ufe0f Partial | Assertions extracted and classified; but 2 unresolved conflicts remain |\n| 4. Conflict resolution | \u274c Not met | c_001 (birthplace) and c_002 (identity) both unresolved; both block q_001 |\n| 5. Written conclusion | \u26a0\ufe0f Premature | ps_001 exists (probable tier, summary vehicle) but conflicts are open |\n\n---\n\n### Research Log Statistics\n\n| Metric | Count |\n|---|---|\n| Searches performed | 5 |\n| Positive outcomes | 4 (log_001, log_002, log_004, log_005) |\n| Negative / nil results | 1 (log_003 \u2014 MyHeritage) |\n| Record types searched | 2 \u2014 census, vital records |\n| Repositories consulted | 3 \u2014 FamilySearch, Ancestry, MyHeritage |\n\n---\n\n### Sources & Assertions\n\n| Metric | Count |\n|---|---|\n| Sources documented | 4 (3 original, 1 derivative) |\n| Assertions extracted | 13 |\n| \u2014 Primary information | 2 (a_003, a_011) |\n| \u2014 Secondary information | 2 (a_012, a_013) |\n| \u2014 Indeterminate information | 9 |\n| Person links (confident) | 3 (pe_001, pe_004, pe_005 \u2192 I1) |\n| Person links (probable) | 3 (pe_002 \u2192 I1; pe_003, pe_006 \u2192 I2) |\n| Person links (speculative) | 0 |\n\n---\n\n### Conflicts\n\n| ID | Type | Description | Status | Blocks |\n|---|---|---|---|---|\n| c_001 | Fact | Birthplace: Ireland (1850/1860 census) vs. Pennsylvania (1908 death cert) | \u274c Unresolved | q_001 |\n| c_002 | Identity | Two Patrick Flynns aged ~5\u20136 in Schuylkill Co. 1850 \u2014 which is the 1908 decedent? | \u274c Unresolved | q_001 |\n\n---\n\n### Hypotheses\n\n| ID | Claim | Status | Supporting | Contradicting |\n|---|---|---|---|---|\n| h_001 | Patrick's father was Thomas Flynn of Schuylkill Co., PA | Supported | a_004, a_010, a_013 | None |\n\n**What would change h_001:** A Thomas Flynn probate record naming Patrick as son would strengthen this to \"highly probable.\" Discovery that Patrick's 1908 death certificate refers to the *other* Patrick Flynn from 1850 household 197 would overturn the conclusion entirely. Church baptism or immigration records naming a different father would also require revision.\n\n---\n\n### Timeline\n\n**t_001 \u2014 Patrick Flynn (assuming Thomas Flynn parentage)**\n\n| Date | Event | Place | Evidence |\n|---|---|---|---|\n| ~1845 | Birth | Ireland | Census-derived (indirect) |\n| 1850 | Census enumeration | Schuylkill Co., PA | 2 sources |\n| 1860 | Census enumeration | Schuylkill Co., PA | 1 source |\n| 1908-03-12 | Death | Schuylkill Co., PA | Death certificate |\n\n\u26a0\ufe0f **High-severity gap: 1860\u20131908 (48 years).** Missing: marriage, 1870 census, 1880 census, 1900 census, residence, occupation.\n\n---\n\n### Exhaustiveness Assessment: **Preliminary**\n\n- **Record-type coverage:** Only census and vital records. Church/parish, land, probate (in progress), military, immigration, newspaper, marriage, cemetery, tax records all unsearched.\n- **Repository coverage:** Three major online platforms searched. No state archives, county courthouse, church archives, or local repositories accessed.\n- **Temporal coverage:** 1850, 1860, 1908 only. Three census decades (1870, 1880, 1900) unexamined.\n- **Plan completion:** pl_002 is 2/3 complete (pli_006 probate still in progress).\n- **Nil results documented:** 1 (MyHeritage, log_003) \u2713\n\n---\n\n### Conclusion Readiness for h_001\n\n| Condition | Met? |\n|---|---|\n| Search coverage sufficient | \u274c No \u2014 preliminary exhaustiveness; 3 census decades and multiple record types unsearched |\n| Evidence analyzed and classified | \u2705 Yes |\n| Conflicts resolved or acknowledged | \u274c No \u2014 c_001 and c_002 both open |\n| Hypothesis at \"supported\" | \u2705 Yes |\n\n**Not ready for formal conclusion** \u2014 2 of 4 conditions unmet. The existing `ps_001` was written prematurely.\n\n---\n\n### Active Plan \u2014 pl_002 (q_001)\n\n| Item | Record Type | Jurisdiction | Date Range | Status |\n|---|---|---|---|---|\n| pli_004 | Census (1860) | Schuylkill Co., PA | 1860 | \u2705 Completed |\n| pli_005 | Vital record (death cert) | Schuylkill Co., PA | 1908 | \u2705 Completed |\n| pli_006 | Probate / will | Schuylkill Co., PA | 1870\u20131890 | \ud83d\udd04 In Progress |\n\n*No stale-plan flag raised \u2014 the plan's items account for the death certificate finding (pli_005), and pli_006 remains the logical next planned item.*\n\n---\n\n### Recommended Next Step\n\n**Resolve conflict c_002 first (identity).** Before any parentage conclusion can stand, you must establish that the Patrick Flynn in Thomas's 1850 household is the same person as the Patrick Flynn who died in 1908 in Schuylkill County. A second Patrick Flynn of nearly the same age appeared in the same county in 1850, so the identification is not yet secure. Searching the 1870, 1880, or 1900 census for a Patrick Flynn whose age, birthplace, and household match your subject would anchor the identity \u2014 and may simultaneously resolve the birthplace conflict (c_001) by adding more data points.",
+            "activated": true,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The skill's narrative and GPS-state summary are factually accurate regarding the research state, sources, and conflicts. However, there is a critical data integrity issue flagged by the skill itself: src_001 and src_002 both map to gedcomx_source_description_id S1, which the skill correctly identifies as a potential problem. More significantly, the skill notes that ps_001 lists c_001 in resolved_conflict_ids while c_001 is marked unresolved in the conflicts section \u2014 this is a real contradiction in the input state that the skill correctly surfaces. The skill does not fabricate material, but the existence of this unresolved contradiction in the persisted state (which the skill accurately reports) represents a correctness issue with the underlying project data that the skill appropriately flags rather than ignores."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: it provided both a narrative summary and a detailed GPS-state report covering all GPS elements (questions, plans, search log, evidence, conflicts, hypotheses, conclusions, timeline). It explicitly named both c_001 (birthplace fact conflict) and c_002 (identity conflict) as blockers of q_001, distinguished their types (fact vs. identity), reported on all 4 sources, 13 assertions, 5 log entries, 1 hypothesis, and the active plan. Empty sections were noted (e.g., speculative person links = 0). The skill did not silently omit any required coverage."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this execution. The skill read the existing research.json and tree.gedcomx.json state and produced a summary without invoking any tools. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Completeness of summary",
+                "score": 3,
+                "rationale": "The skill reported on all GPS elements present in the research state: questions (q_001, q_002 with statuses), plans (pl_002 with 3 items and their statuses), search log (5 entries with counts of positive/negative outcomes), evidence (4 sources with classification and counts), conflicts (c_001 and c_002 both explicitly named and described), hypotheses (h_001 with supporting/contradicting assertions), and conclusions (ps_001 with readiness assessment). Empty sections were explicitly noted (e.g., 'Speculative person links: 0'). No GPS element was silently omitted."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "All counts and statuses match the input state: 4 sources (3 original, 1 derivative), 13 assertions (2 primary, 2 secondary, 9 indeterminate), 5 log entries (4 positive, 1 nil), 3 confident person links, 3 probable person links, 2 unresolved conflicts, 1 resolved question (q_002), 1 in-progress question (q_001), 1 hypothesis, 1 active plan with 3 items (2 completed, 1 in progress). The skill correctly reports c_001 and c_002 as both unresolved and both blocking q_001. The 48-year gap (1860\u20131908) is accurately identified. The skill's integrity warnings about the shared GEDCOM source ID and the ps_001/c_001 discrepancy are factually correct observations about the input state."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "The skill provided a specific, well-reasoned next step: 'Resolve conflict c_002 first (identity)' with clear reasoning that the identity of Patrick Flynn must be established before parentage can be concluded, and that searching 1870/1880/1900 census records would anchor the identity and potentially resolve the birthplace conflict simultaneously. This recommendation is grounded in the actual research state (two Patrick Flynns of similar age in 1850, the 48-year gap, and the two open conflicts) and explains why this step is prioritized over others."
+              },
+              {
+                "source": "rubric",
+                "name": "Both summaries present",
+                "score": 3,
+                "rationale": "The skill produced both required outputs: (1) a plain-language narrative summary ('The Story So Far') that explains the research in conversational terms, the evidence found, the two open issues, and the 48-year gap without GPS jargon; and (2) a detailed GPS-state summary with structured tables covering project status, research questions, GPS element status, log statistics, sources, assertions, conflicts, hypotheses, timeline, exhaustiveness assessment, and conclusion readiness. The two summaries serve distinct audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists \u2014 and are clearly separated."
+              }
+            ],
+            "judge_cost_usd": 0.0079095,
+            "duration_ms": 14467.712900000151,
+            "error": null,
+            "input_tokens": 5371,
+            "cached_input_tokens": 4235,
+            "output_tokens": 1270
+          },
+          "started_at": 1786476525.7621632,
+          "ended_at": 1786476768.5311334
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The response is mostly factually correct and grounded in research.json state, but contains one significant unsupported claim: the skill asserts that 'src_005\u2013src_009 have zero assertions in assertions[]' when the before-state data provided shows only 4 sources with assertions (src_001\u2013src_004), making the claim about 5 sources with no assertions technically correct but the phrasing suggests these 5 sources were added but unanalyzed, which is accurate. However, the skill claims 'log_entry_id: null' for src_005\u2013src_009 without verifying this against the actual file state shown in before-state (which confirms this is accurate). The main issue is the skill fabricated specific warning details about 'Duplicate GEDComX source reference' and 'Plan item pli_006 stuck at in_progress' without access to the actual research.json file to verify these conditions exist. The skill made zero MCP tool calls and thus never read research.json or tree.gedcomx.json to confirm these warnings are real."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 1,
+            "rationale": "The skill failed to read the actual research.json and tree.gedcomx.json files, which are essential to produce an accurate project status. The skill made zero MCP tool calls despite the task requiring it to access the project state. Without reading the files, the skill cannot verify counts, statuses, conflicts, hypotheses, or any other GPS elements. The response appears complete in structure but is built on fabricated or assumed data rather than the actual project state, making it substantively incomplete."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made during this skill execution. The skill did not attempt to read research.json or tree.gedcomx.json, which are required to produce an accurate project status summary. N/A \u2014 zero tool calls."
+          },
+          {
+            "source": "rubric",
+            "name": "Completeness of summary",
+            "score": 1,
+            "rationale": "The skill cannot accurately report on all GPS elements without reading research.json. While the response includes sections labeled for questions, plans, search log, evidence, conflicts, hypotheses, and conclusions, these are not grounded in the actual file state. The skill never verified which GPS elements exist, their counts, or their status. The detailed summary claims to report on specific elements (q_001, pli_006, h_001, ps_001, c_001) but without file access, these claims are unverified and potentially fabricated."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 1,
+            "rationale": "The skill's accuracy cannot be verified because it made no tool calls to read research.json. The response contains specific counts and statuses (e.g., '13 assertions extracted', '5 searches logged', 'ps_001 tier: probable', 'c_001 resolved') but these are not confirmed against the actual file. The before-state data shows 9 sources and 4 sources with assertions, but the skill's claims about which sources have assertions, which are unlogged, and which have rough citations cannot be verified without reading the actual research.json. The skill is making claims without evidence."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 2,
+            "rationale": "The skill recommends a specific next step: 'Extract assertions from Thomas Flynn's 1881 will (src_006).' This is concrete and references actual research state (the will exists in the before-state as src_006). However, the reasoning behind this recommendation relies on unverified claims about what assertions exist and what gaps remain. The recommendation itself is reasonable given the scenario context, but it is not grounded in verified current project state, only in the skill's assumptions about what the file contains."
+          },
+          {
+            "source": "rubric",
+            "name": "Both summaries present",
+            "score": 3,
+            "rationale": "The skill produced both required outputs: (1) a plain-language narrative summary ('The Story So Far') that explains the research in conversational terms without GPS jargon, and (2) a detailed GPS-state summary with structured tables showing questions, plans, sources, assertions, conflicts, hypotheses, and proof tier. The two summaries are distinct and serve different audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists. Both are present and clearly separated."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 257322.00349999947,
+        "duration_api_ms": 317944.0,
+        "judge_duration_ms": 14145.161100000223,
+        "wall_clock_ms": 274593.745470047,
+        "num_turns": 11,
+        "input_tokens": 1753,
+        "cached_input_tokens": 128569,
+        "output_tokens": 7996,
+        "judge_input_tokens": 7059,
+        "judge_cached_input_tokens": 4235,
+        "judge_output_tokens": 1151,
+        "skill_cost_usd": 0.27928695,
+        "judge_cost_usd": 0.0090025,
+        "total_cost_usd": 0.28828945
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_008_2026-08-11_19-00-27_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 257322.00349999947,
+          "duration_api_ms": 317944.0,
+          "num_turns": 11,
+          "skill_attempts": 1,
+          "input_tokens": 1753,
+          "cached_input_tokens": 128569,
+          "output_tokens": 7996,
+          "skill_cost_usd": 0.27928695,
+          "output": {
+            "text_response": "Now I have everything I need. Let me check for the output formats reference before presenting.No output-formats.md was found \u2014 I'll use a clear two-part structure. Here are both summaries:\n\n---\n\n## \ud83d\udcd6 The Story So Far\n\n**What we're trying to find out:** Who were the parents of Patrick Flynn, who was born around 1845 (likely in Ireland) and died in Schuylkill County, Pennsylvania in 1908?\n\n**What we've found:**\n\nTwo census records show a boy named Patrick Flynn living in the same Schuylkill County household as a man named Thomas Flynn \u2014 first as a 5-year-old in 1850, then as a 15-year-old in 1860. The censuses from this period don't spell out family relationships, but a child of matching age and the same surname in the head's household is a strong, well-understood pattern. Then, Patrick's own 1908 death certificate names \"Thomas Flynn\" outright as his father \u2014 though the person who told that to the registrar was Patrick's son-in-law, who wasn't present at Patrick's birth and was reporting what he'd been told.\n\nTaken together, the three pieces of evidence point consistently to Thomas Flynn as Patrick's father. The conclusion is rated **probable** \u2014 not yet fully proved \u2014 because no source *explicitly* states the relationship with first-hand knowledge, and several record types that could settle it haven't been searched yet.\n\nOne disagreement between sources has already been sorted out: the death certificate says Patrick was born in Pennsylvania, while both census records say Ireland. Because the censuses were recorded much closer to the time of Patrick's birth by informants who likely knew him personally, Ireland is accepted as the correct birthplace. The death certificate entry is attributed to the son-in-law not knowing where his father-in-law was actually born.\n\n**What's likely sitting on the table right now:** Five records were located and documented \u2014 Thomas Flynn's 1881 will, a deed from Thomas to Patrick (also 1881), a St. Mary's Catholic Church baptismal record for Patrick (1845), a birth certificate for Mary Elizabeth Flynn (1905), and Patrick's obituary in the *Pottsville Republican* (1908) \u2014 but none of them have been formally read through for evidence yet. Thomas Flynn's will in particular could name Patrick directly as a son and push the conclusion from \"probable\" to \"proved.\"\n\n**The clearest next step:** Read and analyze Thomas Flynn's will (src_006). If it names Patrick as a son, that's a first-hand legal declaration of the relationship \u2014 the strongest kind of evidence for parentage.\n\n---\n\n## \ud83d\udd2c Detailed GPS-State Summary\n\n### \u26a0\ufe0f Integrity Warnings\n\n| # | Issue | Detail |\n|---|-------|--------|\n| 1 | **Duplicate GEDComX source reference** | `src_001` (FamilySearch original) and `src_002` (Ancestry derivative) both point to `gedcomx_source_description_id: \"S1\"`. These are distinct access points and arguably distinct sources; the derivative should have its own tree source entry. |\n| 2 | **5 sources with no assertions extracted** | `src_005`\u2013`src_009` (baptismal register, will, birth cert, deed, obituary) were added on 2026-05-10 and 2026-05-12 but have zero assertions in `assertions[]`. Records are documented but analytically inert. |\n| 3 | **Plan item pli_006 stuck at \"in_progress\"** | The Thomas Flynn will (`src_006`, accessed 2026-05-10) appears to fulfill the probate search (pli_006), yet the item remains `in_progress`. Either the plan wasn't updated after the source was found, or extraction is still pending. |\n| 4 | **5 sources missing log entries** | `src_005`\u2013`src_009` all have `log_entry_id: null`. The searches that produced these sources aren't documented in the research log, which undermines exhaustiveness documentation and auditability. |\n| 5 | **5 sources with rough, flagged citations** | `src_005`\u2013`src_009` have notes explicitly calling out citation deficiencies (wrong `who`, missing locators, missing dates). These need citation refinement before any formal conclusion references them. |\n\n---\n\n### Project at a Glance\n\n| Metric | Value |\n|--------|-------|\n| **Project objective** | Identify the parents of Patrick Flynn (b. ~1845 Ireland/PA, d. 1908 Schuylkill Co., PA) |\n| **Subject person** | I1 \u2014 Patrick Flynn |\n| **Questions: open / in_progress / resolved** | 0 / 1 / 1 |\n| **Active plan items remaining** | 1 (pli_006 \u2014 probate, nominally in_progress) |\n| **Searches logged** | 5 |\n| **Positive / negative / partial outcomes** | 4 / 1 / 0 |\n| **Record types searched (logged)** | 2 \u2014 census, vital records |\n| **Repositories consulted (logged)** | 3 \u2014 FamilySearch, Ancestry, MyHeritage |\n| **Nil results documented** | 1 (log_003 \u2014 MyHeritage 1850 census) |\n| **Sources documented** | 9 |\n| **Assertions extracted** | 13 |\n| **Assertions: primary / secondary / indeterminate** | 2 / 2 / 9 |\n| **Person links: confident / probable / speculative** | 3 / 3 / 0 |\n| **Conflicts: unresolved / resolved** | 0 / 1 |\n| **Hypotheses: supported / active / ruled out** | 1 / 0 / 0 |\n| **Timeline gaps (high severity)** | 1 \u2014 1860\u20131908 (48 years) |\n| **Proof conclusions** | 1 \u2014 ps_001, tier: **probable** |\n\n---\n\n### GPS Element Status \u2014 q_001 (Patrick Flynn's parents)\n\n| GPS Element | Status | Notes |\n|-------------|--------|-------|\n| 1. Reasonably exhaustive search | \u274c **Preliminary** | Only 5 searches logged; 2 record types; 1870, 1880, 1900 censuses not searched; no immigration, military, tax, or church records searched (logging gap: 5 sources unlogged). The 48-year timeline gap is a direct symptom. |\n| 2. Complete & accurate citations | \u26a0\ufe0f **Partial** | src_001\u2013src_004 have solid citations. src_005\u2013src_009 have rough working citations with documented deficiencies. |\n| 3. Analysis and correlation | \u26a0\ufe0f **Partial** | 13 assertions extracted and classified from 4 sources. 5 sources (will, deed, baptismal, birth cert, obituary) have no assertions extracted \u2014 potentially the strongest evidence is sitting unanalyzed. |\n| 4. Conflict resolution | \u2705 **Complete** | c_001 (Ireland vs. Pennsylvania birthplace) resolved; no blocking conflicts. |\n| 5. Soundly written conclusion | \u2705 **Written (probable)** | ps_001 exists as a proof summary, explicitly rated \"probable\" with a clear statement of what would upgrade it to \"proved.\" |\n\n---\n\n### Exhaustiveness Assessment \u2014 **Preliminary**\n\n- **Record-type coverage:** Only census and vital records appear in the formal log. Five additional record types have sources (church/baptismal, probate/will, land/deed, newspaper, civil birth certificate), but none are logged and none have extracted assertions.\n- **Repository coverage:** FamilySearch, Ancestry, MyHeritage. State archives, county courthouse, church archives \u2014 not formally logged.\n- **Temporal coverage:** 1850 and 1860 covered well. 1870, 1880, and 1900 censuses explicitly identified as not searched (in ps_001). 1845 baptismal record located but unanalyzed.\n- **Nil results:** One documented (MyHeritage 1850). Other nil results may exist but aren't logged.\n- **Plan completion:** 2 of 3 items in pl_002 completed; pli_006 in progress.\n\n---\n\n### Conclusion Readiness \u2014 h_001 (Thomas Flynn is Patrick's father)\n\n| Condition | Met? | Gap |\n|-----------|------|-----|\n| Search coverage sufficient | \u274c No | 1870/1880/1900 censuses unsearched; 48-year high-severity gap; 5 unlogged searches |\n| Evidence analyzed and classified | \u274c No | 5 sources unextracted \u2014 will, deed, baptismal, obituary, birth cert |\n| Conflicts resolved | \u2705 Yes | c_001 resolved |\n| Hypothesis at \"supported\" | \u2705 Yes | h_001 is supported |\n\nA proof conclusion (ps_001) was appropriately written at the **probable** tier while acknowledging these gaps. It should not be upgraded to \"proved\" until conditions 1 and 2 are satisfied.\n\n---\n\n### Recommended Next Step\n\n**Extract assertions from Thomas Flynn's 1881 will (src_006).** This is the highest-yield pending action: a will naming Patrick as a beneficiary or heir would constitute direct, legally declared evidence of parentage \u2014 the kind of record that could upgrade the conclusion from \"probable\" to \"proved.\" After that, extract from the deed (src_008) and obituary (src_009), both of which likely carry independent corroborating assertions. Once those five unanalyzed sources are worked through, the plan needs a new item to cover the 1870, 1880, and 1900 federal censuses \u2014 the most significant remaining gap in Patrick's 48-year undocumented stretch.",
+            "activated": true,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The response is mostly factually correct and grounded in research.json state, but contains one significant unsupported claim: the skill asserts that 'src_005\u2013src_009 have zero assertions in assertions[]' when the before-state data provided shows only 4 sources with assertions (src_001\u2013src_004), making the claim about 5 sources with no assertions technically correct but the phrasing suggests these 5 sources were added but unanalyzed, which is accurate. However, the skill claims 'log_entry_id: null' for src_005\u2013src_009 without verifying this against the actual file state shown in before-state (which confirms this is accurate). The main issue is the skill fabricated specific warning details about 'Duplicate GEDComX source reference' and 'Plan item pli_006 stuck at in_progress' without access to the actual research.json file to verify these conditions exist. The skill made zero MCP tool calls and thus never read research.json or tree.gedcomx.json to confirm these warnings are real."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "The skill failed to read the actual research.json and tree.gedcomx.json files, which are essential to produce an accurate project status. The skill made zero MCP tool calls despite the task requiring it to access the project state. Without reading the files, the skill cannot verify counts, statuses, conflicts, hypotheses, or any other GPS elements. The response appears complete in structure but is built on fabricated or assumed data rather than the actual project state, making it substantively incomplete."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made during this skill execution. The skill did not attempt to read research.json or tree.gedcomx.json, which are required to produce an accurate project status summary. N/A \u2014 zero tool calls."
+              },
+              {
+                "source": "rubric",
+                "name": "Completeness of summary",
+                "score": 1,
+                "rationale": "The skill cannot accurately report on all GPS elements without reading research.json. While the response includes sections labeled for questions, plans, search log, evidence, conflicts, hypotheses, and conclusions, these are not grounded in the actual file state. The skill never verified which GPS elements exist, their counts, or their status. The detailed summary claims to report on specific elements (q_001, pli_006, h_001, ps_001, c_001) but without file access, these claims are unverified and potentially fabricated."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 1,
+                "rationale": "The skill's accuracy cannot be verified because it made no tool calls to read research.json. The response contains specific counts and statuses (e.g., '13 assertions extracted', '5 searches logged', 'ps_001 tier: probable', 'c_001 resolved') but these are not confirmed against the actual file. The before-state data shows 9 sources and 4 sources with assertions, but the skill's claims about which sources have assertions, which are unlogged, and which have rough citations cannot be verified without reading the actual research.json. The skill is making claims without evidence."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 2,
+                "rationale": "The skill recommends a specific next step: 'Extract assertions from Thomas Flynn's 1881 will (src_006).' This is concrete and references actual research state (the will exists in the before-state as src_006). However, the reasoning behind this recommendation relies on unverified claims about what assertions exist and what gaps remain. The recommendation itself is reasonable given the scenario context, but it is not grounded in verified current project state, only in the skill's assumptions about what the file contains."
+              },
+              {
+                "source": "rubric",
+                "name": "Both summaries present",
+                "score": 3,
+                "rationale": "The skill produced both required outputs: (1) a plain-language narrative summary ('The Story So Far') that explains the research in conversational terms without GPS jargon, and (2) a detailed GPS-state summary with structured tables showing questions, plans, sources, assertions, conflicts, hypotheses, and proof tier. The two summaries are distinct and serve different audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists. Both are present and clearly separated."
+              }
+            ],
+            "judge_cost_usd": 0.0090025,
+            "duration_ms": 14145.161100000223,
+            "error": null,
+            "input_tokens": 7059,
+            "cached_input_tokens": 4235,
+            "output_tokens": 1151
+          },
+          "started_at": 1786476525.7897928,
+          "ended_at": 1786476800.3835382
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn-broken-fk",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1637531.5581,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 1644657.1645736694,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_005_2026-08-11_19-00-27_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_wall_clock_seconds",
+          "duration_ms": 1637531.5581,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": false,
+                "error": "project files failed full validation (reference integrity / cross-file / cycles that jsonschema cannot catch):\n  - research.json/person_evidence[3]: person_id 'I9' not found in tree.gedcomx.json persons"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1786474879.2733088,
+          "ended_at": 1786476523.9304733
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn-broken-fk-refs",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1644989.7338999999,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 1651821.2928771973,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_006_2026-08-11_19-00-27_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_wall_clock_seconds",
+          "duration_ms": 1644989.7338999999,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": false,
+                "error": "project files failed full validation (reference integrity / cross-file / cycles that jsonschema cannot catch):\n  - research.json/project: subject_person_ids contains 'I9' which is not in tree.gedcomx.json persons\n  - research.json/timelines[0]: person_ids contains 'I9' which is not in tree.gedcomx.json persons"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1786474872.129025,
+          "ended_at": 1786476523.9503179
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-resolved",
+      "mcp_fixtures": [],
+      "outcome": "partial",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "partial"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The response is mostly factually correct and well-grounded in the research.json state. However, it contains one unsupported claim: the skill states 'Repositories consulted | 3 \u2014 FamilySearch, Ancestry, MyHeritage' and references 'log_003: MyHeritage 1850 census' as a nil result. The before-state shows only 4 sources (src_001\u2013src_004) with repositories FamilySearch, Ancestry, and FamilySearch again. There is no log_003 or MyHeritage reference in the provided research.json. The skill fabricated a third repository and a search log entry that do not exist in the input state. This is a factual error that changes the reported search scope."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything the user message and input state required. It reported on the completed project status, explained the parentage conclusion with supporting evidence, documented the negative probate result (log_006) as part of the exhaustive-search narrative, correctly framed the 1860 census evidence as indirect (co-residence, position, age, surname), and appropriately did not propose new research directions. All GPS elements present in the state were covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill produced its output entirely from the provided research.json state without invoking any tools. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Completeness of summary",
+            "score": 3,
+            "rationale": "The skill reported on all GPS elements with state present in research.json: questions (q_001 resolved), plans (pl_001, pl_002 completed), search log (log_001\u2013log_006 documented), evidence (4 sources, 13 assertions), conflicts (c_001 resolved), hypotheses (h_001 supported/proved), and conclusions (ps_001 at proved tier). Empty sections were explicitly noted (0 open questions, 0 unresolved conflicts, 0 active hypotheses). Both summaries touched every element."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 2,
+            "rationale": "Most facts are correct: project status is completed, proof tier is proved, question and plan counts are accurate (2 questions, 2 plans, both resolved/completed), assertion count is 13, sources are 4, conflicts resolved is 1. However, the repository count and MyHeritage reference are fabricated. The skill claims 3 repositories (FamilySearch, Ancestry, MyHeritage) and references log_003 as a MyHeritage nil result, but the before-state contains only FamilySearch and Ancestry across 4 sources, with no log_003 or MyHeritage entry. This is a concrete count error (3 vs. 2 repositories) and a false log entry reference."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "The skill clearly identified that the research is complete and the project is closed. It stated 'The research is complete. Patrick Flynn's parentage is proved.' and 'All research questions are resolved. The proof conclusion (ps_001) is written and rated Proved. The project is closed.' This is appropriate for a completed project \u2014 no new research directions are proposed, which correctly respects the project's closed status. The actionability is to recognize completion, not to suggest next steps."
+          },
+          {
+            "source": "rubric",
+            "name": "Both summaries present",
+            "score": 3,
+            "rationale": "The skill produced both required outputs: (1) a plain-language narrative ('The Story So Far \u2014 Flynn Parentage Research') that explains the conclusion conversationally without GPS jargon, and (2) a detailed GPS-state summary with structured tables, element assessment, statistics, and integrity checks. The two summaries serve distinct audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists \u2014 and are clearly separated."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 134259.69729999997,
+        "duration_api_ms": 128386.0,
+        "judge_duration_ms": 14180.055400000128,
+        "wall_clock_ms": 149384.3812942505,
+        "num_turns": 12,
+        "input_tokens": 922,
+        "cached_input_tokens": 194814,
+        "output_tokens": 5784,
+        "judge_input_tokens": 4871,
+        "judge_cached_input_tokens": 4235,
+        "judge_output_tokens": 1078,
+        "skill_cost_usd": 0.25597795,
+        "judge_cost_usd": 0.0064494999999999995,
+        "total_cost_usd": 0.26242745
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_002_2026-08-11_19-00-27_0",
+          "outcome": "partial",
+          "aborted_reason": null,
+          "duration_ms": 134259.69729999997,
+          "duration_api_ms": 128386.0,
+          "num_turns": 12,
+          "skill_attempts": 1,
+          "input_tokens": 922,
+          "cached_input_tokens": 194814,
+          "output_tokens": 5784,
+          "skill_cost_usd": 0.25597795,
+          "output": {
+            "text_response": "Now I have everything I need. Let me check the output format reference file.No output-formats.md reference file exists in this skill, but all the data I need is in hand. Here are the two summaries:\n\n---\n\n## The Story So Far \u2014 Flynn Parentage Research\n\n**The short version: this one is done.** The research into Patrick Flynn's parentage is fully complete, and the conclusion is **proved**.\n\n---\n\nPatrick Flynn was born around 1845 \u2014 most likely in Ireland \u2014 and died on 12 March 1908 in Schuylkill County, Pennsylvania. The goal was to find his parents.\n\nThree separate, independent records all point to the same answer: **Thomas Flynn of Schuylkill County was Patrick's father.**\n\n- The **1850 census** places young Patrick (age 5, born Ireland) living in the household of Thomas Flynn (age ~32, born Ireland) in Schuylkill County. They share a surname and household position consistent with father and son \u2014 though the census of that era didn't explicitly state relationships, the arrangement is clear.\n- The **1860 census** finds Patrick again, now 15, still in Thomas Flynn's Schuylkill County household \u2014 a decade later, same family.\n- Patrick's **1908 death certificate** directly names \"Thomas Flynn\" as his father. The informant was his son-in-law James Brown, who wasn't present at Patrick's birth and was reporting secondhand \u2014 but the naming is explicit.\n\nOne discrepancy came up and was sorted out: the two census records say Patrick was born in Ireland, while the death certificate says Pennsylvania. The older records win. They were made much closer in time to Patrick's birth, and the informant was almost certainly a household member with direct knowledge. James Brown, reporting six decades later, likely didn't know his father-in-law had been born in Ireland before the family immigrated.\n\nA search of Thomas Flynn's probate records (1870\u20131890) turned up nothing \u2014 no will, no estate proceedings. That's not unusual and doesn't weaken the conclusion.\n\n**The research is complete. Patrick Flynn's parentage is proved.**\n\n---\n\n## Detailed GPS-State Summary\n\n**Project:** Identify the parents of Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill Co., PA)\n**Status:** \u2705 Completed | **Last updated:** 2026-05-04\n\n---\n\n### Integrity Checks\n\nNo broken foreign keys detected. All `person_evidence` entries resolve to persons in `tree.gedcomx.json` (I1, I2 both present); all `sources` entries resolve to `tree.gedcomx.json` source descriptions (S1, S2, S3).\n\n**Minor architectural note:** `src_001` (FamilySearch original, 1850 census) and `src_002` (Ancestry derivative, 1850 census) both share `gedcomx_source_description_id = \"S1\"`. The reference resolves cleanly \u2014 S1 exists \u2014 but ideally the derivative index would carry a distinct source description entry. Not a broken foreign key; flagged for awareness.\n\n**Unused tree source:** `S4` (Schuylkill County Probate Records) exists in `tree.gedcomx.json` but is not referenced by any `research.json` source entry, because the probate search (log_006) was a documented nil result generating no source. Expected behavior.\n\nNo stale plans: both plans (pl_001, pl_002) are completed.\n\n---\n\n### Statistics\n\n| Metric | Value |\n|---|---|\n| Questions | 2 total \u2014 2 resolved (0 open, 0 in progress) |\n| Exhaustive declarations | 2 of 2 questions |\n| Plans | 2 total \u2014 2 completed, 0 active items remaining |\n| Searches performed | 6 (log_001\u2013log_006) |\n| Outcomes | 4 positive, 2 negative, 0 partial |\n| Record types searched | 3 \u2014 census (1850, 1860), vital record (death cert.), probate |\n| Repositories consulted | 3 \u2014 FamilySearch, Ancestry, MyHeritage |\n| Nil results documented | 2 (log_003: MyHeritage 1850 census; log_006: Thomas Flynn probate) |\n| Sources documented | 4 (3 original, 1 derivative) |\n| Assertions extracted | 13 |\n| Assertions: primary / secondary / indeterminate | 2 / 2 / 9 |\n| Person links: confident / probable / speculative | 3 / 3 / 0 |\n| Conflicts: resolved / unresolved | 1 / 0 |\n| Hypotheses: supported / ruled out / active | 1 / 0 / 0 |\n| Timeline gaps (high severity) | 1 (1860\u20131908: marriage, 1870/1880/1900 censuses, residence) |\n| Proof conclusions | 1 \u2014 ps_001 (tier: **proved**, vehicle: summary) |\n\n---\n\n### GPS Element Assessment \u2014 q_001 (Parentage of Patrick Flynn)\n\n| GPS Element | Status |\n|---|---|\n| 1. Reasonably exhaustive search | \u2705 Declared \u2014 three independent record types across three repositories; nil result documented for probate; MyHeritage gap explained by collection availability |\n| 2. Complete and accurate citations | \u2705 All four sources carry full *Evidence Explained*-style citations with who/what/when/where detail |\n| 3. Analysis and correlation | \u2705 13 assertions extracted and classified; all linked to persons; three lines of evidence correlated through timeline |\n| 4. Conflict resolution | \u2705 Birthplace conflict (c_001: Ireland vs. Pennsylvania) resolved by source independence and informant proximity \u2014 Ireland accepted |\n| 5. Soundly written conclusion | \u2705 Proof summary ps_001 written at \"proved\" tier, citing all three sources and addressing c_001 |\n\n**Exhaustiveness level:** Substantial\u2013to\u2013Reasonably Exhaustive. Three record types (census, vital, probate) across three repositories were searched with nil results documented. Standard genealogical categories not consulted (church records, land records, military, immigration, newspapers) \u2014 however, the research question was narrowly focused on parentage, three independent sources converge, and the exhaustive_declaration's overturn_risk assessment (\"Low \u2014 new evidence would have to undermine all three sources simultaneously\") is well-reasoned. The researcher's exhaustive declaration is defensible for this targeted question.\n\n---\n\n### Hypothesis h_001\n\n**Claim:** Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\n**Status:** Supported \u2192 **Proved** (ps_001)\n**Supporting assertions:** a_004 (1850 census household, indirect), a_010 (1860 census household, indirect), a_013 (1908 death cert. naming Thomas Flynn as father, direct/secondary)\n**Contradicting assertions:** None\n\nWhat would change this conclusion: Discovery of a record showing Patrick in a different household without connection to Thomas Flynn (e.g., an 1870 census in another county under a different head), or a church baptismal record naming different parents, would require re-examination. The risk is rated low given three-source convergence.\n\n---\n\n### Timeline Note\n\nThe timeline (t_001) carries a **high-severity gap** from 1860 to 1908 \u2014 48 years without documented events (marriage, 1870/1880/1900 censuses, residence, occupation). This gap does not affect the parentage conclusion, which is proved on three independent sources. It would matter if a future research objective extended to Patrick's adult life.\n\n---\n\n### Project Completion\n\nAll research questions are resolved. The proof conclusion (ps_001) is written and rated **Proved**. The project is closed.",
+            "activated": true,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The response is mostly factually correct and well-grounded in the research.json state. However, it contains one unsupported claim: the skill states 'Repositories consulted | 3 \u2014 FamilySearch, Ancestry, MyHeritage' and references 'log_003: MyHeritage 1850 census' as a nil result. The before-state shows only 4 sources (src_001\u2013src_004) with repositories FamilySearch, Ancestry, and FamilySearch again. There is no log_003 or MyHeritage reference in the provided research.json. The skill fabricated a third repository and a search log entry that do not exist in the input state. This is a factual error that changes the reported search scope."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed everything the user message and input state required. It reported on the completed project status, explained the parentage conclusion with supporting evidence, documented the negative probate result (log_006) as part of the exhaustive-search narrative, correctly framed the 1860 census evidence as indirect (co-residence, position, age, surname), and appropriately did not propose new research directions. All GPS elements present in the state were covered."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill produced its output entirely from the provided research.json state without invoking any tools. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Completeness of summary",
+                "score": 3,
+                "rationale": "The skill reported on all GPS elements with state present in research.json: questions (q_001 resolved), plans (pl_001, pl_002 completed), search log (log_001\u2013log_006 documented), evidence (4 sources, 13 assertions), conflicts (c_001 resolved), hypotheses (h_001 supported/proved), and conclusions (ps_001 at proved tier). Empty sections were explicitly noted (0 open questions, 0 unresolved conflicts, 0 active hypotheses). Both summaries touched every element."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 2,
+                "rationale": "Most facts are correct: project status is completed, proof tier is proved, question and plan counts are accurate (2 questions, 2 plans, both resolved/completed), assertion count is 13, sources are 4, conflicts resolved is 1. However, the repository count and MyHeritage reference are fabricated. The skill claims 3 repositories (FamilySearch, Ancestry, MyHeritage) and references log_003 as a MyHeritage nil result, but the before-state contains only FamilySearch and Ancestry across 4 sources, with no log_003 or MyHeritage entry. This is a concrete count error (3 vs. 2 repositories) and a false log entry reference."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "The skill clearly identified that the research is complete and the project is closed. It stated 'The research is complete. Patrick Flynn's parentage is proved.' and 'All research questions are resolved. The proof conclusion (ps_001) is written and rated Proved. The project is closed.' This is appropriate for a completed project \u2014 no new research directions are proposed, which correctly respects the project's closed status. The actionability is to recognize completion, not to suggest next steps."
+              },
+              {
+                "source": "rubric",
+                "name": "Both summaries present",
+                "score": 3,
+                "rationale": "The skill produced both required outputs: (1) a plain-language narrative ('The Story So Far \u2014 Flynn Parentage Research') that explains the conclusion conversationally without GPS jargon, and (2) a detailed GPS-state summary with structured tables, element assessment, statistics, and integrity checks. The two summaries serve distinct audiences \u2014 the narrative for casual users, the detailed report for experienced genealogists \u2014 and are clearly separated."
+              }
+            ],
+            "judge_cost_usd": 0.0064494999999999995,
+            "duration_ms": 14180.055400000128,
+            "error": null,
+            "input_tokens": 4871,
+            "cached_input_tokens": 4235,
+            "output_tokens": 1078
+          },
+          "started_at": 1786476755.038453,
+          "ended_at": 1786476904.4228344
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "empty-folder-no-project",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that no research.json or tree.gedcomx.json files exist, accurately diagnosing the empty-folder state. It did not fabricate any project state, counts, questions, or hypotheses. The response is factually correct about the precondition and the appropriate next step."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request completely by recognizing the empty folder and directing them to init-project with clear guidance on what information is needed to initialize the project. No required actions were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly recognized the empty-folder condition and routed the user without invoking any tools. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Completeness of summary",
+            "score": 3,
+            "rationale": "Per the empty-folder exception in rubric.md, this dimension passes when the skill correctly identifies that no project exists and points the user to init-project without inventing project state. The skill did exactly this, so the absence of a GPS summary is the correct outcome and not penalized."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Per the empty-folder exception, accuracy passes when the skill correctly identifies the empty-folder condition without fabricating counts, statuses, or research state. The skill accurately reported the absence of both required files and made no false claims about project state."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "The skill clearly identified the next step: initialize the project using init-project. It provided specific, actionable guidance by asking for the subject (who, what, when, where) and the research question, which are exactly the inputs needed to start a project. The reasoning is grounded in the actual state (no files present)."
+          },
+          {
+            "source": "rubric",
+            "name": "Both summaries present",
+            "score": 3,
+            "rationale": "Per the empty-folder exception in rubric.md, this dimension is not graded on empty-folder scenarios where no project exists. The skill correctly declined to produce a summary and instead routed to init-project, which is the correct behavior. The absence of both summaries is appropriate here."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 43657.16530000009,
+        "duration_api_ms": 23081.0,
+        "judge_duration_ms": 7257.100000000719,
+        "wall_clock_ms": 51595.77131271362,
+        "num_turns": 6,
+        "input_tokens": 8,
+        "cached_input_tokens": 78421,
+        "output_tokens": 716,
+        "judge_input_tokens": 1322,
+        "judge_cached_input_tokens": 4235,
+        "judge_output_tokens": 688,
+        "skill_cost_usd": 0.06743405000000001,
+        "judge_cost_usd": 0.0009505,
+        "total_cost_usd": 0.06838455000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_009_2026-08-11_19-00-27_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 43657.16530000009,
+          "duration_api_ms": 23081.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 8,
+          "cached_input_tokens": 78421,
+          "output_tokens": 716,
+          "skill_cost_usd": 0.06743405000000001,
+          "output": {
+            "text_response": "It looks like this project hasn't been initialized yet \u2014 there are no `research.json` or `tree.gedcomx.json` files present, which means no research has been started or recorded.\n\nTo get going, I'd recommend starting a new project with the **init-project** skill. To do that, just let me know:\n\n- **Who** are you researching? (name, approximate time period, and place)\n- **What** is your main research question? (e.g., \"Who were the parents of John Smith, born ~1845 in County Cork, Ireland?\")\n\nOnce we have that, I can set up the project structure and we can begin searching records!",
+            "activated": true,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for diff"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that no research.json or tree.gedcomx.json files exist, accurately diagnosing the empty-folder state. It did not fabricate any project state, counts, questions, or hypotheses. The response is factually correct about the precondition and the appropriate next step."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's request completely by recognizing the empty folder and directing them to init-project with clear guidance on what information is needed to initialize the project. No required actions were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly recognized the empty-folder condition and routed the user without invoking any tools. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Completeness of summary",
+                "score": 3,
+                "rationale": "Per the empty-folder exception in rubric.md, this dimension passes when the skill correctly identifies that no project exists and points the user to init-project without inventing project state. The skill did exactly this, so the absence of a GPS summary is the correct outcome and not penalized."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Per the empty-folder exception, accuracy passes when the skill correctly identifies the empty-folder condition without fabricating counts, statuses, or research state. The skill accurately reported the absence of both required files and made no false claims about project state."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "The skill clearly identified the next step: initialize the project using init-project. It provided specific, actionable guidance by asking for the subject (who, what, when, where) and the research question, which are exactly the inputs needed to start a project. The reasoning is grounded in the actual state (no files present)."
+              },
+              {
+                "source": "rubric",
+                "name": "Both summaries present",
+                "score": 3,
+                "rationale": "Per the empty-folder exception in rubric.md, this dimension is not graded on empty-folder scenarios where no project exists. The skill correctly declined to produce a summary and instead routed to init-project, which is the correct behavior. The absence of both summaries is appropriate here."
+              }
+            ],
+            "judge_cost_usd": 0.0009505,
+            "duration_ms": 7257.100000000719,
+            "error": null,
+            "input_tokens": 1322,
+            "cached_input_tokens": 4235,
+            "output_tokens": 688
+          },
+          "started_at": 1786476768.5968056,
+          "ended_at": 1786476820.192577
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1677093.4429000004,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 1696107.3739528656,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_001_2026-08-11_19-00-27_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_wall_clock_seconds",
+          "duration_ms": 1677093.4429000004,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1786474827.9240599,
+          "ended_at": 1786476524.0314338
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_011",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform project-status's own task and instead routed the user to search-records to execute the 1870 census search. The empty response and routing to the appropriate search skill is the correct behavior for this scenario."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the user's request (search the 1870 census) was outside project-status's scope and required routing to a search/execution skill. The decline and routing decision was complete and appropriate\u2014no additional project-status work was needed or should have been performed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to execute its own task and routed to search-records instead, so no tool arguments are applicable here."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 9890.42260000042,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3922.545000000355,
+        "wall_clock_ms": 15139.443397521973,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 8030,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 299,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.009525,
+        "total_cost_usd": 0.009525
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_011_2026-08-11_19-00-27_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 9890.42260000042,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform project-status's own task and instead routed the user to search-records to execute the 1870 census search. The empty response and routing to the appropriate search skill is the correct behavior for this scenario."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the user's request (search the 1870 census) was outside project-status's scope and required routing to a search/execution skill. The decline and routing decision was complete and appropriate\u2014no additional project-status work was needed or should have been performed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined to execute its own task and routed to search-records instead, so no tool arguments are applicable here."
+              }
+            ],
+            "judge_cost_usd": 0.009525,
+            "duration_ms": 3922.545000000355,
+            "error": null,
+            "input_tokens": 8030,
+            "cached_input_tokens": 0,
+            "output_tokens": 299
+          },
+          "started_at": 1786476800.5260434,
+          "ended_at": 1786476815.6654868
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-resolved",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the skill should decline and route to proof-conclusion rather than perform its own task. The skill correctly declined to perform project-status's task and routed the user to the appropriate skill (proof-conclusion). The correct behavior was executed: no substantive project-status output was produced."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the required action for this negative test: it declined to perform project-status's task and routed to proof-conclusion. The routing decision was appropriate given the user's request to write a proof statement, which is proof-conclusion's responsibility, not project-status's. No omissions in the decline/routing behavior."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill. The skill declined and routed to another skill without invoking any tools. N/A applies."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 28486.496500000158,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4259.76430000037,
+        "wall_clock_ms": 45702.1963596344,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 6248,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 313,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.007813,
+        "total_cost_usd": 0.007813
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_004_2026-08-11_19-00-27_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 28486.496500000158,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "proof-conclusion"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the skill should decline and route to proof-conclusion rather than perform its own task. The skill correctly declined to perform project-status's task and routed the user to the appropriate skill (proof-conclusion). The correct behavior was executed: no substantive project-status output was produced."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed the required action for this negative test: it declined to perform project-status's task and routed to proof-conclusion. The routing decision was appropriate given the user's request to write a proof statement, which is proof-conclusion's responsibility, not project-status's. No omissions in the decline/routing behavior."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill. The skill declined and routed to another skill without invoking any tools. N/A applies."
+              }
+            ],
+            "judge_cost_usd": 0.007813,
+            "duration_ms": 4259.76430000037,
+            "error": null,
+            "input_tokens": 6248,
+            "cached_input_tokens": 0,
+            "output_tokens": 313
+          },
+          "started_at": 1786474827.9260705,
+          "ended_at": 1786474873.6282668
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_010",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the correct behavior is for project-status to decline and route to question-selection. Claude correctly invoked question-selection instead of performing project-status's own task. The routing decision is correct and no fabricated material was produced."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform project-status's task and routed to question-selection as required. The test expected the skill to NOT author a new q_ entry itself, and it did not. The routing behavior is complete and correct."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill routed to question-selection without invoking any tools itself. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 21597.072000000026,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3589.0690000001086,
+        "wall_clock_ms": 38382.275342941284,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 7998,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 279,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.009393,
+        "total_cost_usd": 0.009393
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_010_2026-08-11_19-00-27_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 21597.072000000026,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the correct behavior is for project-status to decline and route to question-selection. Claude correctly invoked question-selection instead of performing project-status's own task. The routing decision is correct and no fabricated material was produced."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly declined to perform project-status's task and routed to question-selection as required. The test expected the skill to NOT author a new q_ entry itself, and it did not. The routing behavior is complete and correct."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill routed to question-selection without invoking any tools itself. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.009393,
+            "duration_ms": 3589.0690000001086,
+            "error": null,
+            "input_tokens": 7998,
+            "cached_input_tokens": 0,
+            "output_tokens": 279
+          },
+          "started_at": 1786474827.9180212,
+          "ended_at": 1786474866.3002965
+        }
+      ]
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn-stale-plan",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's outputs are factually correct. The narrative accurately summarizes the research state: Patrick Flynn's parentage evidence (three census/death cert threads), the birthplace conflict resolution, the five unprocessed sources (src_005\u2013src_009), and the proof tier (probable). The detailed GPS summary correctly reports counts (1 in_progress question, 1 resolved; 5 sources with no assertions; 13 assertions extracted; 1 resolved conflict; 1 supported hypothesis). The stale-plan flag correctly identifies that pl_002 (created 2026-04-28) predates the five sources accessed 2026-05-10/12, and that pli_006 (probate search) is now redundant because src_006 (Thomas Flynn's will) is already in hand. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything the user message and input state required. Both summaries are present and complete: the narrative explains the research story, evidence threads, conflict resolution, and current state; the detailed GPS summary covers all required elements (questions, plans, search log, evidence, conflicts, hypotheses, conclusions, exhaustiveness, proof tier). The stale-plan detection is explicit and concrete. The recommended next step is specific (extract Thomas Flynn's will src_006, then the remaining four sources). No silent omissions of items the input state made obvious."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill is read-only (project-status does not modify research.json or tree.gedcomx.json) and performed its analysis entirely from the provided input state. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Completeness of summary",
+            "score": 3,
+            "rationale": "The skill reported on all GPS elements with state present in research.json. Questions (1 in_progress, 1 resolved), plans (pl_002 flagged as stale), search log (5 entries, 4 positive outcomes, 1 nil), evidence (9 sources, 13 assertions, 5 unextracted), conflicts (1 resolved birthplace conflict), hypotheses (h_001 supported), and conclusions (ps_001 at probable tier) are all covered. Empty sections (e.g., unresolved conflicts) are explicitly noted. Exhaustiveness level is explicitly stated as 'Preliminary' with clear reasoning."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "All counts match the input state: 1 in_progress question (q_001), 1 resolved (q_002); 9 sources total; 5 with no assertions (src_005\u2013src_009); 13 assertions extracted; 5 log entries; 1 resolved conflict (c_001); 1 supported hypothesis (h_001); 1 proof summary (ps_001) at probable tier. Statuses are reported correctly: pl_002 is active but flagged as stale; pli_006 is marked planned (not in_progress); the birthplace conflict is resolved. The stale-plan detection is accurate: sources src_005\u2013src_009 were accessed 2026-05-10/12, after pl_002's creation (2026-04-28) and last logged execution (log_005, 2026-05-03), and carry no log_entry_id or assertions."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "The skill clearly identified a specific, concrete next step grounded in actual research state: extract Thomas Flynn's 1881 will (src_006) because it is the probate record pli_006 was planned to find, it is already in hand, and if it names Patrick as a son it would upgrade the conclusion from probable to proved. The reasoning references the stale-plan detection and the five unprocessed sources. A secondary step (extract the remaining four sources, then revise the plan) is also specified. The recommendation is not generic but directly tied to the new findings and their potential impact on the proof tier."
+          },
+          {
+            "source": "rubric",
+            "name": "Both summaries present",
+            "score": 3,
+            "rationale": "Both required outputs are present and distinct. The narrative summary ('The Story So Far') explains the research in plain language for casual users: who is being researched, what evidence points to Thomas Flynn, how the birthplace conflict was resolved, and what the five new sources represent. The detailed GPS-state summary ('Detailed GPS-State Summary') provides structured reporting of GPS elements, counts, statuses, exhaustiveness level, and proof-tier readiness for experienced genealogists. The two summaries serve different audiences and are clearly separated."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 211890.1419999993,
+        "duration_api_ms": 272284.0,
+        "judge_duration_ms": 13670.641499999874,
+        "wall_clock_ms": 229100.3761291504,
+        "num_turns": 10,
+        "input_tokens": 9,
+        "cached_input_tokens": 127267,
+        "output_tokens": 6112,
+        "judge_input_tokens": 6647,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1250,
+        "skill_cost_usd": 0.22706159999999997,
+        "judge_cost_usd": 0.012897,
+        "total_cost_usd": 0.23995859999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_project_status_007_2026-08-11_19-00-27_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 211890.1419999993,
+          "duration_api_ms": 272284.0,
+          "num_turns": 10,
+          "skill_attempts": 1,
+          "input_tokens": 9,
+          "cached_input_tokens": 127267,
+          "output_tokens": 6112,
+          "skill_cost_usd": 0.22706159999999997,
+          "output": {
+            "text_response": "Now I have everything I need. Let me compile both summaries.\n\n---\n\n## \ud83d\udcd6 The Story So Far\n\n**Who we're researching:** Patrick Flynn \u2014 born around 1845 in Ireland, died March 12, 1908 in Schuylkill County, Pennsylvania. The goal is to identify his parents.\n\n**What we've found:**\n\nThree independent threads of evidence all point to **Thomas Flynn of Schuylkill County** as Patrick's father:\n\n- The **1850 census** shows young Patrick (age 5, born Ireland) living in Thomas Flynn's household in Schuylkill County. The census didn't record family relationships in 1850, so the parent-child tie is inferred from household position and the shared surname.\n- The **1860 census** shows Patrick again (now age 15) still in Thomas Flynn's household \u2014 the same county, ten years later.\n- Patrick's **1908 death certificate** explicitly names \"Thomas Flynn\" as his father. The informant was Patrick's son-in-law, James Brown \u2014 someone who wasn't present at Patrick's birth and is passing on family knowledge, so this is reliable but not definitive on its own.\n\nA wrinkle came up: the census records say Patrick was born in **Ireland**, but the death certificate says **Pennsylvania**. This conflict has been resolved \u2014 the two contemporary census entries, recorded much closer to Patrick's birth, outweigh the later recollection of a son-in-law who may simply not have known that Patrick was born in Ireland before the family emigrated.\n\n**Where the conclusion stands:** The evidence is strong enough to say Patrick *probably* was Thomas Flynn's son \u2014 a written proof summary exists at the **\"probable\" tier**. Five additional sources have recently been located (including Thomas Flynn's 1881 will, a deed Thomas made to Patrick that same year, a baptism record, an obituary, and a grandchild's birth certificate) but haven't been fully processed yet. **The will in particular could be decisive** \u2014 if it names Patrick as a son, the conclusion upgrades from *probable* to *proved*.\n\n**A gap worth noting:** Between 1860 and 1908, Patrick essentially disappears from the documented record \u2014 a 48-year stretch that includes three census years (1870, 1880, 1900) not yet searched.\n\n---\n\n**\u2b50 What to do next:** Extract the evidence from **Thomas Flynn's 1881 will** (already in the project as `src_006`). This is the highest-leverage unfinished task \u2014 a will naming Patrick as a son would be direct evidence from Thomas himself, potentially proving the relationship outright. After the will, process the remaining four sources (baptism, deed, obituary, birth certificate).\n\n---\n\n## \ud83d\udd2c Detailed GPS-State Summary\n\n### Integrity Check\nNo broken foreign keys detected. All `person_evidence`, `subject_person_ids`, `sources`, and `timelines` references resolve correctly in both files.\n\n**\u26a0 Stale plan flag:** Plan `pl_002` (for q_001) was created 2026-04-28, but five sources (`src_005`\u2013`src_009`) have since been added with `log_entry_id: null` \u2014 outside the research log entirely. One of these (`src_006`, Thomas Flynn's will) is the exact record that plan item `pli_006` was intended to find. The plan item is still marked `planned`, but the record is already in the project. The plan needs to be updated to reflect current reality.\n\n---\n\n### Statistics\n\n| Metric | Count |\n|---|---|\n| Questions: in_progress / resolved | 1 / 1 |\n| Active plan items remaining | 1 (`pli_006`, probate \u2014 effectively already found) |\n| Searches logged | 5 |\n| Outcomes: positive / negative | 4 / 1 |\n| Record types logged | 2 (census, vital records) |\n| Repositories consulted | 3 (FamilySearch, Ancestry, MyHeritage) |\n| Nil results documented | 1 (MyHeritage, log_003) |\n| Sources documented | 9 |\n| Sources with no assertions extracted | **5** (src_005\u2013src_009) |\n| Assertions extracted | 13 |\n| Information quality: primary / secondary / indeterminate | 2 / 2 / 9 |\n| Person links: confident / probable | 3 / 3 |\n| Conflicts: resolved / unresolved | 1 / 0 |\n| Hypotheses: supported | 1 (h_001) |\n| Timeline gaps (high severity) | **1** (1860\u20131908, 48 years) |\n| Proof conclusions | 1 (ps_001, tier: **probable**, vehicle: summary) |\n\n---\n\n### Exhaustiveness Level: **Preliminary**\n\n- \u2705 Multiple repositories consulted (FamilySearch, Ancestry, MyHeritage)\n- \u2705 Nil result documented (MyHeritage search)\n- \u2705 Multiple source types located (census, vital records, church, probate, land, newspaper)\n- \u274c Only 2 record types formally searched via log \u2014 the 5 additional sources were found outside the logged research process\n- \u274c 1870, 1880, and 1900 censuses not yet searched (high-severity 48-year gap)\n- \u274c 5 found sources have no extracted assertions and rough citations\n- \u274c Immigration/naturalization records not searched (family emigrated from Ireland ~1845\u20131850)\n\nResearch has broadened considerably beyond the original plan, but the temporal gap and unprocessed sources prevent a \"substantial\" or higher rating.\n\n---\n\n### Conclusion Readiness for h_001 (\"Thomas Flynn is Patrick's father\")\n\n| Condition | Status |\n|---|---|\n| 1. Search coverage sufficient | \u26a0 Partial \u2014 1870/1880/1900 censuses unsearched; 5 sources unextracted |\n| 2. Evidence analyzed and classified | \u26a0 Partial \u2014 13 assertions extracted and classified; 5 sources have none |\n| 3. Conflicts resolved | \u2705 c_001 resolved (birthplace) |\n| 4. Hypothesis at \"supported\" | \u2705 h_001 supported |\n\nA proof summary (`ps_001`) has already been written at the **probable** tier. The conclusion exists but is not yet at its strongest form. What would change it:\n- **Upgrade to Proved:** Thomas Flynn's will names Patrick as a son (direct evidence from Thomas himself), AND the 1870/1880/1900 censuses confirm continued connection\n- **Weaken/overturn:** Another Patrick Flynn of matching age found in Schuylkill County in 1850; or the will explicitly excludes Patrick; or a different man is named as Patrick's father in a church or naturalization record\n\n---\n\n### Recommended Next Step\n\nFive sources are sitting in the project unprocessed, with rough citations and no extracted assertions. The most impactful is **Thomas Flynn's 1881 will (`src_006` / S4)** \u2014 it's the probate record `pli_006` was planned to find, and it's already in hand. Extract its assertions now. If the will names Patrick as a son, the conclusion advances from *probable* to *proved*. After the will, extract from the remaining four sources (baptism, deed, obituary, birth certificate) and then refresh the plan to reflect everything that's been found.",
+            "activated": true,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill's outputs are factually correct. The narrative accurately summarizes the research state: Patrick Flynn's parentage evidence (three census/death cert threads), the birthplace conflict resolution, the five unprocessed sources (src_005\u2013src_009), and the proof tier (probable). The detailed GPS summary correctly reports counts (1 in_progress question, 1 resolved; 5 sources with no assertions; 13 assertions extracted; 1 resolved conflict; 1 supported hypothesis). The stale-plan flag correctly identifies that pl_002 (created 2026-04-28) predates the five sources accessed 2026-05-10/12, and that pli_006 (probate search) is now redundant because src_006 (Thomas Flynn's will) is already in hand. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed everything the user message and input state required. Both summaries are present and complete: the narrative explains the research story, evidence threads, conflict resolution, and current state; the detailed GPS summary covers all required elements (questions, plans, search log, evidence, conflicts, hypotheses, conclusions, exhaustiveness, proof tier). The stale-plan detection is explicit and concrete. The recommended next step is specific (extract Thomas Flynn's will src_006, then the remaining four sources). No silent omissions of items the input state made obvious."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill is read-only (project-status does not modify research.json or tree.gedcomx.json) and performed its analysis entirely from the provided input state. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Completeness of summary",
+                "score": 3,
+                "rationale": "The skill reported on all GPS elements with state present in research.json. Questions (1 in_progress, 1 resolved), plans (pl_002 flagged as stale), search log (5 entries, 4 positive outcomes, 1 nil), evidence (9 sources, 13 assertions, 5 unextracted), conflicts (1 resolved birthplace conflict), hypotheses (h_001 supported), and conclusions (ps_001 at probable tier) are all covered. Empty sections (e.g., unresolved conflicts) are explicitly noted. Exhaustiveness level is explicitly stated as 'Preliminary' with clear reasoning."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "All counts match the input state: 1 in_progress question (q_001), 1 resolved (q_002); 9 sources total; 5 with no assertions (src_005\u2013src_009); 13 assertions extracted; 5 log entries; 1 resolved conflict (c_001); 1 supported hypothesis (h_001); 1 proof summary (ps_001) at probable tier. Statuses are reported correctly: pl_002 is active but flagged as stale; pli_006 is marked planned (not in_progress); the birthplace conflict is resolved. The stale-plan detection is accurate: sources src_005\u2013src_009 were accessed 2026-05-10/12, after pl_002's creation (2026-04-28) and last logged execution (log_005, 2026-05-03), and carry no log_entry_id or assertions."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "The skill clearly identified a specific, concrete next step grounded in actual research state: extract Thomas Flynn's 1881 will (src_006) because it is the probate record pli_006 was planned to find, it is already in hand, and if it names Patrick as a son it would upgrade the conclusion from probable to proved. The reasoning references the stale-plan detection and the five unprocessed sources. A secondary step (extract the remaining four sources, then revise the plan) is also specified. The recommendation is not generic but directly tied to the new findings and their potential impact on the proof tier."
+              },
+              {
+                "source": "rubric",
+                "name": "Both summaries present",
+                "score": 3,
+                "rationale": "Both required outputs are present and distinct. The narrative summary ('The Story So Far') explains the research in plain language for casual users: who is being researched, what evidence points to Thomas Flynn, how the birthplace conflict was resolved, and what the five new sources represent. The detailed GPS-state summary ('Detailed GPS-State Summary') provides structured reporting of GPS elements, counts, statuses, exhaustiveness level, and proof-tier readiness for experienced genealogists. The two summaries serve different audiences and are clearly separated."
+              }
+            ],
+            "judge_cost_usd": 0.012897,
+            "duration_ms": 13670.641499999874,
+            "error": null,
+            "input_tokens": 6647,
+            "cached_input_tokens": 0,
+            "output_tokens": 1250
+          },
+          "started_at": 1786476525.8174238,
+          "ended_at": 1786476754.9178
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 5891905.651099999,
+    "duration_api_ms": 1026496.0,
+    "judge_duration_ms": 75492.04920000193,
+    "num_turns": 50,
+    "input_tokens": 3613,
+    "cached_input_tokens": 683345,
+    "output_tokens": 27834,
+    "judge_input_tokens": 47546,
+    "judge_cached_input_tokens": 16940,
+    "judge_output_tokens": 6328,
+    "skill_cost_usd": 1.0751422499999999,
+    "judge_cost_usd": 0.06394,
+    "total_cost_usd": 1.13908225,
+    "wall_clock_ms": 2076504.813194275
+  }
+}
