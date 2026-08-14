@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -129,7 +130,7 @@ describe("materialize_facts", () => {
   it("(1) create-or-enrich mints a NEW person WITH facts (never fact-less)", async () => {
     await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -163,7 +164,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC2", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC2", recordRole: "principal" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -179,10 +180,10 @@ describe("materialize_facts", () => {
   it("(3) is idempotent — a re-run adds no duplicate facts or refs", async () => {
     await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
 
-    const first = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" });
+    const first = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
     expect(first.ok).toBe(true);
 
-    const second = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" });
+    const second = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
     expect(second.ok).toBe(true);
     if (!second.ok) return;
     expect(second.created).toBe(false);
@@ -211,12 +212,12 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const r1 = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-A", recordRole: "principal" });
+    const r1 = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-A", recordRole: "principal" }));
     expect(r1.ok).toBe(true);
     if (!r1.ok) return;
     expect(r1.factsAdded).toBe(1);
 
-    const r2 = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-B", recordRole: "principal" });
+    const r2 = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-B", recordRole: "principal" }));
     expect(r2.ok).toBe(true);
     if (!r2.ok) return;
     expect(r2.factsAdded).toBe(0);
@@ -242,7 +243,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC5", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC5", recordRole: "principal" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -270,7 +271,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC6", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC6", recordRole: "principal" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -294,7 +295,7 @@ describe("materialize_facts", () => {
     );
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC7", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC7", recordRole: "principal" }));
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -306,7 +307,7 @@ describe("materialize_facts", () => {
   it("(8) GOLDEN: every fact and name written carries a non-null source-ref", async () => {
     await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
     expect(result.ok).toBe(true);
 
     const p = findPerson(await readTree(), "I2");
@@ -322,7 +323,7 @@ describe("materialize_facts", () => {
     ];
     await writeProject(tree(), research({ sources: [S1], assertions: persona }));
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
     expect(result.ok).toBe(true);
 
     const p = findPerson(await readTree(), "I2");
@@ -342,7 +343,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC10", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC10", recordRole: "principal" }));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
@@ -366,7 +367,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC11", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC11", recordRole: "principal" }));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.namesAdded).toBe(2); // two distinct names, neither collapsed onto the other
@@ -383,7 +384,7 @@ describe("materialize_facts", () => {
     const other = { id: "I5", gender: "Female", names: [{ id: "N9", given: "Ann", surname: "Smith" }] };
     await writeProject(tree({ persons: [other] }), research({ sources: [S1], assertions: enrichPersona() }));
 
-    const result = await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }); // no personId
+    const result = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" })); // no personId
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.created).toBe(true);
@@ -414,7 +415,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC13", recordRole: "absent" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC13", recordRole: "absent" }));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.factsAdded).toBe(0); // the absence feeds proof-conclusion, not a tree fact
@@ -635,7 +636,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -665,7 +666,7 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" }));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;

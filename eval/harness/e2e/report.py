@@ -1,13 +1,13 @@
 """Roll-up reporter for an e2e suite invocation.
 
-Skeleton stub. With one fixture, the "roll-up" is one line. The
-real per-tag breakdown lands when there are enough fixtures to make
-it useful (build order step 9).
+Prints compliance and cost/duration only.  Verdict-bearing lines (recall
+summary, overall gate, by-tag breakdowns) are deliberately omitted — §7.4
+requires blind grading, and the person who runs a fixture is usually the
+same person who grades it next.  For verdict totals use ``make e2e-corpus``.
 """
 
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import Iterable
 
 from e2e.result import E2eResult
@@ -33,8 +33,8 @@ UNGRADED_VERDICTS = ("ungraded", "skipped")
 def print_rollup(results: Iterable[E2eResult]) -> None:
     """Print a one-shot summary of the runs from this invocation.
 
-    Skeleton: total counts, per-tag breakdown, average cost + duration.
-    No persistence — devs read the committed runlogs for history.
+    Only compliance and cost/duration are shown — verdict-bearing output is
+    suppressed to preserve blind grading (spec §7.4, issue #1114).
     """
     results = list(results)
     if not results:
@@ -42,35 +42,9 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         return
 
     total = len(results)
-    passes = sum(1 for r in results if r.verdict == "pass")
-    partials = sum(1 for r in results if r.verdict == "partial")
-    fails = sum(1 for r in results if r.verdict == "fail")
-    ungraded = sum(1 for r in results if r.verdict == "ungraded")
-    skipped = sum(1 for r in results if r.verdict == "skipped")
-    # A verdict this module does not know. Counted at the HEADLINE, not only in
-    # the per-tag loop below: an untagged run never reaches that loop, so an
-    # unreadable verdict would leave `0/1 recall pass` and no other trace, which
-    # is the same silent non-reconciliation issue #1245 is about.
-    unrecognised = sum(1 for r in results if r.verdict not in KNOWN_VERDICTS)
 
-    # The recall line counts the GENEALOGICAL verdict only. It is labelled as
-    # such because it is no longer the whole story: a run can recover the
-    # answer perfectly and still fail the gate on compliance (issue #972).
-    summary = f"E2E suite: {passes}/{total} recall pass"
-    if partials:
-        summary += f", {partials} partial"
-    if fails:
-        summary += f", {fails} fail"
-    if ungraded:
-        summary += f", {ungraded} ungraded"
-    if skipped:
-        summary += f", {skipped} skipped"
-    if unrecognised:
-        summary += f", {unrecognised} unrecognised"
-    print(summary)
-
-    # Compliance + the combined gate, always printed — a silent compliance
-    # line would put us right back to one number that means two things.
+    # Compliance, always printed — §7.4 permits this axis.  A silent
+    # compliance line would put us back to one number meaning two things.
     non_compliant = [r for r in results if r.compliance == "fail"]
     if non_compliant:
         names = ", ".join(r.test_id for r in non_compliant)
@@ -80,39 +54,6 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         )
     else:
         print(f"  compliance: {total}/{total} clean")
-
-    gate_pass = sum(1 for r in results if r.outcome == "pass")
-    print(f"  overall gate: {gate_pass}/{total} pass")
-
-    # By-tag breakdowns. Collect tag-dimension → tag-value → counts.
-    #
-    # Seeded from KNOWN_VERDICTS rather than a literal, and anything outside it
-    # lands in `other` — which IS printed. `verdict` reaches us as whatever
-    # string the judge returned (`orchestrator.py`: `str(judge_output.get(
-    # "verdict") or "fail")`), so an unrecognised value is reachable, and the
-    # previous `bucket.get(v, 0) + 1` filed it under a key nothing rendered.
-    # A tally that silently fails to reconcile is the #1245 defect in miniature.
-    by_dim: dict[str, dict[str, dict[str, int]]] = defaultdict(
-        lambda: defaultdict(lambda: {k: 0 for k in (*KNOWN_VERDICTS, "other", "total")})
-    )
-    for r in results:
-        for dim, value in (r.tags or {}).items():
-            bucket = by_dim[dim][value]
-            bucket["total"] += 1
-            bucket[r.verdict if r.verdict in KNOWN_VERDICTS else "other"] += 1
-
-    for dim, values in by_dim.items():
-        parts = []
-        for value, bucket in sorted(values.items()):
-            # Ungradeable runs are named, not folded into the denominator's
-            # silence: "3/8" with 5 ungraded reads as five genealogical
-            # failures, which is the miscount acceptance criterion 4 asks about.
-            ungradeable = sum(bucket[v] for v in UNGRADED_VERDICTS if v in bucket)
-            suffix = f" ({ungradeable} ungraded)" if ungradeable else ""
-            if bucket["other"]:
-                suffix += f" ({bucket['other']} unrecognised)"
-            parts.append(f"{value} {bucket['pass']}/{bucket['total']}{suffix}")
-        print(f"  by {dim:<15} {'  '.join(parts)}")
 
     # Cost + duration averages from usage.
     costs = [r.usage.get("total_cost_usd") for r in results if r.usage.get("total_cost_usd")]

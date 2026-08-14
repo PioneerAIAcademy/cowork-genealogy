@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -208,7 +209,7 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     } as any);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("src_002");
+    expect(single(r).entryId).toBe("src_002");
   });
 
   it("persists a whole record — source + assertions — in one all-or-nothing batch", async () => {
@@ -251,6 +252,6 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     } as any);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("pe_001");
+    expect(single(r).entryId).toBe("pe_001");
   });
 });

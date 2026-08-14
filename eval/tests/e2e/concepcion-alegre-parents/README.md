@@ -29,6 +29,85 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 25, flags `adds_father`/`adds_mother`/`adds_birth`/`adds_marriage`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Paraguay, Catholic Church Records, 1754-2015: marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera, for Vicente Figueredo and Concepción Alegre (daughter of Juan Delgado and Hipólita Martínez). The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard, plus a `required` finding that the report documents the rejection.
+**Adjudicated 2026-08-12 (issue #875): the record is the right one, but its
+indexed parent names are wrong.** The hint matched the correct marriage — and
+the indexed parentage it carries is an indexing error, which is what makes this
+fixture worth running.
 
-Points a reviewer should weigh: the groom's name "Vicente Figueredo" and the town "Altos" both match the tree's recorded spouse and family location exactly, and the tree currently has **no** birth, marriage, or parent data for Concepción at all, so this record would be the first anchor for all four. The one wrinkle: the tree's eldest recorded child, Paulino, was born **1938** — two years **before** the hint record's 1940 marriage date. A child born before a couple's registered church marriage is common in this region and era (a civil or common-law union formalized later by the church), so this is not necessarily disqualifying, but a reviewer should weigh it.
+**Verdict.** The 11 May 1940 marriage at San Lorenzo, Altos is Concepción
+Alegre and Vicente Figueredo. Her birth (about 1917, Altos) and that marriage
+are both recoverable and are kept as findings. Her parents are **Venancio
+Alegre and María de la Paz Resquín** — *not* the Juan Delgado and Hipólita
+Martínez the index names.
+
+**What decided it.** The register page itself
+(`ark:/61903/3:1:33SQ-GRG8-9G8C`, folio 222-223, third act) reads: *"bendije el
+matrimonio de Vicente Figueredo, soltero de veinte y cuatro años … hijo legítimo
+de Mauricio Higueredo y de Ramona Bagada, con Concepción Alegre, soltera de
+veinte y tres años … e hija legítima de Venancio Alegre y de la Paz Resquín,
+**siendo testigos Juan Delgado y su esposa Hipólita Martínez**, y legitimaron en
+el acto a un hijo Marcelino de un año."* Delgado and Martínez are the
+**witnesses** — a married couple standing for the bride and groom — promoted
+into the bride's parent fields by FamilySearch's indexer. The father's name was
+also read off the image directly; FamilySearch's AI transcription of the page
+drops it, rendering the clause as "hija legítima y de la Paz Resquín".
+
+**The father is not machine-readable, so f3 is `required: false` (measured
+2026-08-12).** `image_transcribe` was run once on the register page
+(`ark:/61903/3:1:33SQ-GRG8-9G8C`) with `lookingFor` naming the father. Our own
+VLM transcription drops him the same way FamilySearch's does, rendering the
+clause *"con Concepcion Alegre, soltera de veinte y tres años, de la misma
+naturaleza y vecindad e hija legítima, y de la Paz Berguin"* — a dangling
+"y de" where the father should be. So there is no tool route to Venancio: not
+the index, not full-text search over the transcription, not the transcription
+tool. He is legible only to a human reading the image, which is how this
+fixture's answer was adjudicated. f3 is therefore **bonus credit, not a
+gate** — an agent cannot be failed for missing a name no tool it has can
+surface. f4 (the mother) stays `required: true`: her given name survives
+transcription intact as "de la Paz", though note the surname garbles to
+"Berguin" for Resquín, so grade her on the given name and let the surname
+spelling slide. Two other names on the same act garble the same way
+("Ramona Bagado" for Bagada, "Felipolita Martinez" for Hipólita), which is
+the expected accuracy floor for 1940 Paraguayan parish hand, not a defect.
+
+One caveat for whoever re-measures: the tool's `FOUND` marker came back
+positive and was **wrong**. It is the VLM's own self-report, and the
+`lookingFor` string named both the bride and the father — "Concepción Alegre"
+is on the page, "Venancio" is not. Read the transcription text, not the
+marker.
+
+**What corroborates it.** Three other marriages in the same register name
+Venancio Alegre and María De la Paz Resquín as parents of children surnamed
+Alegre — Benicio (1929), Tomasa (1934), Mónica (1936) — so Concepción is a
+fourth. The naming convention agrees independently: she is recorded *Alegre*,
+and two of her children appear in the tree as *Figueredo Alegre*, making her
+paternal surname Alegre and ruling out Delgado. Her stated age of 23 gives a
+birth about 1917; the groom's stated age of 24 matches `G384-Z5K` (b. 19 Jul
+1915), and his parents — Mauricio (H)igueredo and Ramona Bagada — confirm the
+"Vicente Figueredo **Bogado**" naming in the military-pension source already
+attached to the tree.
+
+**The 1938 wrinkle resolved.** The original draft flagged that the tree's eldest
+recorded child, Paulino, was born two years before the marriage. The act settles
+it: the couple *"legitimaron en el acto a un hijo Marcelino de un año"* — they
+legitimised a one-year-old son at the ceremony, exactly the civil/consensual
+union formalised later by the church that the draft hypothesised. (Marcelino is
+not in the tree; neither are Adriano or Silvio, both named in attached military
+registers. Out of scope here.)
+
+**Why the fixture is shaped the way it is.** The indexed parents are encoded as
+a `polarity: "avoid"` guard (f5) rather than simply deleted, because the wrong
+answer is what FamilySearch actively pushes at the agent: the hint for
+`G384-ZCZ` offers Delgado and Martínez as parents, and an agent that trusts it
+will assert them. The paired required finding (f6) asks the agent to *document*
+the conflict rather than silently route around it. Neither correct parent is
+reachable from any indexed entry — both require the register page — so this
+fixture tests whether the agent goes past the index when the index is what
+misled it. The two differ in how far that gets it: the mother (f4) is
+recoverable from the page's transcription and stays required, while the father
+(f3) survives no machine reading of the page at all and is bonus-only (see
+above).
+
+**For the next reader.** Nothing in the index disambiguates witnesses from
+parents; only the register text does. If this fixture is ever re-derived from
+`ark:/61903/1:1:X9PK-5YNN` alone it will reproduce the original error.
