@@ -350,6 +350,7 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Christening` | yes | GedcomX-only — no lowercase equivalent in research.json (use `birth` assertions for baptism-related claims) |
 | `Marriage` | yes | Used on Couple relationship facts |
 | `Divorce` | yes | Used on Couple relationship facts. GedcomX-only — no research.json equivalent in v1 |
+| `Annulment` | yes | Used on Couple relationship facts, and echoed as a person-level fact (see `Parents` note). Swept by `tree_forget` `spouses-of` alongside `Marriage`/`Divorce` |
 | `Residence` | yes | |
 | `Census` | **no** | Extension. Standard GedcomX records census appearances as `Residence`. The conversion function maps `Census` → `Residence` with a qualifier at upload. Use `Census` in the simplified format for clarity |
 | `Immigration` | yes | |
@@ -362,6 +363,7 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Property` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI. May not survive FamilySearch upload processing |
 | `Will` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
 | `Probate` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
+| `Parents` | **no** | Extension. A FamilySearch **person-level** documentary fact that transcribes the parents named in an indexed record; its `value` holds the parents' names (e.g. `"Geo[illegible] Wilcox - Caroline E Woodruff"`). Redundant with the `ParentChild` structure, so `tree_forget` `parents-of` sweeps it (§2.1.1); not emitted onto the tree by our own writers. No standard GedcomX person fact type — same upload caveat as Property |
 
 **Casing convention:** Fact and name types use PascalCase (matching GedcomX conventions with URI prefixes dropped). This contrasts with `research.json` which uses lowercase_with_underscores. When mapping between the two files, convert case: `birth` ↔ `Birth`, `military_service` ↔ `Military`, `residence` ↔ `Residence`. The research.json types `name`, `relationship`, and `other` are research-only and do not appear as GedcomX fact types.
 

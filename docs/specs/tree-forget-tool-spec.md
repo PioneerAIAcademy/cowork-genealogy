@@ -75,17 +75,17 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 
 | `selector` | Required field(s) | Removes |
 |---|---|---|
-| `parents-of` | `personId` | the person's parents, and the ParentChild links to them |
+| `parents-of` | `personId` | the person's parents, the ParentChild links to them, **and the person's own `Parents` documentary facts** (see §2.1.1) |
 | `children-of` | `personId` | the person's children, and the ParentChild links to them |
-| `spouses-of` | `personId` | the person's spouses, and the couple relationships |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own `Marriage`/`Divorce`/`Annulment` documentary facts** (see §2.1.1) |
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
-| `facts-before` | `year`, optional `personId` | facts confidently dated before `year` (§2.1.2); tree-wide when `personId` is omitted |
+| `facts-before` | `year`, optional `personId` | facts confidently dated before `year` (§2.1.3); tree-wide when `personId` is omitted |
 | `facts-after` | `year`, optional `personId` | facts confidently dated after `year`; tree-wide when `personId` is omitted |
 | `facts-between` | `fromYear`, `toYear`, optional `personId` | facts confidently within the inclusive range `[fromYear, toYear]`; tree-wide when `personId` is omitted |
 | `person` | `personId` | one person, cascading every relationship touching them |
-| `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.1) |
+| `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.2) |
 | `relationship` | `relationshipId` | one specific relationship |
 
 Selection is **structural, never by name**. The caller passes ids; the tool
@@ -98,11 +98,43 @@ therefore fails loudly, which reads as "this was already forgotten." An unknown
 `personId` is likewise an error, phrased to distinguish a tree person id from a
 FamilySearch PID.
 
-#### 2.1.1 A fact id is not guaranteed unique across owners
+#### 2.1.1 A conclusion is carried twice — the relative selectors strip both
+
+FamilySearch encodes a conclusion **redundantly**: as graph structure *and* as a
+documentary fact on the subject's own record. `person_read` returns both. If a
+relative selector stripped only the structure, the answer would survive as that
+fact — and the fact can be the **sole** carrier, when the related persons were
+never added as tree persons at all. So the relative selectors also remove the
+subject's own facts of the matching type(s), matched by type — consistent with
+the structural, never-by-value rule, since the fact *value* naming the relatives
+is never read. Their presence also satisfies the "matched nothing" check: the
+selector succeeds on a person with such a fact but no matching relationship
+rather than erroring. Reported as `factsByType`, a kind not a value.
+
+- **`parents-of`** strips the subject's `Parents`-type fact (a fact whose
+  `value` names the parents, e.g. `"Geo… Wilcox - Caroline E Woodruff"`).
+- **`spouses-of`** strips the subject's `Marriage`/`Divorce`/`Annulment`-type
+  facts, the person-level echo of the conclusion the `Couple` relationship also
+  carries as its own facts.
+
+`children-of` needs no such sweep: the redundant `Parents` fact lives on the
+child, whom `children-of` removes wholesale.
+
+**Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
+at scale: measured over committed snapshot trees (2026-08-14, scanning
+`eval/**/*.gedcomx.json`), 27 of the 86 persons carrying a person-level `Marriage`
+fact have no `Couple` relationship, so for those `spouses-of` shifts from erroring
+to deleting facts. The ratio drifts as the corpus grows — re-measure rather than
+quoting these figures. That is the sole-carrier case working as
+designed — the fact is the only record of the conclusion — and `removed.factsByType`
+names what went, so the deletion is not silent.
+
+#### 2.1.2 A fact id is not guaranteed unique across owners
 
 FamilySearch does not guarantee a fact id is unique across persons — a real
 compiled tree returned the same literal Birth fact id for six distinct people.
-Every fact-producing selector (`birth-of`, `death-of`, `facts-of`, `fact`)
+Every fact-producing selector — `birth-of`, `death-of`, `facts-of`, the
+`parents-of`/`spouses-of` redundant-fact sweep (§2.1.1), and `fact` —
 therefore resolves and removes by **(owner, factId)**, never by a bare factId:
 removing one person's fact never touches another owner's fact that happens to
 carry the same id, even when both are kept.
@@ -114,12 +146,14 @@ ids — so a bare `(ownerId, factId)` pair would reunite the exact cross-owner
 leak this scoping exists to prevent, just across a different pair of fields,
 the moment a person and a relationship happened to share a literal id.
 
-For `birth-of`/`death-of`/`facts-of`, ownership is already unambiguous — the
-selector names the owning `personId` directly — so removal proceeds without
-asking anything. But the same id can still exist on a different owner the
-call is not touching, and `validation.warnings` says so (§3.1's ids-only rule
-applies): one line per resolved fact naming every other owner and its kind.
-Not an error; removal is correct regardless. It is a fact about the data worth
+For `birth-of`/`death-of`/`facts-of`, and the `parents-of`/`spouses-of`
+redundant-fact sweep (§2.1.1), ownership is already unambiguous — the
+selector (or, for the sweep, the relative selector doing the sweeping) names
+the owning `personId` directly — so removal proceeds without asking anything.
+But the same id can still exist on a different owner the call is not
+touching, and `validation.warnings` says so (§3.1's ids-only rule applies):
+one line per resolved fact naming every other owner and its kind. Not an
+error; removal is correct regardless. It is a fact about the data worth
 telling the researcher.
 
 For the bare `fact` selector, which historically took only a `factId`, there is
@@ -144,7 +178,7 @@ before the call, so it is not reported as missing. It is not counted in
 `removed.factsByType` either, consistent with a removed owner's other facts,
 which were never individually counted to begin with.
 
-#### 2.1.2 Date-range selectors resolve internally, never by the caller reading dates
+#### 2.1.3 Date-range selectors resolve internally, never by the caller reading dates
 
 `forget-and-rederive/SKILL.md` tells the agent not to read `tree.gedcomx.json` —
 the file holds the very answer it is about to go looking for. A request like

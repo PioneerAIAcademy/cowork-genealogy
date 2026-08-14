@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-08-12_14-44-18.json",
+  "run_log": "v1_2026-08-13_12-12-52.json",
   "annotator": "chesworthrm@familysearch.org",
   "corrections": [
     {
@@ -646,16 +646,16 @@
       "test_id": "ut_search_records_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 1,
+      "corrected_score": 1,
       "comment": null
     },
     {
       "test_id": "ut_search_records_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 1,
+      "corrected_score": 1,
       "comment": null
     },
     {
