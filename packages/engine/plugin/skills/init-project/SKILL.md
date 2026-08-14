@@ -142,7 +142,7 @@ Objectives are broad (overarching goal, not a research question — those come l
 
 ### Searching by name
 
-Call `person_search` with name + known facts. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
+Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
 
 Present ranked candidates with `personId`, confidence, key facts. In single-turn mode, select the top candidate. Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
 
