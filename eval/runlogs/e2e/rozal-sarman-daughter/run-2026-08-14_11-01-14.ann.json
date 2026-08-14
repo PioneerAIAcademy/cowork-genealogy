@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Agent declined the wrong candidate: the 1892 Kiszombor christening record was created as an unattached person (I1) but never asserted as a child of Rozal Sarman (P873-TWP); ps_001 explicitly rejects the link, identifying a different couple (mother Szaz, not Sarman). Present only as a rejected hypothesis. Compliance/guardrail issues are separate from finding recovery.",
+    "f2": "Documented negative conclusion at probable tier (ps_001): no record links a daughter Viktoria to Rozal Sarman; the 1892 baptism belongs to a Szaz-surname family. Exhaustive-search summary covers four Torontal church collections plus FTS coverage analysis."
+  },
+  "annotator": "solomonbaidoo54@gmail.com"
+}
