@@ -375,7 +375,11 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
     const md = await feedbackMarkdown({ ...makeOptions(folder), includeSessionLog: true })
     expect(md).toContain('## Session log')
     expect(md).toContain('requested but none was found')
-    expect(md).toContain('Cowork')
+    // Assert on the parts that actually moved into this branch — the results/
+    // pointer and the doc link — not just 'Cowork', which the pre-swap wording
+    // also contained and so would not catch a regression (chesworthrm review).
+    expect(md).toContain('results/')
+    expect(md).toContain('docs/alpha-user-guide-cowork.md')
     expect(md).not.toContain('See `_feedback/session-log.jsonl`')
   })
 
