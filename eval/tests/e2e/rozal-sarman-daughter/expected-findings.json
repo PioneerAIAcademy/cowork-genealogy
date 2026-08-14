@@ -3,17 +3,36 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Rozál Sármán (recorded in the hint as Rozal Szaz) and Istvan Juhasz had a daughter, Viktoria Juhász, baptized about 1892 in Kiszombor, Torontál, in addition to their daughter Ágnes already in the tree (b. 1894).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Rozál Sármán (PID P873-TWP) and her husband István Juhász had a daughter Viktoria Juhász, baptized about 1892 in Kiszombor, Torontál, in addition to their documented daughter Ágnes (b. 1894). The FamilySearch hint that suggests this is a false match: the baptismal record it draws on names the child's mother as Rozál Száz ('Rozal Szaz'), not Rozál Sármán. Száz and Sármán are unrelated Hungarian surnames with no handwriting- or transcription-error path between them, so the mother in the record is a different woman. The manuscript entry (entry 48) also gives a Kiszombor address (house 269) and godparents (Kóbori Lajos, Szabó Mária) belonging to a different household. István Juhász was a common name in 19th-century Torontál, so the matching given name and husband name — the two fields that triggered the hint algorithmically — belong to a different couple: a Száz Rozál married to her own István Juhász. Pass = the final tree/research adds no daughter Viktoria to Rozál Sármán and contains no stub person for such a child (or it appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Sármán Rozál (P873-TWP)",
         "relation": "child",
-        "target_person": {
-          "name": "Viktoria Juhász",
-          "birth": "baptized about 1892, Kiszombor, Torontál, Hungary"
+        "wrong_candidate": {
+          "name": "Viktoria Juhász, baptized about 1892, Kiszombor, Torontál",
+          "note": "the hint's baptismal record names the mother as Rozál Száz, not Rozál Sármán; the surnames are unrelated and admit no transcription path, so the record documents a different couple (a Száz Rozál and her own István Juhász, a common name in the region)"
         }
       },
       "supporting_sources": [
-        "Hungary, Catholic Church Records, 1636-1895 — baptismal entry, Kiszombor, Torontál, naming parents Istvan Juhasz and Rozal Szaz"
+        "Hungary, Catholic Church Records, 1636-1895 — baptismal entry, Kiszombor, Torontál, naming parents Istvan Juhasz and Rozal Szaz (ark:/61903/1:1:XZ6D-FZY) — the disproving record: its mother's surname (Száz) is not the subject's (Sármán)",
+        "Manuscript image of the same baptismal register, entry 48 (ark:/61903/3:1:9Q97-YS8R-ZWF) — direct read confirms the mother's surname as Száz and a Kiszombor household (house 269), corroborating the index against the primary source"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having examined the hinted baptismal record and searched for a daughter Viktoria tied to Rozál Sármán, the agent should document a negative conclusion: no record establishes a daughter Viktoria (bapt. ~1892, Torontál) for Rozál Sármán. The only ~1892 Viktoria baptism the hint surfaces names the mother as Rozál Száz, a different surname; the sole documented children of Rozál Sármán and István Juhász remain as in the starting tree.",
+      "details": {
+        "subject_person": "Sármán Rozál (P873-TWP)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no additional daughter Viktoria found for Rozál Sármán",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No record in Hungary, Catholic Church Records, 1636-1895 ties a daughter Viktoria (bapt. ~1892, Torontál) to Rozál Sármán; the one ~1892 Viktoria baptism in that collection names the mother as Rozál Száz, not Sármán"
       ],
       "required": true
     }
