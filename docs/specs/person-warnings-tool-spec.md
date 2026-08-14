@@ -233,7 +233,7 @@ unlikely result.
 
 ### W1: `DEATH_BEFORE_BIRTH`
 
-**Severity:** `error`
+**Severity:** `contradiction`
 
 **Condition:** The anchor has both a Birth and a Death fact with
 parseable years, and the latest possible death is before the earliest
@@ -263,7 +263,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 ### W2: `YOUNG_BIRTH`
 
-**Severity:** `warning`
+**Severity:** `implausible`
 
 **Condition:** A ParentChild relationship involving the anchor exists
 where the parent is male, and even the maximum possible age at the
@@ -305,7 +305,7 @@ child's data is what typically needs correction), with the father as
 
 ### W3: `EVENT_AFTER_DEATH`
 
-**Severity:** `error`
+**Severity:** `contradiction`
 
 **Condition:** The anchor has a Death fact with a parseable year, and
 another fact (not in the exclusion list) whose earliest possible year
