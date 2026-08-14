@@ -649,14 +649,16 @@ def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value, dat
     )
 
 
-def test_birth_year_rule_exemption_one_is_year_specific():
-    """A `date` holding a DIFFERENT year does not excuse the value's year —
-    otherwise any populated date waves the check through."""
+def test_birth_year_rule_reports_every_year_in_the_label():
+    """When nothing states a date, the message names all the years it found,
+    so the annotator sees the whole label rather than its first match."""
     result = _run_birth_year_rule(
-        [_birth_assertion(value="born about 1845, Ohio", date="1890")]
+        [_birth_assertion(value="1870 census: born about 1845, Ohio",
+                          date=None)]
     )
     assert result.passed is False
-    assert "1845" in (result.error or "")
+    for year in ("1870", "1845"):
+        assert year in (result.error or ""), result.error
 
 
 def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
@@ -724,38 +726,63 @@ def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
     assert result.passed is True, f"false positive on an atomic pair: {result.error}"
 
 
-def test_birth_year_rule_still_fires_when_the_sibling_states_another_year():
-    """The exemption is year-specific and role-specific, so it cannot be used
-    to wave through a genuinely orphaned year: a sibling stating 1890 does not
-    excuse 1845 appearing only in a birthplace label."""
+def test_birth_year_rule_exemption_is_scoped_to_the_same_role():
+    """A sibling under a DIFFERENT role does not vouch: the bride stating 1845
+    cannot excuse a year smuggled into the groom's birthplace label."""
     result = _run_birth_year_rule(
         [
             _birth_assertion(
-                id="a_1",
-                record_role="groom",
-                value="born about 1845, Ohio",
-                date=None,
+                id="a_1", record_role="groom",
+                value="born about 1845, Ohio", date=None,
             ),
             _birth_assertion(
-                id="a_2",
-                record_role="groom",
-                value="about 1890",
-                place=None,
-                date="~1890",
-                evidence_type="indirect",
-            ),
-            _birth_assertion(
-                id="a_3",
-                record_role="bride",
-                value="about 1845",
-                place=None,
-                date="~1845",
-                evidence_type="indirect",
+                id="a_2", record_role="bride", value="about 1845",
+                place=None, date="~1845", evidence_type="indirect",
             ),
         ]
     )
     assert result.passed is False
     assert "a_1" in (result.error or "")
+
+
+def test_birth_year_rule_exemption_is_scoped_to_the_same_record():
+    """And not across records — `child_1` on one record must not vouch for
+    `child_1` on another, which would suppress a genuine leak in any
+    multi-record project."""
+    smuggled = _birth_assertion(
+        id="b_1", value="born about 1845, Ohio", date=None,
+    )
+    smuggled["record_id"] = "recB"
+    other = _birth_assertion(
+        id="a_2", value="about 1845", place=None, date="~1845",
+        evidence_type="indirect",
+    )
+    other["record_id"] = "recA"
+    result = _run_birth_year_rule([smuggled, other])
+    assert result.passed is False
+    assert "b_1" in (result.error or "")
+
+
+def test_birth_year_rule_tolerates_a_second_year_in_the_label():
+    """A label carrying an enumeration year besides the birth year must not
+    fire when the birth year IS captured on a sibling. `search` took the FIRST
+    year, so "1870 census: born in Ohio" failed on 1870 even though ~1845 sat
+    correctly on the sibling — and a validator failure suppresses the judge,
+    so that false positive cost the whole test's grade."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1", value="1870 census: born in Ohio", date=None,
+            ),
+            _birth_assertion(
+                id="a_2", value="about 1845", place=None, date="~1845",
+                evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is True, (
+        f"false positive on a label carrying a second year: {result.error}"
+    )
 
 
 def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
