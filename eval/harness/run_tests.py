@@ -796,7 +796,7 @@ def main(argv: list[str] | None = None) -> int:
         The save step must not be the thing that loses the work it is saving,
         so a failure here is recorded and reported, not propagated.
         """
-        nonlocal harness_error
+        nonlocal harness_error, stop_submitting
         by_skill: dict[str, list[dict]] = {}
         for i, sp in enumerate(specs):
             e = results_by_index.get(i)
@@ -839,6 +839,16 @@ def main(argv: list[str] | None = None) -> int:
                 # promotes whatever partials did land and prints the reason.
                 if harness_error is None:
                     harness_error = e
+                # ...and STOP SUBMITTING, exactly as the last-resort guard on
+                # fut.result() does. This failure is not transient: build_run_log
+                # re-validates every accumulated entry on each flush, so one bad
+                # entry poisons every later flush for that skill. Without this,
+                # `harness_error` makes the end-of-run block short-circuit to
+                # promote-and-return, so every test that finishes after this
+                # point is executed, judged, PAID FOR, and then discarded — a
+                # slower and more expensive version of the crash this guard
+                # exists to prevent.
+                stop_submitting = True
 
     def _budget_blocks_next(spec) -> bool:
         """True (and flips stop_submitting) when a suite cap would be

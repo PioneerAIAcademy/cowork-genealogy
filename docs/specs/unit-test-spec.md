@@ -1366,7 +1366,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 ### Estimated costs
 
-Costs assume prompt caching is firing and are quoted **per run**. The harness default is N=1 (Section 7), so these are the headline figures. For description-optimizer passes or golden-set calibration with N=3, multiply by ~2.5 (caching damps the per-run multiplier below 3x). Verify caching with `totals.cached_input_tokens` in the run log, read as a share of `cached_input_tokens + input_tokens` (the two are disjoint — see Section 12) — should be 50%+ for N=1 batched runs, 70%+ for N=3 batched runs.
+Costs assume prompt caching is firing and are quoted **per run**. The harness default is N=1 (Section 7), so these are the headline figures. For description-optimizer passes or golden-set calibration with N=3, multiply by ~2.5 (caching damps the per-run multiplier below 3x). Verify caching with `totals.cached_input_tokens` in the run log, read as a share of `cached_input_tokens + input_tokens` (the two are disjoint — see Section 10) — should be 50%+ for N=1 batched runs, 70%+ for N=3 batched runs.
 
 Most tests are mid-complexity (~$0.10-0.20 per run). Simple stateless skills (search-wikipedia, convert-dates) are at the low end (~$0.03). Complex synthesis skills (proof-conclusion, research-plan) are at the high end (~$0.40).
 
