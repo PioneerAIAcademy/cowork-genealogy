@@ -1,0 +1,76 @@
+{
+  "test": {
+    "id": "ut_record_extraction_029",
+    "skill": "record-extraction",
+    "name": "Extract marriage order and the parental consent signer from an 1893 Hamilton County license",
+    "type": "positive",
+    "description": "1893 Hamilton County, Ohio marriage license and return. The bride is designated a widow on her second marriage, so her recorded surname (Schmidt) is a prior husband's, not her parents'. The underage groom's consent is signed on the reverse by a man whose surname (Lang) differs from his own, i.e. a stepfather or guardian rather than the father. Exercises the marriage-order and consent-signer capture rules; the alpha-team review (2026-08-14) found nothing instructed the extractor to capture either.",
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "marriage-order",
+      "consent-signer",
+      "surname-evidence"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record:\n\nOhio, County Marriages, 1789-2016 — Hamilton County marriage license and return\nark:/61903/1:1:XZR4-K7Q\n\nMarriage date: 14 June 1893\nEvent place: Hamilton County, Ohio\n\nGroom: Charles Ferber\n  Age: 20\n  Residence: Cincinnati, Ohio\n  Marital status: Single (first marriage)\n\nBride: Emma Schmidt\n  Age: 26\n  Residence: Cincinnati, Ohio\n  Marital status: Widow — second marriage\n\n[On the reverse of the license:]\nConsent of parent or guardian for the minor groom, signed: Jacob Lang, stepfather\n\n(The FamilySearch index for this record shows only the names, date and county; the marital-status column and the consent signature appear on the license image.)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Marriage date (14 Jun 1893) and place (Hamilton County, Ohio) are DIRECT evidence — stated on the record",
+    "MARRIAGE ORDER — do not skip this: the bride's 'Widow — second marriage' designation and the groom's 'Single (first marriage)' designation are stated facts and must each be captured as an assertion (fact_type 'marital_status' or an equivalent spelling), evidence_type 'direct'. Omitting the bride's prior-marriage designation is the failure this test guards against",
+    "SURNAME CONSEQUENCE: because Emma is a widow remarrying, her recorded surname 'Schmidt' is a PRIOR HUSBAND'S surname, not her parents' surname. Extract her name exactly as stated ('Emma Schmidt') and do NOT assert or imply that Schmidt is her birth/maiden surname or her father's surname. Flagging that her maiden name is unknown and needs a separate source is good practice",
+    "CONSENT SIGNER: Jacob Lang must be captured as his own persona with a mandatory 'name' assertion, at a consent-signer role (e.g. 'consent_signer_1'). His stated relationship to the groom is 'stepfather' — record it as stated",
+    "DO NOT infer fatherhood from the consent signature: Jacob Lang's surname (Lang) differs from the groom's (Ferber) and the record says stepfather, so he must NOT be roled 'father_of_groom' and no father-of-groom name assertion may be invented from the signature. This is the second failure this test guards against",
+    "The parties are the informants for their own facts, including their own marital status, at proximity 'self'. The marriage event itself (date, place) also takes the parties at proximity 'self' — they participated in the ceremony firsthand; the clerk and any officiant are RECORDERS, not the event's informant. Jacob Lang is the informant for his own name and his stated relationship, proximity 'self'",
+    "Source classification is ORIGINAL for the license and return itself (this is the record, not an index of it). The note that the FamilySearch index omits the marital-status column and the consent signature is context about the index, not a reason to classify this source derivative",
+    "No parents are named for either party anywhere on this record. A negative-evidence assertion (record_role 'absent', evidence_type 'negative') recording that the license names no parents is PERMITTED BUT NOT REQUIRED — do not dock the skill for creating one, and do not dock it for omitting one. What IS wrong is treating the silence as evidence that either party's surname is their parents' surname"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Ferber",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Schmidt",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "consent_signer_1",
+      "fact_type": "name",
+      "value": "Lang",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    }
+  ]
+}
