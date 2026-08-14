@@ -806,6 +806,109 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
     ).passed is True
 
 
+# --- name values must be bare names (#1627) ---
+
+
+def _run_bare_name_rule(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results if r.name == "test_name_value_is_a_bare_name"), None
+    )
+    assert result is not None, "test_name_value_is_a_bare_name did not run"
+    return result
+
+
+def test_bare_name_rule_flags_the_persona_collapse_shape():
+    """The ut_025 defect, from `v1_2026-08-14_16-03-27`: the groom's father
+    captured as a name assertion ON the groom, with the tie fused into the
+    value, so no `father_of_groom` persona exists for person-evidence to
+    bind."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "name",
+                "value": "John Becker (father of Frank Becker)",
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "groom", "father of"):
+        assert fragment in (result.error or ""), result.error
+
+
+def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
+    """The ut_017 shape: the persona IS correct (`daughter_in_law_1`), but the
+    value carries a relational clause instead of the bare name. Milder than
+    the collapse, same rule — a name value is a name."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "daughter_in_law_1",
+                "fact_type": "name",
+                "value": "Linda (given name only; spouse of Robert Whitaker)",
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Mary (Johnson) Smith",  # maiden surname parenthetical — one person
+        "John Becker",
+        "Tollev [Nadnesen?]",  # faithful-capture uncertainty marker
+        "Emma Schmidt",
+    ],
+)
+def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
+    """A maiden-name parenthetical, an uncertainty marker, and plain names all
+    pass: the rule needs a relation word followed by `of`/`to`."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "bride",
+                "fact_type": "name",
+                "value": value,
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is True, f"false positive on {value!r}: {result.error}"
+
+
+def test_bare_name_rule_exempts_negative_evidence():
+    """`record_role: absent` values describe an expected-but-missing person,
+    so a relational phrase there is the point, not a defect."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "absent",
+                "fact_type": "name",
+                "value": "no father of the bride recorded on the license",
+                "evidence_type": "negative",
+            }
+        ]
+    )
+    assert result.passed is True, result.error
+
+
 # --- record_persona_id corruption signature (shared persona across roles) ---
 
 _PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"

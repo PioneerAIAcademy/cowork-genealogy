@@ -334,6 +334,17 @@ record.
 in the project (that's person-evidence's job). Assertions attach to
 records, not persons.
 
+**Whose role — the person the assertion is ABOUT.** A third party named
+inside a party's block (a marriage license's `Father:` line, a death
+certificate's `Mother's maiden name:`) is a **separate persona**: their
+`name` assertion carries THEIR role — `father_of_groom`,
+`mother_of_deceased` — never the party's. The record nests them under the
+party; your roles must not. Filing them under the party leaves no persona
+at all, and person-evidence binds by `record_id` + `record_role`, so
+nothing downstream can reach them. **A `name` value is the bare name** —
+`John Becker`, never `John Becker (father of Frank Becker)`. The tie is
+its own `relationship` assertion, under the party's role.
+
 **`record_persona_id`** — the GedcomX person `id` of this persona in the
 search sidecar. When the record came from a staged search (the
 assertion's `log_entry_id` has a sidecar), it is **required on EVERY

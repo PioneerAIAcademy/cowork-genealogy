@@ -436,6 +436,70 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     )
 
 
+_RELATIONAL_NAME_RE = re.compile(
+    r"\b(father|mother|parent|wife|husband|spouse|widow|widower|son|"
+    r"daughter|child|brother|sister|sibling)\s+(?:of|to)\b",
+    re.IGNORECASE,
+)
+
+
+def test_name_value_is_a_bare_name(before_state, after_state):
+    """A `name` assertion's value is the NAME, not the name plus the person's
+    tie to someone else (#1627).
+
+    The observed failure fuses two things into one value while filing the
+    assertion under the wrong persona:
+
+        record_role='groom'  fact_type='name'
+        value='John Becker (father of Frank Becker)'
+
+    Both halves are wrong. The tie belongs in its own `relationship`
+    assertion, and the name belongs to `father_of_groom` — filed under
+    `groom`, no parent persona exists at all, and `person-evidence` binds by
+    record_id + record_role, so nothing downstream can ever reach it.
+
+    This rule catches the value half deterministically and corpus-wide. The
+    role half is only reachable per fixture, via an existence-gated
+    `expected_classifications` matcher on the third-party role (ut_025 has
+    them, which is how this surfaced).
+
+    Scoped to `name` assertions, and to a relation word followed by `of`/`to`,
+    so a maiden-name parenthetical ("Mary (Johnson) Smith") and a
+    negative-evidence value describing an absence are both untouched.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if not _fact_type_matches(a.get("fact_type"), "name"):
+            continue
+        if a.get("record_role") == "absent":
+            continue  # negative evidence describes what was expected
+        value = str(a.get("value") or "")
+        hit = _RELATIONAL_NAME_RE.search(value)
+        if hit:
+            errors.append(
+                f"assertions[{a.get('id', '?')}] (record_role="
+                f"'{a.get('record_role')}'): name value={value!r} carries the "
+                f"relational phrase '{hit.group(0)}' — a name assertion's "
+                f"value is the bare name, the tie is its own `relationship` "
+                f"assertion, and the named third party needs their OWN "
+                f"record_role rather than this one"
+            )
+
+    assert not errors, (
+        "Name assertions fusing identity with relationship:\n  - "
+        + "\n  - ".join(errors)
+    )
+
+
 def test_new_assertions_attached_to_record_role(before_state, after_state):
     """Every new assertion must have both record_id and record_role.
 
