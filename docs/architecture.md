@@ -1327,7 +1327,9 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and three **warn-only** lints
+§3 — plus a **warn-only** arm that maps a changed shared fixture
+(`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
+and warns when their run logs go stale), and three **warn-only** lints
 worth knowing because they fire right after the three most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
