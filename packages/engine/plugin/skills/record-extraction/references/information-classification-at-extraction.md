@@ -112,7 +112,9 @@ Marriage records often involve multiple informants:
   (they were not present at the other's birth).
 - Parents' consent (when recorded): primary from the parent who
   signed; secondary if reported by the couple.
-- The officiant is primary for the ceremony date and location.
+- The parties are primary for the ceremony date and location — they
+  participated in it firsthand. The officiant and the clerk are
+  recorders, not informants for the event.
 - Witnesses are primary for the fact that the ceremony occurred.
 
 ## Informant vs. Recorder

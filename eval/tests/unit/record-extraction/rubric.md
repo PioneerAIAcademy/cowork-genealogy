@@ -60,6 +60,13 @@ Do not score the skill down for attributing death date/place to the physician ra
 - The stated **death and burial dates** stay `direct` evidence. An unknown informant answers WHO reported a fact, never WHETHER it was stated — so `informant: unknown` / `information_quality: indeterminate` never demotes a stated fact off `direct`. The same holds for a named associated person on the entry (a spouse noted alongside the deceased): their name is stated content, so `direct`.
 - **Parents named on a burial entry are `indirect`** — the register is recording a relationship reported to it, not one it observed.
 
+**Marriage records — the parties are the informants (matches the record-extractor agent's doctrine; grade against this, not intuition):**
+
+- **Groom and bride** are the informants for their own identifying facts — **name**, sex, age, birthplace, occupation, residence — and for **their own parents' names**, all at proximity `self`. `name` is explicitly included: a sparse index whose only party facts are name and sex still has `self` informants, never `unknown`.
+- **The marriage event itself** (date, place, ceremony) also takes the **parties** at proximity `self` — they participated in it firsthand. The officiant and the clerk are **recorders**: do not name them as the event's informant, and do **not** dock `self` in favour of `official_duty`. A **witness** is different — `witness` proximity is for a witness's own attestation that the ceremony occurred, and never for the parties' facts (a witness did not marry).
+- **Information quality for a party's own parents' names is `primary`** — the party has firsthand, ongoing knowledge of who their own parents are. This is *not* the death-certificate secondhand-relay case; do not accept `secondary`.
+- The **only** `indirect` value on a marriage record is a birth *year* computed from a stated age (its own assertion). A stated parent name is `direct`. Marking a stated party or parent fact `indirect` because the record is an indexed transcription is the derivative-inversion error the ⚠️ callout below forbids.
+
 ## Evidence type accuracy
 
 Were direct, indirect, and negative evidence types assigned correctly? A relationship inferred from household position in the 1850 or 1860 census (no relationship column — explicit relationship columns were not introduced until 1880) is indirect evidence. A relationship stated in an 1880+ census (explicit column) is direct evidence.

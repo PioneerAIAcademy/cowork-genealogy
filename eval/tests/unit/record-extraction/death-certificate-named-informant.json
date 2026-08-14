@@ -19,7 +19,7 @@
   "expected_classifications": [
     { "record_role": "deceased", "fact_type": "name", "evidence_type": "direct", "informant_proximity": "family_not_present" },
     { "record_role": "deceased", "fact_type": "occupation", "value": "Coal miner", "evidence_type": "direct", "informant_proximity": "family_not_present" },
-    { "record_role": "deceased", "fact_type": "sex", "optional": true, "evidence_type": "direct", "informant_proximity": "family_not_present" },
+    { "record_role": "deceased", "fact_type": "sex", "evidence_type": "direct", "informant_proximity": "family_not_present" },
     { "record_role": "deceased", "fact_type": "race", "optional": true, "evidence_type": "direct", "informant_proximity": "family_not_present" },
     { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": ["official_duty", "witness"] },
     { "record_role": "deceased", "fact_type": "cause_of_death", "evidence_type": "direct", "informant_proximity": "official_duty" },

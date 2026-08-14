@@ -555,9 +555,10 @@ the record establishes about who spoke.
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**
-- **Officiant / clerk:** informant for the marriage event itself (date,
-  place, ceremony). Proximity `official_duty` (officiant) or `witness`
-  (clerk who recorded the signed return).
+- **The marriage event itself** (date, place, ceremony): the **parties**,
+  proximity `self` — they participated in it firsthand. The officiant and
+  the clerk are **recorders**, not informants for the event; do not assign
+  them `official_duty` here.
   - **Place = the locality, not the venue.** Set `place` to the civil
     jurisdiction (town/county/state); keep a church/cemetery/hospital name
     in `value`/notes. A building name fed to the resolver mis-geocodes (e.g.
