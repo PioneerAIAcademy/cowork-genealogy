@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Agent found and cited the record (proof summary ps_001 names Jose Macatangay as father at 'probable' tier with a full GPS narrative) but never created a person or ParentChild relationship in the tree -- materialization gap, not a research miss.",
+    "f2": "Same as f1: Bernardina Cabrera is named in ps_001's narrative and supporting sources, but no person or relationship was written to the tree.",
+    "f3": "Agent found the baptism record (source S1, ark:/61903/1:1:6664-TBRQ) and wrote a fully-argued 'proved'-tier proof summary (ps_002), but no person named Miguel and no ParentChild relationship were added to the tree; S1 sits unattached in the sources array. Also note: the fixture's expected-findings.json cites ark:/61903/1:1:6664-TBR7, one character off from the ark the agent actually found and cited (...-TBRQ) -- worth confirming these are the same record before treating this as fully resolved."
+  }
+}
