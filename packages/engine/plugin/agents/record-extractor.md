@@ -206,11 +206,18 @@ List every person mentioned and assign a `record_role`:
   unspecified relationship (parent, sibling, or in-law of either spouse
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
-  evidence; report ambiguity rather than resolving it silently.
+  evidence; report ambiguity rather than resolving it silently. **Scope:
+  this governs links ACROSS household groups and to persons outside the
+  record. It never licenses persisting zero relationship assertions — the
+  apparent nuclear family's links MUST be persisted, as `_inferred` /
+  `indirect` per the pre-1880 rule below. A missing relationship column is
+  why they are `indirect`; it is never a reason to omit them.**
   - **`record_role` = apparent within-group structure, not raw position
     after the head.** Don't number everyone after the head `child_1,
     child_2, …` — that fabricates a parent-child link the record never
-    states (pre-1880 has no relationship column). A co-resident family
+    states (pre-1880 has no relationship column). This is a role-*naming*
+    rule; it does not license skipping the relationship assertions
+    themselves. A co-resident family
     keeps its own `head`/`wife`/`child_N`; an adult too old to be the
     head's child isn't `child_N` of that head. Unknown tie to the head →
     label by the person's own role, leave the cross-group link to a
