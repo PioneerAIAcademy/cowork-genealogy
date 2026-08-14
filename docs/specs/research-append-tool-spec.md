@@ -561,8 +561,9 @@ flagged but not audited (`guardrail-enforcement-spec.md` §10).
 
 **Warn-only advisories (the write still succeeds).** Distinct from the reject
 table above, `research_append` also surfaces non-blocking advisories on the
-successful response's `validation.warnings`. The first is the `person_evidence`
-**match_score** advisory: a link claiming `confidence: "confident"` that
+successful response's `validation.warnings`. One is the `person_evidence`
+**match_score** advisory (the other is §5.1's sources-without-assertions nudge,
+which shipped first): a link claiming `confidence: "confident"` that
 records no numeric `match_score` is warned, not rejected. `same_person` returns
 the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
 of historical `person_evidence` writes leave it unset — identity asserted, never
