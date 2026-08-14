@@ -79,6 +79,7 @@
     {
       "record_role": "bride",
       "fact_type": "marriage",
+      "optional": true,
       "evidence_type": "direct",
       "informant_proximity": "self"
     }

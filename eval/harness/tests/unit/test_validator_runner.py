@@ -627,25 +627,72 @@ def test_birth_year_rule_passes_on_a_bare_birthplace():
 
 
 @pytest.mark.parametrize(
-    "value",
+    ("value", "date"),
     [
-        "January 1845",  # ut_026 — stated month-year mirrored in `date`
-        "Born 11 July 1817, Stavanger, Norway",  # ut_016
-        "born Ireland, circa 1845",  # ut_005
-        "born ca. 1845, Ireland",  # ut_006
+        ("January 1845", "January 1845"),  # ut_026 — month-year mirrored
+        ("Born 11 July 1817, Stavanger, Norway", "11 July 1817"),  # ut_016
+        ("born Ireland, circa 1845", "~1845"),  # ut_005
+        ("born ca. 1845, Ireland", "~1845"),  # ut_006
     ],
 )
-def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value):
-    """The four shapes measured across the 8 committed/recoverable run logs
-    that carry a year in `value` and are NOT the defect: each populates
-    `date`, so the year mirrors a structured fact. Flagging any of them
-    would redden a correct test — the plan's explicit acceptance bar."""
-    result = _run_birth_year_rule(
-        [_birth_assertion(value=value, date="1845")]
-    )
+def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value, date):
+    """The four shapes measured across the committed run logs that carry a
+    year in `value` and are NOT the defect: each populates `date` with THAT
+    year, so the year mirrors a structured fact. Flagging any of them would
+    redden a correct test — the plan's explicit acceptance bar. The date is
+    the real one per shape, not a stand-in: exemption 1 is year-specific, so
+    pairing an 1817 value with a 1845 date would pass for the wrong reason
+    and hide a regression in that check."""
+    result = _run_birth_year_rule([_birth_assertion(value=value, date=date)])
     assert result.passed is True, (
         f"false positive on a date-backed value: {result.error}"
     )
+
+
+def test_birth_year_rule_exemption_one_is_year_specific():
+    """A `date` holding a DIFFERENT year does not excuse the value's year —
+    otherwise any populated date waves the check through."""
+    result = _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio", date="1890")]
+    )
+    assert result.passed is False
+    assert "1845" in (result.error or "")
+
+
+def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
+    """`sibling_years` reads the whole after-state, so a birth date seeded by
+    the scenario (every mid-research-flynn fixture has them) exempts a run
+    that adds only the birthplace — it smuggled nothing."""
+    seeded = _birth_assertion(
+        id="seed_1", value="about 1845", place=None, date="~1845",
+        evidence_type="indirect",
+    )
+    before = _empty_research_state()
+    before["files"] = {}
+    before["research_json"] = {
+        **before["research_json"], "assertions": [seeded],
+    }
+    after = _empty_research_state()
+    after["files"] = {}
+    after["research_json"] = {
+        **after["research_json"],
+        "assertions": [seeded, _birth_assertion(value="born about 1845, Ohio")],
+    }
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        r
+        for r in results
+        if r.name == "test_birth_place_value_has_no_embedded_year"
+    )
+    assert result.passed is True, f"false positive on a seeded year: {result.error}"
 
 
 def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
@@ -712,14 +759,23 @@ def test_birth_year_rule_still_fires_when_the_sibling_states_another_year():
 
 
 def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
-    """Scope guards: the rule examines only place-keyed `direct` births."""
+    """Scope guards, each isolated so it is the ONLY thing that can spare the
+    assertion — with a `date` present too, exemption 1 would carry these and
+    the guard itself would be untested (deleting it would keep the suite
+    green)."""
+    # placeless: no place/standard_place, and no date to fall back on.
     assert _run_birth_year_rule(
-        [_birth_assertion(value="about 1845", place=None, date="about 1845",
+        [_birth_assertion(value="born about 1845", place=None, date=None)]
+    ).passed is True
+    # indirect: place-keyed and dateless, spared only by evidence_type.
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio", date=None,
                           evidence_type="indirect")]
     ).passed is True
+    # non-birth fact_type, likewise place-keyed, dateless and direct.
     assert _run_birth_year_rule(
-        [_birth_assertion(value="born about 1845, Ohio",
-                          evidence_type="indirect")]
+        [_birth_assertion(value="born about 1845, Ohio", date=None,
+                          fact_type="residence")]
     ).passed is True
 
 

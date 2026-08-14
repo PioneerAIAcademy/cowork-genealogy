@@ -364,11 +364,14 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     before_ids = {a.get("id") for a in before.get("assertions", [])}
     new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
 
-    # Years any sibling `birth` assertion states structurally, per record_role.
+    # Years any `birth` assertion states structurally, per record_role.
     # Exemption 2: a year captured on a sibling's `date` is stated twice, not
     # smuggled — the assertion set is atomic even though this label is verbose.
+    # Scans the WHOLE after-state, not just new rows: a scenario that seeded a
+    # birth date (every `mid-research-flynn` fixture does) already states the
+    # year, so a run adding only the birthplace has smuggled nothing.
     sibling_years = {}
-    for a in new:
+    for a in after.get("assertions", []):
         if not _fact_type_matches(a.get("fact_type"), "birth"):
             continue
         role = _normalize_classification_token(a.get("record_role"))
@@ -383,22 +386,29 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
             continue
         if not (a.get("place") or a.get("standard_place")):
             continue
-        if a.get("date"):
-            continue  # exemption 1 — year mirrors this assertion's own date
         value = str(a.get("value") or "")
         found = _EMBEDDED_YEAR_RE.search(value)
-        if found and found.group(1) in sibling_years.get(
+        if not found:
+            continue
+        year = found.group(1)
+        # Exemption 1 — this assertion's own `date` states the same year.
+        # Year-specific, like exemption 2: a `date` holding some OTHER year
+        # does not excuse this one, which a bare `if a.get("date")` would.
+        if year in set(_EMBEDDED_YEAR_RE.findall(str(a.get("date") or ""))):
+            continue
+        # Exemption 2 — a sibling birth assertion for this role states it.
+        if year in sibling_years.get(
             _normalize_classification_token(a.get("record_role")), set()
         ):
-            continue  # exemption 2 — a sibling birth assertion states it
-        if found:
-            errors.append(
-                f"assertions[{a.get('id', '?')}] (record_role="
-                f"'{a.get('record_role')}'): direct birth/place assertion "
-                f"has the year {found.group(1)} embedded in value={value!r} "
-                f"— a birth year belongs in its own indirect assertion, not "
-                f"in the birthplace's value"
-            )
+            continue
+        errors.append(
+            f"assertions[{a.get('id', '?')}] (record_role="
+            f"'{a.get('record_role')}'): direct birth/place assertion "
+            f"has the year {year} embedded in value={value!r}, and no "
+            f"assertion for this role states it structurally — a birth year "
+            f"belongs in its own indirect assertion, not recoverable only "
+            f"from the birthplace's prose"
+        )
 
     assert not errors, (
         "Compound birth assertions (year smuggled into a birthplace "
