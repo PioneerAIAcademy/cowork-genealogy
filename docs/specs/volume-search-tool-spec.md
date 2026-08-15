@@ -217,8 +217,8 @@ Group fields intentionally **ignored**: `creators`, `custodians`,
 | API field | Type | Used for |
 |-----------|------|----------|
 | `place` | string | `place` (resolved, human-readable) |
-| `datesOrig` | string? | `dateRange` (when present, e.g. `"1726–1812"`) |
-| `recordTypeOrig` | string? | `recordType` (when present and not an internal placeholder) |
+| `datesOrig` | string? | `dateRange` (when present, e.g. `"1726–1812"`; a `title:` prefix is stripped) |
+| `recordTypeOrig` | string? | `recordType` (when present and not an opaque `concept-id:` value; a `title:` prefix is stripped) |
 
 Coverage fields intentionally **ignored**: `placeRepId`,
 `placeRepIdHierarchy`, `placeCoordinates`, `placeOrig`,
@@ -317,8 +317,8 @@ on the full `groupName` is exact — no prefix fallback is needed.
 | Field | Type | Description |
 |-------|------|-------------|
 | `place` | string | Human-readable place (e.g., `"Edensor, Derbyshire, England, United Kingdom"`). |
-| `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`), when present. |
-| `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`), when present. Omitted when the API returns an internal placeholder (a value matching `^concept-id:` or `^title:`). |
+| `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`), when present. A `^title:` prefix is stripped and the value kept, as on `recordType`. Omitted if nothing remains after stripping. |
+| `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`), when present. Omitted when the API returns an opaque internal id (a value matching `^concept-id:`). A `^title:` prefix is **stripped and the value kept** — that prefix marks provenance (the type came from the volume's title rather than the concept taxonomy), not a placeholder, so `"title:Taxation"` surfaces as `"Taxation"`. Omitted if nothing remains after stripping. |
 
 ### Output example
 
@@ -470,9 +470,12 @@ For each group in `response.groups`:
 8. `languages` ← `group.languages ?? []`
 9. For each `group.coverages` entry:
    - `place` ← `coverage.place`
-   - `dateRange` ← `coverage.datesOrig` (when present)
-   - `recordType` ← `coverage.recordTypeOrig` (when present and not
-     matching `^(concept-id|title):`)
+   - `dateRange` ← `coverage.datesOrig` (when present), with a leading
+     `^title:\s*` stripped and the result trimmed; omitted when the
+     result is empty
+   - `recordType` ← `coverage.recordTypeOrig`, when present and not matching
+     `^concept-id:`, with a leading `^title:\s*` stripped and the result
+     trimmed; omitted when the result is empty
 
 ---
 
@@ -553,7 +556,7 @@ images are digitized, indexed, or full-text processed.
 | 11 | Sets `fulltextSearchable: null` after the full-text call fails 3× | Full-text failure path |
 | 12 | Batches `groupName`s in chunks of ≤ 100 | Batch sizing |
 | 13 | Maps coverages to `{ place, dateRange?, recordType? }`; drops `placeId`/`placeRelevance` | Coverage mapping |
-| 14 | Omits `recordType` when value is `concept-id:…`/`title:…` | Placeholder filtering |
+| 14 | Omits `recordType` for `concept-id:…`; strips a `title:` prefix and keeps the type | Record-type normalization |
 | 15 | Handles empty `{"totalCount":0}` response | Zero-result path |
 | 16 | Returns `nextPageToken` when present; rebuilds identical body + token on paged call | Pagination |
 | 17 | Throws on 401 with re-login guidance | Token-expired path |
