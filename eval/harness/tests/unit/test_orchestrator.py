@@ -9,6 +9,7 @@ from harness.orchestrator import (
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
+    apply_routing_deference,
 )
 
 
@@ -93,6 +94,112 @@ def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched
         dims, [_vr("test_expected_classifications", True)], has_expected_classifications=True
     )
     assert [d["score"] for d in dims] == [2, 3, 1, 1]
+
+
+# --- routing deference (correctly-routed negative tests) ----------------
+#
+# `_negative_spec` is defined further down this file; these tests are placed
+# here to sit beside the deference tests they mirror, and Python resolves the
+# name at call time.
+
+
+def _routing_dims(correctness=1, completeness=1):
+    return [
+        {"name": "Correctness", "score": correctness, "rationale": "No such routing occurred"},
+        {"name": "Completeness", "score": completeness, "rationale": "nothing was done"},
+        {"name": "Tool Arguments", "score": None, "rationale": "no calls"},
+    ]
+
+
+def test_deference_floors_correctly_routed_negative():
+    """The skill under test declined and an accepted skill fired, so routing
+    already decided pass. A judge FAIL on Correctness/Completeness grades the
+    routed-to skill's work, which this test does not own — floor it to 2."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [2, 2, None]
+    assert "deterministic-deference" in dims[0]["rationale"]
+    assert "No such routing occurred" in dims[0]["rationale"]  # original preserved
+
+
+def test_routing_deference_noop_when_skill_activated():
+    """If the skill under test actually activated, the negative test FAILED —
+    the judge's scores are not the thing being corrected."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=True,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_when_no_accepted_skill_fired():
+    """Declined but routed nowhere acceptable: the test fails on routing, so
+    there is no correct routing to defer to."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["timeline"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_on_out_of_scope_negative():
+    """An empty `correct_skill` is an out-of-scope test, where the base
+    dimensions DO gate the outcome (see `_compute_outcome`). Flooring there
+    would convert a real fail into a pass."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims, spec=_negative_spec(correct=[]), activated=False, skills_invoked=[]
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_on_grade_on_invariant():
+    """`grade_on_invariant` negatives return from `_compute_outcome` before the
+    routing branch; their dimensions are already documented as diagnostic."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_leaves_partial_and_pass_untouched():
+    """Only a 1 is floored. A 2 and a 3 are the judge seeing something real."""
+    dims = _routing_dims(correctness=2, completeness=3)
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [2, 3, None]
+
+
+def test_routing_deference_noop_on_positive_test():
+    """A positive test's base dimensions gate its outcome outright."""
+    dims = _routing_dims()
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": "search-records", "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    })
+    apply_routing_deference(dims, spec=spec, activated=True, skills_invoked=[])
+    assert [d["score"] for d in dims] == [1, 1, None]
 
 
 # --- judge error handling (item #27) -----------------------------------

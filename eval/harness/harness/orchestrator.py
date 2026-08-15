@@ -542,6 +542,16 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
+    # Routing deference: on a correctly-routed negative test the outcome is
+    # decided by routing and the base dimensions are diagnostic, so a judge FAIL
+    # there grades something this test does not own.
+    apply_routing_deference(
+        judge_result.dimensions,
+        spec=spec,
+        activated=activated,
+        skills_invoked=result.skills_invoked,
+    )
+
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -854,6 +864,15 @@ _CLASSIFICATION_DIMENSIONS = frozenset(
     {"Evidence type accuracy", "Informant identification"}
 )
 
+# Base dimensions floored on a correctly-routed negative test. On a negative
+# test with a non-empty `correct_skill`, `_compute_outcome` decides pass/fail
+# from routing alone and the judge runs base-only and diagnostically — so a
+# FAIL here grades the routed-to skill's work, which this test does not own.
+# The judge does it anyway: "No such routing occurred" while the transcript's
+# own Skills-invoked block names an accepted skill, across 9 tests in 5 skills.
+# Prose was tried twice (PRs #589 and #1564) and it recurs, so defer instead.
+_ROUTING_DIAGNOSTIC_DIMENSIONS = frozenset({"Correctness", "Completeness"})
+
 
 def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
     """Floor the classification judge-dimensions at partial(2) when the
@@ -881,6 +900,50 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
                 "[deterministic-deference] the expected_classifications validator "
                 "verified the declared classifications as correct, so this dimension "
                 "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
+                "Original judge rationale: " + orig
+            )
+    return dimensions
+
+
+def apply_routing_deference(dimensions, *, spec, activated, skills_invoked):
+    """Floor Correctness/Completeness off 1 on a correctly-routed negative test.
+
+    A negative test with a non-empty `correct_skill` is decided by routing:
+    `_compute_outcome` returns pass once the skill under test did not activate
+    and an accepted skill fired, and the judge runs base-only and diagnostically.
+    A judge FAIL there is therefore grading something the test does not own —
+    usually the routed-to skill's execution — and it costs a genealogist the same
+    override every run while polluting the dimension data `rubric-critic` and
+    `skill-improver` read as signal.
+
+    Mutates + returns `dimensions`. No-op unless the test is negative with a
+    non-empty `correct_skill`, the skill under test did not activate, and an
+    accepted skill is in `skills_invoked`. `grade_on_invariant` negatives return
+    from `_compute_outcome` before the routing branch, so they are excluded.
+    Floors to 2, never 3: the judge may still have seen something real, and this
+    removes only the false FAIL.
+    """
+    if not dimensions:
+        return dimensions
+    negative = spec.negative or {}
+    if not spec.negative or negative.get("grade_on_invariant"):
+        return dimensions
+    correct = negative.get("correct_skill", [])
+    if not correct:
+        return dimensions
+    if activated:
+        return dimensions
+    if not any(s in (skills_invoked or []) for s in correct):
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            orig = dd.get("rationale") or ""
+            dd["score"] = 2
+            dd["rationale"] = (
+                "[deterministic-deference] this negative test is decided by "
+                "routing, and the harness observed the skill under test decline "
+                "while an accepted skill fired — so this dimension cannot FAIL on "
+                "the routing. Floored from the judge's 1 to 2 (partial). "
                 "Original judge rationale: " + orig
             )
     return dimensions
