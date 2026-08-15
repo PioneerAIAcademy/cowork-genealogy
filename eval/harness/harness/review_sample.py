@@ -80,17 +80,31 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
 
 
 def _validator_judge_conflict(entry: dict[str, Any]) -> bool:
-    """A validator failed while the judge saw nothing wrong, or the inverse."""
+    """A validator failed while the judge saw nothing wrong, or the inverse.
+
+    Reads the run's `validators.passed` **aggregate**, never the individual
+    `results[].passed`. `compute_validators_passed` exempts the file-validity
+    validators on a test declaring `intentionally_invalid` — those tests fail
+    `test_project_files_pass_full_validation` by design on every run, and the
+    judge still grades clean. Scanning raw results reports a permanent conflict
+    for them: 5 of 10 `validate-schema` tests plus `ut_project_status_005`
+    match, which pins the targeted slot to one test forever.
+    """
     scores = [d.get("score") for d in _dimensions(entry)]
     numeric = [s for s in scores if isinstance(s, int)]
     if not numeric:
         return False
-    judge_clean = all(s == 3 for s in numeric)
     runs = entry.get("runs") or []
-    results = [r for run in runs for r in (run.get("validators", {}).get("results") or [])]
-    if not results:
+    verdicts = [
+        run.get("validators", {}).get("passed")
+        for run in runs
+        if isinstance(run.get("validators"), dict)
+        and run["validators"].get("passed") is not None
+    ]
+    if not verdicts:
         return False
-    any_validator_failed = any(r.get("passed") is False for r in results)
+    any_validator_failed = any(v is False for v in verdicts)
+    judge_clean = all(s == 3 for s in numeric)
     judge_failed = any(s == 1 for s in numeric)
     return (any_validator_failed and judge_clean) or (judge_failed and not any_validator_failed)
 
@@ -138,8 +152,16 @@ def select_review_sample(
 ) -> dict[str, Any]:
     """Return `{"tests": [...], "cursor": [...], "seed": seed}`.
 
-    `cursor` is the set of test ids already covered by rotation since the sweep
-    last wrapped. It rides in the run log so it survives candidate pruning.
+    `cursor` is every test **sampled by any slot** since the sweep last
+    wrapped — not just the rotation picks. That distinction is load-bearing:
+    while the cursor tracked rotation alone it reset on every wrap, so a test
+    matching a targeted rule was nearly always "unswept" and won the slot
+    again. Simulated over the committed corpus that pinned one test on 20 of
+    20 chained runs in 10 of 25 suites, making the effective sample 4 rather
+    than 5. Counting every sampled test also makes coverage faster, since a
+    targeted or random pick is a review like any other.
+
+    It rides in the run log so it survives candidate pruning.
 
     Pure: same inputs, same output. `seed` drives the random slot only.
     """
@@ -168,37 +190,43 @@ def select_review_sample(
         picked.append(tid)
         cursor.append(tid)
 
-    # --- Targeted: ranked rules, first match wins -------------------------
-    def rule1_exhausted() -> bool:
-        """Rule 1 stops winning once every null-bearing positive test has been
-        swept. Without this it eats the slot forever: the null set is
-        structural, not transient — `search-familysearch-wiki` carries 11-12 of
-        16 across every committed log, `init-project` 3-7 of 11 — so rules 2
-        and 3 would never reach the targeted slot in exactly the suites where
-        the null permission keeps widening."""
-        nulls = [tid for tid in ids if _has_rubric_null_on_positive(by_id[tid])]
-        return bool(nulls) and all(tid in cursor for tid in nulls)
-
+    # --- Targeted: ranked rules, first UNSWEPT match wins ------------------
+    #
+    # Every rule carries the same exhaustion guard, not just rule 1. These
+    # signals are structural, not transient: a test that matches one match it
+    # on every run forever — a permanently-`intentionally_invalid` validator
+    # result, a rubric dimension the fixture never exercises, an `xfail`. An
+    # earlier version guarded only rule 1 and simulation over the committed
+    # corpus showed **10 of 25 suites pinning one test on 20 of 20 chained
+    # runs**, making the effective sample 4 distinct tests rather than 5.
+    #
+    # So a rule only wins with a candidate this sweep has not covered. When its
+    # matches are all swept, the slot falls through to the next rule; when
+    # every rule is exhausted, the highest-ranked match wins anyway — a
+    # repeated targeted pick beats an empty slot.
     rules = [
-        (lambda e: _has_rubric_null_on_positive(e) and not rule1_exhausted()),
+        _has_rubric_null_on_positive,
         _validator_judge_conflict,
         lambda e: _score_moved(e, previous),
         _outcome_disagrees,
-        lambda e: e["test_id"] not in cursor and not previous,
+        lambda e: not previous,
         _rationale_hedges,
     ]
     available = [tid for tid in ids if tid not in picked]
+    fallback: list[str] = []
     for matches in rules:
-        # Within a matched rule, prefer a test this sweep has not covered —
-        # otherwise a lowest-test_id implementation re-picks the same test
-        # forever and every acceptance test still passes.
-        hits = sorted(
-            (tid for tid in available if matches(by_id[tid])),
-            key=lambda tid: (tid in cursor, tid),
-        )
-        if hits:
-            picked.extend(hits[:n_targeted])
+        hits = sorted(tid for tid in available if matches(by_id[tid]))
+        if not hits:
+            continue
+        fresh = [tid for tid in hits if tid not in cursor]
+        if fresh:
+            picked.extend(fresh[:n_targeted])
             break
+        if not fallback:
+            fallback = hits
+    else:
+        if fallback and n_targeted:
+            picked.extend(fallback[:n_targeted])
 
     # --- Random: the unbiased slot ----------------------------------------
     available = [tid for tid in ids if tid not in picked]
@@ -206,4 +234,12 @@ def select_review_sample(
         rng = random.Random(seed)
         picked.extend(rng.sample(available, min(n_random, len(available))))
 
-    return {"tests": sorted(picked), "cursor": sorted(cursor), "seed": seed}
+    # Every sampled test counts as covered, whichever slot chose it — see the
+    # docstring. Rotation already appended its own; this adds the targeted and
+    # random picks so they cannot be re-chosen next run.
+    covered = sorted(set(cursor) | set(picked))
+    # A sweep that now covers everything wraps here rather than on the next
+    # call, so the next run starts a clean sweep instead of finding one id left.
+    if set(covered) >= set(ids):
+        covered = []
+    return {"tests": sorted(picked), "cursor": covered, "seed": seed}

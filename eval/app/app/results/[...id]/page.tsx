@@ -547,6 +547,7 @@ function GradesPane({
   entry,
   skillUnderTest,
   annotation,
+  sampled,
   onSetCorrection,
   onAgreeAll,
   onDimensionFocus,
@@ -557,6 +558,8 @@ function GradesPane({
   entry: TestEntry;
   skillUnderTest: string;
   annotation: AnnotationFile | null;
+  /** Tests the annotation must cover, or null for all of them. */
+  sampled: Set<string> | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
   onDimensionFocus: (dim: DimensionId) => void;
@@ -573,9 +576,15 @@ function GradesPane({
   }, [annotation]);
 
   const dims = entry.outcome_summary.aggregated_dimensions;
-  const unreviewedCount = dims.filter(
-    (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
-  ).length;
+  // A test outside the sample is not unreviewed — nothing is asked of it.
+  // Without this the header paints "6 unreviewed" on the very test the sidebar
+  // labels `not sampled`.
+  const inSample = sampled === null || sampled.has(entry.test_id);
+  const unreviewedCount = !inSample
+    ? 0
+    : dims.filter(
+        (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
+      ).length;
   const hasUncommentedDisagreement = dims.some((d) => {
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
     return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
@@ -591,7 +600,9 @@ function GradesPane({
             {entry.outcome}
           </Badge>
           {entry.flaky ? <Badge color="orange">flaky</Badge> : null}
-          {unreviewedCount > 0 ? (
+          {!inSample ? (
+            <Badge color="gray" variant="outline">not sampled</Badge>
+          ) : unreviewedCount > 0 ? (
             <Badge color="orange" variant="outline">{unreviewedCount} unreviewed</Badge>
           ) : (
             <Badge color="green" variant="light">complete</Badge>
@@ -1449,6 +1460,7 @@ export default function RunLogDetailPage({
               entry={selectedEntry}
               skillUnderTest={log.skill}
               annotation={localAnn}
+              sampled={sampled}
               onSetCorrection={setCorrection}
               onAgreeAll={agreeAll}
               onDimensionFocus={setFocusedDim}

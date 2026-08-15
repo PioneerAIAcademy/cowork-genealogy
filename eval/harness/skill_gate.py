@@ -276,9 +276,17 @@ class Baseline:
     total: int = 0
 
 
-def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
+def incumbent_baseline(
+    skill: str, runlogs_root: Path, *, gate_test_ids: set[str] | None = None
+) -> Baseline | None:
     """Per-test incumbent scores from the skill's most recent run-log, with human
     `.ann` corrections overlaid where present (human score wins over the judge's).
+
+    `gate_test_ids` scopes the `corrected`/`total` counters to the tests this
+    gate actually compares — the mined test plus its holdouts. Counting over the
+    whole run log would report e.g. "10/54 human-corrected" while none of the
+    compared dimensions carried a correction, which is exactly the misreading
+    the header exists to prevent.
 
     Returns None when the skill has no run-log yet — the caller tells the user to
     run `make eval-skill SKILL=<x>` (step 4) first.
@@ -312,9 +320,10 @@ def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
             src, name = d.get("source", ""), d.get("name", "")
             ck = (tid, src, name)
             dims[(src, name)] = corrections[ck] if ck in corrections else d.get("score")
-            n_total += 1
-            if ck in corrections:
-                n_corrected += 1
+            if gate_test_ids is None or tid in gate_test_ids:
+                n_total += 1
+                if ck in corrections:
+                    n_corrected += 1
         scores[tid] = dims
 
     return Baseline(scores=scores, path=log_path, corrected=n_corrected, total=n_total)
@@ -502,7 +511,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
 
-    baseline = incumbent_baseline(args.skill, REPO_ROOT / "eval/runlogs")
+    baseline = incumbent_baseline(
+        args.skill,
+        REPO_ROOT / "eval/runlogs",
+        gate_test_ids={mined_spec.id, *(s.id for s in holdout_specs)},
+    )
     if baseline is None:
         print(f"ERROR: no run-log for '{args.skill}' — run `make eval-skill "
               f"SKILL={args.skill}` first (step 4) so the gate has a pre-edit "

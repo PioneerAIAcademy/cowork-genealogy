@@ -41,6 +41,7 @@ from harness.snapshot import (  # noqa: E402
     diff_snapshot_vs_disk,
     hash_file,
 )
+from harness.review_sample import zero_dimension_test_ids  # noqa: E402
 from harness.versioning import classify  # noqa: E402
 
 
@@ -446,11 +447,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     # sampler drops it from every slot. Excluded is not unnoticed: warn, because
     # an ungraded test is a signal, not an absence, and silently dropping it is
     # how a run with nothing gradeable would pass rule 3 on an empty annotation.
-    ungraded = [
-        t["test_id"]
-        for t in tests
-        if not (t.get("outcome_summary", {}).get("aggregated_dimensions") or [])
-    ]
+    ungraded = zero_dimension_test_ids(tests)
     if ungraded:
         gh_warning(
             f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` produced "
@@ -469,6 +466,37 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         required_test_ids = None
     else:
         required_test_ids = set(review_sample.get("tests") or [])
+        # This is a blocking rule reading a field committed in the same PR, so
+        # it must fail CLOSED on anything it cannot trust. `{"tests": []}` would
+        # otherwise turn rule 3 off entirely and pass an empty `.ann.json` with
+        # no error and no warning; an id that names no test in this run log is
+        # the same hole with extra steps. Either falls back to the
+        # every-dimension rule rather than being believed.
+        gradeable = {
+            t["test_id"]
+            for t in tests
+            if t.get("outcome_summary", {}).get("aggregated_dimensions")
+        }
+        unknown = required_test_ids - {t["test_id"] for t in tests}
+        if not required_test_ids or unknown:
+            reason = (
+                "is empty" if not required_test_ids
+                else f"names {len(unknown)} test(s) not in this run log "
+                     f"({', '.join(sorted(unknown)[:3])})"
+            )
+            gh_warning(
+                f"skill `{skill}`: `{filename}`'s `review_sample` {reason}; "
+                f"ignoring it and requiring every dimension. The harness writes "
+                f"this field — a hand-edited one is not trusted.",
+            )
+            required_test_ids = None
+        elif not required_test_ids & gradeable:
+            gh_warning(
+                f"skill `{skill}`: `{filename}`'s `review_sample` names only "
+                f"tests with no graded dimensions, so it would require nothing; "
+                f"requiring every dimension instead.",
+            )
+            required_test_ids = None
 
     missing: list[tuple[str, str, str]] = []
     for t in tests:

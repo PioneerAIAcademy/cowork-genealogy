@@ -796,3 +796,39 @@ def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatc
     body["input"]["user_message"] = "SUBSTANTIVE"
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+
+
+def test_rule3_ignores_an_empty_review_sample(tmp_path, capsys):
+    """`{"tests": []}` must not switch the blocking rule off. This field is
+    committed in the same PR it gates, so anything untrustworthy falls back to
+    the every-dimension rule rather than being believed."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": [], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "is empty" in out
+    assert "unreviewed" in out
+
+
+def test_rule3_ignores_a_review_sample_naming_unknown_tests(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_nope"], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "not in this run log" in capsys.readouterr().out
+
+
+def test_rule3_ignores_a_sample_of_only_ungraded_tests(tmp_path, capsys):
+    """A sample naming only zero-dimension tests would require nothing."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(2, review_sample={"tests": ["ut_x_aborted"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "would require nothing" in capsys.readouterr().out

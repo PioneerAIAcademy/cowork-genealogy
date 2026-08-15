@@ -143,19 +143,6 @@ export function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null
   return unreviewedDimensions(log, ann).length === 0;
 }
 
-/** Total dimensions the annotator is asked to review — the denominator the
- *  progress badges show. Counts sampled tests only, so "5/90 reviewed" cannot
- *  be rendered against a sample of 5. */
-export function reviewableDimensionCount(log: RunLogFile): number {
-  const sampled = sampledTestIds(log);
-  let n = 0;
-  for (const t of log.tests) {
-    if (sampled && !sampled.has(t.test_id)) continue;
-    n += t.outcome_summary.aggregated_dimensions.length;
-  }
-  return n;
-}
-
 /**
  * Build a fresh AnnotationFile shell. The CRUD UI populates corrections
  * as the annotator reviews dimensions; this is the seed when none

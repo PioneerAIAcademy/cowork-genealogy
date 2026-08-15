@@ -102,7 +102,9 @@ def test_rotation_cursor_survives_candidate_pruning():
         )
         seen.update(sample["tests"])
     assert seen == {t["test_id"] for t in tests}
-    assert len(sample["cursor"]) == 27
+    # The cursor wraps to empty the moment the sweep completes, so the next run
+    # starts clean rather than finding one straggler id left over.
+    assert sample["cursor"] == []
 
 
 def test_rotation_wraps_without_repeating_within_a_run():
@@ -139,17 +141,19 @@ def test_rubric_null_on_negative_test_does_not_win():
 
 
 def test_targeted_falls_through_when_all_null_tests_recently_sampled():
-    """Rule 1 must stop winning once the null-bearing tests have been swept, or
-    it eats the slot forever in the four suites where nulls cluster."""
+    """A rule stops winning once every test it matches has been swept.
+
+    Simulation over the committed corpus showed the un-guarded version pinning
+    one test on 20 of 20 chained runs in 10 of 25 suites. Here ut_000-ut_002
+    carry a null and are already swept, so rule 1 has no fresh candidate and the
+    slot falls through to ut_003, which carries no null but matches rule 4."""
     tests = _suite(4)
-    for t in tests:
+    for t in tests[:3]:
         t["outcome_summary"]["aggregated_dimensions"] = [
             _dim(), _dim(name="Tier justification", score=None, source="rubric")
         ]
-    # Every test carries a null and every test is in the cursor, so rule 1 is
-    # exhausted; rule 4 (outcome disagrees) must take the slot instead.
     tests[3]["outcome"] = "fail"
-    prior = {"cursor": [t["test_id"] for t in tests]}
+    prior = {"cursor": ["ut_000", "ut_001", "ut_002"]}
     out = select_review_sample(
         tests=tests, prior_sample=prior, n_rotation=0, n_random=0
     )
@@ -184,7 +188,12 @@ def test_targeted_pick_is_distinct_from_rotation():
 
 def test_validator_judge_conflict_wins_over_lower_rules():
     tests = _suite(6, outcome="fail")  # every test matches rule 4
-    tests[4]["runs"] = [{"validators": {"results": [{"name": "v", "passed": False}]}}]
+    # The rule reads the `passed` AGGREGATE, which `compute_validators_passed`
+    # computes with the intentionally_invalid exemption applied — not the raw
+    # results, which report a permanent conflict for those tests.
+    tests[4]["runs"] = [
+        {"validators": {"passed": False, "results": [{"name": "v", "passed": False}]}}
+    ]
     out = select_review_sample(tests=tests, n_rotation=0, n_random=0)
     assert out["tests"] == ["ut_004"]
 
