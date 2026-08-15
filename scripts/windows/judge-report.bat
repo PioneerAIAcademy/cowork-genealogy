@@ -8,6 +8,6 @@ set SINCE_FLAG=
 if not "%SKILL%"=="" set SKILL_FLAG=--skill %SKILL%
 if not "%SINCE%"=="" set SINCE_FLAG=--since %SINCE%
 
-cd /d "%~dp0.."
+cd /d "%~dp0..\.."
 cd eval\harness
 uv run python -m judge_report %SKILL_FLAG% %SINCE_FLAG%
