@@ -492,7 +492,21 @@ researcher's own conclusion (negative evidence, structure-inferred
 relationships) — no record informant exists. `unknown` = a record
 informant exists but cannot be identified. The informant is whoever provided THIS
 specific fact — not who created the record; indexers and transcribers are
-never the informant (look through derivatives to the original provider).
+never the informant.
+
+**A derivative does not erase the informant — look THROUGH it.** Classify
+from whoever provided the fact to the ORIGINAL record, exactly as if you
+held that record: an index of a marriage register still carries the
+register's information, and indexing it changed *who stated the fact* not
+at all. `unknown` is for a record whose original informant genuinely
+cannot be identified — **never a conclusion drawn from the source being an
+index or a transcript.** If your reasoning contains "unknown *through*
+this derivative", you have made exactly this error: that phrase describes
+the derivative, not the informant. A bare marriage index carrying only two
+names, a year and a county still has each party at **`self`** for their
+own name and for the marriage event — the register recorded what they
+stated, and the index copied it.
+
 The recorder and informant are different people — on **every** record
 type. The census **enumerator**, the marriage **clerk**, the parish
 **officiant**, the civil **registrar** all *write the record down*; that
