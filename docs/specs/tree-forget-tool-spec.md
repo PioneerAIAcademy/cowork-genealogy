@@ -210,11 +210,17 @@ at. This is deliberate: a looser "any overlap counts" rule would recreate the
 same over-broad-removal shape this whole fix exists to eliminate, just moved
 from id collision onto date uncertainty.
 
-`personId` is optional on all three. Given, the selector matches only that
-person's own facts. Omitted, it matches tree-wide — every person's and every
-Couple relationship's facts — which is the variant the original date-range
-request needed and the owner-scoping fix above makes safe to offer, since
-every match is still resolved and removed through the same (ownerKind,
+`personId` is optional on all three. Given, the selector matches that
+person's own facts, plus the facts on any Couple relationship they are a
+party to — a marriage date typically lives on the relationship, not on
+either spouse's own record, and skipping it would let a person-scoped
+request report success while that fact stays in the tree, unremoved and
+unmentioned (found by review; the same reason `spouses-of` sweeps a
+person-level echo of the same conclusion in the other direction). Omitted,
+it matches tree-wide — every person's and every Couple relationship's
+facts — which is the variant the original date-range request needed and the
+owner-scoping fix above makes safe to offer, since every match is still
+resolved and removed through the same (ownerKind,
 ownerId, factId) scoping as every other selector.
 
 ### 2.2 Cascade

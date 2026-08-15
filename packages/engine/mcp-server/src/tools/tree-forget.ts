@@ -405,6 +405,17 @@ function datedFacts(
   };
   if (personId !== undefined) {
     consider("person", personId, persons(tree).find((p) => p.id === personId)?.facts);
+    // A marriage date normally lives on the Couple relationship, not on
+    // either spouse's own record — the same reason spouses-of sweeps a
+    // person-level Marriage fact in the other direction. Skipping this
+    // would let a person-scoped date selector report success while a
+    // dated fact the person is a party to stays in the tree, unremoved
+    // and unmentioned (found by review).
+    const { rels } = relatives(tree, personId, "spouses");
+    for (const rid of rels) {
+      const rel = relationships(tree).find((r) => r.id === rid);
+      consider("relationship", rid, rel?.facts);
+    }
   } else {
     for (const p of persons(tree)) consider("person", p.id ?? "", p.facts);
     for (const r of relationships(tree)) consider("relationship", r.id ?? "", r.facts);
@@ -911,8 +922,9 @@ export const treeForgetSchema = {
                 "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death " +
                 "facts. facts-of: that person's facts of one type (needs factType). " +
                 "facts-before/facts-after: that person's facts confidently before/after a " +
-                "year (needs year). facts-between: that person's facts confidently within " +
-                "an inclusive year range (needs fromYear, toYear). All three date selectors " +
+                "year, including a Couple relationship they are a party to (needs year). " +
+                "facts-between: that person's facts confidently within an inclusive year " +
+                "range, same reach (needs fromYear, toYear). All three date selectors " +
                 "omit personId to apply tree-wide instead of to one person. person: one " +
                 "person, cascading every relationship touching them. fact: one fact by id " +
                 "(add personId if that id exists on more than one person). relationship: " +

@@ -1233,6 +1233,51 @@ describe("tree_forget", () => {
     expect(e3.facts.map((f: any) => f.id)).toEqual(["SHARED"]);
   });
 
+  it("a person-scoped date-range selector also reaches a Couple relationship the person is party to", async () => {
+    // A marriage date normally lives on the Couple relationship, not on
+    // either spouse's own record. A person-scoped facts-before must still
+    // catch it, or the tool reports success while the marriage date and
+    // place are still sitting in the tree, readable (found by review).
+    await writeProject({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Patrick", surname: "Ryan", preferred: true }],
+          facts: [{ id: "BF1", type: "Birth", standard_date: "1820" }],
+        },
+        {
+          id: "I5",
+          gender: "Female",
+          names: [{ id: "N2", given: "Ellen", surname: "Walsh", preferred: true }],
+        },
+      ],
+      relationships: [
+        {
+          id: "R6",
+          type: "Couple",
+          person1: "I1",
+          person2: "I5",
+          facts: [{ id: "MF1", type: "Marriage", standard_date: "1845", place: "Cork, Ireland" }],
+        },
+      ],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "I1", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Birth: 1, Marriage: 1 });
+    const tree = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toEqual([]);
+    expect(tree.relationships.find((x: any) => x.id === "R6").facts).toEqual([]);
+    // I5 was never a target of this call, only their shared relationship's
+    // own fact.
+    expect(tree.persons.find((p: any) => p.id === "I5")).toBeDefined();
+  });
+
   it("a tree-wide date-range selector matches a fact that lives only on a Couple relationship", async () => {
     await writeProject({
       persons: [
