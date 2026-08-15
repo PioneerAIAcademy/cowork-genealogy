@@ -60,12 +60,59 @@ from harness.runlog import (
 )
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
+from harness.review_sample import select_review_sample
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
+    classify,
     is_releasable_invocation,
     next_filename_for,
     now_utc_filename_timestamp,
 )
+
+
+def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
+    """The newest released-or-candidate run log for a skill, or None.
+
+    Sorts by `classify()`'s (version, timestamp), NOT by filename: a
+    lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
+    every suite at v1, and cheap to avoid here.
+    """
+    if not skill_runlog_dir.is_dir():
+        return None
+    dated = []
+    for p in skill_runlog_dir.iterdir():
+        if not p.name.endswith(".json") or p.name.endswith(".ann.json"):
+            continue
+        c = classify(p.name)
+        if c.kind in ("released", "candidate") and c.version is not None:
+            dated.append(((c.version, c.timestamp or ""), p))
+    if not dated:
+        return None
+    newest = max(dated, key=lambda pair: pair[0])[1]
+    try:
+        return json.loads(newest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        # A corrupt predecessor must not take down the run that is writing a
+        # new one — the sample simply starts a fresh sweep.
+        return None
+
+
+def _review_sample_for(
+    skill: str, entries: list[dict], skill_runlog_dir: Path, timestamp: str
+) -> dict:
+    """Compute this run's review sample from its predecessor's cursor.
+
+    The seed is derived from the skill name and the invocation timestamp, so
+    the random slot varies run to run but is reproducible from the committed
+    artifact — the seed itself is stored in the envelope.
+    """
+    previous = _newest_releasable_runlog(skill_runlog_dir)
+    return select_review_sample(
+        tests=entries,
+        prior_sample=(previous or {}).get("review_sample"),
+        previous_tests=(previous or {}).get("tests"),
+        seed=sum(ord(c) for c in (skill + timestamp)),
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -1046,6 +1093,16 @@ def main(argv: list[str] | None = None) -> int:
             releasable=releasable,
             timestamp=invocation_timestamp,
         )
+        # Only a releasable run carries a review sample. A scratch run is
+        # gitignored and never faces rule 3, and letting one advance the
+        # rotation cursor would skip tests nobody reviewed.
+        sample = (
+            _review_sample_for(
+                skill, entries, skill_runlog_dir, invocation_timestamp
+            )
+            if releasable
+            else None
+        )
         log = build_run_log(
             skill=skill,
             version=version,
@@ -1058,6 +1115,7 @@ def main(argv: list[str] | None = None) -> int:
             judge_prompt_hash=judge_hash,
             snapshot=_snapshot_for(skill),
             tests=entries,
+            review_sample=sample,
         )
         path = write_run_log(
             log,

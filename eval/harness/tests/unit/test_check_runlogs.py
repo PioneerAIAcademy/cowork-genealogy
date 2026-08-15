@@ -109,6 +109,98 @@ def test_rule3_missing_dimension_still_reported(tmp_path, capsys):
     assert "unreviewed" in capsys.readouterr().out
 
 
+# --- Sampled rule 3 -----------------------------------------------------
+
+
+def _multi_test_log(n: int = 20, review_sample: dict | None = None) -> dict:
+    log = {
+        "tests": [
+            {
+                "test_id": f"ut_x_{i:03d}",
+                "outcome_summary": {
+                    "aggregated_dimensions": [
+                        {"source": "base", "name": "Correctness"},
+                        {"source": "base", "name": "Completeness"},
+                    ]
+                },
+            }
+            for i in range(n)
+        ]
+    }
+    if review_sample is not None:
+        log["review_sample"] = review_sample
+    return log
+
+
+def _corrections_for(test_ids: list[str]) -> list[dict]:
+    return [
+        {
+            "test_id": tid,
+            "dimension_source": "base",
+            "dimension_name": name,
+            "llm_score": 3,
+            "corrected_score": 3,
+        }
+        for tid in test_ids
+        for name in ("Correctness", "Completeness")
+    ]
+
+
+def test_rule3_accepts_sampled_annotation(tmp_path):
+    """A 20-test run log whose annotation covers only the 5 sampled tests
+    passes. Under the old every-dimension rule this was 40 unreviewed cells."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_blocks_an_unreviewed_sampled_test(tmp_path, capsys):
+    """Sampling narrows WHICH tests are required, not whether they are."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled[:-1]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "unreviewed" in capsys.readouterr().out
+
+
+def test_rule3_unchanged_without_review_sample(tmp_path):
+    """Back-compat, and the reason this change is retroactively safe: every one
+    of the 109 committed annotations predates `review_sample`, so they must keep
+    the every-dimension rule. Must pass before AND after the change."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(20)]
+    log = _multi_test_log(20)  # no review_sample
+    partial = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every[:5])
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, partial, skill_dir) == 1
+
+    full = _write_ann(skill_dir, "v2_2026-06-24_00-00-00.json", _corrections_for(every))
+    assert check_runlogs.rule3_completeness("init-project", log, full, skill_dir) == 0
+
+
+def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
+    """An ungraded test asks nothing of rule 3 and is dropped from sampling, so
+    without a warning a run with nothing gradeable passes silently."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+    out = capsys.readouterr().out
+    assert "no graded dimensions" in out
+    assert "ut_x_aborted" in out
+
+
 # --- Rule 2 cosmetic-skip escape hatch -----------------------------------
 
 # A snapshot entry pointing at a path that does not exist under REPO_ROOT

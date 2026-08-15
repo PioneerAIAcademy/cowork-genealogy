@@ -439,8 +439,41 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         (c["test_id"], c["dimension_source"], c["dimension_name"])
         for c in corrections
     }
+    tests = log.get("tests") or []
+
+    # A test whose judge was skipped (validators failed, or the run aborted)
+    # carries no dimensions, so the loop below asks nothing of it — and the
+    # sampler drops it from every slot. Excluded is not unnoticed: warn, because
+    # an ungraded test is a signal, not an absence, and silently dropping it is
+    # how a run with nothing gradeable would pass rule 3 on an empty annotation.
+    ungraded = [
+        t["test_id"]
+        for t in tests
+        if not (t.get("outcome_summary", {}).get("aggregated_dimensions") or [])
+    ]
+    if ungraded:
+        gh_warning(
+            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` produced "
+            f"no graded dimensions, so nothing is required of them here: "
+            f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / validator "
+            f"results before treating this run as a clean pass.",
+        )
+
+    # `review_sample` names the tests this run's annotation must cover. Absent
+    # on every run log written before sampling shipped, and on any scratch or
+    # partial write — those keep the original every-dimension rule, which is
+    # what makes this change retroactively safe for all 109 committed
+    # annotations.
+    review_sample = log.get("review_sample")
+    if review_sample is None:
+        required_test_ids = None
+    else:
+        required_test_ids = set(review_sample.get("tests") or [])
+
     missing: list[tuple[str, str, str]] = []
-    for t in log.get("tests") or []:
+    for t in tests:
+        if required_test_ids is not None and t["test_id"] not in required_test_ids:
+            continue
         for d in t.get("outcome_summary", {}).get("aggregated_dimensions") or []:
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
@@ -448,10 +481,15 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     if not missing:
         return 0
     sample = ", ".join(f"{tid}/{src}/{name}" for tid, src, name in missing[:5])
+    scope = (
+        "every dimension"
+        if required_test_ids is None
+        else f"every dimension of the {len(required_test_ids)} sampled test(s)"
+    )
     gh_error(
         f"skill `{skill}`: annotation `{ann_filename}` is incomplete — "
         f"{len(missing)} dimension(s) are unreviewed (e.g., {sample}). "
-        f"Review every dimension in the CRUD UI before opening the PR.",
+        f"Review {scope} in the CRUD UI before opening the PR.",
     )
     return 1
 
