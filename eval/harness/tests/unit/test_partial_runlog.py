@@ -222,9 +222,12 @@ def test_a_raising_partial_writer_does_not_discard_finished_tests(tmp_path, monk
 
     # Reported as a harness failure rather than a clean run...
     assert rc == 1
-    # ...and the writer really was exercised past its first (successful) call,
-    # so the raising path was taken rather than skipped.
-    assert calls["n"] > 1
+    # ...the raising path was taken (call 2), and submission then STOPPED —
+    # a third call would mean test 3 was run, judged and paid for after the
+    # guard fired, which is what stop_submitting exists to prevent.
+    assert calls["n"] == 2, (
+        "stop_submitting must halt the third test; a third flush means it did not"
+    )
     # ...and the finished work survives as a scratch log the CRUD UI can open,
     # not as an orphaned gitignored dotfile.
     scratch = list((runlogs / "unit" / "skill-a").glob("scratch_*.json"))
