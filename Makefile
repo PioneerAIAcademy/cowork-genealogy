@@ -5,6 +5,10 @@
 # Running the workbench locally? See DEVELOPMENT.md § "Running the hosted web
 # workbench locally" for the server/web target matrix (provider, agent, login,
 # port) and the rule that the web target must match the server's port.
+#
+# On Windows without Git Bash or WSL: scripts/windows/README.md maps the
+# developer targets to .bat wrappers. Change a recipe there too — the wrappers
+# reimplement it rather than shelling out to make.
 
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
@@ -440,7 +444,8 @@ e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
-	# Changed this recipe? Keep scripts/e2e-run.bat in sync.
+	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
+	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
