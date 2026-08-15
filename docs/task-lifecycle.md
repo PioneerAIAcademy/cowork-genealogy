@@ -318,17 +318,16 @@ returns as an input to your review, never as your review.
    whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
    lists, your approval doesn't unblock merge. Say which is still owed rather
    than leaving the author to discover it at the merge button.
+5. **Pushing a small fix to their branch is fine.** It costs nobody a
+   reapproval: a push doesn't clear the approvals already on the PR, and nothing
+   is required after it. That cuts both ways — whatever you push merges unread,
+   so push only what you'd approve on sight, and leave anything bigger to the
+   author.
 
 ### "It says approved, but it won't merge"
 
-Four rules can each hold a green, approved PR. Check them in this order:
+Three rules can each hold a green, approved PR. Check them in this order:
 
-- **Someone pushed after the approvals.** At least one approval has to land
-  *after* the most recent push, from someone other than whoever pushed it. The
-  old approvals are not cancelled — they still count toward the two — so you
-  need one fresh approval, not two. **Senior developers are exempt**, so a
-  senior who pushes a small fix rather than asking the author for it can still
-  merge it themselves.
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
 - **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team

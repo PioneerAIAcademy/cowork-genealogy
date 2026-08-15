@@ -1,0 +1,140 @@
+{
+  "tool": "record_search",
+  "description": "Spouse-anchored 1860 census search for George Ackerman that returns the household WITHOUT his wife. The caller supplied spouseGivenName=Catherine, so record_search reports relativeTerms; FamilySearch keeps a record that does not CONTRADICT the named spouse, and this one simply never names one. relativeTerms.spouse is DERIVED, not asserted: the response's own gedcomx has three personas (George head, Henry child, Margaret child) and two ParentChild rows, and no Couple row with the persona as an endpoint, which is exactly what resolveRelativeTerms turns into spouse: absent. This is the case #1324 exists for, and the one no other fixture covers: every other relativeTerms fixture is a `present`. Pairs with the census-household-absent-spouse scenario, where Catherine is joined to George by Couple R1 and carries no death fact, so nothing explains her being missing.",
+  "args": {
+    "surname": "~Ackerman",
+    "spouseGivenName": "~Catherine"
+  },
+  "response": {
+    "query": {
+      "surname": "Ackerman",
+      "givenName": "George",
+      "spouseGivenName": "Catherine",
+      "recordType": "census",
+      "residencePlace": "Pennsylvania, United States",
+      "residenceYearFrom": 1860,
+      "residenceYearTo": 1860
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "M7QZ-8KD",
+        "recordId": "M7QZ-8KD",
+        "personName": "George Ackerman",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1818",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1860",
+            "place": "Bucks, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:M7QZ-8KD",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "recordTitle": "George Ackerman in household of George Ackerman, 1860",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        },
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1860",
+                  "place": "Bucks, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1818",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Birth",
+                  "date": "about 1851",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Margaret",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1854",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -115,18 +115,28 @@ Both JSON files must conform to their respective schemas (`docs/specs/research-s
 The README.md describes the scenario in terms genealogists understand:
 
 ```markdown
-# mid-research-flynn
+# <scenario-name>
 
-Patrick Flynn parentage research, mid-project. Two questions active (parentage
-and migration), 1850 census searched. Thomas Flynn identified as candidate father
-from census co-residence. 5 assertions, 2 sources, no conflicts yet.
+<Surname> parentage research, mid-project. Two questions active (parentage and
+migration), 1850 census searched. <Candidate> identified as candidate father from
+census co-residence.
+
+- **Sources:** 3 sources (1850 census, 1860 census, death cert)
+- **Assertions:** 7 assertions
 ```
+
+The example is deliberately generic. An illustration that restates a *real*
+fixture's counts becomes a second place for them to drift — this one did, claiming
+"5 assertions, 2 sources" for `mid-research-flynn` long after that fixture had 13
+and 9, and the count lint cannot see it because the sample lives under `docs/`.
+Any count bullet you write in a real scenario README is checked against its
+`research.json`; see the `Sources:` / `Assertions:` form above.
 
 **Ownership:** Junior genealogists own scenario creation. The target state is a CRUD UI that provides form fields for building the research state (adding assertions, sources, plans, etc.) and generates the JSON behind the scenes. Genealogists understand the genealogy — what assertions exist, what sources were consulted, what conflicts are unresolved — and the UI translates that knowledge into valid `research.json` and `tree.gedcomx.json`.
 
 Scenario creation tooling (the form-based UI that generates valid JSON) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, scenarios are dev-authored; until a needed scenario exists, tests that reference it via `scenario_notes` fail the runnability gate (§9).
 
-Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is auto-generated from the scenario contents.
+Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is **hand-authored** — no generator exists, and the file is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count it states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
 
 **When to create a new scenario vs reuse:** If an existing scenario is close to what you need, select it and describe the differences in `scenario_notes`. If 3+ tests need the same modification, promote to a new named scenario.
 

@@ -99,19 +99,50 @@ Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsu
 
 **Family knowledge counts as a holding too.** When the user states something from family memory (a maiden name, who married whom), record it as `oral_knowledge` *in addition* to using it in the tree. The two are not mutually exclusive: "Mary Donovan" both creates Mary's stub and is itself oral knowledge worth surveying. Do not let "I used it in the tree" drop it from `known_holdings`. (Only facts from family/personal knowledge, not the bare research target.)
 
+## Setting up a forget-and-rederive test
+
+Sometimes the researcher seeds a project **specifically to test you** — "start a
+project for this person but omit his parents, I want to see whether you can find
+them again," or "leave his death out so I can check you re-derive it." Your job
+here is unchanged: **build the complete tree and stop.** Never hand-omit anything
+at construction time, and never perform the forgetting yourself.
+
+Build the tree exactly as you normally would — every person, relationship, and
+documentary fact the survey turns up, *including the very slice they asked you to
+leave out*. Then finish init-project normally and tell the researcher the tree is
+complete and that forgetting is a **separate next step** they run with the
+**forget-and-rederive** skill. In this skill you do **not**:
+
+- strip, omit, or leave out the fact or relationship under test;
+- write a `.tree-before-forget…` restore file or any partial tree;
+- call `tree_forget` or `project_context`, or otherwise begin forget-and-rederive
+  in this turn — you don't have those tools, and the forgetting is not your step.
+
+Why the strip belongs to `tree_forget`, not a hand-omit: a conclusion is recorded
+in two places at once — as structure (a ParentChild or Couple relationship) *and*
+as a documentary fact on the subject's own record (a `Parents` or `Marriage` fact
+whose value names the relatives). Omit at build time and you drop the structure
+but keep the fact, so the answer survives. `tree_forget` removes both, writes a
+restore file so the researcher can undo it, and reports counts-only so the answer
+never re-enters context. A partial hand-build has none of that — which is why the
+**complete** tree, not a stripped one, is what init-project delivers. Do not treat
+"omit X" as an instruction to skip X during construction.
+
 ## Steps
 
 > These steps run ONLY for a brand-new project. If `research.json` exists, you stopped at the guard clause.
 
 ### 1. Get the research objective
 
-Get from the user: a FamilySearch person ID (preferred), or name + known facts for `person_search`; and the research objective in one sentence.
+**This step blocks — unlike the profile and holdings interviews below, do NOT proceed past it without an explicit objective.** Before calling `person_read`, building the tree, or doing any pedigree analysis, you need BOTH: (a) a FamilySearch person ID (preferred) or name + known facts for `person_search`, AND (b) the research objective in the user's own words.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If the user provides just an ID, formulate a default objective from what's missing. If no ID, search by name (see below). If too vague (no named individual), ask for clarification.
+If the user gives a PID (or a name) with no stated objective, STOP and ask: "What would you like to research about this person?" **Do not call `person_read` first to learn the person's name for the question — asking about "this person" needs no lookup, and fetching anything before the objective is the exact failure this step blocks.** Do NOT invent, assume, or default an objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — a wrong assumption sends the whole project in a direction the user didn't ask for. This is the one interview question in this skill that is blocking; the researcher-profile and known-holdings questions below are not.
+
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below) — but still confirm the objective before or alongside the name search, not after. If too vague (no named individual), ask for clarification.
 
 ### Searching by name
 
-Call `person_search` with name + known facts. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
+Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
 
 Present ranked candidates with `personId`, confidence, key facts. In single-turn mode, select the top candidate. Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
 
@@ -131,7 +162,7 @@ Write using data from `person_read`. Follow `references/simplified-gedcomx-summa
 
 **Simplified GedcomX is NOT the same as full GedcomX.** `person_read` returns full GedcomX — you must convert. Key differences: top-level array is `sources` (NOT `sourceDescriptions`); persons have no `fsid` or `extracted` fields; use snake_case for all field names (`standard_place`, not `standardPlace`). Structure: `{ "persons": [], "relationships": [], "sources": [] }`.
 
-**Include:** subject person (names, facts, source references), all relatives (parents, spouse, children), all relationships, all source descriptions.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`.
 
 **ID conventions (overrides the reference doc):** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`….
 
@@ -169,7 +200,7 @@ Write using `templates/research.json`.
 
 **Project section:** `id`: `rp_001`; `objective`: from Step 1; `subject_person_ids`: local GedcomX ID of primary subject (e.g. `["I1"]`); `status`: `active`; `created`/`updated`: today (ISO 8601); `title`: concise 3-6 word session name (e.g. "Patrick Flynn's parents").
 
-**`researcher_profile`:** `experience_level`, `subscriptions`, `narration_guidance` from the interview.
+**`researcher_profile`:** Scan the opening message for a stated experience level and subscriptions before writing. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). Write all three. When the message supplied answers, never persist the `intermediate` / `["none"]` default.
 
 **`known_holdings`:** one entry per reported item — `id` (`kh_001`…), `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in tree.gedcomx.json; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`), `created` (today ISO 8601). If no holdings, write `known_holdings: []`.
 
@@ -193,6 +224,16 @@ Analyze imported data before presenting results:
 - Fact researcher holds but tree lacks → already in hand, don't queue a search. Surface as head start.
 - Holding disagrees with tree → flag as discrepancy (never frame user's holding as error).
 - `oral_knowledge` lead → surface early; oral sources are cheapest and most perishable.
+
+**When the objective disputes the existing relationship** — phrasing like
+"correct parents", "the right parents", "parents are not correct" — do NOT
+present the imported relationship as established. Frame the current
+parent-child (or other disputed) assignment as **the relationship under
+investigation**: an *unverified* (`quality: 1`) tree assertion that is the
+hypothesis to be tested this project, not a settled fact. Say so in the tree
+summary and findings, and never confirm it from the tree it came from
+(issue #1471). Recording and testing the doubt is question-selection's job —
+here, only the framing changes.
 
 **Present to the user:**
 - Research objective
@@ -230,6 +271,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+- **Never persist a default `researcher_profile` when the opening message stated experience or subscriptions.** Normalize per the interview tables before writing `research.json`.
 
 ## Re-invocation behavior
 

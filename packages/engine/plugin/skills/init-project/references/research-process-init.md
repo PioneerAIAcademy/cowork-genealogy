@@ -140,7 +140,7 @@ but day-month-year in human-readable output.
 | Situation | Action |
 |-----------|--------|
 | User gives a clear objective + person ID | Proceed directly with fetch and file creation |
-| User gives only a person ID | Fetch data, analyze gaps, propose a default objective based on what is missing |
+| User gives only a person ID | Ask what they want to research before fetching anything -- do not invent an objective from the person's data (see SKILL.md Step 1) |
 | User's stated objective is too vague | Help narrow it: ensure it identifies a specific person and a specific goal |
 | User's objective conflates multiple questions | Accept it as the broad objective, note that individual questions will be formulated later |
 | person_read returns a person with no gaps | Still create the project -- the user may want to verify existing information or extend the tree |

@@ -501,6 +501,16 @@ failure it guards against: with two run-log entries under one
 returns one test's corrections for both, so an unreviewed test clears
 rule 3.
 
+**Rule 2 fixture arm (warn-only)**: a run log's snapshot embeds the
+scenario/mcp fixtures its tests referenced, so a changed
+`eval/fixtures/{scenarios,mcp}/<name>` marks every skill whose tests
+reference it as touched and warns when that skill's latest run log is
+now stale. Warn-only, not blocking (#1094 decision — a blocking gate
+on the ~20-skill `mid-research-flynn` fan-out would train
+`eval-cosmetic-skip` misuse); blocking only on *new* staleness is a
+deferred follow-up. Full rationale: `eval/CLAUDE.md` § "GitHub Action
+rules".
+
 Scratch runs (`scratch_*.json`) are gitignored and never reach the
 action. Implementation is a Python script that loads the latest run
 log's snapshot and diffs vs working tree, using the same

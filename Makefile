@@ -5,6 +5,10 @@
 # Running the workbench locally? See DEVELOPMENT.md § "Running the hosted web
 # workbench locally" for the server/web target matrix (provider, agent, login,
 # port) and the rule that the web target must match the server's port.
+#
+# On Windows without Git Bash or WSL: scripts/windows/README.md maps the
+# developer targets to .bat wrappers. Change a recipe there too — the wrappers
+# reimplement it rather than shelling out to make.
 
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
@@ -134,7 +138,7 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 # existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
 worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
-	@scripts/link-worktree.sh
+	@bash scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
 # of this clone): post-checkout auto-links shared files into new worktrees.
@@ -275,7 +279,13 @@ test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRU
 	# because it reports every failure instead of stopping at the first.
 	# Everything it runs is offline and deterministic — keep it that way; a
 	# gate slow enough to skip is a gate nobody runs.
-	scripts/test.sh
+	#
+	# Invoked as `bash scripts/test.sh`, not bare. Relying on the shebang makes
+	# make resolve the script itself, which fails on a repo path containing
+	# spaces — `bash: C:\Users\RUKN: No such file or directory` — so the
+	# documented pre-PR gate was unrunnable for anyone whose checkout sits under
+	# a spaced path (a Windows default, e.g. OneDrive\Desktop\New folder).
+	bash scripts/test.sh
 
 .PHONY: test
 test: ## Quick loop: JS workspace + server tests (a subset of test-all)
@@ -434,7 +444,8 @@ e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
-	# Changed this recipe? Keep scripts/e2e-run.bat in sync.
+	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
+	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
@@ -613,7 +624,7 @@ feedback-case: ## Unpack a submitted alpha-feedback zip into a working project d
 	# research project you open in Claude Code and continue, not an archive.
 	# Windows: run scripts\setup-feedback-case.bat instead.
 	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
-	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
+	bash scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
 
 .PHONY: feedback-reset
 feedback-reset: ## Reset a feedback case dir to its imported state between attempts: make feedback-reset CASE=~/feedback/<slug>
@@ -623,7 +634,7 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	# baseline underneath is setup-feedback-case.sh's business, not theirs.
 	# Windows: run scripts\reset-feedback-case.bat instead.
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
-	scripts/reset-feedback-case.sh $(CASE)
+	bash scripts/reset-feedback-case.sh $(CASE)
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows

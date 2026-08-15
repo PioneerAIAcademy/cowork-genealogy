@@ -313,7 +313,7 @@ describe("mergeGedcomx — mode 1 relationships / sources / carry-over", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — name equivalence", () => {
-  function preferred(p: { names?: { preferred?: boolean }[] }) {
+  function preferred(p: { names?: { preferred?: boolean; given?: string }[] }) {
     return (p.names ?? []).filter((n) => n.preferred === true);
   }
 

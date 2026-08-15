@@ -139,7 +139,13 @@
             }
           ]
         },
-        "primaryId": "p_100175021380"
+        "primaryId": "p_100175021380",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Mallalieu"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-M3DC",
@@ -269,7 +275,13 @@
             }
           ]
         },
-        "primaryId": "p_100173513069"
+        "primaryId": "p_100173513069",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MDZS",
@@ -399,7 +411,13 @@
             }
           ]
         },
-        "primaryId": "p_100173521102"
+        "primaryId": "p_100173521102",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-528T",
@@ -525,7 +543,13 @@
             }
           ]
         },
-        "primaryId": "p_100174986356"
+        "primaryId": "p_100174986356",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-5LYB",
@@ -651,7 +675,13 @@
             }
           ]
         },
-        "primaryId": "p_100174987738"
+        "primaryId": "p_100174987738",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-MPNK",
@@ -777,7 +807,13 @@
             }
           ]
         },
-        "primaryId": "p_100174341199"
+        "primaryId": "p_100174341199",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Ann Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-MXBL",
@@ -903,7 +939,13 @@
             }
           ]
         },
-        "primaryId": "p_100174333461"
+        "primaryId": "p_100174333461",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Ann Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MQML",
@@ -1033,7 +1075,13 @@
             }
           ]
         },
-        "primaryId": "p_100173513621"
+        "primaryId": "p_100173513621",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-MFSN",
@@ -1158,7 +1206,13 @@
             }
           ]
         },
-        "primaryId": "p_100174333576"
+        "primaryId": "p_100174333576",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Ann"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MBN7",
@@ -1288,7 +1342,13 @@
             }
           ]
         },
-        "primaryId": "p_100173535685"
+        "primaryId": "p_100173535685",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MQKF",
@@ -1418,7 +1478,13 @@
             }
           ]
         },
-        "primaryId": "p_100173514185"
+        "primaryId": "p_100173514185",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MPGC",
@@ -1548,7 +1614,13 @@
             }
           ]
         },
-        "primaryId": "p_100173531369"
+        "primaryId": "p_100173531369",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MGKJ",
@@ -1678,7 +1750,13 @@
             }
           ]
         },
-        "primaryId": "p_100173530387"
+        "primaryId": "p_100173530387",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-261T",
@@ -1804,7 +1882,13 @@
             }
           ]
         },
-        "primaryId": "p_100174872596"
+        "primaryId": "p_100174872596",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MS1Y",
@@ -1934,7 +2018,13 @@
             }
           ]
         },
-        "primaryId": "p_100173512697"
+        "primaryId": "p_100173512697",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Mary Richardson"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-23R6",
@@ -2066,7 +2156,12 @@
             }
           ]
         },
-        "primaryId": "p_100174863463"
+        "primaryId": "p_100174863463",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-LM2Q",
@@ -2198,7 +2293,12 @@
             }
           ]
         },
-        "primaryId": "p_100174887604"
+        "primaryId": "p_100174887604",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-2NF9",
@@ -2330,7 +2430,12 @@
             }
           ]
         },
-        "primaryId": "p_100174874851"
+        "primaryId": "p_100174874851",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-KGRF",
@@ -2462,7 +2567,12 @@
             }
           ]
         },
-        "primaryId": "p_100174853565"
+        "primaryId": "p_100174853565",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-H14D",
@@ -2598,7 +2708,12 @@
             }
           ]
         },
-        "primaryId": "p_100173752322"
+        "primaryId": "p_100173752322",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD6-D7ZL",
@@ -2730,7 +2845,12 @@
             }
           ]
         },
-        "primaryId": "p_100175458821"
+        "primaryId": "p_100175458821",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-28SG",
@@ -2862,7 +2982,12 @@
             }
           ]
         },
-        "primaryId": "p_100174869982"
+        "primaryId": "p_100174869982",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-FT3D",
@@ -2998,7 +3123,12 @@
             }
           ]
         },
-        "primaryId": "p_100173938502"
+        "primaryId": "p_100173938502",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-MQM2",
@@ -3134,7 +3264,12 @@
             }
           ]
         },
-        "primaryId": "p_100173513620"
+        "primaryId": "p_100173513620",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-2BR4",
@@ -3239,7 +3374,12 @@
             }
           ]
         },
-        "primaryId": "p_100174885957"
+        "primaryId": "p_100174885957",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-79B3",
@@ -3375,7 +3515,12 @@
             }
           ]
         },
-        "primaryId": "p_100174456743"
+        "primaryId": "p_100174456743",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-7SGB",
@@ -3511,7 +3656,12 @@
             }
           ]
         },
-        "primaryId": "p_100174457488"
+        "primaryId": "p_100174457488",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-XRCY",
@@ -3620,7 +3770,12 @@
             }
           ]
         },
-        "primaryId": "p_100174720797"
+        "primaryId": "p_100174720797",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-PNSC",
@@ -3752,7 +3907,12 @@
             }
           ]
         },
-        "primaryId": "p_100174955469"
+        "primaryId": "p_100174955469",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-1D1N",
@@ -3884,7 +4044,12 @@
             }
           ]
         },
-        "primaryId": "p_100175114686"
+        "primaryId": "p_100175114686",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-G6YT",
@@ -4016,7 +4181,12 @@
             }
           ]
         },
-        "primaryId": "p_100174926536"
+        "primaryId": "p_100174926536",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-2Z9R",
@@ -4148,7 +4318,12 @@
             }
           ]
         },
-        "primaryId": "p_100174869055"
+        "primaryId": "p_100174869055",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-VCK4",
@@ -4247,7 +4422,12 @@
             }
           ]
         },
-        "primaryId": "p_100174814677"
+        "primaryId": "p_100174814677",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-VCK7",
@@ -4346,7 +4526,12 @@
             }
           ]
         },
-        "primaryId": "p_100174814675"
+        "primaryId": "p_100174814675",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-J5N9",
@@ -4445,7 +4630,12 @@
             }
           ]
         },
-        "primaryId": "p_100174801081"
+        "primaryId": "p_100174801081",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-SMGK",
@@ -4544,7 +4734,12 @@
             }
           ]
         },
-        "primaryId": "p_100173564679"
+        "primaryId": "p_100173564679",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-VK54",
@@ -4631,7 +4826,12 @@
             }
           ]
         },
-        "primaryId": "p_100174013827"
+        "primaryId": "p_100174013827",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-V25L",
@@ -4718,7 +4918,12 @@
             }
           ]
         },
-        "primaryId": "p_100174014741"
+        "primaryId": "p_100174014741",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-SG5Y",
@@ -4805,7 +5010,12 @@
             }
           ]
         },
-        "primaryId": "p_100174394547"
+        "primaryId": "p_100174394547",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD6-72BM",
@@ -4892,7 +5102,12 @@
             }
           ]
         },
-        "primaryId": "p_100175283840"
+        "primaryId": "p_100175283840",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-H6NZ",
@@ -4983,7 +5198,12 @@
             }
           ]
         },
-        "primaryId": "p_100173738190"
+        "primaryId": "p_100173738190",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-YYZM",
@@ -5064,7 +5284,12 @@
             }
           ]
         },
-        "primaryId": "p_100175073600"
+        "primaryId": "p_100175073600",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD6-7LQ9",
@@ -5151,7 +5376,12 @@
             }
           ]
         },
-        "primaryId": "p_100175284021"
+        "primaryId": "p_100175284021",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QKK4-RMG5",
@@ -5242,7 +5472,12 @@
             }
           ]
         },
-        "primaryId": "p_101799045684"
+        "primaryId": "p_101799045684",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJDD-347C",
@@ -5329,7 +5564,12 @@
             }
           ]
         },
-        "primaryId": "p_100174407459"
+        "primaryId": "p_100174407459",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD6-7V88",
@@ -5416,7 +5656,12 @@
             }
           ]
         },
-        "primaryId": "p_100175281541"
+        "primaryId": "p_100175281541",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-VBFM",
@@ -5526,7 +5771,12 @@
             }
           ]
         },
-        "primaryId": "p_100174021650"
+        "primaryId": "p_100174021650",
+        "relativeTerms": {
+          "spouse": {
+            "status": "absent"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QKKH-6TRY",
@@ -5617,7 +5867,12 @@
             }
           ]
         },
-        "primaryId": "p_101799555177"
+        "primaryId": "p_101799555177",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD8-VP9T",
@@ -5704,7 +5959,12 @@
             }
           ]
         },
-        "primaryId": "p_100174016756"
+        "primaryId": "p_100174016756",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       },
       {
         "recordId": "ark:/61903/1:1:QJD6-7MY2",
@@ -5791,7 +6051,12 @@
             }
           ]
         },
-        "primaryId": "p_100175265830"
+        "primaryId": "p_100175265830",
+        "relativeTerms": {
+          "spouse": {
+            "status": "unknown"
+          }
+        }
       }
     ]
   }
