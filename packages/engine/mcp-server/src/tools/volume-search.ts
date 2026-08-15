@@ -20,18 +20,26 @@ const FULLTEXT_GROUP_URL =
   "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
 
 // `concept-id:…` is an opaque internal id with nothing a reader can use. A
-// `title:…` prefix is different in kind: it marks *provenance* — the type came
-// from the volume's title rather than the concept taxonomy — and the value after
-// it is a real record type, so the prefix is stripped and the value kept.
-// Measured live 2026-08-13 over Malmöhus (SE), Edensor (GB) and Wayne, Ohio (US):
-// every `title:`-prefixed value was a real type (Taxation, Census, Probate
-// records, Military records, Town records, Church records), and those same types
-// also occur unprefixed in the same corpus. Treating them as placeholders
-// discarded 785 of 805 labels (97.5%) across Harjager härad — every Taxation,
-// Census and Probate label among them, which is what hid the Swedish
-// mantalslängder from `volume_search` (issue #572).
+// `title:…` prefix is different in kind: it marks *provenance* — the value came
+// from the volume's title rather than the concept taxonomy — and what follows it
+// is real, so the prefix is stripped and the value kept.
+//
+// It appears on `recordTypeOrig` AND `datesOrig`, independently of each other:
+// Wayne, Ohio and Kent both return coverages where a `title:`-prefixed date sits
+// beside a clean record type (e.g. `"title:1867-1908"` / `"Death records"`), so
+// neither field can be normalized on the strength of the other.
+//
+// Measured live 2026-08-15, full pagination, 1500–1950: over Harjager härad
+// 1762 of 1889 record types carry the prefix, and every `title:`-prefixed
+// *record type* observed was a real type (Taxation, Census, Probate records,
+// Military records, Town records, Church records) — the same types also occur
+// unprefixed in the same corpus. Discarding them is what hid the Swedish
+// mantalslängder from `volume_search` (issue #572). Prefixed date ranges are far
+// rarer (Harjager 4/1889, Wayne 11/710, Kent 1/1379) but reach the agent as an
+// unparseable `"title:1683-1700"` — including on `008768877`, the häradsrätt
+// court series that issue #1596 names as an unexamined route for that fixture.
 const RECORD_TYPE_OPAQUE_RE = /^concept-id:/;
-const RECORD_TYPE_TITLE_PREFIX_RE = /^title:\s*/;
+const TITLE_PREFIX_RE = /^title:\s*/;
 
 function validate(input: VolumeSearchInput): void {
   if (!input.standardPlace) {
@@ -137,10 +145,14 @@ function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null 
 
 function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
   const coverage: SimplifiedCoverage = { place: entry.place ?? "" };
-  if (entry.datesOrig != null) coverage.dateRange = entry.datesOrig;
+  const rawDates = entry.datesOrig;
+  if (rawDates != null) {
+    const dateRange = rawDates.replace(TITLE_PREFIX_RE, "").trim();
+    if (dateRange) coverage.dateRange = dateRange;
+  }
   const rawType = entry.recordTypeOrig;
   if (rawType != null && !RECORD_TYPE_OPAQUE_RE.test(rawType)) {
-    const recordType = rawType.replace(RECORD_TYPE_TITLE_PREFIX_RE, "").trim();
+    const recordType = rawType.replace(TITLE_PREFIX_RE, "").trim();
     if (recordType) coverage.recordType = recordType;
   }
   return coverage;

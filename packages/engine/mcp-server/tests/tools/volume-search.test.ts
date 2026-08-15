@@ -351,6 +351,10 @@ describe("volumeSearchTool", () => {
             { place: "Edensor", recordTypeOrig: "title: Probate records" },
             { place: "Edensor", recordTypeOrig: "Burial Records" },
             { place: "Edensor", recordTypeOrig: "title:" },
+            // The same prefix lands on datesOrig, independently of the type:
+            // live, `"title:1867-1908"` occurs beside a clean `"Death records"`.
+            { place: "Edensor", datesOrig: "title:1683-1700", recordTypeOrig: "Court records" },
+            { place: "Edensor", datesOrig: "1726-1812", recordTypeOrig: "Burial Records" },
           ],
         }),
       ]),
@@ -369,6 +373,11 @@ describe("volumeSearchTool", () => {
     expect(coverages[3].recordType).toBe("Burial Records");
     // A bare prefix leaves nothing behind, so the field stays absent.
     expect(coverages[4].recordType).toBeUndefined();
+    // dateRange carries the same provenance prefix and is stripped the same way.
+    expect(coverages[5].dateRange).toBe("1683-1700");
+    expect(coverages[5].recordType).toBe("Court records");
+    // An unprefixed date range is untouched.
+    expect(coverages[6].dateRange).toBe("1726-1812");
   });
 
   // 15. Empty result set
