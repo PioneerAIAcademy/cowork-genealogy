@@ -379,9 +379,17 @@ def main(argv: list[str] | None = None) -> int:
     cutoff = staleness_cutoff()
     reports: list[SkillReport] = []
     stale: list[tuple[str, Any]] = []
+    unmeasured: list[str] = []
     for skill in skills:
         logs = releasable_runlogs_for(skill, cutoff=args.since)
         if not logs:
+            # Name it rather than dropping it. A skill whose only run logs are
+            # scratch_* has never been measured, which is a fact about the corpus
+            # worth seeing — and a footer reading "across N suite(s)" over a
+            # silently shorter list is the same silent-omission this reader flags
+            # staleness to avoid. (Every skill has one today; this is the guard
+            # for when one does not.)
+            unmeasured.append(skill)
             continue
         path = logs[-1]
         report = build_skill_report(skill, path)
@@ -403,6 +411,13 @@ def main(argv: list[str] | None = None) -> int:
     # reads like a whole-corpus measurement.
     if args.since is not None:
         print(describe_window(args.since, n_runs=len(reports), n_total=n_total))
+        print()
+    if unmeasured:
+        print(
+            f"NOT MEASURED: {len(unmeasured)} skill(s) have no releasable run log "
+            f"(scratch runs only) — they are absent from every count below: "
+            f"{', '.join(sorted(unmeasured))}"
+        )
         print()
     if (note := describe_stale(stale)):
         print(note)
