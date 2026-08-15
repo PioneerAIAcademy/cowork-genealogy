@@ -269,7 +269,7 @@ describe('annotations — the comment requirement', () => {
     return l;
   })();
 
-  const one = (comment: string | null): AnnotationFile => ({
+  const one = (comment: string | null, score: 1 | 2 | 3 = 2): AnnotationFile => ({
     run_log: 'v1.json',
     annotator: 'a',
     corrections: [
@@ -277,8 +277,8 @@ describe('annotations — the comment requirement', () => {
         test_id: 'ut_000',
         dimension_source: 'base',
         dimension_name: 'A',
-        llm_score: 3,
-        corrected_score: 3,
+        llm_score: score,
+        corrected_score: score,
         comment,
       },
     ],
@@ -296,6 +296,18 @@ describe('annotations — the comment requirement', () => {
 
   it('a written comment completes it', () => {
     expect(isAnnotationComplete(log, one('checked the transcript'))).toBe(true);
+  });
+
+  it('a confirmed pass (3 -> 3) is exempt', () => {
+    // 89.4% of the corpus is 3 -> 3; requiring a sentence there spends ~26 of
+    // every ~29 on the cells least likely to carry anything.
+    expect(isAnnotationComplete(log, one(null, 3))).toBe(true);
+  });
+
+  it('an overridden pass still needs a comment', () => {
+    const ann = one(null, 3);
+    ann.corrections[0].corrected_score = 2;
+    expect(isAnnotationComplete(log, ann)).toBe(false);
   });
 
   it('an unsampled correction needs no comment', () => {

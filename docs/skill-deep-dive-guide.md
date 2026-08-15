@@ -149,26 +149,53 @@ finding yet — it is a suspicion. Go back and get both.
 
 ---
 
-## Step 6 — Turn what you can into a permanent check
+## Step 6 — Turn every finding you can into a validator
 
-A finding you fix by hand comes back. A finding that becomes a check does not.
+**This is the highest-value half hour of the whole deep dive.** A finding you fix
+by hand comes back on the next run and costs a genealogist again. A finding that
+becomes a validator is decided for free, on every run, forever — including on
+tests written next year by someone who never read your write-up.
 
-Before you close out, look at each finding and ask whether it could be decided
-mechanically — by counting, by matching a fixed list of values, or by comparing
-two things already in the run log. If it can, say so in the write-up and name
-what would be compared. A developer can turn that into a validator; they cannot
-invent the genealogical rule themselves.
+Walk your findings one at a time and ask: *could a program decide this by
+looking at the run log?* If yes, write a **validator request** and hand it to a
+developer. You do not write the Python. You supply the genealogical rule, which
+is the half a developer cannot invent.
 
-Findings that convert well:
+### What converts
 
-- A field that must hold one of a fixed set of values
-- A count — exactly one, at most one, none
-- A field that must be set at creation and never changed here
-- An identifier that must trace back to a tool response
-- A literal phrase that must never appear
+| Shape | Example |
+|---|---|
+| A field must hold one of a fixed set of values | a first-question-from-objective must record `selection_basis: objective_decomposition` |
+| A count — exactly one, at most one, none | at most one new `q_` per invocation; **zero** writes when the skill should have declined |
+| A field pinned at creation | a new hypothesis starts `active`; a new question's `exhaustive_declaration` is unstarted |
+| A cross-field rule that must always hold | `status: supported` requires at least one supporting assertion whose `evidence_type` is `direct` |
+| An identifier that must trace to something real | a collection id in a plan rationale must appear in a tool response from that same run |
+| A literal phrase that must never appear | a disqualified namesake must not be offered extraction "not even as a question" |
+| Content that must land in a persisted field, not just the chat | a locality fact cited in narration but absent from `plan_items[].rationale` never reaches the next skill |
 
-Findings that do not convert: anything about whether the reasoning was good.
-Leave those with the judge.
+### What does not convert
+
+Anything about whether the reasoning was *good* — whether a plan was
+well-sequenced, whether a narrative reads well, whether an inference was sound.
+Leave those with the judge. Trying to mechanise judgment is how a rubric ends up
+with a dimension that scores 3 forever.
+
+### Write the request like this
+
+> **Rule:** every new assertion carrying `evidence_type: direct` must cite a
+> `source_id` whose source is `original`, not `derivative`.
+> **Where to look:** `research.json` `assertions[]` and `sources[]` in the
+> after-state.
+> **Why it is not judgment:** both fields are closed enums already in the file;
+> nothing needs interpreting.
+> **What a violation looks like:** `ut_record_extraction_014`, run
+> `v1_2026-08-07`, `as_031` cites `src_004` (derivative).
+
+Three sentences and one example is enough. A developer turns that into a
+validator in an afternoon, and the rule then holds for every skill run after it.
+
+**If a finding converts, say so even when you also fixed it by hand.** The fix
+closes today's instance; the validator closes the class.
 
 ---
 
@@ -176,8 +203,13 @@ Leave those with the judge.
 
 - The prohibition list from Step 1, saved for the next auditor
 - Each finding in Did / Should / Gap form, with its lane
+- **A validator request for every finding that converts** (Step 6) — this is the
+  part that stops the finding recurring, and the part only you can write
 - For lane 2 findings you own: the fix, made
 - For everything else: one issue, or a comment on the issue that already covers it
+
+**The measure of a deep dive is validator requests per session, not findings per
+session.** A finding is worth one fix; a validator is worth every future run.
 
 **Do not open one issue per finding.** Group them by lane and by which paid eval
 run they would ride on — two findings on the same skill land on one run and one
@@ -196,3 +228,6 @@ annotation pass, and splitting them buys a second run for nothing.
   the fix.
 - **Do not chase coverage.** You are not trying to see every test. You are trying
   to come back with findings.
+- **Do not skip Step 6 because you already fixed it.** A hand fix closes today's
+  instance; the validator closes the class. Findings that recur are the ones
+  nobody converted.

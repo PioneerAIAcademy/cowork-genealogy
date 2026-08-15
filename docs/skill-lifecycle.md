@@ -311,11 +311,11 @@ Release button only waits on those five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
-- **Write a comment on every dimension of a sampled test** — whether or not you
-  agree, and whether or not it is passing. CI blocks a sampled correction with an
-  empty comment. Five tests per run get reviewed instead of all of them, and the
-  sentence you write is the whole point of that trade: 91.4% of the cells this
-  replaced were confirmed silently.
+- **Write a comment on every sampled dimension that isn't a clean pass** — any
+  score you change, and any 1 or 2 you agree with. A confirmed pass (the judge
+  said 3 and you agree) needs nothing. CI blocks the rest. In practice that is
+  about three sentences a run, and they are the whole point of reviewing five
+  tests properly instead of clicking through all twenty.
 
 That second one is the part people skip, and it's what makes the difference in
 step 5. The improver only proposes a body edit when a problem either recurs

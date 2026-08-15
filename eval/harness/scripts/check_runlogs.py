@@ -507,17 +507,29 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
                 missing.append(key)
-    # Every sampled cell needs a written comment, agree or disagree. Sampling
-    # cut the pass ~3x so the remaining cells would actually be read; without
-    # this it buys a smaller pile of silent confirms instead. Measured over the
-    # corpus this replaces: 8,918 of 9,753 cells (91.4%) carried no comment.
-    # Scoped to sampled tests — nothing is asked of the others, so a stray
+    # A sampled cell needs a written comment unless it is a confirmed pass
+    # (judge 3, human agrees 3). Sampling cut the pass ~3x so the remaining
+    # cells would actually be read, and a sentence is what makes that real —
+    # but 8,717 of 9,753 corrections in the corpus (89.4%) are 3 -> 3, so
+    # requiring one there costs ~26 of every ~29 sentences to describe the
+    # cells least likely to carry anything. Exempting them takes a run from
+    # ~29 sentences to ~3.
+    #
+    # The known cost, accepted: a shared false negative lives exactly in a
+    # confirmed 3 (ut_search_records_013 was judge-3 / human-3 five times on
+    # runs that violated the skill's own prohibitions). A comment mandate was
+    # never a strong guard there — "looks fine" satisfies it — so the targeted
+    # slot, not this rule, is what has to catch that class.
+    #
+    # Scoped to sampled tests: nothing is asked of the others, so a stray
     # correction there is a bonus, not a debt.
     if required_test_ids is not None:
         uncommented = [
             (c["test_id"], c["dimension_source"], c["dimension_name"])
             for c in corrections
-            if c["test_id"] in required_test_ids and not (c.get("comment") or "").strip()
+            if c["test_id"] in required_test_ids
+            and not (c.get("comment") or "").strip()
+            and not (c.get("llm_score") == 3 and c.get("corrected_score") == 3)
         ]
         if uncommented:
             shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])
@@ -525,8 +537,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
                 f"skill `{skill}`: annotation `{ann_filename}` has "
                 f"{len(uncommented)} sampled correction(s) with no comment "
                 f"(e.g., {shown}). Five tests are sampled per run so each one "
-                f"gets read — write a sentence on every dimension, whether or "
-                f"not you changed the score.",
+                f"gets read — write a sentence on any dimension that is not a "
+                f"confirmed pass (judge 3, you agree 3).",
             )
             # Fall through rather than returning: an annotation can be missing
             # dimensions AND missing comments, and reporting only the first

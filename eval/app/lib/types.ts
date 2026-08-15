@@ -109,14 +109,20 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
 }
 
 /**
- * Sampled corrections that carry no written comment.
+ * Sampled corrections that owe a written comment and do not have one.
  *
  * Cutting the pass ~3x is only worth having if the remaining cells are actually
- * read. Across the committed corpus 8,918 of 9,753 cells (91.4%) were confirmed
- * with no comment at all and 67% of annotation files were wordless end to end —
- * coverage was forced and agreement was one click. Requiring a sentence on every
- * sampled cell, agree or disagree, is what converts the pass from attestation
- * into review; a smaller set makes that affordable.
+ * read, and a sentence is what makes that real. But a **confirmed pass** (judge
+ * 3, human agrees 3) is exempt: 8,717 of 9,753 corrections in the corpus
+ * (89.4%) are 3 -> 3, so requiring one there spends ~26 of every ~29 sentences
+ * on the cells least likely to carry anything. With the exemption a run needs
+ * ~3 sentences instead of ~29.
+ *
+ * The known cost, accepted: a shared false negative lives exactly in a
+ * confirmed 3 — ut_search_records_013 was judge-3 / human-3 five times on runs
+ * that violated the skill's own prohibitions. A comment mandate was never a
+ * strong guard there ("looks fine" satisfies it), so the targeted slot is what
+ * has to catch that class.
  *
  * Unsampled tests are exempt: nothing is asked of them, so a stray correction
  * there is a bonus, not a debt.
@@ -131,7 +137,12 @@ export function uncommentedSampledCorrections(
   const sampled = sampledTestIds(log);
   if (!sampled) return []; // pre-sampling run log — the old rule, no comment debt
   return (ann?.corrections ?? [])
-    .filter((c) => sampled.has(c.test_id) && !(c.comment ?? '').trim())
+    .filter(
+      (c) =>
+        sampled.has(c.test_id) &&
+        !(c.comment ?? '').trim() &&
+        !(c.llm_score === 3 && c.corrected_score === 3),
+    )
     .map((c) => ({
       test_id: c.test_id,
       dimension_source: c.dimension_source,

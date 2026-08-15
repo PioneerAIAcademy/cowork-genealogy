@@ -351,12 +351,18 @@ const DimensionRow = memo(function DimensionRow({
   }
 
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
-  // On a sampled test EVERY reviewed dimension needs a comment, agreed or not —
-  // CI blocks otherwise. Signalling only on disagreement is how an annotator
-  // follows the on-screen affordances all the way through and first learns the
-  // rule from a red check.
+  // On a sampled test every reviewed dimension needs a comment EXCEPT a
+  // confirmed pass (judge 3, you agree 3) — 89.4% of the corpus is 3 -> 3, so
+  // exempting those takes a run from ~29 sentences to ~3. CI applies the same
+  // rule; signalling anything looser is how an annotator learns it from a red
+  // check instead of from the field.
+  const confirmedPass =
+    correction != null && correction.llm_score === 3 && correction.corrected_score === 3;
   const needsComment =
-    correction != null && !draft.trim() && (inSample || disagrees);
+    correction != null &&
+    !draft.trim() &&
+    !confirmedPass &&
+    (inSample || disagrees);
   const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
 
   const setScore = (s: ScoreOrNull) => {
@@ -467,8 +473,8 @@ const DimensionRow = memo(function DimensionRow({
         size="xs"
         mt={4}
         placeholder={
-          inSample
-            ? 'comment (required — what you checked, and why you agree or not)'
+          inSample && !confirmedPass
+            ? 'comment (required — what you checked, and why)'
             : 'comment (optional, expected on disagreement)'
         }
         value={draft}
@@ -480,7 +486,7 @@ const DimensionRow = memo(function DimensionRow({
           needsComment
             ? disagrees
               ? 'comment required when overriding the LLM score'
-              : 'comment required on every dimension of a sampled test'
+              : 'comment required on a sampled dimension that is not a confirmed pass'
             : undefined
         }
       />
@@ -610,6 +616,7 @@ function GradesPane({
   const hasUncommentedDisagreement = dims.some((d) => {
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
     if (c == null || (c.comment ?? '').trim()) return false;
+    if (c.llm_score === 3 && c.corrected_score === 3) return false; // confirmed pass
     return inSample || c.corrected_score !== c.llm_score;
   });
   const explanation = deriveOutcomeExplanation(entry, skillUnderTest);

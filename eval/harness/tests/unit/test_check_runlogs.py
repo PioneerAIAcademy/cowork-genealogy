@@ -132,14 +132,18 @@ def _multi_test_log(n: int = 20, review_sample: dict | None = None) -> dict:
     return log
 
 
-def _corrections_for(test_ids: list[str], *, comment: str | None = "read it") -> list[dict]:
+def _corrections_for(
+    test_ids: list[str], *, comment: str | None = "read it", score: int = 3
+) -> list[dict]:
+    """`score` defaults to a confirmed pass (3 -> 3), which is comment-exempt.
+    Pass score=2 for a cell the comment rule still applies to."""
     return [
         {
             "test_id": tid,
             "dimension_source": "base",
             "dimension_name": name,
-            "llm_score": 3,
-            "corrected_score": 3,
+            "llm_score": score,
+            "corrected_score": score,
             "comment": comment,
         }
         for tid in test_ids
@@ -843,7 +847,9 @@ def test_rule3_rejects_sampled_correction_without_comment(tmp_path, capsys):
     sampled = ["ut_x_000", "ut_x_001"]
     log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
     fn = _write_ann(
-        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment=None)
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     out = capsys.readouterr().out
@@ -856,7 +862,9 @@ def test_rule3_rejects_a_whitespace_only_comment(tmp_path, capsys):
     sampled = ["ut_x_000"]
     log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
     fn = _write_ann(
-        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment="   ")
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment="   ", score=2),
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
@@ -895,9 +903,37 @@ def test_rule3_reports_missing_dimensions_and_missing_comments_together(tmp_path
     log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
     # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
     fn = _write_ann(
-        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"], comment=None)
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(["ut_x_000"], comment=None, score=2),
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     out = capsys.readouterr().out
     assert "no comment" in out
     assert "unreviewed" in out
+
+
+def test_rule3_exempts_a_confirmed_pass_from_the_comment_rule(tmp_path):
+    """89.4% of corrections are 3 -> 3. Requiring a sentence there spends ~26 of
+    every ~29 on the cells least likely to carry anything."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_an_overridden_pass(tmp_path, capsys):
+    """3 -> 2 is not a confirmed pass; the annotator has to say what they saw."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    corr[0]["corrected_score"] = 2
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
