@@ -110,8 +110,11 @@ Marriage records often involve multiple informants:
   present and participating).
 - Each party is secondary for the other party's birth details
   (they were not present at the other's birth).
-- Parents' consent (when recorded): primary from the parent who
-  signed; secondary if reported by the couple.
+- Consent for an underage party (when recorded): primary from whoever
+  signed it; secondary if reported by the couple. The signer is not
+  necessarily a parent — a differing surname is evidence of a
+  stepfather or guardian, so record the stated relationship and never
+  infer `father_of_bride` / `father_of_groom` from a signature.
 - The parties are primary for the ceremony date and location — they
   participated in it firsthand. The officiant and the clerk are
   recorders, not informants for the event.
