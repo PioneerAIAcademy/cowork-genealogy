@@ -88,7 +88,7 @@ const TABLE = [
   ['apps/server/app/main.py', D],
   ['apps/server/pyproject.toml', D],
   ['.github/workflows/js-tests.yml', D],
-  ['scripts/mcpb.bat', D],
+  ['scripts/windows/test-all.bat', D],
   ['Makefile', D],
   ['apps/electron/Makefile', D],
   ['.gitattributes', D],
