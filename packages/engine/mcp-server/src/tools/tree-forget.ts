@@ -317,11 +317,23 @@ function pendingFactNoticesForIds(
  * by this point and cannot be named (found by review; see PendingFactNotice
  * for why this can't be resolved any earlier). Advisory only — removal
  * above is already correctly scoped regardless (#1574).
+ *
+ * Deduped on the final string, not on the pending entry's own (ownerKind,
+ * ownerId, factId): two DIFFERENT removed facts (e.g. two different
+ * people's own copies of the same shared id) can legitimately resolve to
+ * the identical sentence once the tree state they're checked against is
+ * the same for both — same factId, same post-removal "who else has it"
+ * answer. And two selectors in the same call can independently rediscover
+ * the exact same fact (e.g. each spouse's own person-scoped date selector
+ * reaching their shared Couple relationship). Either way the second
+ * occurrence tells the researcher nothing the first didn't already say
+ * (found by review).
  */
 function resolveFactSharingNotices(
   tree: SimplifiedGedcomX,
   pending: readonly PendingFactNotice[],
 ): string[] {
+  const seen = new Set<string>();
   const notices: string[] = [];
   for (const { ownerKind, ownerId, factId, label } of pending) {
     const others = findFactOwners(tree, factId).filter(
@@ -329,7 +341,10 @@ function resolveFactSharingNotices(
     );
     if (others.length === 0) continue;
     const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
-    notices.push(`${label} fact '${factId}' also exists on: ${named}`);
+    const notice = `${label} fact '${factId}' also exists on: ${named}`;
+    if (seen.has(notice)) continue;
+    seen.add(notice);
+    notices.push(notice);
   }
   return notices;
 }

@@ -1278,6 +1278,91 @@ describe("tree_forget", () => {
     expect(tree.persons.find((p: any) => p.id === "I5")).toBeDefined();
   });
 
+  it("does not warn twice when two selectors in the same call both reach the same shared Couple-relationship fact", async () => {
+    // E1 and E2 share Couple relationship R1. A person-scoped date selector
+    // for EACH spouse independently resolves to the SAME relationship fact
+    // (the Couple-relationship reach above), so the pending notice for that
+    // fact is recorded twice in one call. E3's own fact, sharing the same
+    // literal id but dated too late to be swept, is the genuine "also
+    // exists on" — it must be named once, not once per selector that
+    // rediscovered it (found by review).
+    await writeProject({
+      persons: [
+        { id: "E1", gender: "Male", names: [{ id: "N1", given: "A", surname: "B", preferred: true }] },
+        { id: "E2", gender: "Female", names: [{ id: "N2", given: "C", surname: "D", preferred: true }] },
+        {
+          id: "E3",
+          gender: "Male",
+          names: [{ id: "N3", given: "E", surname: "F", preferred: true }],
+          facts: [{ id: "MF1", type: "Marriage", standard_date: "1990" }],
+        },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "E1",
+          person2: "E2",
+          facts: [{ id: "MF1", type: "Marriage", standard_date: "1800" }],
+        },
+      ],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "facts-before", personId: "E1", year: 1850 },
+        { selector: "facts-before", personId: "E2", year: 1850 },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Marriage: 1 });
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Marriage fact 'MF1' also exists on: E3/),
+    ]);
+  });
+
+  it("does not warn twice when one tree-wide sweep independently removes two owners' copies of the same shared id", async () => {
+    // Same "don't repeat the sentence" concern as above, triggered a
+    // different way: ONE selector matching multiple owners in one pass,
+    // rather than two different selectors rediscovering one fact.
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1800" }],
+        },
+        {
+          id: "E2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1820" }],
+        },
+        {
+          id: "E3",
+          gender: "Male",
+          names: [{ id: "N3", given: "E", surname: "F", preferred: true }],
+          facts: [{ id: "SHARED", type: "Residence", standard_date: "1900" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", year: 1850 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/Residence fact 'SHARED' also exists on: E3/),
+    ]);
+  });
+
   it("a tree-wide date-range selector matches a fact that lives only on a Couple relationship", async () => {
     await writeProject({
       persons: [
