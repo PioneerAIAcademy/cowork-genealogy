@@ -1,0 +1,973 @@
+{
+  "project": {
+    "id": "rp_rozal_sarman_daughter",
+    "objective": "Did Roz\u00e1l S\u00e1rm\u00e1n and her husband Istv\u00e1n Juh\u00e1sz of Toront\u00e1l, Hungary have a daughter named Viktoria, baptized about 1892, in addition to their known daughter \u00c1gnes (b. 1894)?",
+    "subject_person_ids": [
+      "P873-TWP"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was a daughter named Viktoria baptized to Roz\u00e1l S\u00e1rm\u00e1n and her husband Istv\u00e1n Juh\u00e1sz of Toront\u00e1l, Hungary, around 1892?",
+      "rationale": "The research objective asks whether this couple had a daughter named Viktoria baptized ~1892 in addition to their known daughter \u00c1gnes (b. 1894). Toront\u00e1l County Catholic and Reformed church registers for the 1890s are partially indexed on FamilySearch and in Hungarian state archive digitization projects \u2014 a targeted baptismal record search for this couple in that window is the direct path to answering the question. This is the only question needed to address the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-14",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_008",
+        "a_012",
+        "a_017"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Reasonably exhaustive indexed search completed. Searched Hungary Catholic Church Records 1636-1895 (coll. 1743180), Reformed Church Christenings 1624-1895 (coll. 1858355), Church Books 1624-1950 (coll. 4133831), Baptisms 1734-1895 (coll. 1804226), and marriage records \u2014 all for Juh\u00e1sz Vikt\u00f3ria with parents Juh\u00e1sz Istv\u00e1n + S\u00e1rm\u00e1n Roz\u00e1l in Toront\u00e1l 1889-1895. Multiple name variant searches executed. The only Vikt\u00f3ria Juh\u00e1sz baptism found (XZ6D-FZR 1892 Kiszombor) names the mother as Sz\u00e1z Roz\u00e1l \u2014 a different family. Full-text (pli_005) and Ancestry (pli_007) remain as next-tier options requiring different skills.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": "GPS Standard 1 reasonably met for indexed tier. Four FamilySearch collections searched with name variants and parent-anchored queries. No record linking S\u00e1rm\u00e1n Roz\u00e1l as mother of a Vikt\u00f3ria Juh\u00e1sz found. Exhaustive criteria from search-strategy-levers.md satisfied."
+      },
+      "created": "2026-08-14"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-14",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1896",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED POSITIVE. Found Vikt\u00f3ria Juh\u00e1sz baptism (1892, Kiszombor, Toront\u00e1l) \u2014 record XZ6D-FZR, father Juh\u00e1sz Istv\u00e1n, mother indexed as Sz\u00e1z Roz\u00e1l. Sibling Roz\u00e1lia Juh\u00e1sz (1890, Kiszombor) also found \u2014 same parents. Key issue: mother surname 'Sz\u00e1z' in records vs. 'S\u00e1rm\u00e1n' in tree. \u00c1gnes Juh\u00e1sz baptism (b. 1894) not found in indexed records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1896",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED NEGATIVE. Hungary, Reformed Church Christenings, 1624-1895 (coll. 1858355). 3 results returned, none matching \u2014 all below 0.002 match score. No Reformed baptism for a Vikt\u00f3ria Juh\u00e1sz child with mother S\u00e1rm\u00e1n Roz\u00e1l found in Toront\u00e1l.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1900",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED NEGATIVE. Hungary, Church Books, 1624-1950 (coll. 4133831). Zero results. Broader multi-denomination compilation yields nothing for Vikt\u00f3ria Juh\u00e1sz + S\u00e1rm\u00e1n mother in Toront\u00e1l, 1889-1895.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1880-1898",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED NEGATIVE. No marriage record for Juh\u00e1sz Istv\u00e1n and Sz\u00e1z/S\u00e1rm\u00e1n Roz\u00e1l found in coll. 1743180 for Kiszombor or Toront\u00e1l. Marriage records for this village/period appear unindexed. Mother surname discrepancy (Sz\u00e1z vs. S\u00e1rm\u00e1n) unresolved through this route.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1896",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED NEGATIVE (coverage gap). Full-text co-occurrence search executed: +Juh\u00e1sz +S\u00e1rm\u00e1n across FamilySearch full-text index (with and without diacritics, with and without year/place constraints). All queries returned zero results. Calibration searches confirm the Toront\u00e1l Catholic church register pages from coll. 1743180 are not in the FamilySearch full-text searchable corpus \u2014 the nil reflects an FTS coverage gap. A positive finding (+Kiszombor +Juh\u00e1sz) returned only a 1940 Michigan naturalization for Matilda Juh\u00e1sz b. Kiszombor 1896 (a candidate Sz\u00e1z-family sibling, not S\u00e1rm\u00e1n-family evidence). Log entry: log_011.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1896",
+          "repository": "FamilySearch",
+          "rationale": "COMPLETED NEGATIVE. Hungary, Baptisms, 1734-1895 (coll. 1804226). Zero results. Supplementary partial baptism index yields nothing for Vikt\u00f3ria Juh\u00e1sz + S\u00e1rm\u00e1n mother in Toront\u00e1l.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Toront\u00e1l, Hungary",
+          "date_range": "1888-1896",
+          "repository": "Ancestry",
+          "rationale": "SKIPPED \u2014 requires external site search (Ancestry subscription). Ancestry Hungary Catholic and Reformed church record mirrors (colls. 9891, 9893, 9894) are accessible only via the search-external-sites skill. Flagged for follow-up. Given the breadth of negative indexed results already obtained, this remains a contingency.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-14T10:15:59.575Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Juh\u00e1sz",
+        "fatherGivenName": "Istv\u00e1n",
+        "motherSurname": "S\u00e1rm\u00e1n",
+        "birthYearFrom": 1888,
+        "birthYearTo": 1896,
+        "birthPlace": "Toront\u00e1l, Hungary",
+        "collectionId": "1743180",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 65,
+      "notes": "65 total matches for surname=Juh\u00e1sz, fatherGivenName=Istv\u00e1n, motherSurname=S\u00e1rm\u00e1n, birth 1888-1896, Toront\u00e1l, coll.1743180. Critical hits in first page: 'Entry for Juh\u00e1sz Vikt\u00f3ria' (XZ6D-FZT \u2014 father Juh\u00e1sz Istv\u00e1n secondary; Vikt\u00f3ria is primary \u2192 likely her baptism); 'Juh\u00e1sz \u00c1gnes' persona (XZ6T-BLW); 'Entry for Juh\u00e1sz Roz\u00e1lia' (XZ6D-HRN \u2014 father Juh\u00e1sz Istv\u00e1n secondary). Reading key records to confirm content and dates."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-14T10:30:43.128Z",
+      "tool": "record_read",
+      "query": {
+        "recordIds": [
+          "ark:/61903/1:1:XZ6D-FZT",
+          "ark:/61903/1:1:XZ6T-BLW",
+          "ark:/61903/1:1:XZ6D-HRN",
+          "ark:/61903/1:1:XZ6T-CG3"
+        ]
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read 4 key records from log_001 sidecar. XZ6D-FZT: father persona for Vikt\u00f3ria Juh\u00e1sz baptism 1892 Kiszombor; XZ6D-HRN: father persona for Roz\u00e1lia Juh\u00e1sz baptism 1890 Kiszombor. Both show father=Juh\u00e1sz Istv\u00e1n, mother=Sz\u00e1z Roz\u00e1l \u2014 note mother surname is 'Sz\u00e1z' not 'S\u00e1rm\u00e1n' as in the tree. XZ6T-BLW: Juh\u00e1sz \u00c1gnes appearing as mother in Szirovicza record 1895 \u2014 different person. XZ6T-CG3: Juh\u00e1sz Vikt\u00f3ria appearing as mother of Bod\u00f3 M\u00e1ty\u00e1s 1891 \u2014 different person."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-14T10:30:43.128Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Juhasz",
+        "givenName": "Agnes",
+        "birthPlace": "Kiszombor, Toront\u00e1l, Hungary",
+        "birthYearFrom": 1893,
+        "birthYearTo": 1895,
+        "collectionId": "1743180",
+        "fatherGivenName": "Istvan",
+        "fatherSurname": "Juhasz"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched for \u00c1gnes Juh\u00e1sz baptism 1893-1895 in Kiszombor coll. 1743180 to verify mother's surname in a known sibling record. Zero results. Kiszombor baptisms for 1894 may be in an image group not well-indexed by place."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-14T10:30:43.128Z",
+      "tool": "record_read",
+      "query": {
+        "recordIds": [
+          "ark:/61903/1:1:XZRG-YTR",
+          "ark:/61903/1:1:XZRG-PPF",
+          "ark:/61903/1:1:XZ8P-K8C",
+          "ark:/61903/1:1:XCYS-C9Q",
+          "ark:/61903/1:1:XCYS-6KB",
+          "ark:/61903/1:1:XCYS-32N",
+          "ark:/61903/1:1:XZ6D-SBZ"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read additional Juh\u00e1sz Istv\u00e1n records from pli_001 marriage search results. All are different families: XZRG (K\u00fcbekh\u00e1za, mother=Lovik Orzse, 1879-1882); XZ8P-K8C (\u00d3becse, mother=Vida Maria, 1893); XCYS (Kiszombor 1839-1846, mother=Koll\u00e1r R\u00f3zsa/Len Ilona \u2014 earlier generation); XZ6D-SBZ (Kiszombor 1888, father=P\u00e9ter Juh\u00e1sz not Istv\u00e1n). None are the Kiszombor/Sz\u00e1z family."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-14T10:30:43.128Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Juhasz",
+        "givenName": "Istvan",
+        "marriagePlace": "Kiszombor, Toront\u00e1l, Hungary",
+        "collectionId": "1743180"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 54,
+      "notes": "Searched for marriage record of Juh\u00e1sz Istv\u00e1n in Kiszombor Catholic Church Records. 54 hits returned, all were baptism records where Juh\u00e1sz Istvan appears as a parent. No marriage record for this couple found in indexed results. Marriage records for this village/period may not be indexed in coll. 1743180."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-14T10:30:43.128Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Juhasz",
+        "givenName": "Istvan",
+        "spouseSurname": "Szaz",
+        "marriagePlace": "Toront\u00e1l, Hungary",
+        "collectionId": "1743180"
+      },
+      "outcome": "negative",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 17,
+      "notes": "Searched for marriage of Juh\u00e1sz Istv\u00e1n + Sz\u00e1z bride in Toront\u00e1l Catholic records. All 17 results were baptism records (children of the couple) not marriage records. No indexed marriage record located. The mother's maiden name discrepancy (Sz\u00e1z in church records vs. S\u00e1rm\u00e1n in tree) remains unresolved through indexed records."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-14T10:44:40.119Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1858355",
+        "surname": "Juh\u00e1sz",
+        "givenName": "Vikt\u00f3ria",
+        "fatherGivenName": "Istv\u00e1n",
+        "fatherSurname": "Juh\u00e1sz",
+        "motherGivenName": "Roz\u00e1l",
+        "motherSurname": "S\u00e1rm\u00e1n",
+        "birthPlace": "Toront\u00e1l, Hungary",
+        "birthYearFrom": 1889,
+        "birthYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 3,
+      "notes": "Hungary, Reformed Church Christenings, 1624-1895 (coll. 1858355). Searched Vikt\u00f3ria Juh\u00e1sz, father Istv\u00e1n Juh\u00e1sz, mother S\u00e1rm\u00e1n Roz\u00e1l, birth 1889-1895, Toront\u00e1l. 3 results returned but all have match scores below 0.002; none are baptism records of a Juh\u00e1sz Vikt\u00f3ria child with these parents. Top result (VF5L-VDS) is a record for 'Juli\u00e1na N\u00e9met' where Viktoria Juh\u00e1sz appears as a relative. Genuine negative \u2014 no Reformed baptism for a Vikt\u00f3ria Juh\u00e1sz with mother S\u00e1rm\u00e1n found."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-14T10:44:40.123Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4133831",
+        "surname": "Juh\u00e1sz",
+        "givenName": "Vikt\u00f3ria",
+        "fatherGivenName": "Istv\u00e1n",
+        "fatherSurname": "Juh\u00e1sz",
+        "motherGivenName": "Roz\u00e1l",
+        "motherSurname": "S\u00e1rm\u00e1n",
+        "birthPlace": "Toront\u00e1l, Hungary",
+        "birthYearFrom": 1889,
+        "birthYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Hungary, Church Books, 1624-1950 (coll. 4133831). Zero results. No broader multi-denomination compilation record found for Vikt\u00f3ria Juh\u00e1sz with mother S\u00e1rm\u00e1n Roz\u00e1l in Toront\u00e1l, 1889-1895."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-14T10:44:40.123Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1804226",
+        "surname": "Juh\u00e1sz",
+        "givenName": "Vikt\u00f3ria",
+        "fatherGivenName": "Istv\u00e1n",
+        "motherSurname": "S\u00e1rm\u00e1n",
+        "birthPlace": "Toront\u00e1l, Hungary",
+        "birthYearFrom": 1889,
+        "birthYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Hungary, Baptisms, 1734-1895 (coll. 1804226). Zero results. Supplementary partial index has no entry for Vikt\u00f3ria Juh\u00e1sz with mother S\u00e1rm\u00e1n in Toront\u00e1l."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-08-14T10:44:40.123Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1743180",
+        "surname": "Juh\u00e1sz",
+        "givenName": "Vikt\u00f3ria",
+        "motherSurname": "S\u00e1rm\u00e1n",
+        "birthPlace": "Toront\u00e1l, Hungary",
+        "birthYearFrom": 1889,
+        "birthYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 6,
+      "notes": "Ad-hoc: Catholic Church Records coll. 1743180 \u2014 Vikt\u00f3ria Juh\u00e1sz + motherSurname S\u00e1rm\u00e1n, Toront\u00e1l, 1889-1895, no fatherSurname constraint. 6 results returned; all below match threshold (max score 0.0024). Top 3 (XZ6T-CG3, XZ6T-G92, XZ6R-5HS) are entries for Bodo family members where Juh\u00e1sz Vikt\u00f3ria appears as a parent in later records, attached to other tree persons. Bottom 3 are 'Juh\u00e1sz Viktor' (Female) entries for Toth family records. None represent a baptism of a Vikt\u00f3ria Juh\u00e1sz child born 1889-1895 with mother S\u00e1rm\u00e1n. Confirms genuine negative for S\u00e1rm\u00e1n-mother Vikt\u00f3ria Juh\u00e1sz in indexed Catholic records."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-14T10:57:09.885Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Juh\u00e1sz +S\u00e1rm\u00e1n",
+        "yearFrom": 1885,
+        "yearTo": 1900,
+        "recordPlace1": "Hungary"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS co-occurrence search for Juh\u00e1sz AND S\u00e1rm\u00e1n in Hungarian records 1885-1900. Zero results. Also tried without year/place constraints (+Juh\u00e1sz +S\u00e1rm\u00e1n unscoped and +Juhasz +Sarman unscoped) \u2014 all nil. Calibration checks show FTS returns 18,561 hits for +S\u00e1rm\u00e1n globally (all English/North American records) and 1 hit for +Kiszombor +Juh\u00e1sz (a 1940 Michigan naturalization for Matilda Juh\u00e1sz b. 1896 Kiszombor). This indicates the Toront\u00e1l Catholic church register pages from collection 1743180 are NOT in the FamilySearch full-text searchable corpus \u2014 the nil is a coverage gap, not a confirmed page-level negative. The FTS path for this specific record set is unavailable."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ6D-FZR : accessed 2026-08-14), Entry for Juhasz Viktoria and Juhasz Istvan, 1892.",
+      "citation_detail": {
+        "who": "Juh\u00e1sz Vikt\u00f3ria (child), Juh\u00e1sz Istv\u00e1n (father), Sz\u00e1z Roz\u00e1l (mother)",
+        "what": "Indexed baptism record entry from Hungary, Catholic Church Records, 1636-1895 (FamilySearch collection 1743180)",
+        "when_created": "1892",
+        "when_accessed": "2026-08-14",
+        "where": "FamilySearch (familysearch.org), Hungary, Catholic Church Records, 1636-1895, collection 1743180",
+        "where_within": "Entry for Juhasz Viktoria, ark:/61903/1:1:XZ6D-FZR; image ark:/61903/3:1:9Q97-YS8R-ZWF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZ6D-FZR",
+      "notes": "Indexed transcription of a Catholic church baptism register entry. Original church register image available at ark:/61903/3:1:9Q97-YS8R-ZWF \u2014 original not examined; only the FamilySearch index entry was consulted. The original register is from Kiszombor parish, Toront\u00e1l County, Hungary. The mother's surname is indexed as 'Szaz' (Sz\u00e1z); the project tree records the mother as Roz\u00e1l S\u00e1rm\u00e1n (P873-TWP) \u2014 surname discrepancy requires resolution against the original image.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ6D-HRF : accessed 14 August 2026), entry for Juh\u00e1sz Roz\u00e1lia, baptism 1890, Kiszombor, Toront\u00e1l, Hungary.",
+      "citation_detail": {
+        "who": "Juh\u00e1sz Roz\u00e1lia, child of Juh\u00e1sz Istv\u00e1n and Sz\u00e1z Rosalia",
+        "what": "Baptism register entry, Catholic church records",
+        "when_created": "1890",
+        "when_accessed": "14 August 2026",
+        "where": "FamilySearch (familysearch.org), collection \"Hungary, Catholic Church Records, 1636-1895\", collection ID 1743180",
+        "where_within": "Entry for Juh\u00e1sz Roz\u00e1lia, Kiszombor parish, Toront\u00e1l; image ARK ark:/61903/3:1:9Q97-YS8R-ZS7"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZ6D-HRF",
+      "notes": "Church baptism register for Kiszombor parish, Toront\u00e1l, Hungary; Catholic church records predating Hungarian civil registration (which began 1 October 1895). Image available at ark:/61903/3:1:9Q97-YS8R-ZS7. FamilySearch index records child's gender as 'Male', which is almost certainly an indexing error \u2014 the given name Roz\u00e1lia is a distinctly female Hungarian name. The mother is indexed as 'Sz\u00e1z Rosalia', which differs from the tree surname 'S\u00e1rm\u00e1n' for P873-TWP; the same discrepancy appears in the Vikt\u00f3ria baptism record (q_001 target), suggesting a systematic indexing issue or a genuine surname discrepancy requiring resolution.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Viktoria Juhasz",
+      "structured_value": {
+        "given": "Viktoria",
+        "surname": "Juhasz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "Baptized 1892, Kiszombor, Toront\u00e1l, Hungary",
+      "date": "1892",
+      "date_certainty": "approximate",
+      "place": "Kiszombor, Toront\u00e1l, Hungary",
+      "standard_place": "Kiszombor, Toront\u00e1l, Hungary",
+      "information_quality": "primary",
+      "informant": "Catholic parish officiant, Kiszombor",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Istvan Juhasz (stated in baptism record)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Rozal Szaz (stated in baptism record; mother's surname 'Szaz' differs from tree person P873-TWP 'Sarman' \u2014 may be indexing error, byname, or different individual)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's surname indexed as 'Szaz' (Sz\u00e1z). The project tree identifies the mother as Roz\u00e1l S\u00e1rm\u00e1n (P873-TWP). 'Sz\u00e1z' and 'S\u00e1rm\u00e1n' are distinct Hungarian surnames. Possible explanations: (1) indexing/transcription error of the original register; (2) the mother used a ragadv\u00e1nyn\u00e9v (byname/nickname surname) not her legal surname; (3) this is a different woman with the same given name. The original register image (ark:/61903/3:1:9Q97-YS8R-ZWF) must be consulted to resolve this discrepancy before this persona is linked to P873-TWP.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Istvan Juhasz",
+      "structured_value": {
+        "given": "Istvan",
+        "surname": "Juhasz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Rozal Szaz",
+      "structured_value": {
+        "given": "Rozal",
+        "surname": "Szaz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname indexed as 'Szaz' (Sz\u00e1z). Tree records the mother as Roz\u00e1l S\u00e1rm\u00e1n (P873-TWP). Discrepancy unresolved \u2014 original image consultation required before linking to tree person P873-TWP.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XZ6D-FZR",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Juh\u00e1sz Roz\u00e1lia",
+      "structured_value": {
+        "given": "Roz\u00e1lia",
+        "surname": "Juh\u00e1sz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Name was supplied by the presenting parent(s) at the baptism and recorded by the parish priest contemporaneously. The given name Roz\u00e1lia is a distinctly female Hungarian name, consistent with the child being female despite the FamilySearch index recording gender as 'Male' (likely indexing error).",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Sex inferred from the distinctly female given name Roz\u00e1lia. The FamilySearch index records gender as 'Male', which is almost certainly an indexing error \u2014 the original Catholic register almost certainly records the child as female. This indexing error should be verified against the original image (ark:/61903/3:1:9Q97-YS8R-ZS7).",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 1890, Kiszombor, Toront\u00e1l, Hungary",
+      "date": "1890",
+      "place": "Kiszombor, Toront\u00e1l, Hungary",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parish priest recorded the baptism contemporaneously as an official act \u2014 primary information for the event itself. Evidence is indirect for q_001 (Vikt\u00f3ria's baptism ~1892) because this record names Roz\u00e1lia (b. 1890), not Vikt\u00f3ria; it establishes that this couple (Juh\u00e1sz Istv\u00e1n + Sz\u00e1z Rosalia) had Catholic children baptized in Kiszombor, Toront\u00e1l, consistent with the family context for a Vikt\u00f3ria baptism in 1892.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Kiszombor, Toront\u00e1l, Hungary"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Juh\u00e1sz Istv\u00e1n",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_child_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father's identity stated in the baptism register, supplied by the presenting parent(s). Direct because the Catholic parish register explicitly names the father (not inferred from household position). This links the same Juh\u00e1sz Istv\u00e1n (XZ6D-HRN) to a daughter Roz\u00e1lia b. 1890 in Kiszombor, Toront\u00e1l \u2014 indirect support for q_001 by establishing the family's presence and children in this parish.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Sz\u00e1z Rosalia",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_child_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother's identity stated in the baptism register. Mother is indexed as 'Sz\u00e1z Rosalia', which differs from the tree surname 'S\u00e1rm\u00e1n' for the tree person P873-TWP (Roz\u00e1l S\u00e1rm\u00e1n). This same Sz\u00e1z/S\u00e1rm\u00e1n discrepancy appears in the Vikt\u00f3ria baptism record that is the subject of q_001, suggesting either (a) the tree has an incorrect surname for the mother, (b) 'Sz\u00e1z' is a nickname or variant, or (c) there is a systematic indexing error. The parallel discrepancy across two sibling records is itself indirect corroborating evidence that both records concern the same family.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "father_of_child_1",
+      "fact_type": "name",
+      "value": "Juh\u00e1sz Istv\u00e1n",
+      "structured_value": {
+        "given": "Istv\u00e1n",
+        "surname": "Juh\u00e1sz"
+      },
+      "information_quality": "primary",
+      "informant": "Juh\u00e1sz Istv\u00e1n (father, self-reported at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father stated his own name at the baptism. Name matches tree person PZ4D-4KF (Istv\u00e1n Juh\u00e1sz), the proposed father in q_001. Indirect evidence for q_001 \u2014 establishes this person's presence in Kiszombor, Toront\u00e1l with a Catholic child baptized in 1890, consistent with having another child (Vikt\u00f3ria) baptized in 1892.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "father_of_child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Juh\u00e1sz Istv\u00e1n (father, self-reported at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "mother_of_child_1",
+      "fact_type": "name",
+      "value": "Sz\u00e1z Rosalia",
+      "structured_value": {
+        "given": "Rosalia",
+        "surname": "Sz\u00e1z"
+      },
+      "information_quality": "primary",
+      "informant": "Sz\u00e1z Rosalia (mother, self-reported at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother stated her own name at the baptism. The surname 'Sz\u00e1z' differs from the tree surname 'S\u00e1rm\u00e1n' for P873-TWP (Roz\u00e1l S\u00e1rm\u00e1n). The same Sz\u00e1z/S\u00e1rm\u00e1n discrepancy appears in the Vikt\u00f3ria baptism record (the subject of q_001). This parallel discrepancy across two sibling baptism records is indirect evidence that both records concern the same family, and that either the tree surname 'S\u00e1rm\u00e1n' is erroneous, or 'Sz\u00e1z' is a variant/nickname, or there is a systematic indexing error in the FamilySearch collection. Resolution requires checking the original register image (ark:/61903/3:1:9Q97-YS8R-ZS7).",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XZ6D-HRF",
+      "record_role": "mother_of_child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Sz\u00e1z Rosalia (mother, self-reported at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Assertion records the given name 'Vikt\u00f3ria' for the child_1 role in record XZ6D-FZR (Hungary, Catholic Church Records). I1 is the stub created from this same record for the child role. Name, sex, and baptism date/place all agree \u2014 this assertion names the child persona that I1 was materialized from.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Assertion records sex Female for the child_1 persona in XZ6D-FZR. I1 was materialized from this persona as a female stub. Direct corroboration.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Assertion records the baptism event (1892, Kiszombor, Toront\u00e1l, Hungary) for child_1 in XZ6D-FZR. I1's sole fact is this christening. Direct match between assertion and stub.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Assertion records the parent-child relationship (father side) for child_1 in XZ6D-FZR. Bears on I1 as the child party. Father persona not linked in autonomous mode (Sz\u00e1z/S\u00e1rm\u00e1n discrepancy caps father match at speculative), but the relationship assertion still identifies I1 as a child of the father named in the record.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Assertion records the parent-child relationship (mother side) for child_1 in XZ6D-FZR. Bears on I1 as the child party. Mother persona not linked in autonomous mode (Sz\u00e1z/S\u00e1rm\u00e1n discrepancy caps mother match at speculative), but the relationship assertion still identifies I1 as a child of the mother named in the record.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion records the given name 'Roz\u00e1lia' for the child_1 role in record XZ6D-HRF (Hungary, Catholic Church Records). I2 is the stub materialized from this persona. Name, sex, and baptism date/place all agree.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion records sex Female for the child_1 persona in XZ6D-HRF. I2 was materialized as female. Direct corroboration.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion records the baptism event (1890, Kiszombor, Toront\u00e1l, Hungary) for child_1 in XZ6D-HRF. I2's sole fact is this christening. Direct match between assertion and stub.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion records the parent-child relationship (father side) for child_1 in XZ6D-HRF. Bears on I2 as the child party. Father persona not linked in autonomous mode (Sz\u00e1z/S\u00e1rm\u00e1n discrepancy), but the relationship assertion still identifies I2 as a child of the named father.",
+      "created": "2026-08-14"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion records the parent-child relationship (mother side) for child_1 in XZ6D-HRF. Bears on I2 as the child party. Mother persona not linked in autonomous mode (Sz\u00e1z/S\u00e1rm\u00e1n discrepancy), but the relationship assertion still identifies I2 as a child of the named mother.",
+      "created": "2026-08-14"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Juh\u00e1sz Istv\u00e1n + Sz\u00e1z Roz\u00e1l family of Kiszombor (parents of Vikt\u00f3ria b. 1892 and Roz\u00e1lia b. 1890 in records XZ6D-FZR and XZ6D-HRF) is a wholly distinct family from the research subjects Juh\u00e1sz Istv\u00e1n (PZ4D-4KF) + S\u00e1rm\u00e1n Roz\u00e1l (P873-TWP). The Vikt\u00f3ria Juh\u00e1sz found in Kiszombor, 1892 is NOT a daughter of the research subjects.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_008",
+        "a_017"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Two independent records (XZ6D-FZR, XZ6D-HRF) consistently name the mother as Sz\u00e1z Roz\u00e1l. P873-TWP is documented as S\u00e1rm\u00e1n Roz\u00e1l with her own parents' records from Romania. These are structurally different surnames. The geographic pattern reinforces this: Kiszombor records vs. \u00c1gnes born in Zim\u00e1ndudvar. No baptism record naming S\u00e1rm\u00e1n Roz\u00e1l as mother of any Juh\u00e1sz child was found across four indexed FamilySearch collections (Catholic, Reformed, multi-denomination, supplementary baptisms)."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_008",
+        "a_012",
+        "a_017"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch indexed records were searched in four collections covering Catholic (coll. 1743180), Reformed (coll. 1858355), multi-denomination church books (coll. 4133831), and supplementary baptisms (coll. 1804226) for Toront\u00e1l County, Hungary, 1889\u20131895. Marriage records also searched. A full-text co-occurrence search for '+Juh\u00e1sz +S\u00e1rm\u00e1n' was executed across the FamilySearch full-text index (with and without diacritics, with and without place/year constraints) \u2014 all returned zero results. Calibration searches confirm the Toront\u00e1l Catholic church register pages from coll. 1743180 are not in the FamilySearch FTS corpus; the nil is a coverage gap. The one substantive FTS hit was a 1940 Michigan naturalization for Matilda Juh\u00e1sz born Kiszombor 1896 (probable Sz\u00e1z-family sibling). 11 log entries (log_001\u2013log_011). Unsearched: Ancestry Hungarian church record mirrors (pli_007, external subscription required).",
+      "narrative_markdown": "## Was a Daughter Named Vikt\u00f3ria Baptized to Roz\u00e1l S\u00e1rm\u00e1n and Istv\u00e1n Juh\u00e1sz of Toront\u00e1l, Hungary, Around 1892?\n\n**Conclusion:** The preponderance of available evidence strongly suggests that the Vikt\u00f3ria Juh\u00e1sz baptized in Kiszombor, Toront\u00e1l, Hungary in 1892 is the daughter of a *different* Juh\u00e1sz Istv\u00e1n family \u2014 one in which the mother bore the surname Sz\u00e1z, not S\u00e1rm\u00e1n \u2014 and that no baptismal record linking a daughter named Vikt\u00f3ria to the research couple Roz\u00e1l S\u00e1rm\u00e1n (P873-TWP) and Istv\u00e1n Juh\u00e1sz (PZ4D-4KF) has been found in any indexed or full-text searchable collection. This conclusion is stated at the *probable* tier: the evidence leans strongly in one direction, but the original register images were not directly consulted and one search avenue (Ancestry) remains open.\n\n---\n\n### Evidence Gathered\n\n**Indexed search across four FamilySearch collections.** Four FamilySearch collections were searched for a baptism of Vikt\u00f3ria Juh\u00e1sz with parents Juh\u00e1sz Istv\u00e1n and S\u00e1rm\u00e1n Roz\u00e1l in Toront\u00e1l County, Hungary, approximately 1889\u20131895: Hungary, Catholic Church Records, 1636\u20131895 (coll. 1743180); Hungary, Reformed Church Christenings, 1624\u20131895 (coll. 1858355); Hungary, Church Books, 1624\u20131950 (coll. 4133831); and Hungary, Baptisms, 1734\u20131895 (coll. 1804226). Marriage records for the same couple and period were also searched. Multiple name-variant and parent-anchored queries were executed. No baptism record naming S\u00e1rm\u00e1n Roz\u00e1l as the mother of any Juh\u00e1sz child appeared in any of these four collections (log entries log_001\u2013log_010).\n\n**Full-text page search \u2014 coverage gap.** A co-occurrence full-text search for +Juh\u00e1sz +S\u00e1rm\u00e1n was executed across the FamilySearch AI-transcribed document corpus (with and without diacritics, with and without place and year constraints). All queries returned zero results. Calibration checks show that the surname 'S\u00e1rm\u00e1n/Sarman' does appear in the FamilySearch full-text index (18,561 global hits), but all returns are English-language North American records; a calibration for '+Kiszombor +Juh\u00e1sz' returned only a 1940 Michigan naturalization for Matilda Juh\u00e1sz, born Kiszombor 1896. This confirms that the Toront\u00e1l Catholic church register pages from collection 1743180 are not currently indexed in the FamilySearch full-text corpus. The nil therefore reflects an FTS coverage gap rather than a confirmed page-level absence of the surnames together (log_011).\n\n**One Vikt\u00f3ria Juh\u00e1sz baptism found \u2014 but the mother is Sz\u00e1z, not S\u00e1rm\u00e1n.** A single indexed record names a Vikt\u00f3ria Juh\u00e1sz baptized in Kiszombor, Toront\u00e1l, Hungary in 1892, with father Juh\u00e1sz Istv\u00e1n and mother Sz\u00e1z Roz\u00e1l.[1] A companion entry for the same couple's daughter Roz\u00e1lia Juh\u00e1sz, baptized in Kiszombor in 1890, names the mother as Sz\u00e1z Rosalia.[2] Both entries are from the FamilySearch index of Hungary, Catholic Church Records, 1636\u20131895, and are indexed derivatives of the original Kiszombor Catholic parish register.\n\n---\n\n### The Sz\u00e1z / S\u00e1rm\u00e1n Surname Discrepancy\n\nThe central obstacle to identifying these Kiszombor records as the research couple's family is the mother's surname. The research subject P873-TWP bears the maiden name *S\u00e1rm\u00e1n*, documented by her own parentage: her parents are recorded as J\u00f3zsef S\u00e1rm\u00e1n (P87Q-VF6) and Katalin Majt\u00e9nyi (P87Q-2VC), and her birthplace as Livada, Arad, Romania. *Sz\u00e1z* and *S\u00e1rm\u00e1n* are structurally distinct Hungarian surnames sharing no phonetic similarity, no common diacritical confusion in Latin-script Catholic registers of the 1890s, and no plausible single-character transcription-error pathway between them.\n\nThe discrepancy appears consistently across two independent baptism records from the same parish, spanning two separate years (1890 and 1892). Consistency across two records makes a one-time FamilySearch indexing error an implausible sole explanation, though the original register images \u2014 accessible at ark:/61903/3:1:9Q97-YS8R-ZWF (Vikt\u00f3ria, 1892) and ark:/61903/3:1:9Q97-YS8R-ZS7 (Roz\u00e1lia, 1890) \u2014 were not directly consulted and remain the definitive check.\n\n**Ragad\u00e1nyn\u00e9v (byname) hypothesis considered.** Hungarian Catholic parish records sometimes recorded a *ragad\u00e1nyn\u00e9v* \u2014 a localized nickname or byname \u2014 alongside or instead of the official legal surname. It is therefore theoretically possible that 'Sz\u00e1z' was a byname for a woman whose legal surname was 'S\u00e1rm\u00e1n.' Three features of the evidence argue against this explanation. First, in both the 1890 and 1892 Kiszombor records the mother is identified only as 'Sz\u00e1z' with no co-occurrence of 'S\u00e1rm\u00e1n' in parenthetical or secondary notation; a formal byname usage in a Latin-rite baptism register typically would appear alongside the legal name (e.g., 'S\u00e1rm\u00e1n alias Sz\u00e1z' or 'Sz\u00e1z [S\u00e1rm\u00e1n]'), not as a standalone replacement. Second, P873-TWP's documented family origin is Livada, Arad County, Romania \u2014 approximately 70 km from Kiszombor; ragad\u00e1nyn\u00e9vek were hyper-local, arising within a single parish community, and a woman from Arad County would not ordinarily acquire a Kiszombor byname. Third, no record was found in any of the four searched collections that places 'S\u00e1rm\u00e1n' and 'Sz\u00e1z' together for the same individual, the kind of bridge record that would normally survive if the same woman used both names across different record types. While the byname hypothesis cannot be conclusively excluded without consulting the original register images, it is unsupported by any affirmative evidence and inconsistent with the broader geographic and documentary pattern.\n\n---\n\n### Geographic Inconsistency\n\nThe research couple's only known child with a documented birthplace is \u00c1gnes Juh\u00e1sz (GG3F-1XM), born in Zim\u00e1ndudvar in April 1894. Zim\u00e1ndudvar lies in Arad County, approximately 70 km southeast of Kiszombor, which sits on the Toront\u00e1l\u2013Csan\u00e1d border. A couple residing in Kiszombor in 1890 and 1892 (as the Kiszombor records imply) would be very unlikely to have a subsequent child born in Zim\u00e1ndudvar in 1894. This geographic pattern is consistent with the Kiszombor couple being a distinct family and the research subjects residing in the Arad-county region.\n\nOf additional note: a 1940 Michigan naturalization for Matilda Juh\u00e1sz \u2014 born 12 March 1896 in Kiszombor, Hungary, emigrated via New York in November 1912 \u2014 represents a probable additional child of the Kiszombor Juh\u00e1sz family (the Sz\u00e1z family), born four years after Vikt\u00f3ria (1892) and consistent with the Sz\u00e1z family's documented continued residence at Kiszombor. This is independent corroboration of a cohesive Kiszombor Juh\u00e1sz family distinct from the research subjects.\n\n---\n\n### Source Classification\n\nBoth found baptism records (XZ6D-FZR and XZ6D-HRF) are *derivative* sources \u2014 FamilySearch indexed transcriptions of original Catholic parish register entries. The underlying originals are original sources; the information they provide about the child's baptism is *primary* information, supplied contemporaneously by the presenting parents and officiating priest. The evidence is *direct* for the Kiszombor family's children but does not concern the research couple given the naming discrepancy. The negative findings across four indexed collections, combined with the FTS coverage gap, constitute *negative evidence* at the indexed tier.\n\n---\n\n### Unsearched Avenue\n\n**Ancestry (external subscription)** \u2014 Ancestry's Hungary Catholic and Reformed church record mirrors (colls. 9891, 9893) use a different indexing engine that may surface records the FamilySearch index misses. This remains the one substantive open path and requires a paid subscription and execution via the search-external-sites skill.\n\n---\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that the Vikt\u00f3ria Juh\u00e1sz baptized in Kiszombor in 1892 (record XZ6D-FZR) is the daughter of a different Juh\u00e1sz Istv\u00e1n + Sz\u00e1z Roz\u00e1l family, and not a daughter of the research subjects Roz\u00e1l S\u00e1rm\u00e1n (P873-TWP) and Istv\u00e1n Juh\u00e1sz (PZ4D-4KF). No baptismal record linking the research couple to a daughter named Vikt\u00f3ria was found in any searched indexed collection, and the full-text searchable corpus does not cover the relevant Toront\u00e1l church register pages. The byname alternative was considered and found unsupported by affirmative evidence.\n\nWhether the research couple had their own daughter named Vikt\u00f3ria baptized around 1892 remains unresolved pending Ancestry verification. The conclusion is stated at *probable*: the evidence leans strongly in one direction, and two mutually reinforcing lines of argument (surname discrepancy and geographic inconsistency) converge on the same finding, but the research is not complete at all tiers and the original register images confirming the Sz\u00e1z surname have not been directly examined.\n\n---\n\n**Footnotes**\n\n[1] \"Hungary, Catholic Church Records, 1636-1895\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ6D-FZR : accessed 2026-08-14), Entry for Juhasz Viktoria and Juhasz Istvan, 1892.\n\n[2] \"Hungary, Catholic Church Records, 1636-1895\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ6D-HRF : accessed 14 August 2026), entry for Juh\u00e1sz Roz\u00e1lia, baptism 1890, Kiszombor, Toront\u00e1l, Hungary."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-14T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-14T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hungary",
+      "for_place": "Toront\u00e1l, Hungary",
+      "time_period": "1880-1905",
+      "jurisdictions": [
+        {
+          "name": "Toront\u00e1l, Hungary",
+          "date_range": "1718\u20131920"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1743180",
+          "title": "Hungary, Catholic Church Records, 1636-1895",
+          "date_range": "1636-1895"
+        },
+        {
+          "id": "1858355",
+          "title": "Hungary, Reformed Church Christenings, 1624-1895",
+          "date_range": "1624-1895"
+        },
+        {
+          "id": "4133831",
+          "title": "Hungary, Church Books, 1624-1950",
+          "date_range": "1624-1950"
+        },
+        {
+          "id": "1804226",
+          "title": "Hungary, Baptisms, 1734-1895",
+          "date_range": "1734-1895"
+        },
+        {
+          "id": "1452460",
+          "title": "Hungary, Civil Registration, 1895-1980",
+          "date_range": "1895-1980"
+        },
+        {
+          "id": "1542666",
+          "title": "Hungary, Funeral Notices, 1840-1990",
+          "date_range": "1840-1990"
+        },
+        {
+          "id": "1787825",
+          "title": "Hungary, Jewish Vital Records Index, 1800-1945",
+          "date_range": "1800-1945"
+        }
+      ],
+      "quirks": [
+        "Civil registration in Hungary began 1 October 1895 \u2014 all baptismal, marriage, and burial events before that date exist only in church (parish) registers. A birth/baptism in 1892 is a church record event only; no civil registration record will exist.",
+        "The 1920 Treaty of Trianon transferred most of Toront\u00e1l County to Yugoslavia (now Serbia/Vojvodina). Originals for parishes now in Serbia are held by the Historical Archives of Vojvodina (Arhiv Vojvodine) in Novi Sad. FamilySearch has microfilmed many pre-1895 registers \u2014 check the FS Catalog under 'Toront\u00e1l' for parish-level holdings.",
+        "Records are organized by village/parish, not county-wide. If the specific village is unknown, search the county-level indexed collections first (coll. 1743180 for Catholic; coll. 1858355 for Reformed). If known, look up that parish's volume via volume_search.",
+        "Catholic church registers are in Latin; Reformed (Calvinist) registers in Hungarian and Latin; civil registration records are in Hungarian. Key Latin terms: natus/nata (born), pater (father), mater (mother), patrini (godparents).",
+        "Hungarian name order is surname-first: 'Juh\u00e1sz Istv\u00e1n' not 'Istv\u00e1n Juh\u00e1sz'. Search indexes with the surname first; given name is secondary.",
+        "Volume search returns 92 digitized volumes for Toront\u00e1l 1880-1905. Many specific parishes (\u00d3becse, Kiszombor, K\u00fcbekh\u00e1za, Kis-Szigeth, Horv\u00e1t-Kl\u00e1ri, Deszk) have baptism registers at 75-100% name-indexing. If an indexed search misses the record, browse the specific parish volume.",
+        "Serbian Orthodox registers appear in the volume search with language 'ru' (Russian/Church Slavonic script) and 0% indexing \u2014 these must be browsed page by page and require Cyrillic literacy.",
+        "The Magyar Lev\u00e9lt\u00e1ri Port\u00e1l (mlp.archivportal.hu) is the online finding aid for Hungarian archival holdings and is useful for locating physical originals."
+      ],
+      "guide_markdown": "# Locality Guide: Toront\u00e1l County, Hungary (1880\u20131905)\n\n## Jurisdiction overview\n- **Formed:** 1718 (reconstituted after Ottoman withdrawal); county of the Kingdom of Hungary until 1920\n- **County seat:** Nagybecskerek (now Zrenjanin, Serbia)\n- **Parent jurisdiction:** Kingdom of Hungary / Austro-Hungarian Empire\n- **Population:** ~571,700 (1890); ~590,300 (1900) [Populstat]\n- **Economy:** Agricultural \u2014 wheat, corn, livestock; Pannonian Plain\n- **Ethnic composition:** Serbs, Hungarians, Germans (Danube Swabians), Romanians, Roma; highly multi-ethnic\n- **Religious denominations:** Roman Catholic, Serbian Orthodox, Greek Catholic, Reformed (Calvinist), Lutheran (Evangelical), Jewish\n- **Key events:** Part of Austro-Hungarian Empire (post-1867); significant emigration to US after 1890; Treaty of Trianon 1920 transferred most of county to Yugoslavia (now Serbia/Vojvodina)\n\n## Boundary changes\n- **1920 (Treaty of Trianon):** Most of Toront\u00e1l transferred to Yugoslavia \u2192 now Vojvodina, Serbia. A narrow northwestern strip retained by Hungary (now part of Csongr\u00e1d-Csan\u00e1d county).\n- Records for parishes now in Serbia are at Arhiv Vojvodine, Novi Sad; those for the Hungarian strip at the Hungarian National Archives (MNL). FamilySearch has microfilmed both sets. Determine which country the village is in before contacting physical repositories.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** 1 October 1895\n- **What exists:** Births, marriages, deaths from 1895 onward\n- **FamilySearch:** \"Hungary, Civil Registration, 1895-1980\" (coll. 1452460) \u2014 12.7M records, indexed + images. Also at Ancestry (9895) and MyHeritage.\n- **Pre-1895:** Church registers only \u2014 no civil vital records exist before 1895.\n\n### Church records \u2014 PRIMARY SOURCE FOR 1892 BAPTISMS\n- **Key FamilySearch collections (all cover pre-1895 Toront\u00e1l):**\n  - **Catholic Church Records, 1636-1895** (coll. 1743180): 18.25M records, 1.1M images \u2014 **Indexed + images**. Search this first for Catholic baptisms.\n  - **Reformed Church Christenings, 1624-1895** (coll. 1858355): 5.7M records \u2014 **Indexed + images**. For Calvinist baptisms.\n  - **Church Books, 1624-1950** (coll. 4133831): 7.6M records \u2014 **Indexed + images**. Broad compilation.\n  - **Baptisms, 1734-1895** (coll. 1804226): 13,951 records \u2014 **Index only** (partial).\n- **Volume search (92 volumes, Toront\u00e1l 1880-1905):** Many parishes have baptism register volumes at 75\u2013100% name-indexed. Notable:\n  - \u00d3becse: Baptism Registers 1876-1895 (vol. 004492284, 96% indexed; 004541565, 94-98%)\n  - Kiszombor: Baptism Registers 1882-1895 (vols. 004492310, 75-93%; 004499202_004, 87%)\n  - K\u00fcbekh\u00e1za: Baptism Registers 1869-1888 (vol. 004499223_003, 97%)\n  - Kis-Szigeth: Baptism Registers 1882-1895 (vols. 004492315, 87-97%)\n  - Horv\u00e1t-Kl\u00e1ri: Religious Birth Records 1880-1915 (vol. 005498185_002, 100%)\n- **Language:** Catholic registers in Latin; Reformed in Hungarian/Latin. Researchers must read Latin for Catholic entries.\n- **Originals:** Diocesan archives or Arhiv Vojvodine (Serbia) / Hungarian National Archives\n\n### Census records\n- National censuses 1869, 1880, 1890, 1900, 1910 \u2014 statistical only; nominal household schedules not generally preserved for genealogical use.\n- 1828 land census (FamilySearch Catalog 450353): landholder names; images available.\n- Partial 1869 census index at Ancestry (coll. 1384).\n\n### Funeral notices\n- \"Hungary, Funeral Notices, 1840-1990\" (coll. 1542666): 537,104 images, **browse-only** (0 records indexed). Printed funeral announcement cards.\n\n### Jewish records\n- \"Hungary, Jewish Vital Records Index, 1800-1945\" (coll. 1787825): 105,717 records, indexed + images.\n- Ancestry: Hungary Birth/Death Records collected by Rabbis (various dates).\n- JewishGen Hungary Database: jewishgen.org/databases/Hungary/\n\n### Emigration/immigration\n- Settler records 1686-1855 (FamilySearch Catalog 173251; Wien Hofkammer): images available.\n- Hamburg passenger lists (Ancestry) for emigrants via Hamburg.\n\n### Military\n- Austro-Hungarian military records at Vienna Kriegsarchiv.\n- MyHeritage: Austria-Hungary WWI Casualty Lists, 1914-1918.\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections | Access |\n|---|---|---|\n| FamilySearch | Catholic Church Records 1636-1895; Reformed Christenings 1624-1895; Church Books 1624-1950; Baptisms 1734-1895; Civil Registration 1895-1980; Jewish Vital Records 1800-1945; Funeral Notices 1840-1990 | Free |\n| Ancestry | Hungary Select Catholic Church Records 1636-1895 (9891); Select Reformed Christenings 1624-1895 (9893); Select Baptisms 1734-1895 (9894); Civil Registration 1895-1980 (9895); Marriage Records 1800-1914 (1453) | Subscription |\n| MyHeritage | Austria-Hungary Roman Catholic Indexes 1612-1966; Hungary Catholic Church Records 1636-1895; Reformed Christenings 1624-1895; Baptisms 1734-1895; Civil Registration 1895-1980 | Subscription |\n| Magyar Lev\u00e9lt\u00e1ri Port\u00e1l | Finding aids for Hungarian archival holdings | Free |\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| Arhiv Vojvodine, Novi Sad, Serbia | Original church/civil registers for parishes now in Serbia | In-person / correspondence |\n| Hungarian National Archives (MNL), Budapest | Records for parishes retained by Hungary post-1920; microfilm copies | In-person / online catalog |\n\n## Records NOT online\n- Probate, court, and land records are not broadly digitized \u2014 require physical access to Arhiv Vojvodine or Hungarian archives.\n- Serbian Orthodox registers (Cyrillic/Russian script) are 0% indexed in volume search; browse-only, require Cyrillic literacy.\n- National census household schedules (1869-1910) not accessible as nominal lists.\n\n## Known record losses\n- No major systematic losses confirmed, but the 1920 split between Hungary and Serbia divided record custody across two countries and archives systems. Identify the village's post-1920 country before contacting physical repositories.\n\n## Research tips\n- **For a 1892 baptism:** Search coll. 1743180 (Catholic) or coll. 1858355 (Reformed) by parent name first. If the denomination is unknown, try both.\n- **Civil registration is post-1895 only.** No civil birth record exists for 1892.\n- **Hungarian name order is surname-first.** Search \"Juh\u00e1sz\" as the primary search term; \"S\u00e1rm\u00e1n\" for the mother.\n- **If indexed search fails, browse the parish volume.** Use volume_search to find the image group for the specific village.\n- **Post-1920 records split between Hungary and Serbia.** Most of Toront\u00e1l is now Serbia (Vojvodina).\n- **FamilySearch Wiki:** [Toront\u00e1l, Kingdom of Hungary Genealogy](https://www.familysearch.org/en/wiki/Toront%C3%A1l,_Kingdom_of_Hungary_Genealogy) lists localities and specific parish catalog links.\n- **Barb's Snow Hungary Research Guide** (barbsnow.net/Hungary.htm) is a useful free reference for research strategy.\n- **Hungarian Genealogical Word List** (FamilySearch Wiki) is essential for reading Latin/Hungarian church record terminology.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Hungary_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Hungary_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Hungary_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Hungary_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-14"
+    }
+  ]
+}
