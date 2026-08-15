@@ -58,6 +58,7 @@ from harness.since_window import (
     add_since_arg,
     age_in_days,
     describe_stale,
+    describe_window,
     run_date,
     staleness_cutoff,
 )
@@ -71,6 +72,11 @@ from skill_latency_report import (
 #: Fewest numeric gradings before a flat dimension is worth flagging. Below this a
 #: single distinct score says more about the sample than about the rubric.
 MIN_GRADED_INSTANCES = 5
+
+#: Fewest same-direction disagreements before calling divergence *systematic*.
+#: `rubric-critic` defines that flag as recurring "across multiple tests in the
+#: same direction", so a lone correction is a judgement call, not a pattern.
+MIN_DISAGREEMENTS_FOR_FLAG = 2
 
 #: Verbatim from `.claude/agents/rubric-critic.md`, so the mechanical pass and the
 #: LLM pass name the same defect the same way.
@@ -89,6 +95,12 @@ class DimensionStats:
     scores: list[int] = field(default_factory=list)
     #: How many gradings returned N/A (null) rather than 1/2/3.
     na: int = 0
+    #: Gradings that were neither an int nor null — a float, a bool, a string.
+    #: Reported rather than folded into `na`, because silently treating a real
+    #: 2.0 as "not applicable" both hides a partial AND can flip the dimension
+    #: into looking flat. Unreachable through the judge's tool schema today;
+    #: nothing validates score types at write time, so it is cheap insurance.
+    malformed: int = 0
 
     # -- annotation join (sparse; absent means NOT REVIEWED, never "agreed") --
     reviewed: int = 0
@@ -118,12 +130,40 @@ class DimensionStats:
 
     @property
     def non_discriminating(self) -> bool:
-        """Enough numeric gradings to judge, and every one of them identical."""
-        return self.graded >= MIN_GRADED_INSTANCES and len(self.distinct) == 1
+        """Enough numeric gradings to judge, and every one of them identical.
+
+        A malformed grading blocks the verdict rather than being ignored. The
+        claim here is "this dimension never varied", and an unreadable score is
+        precisely the case where that cannot be asserted — a float `2.0` dropped
+        from the count would leave five identical 3s and manufacture the flatness
+        this report exists to detect.
+        """
+        return (
+            self.graded >= MIN_GRADED_INSTANCES
+            and len(self.distinct) == 1
+            and self.malformed == 0
+        )
 
     @property
     def disagreements(self) -> int:
         return self.judge_harsher + self.judge_softer + self.n_a_disagreement
+
+    @property
+    def systematic_divergence(self) -> bool:
+        """`rubric-critic`'s definition, not merely "a human changed something".
+
+        That agent defines the flag as a disagreement recurring **across multiple
+        tests in the same direction**. One correction is a single judgement call;
+        borrowing the flag name for it would make the two instruments disagree
+        while claiming to agree — and today it would make 100% of this flag's
+        output a false positive, since the corpus holds exactly two disagreements,
+        both on one test.
+
+        N/A-vs-numeric is excluded: it has no direction to be consistent in.
+        """
+        return (
+            max(self.judge_harsher, self.judge_softer) >= MIN_DISAGREEMENTS_FOR_FLAG
+        )
 
     @property
     def unreviewed(self) -> int:
@@ -169,10 +209,16 @@ def collect_dimensions(runlog: dict[str, Any], skill: str) -> list[DimensionStat
                 stats = DimensionStats(skill=skill, source=source, name=name)
                 by_key[key] = stats
             score = dim.get("score")
-            if isinstance(score, int):
+            # `bool` is an `int` subclass in Python, so check it out explicitly —
+            # otherwise a stray True grades as 1 and prints in `distinct` as `True`.
+            if isinstance(score, bool):
+                stats.malformed += 1
+            elif isinstance(score, int):
                 stats.scores.append(score)
-            else:
+            elif score is None:
                 stats.na += 1
+            else:
+                stats.malformed += 1
     return [by_key[k] for k in sorted(by_key)]
 
 
@@ -226,7 +272,8 @@ def build_skill_report(skill: str, path: Path) -> SkillReport:
 def format_skill(report: SkillReport) -> str:
     stale = f"  [STALE {report.stale_days}d]" if report.stale_days is not None else ""
     lines = [f"{report.skill}  ({report.runlog}){stale}"]
-    if report.annotation_missing:
+    report_annotation_missing = report.annotation_missing
+    if report_annotation_missing:
         lines.append("  (no .ann.json sibling — judge-vs-human columns are blank, not zero)")
     for d in report.dimensions:
         if d.always_na:
@@ -238,22 +285,35 @@ def format_skill(report: SkillReport) -> str:
         else:
             verdict = f"varies {d.distinct}"
         na = f" +{d.na} N/A" if d.na else ""
+        bad = f" +{d.malformed} MALFORMED" if d.malformed else ""
         # Pad the joined key, not the bare name — `base/` and `rubric/` differ in
         # width, so padding the name alone leaves the columns ragged.
         key = f"{d.source}/{d.name}"
-        lines.append(f"  {key:52} n={d.graded:3}{na:9} {verdict}")
-        if d.disagreements:
-            parts = []
+        lines.append(f"  {key:52} n={d.graded:3}{na:9}{bad} {verdict}")
+
+        # ALWAYS print the annotation counts, never only on disagreement. A
+        # dimension reviewed with full agreement and one nobody looked at are
+        # completely different states, and gating this line on `disagreements`
+        # rendered them byte-identical — which is precisely the reading the
+        # sparse-corrections rule exists to prevent.
+        if report_annotation_missing:
+            human = "      human review: (no .ann.json)"
+        elif d.reviewed == 0:
+            human = f"      human review: NONE — {d.unreviewed} grading(s) unreviewed"
+        else:
+            parts = [f"{d.agreements} agreed"]
             if d.judge_harsher:
                 parts.append(f"{d.judge_harsher} judge-harsher")
             if d.judge_softer:
                 parts.append(f"{d.judge_softer} judge-softer")
             if d.n_a_disagreement:
                 parts.append(f"{d.n_a_disagreement} N/A-vs-numeric")
-            lines.append(
-                f"      {FLAG_DIVERGENCE}: {', '.join(parts)} "
-                f"of {d.reviewed} reviewed ({d.unreviewed} unreviewed)"
+            flag = f"  [{FLAG_DIVERGENCE}]" if d.systematic_divergence else ""
+            human = (
+                f"      human review: {', '.join(parts)} of {d.reviewed} reviewed, "
+                f"{d.unreviewed} unreviewed{flag}"
             )
+        lines.append(human)
     return "\n".join(lines)
 
 
@@ -262,17 +322,26 @@ def format_footer(reports: list[SkillReport]) -> str:
     dims = [d for r in reports for d in r.dimensions]
     flagged = [d for d in dims if d.non_discriminating]
     always_na = [d for d in dims if d.always_na]
+    malformed = sum(d.malformed for d in dims)
     reviewed = sum(d.reviewed for d in dims)
+    agreed = sum(d.agreements for d in dims)
+    unreviewed = sum(d.unreviewed for d in dims)
     disagreements = sum(d.disagreements for d in dims)
+    diverging = [d for d in dims if d.systematic_divergence]
     return "\n".join(
         [
             "",
             f"{FLAG_NON_DISCRIMINATING}: {len(flagged)} of {len(dims)} dimension "
             f"keys across {len(reports)} suite(s) "
             f"(>={MIN_GRADED_INSTANCES} numeric gradings, one distinct score).",
-            f"{len(always_na)} are always-N/A — a different defect, never counted above.",
-            f"judge-vs-human: {disagreements} disagreement(s) over {reviewed} reviewed "
-            f"correction entries. A dimension with no entry is UNREVIEWED, not agreed.",
+            f"{len(always_na)} are always-N/A — a different defect, never counted above."
+            + (f" {malformed} grading(s) had a MALFORMED score (neither int nor null)."
+               if malformed else ""),
+            f"judge-vs-human: {agreed} agreed, {disagreements} disagreed over "
+            f"{reviewed} reviewed correction entries; {unreviewed} grading(s) "
+            f"UNREVIEWED (never counted as agreement). "
+            f"{len(diverging)} dimension(s) meet {FLAG_DIVERGENCE.lower()} "
+            f"(>={MIN_DISAGREEMENTS_FOR_FLAG} same-direction disagreements).",
             "",
             "Read a low disagreement count against the flagged column: where a dimension "
             "never varies, agreement mostly means both sides said the same thing every "
@@ -305,6 +374,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     skills = [args.skill] if args.skill else all_skills()
+    # Counted before the window so `describe_window` can say what it excluded.
+    n_total = sum(1 for s in skills if releasable_runlogs_for(s))
     cutoff = staleness_cutoff()
     reports: list[SkillReport] = []
     stale: list[tuple[str, Any]] = []
@@ -327,6 +398,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # Stale rows last, so a skim reaches the trustworthy numbers first.
     reports.sort(key=lambda r: (r.stale_days is not None, r.skill))
+    # A passed SINCE genuinely drops suites from a one-row-per-skill report, so
+    # say which and how many. Without this the report silently shrinks and still
+    # reads like a whole-corpus measurement.
+    if args.since is not None:
+        print(describe_window(args.since, n_runs=len(reports), n_total=n_total))
+        print()
     if (note := describe_stale(stale)):
         print(note)
         print()

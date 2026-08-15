@@ -151,3 +151,77 @@ def test_reads_dimension_keys_from_a_real_committed_run_log():
         "tests[].outcome_summary.aggregated_dimensions[], not tests[].dimensions[]) "
         "or is keying without the skill"
     )
+
+
+def test_the_annotation_join_actually_pairs_against_the_real_corpus():
+    """The guard for the OTHER half — `build_skill_report`'s `.ann.json` pairing.
+
+    The real-corpus test above guards the score path. Nothing guarded this one, and
+    it fails in exactly the same silent way: break the sibling lookup and every
+    suite reports `0 reviewed / 0 disagreements`, the footer reads like a clean
+    result, and all the synthetic tests stay green — because they hand
+    `apply_annotation` a dict directly and never exercise the pairing.
+
+    Floors, not exact counts: the corpus grows as PRs land. Today it is 25 of 25
+    suites paired and 2263 reviewed entries.
+    """
+    skills = judge_report.all_skills()
+    paired, reviewed = 0, 0
+    for skill in skills:
+        logs = judge_report.releasable_runlogs_for(skill)
+        if not logs:
+            continue
+        report = judge_report.build_skill_report(skill, logs[-1])
+        if not report.annotation_missing:
+            paired += 1
+        reviewed += sum(d.reviewed for d in report.dimensions)
+
+    assert paired >= 10, (
+        f"only {paired} suites paired with a .ann.json — the sibling lookup is "
+        "broken (build_skill_report/ann_filename_for), not the corpus"
+    )
+    assert reviewed > 200, (
+        f"only {reviewed} correction entries joined — the annotation keying is "
+        "wrong (corrections key on dimension_source/dimension_name)"
+    )
+
+
+def test_a_lone_disagreement_is_not_called_systematic():
+    """`rubric-critic` defines the flag as recurring across tests in one direction.
+
+    Guards against reintroducing "any correction at all" as the trigger, which
+    would make every one of the corpus's two disagreements a false positive.
+    """
+    dims = collect_dimensions(_runlog({"Dim": [3] * 6}), "demo")
+    (dim,) = dims
+
+    dim.reviewed, dim.agreements, dim.judge_harsher = 6, 5, 1
+    assert not dim.systematic_divergence, "one correction is a judgement call"
+
+    dim.judge_harsher = 2
+    assert dim.systematic_divergence, "two in the same direction is a pattern"
+
+    # Opposite directions are not a pattern either — they cancel, not accumulate.
+    dim.judge_harsher, dim.judge_softer = 1, 1
+    assert not dim.systematic_divergence
+
+
+def test_a_malformed_score_is_not_silently_counted_as_na():
+    """A float 2.0 is a real partial, not "not applicable".
+
+    Folding it into N/A both hides the partial and can flip the dimension into
+    looking flat — the exact opposite of what this report is for. `bool` is an
+    `int` subclass in Python, so True must not grade as 1 either.
+    """
+    dims = collect_dimensions(_runlog({"Dim": [2.0, 3, 3, 3, 3, 3]}), "demo")
+    (dim,) = dims
+
+    assert dim.malformed == 1
+    assert dim.na == 0
+    assert dim.graded == 5
+    assert not dim.non_discriminating, (
+        "a malformed score must not be laundered into a flat verdict"
+    )
+
+    bools = collect_dimensions(_runlog({"Dim": [True, 3, 3]}), "demo")[0]
+    assert bools.malformed == 1 and bools.graded == 2
