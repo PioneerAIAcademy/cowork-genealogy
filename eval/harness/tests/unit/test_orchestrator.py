@@ -94,6 +94,11 @@ def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched
         dims, [_vr("test_expected_classifications", True)], has_expected_classifications=True
     )
     assert [d["score"] for d in dims] == [2, 3, 1, 1]
+    # Score alone cannot catch a widened predicate: a 2 floored to 2 looks
+    # identical. The deference prefix on the rationale is the observable
+    # difference, so assert on that too.
+    for d in dims:
+        assert "deterministic-deference" not in (d["rationale"] or "")
 
 
 # --- routing deference (correctly-routed negative tests) ----------------
@@ -178,7 +183,12 @@ def test_routing_deference_noop_on_grade_on_invariant():
 
 
 def test_routing_deference_leaves_partial_and_pass_untouched():
-    """Only a 1 is floored. A 2 and a 3 are the judge seeing something real."""
+    """Only a 1 is floored. A 2 and a 3 are the judge seeing something real.
+
+    Asserts the RATIONALE, not just the score. A 2 floored to 2 is invisible in
+    the score alone, so a score-only assertion cannot fail when the predicate
+    widens to `in (1, 2)` — the deference prefix is the observable difference.
+    """
     dims = _routing_dims(correctness=2, completeness=3)
     apply_routing_deference(
         dims,
@@ -187,6 +197,8 @@ def test_routing_deference_leaves_partial_and_pass_untouched():
         skills_invoked=["search-records"],
     )
     assert [d["score"] for d in dims] == [2, 3, None]
+    for d in dims:
+        assert "deterministic-deference" not in (d["rationale"] or "")
 
 
 def test_routing_deference_noop_on_positive_test():

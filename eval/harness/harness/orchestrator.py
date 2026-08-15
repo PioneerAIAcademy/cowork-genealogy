@@ -928,11 +928,15 @@ def apply_routing_deference(dimensions, *, spec, activated, skills_invoked):
     negative = spec.negative or {}
     if not spec.negative or negative.get("grade_on_invariant"):
         return dimensions
-    correct = negative.get("correct_skill", [])
-    if not correct:
-        return dimensions
     if activated:
         return dimensions
+    # An out-of-scope negative (empty `correct_skill`) falls out here too, and
+    # must: its base dimensions genuinely DO gate the outcome in
+    # `_compute_outcome`, so flooring would turn a real fail into a pass.
+    # `any()` over an empty `correct` is False, so no separate guard is needed —
+    # and adding one made both guards redundant, which left the out-of-scope
+    # test unable to fail either break.
+    correct = negative.get("correct_skill", [])
     if not any(s in (skills_invoked or []) for s in correct):
         return dimensions
     for dd in dimensions:
