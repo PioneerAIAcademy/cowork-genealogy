@@ -18,9 +18,9 @@ Compared to test_conflict_resolution.py, record-extraction:
 Pattern: ownership check, append-only check on assertions/sources,
 foreign-key integrity, and per-assertion required-field checks.
 
-Tag-gated regression checks (e.g., 1850-census-uses-_inferred-suffix)
-sit at the bottom; they gate on `test["tags"]` so they only fire on
-the specific scenario they describe.
+Tag-gated regression checks (e.g., pre-1880-census-creates-no-relationship-
+assertions) sit at the bottom; they gate on `test["tags"]` so they only fire
+on the specific scenario they describe.
 """
 
 import re
@@ -595,21 +595,45 @@ def test_new_sources_have_citation_detail(before_state, after_state):
 
 # --- Tag-gated regression checks ---
 
-def test_1850_census_uses_inferred_suffix(before_state, after_state, test):
-    """For 1850-census extractions, relationship-type assertions must use
-    the `_inferred` suffix on `structured_value.relationship_type`.
+def _census_year_before_1880(test):
+    """True when the test's tags mark it a census record whose year predates
+    the 1880 relationship column. Year is DERIVED from the tags rather than
+    matched against a hardcoded list, so a future 1840 fixture is covered the
+    day it lands. Tags carry the year either bare (`"1870"`) or suffixed
+    (`"1850-census"`)."""
+    tags = [str(t) for t in (test.get("tags") or [])]
+    is_census = any(t == "census" or t.endswith("-census") for t in tags)
+    if not is_census:
+        return False
+    years = [int(t[:4]) for t in tags if t[:4].isdigit() and len(t[:4]) == 4]
+    return bool(years) and max(years) < 1880
 
-    Per research-schema-spec.md §5.6.1, the 1850 census has no
-    relationship column — relationships are deduced from household
-    position and must be flagged with the `_inferred` suffix
-    (e.g., `child_inferred`, `spouse_inferred`).
 
-    Tag-gated on `1850` or `1850-census` so it only applies to the
-    relevant scenarios.
+def test_pre_1880_census_creates_no_relationship_assertions(
+    before_state, after_state, test
+):
+    """A pre-1880 census extraction must create NO parent-child or spousal
+    relationship assertions — in any form, including `indirect` /
+    `_inferred`.
+
+    Decided 2026-08-15 (issue #1626). The 1790–1870 censuses have no
+    relationship column, so the record states only that these people shared
+    a dwelling. Extraction records each person's stated facts and the
+    co-residence; deducing family links from household position is a
+    hypothesis, and hypotheses belong to downstream correlation.
+
+    This REPLACES `test_1850_census_uses_inferred_suffix`, which enforced the
+    opposite policy (relationships must exist and carry `_inferred`). Both
+    readings were defensible from the old prompt, so the model arbitrated per
+    run — ut_022 emitted 14, 13, 1 and 0 relationship assertions across
+    successive runs of the same fixture. Determinism is the point of the
+    rule, not merely tidiness.
+
+    Gated on census tags with a derived year < 1880, so 1880+ fixtures (where
+    the column exists and the relationship IS stated) are untouched.
     """
-    tags = test.get("tags", [])
-    if not any(t in tags for t in ("1850", "1850-census")):
-        pytest.skip("not a 1850-census scenario")
+    if not _census_year_before_1880(test):
+        pytest.skip("not a pre-1880 census scenario")
 
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -622,19 +646,22 @@ def test_1850_census_uses_inferred_suffix(before_state, after_state, test):
     for a in after.get("assertions", []):
         if a.get("id") in before_ids:
             continue
-        if a.get("fact_type") != "relationship":
+        if not _fact_type_matches(a.get("fact_type"), "relationship"):
             continue
         sv = a.get("structured_value") or {}
-        rel_type = sv.get("relationship_type")
-        if rel_type and not str(rel_type).endswith("_inferred"):
-            errors.append(
-                f"assertions[{a.get('id')}]: 1850-census relationship "
-                f"has relationship_type='{rel_type}' without '_inferred' "
-                f"suffix (relationships in 1850 are deduced, not stated)"
-            )
+        rel_type = sv.get("relationship_type") or "?"
+        errors.append(
+            f"assertions[{a.get('id')}] (record_role="
+            f"'{a.get('record_role')}', relationship_type='{rel_type}', "
+            f"evidence_type='{a.get('evidence_type')}'): a pre-1880 census "
+            f"has no relationship column, so no relationship assertion may "
+            f"be written — not even `indirect`/`_inferred`. Record the "
+            f"people and their co-residence; the family links are "
+            f"downstream correlation's to infer"
+        )
 
     assert not errors, (
-        "1850-census relationships missing _inferred suffix:\n  - "
+        "pre-1880 census wrote relationship assertions:\n  - "
         + "\n  - ".join(errors)
     )
 

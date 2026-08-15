@@ -806,6 +806,109 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
     ).passed is True
 
 
+# --- pre-1880 census writes no relationship assertions (#1626) ---
+
+
+def _run_pre1880_rule(assertions, tags):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": tags},
+    )
+    result = next(
+        (
+            r
+            for r in results
+            if r.name == "test_pre_1880_census_creates_no_relationship_assertions"
+        ),
+        None,
+    )
+    assert result is not None, "the pre-1880 validator did not run"
+    return result
+
+
+def _relationship(rel_type, evidence_type="indirect"):
+    return {
+        "id": "a_1",
+        "record_role": "child_1",
+        "fact_type": "relationship",
+        "value": "child of Thomas Flynn",
+        "structured_value": {"relationship_type": rel_type},
+        "evidence_type": evidence_type,
+    }
+
+
+@pytest.mark.parametrize(
+    "rel_type,evidence_type",
+    [
+        ("child_inferred", "indirect"),  # the OLD policy's correct output
+        ("spouse_inferred", "indirect"),
+        ("child", "direct"),  # and the plainly-wrong one
+    ],
+)
+def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, evidence_type):
+    """The `_inferred`/`indirect` form is rejected too — that is the whole
+    reversal (#1626, decided 2026-08-15). Labelling the doubt is still
+    asserting the relationship."""
+    result = _run_pre1880_rule(
+        [_relationship(rel_type, evidence_type)], ["census", "1870"]
+    )
+    assert result.passed is False
+    assert "no relationship column" in (result.error or ""), result.error
+
+
+def test_pre_1880_rule_passes_when_only_stated_facts_are_written():
+    """The doctrine-correct output: people and their facts, no links."""
+    result = _run_pre1880_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "child_1",
+                "fact_type": "name",
+                "value": "John Baker",
+                "evidence_type": "direct",
+            },
+            {
+                "id": "a_2",
+                "record_role": "head_of_household",
+                "fact_type": "residence",
+                "place": "Cincinnati, Hamilton, Ohio",
+                "evidence_type": "direct",
+            },
+        ],
+        ["census", "1870"],
+    )
+    assert result.passed is True, result.error
+
+
+@pytest.mark.parametrize("tags", [["census", "1850-census"], ["census", "1860"]])
+def test_pre_1880_rule_gate_derives_the_year_from_tags(tags):
+    """Both tag spellings gate: bare (`1860`) and suffixed (`1850-census`)."""
+    result = _run_pre1880_rule([_relationship("child_inferred")], tags)
+    assert result.passed is False
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [
+        ["census", "1880"],  # the column exists from 1880
+        ["census", "1900"],
+        ["extraction", "marriage-record"],  # not a census at all
+        ["census"],  # census with no year — cannot be gated
+    ],
+)
+def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
+    """1880+ census relationships are STATED and stay `direct`; a
+    non-census record is out of scope entirely."""
+    result = _run_pre1880_rule([_relationship("child", "direct")], tags)
+    assert result.passed is True, result.error
+
+
 # --- name values must be bare names (#1627) ---
 
 

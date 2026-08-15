@@ -206,12 +206,16 @@ List every person mentioned and assign a `record_role`:
   unspecified relationship (parent, sibling, or in-law of either spouse
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
-  evidence; report ambiguity rather than resolving it silently. **Scope:
-  this governs links ACROSS household groups and to persons outside the
-  record. It never licenses persisting zero relationship assertions — the
-  apparent nuclear family's links MUST be persisted, as `_inferred` /
-  `indirect` per the pre-1880 rule below. A missing relationship column is
-  why they are `indirect`; it is never a reason to omit them.**
+  evidence; report ambiguity rather than resolving it silently. **This is
+  absolute, and a plausible-looking nuclear family is not an exception. A
+  pre-1880 census has no relationship column, so it records only that
+  these people lived in one household — extract each person's stated
+  facts and the co-residence, and emit NO parent-child or spousal
+  relationship assertion, in any form. Do not reach for `_inferred` or
+  `indirect` to persist the link anyway: that is asserting the
+  relationship while labelling the doubt, and the correlation it belongs
+  to happens downstream, not here.** Say what you noticed in your
+  summary — that is how the hypothesis reaches the next skill.
   - **`record_role` = apparent within-group structure, not raw position
     after the head.** Don't number everyone after the head `child_1,
     child_2, …` — that fabricates a parent-child link the record never
@@ -389,18 +393,17 @@ from inline JSON. Set it **only** when handed a `resultsRef`.
 **`value`** — human-readable, what the record says, not your
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
 `[illegible]`/`[torn]` for damage. **One fact only, no reasoning prose**
-— the justification for an inferred relationship or a doubted reading
-belongs in `informant_bias_notes`, never inside `value`. For an inferred
-**relationship** assertion the whole `value` is the bare claim plus a
-one-word inference tag — `value: "child of Thomas Flynn (inferred)"` —
-never "child of Thomas Flynn, inferred from household position because he
-heads the dwelling and the ages fit"; that household-position reasoning
-goes in `informant_bias_notes`. **One parent per relationship assertion.**
-A child in a two-parent household yields a SEPARATE relationship assertion
-per parent — `child of Thomas Flynn (inferred)` and `child of Bridget
-Flynn (inferred)` are two `a_` entries, never one `child of Thomas and
+— the justification for a doubted reading belongs in
+`informant_bias_notes`, never inside `value`. **One parent per
+relationship assertion.** A child whose record **states** both parents —
+an 1880-or-later census relationship column, a marriage record naming
+them, a death or burial entry naming them — yields a SEPARATE
+relationship assertion per parent: `child of Thomas Flynn` and `child of
+Bridget Flynn` are two `a_` entries, never one `child of Thomas and
 Bridget Flynn`. Each parent link is an independently-classifiable claim
-(and each becomes its own person_evidence bridge later).
+(and each becomes its own person_evidence bridge later). **You write a
+relationship assertion only where the record states the relationship** —
+never one deduced from who lived with whom (Step 2).
 
 **Event place/date go in the `place` and `date` fields** (not just
 `value`) — they are the machine-readable signal that distinguishes a
@@ -411,14 +414,14 @@ Bridget Flynn`. Each parent link is an independently-classifiable claim
 
 **`structured_value`** — machine-readable companion: name
 (`given`/`surname`), birth/death (`year`/`place`), residence (`place`),
-relationship (`relationship_type`/`related_person_role` — add `_inferred`
-suffix when deduced from position, not stated), occupation
-(`occupation`). One shape per fact type. The `_inferred` suffix is
-required on EVERY relationship deduced from household position — a
-pre-1880 census has no relationship column, so its couples and
-parent-child links are always inferred: `relationship_type:
-"spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
-bare `"spouse"`/`"child"`.
+relationship (`relationship_type`/`related_person_role`), occupation
+(`occupation`). One shape per fact type. `relationship_type` carries the
+relationship **the record states** — `"spouse"`, `"child"`, `"parent"`.
+**You never write an `_inferred` variant** (`"child_inferred"`,
+`"spouse_inferred"`): the suffix marks a link deduced from household
+position, and extraction does not deduce relationships at all. The schema
+keeps the convention for the downstream correlation skills that do; it is
+not yours to write.
 
 **Sex is a non-fact assertion — emit one for EVERY persona whose sex the
 record states.** A persona's sex (the census **Sex** column, a birth or
@@ -677,20 +680,23 @@ are all `indirect` (informant-knowledge test). Prefer not to compute
 exact birth dates from death-cert age arithmetic at all — a year is
 enough.
 
-**Pre-1880 census relationships are always `indirect`** — the 1850/1860
-census have no relationship column; relationships are inferred from
-household position. Even when the gedcomx carries a `ParentChild` or
-`Couple` edge, the indexer inferred it — classify `indirect` with
-`relationship_type: "child_inferred"` (or `"spouse_inferred"`). The 1880
-census introduced explicit relationship columns → stated relationships
-from 1880 on are `direct`. This is **uniform across every relationship on
-the record** — the couple/spousal link AND every parent-child link, no
-exceptions. A spousal (`head_of_household`↔`wife`) relationship on an
-1850 census is `indirect`, not `direct`. And when a child yields **two**
-relationship assertions (one per parent, per the one-parent-per-assertion
-rule above), **both** are `indirect` — never one `direct` + one
-`indirect`. If you catch yourself marking any pre-1880 household
-relationship `direct`, that is the error.
+**A pre-1880 census yields NO relationship assertions at all** — the
+1850/1860/1870 census have no relationship column, so the record states
+only that these people shared a dwelling. Extract every person's stated
+facts (name, sex, age, birthplace, occupation) and the residence; write
+**zero** parent-child and **zero** spousal assertions, including the
+`head_of_household`↔`wife` link. **Even when the gedcomx carries a
+`ParentChild` or `Couple` edge, the indexer inferred it from position —
+that edge is not a statement by the record, and you do not persist it.**
+The correct output is not an `indirect` link, and not a
+`"child_inferred"` one: it is no assertion, plus a note in your summary
+that the household looks like a family, which is what carries the
+hypothesis to the correlation skills that own it.
+
+The 1880 census introduced an explicit relationship column, so from 1880
+on the relationship IS stated — those are `direct`, written with a bare
+`relationship_type` (`"child"`, `"spouse"`). **The dividing line is
+whether the record states the relationship, not how confident you are.**
 
 **Subject-identifying name stays `direct` — hard rule.** The **record
 subject's** `name` assertion is `direct` for where/when questions about

@@ -91,8 +91,11 @@ When extracting from a pre-1940 census, use these defaults:
 - **Residence facts:** `witness` — the enumerator visited the dwelling
   and confirmed it. Information quality is `primary`.
 - **Relationship facts (1880+):** `household_member` — someone reported
-  the relationship. Before 1880, relationships are inferred from
-  position (use `child_inferred`, `wife_inferred`, etc.).
+  the relationship. **Before 1880 there are no relationship facts to
+  classify**: the census has no relationship column, so extraction
+  records the people and their co-residence and writes no parent-child
+  or spousal assertion at all. Inferring the links from household
+  position is downstream correlation's work, not extraction's.
 
 ### 1940 and Later Census
 
