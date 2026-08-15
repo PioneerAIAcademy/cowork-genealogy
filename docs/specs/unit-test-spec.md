@@ -1311,7 +1311,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric)",
             "name": "string (dimension name)",
-            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — any rubric dimension whose situation the fixture never created, or Tool Arguments on a run with zero MCP tool calls)",
             "rationale": "string"
           }
         ],

@@ -893,7 +893,7 @@
               "type": "null"
             }
           ],
-          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A, allowed on any rubric dimension whose situation the fixture never created, and among base dimensions only on Tool Arguments when a test makes zero MCP tool calls."
         },
         "rationale": {
           "type": "string"

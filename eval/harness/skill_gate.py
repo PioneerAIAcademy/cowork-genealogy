@@ -13,8 +13,15 @@ What it does (`make gate-skill SKILL=<x> TEST=<mined-id>`):
    SKILL.md, edits applied), mock-backed (`run_one_test` serves every tool from
    `eval/fixtures/mcp/`).
 2. Reads the **incumbent** scores for those same tests from the skill's most
-   recent run-log — the pre-edit `make eval-skill` run you did at **step 4** (with
-   human `.ann` corrections overlaid, so the incumbent side is ground truth).
+   recent run-log — the pre-edit `make eval-skill` run you did at **step 4**, with
+   human `.ann` corrections overlaid **where they exist** and the judge's own
+   score used otherwise.
+
+   Under sampled annotation (`review_sample` in the run log) most dimensions
+   carry no correction, so the incumbent side is mostly raw judge scores rather
+   than ground truth. That is usually fine — corrections change 0.55% of cells
+   corpus-wide — but it is not what this once claimed, and the gate now prints
+   the caveat in its header so nobody reads LOOKS GOOD as human-verified.
 3. Diffs per `(source, name)` and prints a per-dimension comparison + a
    **LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE** signal.
 
@@ -261,6 +268,12 @@ def _latest_runlog(skill_runlog_dir: Path) -> Path | None:
 class Baseline:
     scores: dict[str, dict[tuple[str, str], int | None]]  # test_id -> (s,n) -> score
     path: Path
+    #: Dimensions in the gate's test set carrying a human correction, and the
+    #: total. Under sampled annotation most carry none, so the incumbent side is
+    #: mostly raw judge scores — the header prints this so LOOKS GOOD is not
+    #: read as human-verified.
+    corrected: int = 0
+    total: int = 0
 
 
 def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
@@ -278,6 +291,8 @@ def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
     except (ValueError, OSError):
         return None
 
+    n_corrected = 0
+    n_total = 0
     corrections: dict[tuple[str, str, str], int | None] = {}
     ann_path = Path(str(log_path)[:-len(".json")] + ".ann.json")
     if ann_path.exists():
@@ -297,9 +312,12 @@ def incumbent_baseline(skill: str, runlogs_root: Path) -> Baseline | None:
             src, name = d.get("source", ""), d.get("name", "")
             ck = (tid, src, name)
             dims[(src, name)] = corrections[ck] if ck in corrections else d.get("score")
+            n_total += 1
+            if ck in corrections:
+                n_corrected += 1
         scores[tid] = dims
 
-    return Baseline(scores=scores, path=log_path)
+    return Baseline(scores=scores, path=log_path, corrected=n_corrected, total=n_total)
 
 
 # --------------------------------------------------------------------------
@@ -365,8 +383,22 @@ def render_report(
     out = [f"# Gate report — skill `{skill}`", ""]
     out.append(f"- **Signal: {signal.verdict}**")
     out += [f"  - {r}" for r in signal.reasons]
-    out.append(f"- Incumbent baseline: `{baseline.path.name}` (your step-4 run, "
-               f"human-corrected)  ·  Candidate: working tree"
+    # Name the correction coverage rather than asserting "human-corrected".
+    # Under sampled annotation most dimensions carry no correction, so the
+    # incumbent side is mostly raw judge scores — LOOKS GOOD must not be read
+    # as human-verified when it is not.
+    if baseline.total:
+        pct = 100.0 * baseline.corrected / baseline.total
+        corrected_note = (
+            f"{baseline.corrected}/{baseline.total} dimensions human-corrected"
+            f" ({pct:.0f}%)"
+        )
+        if baseline.corrected < baseline.total:
+            corrected_note += "; the rest are the judge's own scores"
+    else:
+        corrected_note = "no dimensions to compare"
+    out.append(f"- Incumbent baseline: `{baseline.path.name}` (your step-4 run — "
+               f"{corrected_note})  ·  Candidate: working tree"
                + ("  ·  ⚠ no uncommitted edit to this skill — did you apply the "
                   "improver's edits?" if no_edit else ""))
     out.append(f"- Motivating test: `{mined_test_id}`  ·  Holdout: "

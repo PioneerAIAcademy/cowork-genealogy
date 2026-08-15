@@ -305,7 +305,9 @@ has nothing to compare to.
 > changes how the run is graded, so doing it *after* a run invalidates that
 > run — if you've already run, set them and run again.
 
-Now read each run and correct the judge. The UI pre-fills every dimension with
+Now read the **sampled** tests and correct the judge. The sidebar marks the
+rest `not sampled` — five tests per run get reviewed, not all of them, and the
+Release button only waits on those five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
@@ -861,7 +863,7 @@ make eval-skill SKILL=citation               # Windows: eval\RunTests.bat
 make eval-ui                                 # Windows: eval\Start.bat
 ```
 
-Grade every dimension (**Agree with all**, then correct the few you disagree
+Grade every dimension of each sampled test (correct the few you disagree
 with), then commit the skill edit + the new test *and its scenario folder and
 mock fixtures* + the run log + the grades, and open the PR. A senior
 genealogist reads the corrected grades and merges.

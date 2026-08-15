@@ -11,6 +11,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
+import { sampledTestIds } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
 /**
@@ -105,10 +106,11 @@ export async function deleteAnnotation(runLogId: string): Promise<void> {
 
 /**
  * Return the set of unreviewed `(test_id, dimension_source,
- * dimension_name)` triples — dimensions present in the run log but
- * missing from the annotation. Used by:
+ * dimension_name)` triples — dimensions of the SAMPLED tests present in the
+ * run log but missing from the annotation. Used by:
  *   - The scoring UI to show which dimensions remain
- *   - The GH Action's completeness rule (rule 3)
+ *   - The release gate (a run log cannot be released while incomplete)
+ *   - Mirrors the GH Action's completeness rule (rule 3)
  */
 export function unreviewedDimensions(
   log: RunLogFile,
@@ -119,8 +121,10 @@ export function unreviewedDimensions(
       (c) => `${c.test_id}|${c.dimension_source}|${c.dimension_name}`,
     ),
   );
+  const sampled = sampledTestIds(log);
   const out: Array<{ test_id: string; dimension_source: string; dimension_name: string }> = [];
   for (const t of log.tests) {
+    if (sampled && !sampled.has(t.test_id)) continue;
     for (const d of t.outcome_summary.aggregated_dimensions) {
       const key = `${t.test_id}|${d.source}|${d.name}`;
       if (!have.has(key)) {
@@ -137,6 +141,19 @@ export function unreviewedDimensions(
 
 export function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null): boolean {
   return unreviewedDimensions(log, ann).length === 0;
+}
+
+/** Total dimensions the annotator is asked to review — the denominator the
+ *  progress badges show. Counts sampled tests only, so "5/90 reviewed" cannot
+ *  be rendered against a sample of 5. */
+export function reviewableDimensionCount(log: RunLogFile): number {
+  const sampled = sampledTestIds(log);
+  let n = 0;
+  for (const t of log.tests) {
+    if (sampled && !sampled.has(t.test_id)) continue;
+    n += t.outcome_summary.aggregated_dimensions.length;
+  }
+  return n;
 }
 
 /**

@@ -40,7 +40,7 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
-import { dimensionAllowsNa } from '@/lib/types';
+import { dimensionAllowsNa, sampledTestIds } from '@/lib/types';
 import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
@@ -957,11 +957,14 @@ function EvidencePane({
 function TestsPane({
   tests,
   annotation,
+  sampled,
   selectedTestId,
   onSelect,
 }: {
   tests: TestEntry[];
   annotation: AnnotationFile | null;
+  /** Tests the annotation must cover, or null for all of them. */
+  sampled: Set<string> | null;
   selectedTestId: string | null;
   onSelect: (test_id: string) => void;
 }) {
@@ -989,14 +992,21 @@ function TestsPane({
       ),
     );
     for (const t of tests) {
-      const total = t.outcome_summary.aggregated_dimensions.length;
-      const reviewed = t.outcome_summary.aggregated_dimensions.filter((d) =>
-        have.has(`${t.test_id}|${d.source}|${d.name}`),
-      ).length;
+      // An unsampled test is not "0 reviewed" — nothing is asked of it. Giving
+      // it a denominator is what would render "5/90 reviewed" on a sample of 5
+      // and paint an orange badge on every test the annotator must not open.
+      const total = sampled && !sampled.has(t.test_id)
+        ? 0
+        : t.outcome_summary.aggregated_dimensions.length;
+      const reviewed = total === 0
+        ? 0
+        : t.outcome_summary.aggregated_dimensions.filter((d) =>
+            have.has(`${t.test_id}|${d.source}|${d.name}`),
+          ).length;
       out[t.test_id] = { reviewed, total };
     }
     return out;
-  }, [tests, annotation]);
+  }, [tests, annotation, sampled]);
 
   const totalReviewed = Object.values(reviewedByTest).reduce((a, b) => a + b.reviewed, 0);
   const totalDimensions = Object.values(reviewedByTest).reduce((a, b) => a + b.total, 0);
@@ -1035,11 +1045,11 @@ function TestsPane({
                     {name ?? t.test_id}
                   </Text>
                   <Badge
-                    color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
-                    variant={complete ? 'filled' : 'light'}
+                    color={total === 0 ? 'gray' : complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
+                    variant={total === 0 ? 'outline' : complete ? 'filled' : 'light'}
                     size="xs"
                   >
-                    {reviewed}/{total}
+                    {total === 0 ? 'not sampled' : `${reviewed}/${total}`}
                   </Badge>
                 </Group>
               </UnstyledButton>
@@ -1282,9 +1292,15 @@ export default function RunLogDetailPage({
 
   const log = query.data.runLog;
   const ann = localAnn;
-  const allDimensions = log.tests.flatMap((t) =>
-    t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
-  );
+  // Sampled tests only. Counting every dimension here would render "5/90
+  // reviewed" against a sample of 5 and leave Release permanently disabled
+  // while CI is green — the annotator would have no way to finish.
+  const sampled = sampledTestIds(log);
+  const allDimensions = log.tests
+    .filter((t) => !sampled || sampled.has(t.test_id))
+    .flatMap((t) =>
+      t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
+    );
   const reviewedCount = allDimensions.filter(({ t, d }) =>
     ann?.corrections.some(
       (c) =>
@@ -1424,6 +1440,7 @@ export default function RunLogDetailPage({
           <TestsPane
             tests={log.tests}
             annotation={localAnn}
+            sampled={sampled}
             selectedTestId={selectedEntry?.test_id ?? null}
             onSelect={(id) => setSelectedTestId(id)}
           />

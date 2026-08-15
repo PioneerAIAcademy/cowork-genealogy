@@ -191,3 +191,63 @@ describe('annotations — upsert / delete', () => {
     expect(deleted.corrections).toHaveLength(0);
   });
 });
+
+describe('annotations — review sampling', () => {
+  const buildLog = (
+    n: number,
+    review_sample?: { tests: string[]; cursor: string[]; seed: number },
+  ) => {
+    const log = buildRunLog({
+      skill: 's',
+      version: 1,
+      timestamp: '2026-05-13_09-30-52',
+      tests: Array.from({ length: n }, (_, i) => ({
+        test_id: `ut_${String(i).padStart(3, '0')}`,
+        dimensions: [
+          { source: 'base', name: 'A', score: 3 },
+          { source: 'base', name: 'B', score: 3 },
+        ],
+      })),
+    }) as unknown as RunLogFile;
+    if (review_sample) log.review_sample = review_sample;
+    return log;
+  };
+
+  const annFor = (ids: string[]): AnnotationFile => ({
+    run_log: 'v1.json',
+    annotator: 'a',
+    corrections: ids.flatMap((test_id) =>
+      (['A', 'B'] as const).map((dimension_name) => ({
+        test_id,
+        dimension_source: 'base',
+        dimension_name,
+        llm_score: 3 as const,
+        corrected_score: 3 as const,
+      })),
+    ),
+  });
+
+  it('completeness counts only sampled dimensions', () => {
+    // Without this the annotator sees "10/40 reviewed" on a sample of 5 and the
+    // Release button never enables, while CI is green.
+    const sampled = ['ut_000', 'ut_001', 'ut_002', 'ut_003', 'ut_004'];
+    const log = buildLog(20, { tests: sampled, cursor: sampled, seed: 0 });
+    expect(isAnnotationComplete(log, annFor(sampled))).toBe(true);
+    expect(unreviewedDimensions(log, annFor(sampled))).toHaveLength(0);
+  });
+
+  it('an unreviewed sampled test still blocks', () => {
+    const sampled = ['ut_000', 'ut_001'];
+    const log = buildLog(20, { tests: sampled, cursor: sampled, seed: 0 });
+    expect(isAnnotationComplete(log, annFor(['ut_000']))).toBe(false);
+    expect(unreviewedDimensions(log, annFor(['ut_000']))).toHaveLength(2);
+  });
+
+  it('a run log with no review_sample keeps the every-dimension rule', () => {
+    // Every committed run log today. This is what makes sampling retroactively
+    // safe for all 109 committed annotations.
+    const log = buildLog(3);
+    expect(isAnnotationComplete(log, annFor(['ut_000']))).toBe(false);
+    expect(isAnnotationComplete(log, annFor(['ut_000', 'ut_001', 'ut_002']))).toBe(true);
+  });
+});

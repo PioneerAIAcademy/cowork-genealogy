@@ -516,6 +516,8 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
+> each **sampled** test (the run log's `review_sample`; absent on pre-sampling
+> logs, which still owe all of
 > every test. Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
 > take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot

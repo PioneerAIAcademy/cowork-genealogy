@@ -81,6 +81,23 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
  *     set *or override to* N/A even when the judge emitted a 1/2/3.
  */
+/**
+ * The tests a run log's annotation must cover, or `null` for "all of them".
+ *
+ * A run log written before sampling shipped — every committed one today — has
+ * no `review_sample` and keeps the original every-dimension rule. Keep this the
+ * single definition: a private second copy in `lib/fs/runlogs.ts` is exactly
+ * what let the run-log list badge and the release gate disagree on one file.
+ *
+ * Lives here rather than in `lib/fs/` because the scoring page is a client
+ * component and must not pull in `node:fs`.
+ */
+export function sampledTestIds(log: RunLogFile): Set<string> | null {
+  const sample = log.review_sample;
+  if (!sample) return null;
+  return new Set(sample.tests ?? []);
+}
+
 export function dimensionAllowsNa(
   source: DimensionSource,
   name: string,
@@ -188,6 +205,20 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * Run-log envelope (schema v3). Wraps a list of per-test entries with
  * metadata, snapshot, and version info.
  */
+/**
+ * Which tests a run log's annotation must cover. Absent on every run log
+ * written before sampling shipped, and on scratch/partial writes — readers
+ * treat absence as "every dimension of every test". Produced by the harness's
+ * `review_sample.py`; `cursor` is the rotation state, carried here because
+ * candidate pruning destroys the annotation history it would otherwise be
+ * derived from.
+ */
+export interface ReviewSample {
+  tests: string[];
+  cursor: string[];
+  seed: number;
+}
+
 export interface RunLogFile {
   schema_version: 3;
   skill: string;
@@ -198,6 +229,7 @@ export interface RunLogFile {
   timestamp: string;
   harness_version: string;
   model: string;
+  review_sample?: ReviewSample;
   judge_prompt_hash: string;
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;

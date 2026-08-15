@@ -135,7 +135,7 @@ The "active" run log for a skill is the newest releasable run log whose snapshot
 
 ## Grading Scale
 
-Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** The semantic labels live in the judge prompt and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field is just the integer (or null). N/A is currently used only by the **Tool Arguments** base dimension when a test made zero MCP tool calls.
+Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** The semantic labels live in the judge prompt and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field is just the integer (or null). Any **rubric** dimension may be `null` when the fixture never created the situation it grades (e.g. `check-warnings`' Actionability on a clean project). Among **base** dimensions only **Tool Arguments** may be `null`, and only when a test made zero MCP tool calls — `judge.py`'s `_NULLABLE_BASE_DIMENSIONS` enforces that, and a null `Correctness` raises `JudgeError`. **`null` never means the skill produced nothing** — that is a 1. A rubric null on a positive test forces its test into the review sample, because `_compute_outcome` gates on 1 and 2 and null is neither.
 
 **Base dimensions (always graded):** Correctness, Completeness, Tool Arguments. Base dimensions don't consume the 3–5 rubric budget.
 
