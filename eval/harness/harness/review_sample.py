@@ -214,19 +214,32 @@ def select_review_sample(
     ]
     available = [tid for tid in ids if tid not in picked]
     fallback: list[str] = []
+    targeted: list[str] = []
     for matches in rules:
         hits = sorted(tid for tid in available if matches(by_id[tid]))
         if not hits:
             continue
         fresh = [tid for tid in hits if tid not in cursor]
         if fresh:
-            picked.extend(fresh[:n_targeted])
+            targeted = fresh[:n_targeted]
             break
         if not fallback:
             fallback = hits
     else:
-        if fallback and n_targeted:
-            picked.extend(fallback[:n_targeted])
+        targeted = fallback[:n_targeted] if fallback else []
+
+    # A clean suite matches no rule at all — every dimension passed, nothing
+    # moved, no outcome disagreed. The slot then degrades to rotation rather
+    # than to nothing, so the sample stays N and the docstring, the CI error
+    # message and the behaviour agree. Leaving it empty silently sampled 4 on a
+    # fully-green suite while everything claimed 5.
+    if n_targeted and not targeted:
+        spare = [tid for tid in ids if tid not in picked and tid not in cursor]
+        if not spare:
+            spare = [tid for tid in ids if tid not in picked]
+        targeted = spare[:n_targeted]
+    picked.extend(targeted)
+    cursor.extend(t for t in targeted if t not in cursor)
 
     # --- Random: the unbiased slot ----------------------------------------
     available = [tid for tid in ids if tid not in picked]

@@ -40,7 +40,7 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
-import { dimensionAllowsNa, sampledTestIds } from '@/lib/types';
+import { dimensionAllowsNa, sampledTestIds, uncommentedSampledCorrections } from '@/lib/types';
 import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
@@ -314,6 +314,7 @@ const DimensionRow = memo(function DimensionRow({
   dim,
   judgeRationale,
   correction,
+  inSample,
   onUpdate,
   onFocus,
   onBlur,
@@ -323,6 +324,9 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
+  /** This test is in the review sample, so every reviewed dimension of it
+   *  needs a written comment — not just the ones whose score changed. */
+  inSample: boolean;
   onUpdate: (c: AnnotationCorrection | null, key: string) => void;
   onFocus: (dim: DimensionId) => void;
   onBlur: () => void;
@@ -347,7 +351,12 @@ const DimensionRow = memo(function DimensionRow({
   }
 
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
-  const needsComment = disagrees && !draft.trim();
+  // On a sampled test EVERY reviewed dimension needs a comment, agreed or not —
+  // CI blocks otherwise. Signalling only on disagreement is how an annotator
+  // follows the on-screen affordances all the way through and first learns the
+  // rule from a red check.
+  const needsComment =
+    correction != null && !draft.trim() && (inSample || disagrees);
   const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
 
   const setScore = (s: ScoreOrNull) => {
@@ -457,13 +466,23 @@ const DimensionRow = memo(function DimensionRow({
       <Textarea
         size="xs"
         mt={4}
-        placeholder="comment (optional, expected on disagreement)"
+        placeholder={
+          inSample
+            ? 'comment (required — what you checked, and why you agree or not)'
+            : 'comment (optional, expected on disagreement)'
+        }
         value={draft}
         onChange={(e) => onCommentChange(e.target.value)}
         onBlur={onCommentBlur}
         autosize
         minRows={1}
-        error={needsComment ? 'comment required when overriding the LLM score' : undefined}
+        error={
+          needsComment
+            ? disagrees
+              ? 'comment required when overriding the LLM score'
+              : 'comment required on every dimension of a sampled test'
+            : undefined
+        }
       />
     </Card>
   );
@@ -585,9 +604,13 @@ function GradesPane({
     : dims.filter(
         (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
       ).length;
+  // Blocks "Next test" on anything CI would block the PR on. On a sampled test
+  // that is every reviewed dimension with no comment, not only the overridden
+  // ones — otherwise the button waves the annotator through work CI rejects.
   const hasUncommentedDisagreement = dims.some((d) => {
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
-    return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
+    if (c == null || (c.comment ?? '').trim()) return false;
+    return inSample || c.corrected_score !== c.llm_score;
   });
   const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
 
@@ -608,15 +631,32 @@ function GradesPane({
             <Badge color="green" variant="light">complete</Badge>
           )}
         </Group>
-        <Button
-          size="xs"
-          variant="default"
-          px="xs"
-          style={{ flexShrink: 0 }}
-          onClick={() => onAgreeAll(entry.test_id)}
-        >
-          Agree All
-        </Button>
+        {/* Agree All is hidden on a sampled test. Sampling cut the pass ~3x
+            precisely so the remaining cells get read; a one-click agree on the
+            five tests that matter reproduces the 91.4%-silent-confirm corpus at
+            a fifth the size. It stays available on unsampled tests, which are
+            optional and where a bulk agree costs nothing. */}
+        {inSample ? (
+          <Tooltip
+            label="Sampled tests are reviewed one dimension at a time — each needs a comment."
+            position="left"
+            withArrow
+          >
+            <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+              sampled — comment on each
+            </Text>
+          </Tooltip>
+        ) : (
+          <Button
+            size="xs"
+            variant="default"
+            px="xs"
+            style={{ flexShrink: 0 }}
+            onClick={() => onAgreeAll(entry.test_id)}
+          >
+            Agree All
+          </Button>
+        )}
       </Group>
 
       {explanation ? (
@@ -654,6 +694,7 @@ function GradesPane({
           const key = `${entry.test_id}|${d.source}|${d.name}`;
           return (
             <DimensionRow
+              inSample={inSample}
               key={key}
               test_id={entry.test_id}
               dimKey={key}
@@ -1320,7 +1361,14 @@ export default function RunLogDetailPage({
         c.dimension_name === d.name,
     ),
   ).length;
-  const complete = reviewedCount === allDimensions.length;
+  // Delegate the release gate to the shared rule rather than re-deriving it.
+  // A local `reviewedCount === allDimensions.length` counts only whether an
+  // ENTRY exists, so it green-lights a release with no comments written that
+  // `check_runlogs.rule3_completeness` then rejects — and by then the candidate
+  // has already been renamed to v{N}.json. Re-deriving the rule in the UI is
+  // the same split that let the run-log list badge and this gate disagree.
+  const uncommented = uncommentedSampledCorrections(log, ann);
+  const complete = reviewedCount === allDimensions.length && uncommented.length === 0;
 
   const selectedEntry = log.tests.find((t) => t.test_id === selectedTestId) ?? log.tests[0] ?? null;
   const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
@@ -1339,7 +1387,12 @@ export default function RunLogDetailPage({
 
   const release = async () => {
     if (!complete) {
-      alert('Cannot release: annotation is incomplete. Review every dimension first.');
+      alert(
+        uncommented.length > 0
+          ? `Cannot release: ${uncommented.length} sampled dimension(s) have no comment. `
+            + 'Every dimension of a sampled test needs one, whether or not you changed the score.'
+          : 'Cannot release: annotation is incomplete. Review every sampled dimension first.',
+      );
       return;
     }
     if (!confirm(`Release this candidate as v${log.version}? The file will be renamed.`)) {

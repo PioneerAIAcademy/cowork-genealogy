@@ -311,8 +311,11 @@ Release button only waits on those five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
-- **Write a comment on every dimension that isn't passing** — whether or not
-  you agree with the score.
+- **Write a comment on every dimension of a sampled test** — whether or not you
+  agree, and whether or not it is passing. CI blocks a sampled correction with an
+  empty comment. Five tests per run get reviewed instead of all of them, and the
+  sentence you write is the whole point of that trade: 91.4% of the cells this
+  replaced were confirmed silently.
 
 That second one is the part people skip, and it's what makes the difference in
 step 5. The improver only proposes a body edit when a problem either recurs

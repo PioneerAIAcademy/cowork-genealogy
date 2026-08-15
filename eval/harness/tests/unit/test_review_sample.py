@@ -231,3 +231,14 @@ def test_sample_never_exceeds_the_suite():
     out = select_review_sample(tests=tests)
     assert set(out["tests"]) <= {"ut_000", "ut_001"}
     assert len(set(out["tests"])) == len(out["tests"])
+
+
+def test_sample_is_full_size_on_a_clean_suite():
+    """A fully-green suite with a previous run matches no targeted rule, so the
+    slot degrades to rotation rather than to nothing. Leaving it empty sampled 4
+    while the docstring and the CI error message both claimed 5."""
+    tests = _suite(12)
+    previous = _suite(12)
+    out = select_review_sample(tests=tests, previous_tests=previous)
+    assert len(out["tests"]) == 5
+    assert len(set(out["tests"])) == 5

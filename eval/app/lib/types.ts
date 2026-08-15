@@ -95,7 +95,48 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
 export function sampledTestIds(log: RunLogFile): Set<string> | null {
   const sample = log.review_sample;
   if (!sample) return null;
-  return new Set(sample.tests ?? []);
+  const ids = new Set(sample.tests ?? []);
+  // Fail CLOSED on anything untrustworthy, mirroring `check_runlogs.py`'s
+  // guards exactly. Failing open here is worse than in CI: an empty `tests`
+  // array would render every test `not sampled`, make `unreviewedDimensions`
+  // return nothing, and report the annotation complete — so the UI would
+  // green-light a release that CI then rejects. That is the same UI-vs-CI
+  // split deleting the duplicate `isAnnotationComplete` was meant to end.
+  if (ids.size === 0) return null;
+  const known = new Set(log.tests.map((t) => t.test_id));
+  for (const id of ids) if (!known.has(id)) return null;
+  return ids;
+}
+
+/**
+ * Sampled corrections that carry no written comment.
+ *
+ * Cutting the pass ~3x is only worth having if the remaining cells are actually
+ * read. Across the committed corpus 8,918 of 9,753 cells (91.4%) were confirmed
+ * with no comment at all and 67% of annotation files were wordless end to end —
+ * coverage was forced and agreement was one click. Requiring a sentence on every
+ * sampled cell, agree or disagree, is what converts the pass from attestation
+ * into review; a smaller set makes that affordable.
+ *
+ * Unsampled tests are exempt: nothing is asked of them, so a stray correction
+ * there is a bonus, not a debt.
+ *
+ * Lives here rather than in `lib/fs/` for the same reason as `sampledTestIds`:
+ * the scoring page is a client component and must not pull in `node:fs`.
+ */
+export function uncommentedSampledCorrections(
+  log: RunLogFile,
+  ann: AnnotationFile | null,
+): Array<{ test_id: string; dimension_source: string; dimension_name: string }> {
+  const sampled = sampledTestIds(log);
+  if (!sampled) return []; // pre-sampling run log — the old rule, no comment debt
+  return (ann?.corrections ?? [])
+    .filter((c) => sampled.has(c.test_id) && !(c.comment ?? '').trim())
+    .map((c) => ({
+      test_id: c.test_id,
+      dimension_source: c.dimension_source,
+      dimension_name: c.dimension_name,
+    }));
 }
 
 export function dimensionAllowsNa(

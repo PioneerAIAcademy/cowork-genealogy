@@ -461,6 +461,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     # partial write — those keep the original every-dimension rule, which is
     # what makes this change retroactively safe for all 109 committed
     # annotations.
+    failed = False
     review_sample = log.get("review_sample")
     if review_sample is None:
         required_test_ids = None
@@ -506,8 +507,34 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
                 missing.append(key)
+    # Every sampled cell needs a written comment, agree or disagree. Sampling
+    # cut the pass ~3x so the remaining cells would actually be read; without
+    # this it buys a smaller pile of silent confirms instead. Measured over the
+    # corpus this replaces: 8,918 of 9,753 cells (91.4%) carried no comment.
+    # Scoped to sampled tests — nothing is asked of the others, so a stray
+    # correction there is a bonus, not a debt.
+    if required_test_ids is not None:
+        uncommented = [
+            (c["test_id"], c["dimension_source"], c["dimension_name"])
+            for c in corrections
+            if c["test_id"] in required_test_ids and not (c.get("comment") or "").strip()
+        ]
+        if uncommented:
+            shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])
+            gh_error(
+                f"skill `{skill}`: annotation `{ann_filename}` has "
+                f"{len(uncommented)} sampled correction(s) with no comment "
+                f"(e.g., {shown}). Five tests are sampled per run so each one "
+                f"gets read — write a sentence on every dimension, whether or "
+                f"not you changed the score.",
+            )
+            # Fall through rather than returning: an annotation can be missing
+            # dimensions AND missing comments, and reporting only the first
+            # sends the author round a second CI cycle to discover the rest.
+            failed = True
+
     if not missing:
-        return 0
+        return 1 if failed else 0
     sample = ", ".join(f"{tid}/{src}/{name}" for tid, src, name in missing[:5])
     scope = (
         "every dimension"

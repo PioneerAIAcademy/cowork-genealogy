@@ -11,7 +11,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
-import { sampledTestIds } from '../types';
+import { sampledTestIds, uncommentedSampledCorrections } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
 /**
@@ -140,7 +140,10 @@ export function unreviewedDimensions(
 }
 
 export function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null): boolean {
-  return unreviewedDimensions(log, ann).length === 0;
+  return (
+    unreviewedDimensions(log, ann).length === 0 &&
+    uncommentedSampledCorrections(log, ann).length === 0
+  );
 }
 
 /**

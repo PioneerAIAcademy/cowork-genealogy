@@ -132,7 +132,7 @@ def _multi_test_log(n: int = 20, review_sample: dict | None = None) -> dict:
     return log
 
 
-def _corrections_for(test_ids: list[str]) -> list[dict]:
+def _corrections_for(test_ids: list[str], *, comment: str | None = "read it") -> list[dict]:
     return [
         {
             "test_id": tid,
@@ -140,6 +140,7 @@ def _corrections_for(test_ids: list[str]) -> list[dict]:
             "dimension_name": name,
             "llm_score": 3,
             "corrected_score": 3,
+            "comment": comment,
         }
         for tid in test_ids
         for name in ("Correctness", "Completeness")
@@ -832,3 +833,71 @@ def test_rule3_ignores_a_sample_of_only_ungraded_tests(tmp_path, capsys):
     fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "would require nothing" in capsys.readouterr().out
+
+
+def test_rule3_rejects_sampled_correction_without_comment(tmp_path, capsys):
+    """Sampling only pays off if the remaining cells are read. 91.4% of the
+    corpus this replaces was confirmed with no comment written at all."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+
+
+def test_rule3_rejects_a_whitespace_only_comment(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment="   ")
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_does_not_require_comments_without_a_review_sample(tmp_path):
+    """Every committed annotation predates both sampling and this rule; a
+    comment mandate applied to them would redden 109 files retroactively."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(3)]
+    log = _multi_test_log(3)  # no review_sample
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_ignores_a_missing_comment_on_an_unsampled_test(tmp_path):
+    """Nothing is asked of an unsampled test, so a stray correction there is a
+    bonus, not a debt."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corrections = _corrections_for(sampled) + _corrections_for(["ut_x_009"], comment=None)
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_reports_missing_dimensions_and_missing_comments_together(tmp_path, capsys):
+    """Reporting only the first sends the author round a second CI cycle."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"], comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+    assert "unreviewed" in out
