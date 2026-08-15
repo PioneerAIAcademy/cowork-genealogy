@@ -202,7 +202,14 @@ def test_routing_deference_leaves_partial_and_pass_untouched():
 
 
 def test_routing_deference_noop_on_positive_test():
-    """A positive test's base dimensions gate its outcome outright."""
+    """A positive test is never floored — covered by the same `any(correct)`
+    guard as an out-of-scope negative, because the schema forbids a positive
+    test a `negative` block, so `correct` is always empty.
+
+    Kept as a regression test on the BEHAVIOUR. It is not an independent guard
+    test: a dedicated `spec.type != "negative"` check was tried and was
+    unreachable, so no mutation of one is observable here.
+    """
     dims = _routing_dims()
     spec = load_test_from_dict({
         "test": {"id": "ut_o_003", "skill": "search-records", "name": "n",
@@ -210,8 +217,46 @@ def test_routing_deference_noop_on_positive_test():
         "input": {"user_message": "m", "scenario": None},
         "judge_context": [],
     })
-    apply_routing_deference(dims, spec=spec, activated=True, skills_invoked=[])
+    apply_routing_deference(
+        dims, spec=spec, activated=False, skills_invoked=["search-records"]
+    )
     assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_preserves_the_judge_score_in_a_warning():
+    """The floored 1 must stay trendable. `rubric-critic` flags dimensions that
+    never fail; without this it could not recover how often the judge failed
+    them, and the case where the judge's 1 was RIGHT (skill did its task inline
+    while skills_invoked was empty) would vanish entirely."""
+    dims = _routing_dims()
+    warnings: list = []
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [w["kind"] for w in warnings] == [
+        "floored_routing_diagnostic_dimension",
+        "floored_routing_diagnostic_dimension",
+    ]
+    assert [w["name"] for w in warnings] == ["Correctness", "Completeness"]
+    assert all(w["score"] == 1 for w in warnings)
+    assert warnings[0]["rationale"] == "No such routing occurred"
+
+
+def test_routing_deference_warning_omitted_when_nothing_floored():
+    dims = _routing_dims(correctness=3, completeness=3)
+    warnings: list = []
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert warnings == []
 
 
 # --- judge error handling (item #27) -----------------------------------

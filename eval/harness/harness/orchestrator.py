@@ -550,6 +550,7 @@ async def _execute_single_run(
         spec=spec,
         activated=activated,
         skills_invoked=result.skills_invoked,
+        warnings=judge_dimension_warnings,
     )
 
     outcome = _compute_outcome(
@@ -905,49 +906,79 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
     return dimensions
 
 
-def apply_routing_deference(dimensions, *, spec, activated, skills_invoked):
+def apply_routing_deference(dimensions, *, spec, activated, skills_invoked, warnings=None):
     """Floor Correctness/Completeness off 1 on a correctly-routed negative test.
 
     A negative test with a non-empty `correct_skill` is decided by routing:
     `_compute_outcome` returns pass once the skill under test did not activate
     and an accepted skill fired, and the judge runs base-only and diagnostically.
-    A judge FAIL there is therefore grading something the test does not own —
-    usually the routed-to skill's execution — and it costs a genealogist the same
-    override every run while polluting the dimension data `rubric-critic` and
-    `skill-improver` read as signal.
+    A judge FAIL there is therefore usually grading something the test does not
+    own — the routed-to skill's execution — and it costs a genealogist the same
+    override every run.
 
-    Mutates + returns `dimensions`. No-op unless the test is negative with a
-    non-empty `correct_skill`, the skill under test did not activate, and an
-    accepted skill is in `skills_invoked`. `grade_on_invariant` negatives return
-    from `_compute_outcome` before the routing branch, so they are excluded.
-    Floors to 2, never 3: the judge may still have seen something real, and this
-    removes only the false FAIL.
+    **Known limitation — read before widening this.** `activated` is False
+    whenever the skill under test is absent from `skills_invoked`, and
+    `derive_activated`'s own docstring records that SDK skill-discovery bugs
+    leave that list empty even when the skill ran. So a run where the model
+    carried out the skill's task inline *and* routed to an accepted skill
+    satisfies every guard here — and `_negative_judge_context`'s third framing
+    line tells the judge to score exactly that case 1. That 1 is correct and this
+    function floors it. There is no mechanical discriminator (a skill can produce
+    substantive prose with no writes), so the pre-floor score and rationale are
+    pushed onto `warnings` instead, following `judge.py`'s
+    `coerced_tool_arguments_to_na`: a silently-vanished 1 is what makes this
+    class of defect untrendable.
+
+    Mutates + returns `dimensions`; appends to `warnings` when given. No-op
+    unless the test is negative with a non-empty `correct_skill`, the skill under
+    test did not activate, and an accepted skill is in `skills_invoked`.
+    `grade_on_invariant` negatives return from `_compute_outcome` before the
+    routing branch, so they are excluded. Floors to 2, never 3: the judge may
+    still have seen something real, and this removes only the false FAIL.
     """
     if not dimensions:
         return dimensions
     negative = spec.negative or {}
-    if not spec.negative or negative.get("grade_on_invariant"):
+    if negative.get("grade_on_invariant"):
         return dimensions
     if activated:
         return dimensions
-    # An out-of-scope negative (empty `correct_skill`) falls out here too, and
-    # must: its base dimensions genuinely DO gate the outcome in
-    # `_compute_outcome`, so flooring would turn a real fail into a pass.
-    # `any()` over an empty `correct` is False, so no separate guard is needed —
-    # and adding one made both guards redundant, which left the out-of-scope
-    # test unable to fail either break.
+    # The `any()` check below is the only guard needed, and it is load-bearing
+    # for three cases at once — do not "clarify" it by adding separate guards.
+    # Each of these leaves `correct` empty, and `any()` over an empty sequence
+    # is False:
+    #   - a POSITIVE test (the schema forbids it a `negative` block at all),
+    #   - an OUT-OF-SCOPE negative (`correct_skill: []`), which must not be
+    #     floored because its base dimensions genuinely DO gate the outcome in
+    #     `_compute_outcome`,
+    #   - a negative that routed nowhere acceptable.
+    # A `if not correct:` and a `spec.type != "negative"` guard were both tried
+    # here; both were unreachable, and each made its own test unable to fail.
     correct = negative.get("correct_skill", [])
     if not any(s in (skills_invoked or []) for s in correct):
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
             orig = dd.get("rationale") or ""
+            if warnings is not None:
+                warnings.append({
+                    "kind": "floored_routing_diagnostic_dimension",
+                    "advisory": (
+                        f"judge scored {dd['name']} 1 on a negative test whose "
+                        f"outcome is decided by routing; floored to 2. If the "
+                        f"skill under test carried out its own task inline, this "
+                        f"1 was correct — check the transcript."
+                    ),
+                    "name": dd["name"],
+                    "score": dd.get("score"),
+                    "rationale": orig,
+                })
             dd["score"] = 2
             dd["rationale"] = (
                 "[deterministic-deference] this negative test is decided by "
-                "routing, and the harness observed the skill under test decline "
-                "while an accepted skill fired — so this dimension cannot FAIL on "
-                "the routing. Floored from the judge's 1 to 2 (partial). "
+                "routing: the skill under test is absent from skills_invoked and "
+                "an accepted skill fired, so this dimension cannot FAIL on the "
+                "routing. Floored from the judge's 1 to 2 (partial). "
                 "Original judge rationale: " + orig
             )
     return dimensions
