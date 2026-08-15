@@ -875,6 +875,7 @@ Everyday docs:
 | You want to… | Go to |
 |---|---|
 | Write a SKILL.md well | [`docs/skill-authoring-guide.md`](skill-authoring-guide.md) |
+| Audit one skill for defects nothing has caught | [`docs/skill-deep-dive-guide.md`](skill-deep-dive-guide.md) |
 | Run the harness / read a run log | [`eval/README.md`](../eval/README.md) |
 | Audit a skill's rubric quality | `/audit-rubric <name>` — the `rubric-critic` agent |
 | Improve a SKILL.md body from eval results | `/improve-skill <name>` — the `skill-improver` agent |
