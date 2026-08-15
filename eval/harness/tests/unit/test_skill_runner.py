@@ -80,6 +80,63 @@ def test_skill_run_result_shape():
     # field for free, and the orchestrator's uncovered-call gate reads it.
     assert r.attempted_mcp_calls == []
     assert r.unread_skill_calls == []
+    assert r.builtin_tool_calls == []
+
+
+def test_builtin_call_record_captures_a_read():
+    """The blind spot this closes: a Read left no trace anywhere, so a
+    subagent that skipped its reference file looked identical to one that
+    read it (issue #702)."""
+    from harness.skill_runner import builtin_call_record
+
+    record = builtin_call_record(
+        "Read", {"tool_input": {"file_path": "/p/references/probate.md"}}
+    )
+    assert record == {
+        "tool": "Read",
+        "args": {"file_path": "/p/references/probate.md"},
+    }
+
+
+def test_builtin_call_record_ignores_mcp_calls():
+    """MCP calls are already recorded twice (tool_calls, attempted_mcp_calls);
+    recording them a third time would double-count the uncovered-call gate."""
+    from harness.skill_runner import builtin_call_record
+
+    assert builtin_call_record(
+        "mcp__genealogy__record_read", {"tool_input": {"recordId": "x"}}
+    ) is None
+
+
+def test_builtin_call_record_keeps_agent_id_when_inside_a_subagent():
+    """`agent_id` is present only inside a Task-spawned subagent, so it is
+    what distinguishes the extractor agent reading a file from the main
+    thread reading it — the question a delegated-reference design asks."""
+    from harness.skill_runner import builtin_call_record
+
+    record = builtin_call_record(
+        "Read",
+        {
+            "tool_input": {"file_path": "/p/x.md"},
+            "agent_id": "record-extractor-1",
+        },
+    )
+    assert record["agent_id"] == "record-extractor-1"
+    # Main-thread calls carry no agent_id, and the key is omitted rather
+    # than set to None so the schema can forbid unknown/null shapes.
+    main = builtin_call_record("Read", {"tool_input": {"file_path": "/p/x.md"}})
+    assert "agent_id" not in main
+
+
+def test_builtin_call_record_truncates_long_arguments():
+    """Run logs are committed; an untruncated Write argument would carry a
+    whole file body into the corpus."""
+    from harness.skill_runner import builtin_call_record, BUILTIN_ARG_TRUNCATE
+
+    record = builtin_call_record(
+        "Write", {"tool_input": {"content": "x" * 5000}}
+    )
+    assert len(record["args"]["content"]) == BUILTIN_ARG_TRUNCATE
 
 
 def test_read_skill_tool_input_reads_the_documented_key():

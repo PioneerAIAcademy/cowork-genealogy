@@ -594,6 +594,14 @@ async def _execute_single_run(
                 for c in result.tool_calls
             ],
             "files_created": files_created,
+            # Omitted when empty so a run that called no built-in tool writes
+            # the same run_output it always has — this field appearing is
+            # itself the signal that something was read.
+            **(
+                {"builtin_tool_calls": result.builtin_tool_calls}
+                if result.builtin_tool_calls
+                else {}
+            ),
             **({"file_changes": file_changes} if file_changes else {}),
             **(
                 {"warnings": warnings}

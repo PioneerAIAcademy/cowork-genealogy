@@ -272,6 +272,19 @@
           "type": "array",
           "items": { "$ref": "#/$defs/tool_call" }
         },
+        "builtin_tool_calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["tool", "args"],
+            "additionalProperties": false,
+            "properties": {
+              "tool": { "type": "string" },
+              "args": { "type": "object" },
+              "agent_id": { "type": "string" }
+            }
+          }
+        },
         "files_created": {
           "type": "array",
           "items": { "type": "string" }
