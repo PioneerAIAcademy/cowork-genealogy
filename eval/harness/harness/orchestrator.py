@@ -617,6 +617,41 @@ async def _execute_single_run(
 
 DEFAULT_SKILL_RUN_ATTEMPTS = 3
 
+_ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
+
+
+def _is_zero_progress_timeout(result) -> bool:
+    """A `max_wall_clock_seconds` abort where the run never got going.
+
+    `num_turns` and `duration_api_ms` reach `usage` only from the SDK's
+    ResultMessage, so a run that hung before the model ever answered has
+    neither. Both absent (or zero) means the whole budget was spent without a
+    single turn or a millisecond of API time — the subprocess stalled during
+    startup, which is the `Control request timeout: initialize` failure the
+    `error` path already retries, arriving under a different name because the
+    wall-clock watchdog fired first.
+
+    Observed 2026-08-15: two tests aborted at 1888s and 1908s against a 1500s
+    cap with `num_turns=0`, `duration_api_ms=0`, `attempts=1` — no retry, and
+    both were lost from a paid suite run. A third test in the same run hit the
+    same stall, surfaced as `error`, was retried, and passed.
+
+    Deliberately narrow: a slow test that timed out mid-work HAS turns and API
+    time, so it stays non-retryable and does not burn its budget twice.
+    """
+    if result.aborted_reason != "max_wall_clock_seconds":
+        return False
+    usage = result.usage or {}
+    return not usage.get("num_turns") and not usage.get("duration_api_ms")
+
+
+def _is_retryable_abort(result) -> bool:
+    """Whether a failed skill run should be retried (see the two helpers and
+    `_execute_skill_with_retry`'s docstring)."""
+    if result.aborted_reason in _ALWAYS_RETRYABLE_ABORTS:
+        return True
+    return _is_zero_progress_timeout(result)
+
 
 async def _execute_skill_with_retry(
     *,
@@ -632,7 +667,7 @@ async def _execute_skill_with_retry(
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
-    failures with exponential backoff.
+    failures with exponential backoff. See `_is_retryable_abort`.
 
     Two transient-failure modes are retried:
 
@@ -656,17 +691,21 @@ async def _execute_skill_with_retry(
     pre-flight or mid-run.
 
     Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
-    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
-    retried — a retry would just burn the same budget — so they return
-    on the first attempt. The Agent SDK collapses every other failure
-    into `is_error`/exceptions without the clean HTTP status codes the
-    judge path discriminates on, so a genuinely non-transient error is
-    retried too; the cost is bounded (`attempts` tries plus a few
-    seconds of backoff).
+    `max_input_tokens_per_turn`) are NOT retried — a retry would just burn
+    the same budget — so they return on the first attempt. The Agent SDK
+    collapses every other failure into `is_error`/exceptions without the
+    clean HTTP status codes the judge path discriminates on, so a genuinely
+    non-transient error is retried too; the cost is bounded (`attempts`
+    tries plus a few seconds of backoff).
+
+    3. `max_wall_clock_seconds` **with zero progress** — see
+       `_is_zero_progress_timeout`. A wall-clock abort is normally a slow
+       test and stays non-retryable; one that burned the whole budget
+       without a single turn never started, which is the same transient
+       class as (1) and (2).
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
-    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
@@ -720,10 +759,7 @@ async def _execute_skill_with_retry(
                 # runs don't accumulate orphans under ~/.claude/projects/.
                 cleanup_session_store(workspace)
 
-        if (
-            result.aborted_reason not in RETRYABLE_ABORT_REASONS
-            or attempt + 1 >= attempts
-        ):
+        if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is
             # visible per-run in the log (1 = clean first try).
             result.attempts = attempt + 1
