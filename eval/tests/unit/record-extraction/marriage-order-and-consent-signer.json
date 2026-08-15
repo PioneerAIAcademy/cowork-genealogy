@@ -50,6 +50,7 @@
     {
       "record_role": "bride",
       "fact_type": "marital_status",
+      "optional": true,
       "evidence_type": "direct",
       "informant_proximity": "self"
     },
@@ -63,6 +64,7 @@
     {
       "record_role": "consent_signer_1",
       "fact_type": "name",
+      "optional": true,
       "value": "Lang",
       "evidence_type": "direct"
     },
