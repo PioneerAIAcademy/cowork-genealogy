@@ -687,6 +687,48 @@ describe("rank_search_matches", () => {
     });
   });
 
+  // ── #1592: batchNumber reaches the ranked stub ─────────────────────────────
+
+  it("carries batchNumber from the staged row onto the ranked stub", async () => {
+    // A search that names a subjectId returns `ranked`, and that is what the
+    // caller reads — so a batch number that stops at `results` is invisible on
+    // the most common call shape, and the enumerate-the-batch loop dead-ends.
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const staged = candidate({
+      recordId: "ark:/61903/1:1:AAAA-AA1",
+      primaryId: "p1",
+    }) as Record<string, unknown>;
+    staged.batchNumber = "M01048-5";
+    const ref = await stage([staged]);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.matches[0].batchNumber).toBe("M01048-5");
+  });
+
+  it("omits batchNumber on a staged row that has none", async () => {
+    // Most records trace to no batch. Absence is not a finding and must not be
+    // reported as an empty value the caller could pass back as a query.
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const ref = await stage([
+      candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
+    ]);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect("batchNumber" in out.matches[0]).toBe(false);
+  });
+
   it("warns when returned matches do not carry the relative that was searched for", async () => {
     // The score cannot say this: it measures name/date/place agreement and is
     // blind to whether the record names the father. A top-ranked hit with

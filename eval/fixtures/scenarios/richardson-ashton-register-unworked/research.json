@@ -1,0 +1,71 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of John Richardson (bapt. 1833, Ashton-under-Lyne, Lancashire, England) from the parish registers",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-08-13",
+    "updated": "2026-08-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of John Richardson, baptised 1833 at Ashton-under-Lyne, Lancashire?",
+      "rationale": "Primary research objective. The tree records a baptism year but no parents. Richardson is one of the commonest surnames in the parish, so an indexed name search is expected to return many same-named candidates; the parish register itself is the authority.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-13",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-13",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Ashton-under-Lyne, Lancashire, England",
+          "date_range": "1830-1836",
+          "repository": "FamilySearch",
+          "rationale": "The baptism register for the parish should name both parents. A common surname means the register has to be worked as a register, not sampled by one name query.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": []
+}
