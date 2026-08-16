@@ -33,8 +33,8 @@ MODULE_DIRS = [HARNESS / "harness", HARNESS / "scripts", HARNESS / "e2e"]
 def _python_files() -> list[Path]:
     out: list[Path] = []
     for d in MODULE_DIRS:
-        if d.is_dir():
-            out.extend(sorted(p for p in d.rglob("*.py") if "__pycache__" not in p.parts))
+        assert d.is_dir(), f"{d} is missing — MODULE_DIRS is stale and the scan is silently smaller"
+        out.extend(sorted(p for p in d.rglob("*.py") if "__pycache__" not in p.parts))
     # `eval/harness/` itself, non-recursively: run_tests.py, skill_gate.py and
     # skill_latency_report.py are production modules full of value-returning
     # functions, and scanning only the subdirectories leaves all three out —
