@@ -352,9 +352,12 @@ Run the rubric audit first — it's a health check on the *grading*, so you're
 not chasing a score that was wrong to begin with. The **rubric-critic** agent
 reads the skill's run logs, your corrections and its `rubric.md`, and flags
 dimensions that never discriminate (always pass or always fail), flaky ones,
-and ones no test exercises. Then **skill-improver** reads the annotated run log
-and proposes an evidence-cited diff. Both are read-only: they propose, **you**
-apply the edits.
+and ones no test exercises. Delete a dimension that always passes rather than
+rewriting it — a skill may legitimately end up with no dimensions left, in
+which case delete its `rubric.md` file and the skill is graded on the base
+dimensions alone. Then **skill-improver** reads the
+annotated run log and proposes an evidence-cited diff. Both are read-only: they
+propose, **you** apply the edits.
 
 #### The lane rule — classify every finding before touching skill prose
 

@@ -584,6 +584,14 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: provenance-report
+provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]
+	# Offline, no API calls. Seven skill bodies carry a don't-fabricate rule in
+	# prose and nothing checked any of them; this is the mechanical half.
+	# Triage the hits before acting — a derived value and a punctuation-carrying
+	# ARK both land here. See issue #1667.
+	cd eval/harness && uv run python -m provenance_report $(if $(SKILL),--skill $(SKILL),)
+
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
