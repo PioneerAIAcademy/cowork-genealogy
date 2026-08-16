@@ -1637,3 +1637,47 @@ def test_compute_cost_is_positive_on_the_shape_that_crashed_the_suite():
 
     assert cost > 0, "a warm-cache draw with a small output must not price negative"
     assert cost == pytest.approx((1885 * 1.0 + 5004 * 0.10 + 10 * 5.0) / 1_000_000)
+
+
+# --- validator failures in the prompt (issue #1670) ---------------------
+
+
+def _minimal_prompt(**kw):
+    from harness.judge import render_prompt
+    from harness.rubric import empty_rubric
+
+    base = dict(
+        rubric=empty_rubric("s"),
+        judge_context=[],
+        scenario_readme="",
+        user_message="m",
+        skills_invoked=[],
+        text_response="r",
+        file_changes_summary="",
+        tool_calls=[],
+    )
+    base.update(kw)
+    return render_prompt(**base)
+
+
+def test_validator_failures_appear_in_the_prompt():
+    out = _minimal_prompt(validator_failures=["test_log_append_only"])
+    assert "test_log_append_only" in out
+
+
+def test_no_failures_renders_a_neutral_marker():
+    out = _minimal_prompt(validator_failures=[])
+    assert "(none failed)" in out
+
+
+def test_only_the_named_failures_reach_the_prompt():
+    """FAILURES only. A passing list is a conclusion, and handing the judge a
+    conclusion is the defect behind issues #1007, #1330 and #1603 — it grades
+    what it was told to find.
+
+    Asserts the render carries the failure it was given and NOT one it was not.
+    An earlier version asserted on the section's prose, which tested my wording
+    rather than the behaviour."""
+    out = _minimal_prompt(validator_failures=["test_that_failed"])
+    assert "test_that_failed" in out
+    assert "test_that_passed" not in out
