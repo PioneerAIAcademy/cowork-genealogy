@@ -157,8 +157,8 @@ resort, not the default.**
 
 **Why: an issue costs about four people.** Someone decides whether it is ready
 (`/review-ready`, which fans out a `task-reviewer` per candidate), someone
-implements it, and two review it (`/review` plus a human). So the test is not
-"is this issue justified?" — it is **"is the work big enough to carry
+implements it, and two review it — the branch needs two approvals. So the test
+is not "is this issue justified?" — it is **"is the work big enough to carry
 four-person overhead?"** That is a ratio. A half-day genealogist deep dive
 carries it comfortably. A change of four functions in one file does not; build
 that one.
