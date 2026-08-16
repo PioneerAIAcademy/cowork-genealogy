@@ -494,6 +494,11 @@ async def _execute_single_run(
         _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
+                # Failures only — a passing list is a conclusion, and the judge
+                # grades a conclusion by agreeing with it.
+                validator_failures=[
+                    r.name for r in validator_results if not r.passed
+                ],
                 spec=spec,
                 rubric=rubric,
                 scenario_readme=scenario_readme,
@@ -1122,6 +1127,7 @@ def _run_judge(
     before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
+    validator_failures: list[str] | None = None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1151,6 +1157,7 @@ def _run_judge(
         auth=auth,
         model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
+        validator_failures=validator_failures,
     )
 
 
