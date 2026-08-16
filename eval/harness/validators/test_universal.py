@@ -48,19 +48,30 @@ from harness.schema_validator import (
 from harness.ts_validator import validate_parsed
 
 
-# Top-level sections of research.json — the diff-aware tests below
-# (`test_log_append_only`, `test_no_entries_deleted`,
-# `test_id_references_resolve`) iterate over these. Shape, enums, ID prefixes,
-# and required fields are all delegated to jsonschema (research.schema.json)
-# per spec §8; this list is the only enum-table kept in Python.
+# The research.json sections the diff-aware tests below iterate —
+# `test_no_entries_deleted` and `test_id_references_resolve`. Shape, enums, ID
+# prefixes, and required fields are all delegated to jsonschema
+# (research.schema.json) per spec §8; this list is the only enum-table kept in
+# Python.
+#
+# It was called REQUIRED_SECTIONS and was neither: it omitted `evaluations`,
+# which the schema does require, and now carries two sections the schema makes
+# optional. What it actually is is the diff set, so that is its name.
+#
+# Every top-level property EXCEPT `researcher_profile`, which is an object rather
+# than an array of id-bearing entries — both tests below iterate entries and read
+# `.get("id")`, so it has nothing for them to check. `plan_items` is likewise
+# absent: it is `research_append`'s pseudo-section for `plans[].items[]`, not a
+# top-level property, and a plan-item change already shows up here under `plans`.
 #
 # The two ownership checks do NOT read this list — they iterate the ownership
-# manifest, which is keyed on a wider vocabulary. Keeping them on this list is
-# what left `localities` with a declared owner that was never once evaluated.
-REQUIRED_SECTIONS = [
-    "project", "questions", "plans", "log", "sources",
+# manifest, which is keyed on a wider vocabulary again. Keeping them on this list
+# is what left `localities` with a declared owner that was never once evaluated.
+DIFFED_SECTIONS = [
+    "project", "known_holdings", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
+    "evaluations", "localities",
 ]
 
 
@@ -200,7 +211,17 @@ def test_log_append_only(before_state, after_state):
 # --- No-delete enforcement ---
 
 def test_no_entries_deleted(before_state, after_state):
-    """No entries should be deleted from any section. Supersede with status instead."""
+    """No entries should be deleted from any section. Supersede with status instead.
+
+    Covers every id-bearing section, including `localities`, `evaluations` and
+    `known_holdings` — the three the old list omitted while the prose ownership
+    table stated the no-delete rule for all three. Widening it is close to free:
+    `research_append`'s op enum is `append | update` with no delete at all, so
+    the only route to a deletion is a raw file write, which is already a
+    violation on two other counts. Nine unit tests run against a scenario
+    carrying entries in any of the three, and no run in the committed e2e corpus
+    deletes an entry from any section.
+    """
     before_research = before_state.get("research_json")
     after_research = after_state.get("research_json")
 
@@ -208,7 +229,7 @@ def test_no_entries_deleted(before_state, after_state):
         pytest.skip("Missing research.json for diff")
 
     errors = []
-    for section in REQUIRED_SECTIONS:
+    for section in DIFFED_SECTIONS:
         if section == "project":
             continue  # project is an object, not an array
 
@@ -241,7 +262,7 @@ def test_id_references_resolve(after_state):
     if project:
         known_ids.add(project.get("id", ""))
 
-    for section in REQUIRED_SECTIONS:
+    for section in DIFFED_SECTIONS:
         if section == "project":
             continue
         for entry in research.get(section, []):

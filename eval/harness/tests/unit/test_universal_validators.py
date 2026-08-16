@@ -1,16 +1,18 @@
-"""Tests for the two universal ownership validators, now that they read the manifest.
+"""Direct tests for the universal validators this change rewired.
 
-These validators are **never collected by `make harness-test`** — `pyproject.toml`
+Those validators are **never collected by `make harness-test`** — `pyproject.toml`
 sets `testpaths = ["tests"]`, so `validators/test_universal.py` is outside it and
 their real pass/fail set is produced only inside a paid per-skill eval run. That
-made the move from two dict literals to a JSON manifest a rewiring nothing would
-exercise until someone spent $7-25.
+made the move from two dict literals to a JSON manifest — and the widening of the
+no-delete diff set alongside it — changes nothing would exercise until someone
+spent $7-25.
 
 So this module calls them directly, the same way `test_universal_context_calls.py`
-does. It is about the *wiring* — that a permitted writer passes, a non-owner
-fails, an undeclared section is not default-denied, and `localities` is now
-reached at all. Which skill owns which section is frozen next door, in
-`test_ownership_manifest.py`.
+does. It is about the *wiring*: that a permitted writer passes, a non-owner fails,
+an undeclared section is not default-denied, `localities` is reached at all, and
+the three sections the diff set used to omit are now covered by the no-delete
+rule their own spec row states. Which skill owns which section is frozen next
+door, in `test_ownership_manifest.py`.
 """
 
 import sys
@@ -23,6 +25,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_universal import (  # noqa: E402
+    test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
     test_tree_ownership_table as check_tree,
 )
@@ -160,3 +163,34 @@ def test_person_evidence_may_not_write_tree_sources():
     with pytest.raises(AssertionError) as e:
         check_tree(tree(), tree(sources=entry("S1")), {"name": "person-evidence"}, POSITIVE)
     assert "sources" in str(e.value)
+
+
+# ── the no-delete diff set ─────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("section,_id", [
+    ("localities", "loc_001"),
+    ("evaluations", "ev_001"),
+    ("known_holdings", "kh_001"),
+])
+def test_deleting_from_a_newly_covered_section_fails(section, _id):
+    """The three sections the old diff set omitted.
+
+    Each one's spec row states the no-delete rule — `localities` refreshes in
+    place, `evaluations` retires via `superseded_by`, `known_holdings` never
+    deletes — and until now nothing checked any of them.
+    """
+    with pytest.raises(AssertionError) as e:
+        check_no_deletes(research(**{section: entry(_id)}), research())
+    assert section in str(e.value)
+    assert _id in str(e.value)
+
+
+def test_deleting_from_an_already_covered_section_still_fails():
+    with pytest.raises(AssertionError) as e:
+        check_no_deletes(research(sources=entry("src_001")), research())
+    assert "sources" in str(e.value)
+
+
+def test_appending_is_not_a_deletion():
+    check_no_deletes(research(), research(localities=entry("loc_001")))

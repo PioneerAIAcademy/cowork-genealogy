@@ -172,13 +172,13 @@ Three checks hold it, all free and all running on every push:
   writable section of both schemas has exactly one row; every owner, caller and
   writer tool resolves to something that ships.
 - `eval/harness/tests/unit/test_ownership_manifest.py` — the enforced writer sets
-  still equal the pre-promotion literals, pasted in verbatim, plus the two
-  declared deltas below.
-- `eval/harness/tests/unit/test_universal_ownership.py` — the *validators* still
+  still equal the pre-promotion literals, pasted in verbatim, plus the three
+  declared deltas below. Each delta is a named constant a reviewer can look at.
+- `eval/harness/tests/unit/test_universal_validators.py` — the *validators* still
   behave, called directly. They have to be, because `pyproject.toml` sets
   `testpaths = ["tests"]`: `validators/test_universal.py` is outside it, so its
-  ownership checks are never collected by `make harness-test` and their real
-  pass/fail set appears only inside a paid per-skill run.
+  ownership and no-delete checks are never collected by `make harness-test` and
+  their real pass/fail set appears only inside a paid per-skill run.
 
 **What promotion did not change: it is still not a hard deny.** The rows are
 enforced on exactly one plane — the harness's universal validator, inside a paid
@@ -240,8 +240,12 @@ by `research_log_append`, which takes no `section`) and `researcher_profile`;
 keying on the schema alone would drop `plan_items`, the single largest source of
 false denies in the replay above.
 
-**Two writer-set changes, and no others.** `localities` is newly enforced, as
-above. `questions` gains `proof-conclusion`: the `status -> resolved` transition
+**Three writer-set changes, and no others.** `localities` is newly enforced, as
+above. `assertions` loses `convert-dates`, a grant that was dead on arrival —
+the skill's only tool is `convert_calendar`, it holds no writer tool, and none of
+its 14 unit tests names `research_append` or `assertions`. A narrowing is the
+direction that *can* break a run, which is why it was measured before it was
+made. And `questions` gains `proof-conclusion`: the `status -> resolved` transition
 it covers was owned by nobody — `proof-conclusion`'s body hands it to
 `question-selection`, `question-selection`'s body hands it back, and 150
 questions reached `resolved` across 154 runs from 11 different skill contexts.
@@ -250,14 +254,12 @@ write a summary and its resolve together all name `proof-conclusion`. A widening
 cannot newly fail a test; the matching skill-body edit is a separate change,
 gated on that skill's paid run.
 
-**Three declared contradictions, recorded rather than repaired**, because
-repairing any of them changes an enforced writer set and this promotion
-deliberately does not:
+**Two declared contradictions that turn out not to be defects**, recorded rather
+than repaired:
 
-- `convert-dates` holds `assertions` while its only tool is `convert_calendar`.
-  It has no writer tool, so the grant permits nothing that could happen.
 - `hypotheses` and `timelines` name skills the e2e corpus routes to **zero**
-  times. The rows stay enforced because the unit corpus does exercise both.
+  times. The rows stay enforced because the unit corpus does exercise both — 14
+  tests and 10 respectively.
 - `citation` is allowed on research `sources` and forbidden on tree `sources`,
   while `research_append` mints a tree source in the same call, so **`citation`
   can never create a source**. Read as a structural impossibility when it was
@@ -269,16 +271,26 @@ One name was checked and found already gone: 49 corpus writes are attributed to
 absorbed it. It appears in no row, and the manifest lint now fails any owner or
 caller that does not resolve to a shipped skill directory or agent file.
 
-**A neighbouring gap, left open deliberately.** The ownership checks are off
-`REQUIRED_SECTIONS` now, but the two *other* validators that iterate it —
-no-entries-deleted and id-references-resolve — are not. So `localities`,
-`evaluations` and `known_holdings` are exempt from the no-delete rule that the
-prose ownership table states for all three. Widening the list is a three-word
-change and costs nothing measurable in the e2e corpus (zero deleted ids in any
-section across 153 runs, including the ten sections already covered), but the
-**unit** corpus is where that validator actually runs and it is unmeasured — the
-same reason `localities` ownership needed a count before it was switched on. Do
-that count before widening, not after.
+**A neighbouring gap, closed in the same change.** The list the ownership checks
+used to iterate is also read by two *other* validators — no-entries-deleted and
+id-references-resolve — so `localities`, `evaluations` and `known_holdings` were
+exempt from the no-delete rule the prose ownership table states for all three.
+All three sections are now in it.
+
+Measured before it was switched on, the same way `localities` ownership was:
+zero deleted ids in any section across 153 committed e2e runs, including the ten
+sections already covered; 9 unit tests run against a scenario carrying entries in
+any of the three; and all three sections require an `id`, which is what the check
+keys on. What makes it close to free is upstream of the corpus, though —
+`research_append`'s op enum is `append | update` with **no delete at all**, so
+the only route to a deleted entry is a raw file write, which is already a
+violation on two other counts.
+
+The list was called `REQUIRED_SECTIONS` and was neither: it omitted `evaluations`,
+which the schema does require, and it now carries two sections the schema makes
+optional. It is the diff set, so it is named `DIFFED_SECTIONS`. It holds every
+top-level property except `researcher_profile`, which is an object rather than an
+array of id-bearing entries and so has nothing for either check to read.
 
 ### What is actually in the shadow-to-graduate pipeline
 

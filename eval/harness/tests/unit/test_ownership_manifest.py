@@ -10,8 +10,9 @@ this module asserts the manifest still produces them. Deleting an owner reddens
 this test. Adding one reddens it too, which is the point: a widening is a
 decision, and it should have to be written down here.
 
-Two deltas are declared explicitly below, each with the reason it was made. They
-are the only two.
+Three deltas are declared explicitly below — one newly-enforced section, one
+widening, one narrowing — each with the reason it was made and the measurement
+behind it. They are the only three.
 
 **This is not `make harness-test`'s ownership result.** `pyproject.toml` sets
 `testpaths = ["tests"]`, so `validators/test_universal.py::test_ownership_table`
@@ -86,11 +87,25 @@ NEWLY_ENFORCED = {"localities"}
 #: body edit is a separate, eval-gated change.
 WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 
+#: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
+#: only tool is `convert_calendar`, it holds no writer tool, and its own body
+#: says it writes nothing. A narrowing is the direction that CAN break a run, so
+#: it was measured first — none of the skill's 14 unit tests names
+#: `research_append` or `assertions`, and with no writer tool there is no call it
+#: could emit that this would refuse.
+#:
+#: Declaring it here rather than editing the frozen literal above is the point:
+#: the literal stays a verbatim copy of what was enforced before, and every
+#: departure from it is a line someone had to write.
+NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
+
 
 def expected_research_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_OWNERSHIP_TABLE.items()}
     for section, added in WIDENED.items():
         expected[section] |= added
+    for section, removed in NARROWED.items():
+        expected[section] -= removed
     return expected
 
 
@@ -120,19 +135,20 @@ def test_the_only_newly_enforced_section_is_localities():
     assert before - after == set()
 
 
-def test_no_owner_was_dropped():
-    """Every writer the literals named is still a writer.
+def test_no_owner_was_dropped_except_the_declared_one():
+    """Every writer the literals named is still a writer, bar `NARROWED`.
 
     Redundant with the mapping equality above only while that assertion holds
     as equality. It is here because dropping an owner and widening one are the
     two directions of the same edit, and only one of them can quietly weaken
-    the check.
+    the check — so the drop side gets its own named assertion and its own
+    allow-list, which is a place a reviewer can look.
     """
     actual = writer_sets(RESEARCH_JSON, UNIT_PLANE)
     dropped = {
-        section: sorted(frozen - actual.get(section, set()))
+        section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
-        if frozen - actual.get(section, set())
+        if (frozen - actual.get(section, set())) - NARROWED.get(section, set())
     }
     assert dropped == {}
 
