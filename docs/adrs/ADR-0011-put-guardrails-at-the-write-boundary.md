@@ -89,6 +89,29 @@ Concretely, this is a placement question with six answers — **the layer map**:
 5. Needed at call time but unenforceable? → **tool description**.
 6. Otherwise → **prose, labelled as guidance rather than as a rule.**
 
+### Writing a caller rule — the identifier is not what you expect
+
+Any rule taking the hook row above depends on `PreToolUseHookInput`'s caller
+keys, and both have a trap measured live in Cowork (2026-08-16):
+
+- **`agent_id` is absent as a key on the main thread**, not present-and-null. Test
+  membership (`"agent_id" in input`), never truthiness.
+- **`agent_type` for a plugin agent is NAMESPACED** —
+  `genealogy-research:record-extractor` — while a built-in delegate reports bare
+  (`general-purpose`). **A predicate written as
+  `agent_type == "record-extractor"` never fires in production.**
+
+The second one is worse than a no-op because of polarity. `deny unless ==` with a
+value that never matches denies **every** caller, including the owner the rule
+exists to permit — and if a writer tool also refuses the broad path, the artifact
+becomes unwritable in Cowork while every test stays green, because no CI job
+reaches that runtime.
+
+**Match both spellings, or normalise before comparing.** This is not
+hypothetical: the same shape was flagged on one issue and then written into a
+draft of this repo's own next phase, in a document that already contained the
+warning. Prose in the same file did not prevent it; an adversarial reader did.
+
 ### Snapshot or live — the rule that decides
 
 A writer-tool precondition reads either the **pre-call snapshot** or the **live**
