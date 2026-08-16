@@ -297,3 +297,35 @@ def test_no_annotated_predecessor_starts_a_fresh_sweep(tmp_path):
         encoding="utf-8",
     )
     assert _newest_releasable_runlog(d) is None
+
+
+def test_released_runlog_outranks_a_superseded_candidate(tmp_path):
+    """A released `v{N}.json` has timestamp=None and must sort LAST within its
+    version. Release renames the candidate in place and leaves the earlier ones
+    behind, so treating None as "" lets a superseded candidate win and hands the
+    next run a stale cursor and a stale `previous_tests` baseline."""
+    import json
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from run_tests import _newest_releasable_runlog
+
+    d = tmp_path / "citation"
+    d.mkdir()
+
+    def write(name, cursor):
+        (d / name).write_text(
+            json.dumps({"review_sample": {"tests": [], "cursor": cursor, "seed": 0}, "tests": []}),
+            encoding="utf-8",
+        )
+        (d / name.replace(".json", ".ann.json")).write_text(
+            json.dumps({"run_log": name, "annotator": "a", "corrections": []}),
+            encoding="utf-8",
+        )
+
+    write("v1_2026-01-01_00-00-00.json", ["superseded"])
+    write("v1.json", ["released"])
+
+    got = _newest_releasable_runlog(d)
+    assert got["review_sample"]["cursor"] == ["released"]

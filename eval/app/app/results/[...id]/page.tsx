@@ -40,7 +40,12 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
-import { dimensionAllowsNa, sampledTestIds, uncommentedSampledCorrections } from '@/lib/types';
+import {
+  dimensionAllowsNa,
+  isConfirmedNonFailing,
+  sampledTestIds,
+  uncommentedSampledCorrections,
+} from '@/lib/types';
 import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
@@ -314,7 +319,7 @@ const DimensionRow = memo(function DimensionRow({
   dim,
   judgeRationale,
   correction,
-  inSample,
+  owesComments,
   onUpdate,
   onFocus,
   onBlur,
@@ -324,9 +329,10 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
-  /** This test is in the review sample, so every reviewed dimension of it
-   *  needs a written comment — not just the ones whose score changed. */
-  inSample: boolean;
+  /** This test is in a TRUSTED review sample, so every reviewed dimension of it
+   *  needs a comment unless it is a confirmed pass or N/A. False on a
+   *  pre-sampling run log, where CI asks for no comments at all. */
+  owesComments: boolean;
   onUpdate: (c: AnnotationCorrection | null, key: string) => void;
   onFocus: (dim: DimensionId) => void;
   onBlur: () => void;
@@ -356,13 +362,18 @@ const DimensionRow = memo(function DimensionRow({
   // exempting those takes a run from ~29 sentences to ~3. CI applies the same
   // rule; signalling anything looser is how an annotator learns it from a red
   // check instead of from the field.
+  // Both predicates are the shared ones. Re-deriving either is how this pane
+  // and CI came to disagree twice: once on null -> null (exempt in the shared
+  // rule, red here) and once on pre-sampling logs (nothing owed by CI, every
+  // row red here).
   const confirmedPass =
-    correction != null && correction.llm_score === 3 && correction.corrected_score === 3;
+    correction != null &&
+    isConfirmedNonFailing(correction.llm_score, correction.corrected_score);
   const needsComment =
     correction != null &&
     !draft.trim() &&
     !confirmedPass &&
-    (inSample || disagrees);
+    (owesComments || disagrees);
   const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
 
   const setScore = (s: ScoreOrNull) => {
@@ -473,7 +484,7 @@ const DimensionRow = memo(function DimensionRow({
         size="xs"
         mt={4}
         placeholder={
-          inSample && !confirmedPass
+          owesComments && !confirmedPass
             ? 'comment (required — what you checked, and why)'
             : 'comment (optional, expected on disagreement)'
         }
@@ -604,7 +615,11 @@ function GradesPane({
   // A test outside the sample is not unreviewed — nothing is asked of it.
   // Without this the header paints "6 unreviewed" on the very test the sidebar
   // labels `not sampled`.
+  // Two different questions, deliberately separate: `inSample` is "must this
+  // test be reviewed" (true for every test on a pre-sampling log), while
+  // `owesComments` is "does it owe comments" (false there — CI asks for none).
   const inSample = sampled === null || sampled.has(entry.test_id);
+  const owesComments = sampled !== null && sampled.has(entry.test_id);
   const unreviewedCount = !inSample
     ? 0
     : dims.filter(
@@ -616,8 +631,8 @@ function GradesPane({
   const hasUncommentedDisagreement = dims.some((d) => {
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
     if (c == null || (c.comment ?? '').trim()) return false;
-    if (c.llm_score === 3 && c.corrected_score === 3) return false; // confirmed pass
-    return inSample || c.corrected_score !== c.llm_score;
+    if (isConfirmedNonFailing(c.llm_score, c.corrected_score)) return false;
+    return owesComments || c.corrected_score !== c.llm_score;
   });
   const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
 
@@ -643,7 +658,7 @@ function GradesPane({
             five tests that matter reproduces the 91.4%-silent-confirm corpus at
             a fifth the size. It stays available on unsampled tests, which are
             optional and where a bulk agree costs nothing. */}
-        {inSample ? (
+        {owesComments ? (
           <Tooltip
             label="Sampled tests are reviewed one dimension at a time — each needs a comment."
             position="left"
@@ -701,7 +716,7 @@ function GradesPane({
           const key = `${entry.test_id}|${d.source}|${d.name}`;
           return (
             <DimensionRow
-              inSample={inSample}
+              owesComments={owesComments}
               key={key}
               test_id={entry.test_id}
               dimKey={key}

@@ -148,8 +148,22 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
  *  91% of them silent today, so requiring a sentence there is most of the cost
  *  for the least likely yield. A confirmed 2 or 1 is NOT exempt: agreeing that
  *  something went wrong is exactly when the reviewer should say what. */
-function isConfirmedNonFailing(llm: Score, corrected: Score): boolean {
+export function isConfirmedNonFailing(llm: Score, corrected: Score): boolean {
   return llm === corrected && (llm === 3 || llm === null);
+}
+
+/**
+ * Whether this test owes comments at all — i.e. it is in a TRUSTED sample.
+ *
+ * Distinct from "must this test be reviewed", which is true for every test on a
+ * pre-sampling run log. Conflating the two made the comment rule fire on all 121
+ * committed run logs, where CI asks for nothing: every non-pass correction went
+ * red, "Next test" locked, and "Agree All" vanished — while the page's own
+ * Release gate reported the annotation complete. Two meanings, two predicates.
+ */
+export function testOwesComments(log: RunLogFile, testId: string): boolean {
+  const sampled = sampledTestIds(log);
+  return sampled !== null && sampled.has(testId);
 }
 
 export function uncommentedSampledCorrections(

@@ -86,6 +86,13 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     Sorts by `classify()`'s (version, timestamp), NOT by filename: a
     lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
     every suite at v1, and cheap to avoid here.
+
+    A RELEASED `v{N}.json` has `timestamp=None` and must sort **last** within its
+    version — it supersedes every candidate of that version. Release renames
+    `v{N}_<ts>.json` in place and leaves the earlier candidates behind (pruning
+    keeps 5), so treating None as `""` would let a superseded candidate outrank
+    the blessed release and hand the next run a stale cursor and a stale
+    `previous_tests` baseline.
     """
     if not skill_runlog_dir.is_dir():
         return None
@@ -98,7 +105,9 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
             continue
         if not (skill_runlog_dir / ann_filename_for(p.name)).exists():
             continue  # nobody reviewed it — its cursor is not evidence
-        dated.append(((c.version, c.timestamp or ""), p))
+        # A released log has timestamp=None and must sort LAST within its
+        # version — it supersedes every candidate of that version.
+        dated.append(((c.version, c.timestamp or "￿"), p))
     if not dated:
         return None
     newest = max(dated, key=lambda pair: pair[0])[1]
