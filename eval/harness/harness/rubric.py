@@ -85,8 +85,7 @@ def parse_rubric_or_empty(skill: str, text: str | None) -> Rubric:
         raise InvalidRubricError(
             f"'{skill}' has a blank rubric.md. To grade a skill on the base "
             "dimensions only, delete the file — the CRUD UI's parser rejects "
-            "a blank one, so leaving it in place breaks the skills list while "
-            "the harness reads it as an opt-out."
+            "a blank one, so leaving it in place breaks the skills list."
         )
     return parse_rubric(text)
 
