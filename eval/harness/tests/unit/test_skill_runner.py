@@ -139,6 +139,113 @@ def test_builtin_call_record_truncates_long_arguments():
     assert len(record["args"]["content"]) == BUILTIN_ARG_TRUNCATE
 
 
+class _HookDrivingStream:
+    """An async message stream that first drives the registered PreToolUse hook
+    with scripted inputs, then yields its messages so run_skill completes."""
+
+    def __init__(self, hook, hook_inputs, messages):
+        self._hook = hook
+        self._hook_inputs = hook_inputs
+        self._messages = messages
+        self._started = False
+        self._i = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._started:
+            self._started = True
+            for inp in self._hook_inputs:
+                await self._hook(inp, "tool-use-id", None)
+        if self._i >= len(self._messages):
+            raise StopAsyncIteration
+        msg = self._messages[self._i]
+        self._i += 1
+        return msg
+
+    async def aclose(self):
+        return None
+
+
+def test_run_skill_collects_builtin_calls_through_the_real_hook(tmp_path, monkeypatch):
+    """The tests above prove the RECORD; this proves the WIRING.
+
+    Deleting the hook's two collection lines leaves every other test green
+    while `builtin_tool_calls` stays empty — and because run_output omits the
+    field when empty, a broken collector writes byte-identical output to a run
+    that genuinely called no built-in tool. That is the exact ambiguity this
+    field exists to remove, so the collection needs a test that fails when it
+    is gone.
+
+    The orchestrator's `run_output` spread stays covered-by-inspection, as
+    `file_changes` and `warnings` already are — same boundary
+    test_e2e_context_block.py draws around the `blocked_context_calls=` kwarg.
+    """
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [
+                # Inside the extractor subagent — carries agent_id.
+                {
+                    "tool_name": "Read",
+                    "tool_input": {"file_path": "/p/references/probate.md"},
+                    "agent_id": "agent-record-extractor",
+                },
+                # Main thread — the SDK omits agent_id entirely.
+                {
+                    "tool_name": "Read",
+                    "tool_input": {"file_path": "/p/research.json"},
+                },
+                # MCP calls are recorded elsewhere and must not land here.
+                {
+                    "tool_name": "mcp__genealogy__record_read",
+                    "tool_input": {"recordId": "x"},
+                },
+            ],
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(
+                skill_runner_mode="api_key", api_key="x", detail="stub"
+            ),
+        )
+    )
+
+    assert result.builtin_tool_calls == [
+        {
+            "tool": "Read",
+            "args": {"file_path": "/p/references/probate.md"},
+            "agent_id": "agent-record-extractor",
+        },
+        {"tool": "Read", "args": {"file_path": "/p/research.json"}},
+    ]
+
+
 def test_read_skill_tool_input_reads_the_documented_key():
     """"skill" is the claude-agent-sdk 0.1.81 contract."""
     from harness.skill_runner import read_skill_tool_input
