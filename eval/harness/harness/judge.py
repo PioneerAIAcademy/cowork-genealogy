@@ -921,8 +921,18 @@ def _compute_cost(response, model: str) -> float:
     inp = getattr(usage, "input_tokens", 0) or 0
     cached = getattr(usage, "cache_read_input_tokens", 0) or 0
     out = getattr(usage, "output_tokens", 0) or 0
+    # `input_tokens` and `cache_read_input_tokens` are DISJOINT in the API's
+    # accounting — `input_tokens` already excludes cache reads, so the two are
+    # summed, never subtracted. Subtracting `cached` here double-counted the
+    # discount and drove the fresh-input term negative on any warm cache; when
+    # the output term could not cover it the total went negative, tripping
+    # `judge_cost_usd`'s `minimum: 0` and killing the run mid-suite.
+    #
+    # Every term is now a non-negative count times a non-negative rate, so the
+    # result cannot be negative and needs no clamp — a clamp would have hidden
+    # the ~19% under-count rather than fixing it.
     return (
-        (inp - cached) * pricing["input"] / 1_000_000
+        inp * pricing["input"] / 1_000_000
         + cached * pricing["cached_input"] / 1_000_000
         + out * pricing["output"] / 1_000_000
     )

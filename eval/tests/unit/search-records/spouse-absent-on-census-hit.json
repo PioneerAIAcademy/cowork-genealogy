@@ -20,7 +20,8 @@
   },
   "mcp_fixtures": [
     "record-search-ackerman-1860-spouse-absent",
-    "rank-search-matches-ackerman-1860-spouse-absent"
+    "rank-search-matches-ackerman-1860-spouse-absent",
+    "record-read-ackerman-1860-m7qz-8kd"
   ],
   "judge_context": [
     "CORE (Correctness): the returned record names NO spouse. record_search reports `relativeTerms.spouse: { status: \"absent\" }` and rank_search_matches returns a `relativeTermNote` saying so. Score Correctness 1 if the skill writes, in its narrative, its log notes, or any table, that the record CONFIRMS the marriage, confirms Catherine, or verifies George's wife. That claim is the exact failure this field exists to prevent: FamilySearch keeps records that do not contradict the named spouse, so a spouse-silent record survives a spouse-anchored search and looks identical to a confirming one.",
@@ -31,7 +32,7 @@
     "Do NOT penalise the skill for noticing that Catherine is absent from a household George heads in 1860 and raising it as an identity or research question. That is sound practice given the scenario tree (Catherine is joined to George by Couple R1 and carries no death fact). It is a bonus, not a requirement, and it must never be resolved by renaming or overwriting Catherine.",
     "Completeness: reporting the hit, its absent-spouse status, and logging the search is a complete answer. Do NOT require extraction, attachment, or a second search.",
     "Tool Arguments: the record_search call must carry a spouse anchor (spouseGivenName 'Catherine' and/or spouseSurname) — that is what makes record_search report relativeTerms at all. A call with projectPath + subjectId is preferred since it folds in ranking, but its absence is not a Tool Arguments defect on its own.",
-    "record_read is NOT stocked for this test. If the skill calls it and receives fixture_not_found, that is a test-fixture gap and NOT a Tool Arguments defect — score Tool Arguments on the record_search call's arguments only."
+    "record_read IS stocked for this test — reading the top hit is normal behavior, not a defect. Score Tool Arguments on the record_search call's arguments."
   ],
   "judge_reads_files": true,
   "execution": {

@@ -153,7 +153,17 @@ mocks (no E2B/Anthropic/OAuth needed).
 ## Work you find along the way
 
 Implementing one task always turns up others. **Filing an issue is the last
-resort, not the default.** Walk these in order and stop at the first that fits:
+resort, not the default.**
+
+**Why: an issue costs about four people.** Someone decides whether it is ready
+(`/review-ready`, which fans out a `task-reviewer` per candidate), someone
+implements it, and two review it — the branch needs two approvals. So the test
+is not "is this issue justified?" — it is **"is the work big enough to carry
+four-person overhead?"** That is a ratio. A half-day genealogist deep dive
+carries it comfortably. A change of four functions in one file does not; build
+that one.
+
+Walk these in order and stop at the first that fits:
 
 1. **Fix it in the current PR.** The default, and the right answer about two
    times in three. You already have the context loaded; whoever picks up the
@@ -173,7 +183,10 @@ which of these is true:
 
 - the fix needs a different reviewer or skill — a code fix surfaced during a
   genealogist's fixture work, or vice versa;
-- it depends on a decision only the lead can make;
+- it depends on a decision only the lead can make — **and he is not reachable.**
+  A decision is a *question*, not work: filed, it costs triage every morning
+  until someone asks him anyway, and then costs the four people above on top. If
+  you can ask, ask;
 - it is a different skill's eval slot, and bundling it would force a second
   paid run;
 - it is too big for this PR — **and you have opened the call sites and counted.**
