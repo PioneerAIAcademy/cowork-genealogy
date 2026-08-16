@@ -469,7 +469,11 @@ change, with different (and easy-to-undercount) site lists:
   mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
   in `packages/schema/src/index.ts`). A *required* field additionally breaks
   `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
-  validation until backfilled.
+  validation until backfilled. A new **section** (a top-level property, or a new
+  entry in `research_append`'s `section` enum) additionally needs a row in
+  `docs/specs/schemas/ownership.json` saying who may write it — declare it
+  `owner: null` with a reason rather than guessing; a packaging test fails until
+  the row exists.
 - **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`

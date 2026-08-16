@@ -1,0 +1,309 @@
+{
+  "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts; the enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py.",
+  "version": 1,
+  "enforcementPlanes": {
+    "unit": "eval/harness/validators/test_universal.py — diffs before/after project state against the calling skill's SKILL.md frontmatter name. Cannot see an agent caller, and runs only inside a paid per-skill eval run.",
+    "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
+    "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment. Nothing keys on this manifest yet.",
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Nothing keys on this manifest yet."
+  },
+  "rows": [
+    {
+      "artifact": "research.json",
+      "section": "project",
+      "owner": "skill:init-project",
+      "callers": ["skill:init-project", "skill:proof-conclusion"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
+      "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
+      "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "researcher_profile",
+      "owner": null,
+      "reason": "No tool can write it. `research_append` does not accept the section, so its only writer is init-project's raw file write — the route the raw-write lockdown denies. Zero writes across the committed corpus, though every fixture seeds it. Whether it gains a writer tool or leaves the schema is an open decision; naming a paper owner here would read as coverage.",
+      "callers": [],
+      "writerTools": [],
+      "enforceableAt": [],
+      "requires": "Nothing today — there is no sanctioned write path to guard.",
+      "failure": "Every skill reads `narration_guidance` from this section, so a corrupt or absent profile silently changes narration across the whole project. Nothing detects it.",
+      "remedy": "Seed it at project creation. A skill that wants to change it has no sanctioned route and should say so rather than hand-editing the file.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "known_holdings",
+      "owner": null,
+      "reason": "Speculative and unexercised: zero successful writes corpus-wide and nothing solicits one, though `research_append` accepts the section. The prose ownership table names init-project, record-extraction and citation, none of which has ever written it. Whether the section is wired up or dropped is an open decision; declaring those paper owners here would read as coverage.",
+      "callers": [],
+      "writerTools": ["research_append"],
+      "enforceableAt": [],
+      "requires": "Nothing today — no caller has ever written the section.",
+      "failure": "Unknown. There is no observed behaviour to reason from.",
+      "remedy": "Settle the disposition before granting anyone the section.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "questions",
+      "owner": "skill:question-selection",
+      "callers": [
+        "skill:question-selection",
+        "skill:research-exhaustiveness",
+        "skill:proof-conclusion"
+      ],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule.",
+      "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
+      "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "plans",
+      "owner": "skill:research-plan",
+      "callers": [
+        "skill:research-plan",
+        "skill:search-records",
+        "skill:search-external-sites",
+        "skill:search-full-text",
+        "skill:search-images",
+        "skill:record-extraction"
+      ],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "requires": "research-plan owns plan and item structure. The search skills and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
+      "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "plan_items",
+      "owner": "skill:research-plan",
+      "callers": [
+        "skill:research-plan",
+        "skill:search-records",
+        "skill:search-external-sites",
+        "skill:search-full-text",
+        "skill:search-images",
+        "skill:record-extraction"
+      ],
+      "writerTools": ["research_append"],
+      "enforceableAt": [],
+      "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
+      "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`.",
+      "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
+      "remedy": "Same as `plans`.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "log",
+      "owner": null,
+      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all. No single skill owns the section; the permitted writers are listed in `callers`.",
+      "callers": [
+        "skill:search-records",
+        "skill:search-external-sites",
+        "skill:search-full-text",
+        "skill:search-images",
+        "skill:record-extraction"
+      ],
+      "writerTools": ["research_log_append"],
+      "enforceableAt": ["unit"],
+      "requires": "Append only. Existing entries are never modified or deleted — checked separately by the append-only validator, which this row does not duplicate.",
+      "failure": "The log is what makes a search reconstructible, including nil results. A skill that rewrites entries destroys the one record that says what was already tried.",
+      "remedy": "Append a new entry. Correct a wrong one by appending the correction, never by editing in place.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "sources",
+      "owner": "skill:record-extraction",
+      "callers": ["skill:record-extraction", "skill:citation"],
+      "writerTools": ["research_append", "extraction_append"],
+      "enforceableAt": ["unit"],
+      "notes": "citation can refine a source but can never create one, because `research_append` mints the mirroring tree source description in the same call and citation is not a permitted writer of tree `sources`. That is intended, not a defect: citation's own description says it never creates source entries and routes a new record to record-extraction.",
+      "requires": "record-extraction creates the entry with a working citation and `source_classification`. citation updates `citation` and `citation_detail` on an entry that already exists.",
+      "failure": "A second skill minting sources produces duplicate `src_` entries for one record, and every assertion's `source_id` then points at whichever copy that skill happened to make.",
+      "remedy": "Add a new record through record-extraction; refine an existing citation through citation.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "assertions",
+      "owner": "skill:record-extraction",
+      "callers": ["skill:record-extraction", "skill:convert-dates"],
+      "writerTools": ["research_append", "extraction_append"],
+      "enforceableAt": ["unit"],
+      "notes": "convert-dates cannot exercise its grant: its only tool is `convert_calendar` and it holds no writer tool, so the grant permits nothing that could happen and its own body says it writes nothing. Kept as-is because removing it would change an enforced writer set, which this manifest's promotion deliberately does not do.",
+      "requires": "record-extraction writes the atomic assertions and their three-layer classifications, first and final. No later pass refines them.",
+      "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
+      "remedy": "Extract through record-extraction, which owns classification. Reclassify by re-invoking it on the same record.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "person_evidence",
+      "owner": "skill:person-evidence",
+      "callers": ["skill:person-evidence"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "requires": "Only person-evidence links a persona to a tree person. The record-extraction lane is held off this section by tool identity: `extraction_append` does not accept it.",
+      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
+      "remedy": "Route the identity link through person-evidence.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "conflicts",
+      "owner": "skill:conflict-resolution",
+      "callers": ["skill:conflict-resolution"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "requires": "Only conflict-resolution opens, analyses, or settles a conflict.",
+      "failure": "An unresolved blocking conflict is what stops a project completing. A skill that marks one resolved without adjudicating it removes the block and the project completes over contradictory evidence.",
+      "remedy": "Adjudicate through conflict-resolution, which writes the analysis alongside the status.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "hypotheses",
+      "owner": "skill:hypothesis-tracking",
+      "callers": ["skill:hypothesis-tracking"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill.",
+      "requires": "Only hypothesis-tracking states a hypothesis or rules one out.",
+      "failure": "A ruled-out hypothesis rewritten by another skill loses the reasoning that ruled it out, and the same line gets re-researched.",
+      "remedy": "Route through hypothesis-tracking.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "timelines",
+      "owner": "skill:timeline",
+      "callers": ["skill:timeline"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
+      "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
+      "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
+      "remedy": "Regenerate through timeline.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "proof_summaries",
+      "owner": "skill:proof-conclusion",
+      "callers": ["skill:proof-conclusion"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. The unit plane cannot see that, because it grades a single skill's own run.",
+      "requires": "Only proof-conclusion writes a conclusion, and never more than one summary per `question_id`.",
+      "failure": "A summary written outside the skill skips the tier decision rules and the conflict preconditions, and the tree is then encoded from it.",
+      "remedy": "Conclude through proof-conclusion.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "evaluations",
+      "owner": "agent:gps-mentor",
+      "callers": ["agent:gps-mentor"],
+      "writerTools": ["research_append"],
+      "enforceableAt": [],
+      "notes": "The owner is an agent, and the unit ownership check keys on the calling skill's SKILL.md frontmatter name — it cannot express an agent owner, which is why this row is unenforceable on that plane rather than merely unenforced. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
+      "failure": "A skill appending its own evaluation grades its own work, and the mandatory proof critique becomes self-issued.",
+      "remedy": "Invoke gps-mentor and let it write the entry.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "localities",
+      "owner": "skill:locality-guide",
+      "callers": ["skill:locality-guide"],
+      "writerTools": ["research_append"],
+      "enforceableAt": ["unit"],
+      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it.",
+      "requires": "Only locality-guide surveys a place. A re-survey refreshes the existing `loc_` entry in place; there is no status field to supersede.",
+      "failure": "research-plan plans from these facts. A locality entry written by a skill that did not survey the place produces plan items for record sets that do not exist for that jurisdiction or era.",
+      "remedy": "Survey through locality-guide.",
+      "override": "none"
+    },
+    {
+      "artifact": "tree.gedcomx.json",
+      "section": "persons",
+      "owner": null,
+      "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`.",
+      "callers": [
+        "skill:init-project",
+        "skill:tree-edit",
+        "skill:proof-conclusion",
+        "skill:person-evidence"
+      ],
+      "writerTools": [
+        "tree_edit",
+        "tree_correct",
+        "materialize_facts",
+        "merge_tree_persons",
+        "tree_forget"
+      ],
+      "enforceableAt": ["unit"],
+      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else.",
+      "failure": "This file is the upload target. An unsourced person written here is uploaded to FamilySearch as fact.",
+      "remedy": "Mint through person-evidence with the record's facts attached; correct through tree-edit; conclude through proof-conclusion.",
+      "override": "none"
+    },
+    {
+      "artifact": "tree.gedcomx.json",
+      "section": "relationships",
+      "owner": null,
+      "reason": "The same four writers as `persons`, for the same reason — a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
+      "callers": [
+        "skill:init-project",
+        "skill:tree-edit",
+        "skill:proof-conclusion",
+        "skill:person-evidence"
+      ],
+      "writerTools": [
+        "tree_edit",
+        "tree_correct",
+        "merge_tree_persons",
+        "tree_forget"
+      ],
+      "enforceableAt": ["unit"],
+      "requires": "Every added edge carries a non-null source ref resolved from the relationship assertion it came from. record-extraction is assertion-only here: it writes the inferred relationship-type assertion and never the edge.",
+      "failure": "An unsourced parent-child edge uploads a claimed relationship with nothing behind it, and the warnings chain that would have caught an impossible one never sees it.",
+      "remedy": "Write the edge through person-evidence or tree-edit, carrying the source ref.",
+      "override": "none"
+    },
+    {
+      "artifact": "tree.gedcomx.json",
+      "section": "sources",
+      "owner": "skill:record-extraction",
+      "callers": [
+        "skill:init-project",
+        "skill:tree-edit",
+        "skill:proof-conclusion",
+        "skill:record-extraction"
+      ],
+      "writerTools": [
+        "research_append",
+        "extraction_append",
+        "tree_edit",
+        "tree_correct"
+      ],
+      "enforceableAt": ["unit"],
+      "notes": "person-evidence is a permitted writer of tree `persons` and `relationships` but not of this section: `materialize_facts` attaches a source ref to a node, it does not mint a source description. The prose ownership table listed it here; the code table did not, and the code is right.",
+      "requires": "record-extraction mints each `S` entry as the mirror of a `src_` it appends to research.json, through `research_append`'s composite source description. An `S` entry means the source was consulted, not that its conclusions are final.",
+      "failure": "A source description minted outside extraction has no `src_` behind it, so every `gedcomx_source_description_id` reference into it dangles at upload time.",
+      "remedy": "Let record-extraction mint the entry as part of the record's write; cite an existing one by its `S` id.",
+      "override": "none"
+    }
+  ]
+}

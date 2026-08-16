@@ -138,8 +138,8 @@ and will read as noise until filtered.
 
 ## 4. The enforcement layers
 
-Four layers, deliberately independent — each catches something the others
-cannot, and none depends on another shipping first.
+Deliberately independent — each catches something the others cannot, and none
+depends on another shipping first.
 
 | # | Layer | Binds in | Catches | Status |
 |---|---|---|---|---|
@@ -148,6 +148,7 @@ cannot, and none depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
@@ -155,27 +156,53 @@ cannot, and none depends on another shipping first.
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
 
-### The ownership table is not enforceable as a hard deny — measured
+### The ownership declaration: promoted out of Python, still not a hard deny
 
-`eval/harness/validators/test_universal.py` holds `OWNERSHIP_TABLE` and
-`TREE_OWNERSHIP_TABLE`, described in their own comment as the "single source of
-truth for which skills are allowed to write each research.json section", with
-default-deny for undeclared sections. It is the natural candidate for promotion
-to a write-boundary deny. **Replayed over the committed corpus, 2026-08-15, it is
-not:**
+**Where it lives now.** `docs/specs/schemas/ownership.json` — 19 rows, one per
+`(artifact, section)` pair across both project documents, loaded through
+`eval/harness/harness/ownership.py`. It replaced two dict literals inside
+`eval/harness/validators/test_universal.py`. Each row carries its owner (typed
+`skill:` / `agent:`, or `null` with a stated reason), the full permitted caller
+set, its writer tools, the enforcement planes it can be checked on, and what the
+rule requires / what breaks without it / what the caller should do instead.
+
+Three checks hold it, all free and all running on every push:
+
+- `packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts` — every
+  writable section of both schemas has exactly one row; every owner, caller and
+  writer tool resolves to something that ships.
+- `eval/harness/tests/unit/test_ownership_manifest.py` — the enforced writer sets
+  still equal the pre-promotion literals, pasted in verbatim, plus the two
+  declared deltas below.
+- `eval/harness/tests/unit/test_universal_ownership.py` — the *validators* still
+  behave, called directly. They have to be, because `pyproject.toml` sets
+  `testpaths = ["tests"]`: `validators/test_universal.py` is outside it, so its
+  ownership checks are never collected by `make harness-test` and their real
+  pass/fail set appears only inside a paid per-skill run.
+
+**What promotion did not change: it is still not a hard deny.** The rows are
+enforced on exactly one plane — the harness's universal validator, inside a paid
+per-skill eval run. Nothing keys on this manifest in Cowork, on the hosted path,
+or at any writer tool. The measurement below is why.
+
+#### Why a tool-boundary deny is still refused — measured
+
+The two literals were the natural candidate for promotion to a write-boundary
+deny. **Replayed over the committed corpus, 2026-08-15, they are not:**
 
 > **3,466 of 7,238 write units (47.9%) would have been denied, and at least
 > 1,345 of those denials (39%) are provably wrong** independent of who called —
 > the section has no row at all, or its only declared owner is a skill the corpus
 > never routes to.
 
-**Root cause: there are two vocabularies.** The pytest check diffs the **11**
+**Root cause: there were two vocabularies.** The pytest check diffed the **11**
 names in `REQUIRED_SECTIONS`; a tool-boundary deny sees `args.section`, whose
-vocabulary is **14** (including the `plan_items` pseudo-section). Four keys exist
-on one side only — `plan_items`, `evaluations`, `known_holdings` (tool-only) and
-`localities` (table-only) — and those four account for **1,307 of the 1,314
-no-owner denials**. A third key, `log`, is in neither: it is written by
-`research_log_append`, which has no `section` argument at all.
+vocabulary is **14** (including the `plan_items` pseudo-section). Four keys
+existed on one side only — `plan_items`, `evaluations`, `known_holdings`
+(tool-only) and `localities` (table-only) — and those four account for **1,307 of
+the 1,314 no-owner denials**. A third key, `log`, was in neither: it is written
+by `research_log_append`, which has no `section` argument at all. The manifest
+closes the vocabulary gap; what it does not close is everything below.
 
 | Row | False denies | Why |
 |---|---:|---|
@@ -194,24 +221,64 @@ times against 40** — wrong about two thirds of the time. A `Skill` call has no
 end marker, so every post-skill orchestrator write is charged to the last-named
 skill; median gap 19 tool calls, p90 82, max 359.
 
-**Four sections have no enforced owner at all**, from a separate writer census
-over the same corpus:
+**Four sections had no enforced owner at all**, from a separate writer census
+over the same corpus. Each now has a row, and the right-hand column is what that
+row says:
 
-| Section | Observed | Disposition |
+| Section | Observed | Row as promoted |
 |---|---|---|
-| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | agent-owned — and the ownership check keys on the calling *skill's* name, so it cannot express this |
-| `localities` | 73 ops, 71 to `locality-guide` | the paper row is correct and **has never once been evaluated** — it is not in `REQUIRED_SECTIONS` |
-| `known_holdings` | **zero successful writes corpus-wide** | speculative; nothing solicits it |
-| `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | **no tool can write it**; its owner uses a raw `Write` the lockdown denies |
+| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane**. The harness check keys on the calling *skill's* name and cannot see an agent, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
+| `localities` | 73 ops, 71 to `locality-guide` | `skill:locality-guide`, **newly enforced**. The paper row was always correct and had never once been evaluated — the check iterated `REQUIRED_SECTIONS`, which the section is not in |
+| `known_holdings` | **zero successful writes corpus-wide** | `owner: null` with a reason. Writable through `research_append`, solicited by nothing; the paper owners the prose table named have never written it, and repeating them here would read as coverage |
+| `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | `owner: null` with a reason. **No tool can write it**; its only route is a raw `Write` the lockdown denies |
 
-**What follows for anyone promoting this table.** Key the declaration on the
-union of the schema's top-level properties and `plan_items`, not on either
-vocabulary; keep every row that is enforced today enforced; and treat a row with
-no owner as a legal, *reasoned* state rather than inventing one — an invented
-owner reads as coverage. A structural impossibility to fix on the way past:
-`citation` is allowed on research `sources` and forbidden on tree `sources`,
-while `research_append` mints a tree source in the same call, so **`citation` can
-never create a source**.
+**How the declaration is keyed, and why.** On the **union** of three
+vocabularies, because each alone leaves a hole: the two schemas' top-level
+properties, plus the `plan_items` pseudo-section `research_append`'s `section`
+enum defines. Keying on `RESEARCH_APPEND_SECTIONS` alone would drop `log` (written
+by `research_log_append`, which takes no `section`) and `researcher_profile`;
+keying on the schema alone would drop `plan_items`, the single largest source of
+false denies in the replay above.
+
+**Two writer-set changes, and no others.** `localities` is newly enforced, as
+above. `questions` gains `proof-conclusion`: the `status -> resolved` transition
+it covers was owned by nobody — `proof-conclusion`'s body hands it to
+`question-selection`, `question-selection`'s body hands it back, and 150
+questions reached `resolved` across 154 runs from 11 different skill contexts.
+The prose table, the write-boundary gate's remedy text, and the batches that
+write a summary and its resolve together all name `proof-conclusion`. A widening
+cannot newly fail a test; the matching skill-body edit is a separate change,
+gated on that skill's paid run.
+
+**Three declared contradictions, recorded rather than repaired**, because
+repairing any of them changes an enforced writer set and this promotion
+deliberately does not:
+
+- `convert-dates` holds `assertions` while its only tool is `convert_calendar`.
+  It has no writer tool, so the grant permits nothing that could happen.
+- `hypotheses` and `timelines` name skills the e2e corpus routes to **zero**
+  times. The rows stay enforced because the unit corpus does exercise both.
+- `citation` is allowed on research `sources` and forbidden on tree `sources`,
+  while `research_append` mints a tree source in the same call, so **`citation`
+  can never create a source**. Read as a structural impossibility when it was
+  first measured; it is intended. citation's own description says it never
+  creates source entries and routes a new record to record-extraction.
+
+One name was checked and found already gone: 49 corpus writes are attributed to
+`assertion-classification`, a skill that stopped shipping when extraction
+absorbed it. It appears in no row, and the manifest lint now fails any owner or
+caller that does not resolve to a shipped skill directory or agent file.
+
+**A neighbouring gap, left open deliberately.** The ownership checks are off
+`REQUIRED_SECTIONS` now, but the two *other* validators that iterate it —
+no-entries-deleted and id-references-resolve — are not. So `localities`,
+`evaluations` and `known_holdings` are exempt from the no-delete rule that the
+prose ownership table states for all three. Widening the list is a three-word
+change and costs nothing measurable in the e2e corpus (zero deleted ids in any
+section across 153 runs, including the ten sections already covered), but the
+**unit** corpus is where that validator actually runs and it is unmeasured — the
+same reason `localities` ownership needed a count before it was switched on. Do
+that count before widening, not after.
 
 ### What is actually in the shadow-to-graduate pipeline
 

@@ -9,8 +9,8 @@ the LLM judge.
 The skill is read-only: it calls the validate_research_schema MCP tool
 and reports findings, but never edits research.json or tree.gedcomx.json.
 Universal validators in test_universal.py enforce that contract via
-the ownership table (validate-schema is absent from OWNERSHIP_TABLE
-and TREE_OWNERSHIP_TABLE → any write is flagged).
+the ownership manifest (validate-schema is named by no row of either
+artifact → any write is flagged).
 
 See test_universal.py module docstring for the validator function-
 signature contract.

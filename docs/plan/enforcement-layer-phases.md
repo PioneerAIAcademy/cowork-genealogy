@@ -1,13 +1,13 @@
 # Enforcement layer — the phase programme
 
-**Status: Phase 0 specified and unstarted; Phases 1–5 designed here, none
-started. 2026-08-16.** Three gates, the phase function, and the replay engine
-were built during the investigation and are uncommitted on
-`worktree-enforcement-layer-design` — they are *inputs* to this programme, not
-one of its phases. **Update this line as each phase lands, and delete a phase's
-section when it ships.** Two files in this directory once spent weeks claiming
-"not yet implemented" for work that had shipped; that is the failure this line
-exists to prevent.
+**Status: Phase 0 landed 2026-08-16 — the ownership declaration is
+`docs/specs/schemas/ownership.json`, 19 rows, with its two lints. Phases 1–5
+designed here, none started.** Three gates, the phase function, and the replay
+engine were built during the investigation — they are *inputs* to this
+programme, not one of its phases. **Update this line as each phase lands, and
+delete a phase's section when it ships.** Two files in this directory once spent
+weeks claiming "not yet implemented" for work that had shipped; that is the
+failure this line exists to prevent.
 
 **The goal is a comprehensive enforcement system, not a count of closed issues.**
 The originating investigation carried a pre-registered target of 12 issues; the
@@ -21,6 +21,7 @@ system, not the objective.
 | Artifact | Role |
 |---|---|
 | **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, override tiers. **The durable decision.** |
+| `docs/specs/schemas/ownership.json` | who may write each section of each project document, and on which planes that is checkable. The declaration every later phase keys on |
 | `docs/specs/guardrail-enforcement-spec.md` | what is enforced today, what is measurement, the measured findings |
 | root `PLAN.md` (gitignored) | the *current* phase only, as a per-task plan |
 | **this file** | the phases not yet started, and the dependencies between them |
@@ -28,12 +29,17 @@ system, not the objective.
 ## Sequencing, and the one hard constraint
 
 ```
-Phase 0  manifest ──────────┐
-Phase 1  seed writer ───────┼──> Phase 2  route closure   (HARD DEPENDENCY)
-Phase 3  first pair ────────┘
-Phase 4  remaining pairs        (needs #1253)
-Phase 5  detectors + controls   (independent, free, any time)
+Phase 0  manifest ─── LANDED ┐
+Phase 1  seed writer ────────┼──> Phase 2  route closure   (HARD DEPENDENCY)
+Phase 3  first pair ─────────┘
+Phase 4  remaining pairs         (needs #1253)
+Phase 5  detectors + controls    (independent, free, any time)
 ```
+
+Phase 3 takes its row from the landed manifest: `proof_summaries`, owner
+`skill:proof-conclusion`, `enforceableAt: ["unit"]` today. What that phase adds
+is the `tool` and `hook` planes — both already in the manifest's plane
+vocabulary, both claimed by no row yet.
 
 **The hard constraint: the seed must precede route closure.** Measured
 2026-08-15 — in Cowork with a connected folder, `init-project` creates both
