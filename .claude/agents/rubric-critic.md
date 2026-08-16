@@ -46,8 +46,9 @@ For skill `<X>` (paths relative to repo root):
      not rewriting it.** A rubric is capped at 5 dimensions, so one that grades
      nothing holds a slot a discriminating dimension could take, and every kept
      dimension is a cell a human reviews in the CRUD UI on every annotated run.
-     An empty `rubric.md` is a supported end state: the skill is then graded on
-     the base dimensions only. Before recommending a delete, name what would
+     Deleting every dimension is a supported end state — delete the `rubric.md`
+     file rather than leaving it empty, and the skill is graded on the base
+     dimensions only. Before recommending a delete, name what would
      still catch a regression on that axis — a validator in
      `eval/harness/validators/test_<X>.py`, or a base dimension. Where nothing
      would, recommend rewriting the dimension so it can fail instead. Say in the
