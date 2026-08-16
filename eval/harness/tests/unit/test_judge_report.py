@@ -225,3 +225,51 @@ def test_a_malformed_score_is_not_silently_counted_as_na():
 
     bools = collect_dimensions(_runlog({"Dim": [True, 3, 3]}), "demo")[0]
     assert bools.malformed == 1 and bools.graded == 2
+
+
+def test_a_windowed_out_skill_is_not_reported_as_having_no_run_log(capsys):
+    """The printing path — where a wrong *cause* is invisible to every other test.
+
+    Two different reasons a skill drops out: it has only `scratch_*` logs (never
+    measured), or it has releasable logs that all fall outside `--since`. Asking
+    the windowed lookup alone cannot tell them apart, and reporting the second as
+    the first is a false statement about the corpus — doubly so because the window
+    line above has already counted those skills.
+
+    The cutoff is DERIVED, not hardcoded: it is the newest run date in the corpus,
+    which guarantees the window genuinely splits the suites (some in, some out).
+    A fixed narrow window like `--since 1` looks stricter but is useless here — it
+    empties the corpus, so `main` returns early and prints nothing at all, and the
+    test passes against the very bug it is meant to catch. Verified by mutation.
+    """
+    from harness.since_window import run_date
+
+    dates = sorted(
+        {
+            d
+            for skill in judge_report.all_skills()
+            for path in judge_report.releasable_runlogs_for(skill)
+            if (d := run_date(path)) is not None
+        }
+    )
+    if len(dates) < 2:
+        return  # corpus too small to have an inside and an outside
+
+    rc = judge_report.main(["--since", dates[-1].isoformat()])
+    assert rc == 0
+    out = capsys.readouterr().out
+
+    not_measured = [
+        line for line in out.splitlines() if line.startswith("NOT MEASURED:")
+    ]
+    if not not_measured:
+        return  # nothing claimed unmeasured; nothing to mis-attribute
+
+    named = not_measured[0].split(":", 1)[1]
+    for skill in judge_report.all_skills():
+        if judge_report.releasable_runlogs_for(skill):  # un-windowed
+            assert skill not in named, (
+                f"{skill} has releasable run logs but is reported as having none; "
+                "it was dropped by the window, which is a different fact and is "
+                "already counted by the window line above"
+            )

@@ -380,16 +380,22 @@ def main(argv: list[str] | None = None) -> int:
     reports: list[SkillReport] = []
     stale: list[tuple[str, Any]] = []
     unmeasured: list[str] = []
+    windowed_out: list[str] = []
     for skill in skills:
+        # Two different reasons a skill can be absent, and they must not be
+        # conflated: never measured at all, versus measured but outside the
+        # window. Asking the windowed lookup alone cannot tell them apart, and
+        # reporting the second as the first is a false statement about the
+        # corpus — the more so because the window line above already counted it.
+        if not releasable_runlogs_for(skill):
+            # Only scratch_* run logs: never measured. A footer reading "across
+            # N suite(s)" over a silently shorter list is the same omission this
+            # reader flags staleness to avoid.
+            unmeasured.append(skill)
+            continue
         logs = releasable_runlogs_for(skill, cutoff=args.since)
         if not logs:
-            # Name it rather than dropping it. A skill whose only run logs are
-            # scratch_* has never been measured, which is a fact about the corpus
-            # worth seeing — and a footer reading "across N suite(s)" over a
-            # silently shorter list is the same silent-omission this reader flags
-            # staleness to avoid. (Every skill has one today; this is the guard
-            # for when one does not.)
-            unmeasured.append(skill)
+            windowed_out.append(skill)
             continue
         path = logs[-1]
         report = build_skill_report(skill, path)
@@ -417,6 +423,13 @@ def main(argv: list[str] | None = None) -> int:
             f"NOT MEASURED: {len(unmeasured)} skill(s) have no releasable run log "
             f"(scratch runs only) — they are absent from every count below: "
             f"{', '.join(sorted(unmeasured))}"
+        )
+        print()
+    if windowed_out:
+        print(
+            f"OUTSIDE THE WINDOW: {len(windowed_out)} skill(s) have a releasable run "
+            f"log, but none inside --since — they are absent from every count below: "
+            f"{', '.join(sorted(windowed_out))}"
         )
         print()
     if (note := describe_stale(stale)):
