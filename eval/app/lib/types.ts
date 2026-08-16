@@ -81,6 +81,111 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
  *     set *or override to* N/A even when the judge emitted a 1/2/3.
  */
+/**
+ * The tests a run log's annotation must cover, or `null` for "all of them".
+ *
+ * A run log written before sampling shipped — every committed one today — has
+ * no `review_sample` and keeps the original every-dimension rule. Keep this the
+ * single definition: a private second copy in `lib/fs/runlogs.ts` is exactly
+ * what let the run-log list badge and the release gate disagree on one file.
+ *
+ * Lives here rather than in `lib/fs/` because the scoring page is a client
+ * component and must not pull in `node:fs`.
+ */
+export function sampledTestIds(log: RunLogFile): Set<string> | null {
+  const sample = log.review_sample;
+  if (!sample) return null;
+  const ids = new Set(sample.tests ?? []);
+  // Fail CLOSED on anything untrustworthy, mirroring `check_runlogs.py`'s
+  // THREE guards. Failing open here is worse than in CI: an untrusted sample
+  // renders every test `not sampled`, makes `unreviewedDimensions` return
+  // nothing, and reports the annotation complete — so the UI green-lights a
+  // release that CI then rejects. That is the same UI-vs-CI split deleting the
+  // duplicate `isAnnotationComplete` was meant to end, and shipping two of the
+  // three guards reopened it for the third case.
+  const known = new Set(log.tests.map((t) => t.test_id));
+  for (const id of ids) if (!known.has(id)) return null;
+  // A sample naming only tests whose judge was skipped would require nothing —
+  // and this also covers an EMPTY sample, since `.some()` over no ids is false.
+  // An explicit `ids.size === 0` guard was tried here and was unreachable: it
+  // left its own test unable to fail, the same way three redundant guards did
+  // in `apply_routing_deference`. The Python side keeps its equivalent only
+  // because it emits a different warning message.
+  const gradeable = new Set(
+    log.tests
+      .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)
+      .map((t) => t.test_id),
+  );
+  if (![...ids].some((id) => gradeable.has(id))) return null;
+  return ids;
+}
+
+/**
+ * Sampled corrections that owe a written comment and do not have one.
+ *
+ * Cutting the pass ~3x is only worth having if the remaining cells are actually
+ * read, and a sentence is what makes that real. But a **confirmed pass** (judge
+ * 3, human agrees 3) is exempt: 8,717 of 9,753 corrections in the corpus
+ * (89.4%) are 3 -> 3, so requiring one there spends ~26 of every ~29 sentences
+ * on the cells least likely to carry anything. With the exemption a run needs
+ * ~3 sentences instead of ~29.
+ *
+ * The known cost, accepted: a shared false negative lives exactly in a
+ * confirmed 3 — ut_search_records_013 was judge-3 / human-3 five times on runs
+ * that violated the skill's own prohibitions. A comment mandate was never a
+ * strong guard there ("looks fine" satisfies it), so the targeted slot is what
+ * has to catch that class.
+ *
+ * Unsampled tests are exempt: nothing is asked of them, so a stray correction
+ * there is a bonus, not a debt.
+ *
+ * Lives here rather than in `lib/fs/` for the same reason as `sampledTestIds`:
+ * the scoring page is a client component and must not pull in `node:fs`.
+ */
+/** A grade the reviewer agreed with that asserts nothing went wrong: a pass, or
+ *  an N/A meaning the dimension never applied. Both are exempt from the comment
+ *  rule — 8,717 of 9,753 corrections are 3 -> 3 and 700 more are null -> null,
+ *  91% of them silent today, so requiring a sentence there is most of the cost
+ *  for the least likely yield. A confirmed 2 or 1 is NOT exempt: agreeing that
+ *  something went wrong is exactly when the reviewer should say what. */
+export function isConfirmedNonFailing(llm: Score, corrected: Score): boolean {
+  return llm === corrected && (llm === 3 || llm === null);
+}
+
+/**
+ * Whether this test owes comments at all — i.e. it is in a TRUSTED sample.
+ *
+ * Distinct from "must this test be reviewed", which is true for every test on a
+ * pre-sampling run log. Conflating the two made the comment rule fire on all 121
+ * committed run logs, where CI asks for nothing: every non-pass correction went
+ * red, "Next test" locked, and "Agree All" vanished — while the page's own
+ * Release gate reported the annotation complete. Two meanings, two predicates.
+ */
+export function testOwesComments(log: RunLogFile, testId: string): boolean {
+  const sampled = sampledTestIds(log);
+  return sampled !== null && sampled.has(testId);
+}
+
+export function uncommentedSampledCorrections(
+  log: RunLogFile,
+  ann: AnnotationFile | null,
+): Array<{ test_id: string; dimension_source: string; dimension_name: string }> {
+  const sampled = sampledTestIds(log);
+  if (!sampled) return []; // pre-sampling run log — the old rule, no comment debt
+  return (ann?.corrections ?? [])
+    .filter(
+      (c) =>
+        sampled.has(c.test_id) &&
+        !(c.comment ?? '').trim() &&
+        !isConfirmedNonFailing(c.llm_score, c.corrected_score),
+    )
+    .map((c) => ({
+      test_id: c.test_id,
+      dimension_source: c.dimension_source,
+      dimension_name: c.dimension_name,
+    }));
+}
+
 export function dimensionAllowsNa(
   source: DimensionSource,
   name: string,
@@ -188,6 +293,20 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * Run-log envelope (schema v3). Wraps a list of per-test entries with
  * metadata, snapshot, and version info.
  */
+/**
+ * Which tests a run log's annotation must cover. Absent on every run log
+ * written before sampling shipped, and on scratch/partial writes — readers
+ * treat absence as "every dimension of every test". Produced by the harness's
+ * `review_sample.py`; `cursor` is the rotation state, carried here because
+ * candidate pruning destroys the annotation history it would otherwise be
+ * derived from.
+ */
+export interface ReviewSample {
+  tests: string[];
+  cursor: string[];
+  seed: number;
+}
+
 export interface RunLogFile {
   schema_version: 3;
   skill: string;
@@ -198,6 +317,7 @@ export interface RunLogFile {
   timestamp: string;
   harness_version: string;
   model: string;
+  review_sample?: ReviewSample;
   judge_prompt_hash: string;
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;

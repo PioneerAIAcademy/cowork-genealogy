@@ -14,6 +14,7 @@ import path from 'node:path';
 import { repoRoot, runlogsUnitDir } from '../paths';
 import { diffSnapshotVsDisk, hashFile } from '../snapshot';
 import { classify, sortNewestFirst } from '../versioning';
+import { isAnnotationComplete as sharedIsAnnotationComplete } from './annotations';
 import type { RunLogFile, RunLogListEntry, AnnotationFile } from '../types';
 
 /**
@@ -85,21 +86,16 @@ async function isAnnotated(filePath: string): Promise<boolean> {
   }
 }
 
-/** True iff every dimension in every test has a correction entry. */
+/** True iff every dimension of every SAMPLED test has a correction entry.
+ *
+ * Delegates to `annotations.ts` rather than reimplementing the rule. A private
+ * copy lived here and silently kept the old every-dimension definition, so the
+ * run-log list badge would have contradicted the release gate on the same
+ * file. `null` annotation is still incomplete — an unreviewed run is not a
+ * complete one, whatever the sample says. */
 function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null): boolean {
   if (!ann) return false;
-  const have = new Set(
-    ann.corrections.map(
-      (c) => `${c.test_id}|${c.dimension_source}|${c.dimension_name}`,
-    ),
-  );
-  for (const t of log.tests) {
-    for (const d of t.outcome_summary.aggregated_dimensions) {
-      const key = `${t.test_id}|${d.source}|${d.name}`;
-      if (!have.has(key)) return false;
-    }
-  }
-  return true;
+  return sharedIsAnnotationComplete(log, ann);
 }
 
 async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null> {

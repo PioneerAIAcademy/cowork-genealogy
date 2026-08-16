@@ -34,7 +34,8 @@ and stop at the first that fits:
   2. Drop it. A nit costs triage every morning for as long as it stays open.
   3. Comment on the issue that already covers it (one search, then stop).
   4. File -- only by naming which exemption applies: different reviewer/skill;
-     a decision only the lead can make; a different skill's paid eval slot; or
+     a decision only the lead can make AND he is not reachable (a decision is a
+     question -- if you can ask, ask); a different skill's paid eval slot; or
      too big for this PR AFTER opening the call sites and counting files/lines.
 
 "I noticed it in passing" and "I'm not sure if this is in scope" are not
