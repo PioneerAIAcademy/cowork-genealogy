@@ -223,6 +223,51 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  *  the *current* op is the one setting/changing `tier` (see call site), so an
  *  unrelated update to an already-legitimately-proved entry (proved in an
  *  earlier, separate call) never re-triggers it. */
+/**
+ * A question may only be marked `resolved` once a proof summary exists for it.
+ *
+ * **Why this gate exists.** `status: "resolved"` is the orchestrator's stop
+ * condition, and today it is a free write: neither `proof-conclusion` nor
+ * `question-selection` claims it — each body explicitly points at the other —
+ * so it lands in whichever skill happens to be running when the agent decides
+ * it is done. Measured over 154 committed e2e runs: 150 questions reached
+ * `resolved`, written from **11 different skill contexts**.
+ *
+ * **Why it reads `research` LIVE, unlike the sibling completion gates.** Those
+ * snapshot before the call so a batch cannot satisfy its own precondition. That
+ * discipline is right when the precondition must be met by a *different actor* —
+ * a `gps-mentor` verdict is not something the writer may append for itself. Here
+ * the summary and the resolve are two halves of one author's single conclusion,
+ * and requiring separate calls would be friction with no safety gained.
+ * Measured: 7 of 154 resolve-calls append the summary in the same batch, and all
+ * 7 order the summary first — so a pre-call snapshot would refuse 7 correct
+ * writes while live state refuses none.
+ *
+ * The general rule, worth stating once: **snapshot when the precondition must be
+ * satisfied by someone else; read live when it is the same author's own prior
+ * step.**
+ *
+ * **Cost, measured before it was written: zero.** All 150 questions that reached
+ * `resolved` in the corpus have a proof summary. This gate would have refused
+ * nothing that ever happened.
+ *
+ * Deliberately NOT gated here, because both would refuse real runs and a false
+ * deny is the asymmetric risk: a prior exhaustive declaration (14 of 150 lack
+ * one) and non-empty `resolution_assertion_ids` (9 of 150 are empty). Both are
+ * surfaced advisorily by `project_context`'s `questionStatuses` instead.
+ */
+function questionResolvedInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "resolved") return [];
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
+  return [
+    `question ${entry?.id ?? "(no id)"} cannot be set to status "resolved": no proof summary ` +
+      "references it. A question is resolved by concluding it — invoke proof-conclusion, which " +
+      "writes the proof_summaries entry carrying question_id. If you are writing both in one " +
+      "batch, order the proof_summaries append BEFORE this update.",
+  ];
+}
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
@@ -615,6 +660,8 @@ function applyOne(
   op: ResearchAppendOp,
   appendedThisBatch?: Set<string>,
   preCallExhaustiveDeclared?: Map<string, boolean>,
+  preCallCritiquedSummaryIds?: Set<string>,
+  preCallBlockingConflicts?: any[],
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -667,13 +714,28 @@ function applyOne(
       // blocks_question_ids was also empty (issue #1001).
       const isIdentityConflict = (c: any) =>
         typeof c.identity_question === "string" && c.identity_question.trim() !== "";
-      const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
+      const live = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
         (c: any) =>
           c &&
           c.status === "unresolved" &&
           (isIdentityConflict(c) ||
             (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
       );
+      // Refuse on the UNION of the pre-call and live blocking sets, not on live
+      // alone. `applyOne` mutates `research` in place per op, so a live-only read
+      // let one batch resolve the conflict and complete in the same call — the
+      // gate grading its own homework, the exact defect the sibling mentor gate
+      // below was built to avoid. The union is strictly stronger than either
+      // half: the snapshot catches a conflict settled mid-batch, and the live
+      // read still catches one this batch newly introduced.
+      const blockingIds = new Set<string>(live.map((c: any) => c.id));
+      const blocking = [...live];
+      for (const c of preCallBlockingConflicts ?? []) {
+        if (!blockingIds.has(c.id)) {
+          blockingIds.add(c.id);
+          blocking.push(c);
+        }
+      }
       if (blocking.length > 0) {
         const names = blocking
           .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
@@ -684,6 +746,62 @@ function applyOne(
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
             "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
             "(with a rationale for why it no longer matters) — then retry completing the project.",
+        );
+      }
+
+      // Mentor gate: every proof summary backing a RESOLVED question must carry
+      // a gps-mentor `proof-critique` verdict before the project may complete.
+      //
+      // A pure foreign key — proof_summaries[].question_id joins the question
+      // (a question entry carries no ps_id), and evaluations[].target_id joins
+      // the summary. It reads only data already in memory, so unlike the
+      // sibling same_person gate there is nothing to invent and no new field to
+      // persist.
+      //
+      // **The critique set is the PRE-CALL snapshot, deliberately.** Read live,
+      // one batch could append its own proof-critique evaluation and consume it
+      // for the completed transition in the same call — the gate would grade its
+      // own homework. Same discipline as proofSummaryInvariants.
+      //
+      // Prose was tried on exactly this rule and lost: research/SKILL.md has
+      // carried "verify BOTH gates, in order — do not write completed until both
+      // hold" since PR #1029, and 23% of completed runs in the committed e2e
+      // corpus reach `completed` with at least one uncritiqued summary anyway.
+      //
+      // A superseded verdict does not count: if a newer verdict replaced it, the
+      // newer one is itself in evaluations[] and satisfies the gate; if nothing
+      // replaced it, the critique genuinely no longer stands.
+      const resolvedQuestionIds = new Set(
+        (Array.isArray(research.questions) ? research.questions : [])
+          .filter((q: any) => q && (q.status === "resolved" || q.resolved === true))
+          .map((q: any) => q.id),
+      );
+      const uncritiqued = (
+        Array.isArray(research.proof_summaries) ? research.proof_summaries : []
+      )
+        .filter(
+          (ps: any) =>
+            ps &&
+            resolvedQuestionIds.has(ps.question_id) &&
+            !preCallCritiquedSummaryIds?.has(ps.id),
+        )
+        .map((ps: any) => ps.id);
+      // A resolved question with NO proof summary passes vacuously, knowingly.
+      // Nothing in the schema marks which question answers the objective, so no
+      // mechanically checkable discriminator separates "closed a side question
+      // with no candidates" — a legitimate terminal state — from the hazard
+      // issue #1395 describes. Refusing here would hard-block correct work, and
+      // a false deny is the asymmetric risk. Phase 2's tree-encoding gate is
+      // where an unencoded conclusion gets caught.
+      if (uncritiqued.length > 0) {
+        throw new ResearchAppendError(
+          `cannot set project.status = "completed": proof summary/summaries ` +
+            `${uncritiqued.join(", ")} have no gps-mentor verdict. ` +
+            "Every proof summary backing a resolved question must be critiqued before " +
+            "the project is completed. Invoke the gps-mentor agent with " +
+            "focus: proof-critique on each id above — it appends the verdict to " +
+            "evaluations[] — then retry completing the project. A verdict appended in " +
+            "the same batch as this update does not count; complete it in a later call.",
         );
       }
     }
@@ -816,6 +934,17 @@ function applyOne(
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
+  // A question may only reach `resolved` once a proof summary for it exists.
+  // Same "only when THIS op sets it" discipline as the proof_summaries block
+  // below — an unrelated update to an already-resolved question must not
+  // re-trigger it.
+  if (section === "questions") {
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "status");
+    if (statusTouchedThisOp) {
+      invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
+    }
+  }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
@@ -1491,6 +1620,31 @@ export async function researchAppend(
         q?.exhaustive_declaration?.declared === true,
       ]),
     );
+    // Same discipline, for the mentor gate on project.status = "completed":
+    // the proof summaries that already carry a gps-mentor proof-critique
+    // verdict, as of BEFORE this call's ops. Snapshotting is what stops a
+    // single batch appending the verdict and consuming it for the completion
+    // transition in one call.
+    // Same discipline again, for the conflict half of the completion gate: the
+    // conflicts that were blocking BEFORE this call's ops. Without it a single
+    // batch could resolve the conflict and complete in one go.
+    const preCallBlockingConflicts = (
+      Array.isArray(research.conflicts) ? research.conflicts : []
+    ).filter(
+      (c: any) =>
+        c &&
+        c.status === "unresolved" &&
+        ((typeof c.identity_question === "string" && c.identity_question.trim() !== "") ||
+          (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+    );
+    const preCallCritiquedSummaryIds = new Set<string>(
+      (Array.isArray(research.evaluations) ? research.evaluations : [])
+        .filter(
+          (e: any) =>
+            e && e.focus === "proof-critique" && !e.superseded_by && typeof e.target_id === "string",
+        )
+        .map((e: any) => e.target_id as string),
+    );
     // Heal legacy tree shapes in memory; the healed document is what a
     // composite write persists (same one-shot migration as tree_edit). A
     // research-only call still never writes the tree.
@@ -1555,7 +1709,16 @@ export async function researchAppend(
     const appendedThisBatch = new Set<string>();
     for (let i = 0; i < ops.length; i++) {
       try {
-        applied.push(applyOne(research, ops[i], appendedThisBatch, preCallExhaustiveDeclared));
+        applied.push(
+          applyOne(
+            research,
+            ops[i],
+            appendedThisBatch,
+            preCallExhaustiveDeclared,
+            preCallCritiquedSummaryIds,
+            preCallBlockingConflicts,
+          ),
+        );
       } catch (e) {
         if (e instanceof ResearchAppendError) {
           // Identify the failing op; nothing has been written.

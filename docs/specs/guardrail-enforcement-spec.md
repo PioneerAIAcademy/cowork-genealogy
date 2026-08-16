@@ -149,6 +149,39 @@ cannot, and none depends on another shipping first.
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 
+> **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
+> 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
+> project files are written through the **device bridge**, whose tool names its
+> matcher does not cover — while `Write`, which it does deny, cannot reach the
+> user's files at all. It denies the harmless operation and permits the real one.
+
+### What is actually in the shadow-to-graduate pipeline
+
+Measured over the whole corpus, `make e2e-guardrail-shadow SINCE=all`, 154 runs,
+2026-08-16 — **the pipeline is not full of checks waiting on a measurement;
+three of them have one, and it is zero:**
+
+| Check | Fires | Status |
+|---|---:|---|
+| §7 caller-attributed recency | 811 (window 40), 127 runs | **retired permanently**, not queued |
+| §8 live `same_person` provenance | **7**, 5 runs | the only graduatable check with a real rate |
+| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | never fired |
+| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | never fired |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **0**, 0 runs | never fired |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 15 of 154 runs | blocked on corpus growth |
+
+**A zero fire rate is not a licence to graduate.** The citation-nulling check's
+own graduation gate reads "only
+if the rate is low enough that a fail is a signal and not a wall" — zero is not
+"low enough", it is *nobody has seen this detector fire*. Graduating it promotes
+an unexercised predicate to a hard failure.
+
+**And nothing distinguishes the two readings of a zero:** either the behaviour
+never occurs, or the detector is broken. That failure is already documented here
+— the mentor-verdict arm read 0 where recomputation gives 8. **Before any of the
+three graduates, it needs a synthetic fixture that makes it fire** — a positive
+control, offline and free.
+
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
 until something is retained to detect against — the hosted path persists no
@@ -414,6 +447,79 @@ the real script; `apps/server/tests/test_write_lockdown.py`;
 **agree** — extracting each copy's constant and predicate with `ast` and running
 them against one vector set, so the next `PROTECTED_PROJECT_FILES` change cannot
 land in one copy only.
+
+### 6.1 The lockdown is inert — and inverted — in Cowork with a connected folder
+
+**Measured live, 2026-08-15, on both macOS and Windows.** This is the most
+consequential finding about §6 and it is not what the section above assumes.
+
+In Cowork with a connected folder, the agent runs in a **cloud sandbox**
+(`cwd` = `/home/claude`) and reaches the user's project **over the device
+bridge**. Consequences, all observed rather than inferred:
+
+- **`init-project` created both protected files through
+  `mcp__remote-devices__device_commit_files`.** Across the run's 47 logged calls,
+  `Write`, `Edit` and `NotebookEdit` appear **nowhere**. The guard's matcher is
+  `Write|Edit|NotebookEdit`, so **it never fired** — and this was the ordinary
+  onboarding path, not an agent improvising.
+- **`Write` cannot reach the user's files at all.** It operates on the container
+  filesystem; the staged copy of the connected folder is read-only. A `Write` to
+  the user's `research.json` creates a *container-local* file, reports success,
+  and changes nothing on disk.
+
+So the lockdown **denies the operation that cannot do harm and permits the one
+that can.** An unvalidated byte-level append to `research.json` landed on the
+user's disk through the shell path during the same session.
+
+**Route closure is possible, and was demonstrated.** A canary hook shipped in the
+plugin denied both bridge write routes, before execution, with nothing written:
+
+| tool | result |
+|---|---|
+| `mcp__remote-devices__device_bash` | **denied** |
+| `mcp__remote-devices__device_commit_files` | **denied** |
+| `Write` | denied |
+
+That removes the doubt on which the 2026-08-11 deferral partly rested — a
+name-matcher *does* bind against a registrar the plugin does not control. The
+bridge surface is nine tools: `device_bash`, `device_commit_files`,
+`device_stage_files`, `device_list_dir`, `device_request_folder_access`,
+`get_device_info`, `create_artifact`, `list_artifacts`, `update_artifact`.
+
+**One route no matcher closes, and the spec should say so rather than imply
+otherwise.** With every programmatic path denied, the agent wrote the file into
+the container via `Bash` and delivered it to the user through `SendUserFile` for
+manual placement. Nothing reached disk programmatically, so the lockdown held —
+**its guarantee is over *programmatic* writes, not over the file's contents.** A
+human placing a file is out of scope by design.
+
+**A related boundary this layer does not provide.** `SendUserFile` is permitted,
+and the session also holds Gmail `send_message` and Drive `share_file`. The
+lockdown protects the *integrity* of the project documents; it says nothing about
+*exfiltration*. Those are different guarantees.
+
+### 6.2 What the `PreToolUse` payload actually carries
+
+Recorded from a live Cowork session so nobody re-derives it:
+
+```
+cwd, effort, hook_event_name, permission_mode, prompt_id,
+session_id, tool_input, tool_name, tool_use_id, transcript_path
+```
+
+- **`agent_id` is absent as a key on the main thread** and present inside a
+  Task-spawned subagent — confirming in production the discriminator
+  `context_policy.is_subagent_call` depends on.
+- **`agent_type` for a plugin agent is NAMESPACED** —
+  `genealogy-research:image-reader` — while a built-in reports bare
+  (`general-purpose`). **A caller rule written as
+  `agent_type == "record-extractor"` never fires in production**, and with a
+  `deny unless ==` polarity it denies every caller including the owner.
+- `permission_mode`, `session_id` and `transcript_path` are available and unused
+  by anything today. `transcript_path` in particular means a hook has a handle on
+  session history without keeping its own state — subject to its 20s timeout.
+- The hook **cannot** read the project documents: `cwd` is the sandbox, and the
+  connected folder is not mounted there.
 
 ## 7. Caller-attributed recency check (shadow mode)
 

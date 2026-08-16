@@ -1149,6 +1149,238 @@ describe("research_append (project singleton section)", () => {
     const r = await complete();
     expect(r.ok).toBe(true);
   });
+
+  // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
+  // Prose carried this rule since PR #1029 ("verify BOTH gates, in order — do
+  // not write completed until both hold") and 23% of completed runs in the
+  // committed e2e corpus reach `completed` with at least one uncritiqued
+  // summary anyway. This is that rule at the write boundary.
+
+  const resolvedQuestion = () => ({
+    id: "q_001",
+    question: "Who were the parents of John Smith?",
+    rationale: "Objective-answering question.",
+    selection_basis: "objective_decomposition",
+    priority: "high",
+    status: "resolved",
+    depends_on: [],
+    unblocks: [],
+    created: "2026-01-01",
+    resolved: "2026-01-02",
+    resolution_assertion_ids: ["a_001"],
+    exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: {} },
+  });
+  const summary = (id = "ps_001", questionId = "q_001") => ({
+    id,
+    question_id: questionId,
+    tier: "proved",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_001"],
+    resolved_conflict_ids: [],
+    exhaustive_search_summary: "Every identified repository was searched.",
+    narrative_markdown: "The evidence establishes the parentage.",
+  });
+  const critique = (targetId = "ps_001", extra: Record<string, unknown> = {}) => ({
+    id: "ev_001",
+    focus: "proof-critique",
+    target_id: targetId,
+    target_type: "proof_summary",
+    verdict: "looks_solid",
+    file_path: "evaluations/proof-critique-ps_001.json",
+    timestamp: "2026-01-02T00:00:00Z",
+    superseded_by: null,
+    ...extra,
+  });
+  const withProof = (evaluations: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    r.questions.push(resolvedQuestion());
+    r.proof_summaries.push(summary());
+    r.evaluations.push(...evaluations);
+    return r;
+  };
+
+  // ── questions: `resolved` requires a proof summary ──
+  // `status: "resolved"` is the orchestrator's stop condition and was a free
+  // write — neither proof-conclusion nor question-selection claims it, and it
+  // landed from 11 different skill contexts across the corpus. Measured cost of
+  // this gate: 0 refusals across all 150 questions that ever reached resolved.
+
+  it("refuses status resolved when no proof summary references the question", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/q_001/);
+    expect(msg).toMatch(/proof-conclusion/);
+    const research = await readResearch();
+    expect(research.questions[0].status).toBe("open"); // nothing written
+  });
+
+  it("allows status resolved once a summary references it", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows the summary and the resolve in ONE batch, summary first", async () => {
+    // Reads live state on purpose: the summary and the resolve are two halves of
+    // one author's conclusion, unlike the mentor verdict which must come from a
+    // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
+    // the summary ordered first — a pre-call snapshot would refuse all 7.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    await writeProject(r0);
+    // tier `possible` — a proved/probable summary additionally requires a prior
+    // exhaustive declaration, which is a different invariant than the one under
+    // test and would mask it.
+    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "proof_summaries", op: "append", entry: summaryEntry as never },
+        { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not re-trigger on an unrelated update to an already-resolved question", async () => {
+    // The op must be the one SETTING status, or every later edit to a resolved
+    // question re-runs the gate — the same discipline the tier invariant uses.
+    const r0 = baseResearch();
+    r0.questions.push(resolvedQuestion());
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { rationale: "Clarified after review." },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("a batch cannot resolve its own blocking conflict and complete", async () => {
+    // The conflict gate used to read `research.conflicts` LIVE, and applyOne
+    // mutates in place per op — so one batch could settle the conflict and
+    // complete in the same call. Same defect the mentor gate's snapshot avoids.
+    await writeProject(withConflict(conflictBase()));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "conflicts",
+          op: "update",
+          entryId: "c_001",
+          fields: {
+            status: "resolved",
+            resolution_rationale: "The certificate names a different man.",
+            independence_analysis: "Sources are independent.",
+            weighing_analysis: "The parish register is decisive.",
+            preferred_assertion_id: "a_001",
+          },
+        },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/c_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("refuses completed when a resolved question's proof summary has no mentor verdict", async () => {
+    await writeProject(withProof());
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/ps_001/);
+    expect(msg).toMatch(/proof-critique/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("allows completed once the summary carries a proof-critique verdict", async () => {
+    await writeProject(withProof([critique()]));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not count a superseded verdict", async () => {
+    // If a newer verdict replaced it, that one is itself in evaluations[] and
+    // satisfies the gate. If nothing replaced it, the critique no longer stands.
+    await writeProject(withProof([critique("ps_001", { superseded_by: "ev_002" })]));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
+  it("a batch cannot satisfy its own precondition", async () => {
+    // The critique set is snapshotted before any op applies, so appending the
+    // verdict and completing in one call must still refuse. Read live, the gate
+    // would grade its own homework.
+    await writeProject(withProof());
+    // The tool assigns entry ids, so an append entry must not carry one.
+    const { id: _id, ...critiqueEntry } = critique();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "evaluations", op: "append", entry: critiqueEntry as never },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("a resolved question with no proof summary passes vacuously, deliberately", async () => {
+    // Issue #1395's hazard, decided rather than left undefined. Nothing in the
+    // schema marks which question answers the objective, so no mechanically
+    // checkable discriminator separates "closed a side question with no
+    // candidates" — legitimate — from the hazard. Refusing would hard-block
+    // correct work, and a false deny is the asymmetric risk. Phase 2's
+    // tree-encoding gate is where an unencoded conclusion gets caught.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("ignores a summary whose question is not resolved", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────

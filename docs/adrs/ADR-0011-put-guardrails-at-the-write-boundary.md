@@ -7,12 +7,12 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-11 (read-tool carve-out added; issue-filing gate added to Applies to)
+- **Last updated:** 2026-08-16 (the placement table becomes the six-substrate **layer map** with a decision procedure; snapshot-vs-live rule added; override tiers added)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
-- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509, #1081
+- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509, #1081, #1273, #1399
 
 ## Context
 
@@ -68,15 +68,61 @@ observed live in Cowork 2026-08-09). Three of those carry `needs-decision`.
 persists the state, or a `PreToolUse` hook where no writer tool owns the route.
 Prose states the rule; it does not enforce it.**
 
-Concretely, this is a placement question with five answers:
+Concretely, this is a placement question with six answers — **the layer map**:
 
-| The rule constrains… | Put it in |
-|---|---|
-| a value or a state transition in `research.json` / `tree.gedcomx.json` | the writer tool, evaluated against the **pre-call** snapshot so one batch cannot satisfy its own precondition |
-| a route no writer tool owns — raw `Write`/`Edit`, the shell | the plugin `PreToolUse` hook (ADR-0005), the only guardrail that reaches Cowork |
-| what one delegated agent may touch | tool identity plus a `disallowedTools:` deny (ADR-0006) |
-| judgment exercised inside a single invocation | prose — that is what prose is for |
-| a resource budget on a read tool — pages, calls, elapsed spend — where the failure is a loop, not a bad state | the read tool, as an **advisory field on a successful result**; nothing is refused (see the read-tool row in Alternatives considered) |
+| Substrate | Owns | The test an author applies |
+|---|---|---|
+| **Writer tool** (precondition) | a value or a state transition in `research.json` / `tree.gedcomx.json`; every MUST; every completion gate; every foreign key | *"Can this be decided by reading the documents alone?"* If yes it goes here and nowhere else. **The only substrate that binds in all five environments.** |
+| **Schema validator** | document *shape* — types, closed enums, required fields, id patterns, referential integrity | *"Would violating this make the document malformed, rather than merely wrong?"* This is the **integrity tier — not overridable.** |
+| **`PreToolUse` hook** | a route no writer tool owns (raw `Write`/`Edit`, the shell, the device bridge), and any rule that turns on **who** is calling | *"Does this depend on the caller?"* Only substrate that can restrain the main thread (ADR-0005). **Fails open** — never the sole guarantee for anything that matters. |
+| **Agent frontmatter** | what one delegated agent may touch | tool identity plus a `disallowedTools:` deny (ADR-0006). Binds under `bypassPermissions`; a missing deny fails open **silently**. |
+| **Tool description** | what the model must know *at the moment of the call* but that no predicate can enforce — paging, argument choice, budget notices | *"Does the model need this to choose correctly, and is it advice rather than a constraint?"* Reloaded after compaction; **strength unmeasured** — two rules already in `record_search`'s schema decay anyway. Includes the advisory-field shape for a read-tool resource budget. |
+| **Harness validator** | rules judgeable only over a **whole run** — bypass detection, episode analysis, compliance axes | *"Does evaluating this need the whole run?"* **Eval-only; never reaches production** — say so wherever one is added. |
+| **Prose** | judgment exercised inside a single invocation | *"Is this a matter of judgment no predicate can express?"* **Not an enforcement layer.** State the rule; label it guidance. |
+
+**The decision procedure** — take the first row that fits, in this order:
+
+1. Decidable from the documents? → **writer tool**.
+2. About shape rather than content? → **schema validator**.
+3. Turns on who is calling? → **hook**, and only with a writer-tool backstop.
+4. Only judgeable over a whole run? → **harness validator**, labelled eval-only.
+5. Needed at call time but unenforceable? → **tool description**.
+6. Otherwise → **prose, labelled as guidance rather than as a rule.**
+
+### Snapshot or live — the rule that decides
+
+A writer-tool precondition reads either the **pre-call snapshot** or the **live**
+document, and picking wrong is a silent false-deny or a self-satisfying gate:
+
+> **Snapshot when the precondition must be satisfied by someone else. Read live
+> when it is the same author's own prior step.**
+
+A `gps-mentor` verdict is not something the writer may append for itself, so the
+mentor gate snapshots. A proof summary and its question's `resolved` flip are two
+halves of one author's conclusion, so that gate reads live — measured: 7 of 154
+corpus resolve-calls write both in one batch, all with the summary ordered first,
+so a snapshot would refuse 7 correct writes.
+
+### Overridable or not — two tiers
+
+The researcher **must** be able to override a doctrine gate (lead ruling,
+2026-08-15). A system that can only refuse, used by professionals who are
+sometimes right, becomes the thing people route around — which is the failure
+being fixed.
+
+- **Integrity gates are not overridable**: schema validity, and the raw-write
+  lockdown. Overriding either yields an unvalidated document, which is what the
+  layer exists to prevent.
+- **Doctrine gates are overridable**, and the override must be attributable to
+  the *human*: the tool records the refusal with an id, and the override is a
+  **separate write** referencing that id and carrying a justification that
+  persists and is visible. An `override` field on the original call is forgeable
+  by the caller — the same reason a lane expressed as a tool parameter does not
+  hold (ADR-0006).
+
+**The override rate is the calibration signal.** A rule overridden often is a
+wrong rule — and it is the only satisfiability measurement that generates itself
+in production, which every shadow-mode check in this repo has lacked.
 
 The first row is the default and the cheapest: it is caller-agnostic, so it binds
 identically in Cowork, the hosted path, and both harnesses, and it needs no new

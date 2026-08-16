@@ -60,6 +60,13 @@ repo's identifier-casing rule):
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
   }],
+  questionStatuses: [{                   // ADVISORY — see below. One per question,
+    id: string,                          //   including resolved ones.
+    state: "framed" | "planned" | "searching"
+         | "evidence-gathered" | "concluded" | "critiqued",
+    nextStep: string | null,             // null = nothing outstanding
+    openConflictIds: string[],           // unresolved conflicts bearing on it
+  }],
   persons: [{
     id: string,                          // I id (or FS id)
     name: string | null,                 // preferred names entry, "Given Surname"
@@ -98,6 +105,46 @@ Projection rules:
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
 non-object entries.
+
+### 2.2 `questionStatuses` — advisory, and deliberately not a gate
+
+Per **question**, never per project: a project holds several questions at
+several states at once, so any single project-wide phase is wrong on arrival.
+
+The ladder is monotonic on what was **produced**, not on tidiness — a question
+with a proof summary is `concluded` even if its plan is thin, because the
+artifact is what every downstream check joins on.
+
+| state | reached when |
+|---|---|
+| `framed` | the question exists, no plan references it |
+| `planned` | a plan carries `question_id` = this question |
+| `searching` | a log entry names one of that plan's items |
+| `evidence-gathered` | an assertion lists it in `extracted_for_question_ids` |
+| `concluded` | a proof summary carries `question_id` = this question |
+| `critiqued` | every such summary has a live `proof-critique` evaluation |
+
+`nextStep` orders by what blocks what: an unresolved conflict outranks a missing
+critique, which outranks a missing summary. A superseded verdict does not count
+— a replacement is itself present and satisfies the join; if nothing replaced it,
+the critique no longer stands.
+
+**Nothing gates on this field, and that is the design.** `research_append`
+computes its completion preconditions independently, so this can never be the
+reason a write is refused. Two consequences worth stating so they are not
+"tidied" later:
+
+- It reports the same condition the completion gate refuses on **and** the
+  resolved-with-no-proof-summary case that gate deliberately lets pass. Advising
+  on more than is enforced is correct here: a prompt costs nothing when wrong.
+- Because it cannot refuse, it cannot cause an availability regression, which is
+  what makes it safe to ship ahead of the experiment measuring whether it changes
+  routing at all. A state machine that could *deny* activity would have to infer
+  intent the document does not carry.
+
+The same predicates were first written against the committed e2e corpus, where
+they reproduced an independent count of the completion gate's population to
+within two runs.
 
 ## 3. Decisions recorded
 
