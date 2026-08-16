@@ -107,4 +107,4 @@ __pycache__/
 apps/server/sandbox/.last-image-build
 
 # FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
-warnings.java
+warnings.java/PROBES.md

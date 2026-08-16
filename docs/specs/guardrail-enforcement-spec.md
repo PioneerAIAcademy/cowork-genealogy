@@ -155,6 +155,64 @@ cannot, and none depends on another shipping first.
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
 
+### The ownership table is not enforceable as a hard deny — measured
+
+`eval/harness/validators/test_universal.py` holds `OWNERSHIP_TABLE` and
+`TREE_OWNERSHIP_TABLE`, described in their own comment as the "single source of
+truth for which skills are allowed to write each research.json section", with
+default-deny for undeclared sections. It is the natural candidate for promotion
+to a write-boundary deny. **Replayed over the committed corpus, 2026-08-15, it is
+not:**
+
+> **3,466 of 7,238 write units (47.9%) would have been denied, and at least
+> 1,345 of those denials (39%) are provably wrong** independent of who called —
+> the section has no row at all, or its only declared owner is a skill the corpus
+> never routes to.
+
+**Root cause: there are two vocabularies.** The pytest check diffs the **11**
+names in `REQUIRED_SECTIONS`; a tool-boundary deny sees `args.section`, whose
+vocabulary is **14** (including the `plan_items` pseudo-section). Four keys exist
+on one side only — `plan_items`, `evaluations`, `known_holdings` (tool-only) and
+`localities` (table-only) — and those four account for **1,307 of the 1,314
+no-owner denials**. A third key, `log`, is in neither: it is written by
+`research_log_append`, which has no `section` argument at all.
+
+| Row | False denies | Why |
+|---|---:|---|
+| `plan_items` absent from the table | **1,134** | the tool defines the section; the table's own comment *blesses* the status flip it would deny |
+| `evaluations` absent | 172 | a schema-required section; denying it kills the mandatory proof-critique |
+| `hypotheses` → `{hypothesis-tracking}` | 31 | that skill is invoked **0 times in 154 runs** |
+| three rows narrower than the prose table they mirror | 72 | incl. `questions` omitting `proof-conclusion` |
+| `known_holdings` absent | 1 | the prose table declares owners; the code row is missing |
+
+Repairing those drops the rate to 34.9%; the residue is dominated by attribution
+artifact.
+
+**Caller-dependent rows cannot be validated offline at all.** Where both signals
+exist, Skill-proximity attribution **disagrees with measured `agent_type` 81
+times against 40** — wrong about two thirds of the time. A `Skill` call has no
+end marker, so every post-skill orchestrator write is charged to the last-named
+skill; median gap 19 tool calls, p90 82, max 359.
+
+**Four sections have no enforced owner at all**, from a separate writer census
+over the same corpus:
+
+| Section | Observed | Disposition |
+|---|---|---|
+| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | agent-owned — and the ownership check keys on the calling *skill's* name, so it cannot express this |
+| `localities` | 73 ops, 71 to `locality-guide` | the paper row is correct and **has never once been evaluated** — it is not in `REQUIRED_SECTIONS` |
+| `known_holdings` | **zero successful writes corpus-wide** | speculative; nothing solicits it |
+| `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | **no tool can write it**; its owner uses a raw `Write` the lockdown denies |
+
+**What follows for anyone promoting this table.** Key the declaration on the
+union of the schema's top-level properties and `plan_items`, not on either
+vocabulary; keep every row that is enforced today enforced; and treat a row with
+no owner as a legal, *reasoned* state rather than inventing one — an invented
+owner reads as coverage. A structural impossibility to fix on the way past:
+`citation` is allowed on research `sources` and forbidden on tree `sources`,
+while `research_append` mints a tree source in the same call, so **`citation` can
+never create a source**.
+
 ### What is actually in the shadow-to-graduate pipeline
 
 Measured over the whole corpus, `make e2e-guardrail-shadow SINCE=all`, 154 runs,
