@@ -118,7 +118,13 @@ class DimensionStats:
 
     @property
     def instances(self) -> int:
-        return self.graded + self.na
+        """Every grading this dimension received, whatever shape it came in.
+
+        Includes `malformed`: it is the denominator behind `unreviewed`, and a
+        grading with an unreadable score is still a grading a human either did or
+        did not review. Excluding it would quietly undercount what is outstanding.
+        """
+        return self.graded + self.na + self.malformed
 
     @property
     def distinct(self) -> list[int]:
@@ -381,6 +387,7 @@ def main(argv: list[str] | None = None) -> int:
     stale: list[tuple[str, Any]] = []
     unmeasured: list[str] = []
     windowed_out: list[str] = []
+    unreadable: list[tuple[str, str, str]] = []
     for skill in skills:
         # Two different reasons a skill can be absent, and they must not be
         # conflated: never measured at all, versus measured but outside the
@@ -398,7 +405,16 @@ def main(argv: list[str] | None = None) -> int:
             windowed_out.append(skill)
             continue
         path = logs[-1]
-        report = build_skill_report(skill, path)
+        try:
+            report = build_skill_report(skill, path)
+        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+            # One unreadable run log must not take the other 24 suites with it.
+            # An analysis tool that dies on a single truncated file is one nobody
+            # can use to diagnose the corpus it is meant to describe. Named on
+            # stderr and excluded from every count, the way `e2e/corpus_report.py`
+            # handles the same case.
+            unreadable.append((skill, path.name, str(e)))
+            continue
         d = run_date(path)
         if d is not None and d < cutoff:
             report.stale_days = age_in_days(d)
@@ -407,7 +423,31 @@ def main(argv: list[str] | None = None) -> int:
 
     if not reports:
         target = f" for skill {args.skill!r}" if args.skill else ""
-        print(f"No releasable run logs found{target}.", file=sys.stderr)
+        # Three different reasons the report can be empty, and each sends the
+        # reader somewhere different: fix a file, widen the window, or run a
+        # suite. Collapsing them into "none found" is the mislabelling this
+        # module has now had to correct three times.
+        if unreadable:
+            for skill, name, err in unreadable:
+                print(f"  skip {skill}/{name}: {err}", file=sys.stderr)
+            print(
+                f"No readable run logs{target}: "
+                f"{len(unreadable)} run log(s) exist but could not be parsed (above).",
+                file=sys.stderr,
+            )
+        elif windowed_out:
+            # Say which fact is true. "No releasable run logs found" is false
+            # here — they exist, the window excluded them — and it sends the
+            # reader looking for a missing corpus instead of widening --since.
+            # Same mislabelling the NOT MEASURED line carried.
+            print(
+                f"No run logs inside the window{target}: "
+                f"{len(windowed_out)} skill(s) have releasable run logs, but none "
+                f"on/after the --since cutoff. Widen it, or pass --since all.",
+                file=sys.stderr,
+            )
+        else:
+            print(f"No releasable run logs found{target}.", file=sys.stderr)
         return 1
 
     # Stale rows last, so a skim reaches the trustworthy numbers first.
@@ -430,6 +470,14 @@ def main(argv: list[str] | None = None) -> int:
             f"OUTSIDE THE WINDOW: {len(windowed_out)} skill(s) have a releasable run "
             f"log, but none inside --since — they are absent from every count below: "
             f"{', '.join(sorted(windowed_out))}"
+        )
+        print()
+    if unreadable:
+        for skill, name, err in unreadable:
+            print(f"  skip {skill}/{name}: {err}", file=sys.stderr)
+        print(
+            f"UNREADABLE: {len(unreadable)} run log(s) could not be parsed and are "
+            f"excluded from every count below (named on stderr)."
         )
         print()
     if (note := describe_stale(stale)):
