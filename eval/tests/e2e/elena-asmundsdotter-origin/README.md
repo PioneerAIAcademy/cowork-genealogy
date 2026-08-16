@@ -64,3 +64,16 @@ fidelity. `source_pid` is an unused placeholder (`PID-TODO`); §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it. The §14
 fixture-validity run is still owed; it is not CI-gated, so this PID-less draft
 may land with the validity run outstanding.
+
+**2026-08-13 — first run, `fail` (0 of 6 findings).** The agent never reached Västra
+Karaby: `Karaby`, `Henckelstorp` and `Torsson` all appear 0 times in its trace. It
+browsed Barsebäck and Hofterup, then an indexed hit sent it to Fulltofta (Frosta
+härad), where it concluded a contradicting father — Asmund Nilsson — at `probable`,
+tiered the conclusion `possible`, and wrote nothing to the tree. Stopped on the 3600 s
+wall-clock cap at 197 of 200 tool calls. Four gaps found alongside it: #1593
+(`image_read` refuses >700 KB), #1594 (`image_transcribe` fabricates/corrupts on early
+-modern Nordic hands), #1595 (26% OpenRouter failure rate), and **#1596 — the
+Recoverability caveat above is half wrong: the Mantalslängder *are* on FamilySearch
+(Harjager 1681/1700/1702/1705/1708, browse-only), and probate 1688–1816 and häradsrätt
+1697–1714 are unexamined routes.** Read #1596 before grading a future run against that
+caveat.

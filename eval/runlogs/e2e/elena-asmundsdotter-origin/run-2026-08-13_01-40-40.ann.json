@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "No birth/christening fact on Elena in the final tree. Research asserts christening 15 Oct 1682 at Fulltofta, Frosta harad — a different parish from Henckelstorp/Vastra Karaby. Neither Henckelstorp nor Vastra Karaby appears anywhere in the run's output; the Barseback death register that carries \"barnfodd i Henckelstorp\" was never reached.",
+    "f2": "Father's given name Asmund is asserted, but derived from Elena's own patronymic rather than from any record naming him, and attached to the wrong man in the wrong parish (Asmund Nilsson of Fulltofta vs. Asmund Torsson of Henckelstorp). No father person and no ParentChild relationship were written to the tree. Graded false, not partial: the only correct element was free from the patronymic and required no research.",
+    "f3": "Explicit non-recovery — the proof summary states \"Mother: Unknown\" and \"No source naming Elena's mother was found in any record accessed.\"",
+    "f4": "The agent searched for the marriage and failed: indexed Sweden Marriages returned zero results, and it browsed Barseback Kyrkobok images 00205-00250 for c.1710-1719 without finding it. It searched the wrong parish — the marriage is in Vastra Karaby, which was never browsed. Couple relationship exists in the tree but carries no marriage fact, date, or place.",
+    "f5": "Not merely absent — the agent reasoned to the opposite conclusion, deriving the paternal grandfather's name as Nils from the indexed surname \"Nielsson.\"",
+    "f6": "Absent. No burial or death assertion for any Asmund; no Vastra Karaby records were accessed at all."
+  }
+}

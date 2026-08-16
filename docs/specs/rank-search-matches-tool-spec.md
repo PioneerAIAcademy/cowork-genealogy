@@ -236,7 +236,8 @@ Sorted by `matchScore` descending; no gedcomx.
       "attachedToOther": true,
       "relativeTerms": {           // only when the search anchored on a relative
         "father": { "status": "absent" }
-      }
+      },
+      "batchNumber": "M01048-5"    // only when the record traces to an extraction batch
     }
     // … up to `top` (default 10)
   ]
@@ -281,6 +282,27 @@ spec says it belongs.
 
 See `record-search-tool-spec-v2.md` § `relativeTerms` for the statuses and how
 they are resolved.
+
+### `batchNumber` — carried, never scored and never annotated
+
+Copied verbatim from the staged row when it is there, omitted when it is not.
+The ranker neither derives it nor lets it touch `matchScore`.
+
+It reaches the stub for a reason specific to `record_search`'s own contract: a
+search that supplies `subjectId` ranks host-side and the caller reads `ranked`,
+not `results`. A batch number that stopped at `results` would therefore be
+invisible on the most common call shape, and the enumerate-the-batch workflow it
+exists to enable would dead-end on exactly the searches that matter most.
+
+Unlike `relativeTerms` this gets **no** response-level note. A batch number is a
+lookup key for the *next* search, not a caveat on *this* score — there is nothing
+about it the caller could misread as confirmation, and a note on every ranked
+page that happened to include an extracted record would be noise.
+
+Absence carries no information: most records trace to no batch, and a collection
+routinely returns hits both with and without one. See
+`record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
+it is matched on `labelId`.
 
 ## Tool schema
 

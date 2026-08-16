@@ -65,6 +65,11 @@ export interface RankedMatch {
    *  those hits as relative-confirmed, which is why it has to reach the stub
    *  (#1324). */
   relativeTerms?: RelativeTerms;
+  /** The extraction batch this record came out of, carried verbatim from the
+   *  staged row. Present only on records that trace to one. When a search names
+   *  a `subjectId` the caller reads `ranked`, not `results`, so without this the
+   *  batch is invisible on the most common call shape (#1592). */
+  batchNumber?: string;
 }
 
 export interface RankSearchMatchesResult {
