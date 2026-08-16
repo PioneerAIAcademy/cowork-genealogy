@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 26, flags adds_father/adds_mother/adds_son, confidence 3). Draft transcribed from a Philippine Catholic church record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 26, flags adds_father/adds_mother/adds_son, confidence 3). Resolved true match: the hint record (ark:/61903/1:1:6664-TBR7) belongs to Victoriano Macatangay (GV6J-VZC) -- Victorino, father on both this 1915 baptism and the already-attached 1905 baptism of his son Mariano, matches on name, place, and wife-pairing. See README 'Notes for reviewers'."
 }

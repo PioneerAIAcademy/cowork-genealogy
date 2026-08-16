@@ -700,6 +700,10 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 **Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
 
+**Routing deference (grading).** On a **negative** test with a non-empty `correct_skill`, the outcome is decided by routing alone (§7) and the judge runs base-only and diagnostically. When the harness observes that the skill under test is absent from `skills_invoked` **and** an accepted skill fired, it floors a judge `1` on `Correctness` / `Completeness` to `2` (`orchestrator.apply_routing_deference`). A judge FAIL there is grading the routed-to skill's execution, which this test does not own. Partial (`2`) is still permitted. Excluded: `grade_on_invariant` negatives (they return before the routing branch), and out-of-scope negatives with `correct_skill: []`, whose base dimensions genuinely *do* gate the outcome.
+
+**Known limitation.** `activated` is False whenever the skill under test is absent from `skills_invoked`, and that list can be empty even when the skill ran (`runlog.derive_activated`). So a run where the skill carried out its own task inline *and* routed to an accepted skill is floored — even though `_negative_judge_context`'s third framing line correctly tells the judge to score that case `1`. There is no mechanical discriminator, so the pre-floor score and rationale are preserved in a `floored_routing_diagnostic_dimension` warning on the run entry rather than discarded, following the same reasoning as `coerced_tool_arguments_to_na`.
+
 ---
 
 ## 6. Negative Tests
@@ -1307,7 +1311,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "source": "string (base | rubric)",
             "name": "string (dimension name)",
-            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — any rubric dimension whose situation the fixture never created, or Tool Arguments on a run with zero MCP tool calls)",
             "rationale": "string"
           }
         ],
