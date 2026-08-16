@@ -584,8 +584,10 @@ async def _execute_single_run(
         ended_at=_ended_at,
         skill_attempts=result.attempts,
         # Run-level tokens are SKILL ONLY. Judge tokens live on the
-        # judge block so the spec §11 cache-hit-rate diagnostic
-        # (cached/input on the skill side) stays meaningful.
+        # judge block so the spec's cache-hit-rate diagnostic —
+        # cached / (cached + input) on the skill side — stays meaningful.
+        # The two counts are disjoint (input excludes cache reads), so the
+        # rate is a share of their sum; see unit-test-spec.md § Run Log Format.
         input_tokens=skill_input,
         cached_input_tokens=skill_cached,
         output_tokens=skill_output,
