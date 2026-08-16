@@ -45,6 +45,7 @@ from harness.snapshot import (  # noqa: E402
     hash_file,
 )
 from harness.review_sample import zero_dimension_test_ids  # noqa: E402
+from harness.rubric import COVERED_BY_PREFIX  # noqa: E402
 from harness.versioning import classify  # noqa: E402
 
 
@@ -524,6 +525,13 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         if required_test_ids is not None and t["test_id"] not in required_test_ids:
             continue
         for d in t.get("outcome_summary", {}).get("aggregated_dimensions") or []:
+            # A `covered_by` dimension was decided by a deterministic validator
+            # and never sent to the judge. Asking a genealogist to confirm it is
+            # the double-charge this mechanism exists to remove: without the
+            # skip, coverage grows and cost stays flat — which is exactly what
+            # happened to question-selection (12 validators, 7 of 7 dead dims).
+            if (d.get("rationale") or "").startswith(COVERED_BY_PREFIX):
+                continue
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
                 missing.append(key)

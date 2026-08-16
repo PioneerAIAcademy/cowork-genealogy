@@ -20,6 +20,16 @@ import re
 from dataclasses import dataclass, field
 
 
+#: Prefix on the rationale of a dimension the judge did not grade because a
+#: `covered_by` validator already decided it. Load-bearing in three places, so
+#: it lives here rather than being spelled out at each: the run log stays
+#: auditable, `check_runlogs` skips the dimension when requiring corrections,
+#: and `review_sample` must NOT treat the resulting null as the
+#: "rubric null on a positive test" signal — that rule exists to catch a null
+#: standing in for a 1, and a covered null is the opposite of that.
+COVERED_BY_PREFIX = "[covered-by]"
+
+
 class InvalidRubricError(Exception):
     """Raised when a non-empty rubric.md file doesn't match the spec format."""
 
@@ -31,6 +41,13 @@ class RubricDimension:
     pass_criteria: str
     partial_criteria: str
     fail_criteria: str
+    #: Name of a deterministic validator that decides this dimension. When that
+    #: validator RAN and PASSED, the judge does not grade the dimension and the
+    #: annotator is not asked to confirm it — the mechanical check already
+    #: answered it, and asking twice is what let coverage grow while cost stayed
+    #: flat (`question-selection` has 12 validators and 7 of 7 dead dimensions
+    #: grading the same axes). Optional; None means the judge always grades it.
+    covered_by: str | None = None
 
 
 @dataclass
@@ -56,6 +73,14 @@ _H1 = re.compile(r"^# +(.+?)\s*$", re.MULTILINE)
 _H2 = re.compile(r"^## +(.+?)\s*$", re.MULTILINE)
 _BULLET = re.compile(
     r"^\s*-\s+\*\*(pass|partial|fail):\*\*\s+(.+?)\s*$", re.MULTILINE
+)
+
+# Optional per-dimension retirement declaration:
+#     - **covered_by:** test_expected_classifications
+# Deliberately a separate pattern from _BULLET: pass/partial/fail stay
+# REQUIRED (the parser is strict by design), and this one is not.
+_COVERED_BY = re.compile(
+    r"^\s*-\s+\*\*covered_by:\*\*\s+([A-Za-z_][A-Za-z0-9_]*)\s*$", re.MULTILINE
 )
 
 
@@ -110,6 +135,8 @@ def parse_rubric(text: str) -> Rubric:
                     f"dimension '{name}' is missing the **{required}** bullet"
                 )
 
+        covered = _COVERED_BY.search(section)
+
         # Description is everything before the first bullet.
         first_bullet_match = _BULLET.search(section)
         description = section[: first_bullet_match.start()].strip() if first_bullet_match else section.strip()
@@ -121,6 +148,7 @@ def parse_rubric(text: str) -> Rubric:
                 pass_criteria=bullets["pass"],
                 partial_criteria=bullets["partial"],
                 fail_criteria=bullets["fail"],
+                covered_by=covered.group(1) if covered else None,
             )
         )
 
@@ -146,3 +174,62 @@ def parse_rubric(text: str) -> Rubric:
 
 
 _MAX_DIMENSIONS = 5
+
+
+def split_covered_dimensions(
+    rubric: "Rubric", passed_validators: set[str]
+) -> tuple["Rubric", list["RubricDimension"]]:
+    """Split a rubric into (what the judge grades, what a validator retired).
+
+    A dimension is retired only when its `covered_by` validator both RAN and
+    PASSED. A failing or absent validator leaves the dimension with the judge:
+    the mechanical check did not answer it, so the fuzzy one still has to.
+
+    Retiring by removing the dimension from the judge's rubric — rather than
+    grading it and overwriting — is what makes this an actual saving. The judge
+    never sees the criteria, so the tokens are not spent and the score cannot
+    be argued with later.
+    """
+    if not rubric.dimensions:
+        return rubric, []
+    kept, retired = [], []
+    for d in rubric.dimensions:
+        if d.covered_by and d.covered_by in passed_validators:
+            retired.append(d)
+        else:
+            kept.append(d)
+    if not retired:
+        return rubric, []
+    judge_rubric = Rubric(
+        skill=rubric.skill,
+        preamble=rubric.preamble,
+        dimensions=kept,
+        content_hash=rubric.content_hash,
+        raw=rubric.raw,
+    )
+    return judge_rubric, retired
+
+
+def covered_dimension_entries(
+    retired: list["RubricDimension"],
+) -> list[dict]:
+    """Run-log entries for retired dimensions: `null`, with the marker.
+
+    They stay in `aggregated_dimensions` on purpose. Dropping them would make a
+    covered dimension indistinguishable from one nobody thought to grade, and
+    would silently change the dimension key set every reader keys on.
+    """
+    return [
+        {
+            "source": "rubric",
+            "name": d.name,
+            "score": None,
+            "rationale": (
+                f"{COVERED_BY_PREFIX} decided by the deterministic validator "
+                f"`{d.covered_by}`, which ran and passed — the judge was not "
+                f"asked to grade this dimension, and no correction is owed for "
+                f"it."
+            ),
+        }
+        for d in retired
+    ]

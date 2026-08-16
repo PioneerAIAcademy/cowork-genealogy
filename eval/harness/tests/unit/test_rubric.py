@@ -196,3 +196,83 @@ def test_dimension_names_returns_case_sensitive_set():
 def test_dimension_names_empty_for_empty_rubric():
     r = empty_rubric("my-skill")
     assert r.dimension_names() == frozenset()
+
+
+# --- covered_by (issue #1668) ---------------------------------------------
+
+from harness.rubric import (  # noqa: E402
+    COVERED_BY_PREFIX,
+    covered_dimension_entries,
+    parse_rubric,
+    split_covered_dimensions,
+)
+
+
+def _rubric_text(covered: str | None = None) -> str:
+    line = f"\n- **covered_by:** {covered}" if covered else ""
+    return (
+        "# demo-skill\n\n"
+        "## Evidence type accuracy\n\n"
+        "Does the classification hold.\n\n"
+        "- **pass:** right\n"
+        "- **partial:** partly\n"
+        f"- **fail:** wrong{line}\n\n"
+        "## Narrative quality\n\n"
+        "Reads well.\n\n"
+        "- **pass:** yes\n"
+        "- **partial:** partly\n"
+        "- **fail:** no\n"
+    )
+
+
+def test_covered_by_is_parsed_when_present():
+    r = parse_rubric(_rubric_text("test_expected_classifications"))
+    assert r.dimensions[0].covered_by == "test_expected_classifications"
+
+
+def test_covered_by_is_none_when_absent():
+    r = parse_rubric(_rubric_text())
+    assert r.dimensions[0].covered_by is None
+    assert r.dimensions[1].covered_by is None
+
+
+def test_covered_by_is_optional_so_every_existing_rubric_still_parses():
+    """The pass/partial/fail bullets stay REQUIRED; this one does not. Every
+    rubric in the corpus predates it."""
+    r = parse_rubric(_rubric_text())
+    assert len(r.dimensions) == 2
+
+
+def test_split_retires_a_dimension_whose_validator_passed():
+    r = parse_rubric(_rubric_text("test_expected_classifications"))
+    judge_rubric, retired = split_covered_dimensions(
+        r, {"test_expected_classifications"}
+    )
+    assert [d.name for d in judge_rubric.dimensions] == ["Narrative quality"]
+    assert [d.name for d in retired] == ["Evidence type accuracy"]
+
+
+def test_split_keeps_the_dimension_when_its_validator_FAILED():
+    """A failing validator did not answer the dimension, so the judge still has
+    to. Retiring on a failure would convert a real defect into a silent null."""
+    r = parse_rubric(_rubric_text("test_expected_classifications"))
+    judge_rubric, retired = split_covered_dimensions(r, set())
+    assert len(judge_rubric.dimensions) == 2
+    assert retired == []
+
+
+def test_split_is_a_noop_without_any_covered_by():
+    r = parse_rubric(_rubric_text())
+    judge_rubric, retired = split_covered_dimensions(r, {"anything"})
+    assert judge_rubric is r
+    assert retired == []
+
+
+def test_retired_entries_are_null_and_carry_the_marker():
+    r = parse_rubric(_rubric_text("test_expected_classifications"))
+    _, retired = split_covered_dimensions(r, {"test_expected_classifications"})
+    entries = covered_dimension_entries(retired)
+    assert entries[0]["score"] is None
+    assert entries[0]["source"] == "rubric"
+    assert entries[0]["rationale"].startswith(COVERED_BY_PREFIX)
+    assert "test_expected_classifications" in entries[0]["rationale"]

@@ -700,6 +700,29 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 **Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
 
+**Validator coverage (`covered_by`).** A rubric dimension may declare a deterministic validator that decides it:
+
+```markdown
+## Evidence type accuracy
+
+Does the classification hold.
+
+- **pass:** …
+- **partial:** …
+- **fail:** …
+- **covered_by:** test_expected_classifications
+```
+
+When that validator **ran and passed**, the dimension is removed from the rubric the judge sees — the criteria never enter the prompt, so the tokens are not spent — and it is re-attached to the run log with `score: null` and a rationale beginning `[covered-by]`. No correction is owed for it (`check_runlogs` rule 3 skips it), so a genealogist is not asked to confirm what a validator already decided.
+
+When the validator **failed or did not run**, the dimension stays with the judge. A failing check did not answer the dimension, and retiring on a failure would convert a real defect into a silent null.
+
+Optional, and every rubric predates it: `pass`/`partial`/`fail` remain required.
+
+**Why it exists.** Adding a deterministic check did not previously retire the judge dimension it duplicated, so oracle coverage grew while grading cost stayed flat — `question-selection` carries 12 skill-specific validators *and* 7 of 7 dead judge dimensions grading the same axes. This is what makes a new check subtract cost rather than add it.
+
+**One interaction to preserve.** A `covered_by` null must not be read as the review sample's "rubric null on a positive test" signal (`review_sample.py`, targeted rule 1). That rule catches a null standing in for a 1, which records the run as a pass; a covered null is the opposite. Both readers key on the `[covered-by]` rationale prefix, which is why the prefix is a shared constant rather than a literal at each site.
+
 **Routing deference (grading).** On a **negative** test with a non-empty `correct_skill`, the outcome is decided by routing alone (§7) and the judge runs base-only and diagnostically. When the harness observes that the skill under test is absent from `skills_invoked` **and** an accepted skill fired, it floors a judge `1` on `Correctness` / `Completeness` to `2` (`orchestrator.apply_routing_deference`). A judge FAIL there is grading the routed-to skill's execution, which this test does not own. Partial (`2`) is still permitted. Excluded: `grade_on_invariant` negatives (they return before the routing branch), and out-of-scope negatives with `correct_skill: []`, whose base dimensions genuinely *do* gate the outcome.
 
 **Known limitation.** `activated` is False whenever the skill under test is absent from `skills_invoked`, and that list can be empty even when the skill ran (`runlog.derive_activated`). So a run where the skill carried out its own task inline *and* routed to an accepted skill is floored — even though `_negative_judge_context`'s third framing line correctly tells the judge to score that case `1`. There is no mechanical discriminator, so the pre-floor score and rationale are preserved in a `floored_routing_diagnostic_dimension` warning on the run entry rather than discarded, following the same reasoning as `coerced_tool_arguments_to_na`.

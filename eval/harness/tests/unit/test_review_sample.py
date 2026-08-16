@@ -329,3 +329,40 @@ def test_released_runlog_outranks_a_superseded_candidate(tmp_path):
 
     got = _newest_releasable_runlog(d)
     assert got["review_sample"]["cursor"] == ["released"]
+
+
+# --- covered_by must not steal the targeted slot (issue #1668) -------------
+
+
+def test_a_covered_by_null_is_not_the_rubric_null_signal():
+    """Targeted rule 1 catches a null STANDING IN FOR A 1, which records the run
+    as a pass. A covered_by null is the opposite — a validator ran, passed, and
+    answered the dimension. Without this exclusion the slot would go to the very
+    dimensions we retired to save effort, on every run of every adopting suite.
+    """
+    from harness.rubric import COVERED_BY_PREFIX
+
+    tests = _suite(6, outcome="fail")  # every test matches rule 4
+    tests[5]["outcome_summary"]["aggregated_dimensions"] = [
+        _dim(),
+        _dim(
+            name="Evidence type accuracy",
+            score=None,
+            source="rubric",
+            rationale=f"{COVERED_BY_PREFIX} decided by test_expected_classifications",
+        ),
+    ]
+    out = select_review_sample(tests=tests, n_rotation=0, n_random=0)
+    # Rule 1 must not fire; rule 4 takes the slot, so the lowest matching id wins.
+    assert out["tests"] == ["ut_000"]
+
+
+def test_a_judge_emitted_null_still_wins_the_targeted_slot():
+    """The guard must not disarm rule 1 for ordinary nulls."""
+    tests = _suite(6, outcome="fail")
+    tests[5]["outcome_summary"]["aggregated_dimensions"] = [
+        _dim(),
+        _dim(name="Tier justification", score=None, source="rubric"),
+    ]
+    out = select_review_sample(tests=tests, n_rotation=0, n_random=0)
+    assert out["tests"] == ["ut_005"]

@@ -35,6 +35,8 @@ from __future__ import annotations
 import random
 from typing import Any
 
+from harness.rubric import COVERED_BY_PREFIX
+
 
 N_ROTATION = 3
 N_TARGETED = 1
@@ -71,10 +73,22 @@ def zero_dimension_test_ids(tests: list[dict[str, Any]]) -> list[str]:
 
 
 def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
+    """A rubric dimension the judge returned `null` on a positive test.
+
+    Targeted rule 1 exists because a null standing in for a 1 records the run as
+    a pass — `_compute_outcome` gates on 1 and 2 and null is neither.
+
+    A **covered_by** null is the opposite of that: a deterministic validator ran,
+    passed, and answered the dimension, so the judge was never asked. Treating it
+    as the signal would hand the targeted slot to the very dimensions we retired
+    to save effort — on every run, in every suite that adopts `covered_by`.
+    """
     if entry.get("test_type") == "negative":
         return False
     return any(
-        d.get("source") != "base" and d.get("score") is None
+        d.get("source") != "base"
+        and d.get("score") is None
+        and not (d.get("rationale") or "").startswith(COVERED_BY_PREFIX)
         for d in _dimensions(entry)
     )
 

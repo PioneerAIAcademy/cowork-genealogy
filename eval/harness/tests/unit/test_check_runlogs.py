@@ -967,3 +967,39 @@ def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys)
     )
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_does_not_require_a_correction_for_a_covered_dimension(tmp_path):
+    """The whole point of covered_by: a validator already decided it, so asking
+    a genealogist to confirm it is the double-charge this removes."""
+    from harness.rubric import COVERED_BY_PREFIX
+
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(3, review_sample={"tests": sampled, "cursor": [], "seed": 0})
+    log["tests"][0]["outcome_summary"]["aggregated_dimensions"].append(
+        {
+            "source": "rubric",
+            "name": "Evidence type accuracy",
+            "score": None,
+            "rationale": f"{COVERED_BY_PREFIX} decided by test_expected_classifications",
+        }
+    )
+    # Corrections cover only the two base dimensions, not the covered one.
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_an_ordinary_rubric_dimension(tmp_path, capsys):
+    """The skip keys on the marker, not on being a rubric dimension."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(3, review_sample={"tests": sampled, "cursor": [], "seed": 0})
+    log["tests"][0]["outcome_summary"]["aggregated_dimensions"].append(
+        {"source": "rubric", "name": "Tier justification", "score": 3, "rationale": "ok"}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "unreviewed" in capsys.readouterr().out

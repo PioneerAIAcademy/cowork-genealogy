@@ -33,7 +33,13 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
+from harness.rubric import (
+    Rubric,
+    covered_dimension_entries,
+    empty_rubric,
+    parse_rubric_or_empty,
+    split_covered_dimensions,
+)
 from harness.runlog import (
     JudgeResult,
     SingleRun,
@@ -502,6 +508,7 @@ async def _execute_single_run(
                 before_snapshot=before_snapshot,
                 auth=auth,
                 judge_model=judge_model,
+                validator_results=validator_results,
             )
         except JudgeError as e:
             # Missing API key, model returned no tool_use, parse failure,
@@ -1130,6 +1137,7 @@ def _run_judge(
     before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
+    validator_results=None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1142,10 +1150,18 @@ def _run_judge(
     if spec.type == "negative":
         judge_rubric: Rubric = empty_rubric(spec.skill)
         judge_context = _negative_judge_context(spec)
+        retired = []
     else:
-        judge_rubric = rubric
+        # A rubric dimension whose `covered_by` validator ran and PASSED is not
+        # sent to the judge at all. Removing it (rather than grading it and
+        # overwriting) is what makes this a saving: the criteria never enter the
+        # prompt, so the tokens are not spent. The retired dimensions are
+        # re-attached below so the run log's dimension key set is unchanged.
+        judge_rubric, retired = split_covered_dimensions(
+            rubric, {r.name for r in (validator_results or []) if r.passed}
+        )
         judge_context = spec.judge_context
-    return grade(
+    out = grade(
         rubric=judge_rubric,
         judge_context=judge_context,
         scenario_readme=scenario_readme,
