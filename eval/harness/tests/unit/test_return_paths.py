@@ -16,7 +16,8 @@ This is that check: static, fixture-free, and it runs in milliseconds.
 
 Scope is deliberately narrow — a non-`None` return annotation is the author
 stating the function produces a value, so falling off the end is a defect rather
-than a style choice. Generators, abstract stubs and `-> None` are all exempt.
+than a style choice. Generators, abstract stubs, `-> None` and the
+never-returning annotations (`-> NoReturn` / `-> Never`) are all exempt.
 """
 
 from __future__ import annotations
@@ -27,7 +28,16 @@ from pathlib import Path
 import pytest
 
 HARNESS = Path(__file__).resolve().parents[2]
-MODULE_DIRS = [HARNESS / "harness", HARNESS / "scripts", HARNESS / "e2e"]
+MODULE_DIRS = [
+    HARNESS / "harness",
+    HARNESS / "scripts",
+    HARNESS / "e2e",
+    # `validators/` is harness production code, not tests. A validator helper
+    # that falls off the end raises inside validator_runner._run_module's broad
+    # `except Exception`, which records passed=False against the SKILL — so the
+    # defect reads as a skill regression on a paid run.
+    HARNESS / "validators",
+]
 
 
 def _python_files() -> list[Path]:
@@ -41,6 +51,9 @@ def _python_files() -> list[Path]:
     # while run_tests.py is where this class of defect does the most damage.
     out.extend(sorted(p for p in HARNESS.glob("*.py") if "__pycache__" not in p.parts))
     return out
+
+
+_NEVER_RETURNS = frozenset({"NoReturn", "Never"})
 
 
 def _returns_a_value(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
@@ -67,6 +80,13 @@ def _annotates_a_value(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     if ann is None:
         return False
     if isinstance(ann, ast.Constant) and ann.value is None:  # -> None
+        return False
+    # `-> NoReturn` / `-> Never` promise the opposite: the function always
+    # raises. `_is_stub` only exempts a body that is ENTIRELY raise/pass/...,
+    # so one statement before the raise would otherwise be flagged.
+    if isinstance(ann, ast.Name) and ann.id in _NEVER_RETURNS:
+        return False
+    if isinstance(ann, ast.Attribute) and ann.attr in _NEVER_RETURNS:
         return False
     return True
 
@@ -146,3 +166,33 @@ def test_detector_semantics(src, expected):
     inner helper must not satisfy the outer function."""
     fn = ast.parse(src).body[0]
     assert _returns_a_value(fn) is expected
+
+
+@pytest.mark.parametrize(
+    "src, expected",
+    [
+        ("def f() -> int: ...", True),
+        ("def f() -> None: ...", False),
+        ("def f(): ...", False),
+        ("def f() -> NoReturn: ...", False),
+        ("def f() -> Never: ...", False),
+        ("def f() -> typing.NoReturn: ...", False),
+        ("def f() -> t.Never: ...", False),
+    ],
+)
+def test_never_returning_annotations_are_exempt(src, expected):
+    """`-> NoReturn` states the function always raises, so falling off the end
+    is the contract, not a defect. Bare and dotted spellings both."""
+    fn = ast.parse(src).body[0]
+    assert _annotates_a_value(fn) is expected
+
+
+def test_a_noreturn_helper_that_does_work_first_is_not_flagged():
+    """The shape the exemption exists for: `_is_stub` only exempts a body that
+    is entirely raise/pass/..., so one statement before the raise would flag."""
+    fn = ast.parse(
+        "def _die(msg: str) -> NoReturn:\n"
+        "    print(msg)\n"
+        "    raise SystemExit(1)\n"
+    ).body[0]
+    assert not (_annotates_a_value(fn) and not _is_stub(fn) and not _returns_a_value(fn))
