@@ -401,6 +401,14 @@ export interface SkillInfo {
   description: string | null;
   allowedTools: string[];
   rubricDimensions: SkillRubricDimension[];
+  /**
+   * Why `rubricDimensions` is empty, when the rubric failed to parse.
+   * Null when the rubric parsed AND when there is no rubric.md at all —
+   * an absent file is the supported opt-out, not a failure. Empty
+   * dimensions alone can't tell those apart, which is the distinction
+   * the harness enforces (eval/harness/harness/rubric.py).
+   */
+  rubricError: string | null;
   stateless: boolean;
 }
 

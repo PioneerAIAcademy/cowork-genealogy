@@ -468,6 +468,13 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   <Text size="sm" c="dimmed">
                     Pick a skill to see its rubric dimensions.
                   </Text>
+                ) : selectedSkill.rubricError ? (
+                  <Text size="sm" c="red">
+                    {selectedSkill.name}&apos;s rubric.md could not be read, so
+                    its dimensions are missing here and every test for this
+                    skill will be blocked until it is fixed.{' '}
+                    {selectedSkill.rubricError}
+                  </Text>
                 ) : selectedSkill.rubricDimensions.length === 0 ? (
                   <Text size="sm" c="dimmed">
                     No rubric.md found for {selectedSkill.name}.
