@@ -97,14 +97,26 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   if (!sample) return null;
   const ids = new Set(sample.tests ?? []);
   // Fail CLOSED on anything untrustworthy, mirroring `check_runlogs.py`'s
-  // guards exactly. Failing open here is worse than in CI: an empty `tests`
-  // array would render every test `not sampled`, make `unreviewedDimensions`
-  // return nothing, and report the annotation complete — so the UI would
-  // green-light a release that CI then rejects. That is the same UI-vs-CI
-  // split deleting the duplicate `isAnnotationComplete` was meant to end.
-  if (ids.size === 0) return null;
+  // THREE guards. Failing open here is worse than in CI: an untrusted sample
+  // renders every test `not sampled`, makes `unreviewedDimensions` return
+  // nothing, and reports the annotation complete — so the UI green-lights a
+  // release that CI then rejects. That is the same UI-vs-CI split deleting the
+  // duplicate `isAnnotationComplete` was meant to end, and shipping two of the
+  // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
   for (const id of ids) if (!known.has(id)) return null;
+  // A sample naming only tests whose judge was skipped would require nothing —
+  // and this also covers an EMPTY sample, since `.some()` over no ids is false.
+  // An explicit `ids.size === 0` guard was tried here and was unreachable: it
+  // left its own test unable to fail, the same way three redundant guards did
+  // in `apply_routing_deference`. The Python side keeps its equivalent only
+  // because it emits a different warning message.
+  const gradeable = new Set(
+    log.tests
+      .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)
+      .map((t) => t.test_id),
+  );
+  if (![...ids].some((id) => gradeable.has(id))) return null;
   return ids;
 }
 
@@ -130,6 +142,16 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
  * Lives here rather than in `lib/fs/` for the same reason as `sampledTestIds`:
  * the scoring page is a client component and must not pull in `node:fs`.
  */
+/** A grade the reviewer agreed with that asserts nothing went wrong: a pass, or
+ *  an N/A meaning the dimension never applied. Both are exempt from the comment
+ *  rule — 8,717 of 9,753 corrections are 3 -> 3 and 700 more are null -> null,
+ *  91% of them silent today, so requiring a sentence there is most of the cost
+ *  for the least likely yield. A confirmed 2 or 1 is NOT exempt: agreeing that
+ *  something went wrong is exactly when the reviewer should say what. */
+function isConfirmedNonFailing(llm: Score, corrected: Score): boolean {
+  return llm === corrected && (llm === 3 || llm === null);
+}
+
 export function uncommentedSampledCorrections(
   log: RunLogFile,
   ann: AnnotationFile | null,
@@ -141,7 +163,7 @@ export function uncommentedSampledCorrections(
       (c) =>
         sampled.has(c.test_id) &&
         !(c.comment ?? '').trim() &&
-        !(c.llm_score === 3 && c.corrected_score === 3),
+        !isConfirmedNonFailing(c.llm_score, c.corrected_score),
     )
     .map((c) => ({
       test_id: c.test_id,

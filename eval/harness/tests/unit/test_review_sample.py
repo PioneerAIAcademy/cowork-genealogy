@@ -242,3 +242,58 @@ def test_sample_is_full_size_on_a_clean_suite():
     out = select_review_sample(tests=tests, previous_tests=previous)
     assert len(out["tests"]) == 5
     assert len(set(out["tests"])) == 5
+
+
+# --- Cursor provenance ---------------------------------------------------
+
+
+def test_unannotated_run_log_does_not_supply_the_cursor(tmp_path):
+    """A run nobody annotated must not advance the rotation cursor.
+
+    Taking its cursor marks its 5 sampled tests covered and rotates straight
+    past them — the same hole the scratch-run guard closes, by another route.
+    12 of the 121 committed run logs have no `.ann.json`, and CI only ever
+    checks the newest one, so nothing downstream would catch it.
+    """
+    import json
+    import sys
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
+    from run_tests import _newest_releasable_runlog
+
+    d = tmp_path / "timeline"
+    d.mkdir()
+
+    def write(name, sample, annotated):
+        (d / name).write_text(
+            json.dumps({"review_sample": sample, "tests": []}), encoding="utf-8"
+        )
+        if annotated:
+            (d / name.replace(".json", ".ann.json")).write_text(
+                json.dumps({"run_log": name, "annotator": "a", "corrections": []}),
+                encoding="utf-8",
+            )
+
+    write("v1_2026-01-01_00-00-00.json", {"tests": ["ut_a"], "cursor": ["ut_a"], "seed": 0}, True)
+    write("v1_2026-02-01_00-00-00.json", {"tests": ["ut_b"], "cursor": ["ut_b"], "seed": 0}, False)
+
+    got = _newest_releasable_runlog(d)
+    assert got is not None
+    # The NEWER log is unannotated, so the older annotated one supplies the cursor.
+    assert got["review_sample"]["cursor"] == ["ut_a"]
+
+
+def test_no_annotated_predecessor_starts_a_fresh_sweep(tmp_path):
+    import json
+    import sys
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
+    from run_tests import _newest_releasable_runlog
+
+    d = tmp_path / "timeline"
+    d.mkdir()
+    (d / "v1_2026-01-01_00-00-00.json").write_text(
+        json.dumps({"review_sample": {"tests": [], "cursor": [], "seed": 0}, "tests": []}),
+        encoding="utf-8",
+    )
+    assert _newest_releasable_runlog(d) is None

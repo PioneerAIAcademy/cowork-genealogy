@@ -14,7 +14,10 @@ docs/plan/eval-runlog-versioning.md §C6:
              reference it, and warns when that skill's run log is now stale
              (#1094 — see rule2_fixture_touched for why it only warns).
     Rule 3   the same run log's .ann.json has corrections for every
-             (test_id, dimension_source, dimension_name) triple. An edited
+             (test_id, dimension_source, dimension_name) triple of the tests
+             named in its `review_sample` (5 per run), each carrying a
+             comment unless it is a confirmed pass. A run log with no
+             `review_sample` owes every dimension of every test. An edited
              annotation gates; a pruned (deleted) one does not.
     Rule 4   no two unit-test files share a `test.id`.
 
@@ -387,14 +390,31 @@ def rule2b_judge_prompt(skill: str, log: dict, filename: str) -> None:
         )
 
 
+def _is_confirmed_non_failing(correction: dict) -> bool:
+    """A grade the reviewer agreed with that asserts nothing went wrong.
+
+    A pass (3 -> 3) or an N/A (null -> null, the dimension never applied). Both
+    are exempt from the comment rule: 8,717 of 9,753 corrections are 3 -> 3 and
+    700 more are null -> null, 91% of those silent today. A confirmed 2 or 1 is
+    NOT exempt — agreeing something went wrong is exactly when to say what.
+    """
+    llm, corrected = correction.get("llm_score"), correction.get("corrected_score")
+    return llm == corrected and llm in (3, None)
+
+
 def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) -> int:
-    """Rule 3 (blocking): every dimension has a correction entry in .ann.json."""
+    """Rule 3 (blocking): every dimension of each sampled test has a correction
+    entry in .ann.json, and each that is not a confirmed pass carries a comment.
+
+    Falls back to the pre-sampling every-dimension rule when the run log has no
+    `review_sample`, or when the one it has cannot be trusted (see the three
+    guards below)."""
     ann_filename = filename.removesuffix(".json") + ".ann.json"
     ann_path = skill_dir / ann_filename
     if not ann_path.exists():
         gh_error(
             f"skill `{skill}`: latest run log `{filename}` has no annotation file "
-            f"(`{ann_filename}` missing). Review every dimension before opening "
+            f"(`{ann_filename}` missing). Review the sampled tests before opening "
             f"the PR.",
         )
         return 1
@@ -529,7 +549,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             for c in corrections
             if c["test_id"] in required_test_ids
             and not (c.get("comment") or "").strip()
-            and not (c.get("llm_score") == 3 and c.get("corrected_score") == 3)
+            and not _is_confirmed_non_failing(c)
         ]
         if uncommented:
             shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])

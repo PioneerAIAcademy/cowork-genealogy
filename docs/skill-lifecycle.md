@@ -312,8 +312,9 @@ the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
 - **Write a comment on every sampled dimension that isn't a clean pass** — any
-  score you change, and any 1 or 2 you agree with. A confirmed pass (the judge
-  said 3 and you agree) needs nothing. CI blocks the rest. In practice that is
+  score you change, and any 1 or 2 you agree with. A confirmed pass or a
+  confirmed N/A — the judge said 3, or said the dimension didn't apply, and you
+  agree — needs nothing. CI blocks the rest. In practice that is
   about three sentences a run, and they are the whole point of reviewing five
   tests properly instead of clicking through all twenty.
 

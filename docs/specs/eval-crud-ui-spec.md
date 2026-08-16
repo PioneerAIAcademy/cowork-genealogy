@@ -191,7 +191,7 @@ The Results section opens to a dashboard with two panels:
 - For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The picker exposes a fourth `N/A` button whenever the judge scored the dimension `null` (so the junior can *agree* with N/A instead of being forced to pick `3`), plus on the nullable base dimension (Tool Arguments) so N/A can be set or overridden explicitly. See `dimensionAllowsNa` in `eval/app/lib/types.ts`.
 - `comment` text area per dimension — **required on a sampled dimension that is not a confirmed pass** (judge 3, reviewer agrees 3), and optional elsewhere.
 - Save writes `<run-log-timestamp>.ann.json` alongside the run log. Schema: `docs/specs/schemas/ann.schema.json`.
-- Every dimension of every test in the run log gets an entry — agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag. See plan §2.3.
+- Every dimension of each test named in the run log's `review_sample` gets an entry; a run log without that field (every one written before sampling shipped) owes every dimension of every test. Agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag.
 
 ### Comparison view (cross-PR)
 

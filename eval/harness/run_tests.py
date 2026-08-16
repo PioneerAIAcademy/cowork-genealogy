@@ -63,6 +63,7 @@ from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
     classify,
     is_releasable_invocation,
     next_filename_for,
@@ -71,7 +72,16 @@ from harness.versioning import (
 
 
 def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
-    """The newest released-or-candidate run log for a skill, or None.
+    """The newest released-or-candidate run log for a skill that was
+    ANNOTATED, or None.
+
+    A run log with no sibling `.ann.json` is one nobody reviewed. Taking its
+    cursor would mark its 5 sampled tests covered and rotate straight past them
+    — the same hole the scratch-run guard in `main()` closes, arriving by a
+    different route. It is the normal path, not a corner case: 12 of the 121
+    committed run logs have no annotation, and CI only ever checks the newest
+    one, so nothing downstream would catch it. Under the pre-sampling rule a
+    discarded run cost nothing, because the next annotation covered every test.
 
     Sorts by `classify()`'s (version, timestamp), NOT by filename: a
     lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
@@ -84,8 +94,11 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
         if not p.name.endswith(".json") or p.name.endswith(".ann.json"):
             continue
         c = classify(p.name)
-        if c.kind in ("released", "candidate") and c.version is not None:
-            dated.append(((c.version, c.timestamp or ""), p))
+        if c.kind not in ("released", "candidate") or c.version is None:
+            continue
+        if not (skill_runlog_dir / ann_filename_for(p.name)).exists():
+            continue  # nobody reviewed it — its cursor is not evidence
+        dated.append(((c.version, c.timestamp or ""), p))
     if not dated:
         return None
     newest = max(dated, key=lambda pair: pair[0])[1]

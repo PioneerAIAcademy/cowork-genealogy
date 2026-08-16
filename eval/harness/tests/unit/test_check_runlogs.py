@@ -937,3 +937,33 @@ def test_rule3_still_requires_a_comment_on_an_overridden_pass(tmp_path, capsys):
     fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
     assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_exempts_a_confirmed_na_from_the_comment_rule(tmp_path):
+    """null -> null is the same shape as 3 -> 3: the judge said the dimension
+    never applied and the reviewer agrees. 700 such cells exist, 91% silent."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    for c in corr:
+        c["llm_score"] = None
+        c["corrected_score"] = None
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys):
+    """Agreeing that something went wrong is exactly when to say what."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out

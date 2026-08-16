@@ -14,7 +14,7 @@ import {
   upsertCorrection,
   writeAnnotation,
 } from '../../lib/fs/annotations';
-import { uncommentedSampledCorrections } from '../../lib/types';
+import { sampledTestIds, uncommentedSampledCorrections } from '../../lib/types';
 import { runlogsUnitDir } from '../../lib/paths';
 import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
@@ -304,6 +304,18 @@ describe('annotations — the comment requirement', () => {
     expect(isAnnotationComplete(log, one(null, 3))).toBe(true);
   });
 
+  it('a confirmed N/A (null -> null) is exempt', () => {
+    const ann = one(null, 3);
+    ann.corrections[0].llm_score = null;
+    ann.corrections[0].corrected_score = null;
+    expect(isAnnotationComplete(log, ann)).toBe(true);
+  });
+
+  it('a confirmed partial still needs a comment', () => {
+    // Agreeing something went wrong is exactly when to say what.
+    expect(isAnnotationComplete(log, one(null, 2))).toBe(false);
+  });
+
   it('an overridden pass still needs a comment', () => {
     const ann = one(null, 3);
     ann.corrections[0].corrected_score = 2;
@@ -321,5 +333,64 @@ describe('annotations — the comment requirement', () => {
       comment: null,
     });
     expect(isAnnotationComplete(log, ann)).toBe(true);
+  });
+});
+
+describe('annotations — sampledTestIds fails closed', () => {
+  // Each guard gets its own test. The Python counterparts in check_runlogs.py
+  // each have one; without these, deleting a guard here leaves the suite green.
+  const build = (
+    review_sample: { tests: string[]; cursor: string[]; seed: number },
+    opts: { abortedIds?: string[] } = {},
+  ) => {
+    const aborted = new Set(opts.abortedIds ?? []);
+    const log = buildRunLog({
+      skill: 's',
+      version: 1,
+      timestamp: '2026-05-13_09-30-52',
+      tests: ['ut_000', 'ut_001'].map((test_id) => ({
+        test_id,
+        dimensions: aborted.has(test_id)
+          ? []
+          : [{ source: 'base', name: 'A', score: 3 }],
+      })),
+    }) as unknown as RunLogFile;
+    log.review_sample = review_sample;
+    return log;
+  };
+
+  const emptyAnn: AnnotationFile = { run_log: 'v1.json', annotator: 'a', corrections: [] };
+
+  // NB: the empty-sample and only-ungraded cases are both decided by the
+  // gradeable guard — `.some()` over no matching ids is false either way. They
+  // are kept as separate behaviour tests, not as separate guard tests.
+  it('an empty sample falls back to the every-dimension rule', () => {
+    const log = build({ tests: [], cursor: [], seed: 0 });
+    expect(sampledTestIds(log)).toBeNull();
+    expect(isAnnotationComplete(log, emptyAnn)).toBe(false);
+  });
+
+  it('a sample naming a test not in the run log falls back', () => {
+    // MIXED on purpose: one real gradeable id plus one unknown. A sample of
+    // only-unknown ids is already caught by the gradeable guard below, so a
+    // single-unknown case cannot tell the two guards apart and leaves this
+    // test unable to fail.
+    const log = build({ tests: ['ut_000', 'ut_nope'], cursor: [], seed: 0 });
+    expect(sampledTestIds(log)).toBeNull();
+    expect(isAnnotationComplete(log, emptyAnn)).toBe(false);
+  });
+
+  it('a sample of only ungraded tests falls back', () => {
+    // Would otherwise require nothing: an aborted test carries no dimensions,
+    // so unreviewedDimensions returns [] and an empty annotation reads complete
+    // while CI returns 1.
+    const log = build({ tests: ['ut_000'], cursor: [], seed: 0 }, { abortedIds: ['ut_000'] });
+    expect(sampledTestIds(log)).toBeNull();
+    expect(isAnnotationComplete(log, emptyAnn)).toBe(false);
+  });
+
+  it('a trustworthy sample is honoured', () => {
+    const log = build({ tests: ['ut_000'], cursor: [], seed: 0 });
+    expect(sampledTestIds(log)).toEqual(new Set(['ut_000']));
   });
 });
