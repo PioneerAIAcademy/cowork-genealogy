@@ -9,6 +9,7 @@ from harness.orchestrator import (
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
+    apply_routing_deference,
 )
 
 
@@ -93,6 +94,169 @@ def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched
         dims, [_vr("test_expected_classifications", True)], has_expected_classifications=True
     )
     assert [d["score"] for d in dims] == [2, 3, 1, 1]
+    # Score alone cannot catch a widened predicate: a 2 floored to 2 looks
+    # identical. The deference prefix on the rationale is the observable
+    # difference, so assert on that too.
+    for d in dims:
+        assert "deterministic-deference" not in (d["rationale"] or "")
+
+
+# --- routing deference (correctly-routed negative tests) ----------------
+#
+# `_negative_spec` is defined further down this file; these tests are placed
+# here to sit beside the deference tests they mirror, and Python resolves the
+# name at call time.
+
+
+def _routing_dims(correctness=1, completeness=1):
+    return [
+        {"name": "Correctness", "score": correctness, "rationale": "No such routing occurred"},
+        {"name": "Completeness", "score": completeness, "rationale": "nothing was done"},
+        {"name": "Tool Arguments", "score": None, "rationale": "no calls"},
+    ]
+
+
+def test_deference_floors_correctly_routed_negative():
+    """The skill under test declined and an accepted skill fired, so routing
+    already decided pass. A judge FAIL on Correctness/Completeness grades the
+    routed-to skill's work, which this test does not own — floor it to 2."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [2, 2, None]
+    assert "deterministic-deference" in dims[0]["rationale"]
+    assert "No such routing occurred" in dims[0]["rationale"]  # original preserved
+
+
+def test_routing_deference_noop_when_skill_activated():
+    """If the skill under test actually activated, the negative test FAILED —
+    the judge's scores are not the thing being corrected."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=True,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_when_no_accepted_skill_fired():
+    """Declined but routed nowhere acceptable: the test fails on routing, so
+    there is no correct routing to defer to."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["timeline"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_on_out_of_scope_negative():
+    """An empty `correct_skill` is an out-of-scope test, where the base
+    dimensions DO gate the outcome (see `_compute_outcome`). Flooring there
+    would convert a real fail into a pass."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims, spec=_negative_spec(correct=[]), activated=False, skills_invoked=[]
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_noop_on_grade_on_invariant():
+    """`grade_on_invariant` negatives return from `_compute_outcome` before the
+    routing branch; their dimensions are already documented as diagnostic."""
+    dims = _routing_dims()
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_leaves_partial_and_pass_untouched():
+    """Only a 1 is floored. A 2 and a 3 are the judge seeing something real.
+
+    Asserts the RATIONALE, not just the score. A 2 floored to 2 is invisible in
+    the score alone, so a score-only assertion cannot fail when the predicate
+    widens to `in (1, 2)` — the deference prefix is the observable difference.
+    """
+    dims = _routing_dims(correctness=2, completeness=3)
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [2, 3, None]
+    for d in dims:
+        assert "deterministic-deference" not in (d["rationale"] or "")
+
+
+def test_routing_deference_noop_on_positive_test():
+    """A positive test is never floored — covered by the same `any(correct)`
+    guard as an out-of-scope negative, because the schema forbids a positive
+    test a `negative` block, so `correct` is always empty.
+
+    Kept as a regression test on the BEHAVIOUR. It is not an independent guard
+    test: a dedicated `spec.type != "negative"` check was tried and was
+    unreachable, so no mutation of one is observable here.
+    """
+    dims = _routing_dims()
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": "search-records", "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    })
+    apply_routing_deference(
+        dims, spec=spec, activated=False, skills_invoked=["search-records"]
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+
+
+def test_routing_deference_preserves_the_judge_score_in_a_warning():
+    """The floored 1 must stay trendable. `rubric-critic` flags dimensions that
+    never fail; without this it could not recover how often the judge failed
+    them, and the case where the judge's 1 was RIGHT (skill did its task inline
+    while skills_invoked was empty) would vanish entirely."""
+    dims = _routing_dims()
+    warnings: list = []
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [w["kind"] for w in warnings] == [
+        "floored_routing_diagnostic_dimension",
+        "floored_routing_diagnostic_dimension",
+    ]
+    assert [w["name"] for w in warnings] == ["Correctness", "Completeness"]
+    assert all(w["score"] == 1 for w in warnings)
+    assert warnings[0]["rationale"] == "No such routing occurred"
+
+
+def test_routing_deference_warning_omitted_when_nothing_floored():
+    dims = _routing_dims(correctness=3, completeness=3)
+    warnings: list = []
+    apply_routing_deference(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert warnings == []
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -100,6 +264,8 @@ def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched
 import asyncio
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from harness import orchestrator
 from harness.auth import AuthConfig
@@ -700,6 +866,111 @@ def test_skill_retry_does_not_retry_execution_cap_abort(tmp_path, monkeypatch):
     ))
     assert calls["n"] == 1
     assert result.aborted_reason == "max_turns"
+
+
+# --- zero-progress wall-clock timeouts are a startup stall, not a slow test --
+
+
+def _timeout_result(usage):
+    from harness.skill_runner import SkillRunResult
+    return SkillRunResult(
+        text_response="", skills_invoked=[], tool_calls=[],
+        duration_ms=1_900_000.0, usage=usage,
+        aborted_reason="max_wall_clock_seconds",
+        error="wall-clock timeout after 1500s", attempted_mcp_calls=[],
+    )
+
+
+def test_zero_progress_timeout_is_retryable():
+    """The 2026-08-15 signature: the whole wall-clock budget elapsed without a
+    single assistant turn, so the SDK subprocess hung during startup — the
+    same transient the `error` path already retries. `num_turns` here is
+    written by skill_runner's timeout handler, NOT read off a ResultMessage
+    (which never arrives on this path); see test_skill_runner.py for the
+    producer-side coverage."""
+    usage = {"num_turns": 0}
+    assert orchestrator._is_zero_progress_timeout(_timeout_result(usage)) is True
+    assert orchestrator._is_retryable_abort(_timeout_result(usage)) is True
+
+
+def test_timeout_with_no_turn_count_is_not_retried():
+    """Fails CLOSED. A missing `num_turns` means the recording handler did not
+    run, so a stall is indistinguishable from slow work — and retrying a slow
+    test burns the full cap once per attempt at 3x the tokens. This is the
+    case the first version of the guard got wrong: `usage` is empty on the
+    timeout path unless explicitly populated, so treating falsy as
+    zero-progress retried EVERY wall-clock abort."""
+    assert orchestrator._is_zero_progress_timeout(_timeout_result({})) is False
+    assert orchestrator._is_retryable_abort(_timeout_result({})) is False
+
+
+@pytest.mark.parametrize("usage", [{"num_turns": 1}, {"num_turns": 7}, {"num_turns": 40}])
+def test_a_genuinely_slow_test_is_still_not_retried(usage):
+    """A test that timed out MID-WORK stays non-retryable — retrying would
+    burn the same budget twice. This is the line that keeps the fix narrow."""
+    assert orchestrator._is_zero_progress_timeout(_timeout_result(usage)) is False
+    assert orchestrator._is_retryable_abort(_timeout_result(usage)) is False
+
+
+def test_other_cap_aborts_are_never_retried_even_with_no_progress():
+    """`max_turns` / `max_tool_calls` with an empty usage dict must NOT be
+    swept in — the new predicate keys on the wall-clock reason specifically."""
+    from harness.skill_runner import SkillRunResult
+    for reason in ("max_turns", "max_tool_calls", "max_input_tokens_per_turn"):
+        r = SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[],
+            duration_ms=1.0, usage={}, aborted_reason=reason,
+            error=f"{reason} exceeded", attempted_mcp_calls=[],
+        )
+        assert orchestrator._is_retryable_abort(r) is False, reason
+
+
+def test_skill_retry_recovers_a_zero_progress_timeout(tmp_path, monkeypatch):
+    """End to end through the retry loop: the stalled attempt is retried and
+    the recovered attempt's result is returned. Without this, both tests that
+    hit the stall on 2026-08-15 were simply lost from a paid suite run."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return _timeout_result({"num_turns": 0, "duration_api_ms": 0})
+        return _retry_stub_result()
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 2
+    assert result.aborted_reason is None
+    assert result.attempts == 2
+
+
+def test_skill_retry_does_not_retry_a_slow_wall_clock_abort(tmp_path, monkeypatch):
+    """The counterpart: a wall-clock abort WITH progress returns on the first
+    attempt, exactly as before this change."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        return _timeout_result({"num_turns": 9, "duration_api_ms": 800_000})
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 1
+    assert result.aborted_reason == "max_wall_clock_seconds"
 
 
 # --- aborted ------------------------------------------------------------

@@ -16,9 +16,15 @@ characters. Scores are:
 - **3** — pass (the dimension's pass criteria are met)
 - **2** — partial (mostly met, with the gaps described by the partial criteria)
 - **1** — fail (the dimension's fail criteria apply)
-- **null** — N/A. Currently allowed ONLY on the Tool Arguments base
-  dimension when a test made zero MCP tool calls. Correctness and
-  Completeness must always be integer 1, 2, or 3.
+- **null** — N/A, meaning **the situation this dimension grades never arose in
+  this fixture**. Allowed on any **rubric** dimension on that basis, and among
+  the base dimensions only on **Tool Arguments**, only when a test made zero MCP
+  tool calls. Correctness and Completeness must always be integer 1, 2, or 3.
+
+  **`null` never means the skill produced nothing.** If the dimension applied
+  and the skill failed it — including by staying silent when output was
+  required — that is **1**, not N/A. Scoring it null would record the run as a
+  pass, because the outcome gates on 1 and 2 and null is neither.
 
 Be specific in your rationale: cite what the skill did or did not do, not
 generalities. The semantic labels (pass/partial/fail) appear in each
@@ -310,10 +316,13 @@ these dimensions, each tagged with the right `source`:
   rubric dimensions.
 
 Each dimension's `score` is one of {1, 2, 3} or `null`: 3 = pass, 2 =
-partial, 1 = fail. Only Tool Arguments may be `null` (N/A — used when
-no MCP tool calls happened). Correctness and Completeness must be
-integer 1, 2, or 3. The semantic labels live in the rubric bullets;
-the score field itself is just the value.
+partial, 1 = fail. A **rubric** dimension may be `null` (N/A) when the
+fixture never created the situation it grades; among the base dimensions
+only Tool Arguments may be `null`, and only when no MCP tool calls
+happened. Correctness and Completeness must be integer 1, 2, or 3.
+**A dimension that applied and was failed is 1, never `null`.** The
+semantic labels live in the rubric bullets; the score field itself is
+just the value.
 
 Rationales must be specific and at least 20 characters long. One-word
 rationales (e.g., "good") will be rejected.

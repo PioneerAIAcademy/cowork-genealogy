@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all for any batchNumber that is not one of the two real Ashton batches: returns 0 hits, which is exactly what the live tool does for a nonexistent batch (a nil under a batch means the batch is wrong, not that the parish is empty). ORDER: after the two exact batch fixtures, BEFORE the name-search fixture. Without it, a call carrying an invented batch AND the name arguments satisfies the name predicate (subset matching) and comes back with 13,069 hits — the test would reward a fabricated batch number, against its own pass condition that the batch must come off a returned result.",
+  "args": {
+    "batchNumber": "~"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "(nonexistent)"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

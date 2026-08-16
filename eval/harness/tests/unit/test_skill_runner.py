@@ -80,6 +80,170 @@ def test_skill_run_result_shape():
     # field for free, and the orchestrator's uncovered-call gate reads it.
     assert r.attempted_mcp_calls == []
     assert r.unread_skill_calls == []
+    assert r.builtin_tool_calls == []
+
+
+def test_builtin_call_record_captures_a_read():
+    """The blind spot this closes: a Read left no trace anywhere, so a
+    subagent that skipped its reference file looked identical to one that
+    read it (issue #702)."""
+    from harness.skill_runner import builtin_call_record
+
+    record = builtin_call_record(
+        "Read", {"tool_input": {"file_path": "/p/references/probate.md"}}
+    )
+    assert record == {
+        "tool": "Read",
+        "args": {"file_path": "/p/references/probate.md"},
+    }
+
+
+def test_builtin_call_record_ignores_mcp_calls():
+    """MCP calls are already recorded twice (tool_calls, attempted_mcp_calls);
+    recording them a third time would double-count the uncovered-call gate."""
+    from harness.skill_runner import builtin_call_record
+
+    assert builtin_call_record(
+        "mcp__genealogy__record_read", {"tool_input": {"recordId": "x"}}
+    ) is None
+
+
+def test_builtin_call_record_keeps_agent_id_when_inside_a_subagent():
+    """`agent_id` is present only inside a Task-spawned subagent, so it is
+    what distinguishes the extractor agent reading a file from the main
+    thread reading it — the question a delegated-reference design asks."""
+    from harness.skill_runner import builtin_call_record
+
+    record = builtin_call_record(
+        "Read",
+        {
+            "tool_input": {"file_path": "/p/x.md"},
+            "agent_id": "record-extractor-1",
+        },
+    )
+    assert record["agent_id"] == "record-extractor-1"
+    # Main-thread calls carry no agent_id, and the key is omitted rather
+    # than set to None so the schema can forbid unknown/null shapes.
+    main = builtin_call_record("Read", {"tool_input": {"file_path": "/p/x.md"}})
+    assert "agent_id" not in main
+
+
+def test_builtin_call_record_truncates_long_arguments():
+    """Run logs are committed; an untruncated Write argument would carry a
+    whole file body into the corpus."""
+    from harness.skill_runner import builtin_call_record, BUILTIN_ARG_TRUNCATE
+
+    record = builtin_call_record(
+        "Write", {"tool_input": {"content": "x" * 5000}}
+    )
+    assert len(record["args"]["content"]) == BUILTIN_ARG_TRUNCATE
+
+
+class _HookDrivingStream:
+    """An async message stream that first drives the registered PreToolUse hook
+    with scripted inputs, then yields its messages so run_skill completes."""
+
+    def __init__(self, hook, hook_inputs, messages):
+        self._hook = hook
+        self._hook_inputs = hook_inputs
+        self._messages = messages
+        self._started = False
+        self._i = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._started:
+            self._started = True
+            for inp in self._hook_inputs:
+                await self._hook(inp, "tool-use-id", None)
+        if self._i >= len(self._messages):
+            raise StopAsyncIteration
+        msg = self._messages[self._i]
+        self._i += 1
+        return msg
+
+    async def aclose(self):
+        return None
+
+
+def test_run_skill_collects_builtin_calls_through_the_real_hook(tmp_path, monkeypatch):
+    """The tests above prove the RECORD; this proves the WIRING.
+
+    Deleting the hook's two collection lines leaves every other test green
+    while `builtin_tool_calls` stays empty — and because run_output omits the
+    field when empty, a broken collector writes byte-identical output to a run
+    that genuinely called no built-in tool. That is the exact ambiguity this
+    field exists to remove, so the collection needs a test that fails when it
+    is gone.
+
+    The orchestrator's `run_output` spread stays covered-by-inspection, as
+    `file_changes` and `warnings` already are — same boundary
+    test_e2e_context_block.py draws around the `blocked_context_calls=` kwarg.
+    """
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [
+                # Inside the extractor subagent — carries agent_id.
+                {
+                    "tool_name": "Read",
+                    "tool_input": {"file_path": "/p/references/probate.md"},
+                    "agent_id": "agent-record-extractor",
+                },
+                # Main thread — the SDK omits agent_id entirely.
+                {
+                    "tool_name": "Read",
+                    "tool_input": {"file_path": "/p/research.json"},
+                },
+                # MCP calls are recorded elsewhere and must not land here.
+                {
+                    "tool_name": "mcp__genealogy__record_read",
+                    "tool_input": {"recordId": "x"},
+                },
+            ],
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(
+                skill_runner_mode="api_key", api_key="x", detail="stub"
+            ),
+        )
+    )
+
+    assert result.builtin_tool_calls == [
+        {
+            "tool": "Read",
+            "args": {"file_path": "/p/references/probate.md"},
+            "agent_id": "agent-record-extractor",
+        },
+        {"tool": "Read", "args": {"file_path": "/p/research.json"}},
+    ]
 
 
 def test_read_skill_tool_input_reads_the_documented_key():
@@ -121,3 +285,65 @@ def test_read_skill_tool_input_treats_an_empty_name_as_unread():
     got, unread = read_skill_tool_input({"skill": ""})
     assert got is None
     assert unread == ["skill"]
+
+
+# --- wall-clock timeout records the turns actually streamed (#1626 review) ---
+
+
+def _fake_assistant_message(text):
+    """Minimal stand-in for the SDK's AssistantMessage with one TextBlock."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    return AssistantMessage(content=[TextBlock(text=text)], model="stub")
+
+
+def _run_until_timeout(monkeypatch, tmp_path, *, turns):
+    """Drive the REAL run_skill timeout path: stream `turns` assistant
+    messages, then hang until the wall clock fires.
+
+    Deliberately not a hand-built SkillRunResult. `usage` is populated only in
+    the ResultMessage branch, so a fabricated result can carry field
+    combinations this code path can never emit — which is exactly how the
+    first version of the zero-progress retry guard passed its tests while
+    being blind in production.
+    """
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    async def fake_query(*, prompt, options):
+        for i in range(turns):
+            yield _fake_assistant_message(f"turn {i}")
+        await asyncio.sleep(3600)  # hang until the wall clock fires
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(
+        sr, "create_mock_server", lambda *a, **kw: (None, [], {})
+    )
+
+    return asyncio.run(
+        sr.run_skill(
+            user_message="x",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=1,
+        )
+    )
+
+
+def test_timeout_records_zero_turns_when_the_run_never_started(monkeypatch, tmp_path):
+    """The 2026-08-15 stall: the budget elapses without a single assistant
+    message. This is what the orchestrator retries."""
+    result = _run_until_timeout(monkeypatch, tmp_path, turns=0)
+    assert result.aborted_reason == "max_wall_clock_seconds"
+    assert result.usage.get("num_turns") == 0
+
+
+def test_timeout_records_the_turns_a_slow_run_did_produce(monkeypatch, tmp_path):
+    """A run that worked and then ran out of clock must report its turns —
+    otherwise it is indistinguishable from a startup stall and gets retried,
+    burning the full cap once per attempt at 3x the tokens."""
+    result = _run_until_timeout(monkeypatch, tmp_path, turns=4)
+    assert result.aborted_reason == "max_wall_clock_seconds"
+    assert result.usage.get("num_turns") == 4
