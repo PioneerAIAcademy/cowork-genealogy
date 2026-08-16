@@ -48,10 +48,21 @@ For skill `<X>` (paths relative to repo root):
 ## What to flag
 
 1. **Non-discriminating dimension** — scores (nearly) the same across every
-   test and version: all `3`, or all `1`. A dimension that never varies isn't
-   separating good from bad — likely too easy, too vague, or mis-scoped.
-   (skill-creator's analyzer: "always passes → may not differentiate value";
-   "always fails → may be broken or beyond capability".)
+   test and version. Split by direction:
+   - **All `3`** — the dimension separates nothing. **Recommend deleting it,
+     not rewriting it.** A rubric is capped at 5 dimensions, so one that grades
+     nothing holds a slot a discriminating dimension could take, and every kept
+     dimension is a cell a human reviews in the CRUD UI on every annotated run.
+     Deleting every dimension is a supported end state — delete the `rubric.md`
+     file rather than leaving it empty, and the skill is graded on the base
+     dimensions only. Before recommending a delete, name what would
+     still catch a regression on that axis — a validator in
+     `eval/harness/validators/test_<X>.py`, or a base dimension. Where nothing
+     would, recommend rewriting the dimension so it can fail instead. Say in the
+     report that deleting steps the skill's weighted mean, which drops the
+     deleted dimension's scores from the denominator.
+   - **All `1`** — broken, mis-scoped, or beyond current capability. Never
+     recommend deleting one; that hides a real failure.
 2. **Flaky / high-variance dimension** — `flaky: true` recurs, or a dimension's
    score swings across runs/versions with no code change. Flag as
    non-deterministic; the improver must not chase it.
