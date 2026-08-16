@@ -1,0 +1,55 @@
+{
+  "test": {
+    "id": "ut_search_records_028",
+    "skill": "search-records",
+    "name": "Reads batchNumber off a hit and enumerates the parish register with it",
+    "type": "positive",
+    "description": "richardson-ashton-register-unworked: an open question with one planned FamilySearch item and an EMPTY log — a search is the only way to learn anything. The indexed name search returns 13,069 fuzzy hits; the two Ashton ones are christened 25 Sep 1832 (a year off the tree's 1833) and the rest are Kirkham and Liverpool, so the name search cannot settle which John is ours. Two of the six hits carry `batchNumber` (I03213-6, the Ashton-under-Lyne extraction, 4,045 records; C00558-7, St. Michael and All Angels for the same parish, 19,206) and four carry none. This is the loop that had no first step until record_search surfaced the field: the strategy was documented on five surfaces and no tool returned a batch number, so an agent could not obtain one. What is graded is whether the skill closes it — notice the batch on a result, send it, and not mistake one page for the register.",
+    "tags": [
+      "search",
+      "batch-enumeration",
+      "parish-register",
+      "igi",
+      "england",
+      "paging"
+    ]
+  },
+  "input": {
+    "user_message": "Execute pli_001 — John Richardson's baptism in the Ashton-under-Lyne parish register. Richardson is everywhere in that parish, so I don't want one lucky name hit; work the register properly.",
+    "scenario": "richardson-ashton-register-unworked"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "record-search-batch-i03213-6-narrowed-john-richardson",
+    "record-search-batch-i03213-6-narrowed-richardson",
+    "record-search-batch-c00558-7-narrowed-john-richardson",
+    "record-search-batch-c00558-7-narrowed-richardson",
+    "record-search-batch-i03213-6-ashton-enumeration",
+    "record-search-batch-c00558-7-ashton-stmichael-enumeration",
+    "record-search-batch-nonexistent-zero-hits",
+    "record-search-richardson-ashton-christening-batch-visible",
+    "record-search-richardson-england-broad-noise",
+    "rank-search-matches-richardson-ashton-batch",
+    "record-read-richardson-i03213-6-nfcy-7vm",
+    "record-read-richardson-c00558-7-jmf4-cl",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "This is a POSITIVE test for BATCH ENUMERATION. The user asks for the parish register to be worked systematically but does NOT name the mechanism — finding it is the skill's job. 'Worked systematically' is not permission to invent a batch number: the batch must come off a returned result.",
+    "PASS CONDITION: (a) the skill runs the indexed name search for John Richardson at Ashton-under-Lyne; (b) it NOTICES that returned results carry `batchNumber`; (c) it issues a follow-up `record_search` carrying one of them; and (d) it does not present one page as the whole register (see paging below). The scenario's log is EMPTY and pli_001 is `planned`, so there is no prior state to answer from — searching is the only route.",
+    "EITHER BATCH IS CORRECT. Two Ashton batches are on the hits and both are stocked: I03213-6 (Ashton-under-Lyne, 4,045) and C00558-7 (Church of St. Michael and All Angels, Ashton-under-Lyne, 19,206). C00558-7 names the specific church; I03213-6 is the broader parish extraction. Score (c) on whether a batch that appeared on a result was sent — NOT on which one. Do not penalize either choice, with or without a stated rationale, and do not require the skill to try both.",
+    "THE 1832/1833 GAP IS THE PREMISE, NOT A TRAP. The tree says John Richardson was baptised 25 September 1833; both Ashton hits are christened 25 Sep 1832. Flagging that mismatch is GOOD and should be rewarded. But it must not stop the work: a one-year gap between a tree's date and a register entry is ordinary, and the whole reason to enumerate the register is that the name search cannot resolve the identity. A skill that disqualifies both hits as namesakes and stops — never reading the batch, never enumerating — has FAILED this test's behavior, however well it argues the namesake point. Score Correctness at most 2 for that route.",
+    "JUDGE THE BATCH CALL'S OWN ARGUMENTS — DO NOT IMPORT PARAMETERS FROM OTHER CALLS. Read the argument list of the call that carries `batchNumber` and score only that. `recordCountry` on a NAME search is normal and correct; it is a violation ONLY when it appears in the same call as `batchNumber`, because the real tool rejects that pairing (a jurisdiction that does not match the batch returns 0, indistinguishable from a wrong batch). In run v1_2026-08-13_22-11-11 the judge scored this down after seeing `recordCountry` on the skill's earlier name searches while the batch call itself carried only `batchNumber` + `surname` + `subjectId` — a correct call. If the batch call is clean, this dimension is a PASS. `projectPath`, `subjectId` and `surname` are all legitimate companions to a batch.",
+    "PAGING IS PART OF THE TEST. The enumeration returns 6 rows against `totalMatches` in the thousands with `hasMore: true`. Reporting the register as worked, exhausted, or fully enumerated off that single response is WRONG — score Correctness at most 2. Acceptable: paging with `offset`, or stating plainly how many of the total have been seen and that more remain. The skill need not page the whole batch here; it must not claim it has.",
+    "ABSENCE IS NOT A FINDING. Four of the six name-search results carry no `batchNumber`. That is the normal distribution — a batch is a property of an individual record, not of a collection. Do NOT reward 'this collection has no batch numbers', and do NOT penalize the skill for passing over the batch-less rows.",
+    "A FABRICATED BATCH RETURNS ZERO. `rank_search_matches` and `record_read` are stocked, so calling them is normal and correct — the name-search response carries no `ranked` key, so a standalone `rank_search_matches` call is expected, not a mistake. Any batch number OTHER than I03213-6 or C00558-7 hits a catch-all returning 0 hits, matching the live tool's behavior for a nonexistent batch. If the skill invents a batch number rather than reading one off a result, it gets that nil: score Correctness 1 — the pass condition is that the batch comes from real result data.",
+    "SCOPE — do not require a proof conclusion, a parentage determination, or assertion extraction. This test grades SEARCH EXECUTION and the enumeration decision. Logging the searches (including the batch-anchored one) is expected; grade it under the existing Log quality dimensions, not as part of the batch behavior.",
+    "DO NOT penalize the large `totalMatches` (13,069) on the name search. That is real FamilySearch fuzzy-match behavior on a common English surname, and it is the reason enumerating the register is the better route — the premise of the test, not a defect in the skill's query.",
+    "NARROWING A BATCH WITH A NAME IS CORRECT, NOT AN ERROR. Adding `surname` (and `givenName`) to a batch-anchored call is what SKILL.md and the tool schema instruct, and the live tool narrows on BOTH batches: I03213-6 goes 4,045 -> 5 -> 1, C00558-7 goes 19,206 -> 30 -> 9. Fixtures are stocked for every shape. Do NOT score down a skill for pairing a batch with a name, and do NOT accept a claim that the narrowing was ineffective or that the tool 'silently drops' name filters on a batch search — that is false. Only `recordCountry` / `recordSubdivision` are rejected.",
+    "THE MOCK CANNOT PAGE. A fixture returns one static response and the matcher ignores `offset`, so a second call differing only by `offset` gets the SAME rows back. Paging with `offset` is correct behavior that SKILL.md instructs — never score it down, and never score down a skill for reporting that rows remain beyond what it could retrieve. The narrowed-batch fixtures are stocked complete (returned == totalMatches, hasMore false) so a narrowed enumeration CAN be finished; only the bare four/five-figure batches are necessarily partial, and saying so plainly is the pass condition there.",
+    "THE TWO EXTRACTIONS DIFFER, AND THAT IS THE PAYOFF. Reading the I03213-6 record (NFCY-7VM) returns John and a mother Mary with NO father; reading the C00558-7 record (JMF4-CL9 / JMF4-CLS, two personas of one record — re-reading is correct, not a loop) returns John, father Thomas Richardson, and mother Mary. A skill that reaches the father has answered the scenario's question through the batch it enumerated; reward that. Do not require it, though — this test grades the enumeration, not parentage."
+  ]
+}

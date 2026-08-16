@@ -542,6 +542,17 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
+    # Routing deference: on a correctly-routed negative test the outcome is
+    # decided by routing and the base dimensions are diagnostic, so a judge FAIL
+    # there grades something this test does not own.
+    apply_routing_deference(
+        judge_result.dimensions,
+        spec=spec,
+        activated=activated,
+        skills_invoked=result.skills_invoked,
+        warnings=judge_dimension_warnings,
+    )
+
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -594,6 +605,14 @@ async def _execute_single_run(
                 for c in result.tool_calls
             ],
             "files_created": files_created,
+            # Omitted when empty so a run that called no built-in tool writes
+            # the same run_output it always has — this field appearing is
+            # itself the signal that something was read.
+            **(
+                {"builtin_tool_calls": result.builtin_tool_calls}
+                if result.builtin_tool_calls
+                else {}
+            ),
             **({"file_changes": file_changes} if file_changes else {}),
             **(
                 {"warnings": warnings}
@@ -902,6 +921,15 @@ _CLASSIFICATION_DIMENSIONS = frozenset(
     {"Evidence type accuracy", "Informant identification"}
 )
 
+# Base dimensions floored on a correctly-routed negative test. On a negative
+# test with a non-empty `correct_skill`, `_compute_outcome` decides pass/fail
+# from routing alone and the judge runs base-only and diagnostically — so a
+# FAIL here grades the routed-to skill's work, which this test does not own.
+# The judge does it anyway: "No such routing occurred" while the transcript's
+# own Skills-invoked block names an accepted skill, across 9 tests in 5 skills.
+# Prose was tried twice (PRs #589 and #1564) and it recurs, so defer instead.
+_ROUTING_DIAGNOSTIC_DIMENSIONS = frozenset({"Correctness", "Completeness"})
+
 
 def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
     """Floor the classification judge-dimensions at partial(2) when the
@@ -929,6 +957,84 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
                 "[deterministic-deference] the expected_classifications validator "
                 "verified the declared classifications as correct, so this dimension "
                 "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
+                "Original judge rationale: " + orig
+            )
+    return dimensions
+
+
+def apply_routing_deference(dimensions, *, spec, activated, skills_invoked, warnings=None):
+    """Floor Correctness/Completeness off 1 on a correctly-routed negative test.
+
+    A negative test with a non-empty `correct_skill` is decided by routing:
+    `_compute_outcome` returns pass once the skill under test did not activate
+    and an accepted skill fired, and the judge runs base-only and diagnostically.
+    A judge FAIL there is therefore usually grading something the test does not
+    own — the routed-to skill's execution — and it costs a genealogist the same
+    override every run.
+
+    **Known limitation — read before widening this.** `activated` is False
+    whenever the skill under test is absent from `skills_invoked`, and
+    `derive_activated`'s own docstring records that SDK skill-discovery bugs
+    leave that list empty even when the skill ran. So a run where the model
+    carried out the skill's task inline *and* routed to an accepted skill
+    satisfies every guard here — and `_negative_judge_context`'s third framing
+    line tells the judge to score exactly that case 1. That 1 is correct and this
+    function floors it. There is no mechanical discriminator (a skill can produce
+    substantive prose with no writes), so the pre-floor score and rationale are
+    pushed onto `warnings` instead, following `judge.py`'s
+    `coerced_tool_arguments_to_na`: a silently-vanished 1 is what makes this
+    class of defect untrendable.
+
+    Mutates + returns `dimensions`; appends to `warnings` when given. No-op
+    unless the test is negative with a non-empty `correct_skill`, the skill under
+    test did not activate, and an accepted skill is in `skills_invoked`.
+    `grade_on_invariant` negatives return from `_compute_outcome` before the
+    routing branch, so they are excluded. Floors to 2, never 3: the judge may
+    still have seen something real, and this removes only the false FAIL.
+    """
+    if not dimensions:
+        return dimensions
+    negative = spec.negative or {}
+    if negative.get("grade_on_invariant"):
+        return dimensions
+    if activated:
+        return dimensions
+    # The `any()` check below is the only guard needed, and it is load-bearing
+    # for three cases at once — do not "clarify" it by adding separate guards.
+    # Each of these leaves `correct` empty, and `any()` over an empty sequence
+    # is False:
+    #   - a POSITIVE test (the schema forbids it a `negative` block at all),
+    #   - an OUT-OF-SCOPE negative (`correct_skill: []`), which must not be
+    #     floored because its base dimensions genuinely DO gate the outcome in
+    #     `_compute_outcome`,
+    #   - a negative that routed nowhere acceptable.
+    # A `if not correct:` and a `spec.type != "negative"` guard were both tried
+    # here; both were unreachable, and each made its own test unable to fail.
+    correct = negative.get("correct_skill", [])
+    if not any(s in (skills_invoked or []) for s in correct):
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            orig = dd.get("rationale") or ""
+            if warnings is not None:
+                warnings.append({
+                    "kind": "floored_routing_diagnostic_dimension",
+                    "advisory": (
+                        f"judge scored {dd['name']} 1 on a negative test whose "
+                        f"outcome is decided by routing; floored to 2. If the "
+                        f"skill under test carried out its own task inline, this "
+                        f"1 was correct — check the transcript."
+                    ),
+                    "name": dd["name"],
+                    "score": dd.get("score"),
+                    "rationale": orig,
+                })
+            dd["score"] = 2
+            dd["rationale"] = (
+                "[deterministic-deference] this negative test is decided by "
+                "routing: the skill under test is absent from skills_invoked and "
+                "an accepted skill fired, so this dimension cannot FAIL on the "
+                "routing. Floored from the judge's 1 to 2 (partial). "
                 "Original judge rationale: " + orig
             )
     return dimensions
