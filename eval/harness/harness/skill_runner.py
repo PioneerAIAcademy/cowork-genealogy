@@ -432,6 +432,15 @@ async def run_skill(
     text_chunks: list[str] = []
     attempted_mcp_calls: list[dict[str, Any]] = []
     usage: dict[str, Any] = {}
+    # Turns counted as they stream, NOT read back off the ResultMessage.
+    # `usage` is populated only in the ResultMessage branch below, and a
+    # wall-clock timeout cancels this coroutine before that message ever
+    # arrives — so on the timeout path `usage` is always `{}` and cannot tell
+    # a run that did work from one that never started. This counter is the
+    # only progress signal that survives cancellation, and the retry guard
+    # in the orchestrator depends on it (`_is_zero_progress_timeout`).
+    # A mutable holder because the nested consumer rebinds `usage` wholesale.
+    turns_seen: dict[str, int] = {"n": 0}
     aborted_reason: str | None = None
     error: str | None = None
     # The query() async generator, hoisted so the finally below can close it
@@ -468,6 +477,7 @@ async def run_skill(
             if routing_resolved["v"]:
                 return
             if isinstance(message, AssistantMessage):
+                turns_seen["n"] += 1
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
@@ -516,6 +526,13 @@ async def run_skill(
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {max_wall_clock_seconds}s"
+        # No ResultMessage arrived (the wait_for cancelled the consumer), so
+        # `usage` is empty. Record the turns actually streamed so the caller
+        # can tell a slow run from one that never started — without this the
+        # orchestrator's zero-progress retry guard would fire on EVERY
+        # wall-clock abort and retry slow tests until the attempt budget ran
+        # out, at 3x the tokens.
+        usage["num_turns"] = turns_seen["n"]
     except _LimitExceeded as e:
         aborted_reason = e.reason
         if e.reason == "sdk_stream_silence":

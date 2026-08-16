@@ -121,3 +121,65 @@ def test_read_skill_tool_input_treats_an_empty_name_as_unread():
     got, unread = read_skill_tool_input({"skill": ""})
     assert got is None
     assert unread == ["skill"]
+
+
+# --- wall-clock timeout records the turns actually streamed (#1626 review) ---
+
+
+def _fake_assistant_message(text):
+    """Minimal stand-in for the SDK's AssistantMessage with one TextBlock."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    return AssistantMessage(content=[TextBlock(text=text)], model="stub")
+
+
+def _run_until_timeout(monkeypatch, tmp_path, *, turns):
+    """Drive the REAL run_skill timeout path: stream `turns` assistant
+    messages, then hang until the wall clock fires.
+
+    Deliberately not a hand-built SkillRunResult. `usage` is populated only in
+    the ResultMessage branch, so a fabricated result can carry field
+    combinations this code path can never emit — which is exactly how the
+    first version of the zero-progress retry guard passed its tests while
+    being blind in production.
+    """
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    async def fake_query(*, prompt, options):
+        for i in range(turns):
+            yield _fake_assistant_message(f"turn {i}")
+        await asyncio.sleep(3600)  # hang until the wall clock fires
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(
+        sr, "create_mock_server", lambda *a, **kw: (None, [], {})
+    )
+
+    return asyncio.run(
+        sr.run_skill(
+            user_message="x",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=1,
+        )
+    )
+
+
+def test_timeout_records_zero_turns_when_the_run_never_started(monkeypatch, tmp_path):
+    """The 2026-08-15 stall: the budget elapses without a single assistant
+    message. This is what the orchestrator retries."""
+    result = _run_until_timeout(monkeypatch, tmp_path, turns=0)
+    assert result.aborted_reason == "max_wall_clock_seconds"
+    assert result.usage.get("num_turns") == 0
+
+
+def test_timeout_records_the_turns_a_slow_run_did_produce(monkeypatch, tmp_path):
+    """A run that worked and then ran out of clock must report its turns —
+    otherwise it is indistinguishable from a startup stall and gets retried,
+    burning the full cap once per attempt at 3x the tokens."""
+    result = _run_until_timeout(monkeypatch, tmp_path, turns=4)
+    assert result.aborted_reason == "max_wall_clock_seconds"
+    assert result.usage.get("num_turns") == 4

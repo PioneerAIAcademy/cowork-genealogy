@@ -717,29 +717,30 @@ def _timeout_result(usage):
     )
 
 
-@pytest.mark.parametrize(
-    "usage",
-    [
-        {},                                        # no ResultMessage ever arrived
-        {"num_turns": 0, "duration_api_ms": 0},    # arrived, but nothing ran
-    ],
-)
-def test_zero_progress_timeout_is_retryable(usage):
-    """The 2026-08-15 signature: the whole wall-clock budget spent with no
-    turn and no API time means the SDK subprocess hung during startup — the
-    same transient the `error` path already retries."""
+def test_zero_progress_timeout_is_retryable():
+    """The 2026-08-15 signature: the whole wall-clock budget elapsed without a
+    single assistant turn, so the SDK subprocess hung during startup — the
+    same transient the `error` path already retries. `num_turns` here is
+    written by skill_runner's timeout handler, NOT read off a ResultMessage
+    (which never arrives on this path); see test_skill_runner.py for the
+    producer-side coverage."""
+    usage = {"num_turns": 0}
     assert orchestrator._is_zero_progress_timeout(_timeout_result(usage)) is True
     assert orchestrator._is_retryable_abort(_timeout_result(usage)) is True
 
 
-@pytest.mark.parametrize(
-    "usage",
-    [
-        {"num_turns": 7, "duration_api_ms": 0},        # real turns
-        {"num_turns": 0, "duration_api_ms": 120_000},  # real API time
-        {"num_turns": 12, "duration_api_ms": 900_000},
-    ],
-)
+def test_timeout_with_no_turn_count_is_not_retried():
+    """Fails CLOSED. A missing `num_turns` means the recording handler did not
+    run, so a stall is indistinguishable from slow work — and retrying a slow
+    test burns the full cap once per attempt at 3x the tokens. This is the
+    case the first version of the guard got wrong: `usage` is empty on the
+    timeout path unless explicitly populated, so treating falsy as
+    zero-progress retried EVERY wall-clock abort."""
+    assert orchestrator._is_zero_progress_timeout(_timeout_result({})) is False
+    assert orchestrator._is_retryable_abort(_timeout_result({})) is False
+
+
+@pytest.mark.parametrize("usage", [{"num_turns": 1}, {"num_turns": 7}, {"num_turns": 40}])
 def test_a_genuinely_slow_test_is_still_not_retried(usage):
     """A test that timed out MID-WORK stays non-retryable — retrying would
     burn the same budget twice. This is the line that keeps the fix narrow."""

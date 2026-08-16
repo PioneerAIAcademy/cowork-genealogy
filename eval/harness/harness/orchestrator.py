@@ -623,26 +623,38 @@ _ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
 def _is_zero_progress_timeout(result) -> bool:
     """A `max_wall_clock_seconds` abort where the run never got going.
 
-    `num_turns` and `duration_api_ms` reach `usage` only from the SDK's
-    ResultMessage, so a run that hung before the model ever answered has
-    neither. Both absent (or zero) means the whole budget was spent without a
-    single turn or a millisecond of API time — the subprocess stalled during
-    startup, which is the `Control request timeout: initialize` failure the
-    `error` path already retries, arriving under a different name because the
-    wall-clock watchdog fired first.
+    Reads `usage["num_turns"]`, which on this path is set by the timeout
+    handler in `skill_runner` from a counter incremented per AssistantMessage
+    as they stream — NOT from the SDK's ResultMessage. That distinction is the
+    whole correctness of this guard: `usage` is otherwise populated only in
+    the ResultMessage branch, and a wall-clock timeout cancels the consumer
+    before that message arrives, so every wall-clock abort would look like
+    zero progress and EVERY slow test would be retried — burning the full cap
+    once per attempt (1500s x 3) at 3x the tokens. Caught in review before
+    that shipped; do not re-derive this from `duration_api_ms`, which is
+    genuinely unavailable here.
+
+    Zero turns means the whole budget went by without the model answering
+    once: the subprocess stalled during startup, which is the
+    `Control request timeout: initialize` failure the `error` path already
+    retries, arriving under a different name because the wall-clock watchdog
+    fired first.
 
     Observed 2026-08-15: two tests aborted at 1888s and 1908s against a 1500s
-    cap with `num_turns=0`, `duration_api_ms=0`, `attempts=1` — no retry, and
-    both were lost from a paid suite run. A third test in the same run hit the
-    same stall, surfaced as `error`, was retried, and passed.
+    cap having never started, and were lost from a paid suite run. A third hit
+    the same stall, surfaced as `error`, was retried, and passed.
 
-    Deliberately narrow: a slow test that timed out mid-work HAS turns and API
-    time, so it stays non-retryable and does not burn its budget twice.
+    Deliberately narrow: a run that timed out mid-work has turns, so it stays
+    non-retryable and does not burn its budget twice.
     """
     if result.aborted_reason != "max_wall_clock_seconds":
         return False
-    usage = result.usage or {}
-    return not usage.get("num_turns") and not usage.get("duration_api_ms")
+    # Explicit 0, not falsy: a MISSING `num_turns` means the timeout handler
+    # that records it did not run, so we cannot tell a stall from slow work —
+    # and the safe answer there is "don't retry". Fails closed, so if that
+    # handler is ever removed this guard quietly reverts to the old
+    # never-retry behaviour instead of silently retrying every slow test.
+    return (result.usage or {}).get("num_turns") == 0
 
 
 def _is_retryable_abort(result) -> bool:
