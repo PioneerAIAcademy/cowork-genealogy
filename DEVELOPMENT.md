@@ -146,7 +146,8 @@ issue is easy to create and easy to forget; a PR that closes the gap it found
 needs nothing else to remember it. File a new issue instead of fixing it here
 only when at least one of these holds, and say which in the PR description:
 the fix needs a different reviewer or skill (a code fix found during fixture
-work, or vice versa); it depends on a decision only the lead can make; it's
+work, or vice versa); it depends on a decision only the lead can make and he
+is not reachable — a decision is a question, so if you can ask, ask; it's
 a different skill's eval slot and bundling it would force a second paid run;
 or it is too big for this PR — **and you have opened the call sites and
 counted**, and can say how many files and roughly how many lines. "It feels
