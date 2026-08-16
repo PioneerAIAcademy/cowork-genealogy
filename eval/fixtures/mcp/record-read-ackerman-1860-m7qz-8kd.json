@@ -1,0 +1,55 @@
+{
+  "tool": "record_read",
+  "description": "The 1860 Bucks County household behind M7QZ-8KD, for ut_search_records_027. Stocked to stop an ABORT, not for realism: record_read is not in the harness's LIVE_TOOLS, so with no fixture the tool is never registered and any call to it is a Type 1 uncovered call that aborts the run at exit 2 (observed in run v1_2026-08-13_22-11-11, where the skill read the top hit and the whole test died ungraded). That test's judge_context says such a call yields fixture_not_found; it does not. Keeps the test's premise intact — the household names George and two children, and NO spouse.",
+  "args": {
+    "recordId": "~M7QZ-8KD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p1",
+        "names": [
+          {
+            "given": "George",
+            "surname": "Ackerman"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1860",
+            "place": "Bucks, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "names": [
+          {
+            "given": "Henry",
+            "surname": "Ackerman"
+          }
+        ],
+        "facts": []
+      },
+      {
+        "id": "p3",
+        "names": [
+          {
+            "given": "Margaret",
+            "surname": "Ackerman"
+          }
+        ],
+        "facts": []
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "title": "United States Census, 1860",
+        "recordId": "ark:/61903/1:1:M7QZ-8KD"
+      }
+    ],
+    "places": []
+  }
+}

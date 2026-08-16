@@ -1725,3 +1725,138 @@ describe("#1324 relativeTerms", () => {
     }
   });
 });
+
+// #1592 — record_search drops UdeBatchNbr, so batch enumeration has no way to
+// obtain a batch number. Payload shapes below are the ones measured live on
+// 2026-08-13 (dev/probe-batch-field.ts), including the two type spellings.
+describe("#1592 batchNumber on results", () => {
+  /** An entry whose gedcomx root carries the batch, in either type spelling. */
+  const entryWithBatch = (
+    typeSuffix: "UdeBatchNbr" | "UdeBatchNumber",
+    text = "M01048-5",
+  ): FSSearchEntry => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      {
+        type: "http://familysearch.org/types/fields/BatchLocality",
+        values: [{ labelId: "FS_BATCH_LOCALITY", text: "Kirkdale, Lancashire, England" }],
+      },
+      {
+        type: `http://familysearch.org/types/fields/${typeSuffix}`,
+        values: [{ labelId: "FS_UDE_BATCH_NBR", text }],
+      },
+    ];
+    return entry;
+  };
+
+  it("reads the batch when the type is spelled UdeBatchNbr", () => {
+    const r = mapEntry(entryWithBatch("UdeBatchNbr", "B01883-5"));
+    expect(r!.batchNumber).toBe("B01883-5");
+  });
+
+  // The spelling that issue #1592's own quoted payload would have missed:
+  // collection 1494474 and q.batchNumber=8317102 both return this one.
+  it("reads the batch when the type is spelled UdeBatchNumber", () => {
+    const r = mapEntry(entryWithBatch("UdeBatchNumber", "B05338-0"));
+    expect(r!.batchNumber).toBe("B05338-0");
+  });
+
+  it("keys on labelId, so an unknown type spelling still yields the batch", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      {
+        type: "http://familysearch.org/types/fields/SomeFutureSpelling",
+        values: [{ labelId: "FS_UDE_BATCH_NBR", text: "V01311-7" }],
+      },
+    ];
+    // Guards the failure mode this field exists to avoid: a batch that is
+    // present upstream but unreadable here looks exactly like a record with
+    // none, so the miss is silent.
+    expect(mapEntry(entry)!.batchNumber).toBe("V01311-7");
+  });
+
+  it("ignores person-level fields, which carry PR_AGE and Role but never a batch", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.persons![0].fields = [
+      { type: "http://familysearch.org/types/fields/Age", values: [{ labelId: "PR_AGE", text: "3" }] },
+      { type: "http://familysearch.org/types/fields/Role", values: [{ text: "Principal" }] },
+    ];
+    expect(mapEntry(entry)!.batchNumber).toBeUndefined();
+  });
+
+  it("omits the field entirely on a record that traces to no batch", () => {
+    // The common case: 0/10 census hits and 10/17 hits inside one marriage
+    // collection carried none. Absence must not be reported as a value.
+    expect(mapEntry(lincolnEntry())!.batchNumber).toBeUndefined();
+    expect("batchNumber" in mapEntry(lincolnEntry())!).toBe(false);
+  });
+
+  it("takes the batch even when other root fields precede it", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      { type: "http://familysearch.org/types/fields/FilmNumber", values: [{ labelId: "FS_FILM_NBR", text: "329781" }] },
+      { type: "http://familysearch.org/types/fields/RecordGroup", values: [{ labelId: "FS_RECORD_GROUP", text: "Germany-EASy" }] },
+      { type: "http://familysearch.org/types/fields/UdeBatchNumber", values: [{ labelId: "FS_UDE_BATCH_NBR", text: "B93070-3" }] },
+      { type: "http://familysearch.org/types/fields/UniqueId", values: [{ labelId: "FS_UNIQUE_ID", text: "251586213" }] },
+    ];
+    expect(mapEntry(entry)!.batchNumber).toBe("B93070-3");
+  });
+
+  it("survives the staged slim block, which is the only case that matters", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-batch-"));
+    try {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entryWithBatch("UdeBatchNbr")] }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      // gedcomx is stripped inline — if the batch lived only in there, the
+      // enumeration loop would work solely in unlogged exploratory searches.
+      expect(out.staged).toBeTruthy();
+      expect(out.results[0].gedcomx).toBeUndefined();
+      expect(out.results[0].batchNumber).toBe("M01048-5");
+
+      // …and it reaches the sidecar the viewer and rank_search_matches read.
+      const ref = out.staged!.resultsRef;
+      const staged = JSON.parse(
+        await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
+      );
+      expect(staged.payload.results[0].batchNumber).toBe("M01048-5");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reaches the ranked stubs, the projection a subjectId search actually reads", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
+    try {
+      await writeFile(
+        join(dir, "tree.gedcomx.json"),
+        JSON.stringify({
+          persons: [
+            {
+              id: "I1",
+              names: [{ preferred: true, given: "Abraham", surname: "Lincoln" }],
+              facts: [{ type: "Birth", date: "1809", place: "Hardin, Kentucky, United States" }],
+            },
+          ],
+        }),
+        "utf-8",
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entryWithBatch("UdeBatchNbr")] }),
+      );
+
+      const out = await recordSearchTool({
+        surname: "Lincoln",
+        projectPath: dir,
+        subjectId: "I1",
+      });
+
+      expect(out.ranked).toBeTruthy();
+      expect(out.ranked!.matches[0].batchNumber).toBe("M01048-5");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
