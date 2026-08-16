@@ -109,6 +109,103 @@ def test_rule3_missing_dimension_still_reported(tmp_path, capsys):
     assert "unreviewed" in capsys.readouterr().out
 
 
+# --- Sampled rule 3 -----------------------------------------------------
+
+
+def _multi_test_log(n: int = 20, review_sample: dict | None = None) -> dict:
+    log = {
+        "tests": [
+            {
+                "test_id": f"ut_x_{i:03d}",
+                "outcome_summary": {
+                    "aggregated_dimensions": [
+                        {"source": "base", "name": "Correctness"},
+                        {"source": "base", "name": "Completeness"},
+                    ]
+                },
+            }
+            for i in range(n)
+        ]
+    }
+    if review_sample is not None:
+        log["review_sample"] = review_sample
+    return log
+
+
+def _corrections_for(
+    test_ids: list[str], *, comment: str | None = "read it", score: int = 3
+) -> list[dict]:
+    """`score` defaults to a confirmed pass (3 -> 3), which is comment-exempt.
+    Pass score=2 for a cell the comment rule still applies to."""
+    return [
+        {
+            "test_id": tid,
+            "dimension_source": "base",
+            "dimension_name": name,
+            "llm_score": score,
+            "corrected_score": score,
+            "comment": comment,
+        }
+        for tid in test_ids
+        for name in ("Correctness", "Completeness")
+    ]
+
+
+def test_rule3_accepts_sampled_annotation(tmp_path):
+    """A 20-test run log whose annotation covers only the 5 sampled tests
+    passes. Under the old every-dimension rule this was 40 unreviewed cells."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_blocks_an_unreviewed_sampled_test(tmp_path, capsys):
+    """Sampling narrows WHICH tests are required, not whether they are."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled[:-1]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "unreviewed" in capsys.readouterr().out
+
+
+def test_rule3_unchanged_without_review_sample(tmp_path):
+    """Back-compat, and the reason this change is retroactively safe: every one
+    of the 109 committed annotations predates `review_sample`, so they must keep
+    the every-dimension rule. Must pass before AND after the change."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(20)]
+    log = _multi_test_log(20)  # no review_sample
+    partial = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every[:5])
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, partial, skill_dir) == 1
+
+    full = _write_ann(skill_dir, "v2_2026-06-24_00-00-00.json", _corrections_for(every))
+    assert check_runlogs.rule3_completeness("init-project", log, full, skill_dir) == 0
+
+
+def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
+    """An ungraded test asks nothing of rule 3 and is dropped from sampling, so
+    without a warning a run with nothing gradeable passes silently."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+    out = capsys.readouterr().out
+    assert "no graded dimensions" in out
+    assert "ut_x_aborted" in out
+
+
 # --- Rule 2 cosmetic-skip escape hatch -----------------------------------
 
 # A snapshot entry pointing at a path that does not exist under REPO_ROOT
@@ -704,3 +801,169 @@ def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatc
     body["input"]["user_message"] = "SUBSTANTIVE"
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+
+
+def test_rule3_ignores_an_empty_review_sample(tmp_path, capsys):
+    """`{"tests": []}` must not switch the blocking rule off. This field is
+    committed in the same PR it gates, so anything untrustworthy falls back to
+    the every-dimension rule rather than being believed."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": [], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "is empty" in out
+    assert "unreviewed" in out
+
+
+def test_rule3_ignores_a_review_sample_naming_unknown_tests(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_nope"], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "not in this run log" in capsys.readouterr().out
+
+
+def test_rule3_ignores_a_sample_of_only_ungraded_tests(tmp_path, capsys):
+    """A sample naming only zero-dimension tests would require nothing."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(2, review_sample={"tests": ["ut_x_aborted"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "would require nothing" in capsys.readouterr().out
+
+
+def test_rule3_rejects_sampled_correction_without_comment(tmp_path, capsys):
+    """Sampling only pays off if the remaining cells are read. 91.4% of the
+    corpus this replaces was confirmed with no comment written at all."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+
+
+def test_rule3_rejects_a_whitespace_only_comment(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment="   ", score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_does_not_require_comments_without_a_review_sample(tmp_path):
+    """Every committed annotation predates both sampling and this rule; a
+    comment mandate applied to them would redden 109 files retroactively."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(3)]
+    log = _multi_test_log(3)  # no review_sample
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_ignores_a_missing_comment_on_an_unsampled_test(tmp_path):
+    """Nothing is asked of an unsampled test, so a stray correction there is a
+    bonus, not a debt."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corrections = _corrections_for(sampled) + _corrections_for(["ut_x_009"], comment=None)
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_reports_missing_dimensions_and_missing_comments_together(tmp_path, capsys):
+    """Reporting only the first sends the author round a second CI cycle."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(["ut_x_000"], comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+    assert "unreviewed" in out
+
+
+def test_rule3_exempts_a_confirmed_pass_from_the_comment_rule(tmp_path):
+    """89.4% of corrections are 3 -> 3. Requiring a sentence there spends ~26 of
+    every ~29 on the cells least likely to carry anything."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_an_overridden_pass(tmp_path, capsys):
+    """3 -> 2 is not a confirmed pass; the annotator has to say what they saw."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    corr[0]["corrected_score"] = 2
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_exempts_a_confirmed_na_from_the_comment_rule(tmp_path):
+    """null -> null is the same shape as 3 -> 3: the judge said the dimension
+    never applied and the reviewer agrees. 700 such cells exist, 91% silent."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    for c in corr:
+        c["llm_score"] = None
+        c["corrected_score"] = None
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys):
+    """Agreeing that something went wrong is exactly when to say what."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
