@@ -2,7 +2,7 @@
 //
 // The sibling of the merge tools: where those collapse persons, this one does
 // the add/correct/remove edits the tree-edit skill performs by hand today. It
-// reuses the shipped write layer (atomicWriteJson, backupIfExists, validateParsed)
+// reuses the shipped write layer (atomicWriteJson, backupIfExists, validateIntroduced)
 // and the shared id allocator, so the LLM passes only the content judgment and
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
@@ -27,7 +27,7 @@ import type {
   SimplifiedSourceDescription,
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
@@ -640,6 +640,10 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     );
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // Post-heal, pre-edit snapshot (applyOperation mutates tree in place):
+    // block only on errors THIS call introduces, not pre-existing drift in a
+    // section it never touched (#1572).
+    const beforeTree = structuredClone(tree);
 
     const treePath = join(projectPath, "tree.gedcomx.json");
 
@@ -668,7 +672,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
         }
       }
 
-      const validation = await validateParsed(research, tree, { projectPath });
+      const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
@@ -693,7 +697,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     const applied = await applyOperation(tree, research, input);
     const { assignedIds, warnings } = applied;
 
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
