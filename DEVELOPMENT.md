@@ -221,10 +221,12 @@ stops the call and puts the four steps in front of him before anything is
 filed. It's a prompt, not a refusal —
 approving it files the issue. Answer it by saying which exemption applies.
 It costs about 15 ms per Bash call and fails open, so a crash in the gate can
-never block a command you were entitled to run. `python3
-scripts/claude-hooks/test-gate-issue-create.py` proves it fires on the real
-shapes (including inside a compound command) and stays quiet on
-`gh issue list`, `gh pr create`, and malformed input.
+never block a command you were entitled to run. `make hooks-test` proves it
+fires on the real shapes (including inside a compound command) and stays quiet
+on `gh issue list`, `gh pr create`, and malformed input. CI runs it too, in
+`workflow-logic-tests.yml` alongside the other repo-governance checks — the
+fail-open design means a broken gate is otherwise indistinguishable from a
+working one.
 
 Do not agonise past that one search. `/audit-board` merges, rewrites and drops
 issues across the whole pool weekly, which is the only vantage point from which

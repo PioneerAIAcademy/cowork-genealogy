@@ -1588,65 +1588,56 @@
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/**/*"
-      },
-      "response_summary": ".claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/*.json"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\"LHZM-TR7\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-02T00:00:00Z\",\n8\t    \"updated\": \"2026-07-02T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHZM-TR7\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"LHZM-TR7-name-1\",\n10\t          \"given\": \"Teitje\",\n11\t          \"surname\": \"Harkema\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"31 July 1833\",\n19\t          \"standard_date\": \"31 Jul 1833\",\n20\t          \"place\": \"Vee..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1671,39 +1662,34 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__wiki_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Norg",
         "contextName": "Drenthe"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Norg, Noordenveld, Drenthe, Netherlands\\\",\\n      \\\"type\\\": \\\"Village\\\",\\n      \\\"latitude\\\": 53.065,\\n      \\\"longitude\\\": 6.4598,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Norg&focusedId=12662375\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Norg\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Norg, Drenthe, Netherlands\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Netherlands Drenthe civil registration birth records genealogy research"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1711,16 +1697,14 @@
         "standardPlace": "Drenthe, Netherlands",
         "startYear": 1800,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Drenthe, Netherlands\\\",\\n    \\\"startYear\\\": 1800,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"Netherlands\\\",\\n  \\\"totalForPlace\\\": 37,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"2821274\\\",\\n      \\\"title\\\": \\\"Netherlands, Archival Indexes, Population Registers\\\",\\n      \\\"dateRange\\\": \\\"1600-2000\\\",\\n      \\\"recordCount\\\": 20361614,\\n      \\\"personCount\\\": 20697916,\\n      \\\"imageCount\\\": 20391486,\\n      \\\"url\\\": \\\"https:..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__external_links_search,mcp__genealogy__volume_search,mcp__genealogy__wiki_place_page",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1728,16 +1712,14 @@
         "standardPlace": "Norg, Drenthe, Netherlands",
         "startYear": 1820,
         "endYear": 1860
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Norg, Drenthe, Netherlands\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1860\\n  },\\n  \\\"totalForPlace\\\": 232,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.dutchgenealogy.nl/church-records/\\\",\\n      \\\"linkText\\\": \\\"Church Records\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"http://www.traceyourdutchroots.com/\\\",\\n      \\\"linkText\\\": \\\"Trace Your Dutch Roots\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/sear..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Netherlands",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Wiki markdown directory is not configured. Add \\\"wikiMarkdownDir\\\": \\\"/path/to/wiki/markdown\\\" to ~/.familysearch-mcp/config.json. Ask your team lead for the path to the pre-crawled wiki markdown files.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1844,24 +1826,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__login,mcp__genealogy__record_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__login\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1874,23 +1853,20 @@
         "collectionId": "2704829",
         "recordType": "birth",
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Teitje\\\",\\n    \\\"surname\\\": \\\"Harkema\\\",\\n    \\\"birthYearFrom\\\": 1828,\\n    \\\"birthYearTo\\\": 1838,\\n    \\\"birthPlace\\\": \\\"Drenthe, Netherlands\\\",\\n    \\\"collectionId\\\": \\\"2704829\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read,mcp__genealogy__same_person,mcp__genealogy__source_attachments,mcp__genealogy__research_log_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__source_attachments\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QLZJ-NR82"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103046224850\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QLZJ-NR82\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"4836b600-96c8-431c-b28c-197fb2e323fa\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Teitje\\\",\\n          \\\"surname\\\": \\\"Harkema\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"76c1e6bb-f8af-4ca7-bd9d-a218a12fc424\\\",\\n          \\\"type\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__source_attachments",
@@ -1898,8 +1874,7 @@
         "uris": [
           "ark:/61903/1:1:QLZJ-NR82"
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"attachments\\\": {\\n    \\\"ark:/61903/1:1:QLZJ-NR82\\\": [\\n      {\\n        \\\"personId\\\": \\\"LHZM-TR7\\\",\\n        \\\"tags\\\": [\\n          \\\"Gender\\\",\\n          \\\"Birth\\\",\\n          \\\"Name\\\"\\n        ]\\n      }\\n    ]\\n  },\\n  \\\"unattached\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1921,8 +1896,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/99359241-4508-4fae-8cb0-110a99c95346.json",
         "notes": "Single match: Teitje Harkema b. 31 Jul 1833, Norg, Drenthe. Father: Jan Roelfs Harkema (b. ~1799); Mother: Hillichje Willems Jager (b. ~1800). Source cites Drents Archief, archive 0165.016, inv. 1833, record no. 41. 5-star tree match to LHZM-TR7."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-02T12:47:04.101Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1935,24 +1909,21 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "log_001 ark:/61903/1:1:QLZJ-NR82"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1963,8 +1934,7 @@
           "title": "Netherlands, Archival Indexes, Vital Records, 1600-2000 \u2014 Teitje Harkema birth 31 Jul 1833, Norg, Drenthe",
           "url": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2209,8 +2179,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2223,16 +2192,14 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification",
         "args": "a_001 a_002 a_003 a_004 a_005 a_006 a_007 a_008 a_009"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2276,16 +2243,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"wa..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "a_001 a_002 a_003 a_004 a_005 a_006 a_007 a_008 a_009"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -2459,8 +2424,7 @@
           ]
         },
         "primaryId2": "LHZM-TR7"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.98839134,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:RMVB-2BL\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/4:1:MMMM-MMM\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:RMVB-2BL\\\",\\n  \\\"updated\\\": \\\"2026-07-02T12:54:25.225Z\\\",\\n  \\\"confidence\\\": 5\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2496,8 +2460,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N1\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2521,8 +2484,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2651,55 +2613,48 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "LHZM-TR7 I1 I2"
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "LHZM-TR7"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/evaluations/pre-exhaustiveness-q_001-*.json"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Agent",
@@ -2707,44 +2662,38 @@
         "description": "GPS mentor pre-exhaustiveness gate for q_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review this genealogy research project at the pre-exhaustiveness checkpoint for question q_001.\n\nProject path: /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc\nFocus: pre-exhaustiveness\nTarget ID: q_001\n\nThe research question q_001 is: \"What does the 1833 civil birth registration for Teitje Harkema in Veenhuizen, Norg, Drenthe, Netherlands name as her parents?\"\n\nOne plan item has been executed (pli_001): a search of Netherlands, Archival Indexes, Vital Records, 1600-2000 (FamilySearch collection 2704829) which returned a single match \u2014 the 1833 geboorteakte for Teitje Harkema from Drents Archief, Norg, archive 0165.016, inventory 1833, record 41. The record names father Jan Roelfs Harkema (b. ~1799, bouwboer) and mother Hillichje Willems Jager (b. ~1800). Nine assertions extracted (a_001\u2013a_009), classified, and person-linked (pe_001\u2013pe_011). No warnings, no conflicts. Five plan items remain in \"planned\" status (pli_002 through pli_006).\n\nPlease evaluate whether the research is ready to proceed to the exhaustiveness declaration, or whether there are gaps that must be addressed first."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"I don't have a Write or Bash tool available in my current toolkit \\u2014 only Read. I cannot create the `evaluations/` directory or write the verdict file, and I cannot append to `research.json`. Per the edge case \\\"`evaluations/` directory cannot be created,\\\" I must report this explicitly rather than proceed as if the writes succeeded.\\n\\nLet me report this honestly, and still deliver the full substantive review so the work is not lost.\\n\\n---\\n\\n# Mentor review: ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHZM-TR7\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"con..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/results/log_001.json"
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_001\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-02T12:46:36.279Z\",\n5\t  \"returned_count\": 1,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"givenName\": \"Teitje\",\n9\t      \"surname\": \"Harkema\",\n10\t      \"birthYearFrom\": 1828,\n11\t      \"birthYearTo\": 1838,\n12\t      \"birthPlace\": \"Drenthe, Netherlands\",\n13\t      \"collectionId\": \"2704829\",\n14\t      \"recordType\": \"birth\",\n15\t      \"projectPath\": \"/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc\"\n16\t    },\n17\t    \"totalMa..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/tree.gedcomx.json",
         "limit": 5
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHZM-TR7\",\n5\t      \"gender\": \"Female\","
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/evaluations"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/evaluations/.keep"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2782,8 +2731,7 @@
           ],
           "narrative_for_user": "The 1833 birth index entry is strong but rests on a single derivative source. Before declaring exhaustiveness: (1) examine the original Norg birth register image to confirm the parent names are correctly transcribed, and (2) extract the 1876 marriage act which independently names Teitje's parents. Both sources are already accessible."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'target_type'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2824,24 +2772,21 @@
           ],
           "narrative_for_user": "The 1833 birth index entry is strong but rests on a single derivative source. Before declaring exhaustiveness: (1) examine the original Norg birth register image to confirm parent names, and (2) extract the 1876 marriage act which independently names Teitje's parents."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "pli_004"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search,mcp__genealogy__image_search,mcp__genealogy__image_read",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2849,22 +2794,19 @@
         "standardPlace": "Norg, Drenthe, Netherlands",
         "startYear": 1833,
         "endYear": 1833
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Norg, Drenthe, Netherlands\\\",\\n    \\\"startYear\\\": 1833,\\n    \\\"endYear\\\": 1833\\n  },\\n  \\\"totalResults\\\": 12,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"004590516_002_M961-9CN\\\",\\n      \\\"imageGroupPrefix\\\": \\\"004590516\\\",\\n      \\\"imageCount\\\": 207,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"fr\\\",\\n        \\\"nl\\\"\\n      ],\\n      \\\"coverages..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_search",
       "args": {
         "imageGroupNumber": "004748896_041_M9XH-2JQ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"imageIds\\\": [\\n    \\\"004748896_00908\\\",\\n    \\\"004748896_00909\\\",\\n    \\\"004748896_00910\\\",\\n    \\\"004748896_00911\\\",\\n    \\\"004748896_00912\\\",\\n    \\\"004748896_00913\\\",\\n    \\\"004748896_00914\\\",\\n    \\\"004748896_00915\\\",\\n    \\\"004748896_00916\\\",\\n    \\\"004748896_00917\\\",\\n    \\\"004748896_00918\\\",\\n    \\\"004748896_00919\\\",\\n    \\\"004748896_00920\\\",\\n    \\\"004748896_00921\\\",\\n    \\\"004748896_00922\\\",\\n    \\\"004748896_00923\\\",\\n    \\\"004748896_00924\\\",\\n    \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_read",
       "args": {
         "imageId": "004748896_00921"
-      },
-      "response_summary": "{\"error\":\"FamilySearch image 004748896_00921 is 1.0 MB \u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2884,8 +2826,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 31,
         "notes": "Volume search confirmed image group 004748896_041_M9XH-2JQ as the Norg 1833 civil birth register (31 images). image_read failed \u2014 all images ~1MB, exceeding MCP inline transport cap. Original image not readable through this tool. Record no. 41 (Teitje Harkema, 31 Jul 1833) is in this volume and can be viewed manually at https://www.familysearch.org/search/image/index?owc=004748896_041_M9XH-2JQ. The index transcription (src_001 / openarch.nl) identifies the record as archive 0165.016, inventory 1833, record 41 at Drents Archief \u2014 the image group confirms this is the correct volume, but image content could not be verified inline."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-02T13:01:34.955Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2898,23 +2839,20 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "pli_002 ark:/61903/1:1:QL5P-3YZL"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL5P-3YZL"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103391072679\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QL5P-H1KC\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"705d0768-b7e6-4118-84e0-d0e79e32850d\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Roelf\\\",\\n          \\\"surname\\\": \\\"Huisman\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"7c7d10ac-552e-4cb4-bb52-1407dcead711\\\",\\n          \\\"type\\\": \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2932,24 +2870,21 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Marriage act (huwelijksakte) for Roelf Huisman and Teitje Harkema, 30 Jun 1876, Norg, Drenthe. Names Teitje's father as Jan Roelfs Harkema and mother as Hillichje Willems Jager \u2014 independent corroboration of birth-act parentage. Discrepancy: marriage act indexes Teitje's birth as 1834; birth act says 31 Jul 1833. OpenArch: https://www.openarch.nl/show.php?archive=dar&identifier=919acbff-b187-4275-a0f3-3d9f115e51a3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-02T13:05:33.616Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:research_append,research_log_append,tree_edit,place_search",
         "max_results": 5
-      },
-      "response_summary": "No matching deferred tools found"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "research_append genealogy",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__auth_status\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3312,8 +3247,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_012\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3326,32 +3260,28 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:tree_edit",
         "max_results": 2
-      },
-      "response_summary": "No matching deferred tools found"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "tree_edit genealogy person",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_ancestors\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_person_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_quality\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "tree_edit add_person",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3387,8 +3317,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I3\\\",\\n        \\\"names\\\": [\\n          \\\"N3\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I4\\\",\\n        \\\"names\\\": [\\n          \\\"N4\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3583,56 +3512,49 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_012\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_013\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_014\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "person_warnings",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "LHZM-TR7"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc",
         "personId": "LH56-BC2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json",
         "limit": 200
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHZM-TR7\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"con..."
+      }
     },
     {
       "tool": "Read",
@@ -3640,8 +3562,7 @@
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json",
         "offset": 200,
         "limit": 200
-      },
-      "response_summary": "200\t        \"who\": \"Roelf Huisman (groom) and Teitje Harkema (bride)\",\n201\t        \"what\": \"Marriage act (huwelijksakte), 30 Jun 1876, civil register (Burgerlijke Stand), Norg, Drenthe, Netherlands\",\n202\t        \"when_created\": \"30 Jun 1876\",\n203\t        \"when_accessed\": \"2026-07-02\",\n204\t        \"where\": \"FamilySearch, 'Netherlands, Archival Indexes, Vital Records, 1600-2000'\",\n205\t        \"where_within\": \"Marriage register, Norg, 30 Jun 1876, entry for Roelf Huisman and Teitje Harkema\"\n206\t..."
+      }
     },
     {
       "tool": "Read",
@@ -3649,8 +3570,7 @@
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json",
         "offset": 400,
         "limit": 300
-      },
-      "response_summary": "400\t      },\n401\t      \"date\": \"1800\",\n402\t      \"date_certainty\": \"approximate\",\n403\t      \"information_quality\": \"primary\",\n404\t      \"informant\": \"Jan Roelfs Harkema (declarant, reporting about wife)\",\n405\t      \"informant_proximity\": \"household_member\",\n406\t      \"evidence_type\": \"indirect\",\n407\t      \"extracted_for_question_ids\": [\n408\t        \"q_001\"\n409\t      ],\n410\t      \"log_entry_id\": \"log_001\",\n411\t      \"informant_bias_notes\": \"Husband reporting wife's approximate birth year. Esti..."
+      }
     },
     {
       "tool": "Read",
@@ -3658,8 +3578,7 @@
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json",
         "offset": 700,
         "limit": 300
-      },
-      "response_summary": "700\t      \"evidence_type\": \"indirect\",\n701\t      \"extracted_for_question_ids\": [],\n702\t      \"log_entry_id\": \"log_003\"\n703\t    }\n704\t  ],\n705\t  \"person_evidence\": [\n706\t    {\n707\t      \"id\": \"pe_001\",\n708\t      \"assertion_id\": \"a_001\",\n709\t      \"person_id\": \"LHZM-TR7\",\n710\t      \"confidence\": \"confident\",\n711\t      \"match_score\": 0.988,\n712\t      \"rationale\": \"Exact name match (Teitje Harkema), exact birth date match (31 Jul 1833), same province (Drenthe, Netherlands). same_person score 0.98..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3672,8 +3591,7 @@
         "fields": {
           "status": "skipped"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3681,22 +3599,19 @@
         "description": "Pre-exhaustiveness mentor gate (second pass)",
         "subagent_type": "gps-mentor",
         "prompt": "You are the BCG-style senior genealogist reviewing this research project at the pre-exhaustiveness checkpoint (second pass). The project is at /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc.\n\n**Context:** A first pre-exhaustiveness evaluation (ev_001) was completed earlier. It returned verdict \"address_first\" with two must_address items:\n1. \"Derivative source only \u2014 original geboorteakte image not yet examined\" (pli_004)\n2. \"1876 marriage act not yet extracted\" (pli_002)\n\nSince ev_001, the following work has been completed:\n- **pli_002 COMPLETED**: The 1876 huwelijksakte (marriage act, ARK QL5P-3YZL) was extracted via record_read. It names Jan Roelfs Harkema as father of bride and Hillichje Willems Jager as mother of bride \u2014 identical to the 1833 birth act index. Assertions a_010\u2013a_023 and source src_002 were written. Person-evidence pe_012\u2013pe_028 created. No check-warnings fired.\n- **pli_004 SKIPPED**: The Norg 1833 birth register image (collection 2026974, image group 004748896_041_M9XH-2JQ) was located via volume_search and image_search (log_002). image_read was attempted on record 004748896_00921 but all images are ~1MB, exceeding the MCP inline transport cap. The image is accessible manually at FamilySearch but cannot be read inline by the tool. Documented in log_002 as partial outcome.\n\n**Research question q_001**: \"What does the 1833 civil birth registration for Teitje Harkema in Veenhuizen, Norg, Drenthe, Netherlands name as her parents?\"\n\n**Current evidence summary**:\n- src_001 (derivative): FamilySearch index of 1833 Norg geboorteakte record no. 41 (openarch.nl \u2192 Drents Archief archive 0165.016). Names father Jan Roelfs Harkema (bouwboer, b. ~1799) and mother Hillichje Willems Jager (b. ~1800).\n- src_002 (derivative): FamilySearch index of 1876 Norg huwelijksakte for Roelf Huisman and Teitje Harkema. Names father_of_bride Jan Roelfs Harkema and mother_of_bride Hillichje Willems Jager \u2014 independent corroboration from a separate act 43 years later.\n\nPlease conduct a rigorous pre-exhaustiveness review of the project at /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc. Return your verdict as one of:\n- \"proceed\" \u2014 evidence is sufficient to proceed to exhaustiveness declaration\n- \"address_first\" \u2014 specific items must be addressed before proceeding\n\nInclude in your response:\n1. Your verdict\n2. must_address items (if any) with specific details\n3. consider_addressing items (optional improvements)\n4. A narrative explanation of your reasoning\n\nThe project directory contains research.json (full research state) and tree.gedcomx.json (pedigree). Read them to conduct your review."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"I have a complete picture. Let me analyze the state carefully.\\n\\nThis is a **second-pass pre-exhaustiveness review** for q_001. First, I check the refusal conditions:\\n\\n- Plan exists (pl_001) \\u2014 good.\\n- No plan items are `in_progress`. pli_003, pli_005, pli_006 are `planned` (never started, not in progress). pli_001, pli_002 are `completed`. pli_004 is `skipped`. So no refusal on in-progress grounds.\\n\\nNow the substantive analysis.\\n\\n**What was addressed si..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHZM-TR7\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"con..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHZM-TR7\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"LHZM-TR7-name-1\",\n10\t          \"given\": \"Teitje\",\n11\t          \"surname\": \"Harkema\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"31 July 1833\",\n19\t          \"standard_date\": \"31 Jul 1833\",\n20\t          \"place\": \"Vee..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3743,8 +3658,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3767,8 +3681,7 @@
           "resolution": "The 1833 birth act (src_001) is the stronger source: it was created on the day of birth (31 Jul 1833) by the father Jan Roelfs Harkema as declarant \u2014 a witness to the birth \u2014 and recorded by the civil registrar. The informant had direct knowledge (primary, witness proximity). The marriage act (src_002) records the bride's own stated birth year 43 years after the event; a person cannot have primary knowledge of their own birth (secondary, self proximity). One-year discrepancies in Dutch 19th-century civil registration are common and typically reflect imprecise recollection or a transcription/indexing error. The contemporaneous, primary-informant birth act is accepted; the marriage act's 1834 is the erroneous value. Accepted birth year: 1833.",
           "notes": "This conflict does not affect the parentage question \u2014 both records name identical parents. It affects only the birth year of LHZM-TR7. No tree edit required; the tree already carries 31 Jul 1833 from the original source."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"a resolved conflict requires 'independence_analysis'\\\",\\n    \\\"a resolved conflict requires 'weighing_analysis'\\\",\\n    \\\"a resolved conflict requires 'resolution_rationale'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3793,8 +3706,7 @@
           "resolution_rationale": "The 1833 birth act (src_001) is accepted as the authoritative source for Teitje Harkema's birth year. The marriage act value of 1834 reflects a secondary informant reporting approximately 43 years after the event and is consistent with minor recollection or transcription error. This conflict does not affect the parentage question \u2014 both records name identical parents (Jan Roelfs Harkema and Hillichje Willems Jager). The tree already carries 31 Jul 1833; no correction needed.",
           "notes": "Parentage evidence is unaffected. LHZM-TR7 birth year remains 1833."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\n    \\\"research.json/conflicts[0]: missing required field 'description'\\\",\\n    \\\"research.json/conflicts[0]: missing required field 'competing_assertion_ids'\\\",\\n    \\\"research.json/conflicts[0]: missing required field 'blocks_question_ids'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3822,8 +3734,7 @@
           "resolution_rationale": "The 1833 birth act (src_001) is accepted as the authoritative source for Teitje Harkema's birth year. Marriage act's 1834 reflects a secondary informant reporting approximately 43 years post-event and is consistent with minor recollection or indexing error. Conflict does not affect the parentage question \u2014 both records name identical parents. Tree already carries 31 Jul 1833; no correction required.",
           "notes": "Parentage evidence (q_001) is unaffected by this conflict. LHZM-TR7 birth year 1833 confirmed."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: 'factual' is not a valid conflict_type (expected one of: fact, identity)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3851,8 +3762,7 @@
           "resolution_rationale": "The 1833 birth act (src_001) is accepted as the authoritative source for Teitje Harkema's birth year. Marriage act's 1834 reflects a secondary informant reporting approximately 43 years post-event. Conflict does not affect the parentage question \u2014 both records name identical parents. Tree already carries 31 Jul 1833; no correction required.",
           "notes": "Parentage evidence (q_001) is unaffected by this conflict. LHZM-TR7 birth year 1833 confirmed."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: fact conflict requires disputed_attribute\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3875,8 +3785,7 @@
           "resolution_rationale": "The 1833 birth act (src_001) is accepted as the authoritative source for Teitje Harkema's birth year. Marriage act's 1834 reflects secondary information from a self-informant reporting 43 years post-event. Conflict does not affect the parentage question \u2014 both records name identical parents. Tree carries 31 Jul 1833; no correction required.",
           "notes": "Parentage evidence (q_001) unaffected. LHZM-TR7 birth year 1833 confirmed."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"c_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3938,8 +3847,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n   ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3973,8 +3881,7 @@
             "c_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/proof_summaries[0]: missing required field 'tier'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'vehicle'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'supporting_assertion_ids'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'resolved_conflict_ids'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'exhaustive_search_summary'\\\",\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4007,8 +3914,7 @@
           "exhaustive_search_summary": "pli_001 (FamilySearch indexed vital records, Norg 1833): positive \u2014 birth act index found, parent names extracted. pli_002 (FamilySearch 1876 marriage act): positive \u2014 huwelijksakte independently names same parents. pli_004 (original birth register image, collection 2026974): partial \u2014 image group confirmed, inline read technically blocked by tool transport cap; manual URL preserved. pli_003, pli_005, pli_006: skipped as question answered by two independent civil-registration sources; additional searches would add repository diversity but not alter the parentage conclusion.",
           "narrative_markdown": "## Proof Argument: Parents of Teitje Harkema (born 31 July 1833, Veenhuizen, Norg, Drenthe)\n\n### Conclusion\nTeitje Harkema was the daughter of **Jan Roelfs Harkema** (father, *bouwboer*, born approximately 1799) and **Hillichje Willems Jager** (mother, born approximately 1800), as established by two independent Dutch Burgerlijke Stand records.\n\n### Source 1 \u2014 1833 Geboorteakte Index (src_001)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QLZJ-NR82), citing Drents Archief, archive 0165.016, inventory 1833, record no. 41, via openarch.nl.\n\nJan Roelfs Harkema appeared as declarant (*vader*) on 31 July 1833 and registered the birth of his daughter Teitje Harkema, naming Hillichje Willems Jager as the mother. As the declarant and father who witnessed the birth, Jan Roelfs provided **primary information** (witness proximity) for the child's name, birth date, and his own identity, and **primary information** (household member proximity) for the mother's name. The parentage relationship assertions a_003 and a_004 are **direct evidence** for q_001.\n\n### Source 2 \u2014 1876 Huwelijksakte Index (src_002)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QL5P-3YZL), citing Drents Archief, huwelijksregister Norg, 30 Jun 1876.\n\nThe adult bride Teitje Harkema appeared in person before the civil registrar and stated Jan Roelfs Harkema as her father (a_016, direct) and Hillichje Willems Jager as her mother (a_017, direct), with explicit parent-child relationship assertions a_013 and a_014. This record was generated 43 years after the birth, from a different event, with a different registrar, a different informant (the adult bride rather than her father), and constitutes an **independent evidence unit**.\n\n### Correlation and Corroboration\nBoth records name identical full names \u2014 Jan Roelfs Harkema and Hillichje Willems Jager \u2014 with no variant spelling. Dutch patronymic conventions corroborate internal consistency: \u2018Roelfs\u2019 in Jan Roelfs Harkema marks Jan as son of Roelf; \u2018Willems\u2019 in Hillichje Willems Jager marks Hillichje as daughter of Willem. These are not common-surname situations where coincidental name match would be plausible. The two sources are genuinely independent (different records, registrars, informants, dates, archival series) and their agreement constitutes corroborated proof under GPS Standard 38.\n\n### Conflict Resolved\nThe marriage act states Teitje\u2019s birth year as 1834 (a_011), one year later than the 1833 birth act (a_002). This conflict (c_001) is resolved in favor of the birth act: it was created contemporaneously on the day of birth by a first-hand witness (primary information); the marriage act records the bride\u2019s self-reported year 43 years post-event (secondary information). One-year off-by-one discrepancies in 19th-century Dutch bride self-reports are a recognized indexing/recollection artifact. The accepted birth year is 1833. This conflict does not affect the parentage conclusion.\n\n### Limitation\nThe original 1833 birth register image (Norg, record 41, image group 004748896_041_M9XH-2JQ) was located but could not be read inline due to a tool transport limitation (log_002). Both the openarch.nl index (src_001) and the corroborating marriage act (src_002) agree with the Drents Archief citation, and the image remains accessible for manual verification at FamilySearch. This limitation does not undermine the conclusion but would be resolved by direct image examination."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/proof_summaries[0]: 'preponderance' is not a valid proof_tier (expected one of: disproved, not_proved, possible, probable, proved)\\\",\\n    \\\"research.json/proof_summaries[0]: 'proof_argument' is not a valid proof_vehicle (expected one of: argument, statement, summary)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4041,8 +3947,7 @@
           "exhaustive_search_summary": "pli_001 (FamilySearch indexed vital records, Norg 1833): positive \u2014 birth act index found, parent names extracted. pli_002 (FamilySearch 1876 marriage act): positive \u2014 huwelijksakte independently names same parents. pli_004 (original birth register image, collection 2026974): partial \u2014 image group confirmed, inline read technically blocked by tool transport cap; manual URL preserved. pli_003, pli_005, pli_006: skipped as question answered by two independent civil-registration sources; additional searches would add repository diversity but not alter the parentage conclusion.",
           "narrative_markdown": "## Proof Argument: Parents of Teitje Harkema (born 31 July 1833, Veenhuizen, Norg, Drenthe)\n\n### Conclusion\nTeitje Harkema was the daughter of **Jan Roelfs Harkema** (father, *bouwboer*, born approximately 1799) and **Hillichje Willems Jager** (mother, born approximately 1800), as established by two independent Dutch Burgerlijke Stand records.\n\n### Source 1 \u2014 1833 Geboorteakte Index (src_001)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QLZJ-NR82), citing Drents Archief, archive 0165.016, inventory 1833, record no. 41, via openarch.nl.\n\nJan Roelfs Harkema appeared as declarant (*vader*) on 31 July 1833 and registered the birth of his daughter Teitje Harkema, naming Hillichje Willems Jager as the mother. As the declarant and father who witnessed the birth, Jan Roelfs provided **primary information** (witness proximity) for the child's name, birth date, and his own identity, and **primary information** (household member proximity) for the mother's name. The parentage relationship assertions a_003 and a_004 are **direct evidence** for q_001.\n\n### Source 2 \u2014 1876 Huwelijksakte Index (src_002)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QL5P-3YZL), citing Drents Archief, huwelijksregister Norg, 30 Jun 1876.\n\nThe adult bride Teitje Harkema appeared in person before the civil registrar and stated Jan Roelfs Harkema as her father (a_016, direct) and Hillichje Willems Jager as her mother (a_017, direct), with explicit parent-child relationship assertions a_013 and a_014. This record was generated 43 years after the birth, from a different event, with a different registrar, a different informant (the adult bride rather than her father), and constitutes an **independent evidence unit**.\n\n### Correlation and Corroboration\nBoth records name identical full names \u2014 Jan Roelfs Harkema and Hillichje Willems Jager \u2014 with no variant spelling. Dutch patronymic conventions corroborate internal consistency: \u2018Roelfs\u2019 in Jan Roelfs Harkema marks Jan as son of Roelf; \u2018Willems\u2019 in Hillichje Willems Jager marks Hillichje as daughter of Willem. These are not common-surname situations where coincidental name match would be plausible. The two sources are genuinely independent (different records, registrars, informants, dates, archival series) and their agreement constitutes corroborated proof under GPS Standard 38.\n\n### Conflict Resolved\nThe marriage act states Teitje\u2019s birth year as 1834 (a_011), one year later than the 1833 birth act (a_002). This conflict (c_001) is resolved in favor of the birth act: it was created contemporaneously on the day of birth by a first-hand witness (primary information); the marriage act records the bride\u2019s self-reported year 43 years post-event (secondary information). One-year off-by-one discrepancies in 19th-century Dutch bride self-reports are a recognized indexing and recollection artifact. The accepted birth year is 1833. This conflict does not affect the parentage conclusion.\n\n### Limitation\nThe original 1833 birth register image (Norg, record 41, image group 004748896_041_M9XH-2JQ) was located but could not be read inline due to a tool transport limitation (log_002). Both the openarch.nl index (src_001) and the corroborating marriage act (src_002) agree with the Drents Archief citation, and the image remains accessible for manual verification at FamilySearch. This limitation does not undermine the conclusion but would be resolved by direct image examination."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4065,8 +3970,7 @@
             "a_017"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4074,29 +3978,25 @@
         "description": "Post-proof mentor critique",
         "subagent_type": "gps-mentor",
         "prompt": "You are the BCG-style senior genealogist reviewing the proof argument for this project at the post-proof-conclusion checkpoint. The project is at /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc.\n\nPlease read research.json and tree.gedcomx.json and conduct a rigorous critique of proof summary ps_001 (question q_001: \"What does the 1833 civil birth registration for Teitje Harkema in Veenhuizen, Norg, Drenthe, Netherlands name as her parents?\").\n\nThe proof concludes: Teitje Harkema's parents were Jan Roelfs Harkema (father) and Hillichje Willems Jager (mother), established by two independent Dutch civil registration records:\n1. 1833 Norg geboorteakte index (src_001, record no. 41, Drents Archief archive 0165.016)\n2. 1876 Norg huwelijksakte index (src_002, ARK QL5P-3YZL)\n\nKey facts about the research:\n- Both sources are derivative indexes; original images were located but the 1833 register image could not be read inline due to tool transport limitations (~1MB files)\n- A birth-year conflict (1833 vs 1834) was logged as c_001 and resolved in favor of the birth act\n- No check-warnings fired on any tree person\n- The original birth register image is available manually at FamilySearch (image group 004748896_041_M9XH-2JQ)\n\nReturn your verdict as:\n- \"approved\" \u2014 the proof argument is defensible as written\n- \"revise\" \u2014 specific revisions are needed before the proof can stand\n- \"reject\" \u2014 the proof has fundamental flaws\n\nInclude: your verdict, specific strengths, any must-fix issues (if verdict is revise/reject), and your overall assessment of the proof's defensibility."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"The referenced evaluation files aren't on disk (only the pointer records exist in research.json). I'll note that but proceed. Let me write the verdict.\\n\\nI cannot use Write per my instructions restricting me from creating report .md files, but the output protocol requires me to write the structured verdict JSON and append to research.json. However, I have no Write/Edit tool available in my toolkit here \\u2014 only Read. Let me note this constraint honestly and deli..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHZM-TR7\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"con..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHZM-TR7\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"LHZM-TR7-name-1\",\n10\t          \"given\": \"Teitje\",\n11\t          \"surname\": \"Harkema\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"31 July 1833\",\n19\t          \"standard_date\": \"31 Jul 1833\",\n20\t          \"place\": \"Vee..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/evaluations/pre-exhaustiveness-q_001-2026-07-02-pass2.json"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4137,8 +4037,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4146,22 +4045,19 @@
         "description": "Final proof critique after revisions",
         "subagent_type": "gps-mentor",
         "prompt": "You are the BCG-style senior genealogist doing a final proof-critique review of ps_001 at /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc.\n\nThe previous critique (ev_003) returned \"address_first\" with two must_address items:\n1. The proof narrative must explicitly state that corroboration rests on two derivative indexes (original located but not verified inline)\n2. The independence claim must be qualified to acknowledge shared family-knowledge chain\n\nBoth items have been addressed in the updated ps_001 narrative:\n- The Conclusion section now explicitly states: \"This conclusion rests on the concurrence of two independent Dutch Burgerlijke Stand derivative indexes... The original 1833 birth register image has been located... but could not be read inline due to a tool transport limitation; manual verification against the original would confirm the index transcription.\"\n- The Correlation section now explicitly qualifies: \"The two records are independent at the level of record creation... A qualification applies at the level of informant knowledge for parentage: the 1876 bride drew her knowledge from the same family unit that produced the 1833 declarant. They do not share an information chain at the level of the records themselves, but they do share a common family-knowledge origin for the parentage fact.\"\n\nPlease read research.json to review the updated ps_001 and return your verdict:\n- \"approved\" \u2014 the proof argument is now defensible as written\n- \"revise\" \u2014 further revisions are still needed (specify what)\n\nFocus specifically on whether the two ev_003 must_address items have been adequately addressed in the revised narrative_markdown of ps_001."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"The referenced file doesn't exist at that path, but the `evaluations[]` array records it. The output protocol requires me to create the file and append the pointer. I do not have a Write tool available in this toolkit \\u2014 my available tool is Read. I will report this constraint honestly in the narrative rather than silently proceeding, and I'll provide the complete verdict content so the orchestrator can persist it.\\n\\nHere is my review.\\n\\n---\\n\\n# Mentor review..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_teitje_harkema_parents_1833\",\n4\t    \"objective\": \"Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHZM-TR7\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"con..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-teitje-harkema-parents-1833-5e90dpjc/evaluations/proof-critique-ps_001-2026-07-02.json"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-teitje-harkema-parents-1833-5e90dpjc."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4213,8 +4109,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[3]: 'approved' is not a valid evaluation_verdict (expected one of: address_first, consider_addressing, looks_solid, refused)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4266,8 +4161,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ev_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ..."
+      }
     }
   ],
   "error": null,
@@ -4276,5 +4170,6 @@
     "era": "1830s",
     "geography": "NL"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

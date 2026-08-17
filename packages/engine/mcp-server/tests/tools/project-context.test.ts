@@ -107,7 +107,15 @@ describe("project_context", () => {
       { persons: [], relationships: [], sources: [] },
     );
     const r = await projectContext({ projectPath: dir });
-    expect(r).toEqual({ ok: true, projectStatus: "active", openQuestions: [], persons: [], sources: [], localities: [] });
+    expect(r).toEqual({
+      ok: true,
+      projectStatus: "active",
+      openQuestions: [],
+      questionStatuses: [],
+      persons: [],
+      sources: [],
+      localities: [],
+    });
   });
 
   it("projects localities: snake→camel, omits guide_markdown, pagesRead = found sections only", async () => {

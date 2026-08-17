@@ -95,3 +95,57 @@ def test_init_empty_sections(after_state, test):
         f"person_evidence/conflicts/hypotheses/timelines/proof_summaries "
         f"as empty arrays."
     )
+
+
+# --- The write PATH, not just the resulting state ----------------------
+
+def test_project_files_written_through_the_writer_tools(tool_calls, test):
+    """init-project must create the project by CALLING the writer tools.
+
+    Every check above reads the after-state, and the after-state cannot see
+    this. The unit harness grants `Write` and `Edit` to every skill from a fixed
+    baseline independent of frontmatter, and its PreToolUse hook carries no
+    protected-file rule — so a run in which the model ignores the rewritten body
+    and hand-serializes research.json produces a byte-identical after-state and
+    an identical grade. A check on the output alone therefore cannot fail for
+    the reason it exists, which is exactly the unfalsifiable shape this repo has
+    a standing rule against.
+
+    What it is guarding is not hypothetical. In Cowork the raw-write lockdown
+    denies those writes, so `init-project` could not create a project at all and
+    the agent routed around the guard through the device bridge — and the write
+    landed. The e2e corpus cannot see it either: every fixture starts from an
+    existing project.
+
+    Scoped to positive tests that were supposed to produce files. A
+    `no-premature-write` test correctly writes nothing, and a negative test's
+    calls belong to the routed-to skill.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("write-path rules apply only to positive tests")
+    if "no-premature-write" in test.get("tags", []):
+        pytest.skip("no-premature-write test: correct behavior is to write nothing yet")
+
+    sections_written = set()
+    tree_writers = set()
+    for call in tool_calls or []:
+        bare = (call.get("tool") or "").rsplit("__", 1)[-1]
+        args = call.get("args") or {}
+        if bare == "research_append":
+            ops = args.get("ops") if isinstance(args.get("ops"), list) else [args]
+            for op in ops:
+                if isinstance(op, dict) and op.get("section"):
+                    sections_written.add(op["section"])
+        elif bare in {"tree_edit", "materialize_facts"}:
+            tree_writers.add(bare)
+
+    assert "project" in sections_written, (
+        "init-project never called research_append with section 'project' — the "
+        "objective, title and subject person ids reached research.json some other "
+        "way, and in Cowork that route is the one the write lockdown denies"
+    )
+    assert tree_writers, (
+        "init-project never called tree_edit or materialize_facts — "
+        "tree.gedcomx.json was hand-serialized, which is the write the lockdown "
+        "denies"
+    )
