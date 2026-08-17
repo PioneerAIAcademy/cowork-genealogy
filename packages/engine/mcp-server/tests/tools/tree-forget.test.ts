@@ -992,6 +992,11 @@ describe("tree_forget", () => {
           { id: "DF2", type: "Residence", standard_date: "1860" },
           { id: "DF3", type: "Residence" }, // no date field at all: unparseable
           { id: "DF4", type: "Residence", standard_date: "Bet 1845 and 1855" },
+          // Open-ended on one side: "Aft 1855" has no true upper bound (could
+          // be any later year), "Bef 1845" has no true lower bound. Only the
+          // closed side of each is a real bound (found by review).
+          { id: "DF6", type: "Residence", standard_date: "Aft 1855" },
+          { id: "DF7", type: "Residence", standard_date: "Bef 1845" },
         ],
       },
       {
@@ -1015,11 +1020,14 @@ describe("tree_forget", () => {
     if (!r.ok) return;
     // DF1 (1840) is confidently before 1850. DF2 (1860) is not. DF4
     // ("Bet 1845 and 1855") straddles 1850 — its latest possible year, 1855,
-    // is not before 1850, so it must NOT be swept.
-    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    // is not before 1850, so it must NOT be swept. DF7 ("Bef 1845") has no
+    // true lower bound but its real upper bound, 1845, is before 1850, so
+    // it IS confidently before and must be swept. DF6 ("Aft 1855") has no
+    // true upper bound at all, so it must NOT be swept (found by review).
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
     const tree = await readTree();
     const d1 = tree.persons.find((p: any) => p.id === "D1");
-    expect(d1.facts.map((f: any) => f.id)).toEqual(["DF2", "DF3", "DF4"]);
+    expect(d1.facts.map((f: any) => f.id)).toEqual(["DF2", "DF3", "DF4", "DF6"]);
     expect(r.validation.warnings).toEqual([
       expect.stringMatching(/1 fact\(s\).*no parseable date.*facts-before/),
     ]);
@@ -1033,11 +1041,15 @@ describe("tree_forget", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    // DF6 ("Aft 1855") has no true upper bound but its real lower bound,
+    // 1855, is after 1850, so it IS confidently after and must be swept.
+    // DF7 ("Bef 1845") has no true upper bound at all, so it must NOT be
+    // swept (found by review).
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
     const tree = await readTree();
     expect(
       tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
-    ).toEqual(["DF1", "DF3", "DF4"]);
+    ).toEqual(["DF1", "DF3", "DF4", "DF7"]);
   });
 
   it("facts-between removes only facts fully contained in the range, not merely overlapping it", async () => {
@@ -1050,11 +1062,13 @@ describe("tree_forget", () => {
     if (!r.ok) return;
     // DF1 (1840) is fully inside [1830, 1850]. DF4 ("Bet 1845 and 1855")
     // overlaps but is not fully contained (1855 > 1850), so it survives.
+    // DF6/DF7 are each open-ended on one side, so neither can ever be
+    // confidently "fully contained" in any finite range.
     expect(r.removed.factsByType).toEqual({ Residence: 1 });
     const tree = await readTree();
     expect(
       tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
-    ).toEqual(["DF2", "DF3", "DF4"]);
+    ).toEqual(["DF2", "DF3", "DF4", "DF6", "DF7"]);
   });
 
   it("facts-between removes a straddling fact once the range is wide enough to fully contain it", async () => {
@@ -1066,12 +1080,63 @@ describe("tree_forget", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     // Now [1840, 1860] fully contains DF1 (1840), DF2 (1860), and DF4
-    // (1845..1855). Only DF3 (unparseable) survives.
+    // (1845..1855). DF3 (unparseable) and the open-ended DF6/DF7 all survive.
     expect(r.removed.factsByType).toEqual({ Residence: 3 });
     const tree = await readTree();
     expect(
       tree.persons.find((p: any) => p.id === "D1").facts.map((f: any) => f.id),
-    ).toEqual(["DF3"]);
+    ).toEqual(["DF3", "DF6", "DF7"]);
+  });
+
+  it("facts-before never sweeps an Aft fact merely because the threshold clears its warning-check fudge", async () => {
+    // "Aft 1850" has no true upper bound at all. date-helpers' FUDGE gives
+    // it a +10-year latest for the warning checks (a heuristic, not a real
+    // bound), so a threshold past that fudged year, but nowhere near an
+    // actual later occurrence, must still refuse rather than guess (found
+    // by review; this is the shape the fixture-level tests above do not
+    // exercise, since their threshold sits below the fact's own year).
+    await writeProject({
+      persons: [
+        {
+          id: "P1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "PF1", type: "Residence", standard_date: "Aft 1850" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "P1", year: 1870 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
+  });
+
+  it("facts-after never sweeps a Bef fact merely because the threshold clears its warning-check fudge", async () => {
+    // Mirror case: "Bef 1900" has no true lower bound at all.
+    await writeProject({
+      persons: [
+        {
+          id: "P2",
+          gender: "Male",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+          facts: [{ id: "PF2", type: "Residence", standard_date: "Bef 1900" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-after", personId: "P2", year: 1885 }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/matched nothing/);
   });
 
   it("facts-between rejects fromYear > toYear", async () => {
@@ -1104,8 +1169,9 @@ describe("tree_forget", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    // D1's DF1 (1840) and D2's DF5 (1830) are both confidently before 1850.
-    expect(r.removed.factsByType).toEqual({ Residence: 2 });
+    // D1's DF1 (1840) and DF7 ("Bef 1845", real upper bound 1845) and D2's
+    // DF5 (1830) are all confidently before 1850.
+    expect(r.removed.factsByType).toEqual({ Residence: 3 });
     const tree = await readTree();
     expect(tree.persons.find((p: any) => p.id === "D2").facts).toEqual([]);
   });

@@ -204,6 +204,15 @@ Matching is **confident, not merely overlapping**:
 - `facts-between(fromYear, toYear)`: the fact's entire possible range must fit
   inside `[fromYear, toYear]`, not merely intersect it.
 
+`Bef`/`Aft` dates are open-ended on one side, and are treated as such: a `Bef`
+fact's earliest possible year is unbounded, so it is never matched by
+`facts-after` or the open side of `facts-between`, and an `Aft` fact's latest
+possible year is unbounded, so it is never matched by `facts-before` or the
+open side of `facts-between`, regardless of how far past the fact's own stated
+year the threshold sits. `earliestYear`/`latestYear`'s own fudge on the open
+side (used elsewhere for `person_warnings`' looser, illustrative checks) is a
+heuristic, not a real bound, and is not treated as one here (found by review).
+
 An uncertain or ranged date that only partly overlaps the boundary (e.g. `Bet
 1845 and 1855` against `facts-before(1850)`) is left alone rather than guessed
 at. This is deliberate: a looser "any overlap counts" rule would recreate the

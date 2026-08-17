@@ -409,13 +409,30 @@ function datedFacts(
         continue;
       }
       const std = getStandardDate(fact);
-      const earliest = std === null ? null : earliestYear(std);
-      const latest = std === null ? null : latestYear(std);
+      if (std === null) {
+        skipped += 1;
+        continue;
+      }
+      const earliest = earliestYear(std);
+      const latest = latestYear(std);
       if (earliest === null || latest === null) {
         skipped += 1;
         continue;
       }
-      entries.push({ ownerKind, ownerId, fact, earliest, latest });
+      // `Bef`/`Aft` are open-ended on one side. date-helpers' FUDGE caps
+      // that open side at a +/-10 year heuristic meant for the warning
+      // checks, not a real bound: "Aft 1850" could be any later year, not
+      // just up to 1860. Treating the fudge as a real bound let facts-before
+      // sweep a fact that was never confidently before the threshold (found
+      // by review) — unbounded on the open side instead, so the confident-
+      // match predicates never fire there.
+      entries.push({
+        ownerKind,
+        ownerId,
+        fact,
+        earliest: /\bBef\b/.test(std) ? -Infinity : earliest,
+        latest: /\bAft\b/.test(std) ? Infinity : latest,
+      });
     }
   };
   if (personId !== undefined) {
