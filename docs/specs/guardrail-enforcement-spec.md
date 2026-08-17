@@ -648,6 +648,41 @@ bridge surface is nine tools: `device_bash`, `device_commit_files`,
 `device_stage_files`, `device_list_dir`, `device_request_folder_access`,
 `get_device_info`, `create_artifact`, `list_artifacts`, `update_artifact`.
 
+#### Closed 2026-08-17 — `device_commit_files` only
+
+All three lockdown copies now cover `device_commit_files`, matched on the **bare
+tail** (Cowork namespaces it and the plugin cannot control the prefix). It is
+the route the ordinary onboarding path took, and the only one by which an
+unvalidated write to a protected file has been observed reaching a user's disk.
+
+Two properties, both deliberate and both pinned by vectors in
+`eval/harness/tests/unit/test_write_lockdown_parity.py`:
+
+- **Only the two project files.** A user asking Cowork to write any of their own
+  files into a connected folder is not this guard's business, and content that
+  merely *mentions* `research.json` is not a write to it — whole basenames are
+  compared. Denying more would be a availability regression in exchange for
+  nothing.
+- **Fails open on an unrecognised payload.** The bridge's argument schema is not
+  ours and is recorded nowhere in this repo — we know the tool's name and that a
+  deny binds, not its shape. So the guard walks whatever arrives for path-like
+  strings and, finding none, allows. **This is a real hole**, and it is the
+  reason the closure is not proven by its tests: a live Cowork session is the
+  only instrument that sees the true payload, exactly as with agent tool
+  binding.
+
+**`device_bash` is deliberately still open**, and on current evidence should
+stay open. Its input is a command string in which `cat research.json` and
+`cat > research.json` are indistinguishable without parsing a shell — and
+measured over the whole committed corpus, **37 of 40** shell touches of a
+protected file are reads the system depends on, with **3 write-shaped and 0
+landed**. All three write-shaped attempts have since been explained: two were
+seeding a starting tree (project-creation-shaped, and `project_create` now owns
+that), and the third was a run that could not load `research_append` at all,
+which the ToolSearch abort backstop now catches at its third consecutive miss.
+The false deny is the worse failure here, and there is no measured harm on the
+other side of the trade.
+
 **One route no matcher closes, and the spec should say so rather than imply
 otherwise.** With every programmatic path denied, the agent wrote the file into
 the container via `Bash` and delivered it to the user through `SendUserFile` for

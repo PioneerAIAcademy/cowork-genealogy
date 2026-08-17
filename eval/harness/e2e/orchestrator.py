@@ -245,7 +245,68 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # tree_edit, tree_correct), which validate before persisting. See
 # docs/specs/guardrail-enforcement-spec.md §6.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
+# (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
+# prefix. This is the route that actually mattered: measured live 2026-08-15,
+# `init-project` created both protected files through it in a run where
+# Write/Edit/NotebookEdit appear nowhere, while `Write` could not reach the
+# user's disk at all. `device_bash` is deliberately absent — its input is a
+# command string where `cat research.json` and `cat > research.json` are
+# indistinguishable without parsing a shell, and 37 of 40 shell touches of a
+# protected file in the committed corpus are reads.
+#
+# Mirrored in all three lockdown copies even though only the plugin one ever
+# sees the bridge; the parity test holds them to one vector set.
+DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
+# A path has no newline and is not long. Both bounds keep the payload walk below
+# off file CONTENT travelling alongside the paths.
+_MAX_PATH_LEN = 400
+
+
+
+
+def _basename(value: str) -> str:
+    """The trailing segment, under either separator."""
+    return value.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _path_like_strings(value, depth: int = 0):
+    """Every string in `value` that could be a path, walked structurally.
+
+    The bridge's payload shape is not ours and is recorded nowhere in this repo,
+    so this guesses no key: it walks whatever arrives. A content string that
+    merely mentions a protected file is still safe, because whole basenames are
+    compared — "see research.json" has basename "see research.json".
+    """
+    if depth > 6:
+        return
+    if isinstance(value, str):
+        if value and "\n" not in value and len(value) <= _MAX_PATH_LEN:
+            yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _path_like_strings(v, depth + 1)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _path_like_strings(v, depth + 1)
+
+
+def _device_bridge_target(tool_name: str, tool_input) -> str | None:
+    """The protected filename a device-bridge write targets, or None.
+
+    **Fails open on an unrecognised payload, deliberately.** Denying whenever the
+    shape cannot be parsed would block a user asking Cowork to write their OWN
+    files into a connected folder, which is not this guard's business and is a
+    worse failure than the hole.
+    """
+    if _basename(tool_name.replace("__", "/")) not in DEVICE_WRITE_TOOLS:
+        return None
+    for candidate in _path_like_strings(tool_input or {}):
+        name = _basename(candidate)
+        if name in PROTECTED_PROJECT_FILES:
+            return name
+    return None
 
 def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     """The protected filename a raw file-write call targets, or None.
@@ -263,7 +324,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     (issue #940), which cannot import from here.
     """
     if tool_name not in ("Write", "Edit", "NotebookEdit"):
-        return None
+        return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None

@@ -1,13 +1,23 @@
 # Enforcement layer — the phase programme
 
-**Status: Phase 0 landed 2026-08-16 — the ownership declaration is
-`docs/specs/schemas/ownership.json`, 19 rows, with its two lints. Phases 1–5
-designed here, none started.** Three gates, the phase function, and the replay
-engine were built during the investigation — they are *inputs* to this
-programme, not one of its phases. **Update this line as each phase lands, and
-delete a phase's section when it ships.** Two files in this directory once spent
-weeks claiming "not yet implemented" for work that had shipped; that is the
-failure this line exists to prevent.
+**Status, 2026-08-17.**
+
+| Phase | State |
+|---|---|
+| 0 — ownership declaration | **landed** 2026-08-16. `docs/specs/schemas/ownership.json`, 19 rows, two lints |
+| 1 — creation path | **landed** 2026-08-17. `project_create`, and `init-project` rewritten onto it |
+| 1 — standalone (answer, don't error) | **not started**, and no longer a seed writer. Blocked on the `readProjectJson` consolidation |
+| 2 — device-bridge route closure | **landed** 2026-08-17. `device_commit_files` covered in all three lockdown copies; `device_bash` deliberately not |
+| 3 — first skill-agent pair (proof summaries) | **not started.** Premise re-measured 2026-08-17 and it holds: 52 of 142 runs that wrote a proof summary never launched the skill that owns it |
+| 4 — remaining pairs | **not started** |
+| 5 — detectors + positive controls | **not started.** Independent and free; can run at any time |
+
+Three gates, the phase function, and the replay engine were built during the
+investigation — they are *inputs* to this programme, not one of its phases.
+**Update this table as each phase lands, and delete a phase's section when it
+ships.** Two files in this directory once spent weeks claiming "not yet
+implemented" for work that had shipped; that is the failure this line exists to
+prevent.
 
 **The goal is a comprehensive enforcement system, not a count of closed issues.**
 The originating investigation carried a pre-registered target of 12 issues; the
@@ -29,11 +39,12 @@ system, not the objective.
 ## Sequencing, and the one hard constraint
 
 ```
-Phase 0  manifest ─── LANDED ┐
-Phase 1  seed writer ────────┼──> Phase 2  route closure   (HARD DEPENDENCY)
-Phase 3  first pair ─────────┘
-Phase 4  remaining pairs         (needs #1253)
-Phase 5  detectors + controls    (independent, free, any time)
+Phase 0  manifest ────────── LANDED ┐
+Phase 1  creation path ───── LANDED ┼──> Phase 2  route closure ── LANDED
+Phase 1b standalone ──────── issue #1695, after #988
+Phase 3  first pair ──────── next
+Phase 4  remaining pairs      (needs #1253)
+Phase 5  detectors + controls (independent, free, any time)
 ```
 
 Phase 3 takes its row from the landed manifest: `proof_summaries`, owner
@@ -41,77 +52,36 @@ Phase 3 takes its row from the landed manifest: `proof_summaries`, owner
 is the `tool` and `hook` planes — both already in the manifest's plane
 vocabulary, both claimed by no row yet.
 
-**The hard constraint: the seed must precede route closure.** Measured
-2026-08-15 — in Cowork with a connected folder, `init-project` creates both
-project files through `device_commit_files`, a route the lockdown's matcher does
-not cover. Closing that route *before* a sanctioned creation path exists would
-make project creation impossible. That is the satisfiability rule from ADR-0011:
-a deny must leave a working alternative, and here the alternative has to be built
-first.
+**The hard constraint held, and was honoured.** A sanctioned creation path had to
+exist before the bridge route closed, or project creation would have become
+impossible: measured 2026-08-15, `init-project` created both files through
+`device_commit_files` in Cowork with a connected folder. `project_create` landed
+first; the route closed after. That is ADR-0011's satisfiability rule — a deny
+must leave a working alternative — and it is the reason for the ordering above.
 
 ---
 
-## Phase 1 — the seed writer: create-on-first-write
+## Phase 1b — standalone use: answer, don't error
 
-**Goal.** No user should have to start an official project before doing work that
-persists. The files appear when they are needed.
+**The creation half shipped** as `project_create` (2026-08-17), so this section
+is only what remains. **Auto-seeding the writer tools — the design this section
+used to describe — was rejected**, twice, under review: it lets any skill bring
+an objective-less project into being, which `init-project`'s guard then refuses
+to touch and no routing table has a row for. A dead end with no sanctioned exit.
 
-**Design.** Auto-seed inside the **writer tools**, not in skill bodies. As
-SKILL.md prose this is ~20 independently drifting copies; inside
-`research_append` / `research_log_append` / the tree writers it is one
-implementation with validate-before-persist and nothing to drift. This is
-strictly better than the separate seed tool the issue proposes, which still
-requires every caller to remember to call it.
+**What remains is smaller than a seed writer**, and is a lead ruling
+(2026-08-17): *it is fine for standalone work not to be persisted; it is not
+fine for the user to see an error merely because they are not in a project.*
 
-**Create on first WRITE, never on read.** This is what keeps the scope boundary
-intact:
+Measured: of 21 skills declaring a tool that touches the project files, **1**
+(`locality-guide`) handles the absence. The rest would surface
+`research.json not found in projectPath` to someone who simply is not in a
+project — including the search path, which is the 27,699-results loss this
+programme opened with.
 
-| Request | Writes? | Effect |
-|---|---|---|
-| "transcribe this image" | no | nothing created — no project appears in someone's Downloads folder |
-| "does this record belong to this person?" | not until the user wants it kept | answered with no files |
-| `record-extraction`'s first `research_log_append` | yes | shell created as a side effect of the write it was already making |
-
-That last row is the measured failure: a request needing no project produced real
-work (27,699 search results) and lost it at
-`{"ok":false,"errors":["research.json not found in projectPath"]}`.
-
-**Closes** #1080. **Cost:** engine tests only; no paid eval run.
-
-**Open product call:** a durable write in an arbitrary folder now creates project
-files there. Create-on-write makes that implicitly user-requested, but the first
-creation should probably say so out loud. `researcher_profile` stays out of an
-auto-created shell — every skill has an absent-profile fallback, and the
-narration line must tolerate a missing file regardless.
-
----
-
-## Phase 2 — route closure on the device bridge
-
-**Goal.** The lockdown covers the route project files are actually written
-through.
-
-**Why it is newly tractable.** A canary proved a deny on `device_bash` **and**
-`device_commit_files` is honoured, before execution, nothing written. That
-removes the doubt on which the 2026-08-11 deferral partly rested — a name-matcher
-does bind against a registrar the plugin does not control. The nine-tool bridge
-surface is enumerated in the guardrail spec §6.1.
-
-**What is still the hard part**, and what the ruling deferred: the **predicate**.
-The only implementation that exists does not distinguish a file as *source* from
-a file as *destination*, so it denies `cp research.json /tmp/backup/` and
-`jq . research.json > mine.json` — both of which the `Write` half explicitly
-permits in the same module. Shipping that makes the two halves disagree.
-
-**Design constraint from four observations.** A blocked agent improvises toward
-another route rather than stopping — the `device_bash` write that landed, the
-`Bash` `cat` when `Read` was unavailable, an offer of `device_commit_files` as an
-uncovered path, and a container-write delivered to the user via `SendUserFile`.
-So express the rule as a **property of the file** wherever possible, not as a
-list of denied tool names, and give every deny a remedy that actually works.
-
-**Closes** #1499. **Depends on** Phase 1. **Cost:** predicate design + a Cowork
-verification session; no paid eval run.
+The fix belongs at the writer tools, not in 19 skill bodies (~19 paid eval runs,
+and ~19 drifting copies of one rule). Tracked as issue #1695, which **must follow
+#988** — the message is thrown from nine sites until that consolidation lands.
 
 ---
 
@@ -120,8 +90,17 @@ verification session; no paid eval run.
 **Goal.** One artifact whose owner is enforceable, end to end, as the reference
 implementation of the layer map.
 
-Chosen because proof summaries carry the highest measured bypass rate: **47 of
-133 committed runs wrote one without ever launching the skill that owns it.**
+Chosen because proof summaries carry the highest measured bypass rate.
+**Re-measured 2026-08-17, after the three write-boundary gates landed: 52 of the
+142 runs that wrote a proof summary never launched the skill that owns it — 37%,
+against the 35% first measured.** The premise holds.
+
+Note what that re-measurement cannot say. Every run in the corpus predates the
+gates (newest 2026-08-14; the gates merged 2026-08-16), so this is the pre-gate
+rate re-counted on a larger corpus, not evidence about the gates. Nor should it
+be: nothing in #1685 requires `proof-conclusion` to have run — the
+`resolved`-needs-a-summary gate pushes agents *toward* writing summaries and
+never asks who wrote them. Closing that is exactly this phase.
 
 **Six changes, each in exactly one substrate, no prose:**
 

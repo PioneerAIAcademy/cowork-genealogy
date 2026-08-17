@@ -43,6 +43,33 @@ import sys
 # Matched on the basename, so an absolute or relative path is caught alike.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
+# The raw file-write tools. Their `file_path` is unambiguously a destination —
+# there is no reading of `Write(file_path=...)` where that file is an input.
+FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+
+# The device-bridge writer, matched on the BARE TAIL because Cowork namespaces
+# it (`mcp__remote-devices__device_commit_files`) and the plugin cannot control
+# the prefix — the same reason agent frontmatter carries every spelling.
+#
+# This is the route that actually mattered. Measured live 2026-08-15: with a
+# connected folder the agent runs in a cloud sandbox and reaches the user's disk
+# over this bridge, and `init-project` created both protected files through it
+# across a run in which Write/Edit/NotebookEdit appear nowhere. `Write` cannot
+# reach the user's files at all there — it writes a container-local copy and
+# reports success. So the guard denied the operation that cannot do harm and
+# permitted the one that can.
+#
+# `device_bash` is deliberately NOT here. Its input is a command string, where
+# `cat research.json` and `cat > research.json` are indistinguishable without
+# parsing a shell, and 37 of the 40 shell touches of a protected file in the
+# committed corpus are reads the system depends on. Denying on a mention would
+# refuse them; the false deny is the worse failure. See the guardrail spec.
+DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# A path never contains a newline and is never long. Both bounds exist to keep
+# the scan below off file CONTENT that happens to travel in the same payload.
+_MAX_PATH_LEN = 400
+
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
@@ -52,19 +79,72 @@ REASON = (
 )
 
 
+def _basename(value: str) -> str:
+    """The trailing segment, under either separator. Splitting on "/" alone made
+    the e2e copy of this rule a silent no-op on Windows, where the model composes
+    `C:\\...\\research.json`."""
+    return value.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _path_like_strings(value, depth: int = 0):
+    """Every string in `value` that could be a path, walked structurally.
+
+    The device bridge's payload shape is not ours and is not recorded anywhere
+    in this repo — we know the tool's NAME and that a deny binds, not its
+    argument schema. So this does not guess a key; it walks whatever arrives and
+    considers every string.
+
+    Two filters keep it off file CONTENT travelling in the same payload: a path
+    has no newline, and is not long. A content string that merely MENTIONS a
+    protected file is still safe, because the caller compares whole basenames —
+    "see research.json" has basename "see research.json", which matches nothing.
+    """
+    if depth > 6:
+        return
+    if isinstance(value, str):
+        if value and "\n" not in value and len(value) <= _MAX_PATH_LEN:
+            yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _path_like_strings(v, depth + 1)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _path_like_strings(v, depth + 1)
+
+
 def protected_target(tool_name: str, tool_input: dict) -> str | None:
     """The protected filename this call targets, or None.
 
-    Only the file-write tools are candidates — the MCP writer tools are a
-    different code path and are the sanctioned route. Both path separators are
-    handled: splitting on "/" alone made the e2e copy of this rule a silent
-    no-op on Windows, where the model composes `C:\\...\\research.json`.
+    Two routes, because they carry their destination differently:
+
+    - The raw file-write tools name it in `file_path`, unambiguously.
+    - The device-bridge writer carries a file list whose shape we do not
+      control, so every string in the payload is considered.
+
+    The MCP writer tools are neither — they are the sanctioned route and a
+    different code path.
+
+    **Fails open on an unrecognised device payload, deliberately.** If the bridge
+    changes shape and no path-like string is found, this returns None and the
+    call proceeds. The alternative — denying whenever we cannot parse it — would
+    block a user asking Cowork to write any of their OWN files into a connected
+    folder, which is not this guard's business and is a far worse failure than
+    the hole. The hole is real and is why the spec requires a live Cowork check
+    rather than treating this function's tests as proof.
     """
-    if tool_name not in ("Write", "Edit", "NotebookEdit"):
+    if tool_name in FILE_WRITE_TOOLS:
+        file_path = str((tool_input or {}).get("file_path") or "")
+        name = _basename(file_path)
+        return name if name in PROTECTED_PROJECT_FILES else None
+
+    if _basename(tool_name.replace("__", "/")) in DEVICE_WRITE_TOOLS:
+        for candidate in _path_like_strings(tool_input or {}):
+            name = _basename(candidate)
+            if name in PROTECTED_PROJECT_FILES:
+                return name
         return None
-    file_path = str((tool_input or {}).get("file_path") or "")
-    name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
-    return name if name in PROTECTED_PROJECT_FILES else None
+
+    return None
 
 
 def decision(payload: dict) -> dict:
