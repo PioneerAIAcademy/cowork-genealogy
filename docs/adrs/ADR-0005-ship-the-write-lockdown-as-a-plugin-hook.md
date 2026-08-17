@@ -17,8 +17,9 @@
 
 `research.json` and `tree.gedcomx.json` are the durable product of a research
 session. Both are written through validating writer tools that check the whole
-project in memory and write nothing on failure. A raw `Write` or `Edit` to either
-file bypasses every invariant those tools enforce.
+project in memory and write nothing when a call would introduce an invalid state
+(pre-existing drift the call did not cause rides as a warning — #1572). A raw
+`Write` or `Edit` to either file bypasses every invariant those tools enforce.
 
 This is not a theoretical bypass. Across three `william-ferber-origins` e2e runs
 on 2026-07-29, the agent wrote `research.json` raw **33 times** (12 / 13 / 8 —
