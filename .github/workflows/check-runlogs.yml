@@ -16,7 +16,9 @@ name: Check runlog discipline
 #
 #   Rule 3 (blocking): The latest full-skill run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
-#   triple present in the run log.
+#   triple of the tests named in the run log's `review_sample` (5 per run:
+#   3 rotation, 1 targeted, 1 random). A run log with no `review_sample` —
+#   every one written before sampling shipped — still owes all of them.
 #
 # Scratch runs (scratch_<ts>.json) are gitignored and never reach this
 # workflow.

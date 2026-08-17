@@ -1,0 +1,175 @@
+{
+  "tool": "record_search",
+  "description": "Ashton-under-Lyne christening search for John Richardson (the scenario's question). CAPTURED LIVE from the FamilySearch API on 2026-08-13 and trimmed only by dropping each row's `gedcomx` (the majority convention for record-search fixtures); every other value, including the batch numbers and totalMatches, is verbatim. The point of this fixture is the MIX: rows 0-1 carry `batchNumber` (I03213-6, C00558-7) and rows 2-5 carry none, which is the real distribution — a batch is a property of the individual record, not of the collection. A skill that reads the batch off the top hit alone, or that reads its absence on rows 2-5 as 'this collection has no batches', is doing the wrong thing. Pairs with record-search-batch-i03213-6-ashton-enumeration: I03213-6 is the Ashton-under-Lyne extraction, so enumerating it is exactly the register this question is about. ORDER MATTERS: list the batch fixtures BEFORE this one. Predicate matching is a SUBSET test and the first match wins (fixtures.py `matches`, mock_mcp.py dispatch), so a narrowed enumeration call carrying batchNumber AND surname/givenName/birthPlace also satisfies this predicate — listed first, this fixture would swallow it and hand back the 13,069-hit name response with the wrong totalMatches/hasMore, and the graded enumeration step would silently be the name search again.",
+  "args": {
+    "surname": "~Richardson",
+    "givenName": "~John",
+    "birthPlace": "~Ashton"
+  },
+  "response": {
+    "query": {
+      "surname": "Richardson",
+      "givenName": "John",
+      "birthPlace": "Ashton-under-Lyne, Lancashire, England",
+      "birthYearFrom": 1832,
+      "birthYearTo": 1834,
+      "recordType": "birth",
+      "count": 6
+    },
+    "totalMatches": 13069,
+    "paginationCappedAt": 4999,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NFCY-7VM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "25 Sep 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.4236,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KDV",
+        "primaryId": "p_12036524040",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JMF4-CL9",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "25 Sep 1832",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.4136004,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-BYQ",
+        "primaryId": "p_12405347731",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWXZ-HLM",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "17 Oct 1833",
+            "place": "Kirkham, Lancashire"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.1236,
+        "confidence": 3,
+        "collectionId": "1666142",
+        "collectionTitle": "England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1666142",
+        "recordTitle": "Entry for John Richardson, \"England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977\"",
+        "recordArk": "ark:/61903/1:2:MN8Q-T1R",
+        "primaryId": "p_11092417830"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JNY-XMDW",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Church of England"
+          },
+          {
+            "type": "Residence",
+            "place": "Garden St"
+          },
+          {
+            "type": "Baptism",
+            "date": "1833-1834",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.1236,
+        "confidence": 3,
+        "collectionId": "4489061",
+        "collectionTitle": "England, Lancashire, Liverpool, Baptisms, 1557-1919",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4489061",
+        "recordTitle": "Entry for John Richardson, \"England, Lancashire, Liverpool, Baptisms, 1557-1919\"",
+        "recordArk": "ark:/61903/1:2:HSSL-87F3",
+        "primaryId": "p_297114048366"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JNY-35HQ",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "1833-1842",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          },
+          {
+            "type": "Residence",
+            "place": "Edmund Street"
+          },
+          {
+            "type": "Religion",
+            "value": "Church of England"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Kirkland Richardson",
+        "score": 5.1236,
+        "confidence": 3,
+        "collectionId": "4489061",
+        "collectionTitle": "England, Lancashire, Liverpool, Baptisms, 1557-1919",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4489061",
+        "recordTitle": "Entry for John Kirkland Richardson, \"England, Lancashire, Liverpool, Baptisms, 1557-1919\"",
+        "recordArk": "ark:/61903/1:2:HSSL-34M9",
+        "primaryId": "p_297113772844"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JNY-NRMF",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Church of England"
+          },
+          {
+            "type": "Baptism",
+            "date": "1832-1833",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          },
+          {
+            "type": "Residence",
+            "place": "Christian St"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.1236,
+        "confidence": 3,
+        "collectionId": "4489061",
+        "collectionTitle": "England, Lancashire, Liverpool, Baptisms, 1557-1919",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4489061",
+        "recordTitle": "Entry for John Richardson, \"England, Lancashire, Liverpool, Baptisms, 1557-1919\"",
+        "recordArk": "ark:/61903/1:2:HSSL-6LFJ",
+        "primaryId": "p_297114124515"
+      }
+    ]
+  }
+}

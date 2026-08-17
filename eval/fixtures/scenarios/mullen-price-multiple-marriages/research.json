@@ -44,7 +44,7 @@
           "jurisdiction": "Dodge County, Wisconsin",
           "date_range": "1860",
           "repository": "FamilySearch",
-          "rationale": "The 1860 census should show Sarah (age ~8) in her parents' household before her first marriage, confirming the Mullen surname and identifying her parents.",
+          "rationale": "The 1860 census should show Sarah (age ~8) in her parents' household, confirming her birth surname and identifying her parents.",
           "fallback_for": null,
           "status": "in_progress"
         },

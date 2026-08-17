@@ -24,9 +24,9 @@ from validators_lib import assert_foreign_keys_valid
 
 
 # Ownership enforcement for *all* skills is in
-# test_universal.py::test_ownership_table, driven by a single OWNERSHIP_TABLE
-# dict mirroring research-schema-spec.md §4. Per-skill copies were removed
-# to prevent drift between two sources of truth.
+# test_universal.py::test_ownership_table, driven by
+# docs/specs/schemas/ownership.json. Per-skill copies were removed to prevent
+# drift between two sources of truth.
 
 
 # --- Tool allowlist ---

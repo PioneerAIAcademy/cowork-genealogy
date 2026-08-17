@@ -1,0 +1,46 @@
+{
+  "tool": "record_search",
+  "description": "Batch I03213-6 narrowed by surname AND given name — the one John Richardson in the extraction. Narrowing a batch with a name is CORRECT and documented — SKILL.md and the tool schema both say to add `surname` to narrow within a batch, and the live tool does narrow: measured 2026-08-13, batch I03213-6 alone returns 4,045, plus surname=Richardson returns 5, plus givenName=John returns 1. Stocked because its absence actively MISGRADED the skill: without it a narrowed call subset-matched the bare-batch fixture, came back with the full 4,045-total page, and the skill reasonably concluded the tool 'silently drops' the filter and logged that as a finding — costing it three dimensions in run v1_2026-08-13_21-55-59 for doing exactly what it was told. ORDER: the more specific predicate must come FIRST; matching is a subset test and first match wins, so the bare-batch fixture would otherwise swallow both narrowed shapes.",
+  "args": {
+    "batchNumber": "I03213-6",
+    "surname": "~Richardson",
+    "givenName": "~John"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "I03213-6",
+      "surname": "Richardson",
+      "givenName": "John",
+      "count": 6
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NFCY-7VM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "25 Sep 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 4.6236,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KDV",
+        "primaryId": "p_12036524040",
+        "batchNumber": "I03213-6"
+      }
+    ]
+  }
+}

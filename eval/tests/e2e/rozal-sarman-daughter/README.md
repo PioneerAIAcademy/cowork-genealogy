@@ -29,6 +29,40 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 28, flag `adds_daughter`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Hungary, Catholic Church Records, 1636-1895: baptismal entry, Kiszombor, Torontál, naming parents Istvan Juhasz and Rozal Szaz. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Viktoria Juhász as the subject's daughter, plus a `required` finding that the report documents the rejection.
+**Verdict: FALSE MATCH — reject the hint.** Viktoria Juhász (baptized ~1892,
+Kiszombor, Torontál) is **not** an additional daughter of Rozál Sármán
+(`P873-TWP`). The hinted baptismal record — Hungary, Catholic Church Records,
+1636-1895 (`ark:/61903/1:1:XZ6D-FZY`) — names the child's mother as **Rozál
+Száz** ("Rozal Szaz"), not Rozál Sármán. This was confirmed at the manuscript
+level: entry 48 on the register image (`ark:/61903/3:1:9Q97-YS8R-ZWF`) reads
+the mother's surname as **Száz**, gives a Kiszombor address (house 269) and
+godparents (Kóbori Lajos, Szabó Mária) — a different household from the project
+subject.
 
-**Reason to doubt this match**: the mother's surname in the hint record is "**Szaz**", which does not resemble the subject's tree surname "**Sármán**" at all — similar to the row-20 Katalin Horák/Liskovics case, this is a materially weaker name link than most of this batch. The father's name "István Juhász" matches the tree's recorded spouse exactly, and a daughter baptized about 1892 fits neatly two years before the tree's known daughter Ágnes (b. 1894) — plausible as an older sibling. The place (Torontál) is consistent with the tree family's documented region. A reviewer should weigh the surname mismatch heavily against the otherwise-consistent father's name and timeline.
+**Why the surname conflict is decisive, not a transcription quirk.** "Száz"
+and "Sármán" are two entirely different surnames with **no plausible path
+between them** through handwriting or indexing error — they share neither stem
+nor sound, and the manuscript letterforms (a short Sz-á-z word, with none of
+the r/m/n needed for "Sármán") match the index exactly. The match was triggered
+algorithmically by the two fields that *do* agree: the mother's given name
+(Rozál) and the husband's name (István Juhász). But **István Juhász was a
+common name in 19th-century Torontál**, so the most economical explanation is a
+**different couple entirely** — a *Száz* Rozál married to her own István Juhász,
+resident in Kiszombor — rather than a married-name variant or a mis-index of
+the tree's Sármán. A matching given name plus a common husband name does not
+overcome a hard surname conflict.
+
+**What was searched and came up empty.** The one ~1892 Viktoria baptism the
+hint surfaces in Hungary, Catholic Church Records, 1636-1895 is this Száz
+record; no record in that collection ties a daughter Viktoria to Rozál
+*Sármán*. Note that the family's own parish records (Arad county — the tree's
+confirmed daughter Ágnes was born 1894 in Zimándudvar) are **not indexed** in
+FamilySearch; the disproof therefore rests on directly examining the hinted
+Kiszombor record and finding it belongs to another household, not on finding a
+positive Sármán record. The tree's documented children of Rozál Sármán and
+István Juhász stand as they were — Ágnes (b. 1894) remains the recorded
+daughter, with no older sibling Viktoria established.
+
+The fixture therefore expects the agent to **decline** the hint: no daughter
+Viktoria added for Rozál Sármán (`polarity: "avoid"`, f1), paired with a
+documented negative conclusion (f2).

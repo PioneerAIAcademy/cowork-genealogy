@@ -1,7 +1,7 @@
 """SQLite tables (SQLModel). Mirrors spec §6.3 / plan contract D.4, trimmed to
 the POC: users, allowlist, FamilySearch tokens, projects (the user→sandbox map
-+ session list). PII work is deferred; tokens are stored as-is for the POC
-(noted as a follow-up to encrypt at rest).
++ session list). Broader PII work is deferred, but the FamilySearch access /
+refresh tokens are encrypted at rest via crypto.EncryptedStr (issue #1128).
 """
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy import DateTime
 from sqlmodel import Field, SQLModel
+
+from .crypto import EncryptedStr
 
 
 def utcnow() -> datetime:
@@ -39,9 +41,11 @@ class AllowedEmail(SQLModel, table=True):
 class FamilySearchToken(SQLModel, table=True):
     __tablename__ = "familysearch_tokens"
     user_id: str = Field(primary_key=True, foreign_key="users.id")
-    # POC: plaintext. TODO encrypt at rest before any real PII (spec §13).
-    access_token: str
-    refresh_token: str | None = None
+    # Encrypted at rest via EncryptedStr (issue #1128) — plaintext in memory only,
+    # ciphertext in the DB. An undecryptable value reads back as None and is
+    # treated as "expired" (self-heals on the user's next login); see crypto.py.
+    access_token: str = Field(sa_type=EncryptedStr)
+    refresh_token: str | None = Field(default=None, sa_type=EncryptedStr)
     expires_at: datetime = Field(sa_type=_TZ)
     updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
 

@@ -541,6 +541,9 @@ refuses rather than clobbering a hook it didn't write. Details in
   release. Ends with a worked example of the whole loop.
 - [eval/README.md](./eval/README.md) — eval harness for skill
   regression testing: how to run it, add cases, and interpret results.
+- [scripts/windows/README.md](./scripts/windows/README.md) — `cmd.exe`
+  wrappers for the developer `make` targets, for Windows machines without
+  Git Bash or WSL.
 - [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — authoring and
   running the end-to-end research benchmark.
 
