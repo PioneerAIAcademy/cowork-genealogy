@@ -2029,30 +2029,26 @@
       "args": {
         "query": "select:TodoWrite",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.json",
         "path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": ".claude\\skills\\init-project\\templates\\research.json\nresearch.json\ntree.gedcomx.json\n.claude\\settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_swarbrick_christening\",\n4\t    \"objective\": \"Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?\",\n5\t    \"subject_person_ids\": [\n6\t      \"MM4W-19N\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MM4W-19N\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Robert\",\n11\t          \"surname\": \"Swarbrick\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"1365cf01-dcde-4c49-80df-8bd67e2543eb\",\n17\t          \"type\": \"Death\",\n18\t          \"date\": \"about 20 November 1839\",\n19\t          \"standard_date\": \"Abt 20 Nov 1839\",\n20\t          \"place\": \"Ha..."
+      }
     },
     {
       "tool": "TodoWrite",
@@ -2064,53 +2060,46 @@
             "activeForm": "Running question-selection to derive first research question"
           }
         ]
-      },
-      "response_summary": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "references/*.md",
         "path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\question-selection"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\question-selection"
-      },
-      "response_summary": ".claude\\skills\\question-selection\\SKILL.md\n.claude\\skills\\question-selection\\references\\pedigree-analysis.md\n.claude\\skills\\question-selection\\references\\question-formulation.md\n.claude\\skills\\question-selection\\references\\validation-protocol.md"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2135,66 +2124,57 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\locality-guide\\references\\output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\locality-guide\\references\\locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\locality-guide\\references\\locality-broad-context.md"
-      },
-      "response_summary": "1\t# Broad Context Factors for Locality Research\n2\t\n3\tEffective locality research requires understanding the historical,\n4\tsocial, economic, and legal context of the place and time period.\n5\tThese contextual factors determine what records were created, what\n6\tinformation they contain, and where they are likely to be held.\n7\t\n8\tThis reference corresponds to the GPS principle that research planning\n9\tmust consider boundaries, migration, and the full range of factors\n10\tthat shape record creation..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__place_population",
         "max_results": 8
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Poulton-le-Fylde, Lancashire",
         "contextName": "England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Town\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.8432,\\n      \\\"longitude\\\": -2.9882,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Poulton%20le%20Fylde&focusedId=2966032\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Poulton le Fylde\\\"\\n    },\\n    {\\n      \\\"standardPl..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Lancashire, England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"County (Top level)\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.81849,\\n      \\\"longitude\\\": -2.62573,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Lancashire&focusedId=3688\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Lancashire\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Lancashire, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2202,8 +2182,7 @@
         "standardPlace": "Lancashire, England, United Kingdom",
         "startYear": 1750,
         "endYear": 1850
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"error\\\": \\\"Place not found\\\",\\n  \\\"place_id\\\": \\\"1927896\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2211,8 +2190,7 @@
         "standardPlace": "Lancashire, England, United Kingdom",
         "startYear": 1750,
         "endYear": 1840
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Lancashire, England, United Kingdom\\\",\\n    \\\"startYear\\\": 1750,\\n    \\\"endYear\\\": 1840\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 17,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCoun..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2220,8 +2198,7 @@
         "standardPlace": "Lancashire, England",
         "startYear": 1780,
         "endYear": 1810
-      },
-      "response_summary": "<persisted-output>\nOutput too large (58.6KB). Full output saved to: C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\toolu_01C2drZ4BkfjF5A7yzrocezz.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Lancashire, England\\\",\\n    \\\"startYear\\\": 1780,\\n    \\\"endYear\\\": 1810\\n  },\\n  \\\"totalResults\\\": 4336,\\n  \\\"results\\\": [\\n   ..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2229,86 +2206,75 @@
         "standardPlace": "Lancashire, England, United Kingdom",
         "startYear": 1750,
         "endYear": 1840
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Lancashire, England, United Kingdom\\\",\\n    \\\"startYear\\\": 1750,\\n    \\\"endYear\\\": 1840\\n  },\\n  \\\"totalForPlace\\\": 142,\\n  \\\"returned\\\": 88,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/62472\\\",\\n      \\\"linkText\\\": \\\"Lancashire, England, Catholic Registers of Baptisms, Marriages and Burials, 1762-1913\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"http://www.interment.net/uk/eng/lancashire.h..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Lancashire England genealogy records parish registers christenings 1700s"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Lancashire England genealogy records parish registers christenings 1700s\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.871094,\\n      \\\"chunk_text\\\": \\\"## Collection Content  \\\\nFor additional details about these records and help using them see [England Parish Registers - FamilySearch Historical Records](https://www.familysearch.org/en/wiki/England_Parish_Registers_-_FamilySearc..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Lancashire, England, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Lancashire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Lancashire, England, United Kingdom",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Lancashire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Lancashire, England, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Lancashire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Lancashire, England, United Kingdom",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Lancashire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/England_Genealogy\\\",\\n  \\\"content\\\": \\\"# England Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **England Wiki Topics** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/England_Getting_Started \\\\\\\"England Getting Sta..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/England_Getting_Started\\\",\\n  \\\"content\\\": \\\"# England Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy \\\\\\\"England Genealogy\\\\\\\")** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research** |\\\\n| * Gettin..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (73.2KB). Full output saved to: C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\toolu_017rF4z2jtEimihFohPSaS34.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records\\\",\\n  \\\"content\\\": \\\"# England Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[England](https://..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies\\\",\\n  \\\"content\\\": \\\"# England Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy \\\\\\\"England Genealogy\\\\\\\")** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Lancashire Fylde Poulton-le-Fylde parish register baptism 1797 Swarbrick"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Lancashire Fylde Poulton-le-Fylde parish register baptism 1797 Swarbrick\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.691406,\\n      \\\"chunk_text\\\": \\\"* **1813-1911** [Lancashire, England, Church of England Births and Baptisms, 1813-1911](https://www.ancestry.com/search/collections/2575/) at Ancestry \\u2014 index & images ($)\\\\n* [FamilySearch Collections - Lancashire](https://..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2316,8 +2282,7 @@
         "standardPlace": "England, United Kingdom",
         "startYear": 1750,
         "endYear": 1840
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"England, United Kingdom\\\",\\n    \\\"startYear\\\": 1750,\\n    \\\"endYear\\\": 1840\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 17,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCount\\\": 2767114..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2416,22 +2381,19 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2439,8 +2401,7 @@
         "standardPlace": "Lancashire, England",
         "startYear": 1780,
         "endYear": 1820
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Lancashire, England\\\",\\n    \\\"startYear\\\": 1780,\\n    \\\"endYear\\\": 1820\\n  },\\n  \\\"scope\\\": \\\"England\\\",\\n  \\\"totalForPlace\\\": 166,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1473015\\\",\\n      \\\"title\\\": \\\"England Marriages, 1538\\u20131973\\\",\\n      \\\"dateRange\\\": \\\"1538-1973\\\",\\n      \\\"recordCount\\\": 10748332,\\n      \\\"personCount\\\": 30015213,\\n      \\\"imageCount\\\": 2429,\\n      \\\"url\\\": \\\"https://www.familysearch.org/sea..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2448,8 +2409,7 @@
         "standardPlace": "Poulton le Fylde, Lancashire, England",
         "startYear": 1780,
         "endYear": 1820
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Poulton le Fylde, Lancashire, England\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2571,8 +2531,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "TodoWrite",
@@ -2584,23 +2543,20 @@
             "activeForm": "Executing research plan \u2014 searching records"
           }
         ]
-      },
-      "response_summary": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__research_append",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2614,8 +2570,7 @@
         "recordCountry": "England",
         "recordType": "birth",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"1465701\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"birthYearFrom\\\": 1795,\\n    \\\"birthYearTo\\\": 1800,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2624,16 +2579,14 @@
         "stagedResultsRef": "results/.staging/18728398-253c-483b-b398-233e7a602231.json",
         "subjectId": "MM4W-19N",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"MM4W-19N\\\",\\n  \\\"scoredCount\\\": 2,\\n  \\\"returnedCount\\\": 2,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QKKH-96RW\\\",\\n      \\\"matchScore\\\": 0.10823543,\\n      \\\"primaryId\\\": \\\"p_101799219456\\\",\\n      \\\"personName\\\": \\\"Robt Swarbreck\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"England, Lancashire, Parish Regi..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2641,8 +2594,7 @@
         "recordId": "ark:/61903/1:1:QJDD-TDLB",
         "resultsRef": "results/.staging/18728398-253c-483b-b398-233e7a602231.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_100175033458\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QJDD-TDLB\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\",\\n          \\\"given\\\": \\\"Robert\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_100175033457\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QJDD-T..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2650,8 +2602,7 @@
         "recordId": "ark:/61903/1:1:QKKH-96RW",
         "resultsRef": "results/.staging/18728398-253c-483b-b398-233e7a602231.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101799219456\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QKKH-96RW\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Swarbreck\\\",\\n          \\\"given\\\": \\\"Robt\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_101799219425\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QKKH-965..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2674,8 +2625,7 @@
         "resultsExamined": 2,
         "stagedResultsRef": "results/.staging/18728398-253c-483b-b398-233e7a602231.json",
         "notes": "Both results show Robert Swarbrick as a FATHER on later records (1876 Preston; 1807 Bispham George christening), not as the christened child c.1797. No indexed christening for Robert Swarbrick c.1795-1800 found in collection 1465701. The two 1797 christenings are likely in browse-only image volumes not indexed under this collection. Proceeding to pli_002 (1821 marriage register image) for father's name evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-22T15:02:14.436Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2688,44 +2638,38 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_swarbrick_christening\",\n4\t    \"objective\": \"Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?\",\n5\t    \"subject_person_ids\": [\n6\t      \"MM4W-19N\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MM4W-19N\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Robert\",\n11\t          \"surname\": \"Swarbrick\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"1365cf01-dcde-4c49-80df-8bd67e2543eb\",\n17\t          \"type\": \"Death\",\n18\t          \"date\": \"about 20 November 1839\",\n19\t          \"standard_date\": \"Abt 20 Nov 1839\",\n20\t          \"place\": \"Ha..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:NX1Z-4QD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12027966432\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NX1Z-4QD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"cc33fd65-623c-41a6-ac6e-33faaf5f694b\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\",\\n          \\\"given\\\": \\\"Robert\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__image_search,mcp__genealogy__image_read,mcp__genealogy__image_transcribe",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_transcribe\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__image_read",
       "args": {
         "ark": "3:1:S3HT-D49Q-9DJ"
-      },
-      "response_summary": "{\"error\":\"FamilySearch image 3:1:S3HT-D49Q-9DJ is 1.6 MB \u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -2733,16 +2677,14 @@
         "ark": "3:1:S3HT-D49Q-9DJ",
         "lookingFor": "Robert Swarbrick marriage 20 February 1821 and father's name",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"transcription\\\": \\\"Page 76.\\\\n\\\\nMARRIAGES solemnized in the Parish of Preston\\\\nin the County of Lancaster\\\\nin the Year 1820\\\\n\\\\nMatthew Lindley\\\\nSpinner\\\\nof this Parish\\\\nand Anne Bove\\\\nSpinster\\\\nof this Parish\\\\nwere married in this Church by Banns with Consent of\\\\nthis twentieth Day of\\\\nOctober in the Year One thousand eight hundred and twenty\\\\nBy me Abramup Curate\\\\nThis Marriage was solemnized between us {Matthew Lindley\\\\n{Ann Bove\\\\nIn the Pr..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2750,32 +2692,28 @@
         "standardPlace": "Poulton le Fylde, Lancashire, England, United Kingdom",
         "startYear": 1813,
         "endYear": 1837
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Poulton le Fylde",
         "contextName": "Lancashire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton, Lancashire, England\\\",\\n      \\\"type\\\": \\\"Parish\\\",\\n      \\\"dateRange\\\": \\\"+1086/+1801\\\",\\n      \\\"latitude\\\": 54.074,\\n      \\\"longitude\\\": -2.858,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Poulton&focusedId=10622470\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton-le-Sands, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Parish\\\",\\n      \\\"dateR..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Poulton-le-Fylde",
         "contextName": "Lancashire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Town\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.8432,\\n      \\\"longitude\\\": -2.9882,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Poulton%20le%20Fylde&focusedId=2966032\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Poulton le Fylde\\\"\\n    },\\n    {\\n      \\\"standardPl..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2783,8 +2721,7 @@
         "standardPlace": "Poulton le Fylde, Lancashire, England, United Kingdom",
         "startYear": 1813,
         "endYear": 1837
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2792,8 +2729,7 @@
         "standardPlace": "Lancashire, England, United Kingdom",
         "startYear": 1813,
         "endYear": 1837
-      },
-      "response_summary": "<persisted-output>\nOutput too large (55KB). Full output saved to: C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\toolu_013qCA16Jc6Gofz5pgG2uXVJ.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Lancashire, England, United Kingdom\\\",\\n    \\\"startYear\\\": 1813,\\n    \\\"endYear\\\": 1837\\n  },\\n  \\\"totalResults\\\": 6035,\\n  \\\"res..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -2801,8 +2737,7 @@
         "ark": "ark:/61903/1:2:9QPT-4L5",
         "lookingFor": "Robert Swarbrick marriage Ellen Gardner father's name 1821",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "{\"error\":\"Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg).\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2816,8 +2751,7 @@
         "recordCountry": "England",
         "recordType": "marriage",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"1465701\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"marriageYearFrom\\\": 1820,\\n    \\\"marriageYearTo\\\": 1822,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2831,8 +2765,7 @@
         "marriageYearTo": 1822,
         "recordCountry": "England",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"1473015\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"spouseGivenName\\\": \\\"Ellen\\\",\\n    \\\"marriageYearFrom\\\": 1820,\\n    \\\"marriageYearTo\\\": 1822,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2846,15 +2779,13 @@
         "recordCountry": "England",
         "recordType": "marriage",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"spouseGivenName\\\": \\\"Ellen\\\",\\n    \\\"marriageYearFrom\\\": 1820,\\n    \\\"marriageYearTo\\\": 1822,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 18,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:NVHW-CPG"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12108050812\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NVHW-CPG\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_12108050811\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NVHW-CPL\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -2862,16 +2793,14 @@
         "ark": "ark:/61903/1:2:97Q4-B6X",
         "lookingFor": "Robert Swarbrick marriage Ellen Gardner father's name 1821",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "{\"error\":\"Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg).\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -2883,8 +2812,7 @@
         "yearTo": 1823,
         "count": 20,
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Swarbrick +Gardner\\\",\\n    \\\"recordPlace1\\\": \\\"England\\\",\\n    \\\"recordPlace2\\\": \\\"Lancashire\\\",\\n    \\\"yearFrom\\\": 1819,\\n    \\\"yearTo\\\": 1823,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -2895,32 +2823,28 @@
         "yearTo": 1825,
         "count": 20,
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Swarbrick +Gardner\\\",\\n    \\\"recordPlace1\\\": \\\"England\\\",\\n    \\\"yearFrom\\\": 1818,\\n    \\\"yearTo\\\": 1825,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
       "args": {
         "keywords": "+Swarbrick +Gardner",
         "count": 20
-      },
-      "response_summary": "Error: result (275,689 characters) exceeds maximum allowed tokens. Output has been saved to C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structu..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "jq -r '.[0].text' \"C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt\" | python -c \"import sys, json; data = json.load(sys.stdin); results = data.get('results', []); print(f'Total: {data.get(\\\"totalResults\\\", 0)}, Returned: {data.get(\\\"returned\\\", 0)}'); [print(f\\\"{r.get(\\'imageGroupNumber\\',\\'\\')} | {r.get(\\'place\\',\\'\\')} | {r.get(\\'year\\',\\'\\')} | {r.get(\\'recordType\\',\\'\\')} | {r.get(\\'title\\',\\'\\')} | {r.get(\\'id\\',\\'\\')}\\\") for r in results]\"",
         "description": "Parse fulltext search results to find Lancashire/Poulton matches"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "limit": 100
-      },
-      "response_summary": "File content (89398 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Grep",
@@ -2929,8 +2853,7 @@
         "path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "output_mode": "content",
         "head_limit": 30
-      },
-      "response_summary": "4:[Omitted long matching line]"
+      }
     },
     {
       "tool": "Read",
@@ -2938,8 +2861,7 @@
         "file_path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "limit": 50,
         "offset": 0
-      },
-      "response_summary": "File content (89398 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -2947,16 +2869,14 @@
         "file_path": "C:\\Users\\KWESIA ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "limit": 20,
         "offset": 0
-      },
-      "response_summary": "File does not exist. Note: your current working directory is C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "limit": 15
-      },
-      "response_summary": "File content (89398 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Grep",
@@ -2965,8 +2885,7 @@
         "path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Grep",
@@ -2974,8 +2893,7 @@
         "pattern": "imageGroupNumber",
         "path": "C:\\Users\\KWESI ASANTE\\.claude\\projects\\C--Users-KWESIA-1-AppData-Local-Temp-e2e-swarbrick-christening-bhac394j\\a80e55da-f4a1-42e7-82a8-8ade07d0ca6d\\tool-results\\mcp-genealogy-fulltext_search-1784732811759.txt",
         "output_mode": "count"
-      },
-      "response_summary": "No matches found\n\nFound 0 total occurrences across 0 files."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2991,8 +2909,7 @@
         "resultsAvailable": 1,
         "resultsExamined": 1,
         "notes": "The indexed marriage records NX1Z-4QD and NVHW-CPG confirm Robert Swarbrick married Ellen Gardner at Poulton-le-Fylde 20 Feb 1821. Father's name is NOT in the index. Image transcription of ARK 3:1:S3HT-D49Q-9DJ returned Preston marriage registers (wrong image/parish \u2014 likely a FamilySearch film cross-reference error). The 1:2: ARK format is not accessible via image_transcribe. Fulltext search +Swarbrick +Gardner Lancashire 1819-1823 returned 0 results \u2014 this page may not be in the FTS corpus. Note: pre-1836 Anglican marriage registers did not universally include the father's name (it was mandated only from the 1836 Marriage Act). The marriage confirms identity but does not supply the father's name. No further progress possible on this item without direct image access to the correct Poulton-le-Fylde register volume.\""
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-22T15:08:16.979Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3005,8 +2922,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3020,8 +2936,7 @@
         "marriageYearTo": 1800,
         "recordCountry": "England",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"4149574\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"spouseGivenName\\\": \\\"Grace\\\",\\n    \\\"marriageYearFrom\\\": 1785,\\n    \\\"marriageYearTo\\\": 1800,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3034,8 +2949,7 @@
         "birthYearTo": 1801,
         "recordCountry": "England",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"1473014\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"birthYearFrom\\\": 1794,\\n    \\\"birthYearTo\\\": 1801,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 114,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3049,8 +2963,7 @@
         "recordCountry": "England",
         "recordType": "death",
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\KWESIA~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-swarbrick-christening-bhac394j\\\",\\n    \\\"collectionId\\\": \\\"1465701\\\",\\n    \\\"surname\\\": \\\"Swarbrick\\\",\\n    \\\"givenName\\\": \\\"Robert\\\",\\n    \\\"anyYearFrom\\\": 1838,\\n    \\\"anyYearTo\\\": 1841,\\n    \\\"recordCountry\\\": \\\"England\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 20\\n  },\\n  \\\"totalMatches\\\": 8,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 8,\\n  \\\"offs..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3058,8 +2971,7 @@
         "recordId": "ark:/61903/1:1:V5GJ-FJG",
         "resultsRef": "results/.staging/c087985c-b447-4186-8936-2a528005c46e.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_13723493032\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:V5GJ-FJG\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"11 Jun 1797\\\",\\n          \\\"standard_date\\\": \\\"11 Jun..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3067,8 +2979,7 @@
         "recordId": "ark:/61903/1:1:NX2H-W9B",
         "resultsRef": "results/.staging/c087985c-b447-4186-8936-2a528005c46e.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12020621458\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NX2H-W9B\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"20 Dec 1797\\\",\\n          \\\"standard_date\\\": \\\"20 Dec..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3076,8 +2987,7 @@
         "recordId": "ark:/61903/1:1:68CL-NTZ2",
         "resultsRef": "results/.staging/2985cf0a-4465-4e45-8dff-b0083aabad7e.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_292565165720\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:68CL-NTZ2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\",\\n          \\\"given\\\": \\\"John\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_292565165721\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:68CL-NTZ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3085,8 +2995,7 @@
         "recordId": "ark:/61903/1:1:6ZTR-7JQ7",
         "resultsRef": "results/.staging/2985cf0a-4465-4e45-8dff-b0083aabad7e.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_292252200425\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6ZTR-7JQ7\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\",\\n          \\\"given\\\": \\\"John\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_292252200426\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6ZTR-7JQ..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -3094,8 +3003,7 @@
         "ark": "3:1:S3HT-D49Q-373",
         "lookingFor": "Robert Swarbrick baptism christening December 1797 father John mother Grace",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"transcription\\\": \\\"September 1797 Christenings\\\\nThomas Son of Richard Bailey of Thornton Heel and\\\\nman and Margaret his Wife born 19 Christened the 20\\\\nPeggy Daughter of James Cowell of Thornton Haytor\\\\nand Nanny his Wife born 10 Christened the 23\\\\nEllen Daughter of William Whiteside of Traynmal\\\\nHusbandman & Alice his Wife born 10 Christened 23\\\\nMargaret Daughter of Robert Hull of Stainaw Heel and\\\\nman and Alice his Wife born the 2d Christened the 24..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3103,8 +3011,7 @@
         "recordId": "ark:/61903/1:1:QKKH-SSGY",
         "resultsRef": "results/.staging/96f3c6bf-6d03-4c00-956a-5f9bca5ecf09.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101799236487\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QKKH-SSGY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_101799236480\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QKKH-S..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3127,8 +3034,7 @@
         "resultsExamined": 2,
         "stagedResultsRef": "results/.staging/c087985c-b447-4186-8936-2a528005c46e.json",
         "notes": "Found BOTH 1797 Robert Swarbrick christenings: (1) V5GJ-FJG \u2014 christened 11 Jun 1797, Hambleton, father William Swarbrick, mother Ann; (2) NX2H-W9B \u2014 christened 20 Dec 1797, Poulton le Fylde, father John Swarbrick, mother Grace. Record NX2H-W9B image (3:1:S3HT-D49Q-373, St. Chad Poulton-le-Fylde register) transcribed and confirmed: 'Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [Dec 1797].' Twins Robert and John. Father John Swarbrick of Carleton, Husbandman = tree person L88T-VT4; mother Grace = Grace Collinson (P6MH-1N8). The Hambleton Robert (father William, mother Ann) is a different family. NX2H-W9B is the christening for subject MM4W-19N.\""
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-22T15:12:16.783Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3150,8 +3056,7 @@
         "resultsExamined": 2,
         "stagedResultsRef": "results/.staging/2985cf0a-4465-4e45-8dff-b0083aabad7e.json",
         "notes": "Two results found but both show a different John Swarbrick as a FATHER (not groom): 68CL-NTZ2 = John Swarbrick father of bride Betty who married Robert Hendrie 26 Apr 1790; 6ZTR-7JQ7 = John Swarbrick father of bride Jane Hyton who married Edward Nangles 11 Jun 1789. The 1788 marriage bond/allegation for John Swarbrick + Grace Collinson (already in tree as R2/F1) was not found in this collection. The existing tree record (R2) already documents the 1788 marriage. The parentage question is answered by the 1797 christening register image without this bond.\""
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-22T15:12:24.707Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3173,8 +3078,7 @@
         "resultsExamined": 8,
         "stagedResultsRef": "results/.staging/96f3c6bf-6d03-4c00-956a-5f9bca5ecf09.json",
         "notes": "8 Robert Swarbrick burial records retrieved from collection 1465701 but none match the known burial of subject MM4W-19N (22 Nov 1839, St. Chad, Poulton-le-Fylde). The results are from Hambleton (Virgin Mary church) and other Lancashire churches, not St. Chad. The QKKH-SSGY stub ('Entry for Robert', no date shown) turned out to be a 1789 burial at St Michael on Wyre (a 1789 infant, father Robert Swarbrick). The Nov 1839 St. Chad burial record may not be indexed in collection 1465701 for this date range.\""
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-22T15:12:31.088Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 8,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3218,8 +3122,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3232,8 +3135,7 @@
         "fields": {
           "status": "skipped"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3241,15 +3143,13 @@
         "description": "Extract NX2H-W9B christening record assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract ALL assertions from the FamilySearch christening record NX2H-W9B into research.json and tree.gedcomx.json.\n\nProject path: C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\nLog entry: log_003\nResults ref: results/log_003.json\n\nRecord content (from record_read, ark:/61903/1:1:NX2H-W9B):\n- Principal: Robert Swarbrick (Male), ark: ark:/61903/1:1:NX2H-W9B\n  - Christening: 20 Dec 1797, Poulton le Fylde, Lancashire, England\n- Father: John Swarbrick, ark: ark:/61903/1:1:NX2H-W91\n- Mother: Grace (no surname), ark: ark:/61903/1:1:NX2H-WSM\n- Relationships: John+Grace are couple; both are parents of Robert\n- Source: \"England, Births and Christenings, 1538-1975\" (collection 1473014, FS derivative extraction)\n  Citation: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.\n  URL: https://familysearch.org/ark:/61903/1:2:9WMS-KWK\n\nCRITICALLY IMPORTANT ADDITIONAL EVIDENCE \u2014 Image transcription of the ORIGINAL parish register (image ARK 3:1:S3HT-D49Q-373, St. Chad Poulton-le-Fylde register, saved as images/3_1_S3HT-D49Q-373.jpg):\nThe original register entry under \"December 1797 Christenings\" reads:\n\"Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20\"\n\nThis means:\n- Robert AND John were TWINS christened 20 December 1797 (born 19 December 1797)\n- Father: John Swarbrick of Carleton, Husbandman\n- Mother: Grace (his wife)\n- Christening place: St. Chad, Poulton-le-Fylde, Lancashire, England\n\nThe original register is the PRIMARY source. The index record NX2H-W9B is a DERIVATIVE extraction from it.\n\nTREE CONTEXT:\n- Research subject (the person this record is about): MM4W-19N (Robert Swarbrick)\n- Candidate father in tree: L88T-VT4 (John Swarbrick, born ~1764 \"of Carleton, Poulton le Fylde, Lancashire\" \u2014 exact match to \"John Swarbrick of Carleton\" in the register)\n- Candidate mother in tree: P6MH-1N8 (Grace Collinson, christened 1768 Poulton-le-Fylde \u2014 \"Grace\" matches)\n- John and Grace are already linked as couple R2 in the tree (married 28 Oct 1788 at St. Chad, Poulton-le-Fylde)\n\nFACTS TO EXTRACT AS ASSERTIONS (from the original register, using NX2H-W9B as the record):\n1. Robert Swarbrick (MM4W-19N): Christening date = 20 December 1797 [exact]\n2. Robert Swarbrick (MM4W-19N): Christening place = St. Chad, Poulton-le-Fylde, Lancashire, England\n3. Robert Swarbrick (MM4W-19N): Birth date = 19 December 1797 [exact \u2014 stated in register]\n4. Father = John Swarbrick (L88T-VT4), stated as \"of Carleton, Husbandman\"\n5. Mother = Grace (P6MH-1N8 \u2014 Grace Collinson), stated as wife of John Swarbrick\n6. Father's residence: Carleton, Lancashire (from \"John Swarbrick of Carleton\")\n7. Father's occupation: Husbandman (from register)\n8. Robert had a twin brother John (also christened 20 Dec 1797) \u2014 this John is NOT currently in the tree as a sibling; add a note but do NOT create a new person without more evidence\n\nSOURCE CLASSIFICATION for the original register image (3:1:S3HT-D49Q-373):\n- Source classification: ORIGINAL (it is the original parish register page)\n- Information quality: PRIMARY (the christening was recorded at the time of the event)\n- Evidence type for parentage assertions (father/mother): DIRECT (the register explicitly names the parents)\n- Evidence type for christening date/place: DIRECT\n\nSOURCE CLASSIFICATION for the index record NX2H-W9B (collection 1473014):\n- Source classification: DERIVATIVE (an extraction/index from the original register)\n- Use this as the record_id for the log entry linking; the original image provides the corroborating content\n\nPlease extract all facts as individual assertions, classify each properly with all three GPS layers (source/information/evidence), and link the assertions to the correct persons in the tree (MM4W-19N as subject, L88T-VT4 as father, P6MH-1N8 as mother)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 13 ops persisted cleanly. Here is the summary:\\n\\n**Source:** src_002 / S2 \\u2014 action: created\\n\\n**Assertions written: 13 total**\\n\\n- child_1 (Robert Swarbrick, persona p_12020621458): 7 assertions \\u2014 name (a_010), sex (a_011), christening date+place (a_012), birth date (a_013), relationship-to-father (a_014), relationship-to-mother (a_015)\\n- father (John Swarbrick, persona p_12020621459): 4 assertions \\u2014 name (a_016), sex (a_017), residence Carlet..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Which of the two 1797 Lancashire christening records for Robert Swarbrick belongs to Robert Swarbrick (MM4W-19N), the man who married Ellen\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"MM4W-19N\\\",\\n      \\\"name\\\": \\\"Robert Swarbrick\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\"..."
+      }
     },
     {
       "tool": "Agent",
@@ -3257,15 +3157,13 @@
         "description": "Extract V5GJ-FJG Hambleton christening for disambiguation",
         "subagent_type": "record-extractor",
         "prompt": "Extract ALL assertions from the FamilySearch christening record V5GJ-FJG into research.json and tree.gedcomx.json.\n\nProject path: C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\nLog entry: log_003\nResults ref: results/log_003.json\n\nRecord content (from record_read, ark:/61903/1:1:V5GJ-FJG):\n- Principal: Robert Swarbrick (Male), ark: ark:/61903/1:1:V5GJ-FJG\n  - Christening: 11 Jun 1797, Hambleton, Lancashire, England\n- Father: William Swarbrick, ark: ark:/61903/1:1:V5GJ-FJP\n- Mother: Ann (no surname), ark: ark:/61903/1:1:V5GJ-FJ5\n- Relationships: William+Ann are couple; both are parents of Robert\n- Source: \"England, Births and Christenings, 1538-1975\" (collection 1473014, FS derivative extraction)\n  Citation: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.\n  URL: https://familysearch.org/ark:/61903/1:2:9MHY-8S3G\n\nPURPOSE: This record is needed for DISAMBIGUATION. The research question involves two same-named Robert Swarbricks christened in 1797 in neighboring Lancashire parishes. This Hambleton Robert (father William, mother Ann) is NOT the research subject MM4W-19N. The research subject is the Poulton-le-Fylde Robert christened 20 Dec 1797 (father John Swarbrick of Carleton, mother Grace) extracted in a separate record-extractor run.\n\nTREE CONTEXT:\n- Research subject: MM4W-19N (Robert Swarbrick) \u2014 this Hambleton record does NOT belong to MM4W-19N\n- This record belongs to a DIFFERENT Robert Swarbrick (son of William Swarbrick and Ann) \u2014 NOT currently linked to any tree person\n- Do NOT link this record to MM4W-19N\n\nFACTS TO EXTRACT:\n1. A Robert Swarbrick was christened 11 Jun 1797 at Hambleton, Lancashire\n2. His father was William Swarbrick\n3. His mother was Ann (no surname known)\nThis is NEGATIVE/DISAMBIGUATION evidence: it shows the Hambleton Robert has different parents (William + Ann) from the subject's parents (John + Grace).\n\nSOURCE CLASSIFICATION:\n- Source classification: DERIVATIVE (collection 1473014 is an extraction index)\n- Information quality: PRIMARY (christening recorded at the time of the event)\n- Evidence type: NEGATIVE (this is NOT the subject's record \u2014 it establishes the OTHER Robert Swarbrick's parentage, different from the subject's)\n\nPlease extract all facts as assertions, classify properly with GPS three-layer classifications, and do NOT link to MM4W-19N (this record belongs to a different person). Add appropriate notes indicating this record is the Hambleton Robert who is NOT the research subject."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\n**Source:** src_001 / S1 \\u2014 action: created\\n\\n**Assertions written: 10 total across 3 personas**\\n\\n- `deceased` (Robert Swarbrick, p_13723493032): a_001 name, a_002 sex, a_003 christening (11 Jun 1797, Hambleton, Lancashire), a_004 relationship to father William, a_005 relationship to mother Ann\\n- `father_of_deceased` (William Swarbrick, p_13723493033): a_006 name, a_007 sex\\n- `mother_of_deceased` (Ann, p_13723493..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Which of the two 1797 Lancashire christening records for Robert Swarbrick belongs to Robert Swarbrick (MM4W-19N), the man who married Ellen\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"MM4W-19N\\\",\\n      \\\"name\\\": \\\"Robert Swarbrick\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3273,8 +3171,7 @@
         "recordId": "ark:/61903/1:1:V5GJ-FJG",
         "resultsRef": "results/log_003.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_13723493032\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:V5GJ-FJG\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"11 Jun 1797\\\",\\n          \\\"standard_date\\\": \\\"11 Jun..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3282,8 +3179,7 @@
         "recordId": "ark:/61903/1:1:NX2H-W9B",
         "resultsRef": "results/log_003.json",
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12020621458\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NX2H-W9B\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Robert\\\",\\n          \\\"surname\\\": \\\"Swarbrick\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"20 Dec 1797\\\",\\n          \\\"standard_date\\\": \\\"20 Dec..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3512,8 +3408,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3810,16 +3705,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[9]: standard_place 'Carleton, Waimakariri, New Zealand' contradicts place 'Carleton, Lancashire, England' \\u2014 the place text names a different country. Re-resolve with place_search / place_search_all and supply the correct standard_place, or set standard_place: null if no standard form exists.\\\"\\n  ],\\n  \\\"opsReceived\\\": 13\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Carleton",
         "contextName": "Lancashire, England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Carleton, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Village\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.8538,\\n      \\\"longitude\\\": -3.0054,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Carleton&focusedId=3408240\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Carleton,_Lancashire\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Carl..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4117,8 +4010,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_012\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Read",
@@ -4126,15 +4018,13 @@
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json",
         "offset": 148,
         "limit": 200
-      },
-      "response_summary": "148\t    {\n149\t      \"id\": \"log_002\",\n150\t      \"plan_item_id\": \"pli_002\",\n151\t      \"performed\": \"2026-07-22T15:08:16.979Z\",\n152\t      \"tool\": \"record_search\",\n153\t      \"query\": {\n154\t        \"approach\": \"multiple: record_read NX1Z-4QD/NVHW-CPG, image_transcribe 3:1:S3HT-D49Q-9DJ, fulltext_search +Swarbrick +Gardner England 1819-1825\",\n155\t        \"note\": \"Attempted to read 1821 Poulton-le-Fylde marriage register image\"\n156\t      },\n157\t      \"outcome\": \"partial\",\n158\t      \"results_examined..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "Read",
@@ -4142,8 +4032,7 @@
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json",
         "offset": 268,
         "limit": 250
-      },
-      "response_summary": "268\t    }\n269\t  ],\n270\t  \"assertions\": [\n271\t    {\n272\t      \"id\": \"a_001\",\n273\t      \"record_id\": \"ark:/61903/1:1:V5GJ-FJG\",\n274\t      \"record_persona_id\": \"p_13723493032\",\n275\t      \"record_role\": \"deceased\",\n276\t      \"fact_type\": \"name\",\n277\t      \"value\": \"Robert Swarbrick\",\n278\t      \"structured_value\": {\n279\t        \"given\": \"Robert\",\n280\t        \"surname\": \"Swarbrick\"\n281\t      },\n282\t      \"information_quality\": \"primary\",\n283\t      \"informant\": \"presenting parent(s)\",\n284\t      \"inf..."
+      }
     },
     {
       "tool": "Read",
@@ -4151,24 +4040,21 @@
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json",
         "offset": 518,
         "limit": 250
-      },
-      "response_summary": "518\t      \"date_certainty\": \"exact\",\n519\t      \"information_quality\": \"primary\",\n520\t      \"informant\": \"presenting parent(s) at christening\",\n521\t      \"informant_proximity\": \"household_member\",\n522\t      \"informant_bias_notes\": \"The original register states 'born 19' (December 1797), one day before the christening on the 20th. Supplied by the presenting parents at the time of christening and recorded contemporaneously. No place of birth stated.\",\n523\t      \"evidence_type\": \"direct\",\n524\t   ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts,mcp__genealogy__tree_edit,mcp__genealogy__merge_warnings",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4177,8 +4063,7 @@
         "recordId": "ark:/61903/1:1:NX2H-W9B",
         "recordRole": "child_1",
         "personId": "MM4W-19N"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"MM4W-19N\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4187,8 +4072,7 @@
         "recordId": "ark:/61903/1:1:NX2H-W9B",
         "recordRole": "father",
         "personId": "L88T-VT4"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"L88T-VT4\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4197,8 +4081,7 @@
         "recordId": "ark:/61903/1:1:NX2H-W9B",
         "recordRole": "mother",
         "personId": "P6MH-1N8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"P6MH-1N8\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4206,8 +4089,7 @@
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j",
         "recordId": "ark:/61903/1:1:V5GJ-FJG",
         "recordRole": "deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4215,8 +4097,7 @@
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j",
         "recordId": "ark:/61903/1:1:V5GJ-FJG",
         "recordRole": "father_of_deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4224,8 +4105,7 @@
         "projectPath": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j",
         "recordId": "ark:/61903/1:1:V5GJ-FJG",
         "recordRole": "mother_of_deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I3\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4508,29 +4388,25 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\research-exhaustiveness\\references\\research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_swarbrick_christening\",\n4\t    \"objective\": \"Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?\",\n5\t    \"subject_person_ids\": [\n6\t      \"MM4W-19N\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4562,37 +4438,32 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\.claude\\skills\\proof-conclusion\\references\\gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MM4W-19N\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Robert\",\n11\t          \"surname\": \"Swarbrick\",\n12\t          \"sources\": [\n13\t            {\n14\t              \"ref\": \"S2\",\n15\t              \"quality\": 3\n16\t            }\n17\t          ]\n18\t        }\n19\t      ],\n20\t      \"facts\": [\n21\t        {\n22\t          \"id\": \"1365cf01-dcde-4c49-80df-8bd67e2543eb\",\n23\t          \"t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__tree_correct",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4626,8 +4497,7 @@
           "exhaustive_search_summary": "Three FamilySearch collections were searched: collection 1465701 (England, Lancashire, Parish Registers 1538\u20131910) for Robert Swarbrick christenings 1795\u20131800 \u2014 returned later records only, no 1797 christenings indexed; collection 1473014 (England, Births and Christenings, 1538\u20131975) \u2014 found both 1797 christening records (Hambleton: V5GJ-FJG; Poulton-le-Fylde: NX2H-W9B), with the original St. Chad register image (3:1:S3HT-D49Q-373) transcribed; collection 4149574 (England, Lancashire, Marriage Bonds and Allegations, 1746\u20131799) \u2014 searched for John Swarbrick and Grace Collinson 1785\u20131800, returned different John Swarbrick entries (the 1788 marriage of L88T-VT4 and P6MH-1N8 is already in the tree). The 1821 Poulton-le-Fylde marriage register image was attempted (pli_002) but the correct image was not accessible via the available tools; however, the marriage is already in the tree. The 1839 burial in collection 1465701 was not recovered in the indexed search. The Ancestry fallback (pli_004), the 1841 census (pli_006), and the Lan-OPC external search (pli_007) were all skipped after the christening question was definitively answered from the original register image. Civil registration is inapplicable (began July 1837). No further record type applicable to a 1797 Lancashire christening event remains unsearched.",
           "narrative_markdown": "## Parentage and Christening of Robert Swarbrick (MM4W-19N): A Proof Summary\n\n**Conclusion:** Robert Swarbrick (MM4W-19N) \u2014 who married Ellen Gardner at Poulton-le-Fylde in February 1821 and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839 \u2014 was christened **20 December 1797** at St. Chad, Poulton-le-Fylde, Lancashire, England. He was born 19 December 1797. His parents were **John Swarbrick of Carleton, Husbandman** (tree person L88T-VT4) and **Grace his wife** (tree person P6MH-1N8, n\u00e9e Collinson). This conclusion is proved under all five components of the Genealogical Proof Standard.\n\n---\n\n### Background: The Two-Robert Problem\n\nThe project objective identified two men named Robert Swarbrick christened in neighboring Lancashire parishes within months of each other in 1797. Resolving the question required locating both christening records, identifying which belongs to MM4W-19N, and naming his parents from that record.\n\n---\n\n### Evidence\n\n**1. Poulton-le-Fylde Christening Register, December 1797 (Primary evidence)**\n\nThe decisive record is the original St. Chad, Poulton-le-Fylde christening register for December 1797. The FamilySearch index entry was located in collection 1473014 and confirmed against the original parish register image. The original image (FamilySearch image 3:1:S3HT-D49Q-373) was transcribed and reads:\n\n> \"Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [December 1797]\"\n\nThe parish register is an **original** record \u2014 the manuscript in which the officiating clergyman at St. Chad recorded baptisms contemporaneously. The information is **primary**: it was entered at the time of the christening event by the clergyman acting in an official capacity. The evidence is **direct**: it explicitly and unambiguously names \"John Swarbrick of Carleton Husbandman & Grace his Wife\" as the parents of Robert. Source: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).\n\nThe entry also reveals that Robert was a **twin**: \"Robert and John Sons\" were born on 19 December and christened on 20 December 1797. Twin John Swarbrick's further history lies outside the scope of this question.\n\n**2. Hambleton Christening Record, 11 June 1797 (Disambiguation)**\n\nA second 1797 Lancashire christening for \"Robert Swarbrick\" was found at Hambleton: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.\n\nThis index is a **derivative** extraction; the information about the christening is **primary** (recorded by the officiant at the time). The entry names the father as **William Swarbrick** and the mother as **Ann** (no surname given) \u2014 entirely different individuals from John Swarbrick of Carleton and Grace. The two Roberts differ on every identifying dimension: different parish, different father, different mother, and different date (11 June vs. 20 December 1797). The disambiguation is definitive.\n\n**3. 1788 Marriage of John Swarbrick and Grace Collinson (Independent corroboration)**\n\nJohn Swarbrick (L88T-VT4) and Grace Collinson (P6MH-1N8) married at St. Chad, Poulton-le-Fylde, on 28 October 1788 \u2014 nine years before Robert's christening. This independent record (separate event, separate informants from the 1797 christening) establishes the couple's lawful union, their connection to St. Chad, Poulton-le-Fylde as their home parish, and the compatibility of the 1788 marriage date with a child born in 1797. The match of \"John Swarbrick of Carleton\" in the 1797 register to tree person L88T-VT4, described as \"of Carleton, Poulton le Fylde, Lancashire,\" is exact on both name and residence.\n\n**4. MM4W-19N's Lifelong Parish Association (Corroborating)**\n\nMM4W-19N married Ellen Gardner at Poulton-le-Fylde on 20 February 1821 and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839. Both events place him at the same church that recorded the December 1797 christening throughout his entire adult life, consistent with the Poulton-le-Fylde christening and inconsistent with the Hambleton record.\n\n---\n\n### Identification of MM4W-19N with the Poulton-le-Fylde Christening\n\nFour converging points establish the identification:\n\n1. **Parish concordance**: MM4W-19N's 1821 marriage and 1839 burial are both at St. Chad, Poulton-le-Fylde \u2014 the same church that recorded the December 1797 christening. The Hambleton church has no demonstrated connection to MM4W-19N.\n2. **Father concordance**: \"John Swarbrick of Carleton\" in the 1797 Poulton-le-Fylde register corresponds exactly to L88T-VT4 (John Swarbrick, residing at Carleton, a township within the ancient parish of Poulton-le-Fylde). The Hambleton father \"William Swarbrick\" is not associated with MM4W-19N in any record.\n3. **Mother concordance**: \"Grace his Wife\" in the 1797 register matches P6MH-1N8 (Grace Collinson), confirmed as wife of L88T-VT4 by their 1788 marriage at St. Chad. The Hambleton mother \"Ann\" is not associated with MM4W-19N in any record.\n4. **Negative evidence**: No evidence in any record searched links MM4W-19N to a William Swarbrick or an \"Ann\" as parents.\n\n---\n\n### GPS Compliance\n\nAll five Genealogical Proof Standard components are satisfied:\n\n1. *Reasonably exhaustive research* \u2014 Declared exhaustive. Three FamilySearch collections searched (1465701, 1473014, 4149574); the original 1797 christening register image was accessed and transcribed. All record types applicable to a 1797 Lancashire christening event were covered.\n2. *Complete and accurate citations* \u2014 Both sources are fully cited with FamilySearch ARKs and access dates.\n3. *Analysis and correlation* \u2014 Both 1797 christening records were located and compared; the original image was examined to verify the derivative index; the candidate parents were cross-referenced against the register entry.\n4. *Resolution of conflicting evidence* \u2014 No conflicts exist. The Hambleton and Poulton-le-Fylde entries differ on every identifying attribute.\n5. *Soundly reasoned, coherently written conclusion* \u2014 This summary.\n\nThis conclusion is open to revision if previously unknown evidence comes to light, but hypothetical possibilities unsupported by evidence do not impugn the conclusion."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4663,8 +4533,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R19\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R20\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -4688,8 +4557,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4698,8 +4566,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4707,61 +4574,53 @@
         "description": "GPS mentor review of proof summary ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review proof summary ps_001 for project at C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j against the GPS standard. The proof is for question q_001: \"Which of the two 1797 Lancashire christening records for Robert Swarbrick belongs to Robert Swarbrick (MM4W-19N), and who were his parents?\" Tier: proved. The summary (ps_001) is already written in research.json. Please assess all five GPS components and provide a structured verdict. This is an advisory review only \u2014 do not modify research.json or tree.gedcomx.json except to append to evaluations[] if appropriate."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\n\\nThe transcription work on the Poulton-le-Fylde register (src_002, assertions a_010/a_012/a_014) is genuinely strong \\u2014 you didn't stop at the FamilySearch index NX2H-W9B, you pulled the original register image and it paid off with the full family detail: father's residence, occupation, and the discovery of the twin brother John. Your identity linkage (pe_001 through pe_014) is properly reas..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_swarbrick_christening\",\n4\t    \"objective\": \"Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?\",\n5\t    \"subject_person_ids\": [\n6\t      \"MM4W-19N\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-22\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Hambleton",
         "contextName": "Lancashire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Hambleton, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Village\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.8753,\\n      \\\"longitude\\\": -2.9561,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Hambleton&focusedId=2975767\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Hambleton,_Lancashire\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"H..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Poulton le Fylde",
         "contextName": "Lancashire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton, Lancashire, England\\\",\\n      \\\"type\\\": \\\"Parish\\\",\\n      \\\"dateRange\\\": \\\"+1086/+1801\\\",\\n      \\\"latitude\\\": 54.074,\\n      \\\"longitude\\\": -2.858,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Poulton&focusedId=10622470\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton-le-Sands, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Parish\\\",\\n      \\\"dateR..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Poulton-le-Fylde"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Town\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 53.8432,\\n      \\\"longitude\\\": -2.9882,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Poulton%20le%20Fylde&focusedId=2966032\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Poulton le Fylde\\\"\\n    },\\n    {\\n      \\\"standardPl..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_distance",
       "args": {
         "standardPlace1": "Hambleton, Lancashire, England",
         "standardPlace2": "Poulton le Fylde, Lancashire, England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"standardPlace1\\\": \\\"Hambleton, Lancashire, England\\\",\\n  \\\"standardPlace2\\\": \\\"Poulton le Fylde, Lancashire, England\\\",\\n  \\\"miles\\\": 4344,\\n  \\\"kilometers\\\": 6991\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_distance",
       "args": {
         "standardPlace1": "Hambleton, Lancashire, England, United Kingdom",
         "standardPlace2": "Poulton le Fylde, Lancashire, England, United Kingdom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"standardPlace1\\\": \\\"Hambleton, Lancashire, England, United Kingdom\\\",\\n  \\\"standardPlace2\\\": \\\"Poulton le Fylde, Lancashire, England, United Kingdom\\\",\\n  \\\"miles\\\": 4344,\\n  \\\"kilometers\\\": 6991\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\KWESIA~1\\AppData\\Local\\Temp\\e2e-swarbrick-christening-bhac394j\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MM4W-19N\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Robert\",\n11\t          \"surname\": \"Swarbrick\",\n12\t          \"sources\": [\n13\t            {\n14\t              \"ref\": \"S2\",\n15\t              \"quality\": 3\n16\t            }\n17\t          ]\n18\t        }\n19\t      ],\n20\t      \"facts\": [\n21\t        {\n22\t          \"id\": \"1365cf01-dcde-4c49-80df-8bd67e2543eb\",\n23\t          \"t..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4814,8 +4673,7 @@
           "timestamp": "2026-07-22T18:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-22T18-00-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4827,15 +4685,13 @@
         "fields": {
           "narrative_markdown": "## Parentage and Christening of Robert Swarbrick (MM4W-19N): A Proof Summary\n\n**Conclusion:** Robert Swarbrick (MM4W-19N) \u2014 who married Ellen Gardner at Poulton-le-Fylde in February 1821 and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839 \u2014 was christened **20 December 1797** at St. Chad, Poulton-le-Fylde, Lancashire, England. He was born 19 December 1797. His parents were **John Swarbrick of Carleton, Husbandman** (tree person L88T-VT4) and **Grace his wife** (tree person P6MH-1N8, n\u00e9e Collinson). This conclusion is proved under all five components of the Genealogical Proof Standard.\n\n---\n\n### Background: The Two-Robert Problem\n\nThe project objective identified two men named Robert Swarbrick christened in neighboring Lancashire parishes within months of each other in 1797. Resolving the question required locating both christening records, identifying which belongs to MM4W-19N, and naming his parents from that record. The identification rests on parentage evidence, not on later residential patterns.\n\n---\n\n### Evidence\n\n**1. Poulton-le-Fylde Christening Register, December 1797 (Primary evidence)**\n\nThe decisive record is the original St. Chad, Poulton-le-Fylde christening register for December 1797. The FamilySearch index entry (collection 1473014) was confirmed against the original parish register image. The original image (FamilySearch image 3:1:S3HT-D49Q-373) was transcribed and reads:\n\n> \"Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [December 1797]\"\n\nThe parish register is an **original** record \u2014 the manuscript in which the officiating clergyman at St. Chad recorded baptisms contemporaneously. The information is **primary**: entered at the time of the christening event by the clergyman acting in an official capacity. The evidence is **direct**: it explicitly and unambiguously names \"John Swarbrick of Carleton Husbandman & Grace his Wife\" as the parents of Robert. Source: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).\n\nThe entry also reveals that Robert was a **twin**: \"Robert and John Sons\" were born on 19 December and christened on 20 December 1797. Twin John Swarbrick\u2019s further history lies outside the scope of this question.\n\n**2. Hambleton Christening Record, 11 June 1797 (Disambiguation)**\n\nA second 1797 Lancashire christening for \"Robert Swarbrick\" was found at Hambleton: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.\n\nThis index is a **derivative** extraction; the information about the christening is **primary** (recorded by the officiant at the time). The entry names the father as **William Swarbrick** and the mother as **Ann** (no surname given) \u2014 entirely different individuals from John Swarbrick of Carleton and Grace. The two Roberts differ on every critical identifying dimension: parish (Hambleton vs. Poulton-le-Fylde), father (William vs. John of Carleton), mother (Ann vs. Grace), and date (11 June vs. 20 December 1797). The disambiguation based on parentage is definitive.\n\n**3. 1788 Marriage of John Swarbrick and Grace Collinson (Independent corroboration)**\n\nJohn Swarbrick (L88T-VT4) and Grace Collinson (P6MH-1N8) married at St. Chad, Poulton-le-Fylde, on 28 October 1788 \u2014 nine years before Robert\u2019s christening. This independent record (separate event, separate informants from the 1797 christening) establishes the couple\u2019s lawful union, their connection to St. Chad, Poulton-le-Fylde as their home parish, and the compatibility of the 1788 marriage date with a child born in 1797. The match of \"John Swarbrick of Carleton\" in the 1797 register to tree person L88T-VT4 (described as \"of Carleton, Poulton le Fylde, Lancashire\") is exact on both name and residence.\n\n**4. MM4W-19N\u2019s Documented Life Events (Corroborating)**\n\nMM4W-19N married Ellen Gardner at Poulton-le-Fylde on 20 February 1821 (the same church as his parents\u2019 1788 marriage and the 1797 christening) and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839. Both the marriage venue and the burial venue connect him to St. Chad. Note: the original marriage register image was not recovered in the search (log_002 outcome: partial), so the father\u2019s name from the 1821 register is not yet directly confirmed. Similarly, the 1839 burial register entry was not recovered indexed in collection 1465701 (log_005 outcome: negative). These are gaps in corroboration, not conflicts with the conclusion.\n\n**Note on Hambleton residence (reconciliation):** MM4W-19N and his family resided at Hambleton, Lancashire, during their family-raising years (c.1821\u20131839), as evidenced by the christenings of children Nancy (1824), Mary (1827), Margaret (1829), John (1831), Gaskell (1835), and Edward (1838) at Hambleton. This residence at Hambleton does **not** create ambiguity about which 1797 Robert Swarbrick is MM4W-19N. The disambiguation rests exclusively on the **parents named** in each christening record \u2014 John of Carleton and Grace vs. William and Ann \u2014 not on residential patterns. Hambleton and Poulton-le-Fylde are approximately 2.5\u20133 miles apart; the family\u2019s shift to Hambleton after the 1821 marriage at Poulton-le-Fylde is a straightforward residential move within the same tight Fylde locality. William Swarbrick and Ann (the Hambleton Robert\u2019s parents, I2 and I3) are distinct from John Swarbrick of Carleton (L88T-VT4) and Grace Collinson (P6MH-1N8), and no evidence links them.\n\n---\n\n### Identification of MM4W-19N with the Poulton-le-Fylde Christening\n\nThe identification rests primarily on parentage evidence:\n\n1. **Parentage concordance (primary basis)**: The original Poulton-le-Fylde register explicitly names \"John Swarbrick of Carleton Husbandman & Grace his Wife\" as the parents of Robert christened 20 December 1797. These individuals correspond exactly to tree persons L88T-VT4 (John Swarbrick of Carleton) and P6MH-1N8 (Grace Collinson), confirmed as a couple by their 1788 marriage at St. Chad. The Hambleton register names \"William Swarbrick\" and \"Ann\" as the father and mother \u2014 individuals not connected to MM4W-19N\u2019s known life.\n2. **Marriage venue**: MM4W-19N married at Poulton-le-Fylde in 1821, the same parish as his parents\u2019 1788 marriage and the 1797 christening \u2014 consistent with a family whose roots were at St. Chad, Poulton-le-Fylde.\n3. **Burial venue**: MM4W-19N was buried at St. Chad, Poulton-le-Fylde in 1839, his final connection to the parish church associated with his parents.\n4. **Negative evidence**: No evidence in any record searched links MM4W-19N to William Swarbrick or Ann as parents. The family\u2019s later residence at Hambleton (approximately 2.5\u20133 miles from Poulton-le-Fylde) is consistent with a normal residential shift within the Fylde and creates no conflict with the parentage identification.\n\n---\n\n### GPS Compliance\n\nAll five Genealogical Proof Standard components are satisfied:\n\n1. *Reasonably exhaustive research* \u2014 Declared exhaustive. Three FamilySearch collections searched (1465701, 1473014, 4149574); the original 1797 christening register image was accessed and transcribed.\n2. *Complete and accurate citations* \u2014 Both sources are fully cited with FamilySearch ARKs and access dates.\n3. *Analysis and correlation* \u2014 Both 1797 christening records were located and compared; the original image was examined; the candidate parents were cross-referenced against the register; the family\u2019s Hambleton residence is acknowledged and reconciled.\n4. *Resolution of conflicting evidence* \u2014 No conflicts exist. The Hambleton and Poulton-le-Fylde entries differ on every identifying attribute. MM4W-19N\u2019s later Hambleton residence does not conflict with the Poulton-le-Fylde parentage identification.\n5. *Soundly reasoned, coherently written conclusion* \u2014 This summary.\n\nThis conclusion is open to revision if previously unknown evidence comes to light. Additional corroboration \u2014 particularly the father\u2019s name in the 1821 Poulton-le-Fylde marriage register or the age in the 1839 burial register (both searches were attempted but did not return the target record) \u2014 would further strengthen the conclusion but is not required for the proved tier given the direct and specific parentage evidence in the original christening register.\n\n---\n\n### Sources\n\n1. \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).\n\n2. \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4853,8 +4709,7 @@
             "a_015"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4865,8 +4720,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5134,5 +4988,6 @@
       ],
       "transcript": "agent-ad12fadc7eddac30f.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }
