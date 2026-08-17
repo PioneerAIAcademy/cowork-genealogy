@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hmac
 import html
+import logging
 import re
 import secrets
 import uuid
@@ -31,6 +32,8 @@ from . import fs_oauth
 from .config import get_settings
 from .db import get_session
 from .models import AllowedEmail, FamilySearchToken, User, utcnow
+
+logger = logging.getLogger(__name__)
 
 COOKIE_NAME = "wb_session"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
@@ -131,6 +134,14 @@ async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | 
     """
     row = session.get(FamilySearchToken, user_id)
     if row is None:
+        return None
+    if row.access_token is None:
+        # Undecryptable at rest (legacy plaintext, or written under a different
+        # FS_TOKEN_ENC_KEY) — EncryptedStr soft-fails to None. Treat as expired so
+        # the user reconnects and the row is rewritten as ciphertext, rather than
+        # injecting an empty token into a sandbox. This guard is needed because the
+        # expiry check below runs before the token is otherwise looked at.
+        logger.warning("undecryptable FS token for user_id=%s — treating as expired", user_id)
         return None
     expires_at = row.expires_at
     if expires_at.tzinfo is None:  # SQLite hands back naive datetimes

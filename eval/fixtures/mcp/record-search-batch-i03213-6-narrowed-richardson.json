@@ -1,0 +1,120 @@
+{
+  "tool": "record_search",
+  "description": "Batch I03213-6 narrowed by surname — all 5 Richardsons in the Ashton-under-Lyne extraction. CAPTURED LIVE 2026-08-13, gedcomx dropped. Narrowing a batch with a name is CORRECT and documented, and the live tool narrows: I03213-6 goes 4,045 -> 5 -> 1, C00558-7 goes 19,206 -> 30 -> 9. COMPLETE by construction: `returned` == `totalMatches` and `hasMore` is false, so the narrowed set is fully enumerable in ONE call — which is honest, since `count` accepts up to 100. This matters because a fixture returns a static response and the matcher ignores `offset`: an under-filled narrowed page cannot be paged in the mock. In run v1_2026-08-14_00-46-38 the earlier 6-row version of this fixture reported 30 total, the skill correctly paged with `offset: 6` exactly as SKILL.md instructs, got the same 6 rows back, and reported 24 entries unreachable — costing it two dimensions for doing the right thing against a mock that cannot represent paging.",
+  "args": {
+    "batchNumber": "I03213-6",
+    "surname": "~Richardson"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "I03213-6",
+      "surname": "Richardson",
+      "count": 20
+    },
+    "totalMatches": 5,
+    "paginationCappedAt": 4999,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:N132-VTL",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1 Apr 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anne Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-K2L",
+        "primaryId": "p_12371687001",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-3MN",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "4 Nov 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Helen Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Helen Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-VPS",
+        "primaryId": "p_12036521716",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-7VM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "25 Sep 1832",
+            "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-KDV",
+        "primaryId": "p_12036524040",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N132-VTG",
+        "events": [],
+        "treeMatches": [],
+        "personName": "James Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-K2L",
+        "primaryId": "p_12371687002",
+        "batchNumber": "I03213-6"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NFCY-3MJ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "James Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Helen Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9W3Z-VPS",
+        "primaryId": "p_12036521717",
+        "batchNumber": "I03213-6"
+      }
+    ]
+  }
+}
