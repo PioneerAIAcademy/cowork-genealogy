@@ -1,13 +1,11 @@
 {
   "per_finding": {
-    "f1": "partial",
+    "f1": "true",
     "f2": "true",
     "f3": "partial"
   },
-  "proof_quality_score": 3,
+  "proof_quality_score": 1,
   "notes": {
-    "f1": "First wife correctly identified as Dorthe Kjerstine Jensdatter (person I1) and linked to Jens as spouse; birth ~1820 and 1850 Lyngs residence present. Missing the 4 Jun 1852 death fact named in the finding description — partial on completeness, not identity.",
-    "f3": "Dorthe named as mother of Ane Cathrine in the proof narrative, but no ParentChild link from I1 to Ane Cathrine (K1D9-KK3) was written in the tree; daughter remains linked to father only. Prose mention without tree encoding = partial."
-  },
-  "annotator": "Israel Ayomikun Asimi"
+    "f3": "Both persons correctly identified and present in the tree (Ane Cathrine Jensen, b. 29 Nov 1850, Lyngs; Dorthe Kirstine Jensen, m. 1849), but no relationship or assertion was ever written connecting them — the corroborating mother-daughter link itself was never made. Right people, missing link."
+  }
 }
