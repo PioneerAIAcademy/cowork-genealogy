@@ -125,14 +125,18 @@ def test_runnable_when_rubric_missing(tmp_path):
     assert result.runnable is True
 
 
-def test_runnable_when_rubric_empty(tmp_path):
-    """An empty rubric.md is equivalent to a missing one — base dims only."""
+def test_blocks_when_rubric_empty(tmp_path):
+    """A blank rubric.md is NOT equivalent to a missing one. Opting out of
+    rubric grading means deleting the file; a blank one is rejected by the
+    CRUD UI's parser, so letting it through here would grade the run on base
+    dimensions while breaking the skills list the annotator needs."""
     fake_tests = tmp_path / "tests"
     (fake_tests / "search-wikipedia").mkdir(parents=True)
     (fake_tests / "search-wikipedia" / "rubric.md").write_text("", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
-    assert result.runnable is True
+    assert result.runnable is False
+    assert "delete the file" in (result.reason or "")
 
 
 def test_blocks_when_rubric_malformed(tmp_path):

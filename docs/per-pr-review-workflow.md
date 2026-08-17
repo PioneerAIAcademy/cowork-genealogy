@@ -185,7 +185,10 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 > earlier `--diff-filter=A`-only check missed it). Two new blocking
 > rules join Rule 1: the latest full-skill run log must be active on
 > skill-side files (snapshot matches working tree) and its `.ann.json`
-> must have an entry for every dimension. Plus one warn-only check on
+> must have an entry for every dimension **of the sampled tests** — see
+> `eval/harness/harness/review_sample.py`; a run log with no
+> `review_sample` (every one committed before sampling shipped) still
+> owes every dimension of every test. Plus one warn-only check on
 > `judge_prompt_hash` drift.
 
 **Decision:** A new workflow at `.github/workflows/check-runlogs.yml` runs on every PR. It enforces **at most one run log added per skill subdirectory** under `eval/runlogs/unit/<skill>/<model>/`. Optimizer runs at `eval/runlogs/optimizer/` are excluded.
@@ -252,7 +255,7 @@ When body-optimizer runs produce a candidate SKILL.md edit, that edit goes throu
 >    ```
 >    The harness writes the run log to `eval/runlogs/unit/<skill>/<model>/<timestamp>.json`.
 > 3. Open the CRUD UI Results section. Pick the new run log. Review LLM scores per dimension per test.
-> 4. Enter corrections for every dimension. The CRUD UI writes `<timestamp>.ann.json` alongside the run log.
+> 4. Enter corrections for every dimension of the tests the UI marks as sampled — the others read `not sampled` and need nothing. The CRUD UI writes `<timestamp>.ann.json` alongside the run log.
 > 5. Commit all artifacts: SKILL.md edits, test changes, run log, `.ann` file. Push the PR.
 > 6. Respond to senior PR comments by re-running steps 2-5 and pushing **a new commit per revision** (don't amend). Squash on merge.
 

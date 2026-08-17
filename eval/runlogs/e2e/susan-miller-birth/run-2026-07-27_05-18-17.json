@@ -2358,52 +2358,45 @@
       "args": {
         "pattern": "**/*.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json\n.claude/settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_susan_miller_birth\",\n4\t    \"objective\": \"When and where was Susan Miller born?\",\n5\t    \"subject_person_ids\": [\"2BLL-3JS\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-06\",\n8\t    \"updated\": \"2026-07-06\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\": [],\n17\t  \"log\": [],\n18\t  \"sources\": [],\n19\t  \"assertions\": [..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2BLL-3JS\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Susan\",\n10\t          \"surname\": \"Miller\",\n11\t          \"id\": \"2BLL-3JS-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"9381f219-2889-4bfc-9b03-5527232282c1\",\n17\t          \"type\": \"Death\",\n18\t          \"date\": \"1 May 1937\",\n19\t          \"standard_date\": \"1 May 1937\",\n20\t          \"place\": \"Toronto,..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2428,60 +2421,52 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "Forfarshire (Angus), Scotland, ca. 1863-1865 birth of Susan Miller"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/locality-guide/references/output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/locality-guide/references/locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/locality-guide/references/reference-source-types.md"
-      },
-      "response_summary": "1\t# Reference Source Types for Locality Research\n2\t\n3\tReference sources provide information about places, time periods, and\n4\trecord types. They do NOT contain information about specific\n5\tindividuals. Instead, they tell the researcher what records were\n6\tcreated, when and where, and how to find them.\n7\t\n8\t## Categories of reference sources\n9\t\n10\t### Atlases and historical maps\n11\t\n12\tCollections of maps showing political boundaries, geographic features,\n13\tand place names at specific dates. ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/locality-guide/references/locality-broad-context.md"
-      },
-      "response_summary": "1\t# Broad Context Factors for Locality Research\n2\t\n3\tEffective locality research requires understanding the historical,\n4\tsocial, economic, and legal context of the place and time period.\n5\tThese contextual factors determine what records were created, what\n6\tinformation they contain, and where they are likely to be held.\n7\t\n8\tThis reference corresponds to the GPS principle that research planning\n9\tmust consider boundaries, migration, and the full range of factors\n10\tthat shape record creation..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_read",
         "max_results": 9
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_n..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Forfarshire",
         "contextName": "Scotland"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Angus, Scotland, United Kingdom\\\",\\n      \\\"type\\\": \\\"County (Top level)\\\",\\n      \\\"dateRange\\\": \\\"+1928/\\\",\\n      \\\"latitude\\\": 56.67,\\n      \\\"longitude\\\": -2.917,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Angus&focusedId=10593721\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Angus,_Scotland\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Forfarshire, Scot..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2489,8 +2474,7 @@
         "standardPlace": "Forfarshire, Scotland, United Kingdom",
         "startYear": 1841,
         "endYear": 1881
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"error\\\": \\\"Place not found\\\",\\n  \\\"place_id\\\": \\\"1927956\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2498,8 +2482,7 @@
         "standardPlace": "Forfarshire, Scotland, United Kingdom",
         "startYear": 1840,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Forfarshire, Scotland, United Kingdom\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 17,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCo..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2507,8 +2490,7 @@
         "standardPlace": "Forfarshire, Scotland, United Kingdom",
         "startYear": 1840,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Forfarshire, Scotland, United Kingdom\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"totalResults\\\": 4620,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"008138128_022_M934-CB3\\\",\\n      \\\"imageGroupPrefix\\\": \\\"008138128\\\",\\n      \\\"imageCount\\\": 0,\\n      \\\"recordSearchablePercent\\\": null,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"coverages\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2516,61 +2498,53 @@
         "standardPlace": "Forfarshire, Scotland, United Kingdom",
         "startYear": 1840,
         "endYear": 1875
-      },
-      "response_summary": "<persisted-output>\nOutput too large (53.9KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-susan-miller-birth-bw5mcmad/f45a9d7b-201e-4cea-8d80-7895dd091f5d/tool-results/toolu_013J8pjc43yiVUEHX3uRE4Zf.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Forfarshire, Scotland, United Kingdom\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"totalForPlace\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Forfarshire Angus Scotland genealogy birth records research"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Forfarshire Angus Scotland genealogy birth records research\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.878906,\\n      \\\"chunk_text\\\": \\\"# Forfar, Angus, Scotland Genealogy  \\\\n[Scotland](https://www.familysearch.org/en/wiki/Scotland_Genealogy \\\\\\\"Scotland Genealogy\\\\\\\")  \\\\n[Angus](https://www.familysearch.org/en/wiki/Angus_(or_Forfarshire),_Scotland_Genealogy \\\\\\\"Angus (or F..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Scotland, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Scotland_Genealogy\\\",\\n  \\\"content\\\": \\\"# Scotland Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **Scotland Wiki Topics** |\\\\n| [Flag of Scotland](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Scotland.png&filetimestamp=20160922184425& \\\\\\\"Flag of Scotland\\\\\\\") |\\\\n| **Scotland Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/Scotland_Getting_Started \\\\\\\"Scotland Ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Scotland, United Kingdom",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Scotland_Getting_Started\\\",\\n  \\\"content\\\": \\\"# Scotland Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Scotland Wiki Topics](https://www.familysearch.org/en/wiki/Scotland_Genealogy \\\\\\\"Scotland Genealogy\\\\\\\")** |\\\\n| [Flag of Scotland](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Scotland.png&filetimestamp=20160922184425& \\\\\\\"Flag of Scotland\\\\\\\") |\\\\n| **Scotland Beginning Research** |\\\\n|..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Scotland, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Scotland_Online_Genealogy_Records\\\",\\n  \\\"content\\\": \\\"# Scotland Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[Scotland](https://www.familysearch.org/en/wiki/Scotland_Genealogy \\\\\\\"Scotland Genealogy\\\\\\\")\\\\n\\\\nOnline Genealogy Records\\\\n\\\\n|  |  |  |  |  |  |\\\\n| --- | --- | --- | --- | --- | --- |\\\\n| These are genealogy links to Scotland online databases and indexes that may include birth records, marriage records, deat..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Scotland, United Kingdom",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Scotland_Research_Tips_and_Strategies\\\",\\n  \\\"content\\\": \\\"# Scotland Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Scotland Wiki Topics](https://www.familysearch.org/en/wiki/Scotland_Genealogy \\\\\\\"Scotland Genealogy\\\\\\\")** |\\\\n| [Flag of Scotland](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Scotland.png&filetimestamp=20160922184425& \\\\\\\"Flag of Scotland\\\\\\\") |\\\\n| **Scotland ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_read",
       "args": {
         "url": "https://www.familysearch.org/en/wiki/Angus,_Scotland_Genealogy"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Angus,_Scotland_Genealogy\\\",\\n  \\\"content\\\": \\\"# Angus, Scotland Genealogy\\\\n\\\\n\\\\n\\\\n|  |  |\\\\n| --- | --- |\\\\n| **[Angus Wiki Topics](https://www.familysearch.org/en/wiki/Angus_(or_Forfarshire),_Scotland_Genealogy \\\\\\\"Angus (or Forfarshire), Scotland Genealogy\\\\\\\")** | |\\\\n| [Angus.jpg](https://www.familysearch.org/en/wiki/index.php?title=File:Angus.jpg&filetimestamp=20180620182554&) | |\\\\n| **Beginning Research..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_read",
       "args": {
         "url": "https://www.familysearch.org/en/wiki/Scotland_Civil_Registration"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Scotland_Civil_Registration\\\",\\n  \\\"content\\\": \\\"# Scotland Civil Registration\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Scotland Wiki Topics](https://www.familysearch.org/en/wiki/Scotland_Genealogy \\\\\\\"Scotland Genealogy\\\\\\\")** |\\\\n| [Flag of Scotland](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Scotland.png&filetimestamp=20160922184425& \\\\\\\"Flag of Scotland\\\\\\\") |\\\\n| **Scotland Beginning Research**..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2666,30 +2640,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2697,8 +2667,7 @@
         "standardPlace": "Scotland, United Kingdom",
         "startYear": 1855,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Scotland, United Kingdom\\\",\\n    \\\"startYear\\\": 1855,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 17,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCount\\\": 276711..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2820,24 +2789,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute plan pl_001 for q_001: search for birth of Susan Miller, daughter of John Miller and Susan Kidd, born ca. 1863-1865 in Forfarshire/Dundee, Scotland. Start with pli_001 (Scotland Civil Registration 1855-1875, FamilySearch collection 5000163), then pli_002 (Scotland Births and Baptisms 1564-1950, collection 1771030), then pli_003 (1861 Scotland Census, collection 2028677), then pli_004 (1871 Census, collection 2028678), then pli_005 (Ontario Death Registration 1937, source 9DWZ-81M), and pli_007 (FAN siblings search, collection 5000163)."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__research_append",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2853,8 +2819,7 @@
         "collectionId": "5000163",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Miller\\\",\\n    \\\"givenName\\\": \\\"Susan\\\",\\n    \\\"birthYearFrom\\\": 1858,\\n    \\\"birthYearTo\\\": 1868,\\n    \\\"birthPlace\\\": \\\"Forfarshire, Scotland\\\",\\n    \\\"fatherGivenName\\\": \\\"John\\\",\\n    \\\"fatherSurname\\\": \\\"Miller\\\",\\n    \\\"motherGivenName\\\": \\\"Susan\\\",\\n    \\\"collectionId\\\": \\\"5000163\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\\\"\\n  },..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2863,16 +2828,14 @@
         "stagedResultsRef": "results/.staging/00daa6d0-0775-4b15-9707-31ba76114c3b.json",
         "subjectId": "2BLL-3JS",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2BLL-3JS\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:X95X-XHR1\\\",\\n      \\\"matchScore\\\": 0.118418746,\\n      \\\"primaryId\\\": \\\"p_307503925979\\\",\\n      \\\"personName\\\": \\\"Susan Miller\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"17 March 1865\\\",\\n      \\\"birthPlac..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2880,8 +2843,7 @@
         "recordId": "ark:/61903/1:1:X95X-XHR1",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "resultsRef": "results/.staging/00daa6d0-0775-4b15-9707-31ba76114c3b.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_307503925979\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X95X-XHR1\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Miller\\\",\\n          \\\"given\\\": \\\"Susan\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"17 Mar 1865\\\",\\n          \\\"standard_date\\\": \\\"17 Mar 1865\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2905,8 +2867,7 @@
         "resultsExamined": 50,
         "stagedResultsRef": "results/.staging/00daa6d0-0775-4b15-9707-31ba76114c3b.json",
         "notes": "Top match ark:/61903/1:1:X95X-XHR1 scored 0.118 (far ahead of rank 2 at 0.105): Susan Miller, born 17 March 1865, Dundee, Forfarshire, Scotland. Father John Miller, mother Susan Kidd Miller. Parents match subject's tree exactly. Consistent with being ~17-18 at marriage in 1882/1883."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-27T04:50:37.757Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2919,8 +2880,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2933,8 +2893,7 @@
         "collectionId": "2028677",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Miller\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"residenceYearFrom\\\": 1861,\\n    \\\"residenceYearTo\\\": 1861,\\n    \\\"residencePlace\\\": \\\"Dundee, Forfarshire, Scotland\\\",\\n    \\\"collectionId\\\": \\\"2028677\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\\\"\\n  },\\n  \\\"totalMatches\\\": 86,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offse..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2949,8 +2908,7 @@
         "collectionId": "2028678",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Miller\\\",\\n    \\\"givenName\\\": \\\"Susan\\\",\\n    \\\"residenceYearFrom\\\": 1871,\\n    \\\"residenceYearTo\\\": 1871,\\n    \\\"residencePlace\\\": \\\"St Mary's, Forfarshire, Scotland\\\",\\n    \\\"fatherGivenName\\\": \\\"John\\\",\\n    \\\"fatherSurname\\\": \\\"Miller\\\",\\n    \\\"collectionId\\\": \\\"2028678\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\\\"\\n  },\\n  \\\"totalMat..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2965,8 +2923,7 @@
         "collectionId": "5000163",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Miller\\\",\\n    \\\"fatherGivenName\\\": \\\"John\\\",\\n    \\\"fatherSurname\\\": \\\"Miller\\\",\\n    \\\"motherGivenName\\\": \\\"Susan\\\",\\n    \\\"birthYearFrom\\\": 1855,\\n    \\\"birthYearTo\\\": 1875,\\n    \\\"birthPlace\\\": \\\"Forfarshire, Scotland\\\",\\n    \\\"collectionId\\\": \\\"5000163\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\\\"\\n  },\\n  \\\"totalMatches\\\": 35814,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2975,8 +2932,7 @@
         "stagedResultsRef": "results/.staging/04dd407f-6ead-49dc-bf59-d3d32c3c59b1.json",
         "subjectId": "2BLL-3JS",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2BLL-3JS\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 27,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:VB7B-2VR\\\",\\n      \\\"matchScore\\\": 0.012969446,\\n      \\\"primaryId\\\": \\\"p_13807224565\\\",\\n      \\\"personName\\\": \\\"Joan Miller\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1855\\\",\\n      \\\"birthPlace\\\": \\\"Forf..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2985,8 +2941,7 @@
         "stagedResultsRef": "results/.staging/df498b88-0f36-4546-81ae-eb4b198abc33.json",
         "subjectId": "2BLL-3JS",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2BLL-3JS\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:VB5T-NWS\\\",\\n      \\\"matchScore\\\": 0.52939844,\\n      \\\"primaryId\\\": \\\"p_13822556582\\\",\\n      \\\"personName\\\": \\\"Susan Miller\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1865\\\",\\n      \\\"birthPlace\\\": \\\"Angus..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2995,8 +2950,7 @@
         "stagedResultsRef": "results/.staging/79535a9b-a0b5-478e-a647-01b3552e7823.json",
         "subjectId": "2BLL-3JS",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2BLL-3JS\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:6TFL-Y1QD\\\",\\n      \\\"matchScore\\\": 0.13534832,\\n      \\\"primaryId\\\": \\\"p_303646265232\\\",\\n      \\\"personName\\\": \\\"Susan Miller\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"11 December 1857\\\",\\n      \\\"birthPl..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3057,8 +3011,7 @@
             "notes": "FAN siblings search (BCG Standard 14). Found multiple children of John Miller/Susan Kidd in Forfarshire. Key Dundee-born siblings: Jean Kidd Miller (1 Aug 1857), Margory Miller (14 Aug 1859), Isabella Miller (14 Aug 1859), Euphemia Wilson Miller (18 Apr 1862), Susan Miller our subject (17 Mar 1865), William Miller (24 Mar 1867), Ann Crawford Miller (3 Apr 1869). Also an earlier Susan Miller (b. 11 Dec 1857, St Vigeans \u2014 possibly an older sibling who did not survive). All Dundee-born siblings confirm Dundee as the registration district for Susan's 1865 birth. Sibling records corroborate both parents' identities."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"logId\\\": \\\"log_002\\\",\\n      \\\"performed\\\": \\\"2026-07-27T04:52:53.093Z\\\",\\n      \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n      \\\"returnedCount\\\": 50\\n    },\\n    {\\n      \\\"logId\\\": \\\"log_003\\\",\\n      \\\"performed\\\": \\\"2026-07-27T04:52:53.100Z\\\",\\n      \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n      \\\"returnedCount\\\": 50\\n    },\\n    {\\n      \\\"logId\\\": \\\"log_004\\\",\\n      \\\"performed\\\": \\\"2026-07-27T04:52:53..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3066,16 +3019,14 @@
         "recordId": "ark:/61903/1:1:VB5T-NWS",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "resultsRef": "results/.staging/df498b88-0f36-4546-81ae-eb4b198abc33.json"
-      },
-      "response_summary": "{\"error\":\"stagedResultsRef 'results/.staging/df498b88-0f36-4546-81ae-eb4b198abc33.json' does not exist or is invalid JSON.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:9DWZ-81M",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "{\"error\":\"Record 9DWZ-81M was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3083,8 +3034,7 @@
         "recordId": "ark:/61903/1:1:VB5T-NWS",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "resultsRef": "results/log_003.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_13822556582\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:VB5T-NWS\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Susan\\\",\\n          \\\"surname\\\": \\\"Miller\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Religion\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1865\\\",\\n          \\\"standard_date..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3096,8 +3046,7 @@
         "deathPlace": "Toronto, Ontario, Canada",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Susan\\\",\\n    \\\"surname\\\": \\\"Davies\\\",\\n    \\\"deathYearFrom\\\": 1937,\\n    \\\"deathYearTo\\\": 1937,\\n    \\\"deathPlace\\\": \\\"Toronto, Ontario, Canada\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\\\"\\n  },\\n  \\\"totalMatches\\\": 5896,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3105,8 +3054,7 @@
         "recordId": "ark:/61903/1:1:JKJY-7H7",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "resultsRef": "results/.staging/732aad15-08f6-40a5-b2bd-9509bddf7e56.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12869203745\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JKJY-7H7\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Davies\\\",\\n          \\\"given\\\": \\\"Susan Miller\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1865\\\",\\n          \\\"standard_date\\\": \\\"1865\\\"\\n        },\\n        {\\n          \\\"t..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3115,8 +3063,7 @@
         "stagedResultsRef": "results/.staging/732aad15-08f6-40a5-b2bd-9509bddf7e56.json",
         "subjectId": "2BLL-3JS",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2BLL-3JS\\\",\\n  \\\"scoredCount\\\": 20,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:JKJY-7H7\\\",\\n      \\\"matchScore\\\": 0.35157797,\\n      \\\"primaryId\\\": \\\"p_12869203745\\\",\\n      \\\"personName\\\": \\\"Susan Miller Davies\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1865\\\",\\n      \\\"deathDate\\\": \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3136,8 +3083,7 @@
         "resultsExamined": 20,
         "stagedResultsRef": "results/.staging/732aad15-08f6-40a5-b2bd-9509bddf7e56.json",
         "notes": "Top match ark:/61903/1:1:JKJY-7H7: Susan Miller Davies, born 1865, died 1 May 1937, Toronto. Match score 0.352, attachedToSubject: true. Confirms birth year 1865. Birthplace not captured in index; original image would show county/parish. Record also shows parents Thomas Davies (husband) and Susan Miller (the subject's mother, Susan Kidd). Secondary evidence for birth year 1865, consistent with civil registration finding."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-27T04:54:09.171Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3199,8 +3145,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n..."
+      }
     },
     {
       "tool": "Agent",
@@ -3208,15 +3153,13 @@
         "description": "Extract birth record assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch birth record into the research project.\n\n**Project path:** `/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad`\n**Log entry ID:** `log_001`\n**Results ref:** `results/log_001.json`\n**Record ID:** `ark:/61903/1:1:X95X-XHR1`\n**Subject person ID in tree.gedcomx.json:** `2BLL-3JS`\n\n**Record content (already read):**\n- Collection: Scotland, Civil Registration, 1855-1875, 1881, 1891 (collection 5000163)\n- Record title: \"Entry for Susan Miller, Scotland, Civil Registration, 1855-1875, 1881, 1891\"\n- Citation URL: https://www.familysearch.org/ark:/61903/1:2:H4TR-T9XP\n- Principal person (p_307503925979, ark:/61903/1:1:X95X-XHR1): Susan Miller, Female\n  - Birth: 17 Mar 1865, Dundee, Forfarshire, Scotland, United Kingdom (standard place confirmed)\n- Father (p_307503925980, ark:/61903/1:1:X95X-XHTM): John Miller, Male\n- Mother (p_307503925981, ark:/61903/1:1:X95X-XHT9): Susan Kidd Miller, Female (maiden name Kidd)\n- Relationships: John Miller and Susan Kidd Miller are Couple; both are ParentChild to Susan Miller\n\n**Research context:**\nThe research question is q_001: \"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\" Subject in tree is 2BLL-3JS (Susan Miller, b. Scotland, d. 1 May 1937, Toronto). Her parents in the tree are John Miller (2BLB-3WX, b. 1829 Blairgowrie, Perthshire) and Susan Kidd (LQY1-14T, b. 1832 Kirriemuir). This birth record's parents match exactly.\n\nExtract:\n1. The source entry\n2. All assertions for Susan Miller (birth date 17 March 1865, birth place Dundee, Forfarshire, Scotland) with proper GPS three-layer classifications:\n   - Source classification: original (civil registration record)\n   - Information quality: primary (recorded at time of birth by informant present)\n   - Evidence type: direct (directly answers when and where born)\n3. Any other relevant facts present in the record (father's name, mother's maiden name Kidd)\n\nThis is the primary source answering the research question."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete.\\n\\n**Source:** `src_001` / `S1` \\u2014 created (new source).\\n\\n**Assertions persisted: 11 total**\\n- `child` (Susan Miller, p_307503925979): name (a_001), sex (a_002), birth date 17 Mar 1865 (a_003), birth place Dundee, Forfarshire, Scotland (a_004), relationship-child of John Miller (a_010), relationship-child of Susan Kidd Miller (a_011)\\n- `father` (John Miller, p_307503925980): name (a_005), sex (a_006)\\n- `mother` (Susan Kidd Miller, p_307..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"2BLL-3JS\\\",\\n      \\\"name\\\": \\\"Susan Miller\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"2BLB-3WX\\\",\\n      \\\"name\\\": \\\"John Mill..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3224,8 +3167,7 @@
         "recordId": "ark:/61903/1:1:X95X-XHR1",
         "resultsRef": "results/log_001.json",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_307503925979\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X95X-XHR1\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Miller\\\",\\n          \\\"given\\\": \\\"Susan\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"17 Mar 1865\\\",\\n          \\\"standard_date\\\": \\\"17 Mar 1865\\..."
+      }
     },
     {
       "tool": "Agent",
@@ -3233,15 +3175,13 @@
         "description": "Extract 1871 census record assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch 1871 Scotland census record into the research project.\n\n**Project path:** `/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad`\n**Log entry ID:** `log_003`\n**Results ref:** `results/log_003.json`\n**Record ID:** `ark:/61903/1:1:VB5T-NWS`\n**Subject person ID in tree.gedcomx.json:** `2BLL-3JS`\n\n**Record content (already read):**\n- Collection: Scotland, Census, 1871 (collection 2028678)\n- Record title: \"Household of John Miller, Scotland, Census, 1871\"\n- Citation URL: https://www.familysearch.org/ark:/61903/1:2:9M88-SNPC\n- Principal person (p_13822556582, ark:/61903/1:1:VB5T-NWS): Susan Miller, Female\n  - Birth: 1865, Forfarshire (standard: Angus, Scotland, United Kingdom)\n  - Census: 1871, St Mary's, Forfarshire (Angus), Scotland (standard: Forfar, Angus, Scotland, United Kingdom)\n  - Occupation: SCHOLAR\n- Father (p_13822556574, ark:/61903/1:1:VB5T-N75): John Miller, Male, b. 1830, Perthshire, Scotland\n- Mother (p_13822556575, ark:/61903/1:1:VB5T-N7R): Susan Miller, Female, b. 1831, Forfarshire, Scotland\n  (this is Susan Kidd, the mother)\n- Siblings also in household: Elizabeth (b. 1852 Perthshire), Alexander (b. 1854 Forfarshire), George G T (b. 1856 Forfarshire), Jane K (b. 1857 Forfarshire), Marjory (b. 1860 Forfarshire), Euphemia W (b. 1862 Forfarshire), William (b. 1867 Forfarshire), Ann C (b. 1869 Forfarshire)\n\n**Research context:**\nThe research question is q_001: \"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\" Subject in tree is 2BLL-3JS. This census record is already attached to the subject (attachedToSubject: true). It is a SECONDARY source for the birth year and birthplace (recorded in 1871, 6 years after birth). The birth year (1865) and birthplace (Forfarshire/Angus) corroborate the civil registration record found as pli_001.\n\nExtract all assertions:\n1. The source entry\n2. Birth year assertion (1865, Forfarshire/Angus, Scotland) \u2014 secondary information, indirect evidence for the birth question\n3. Residence 1871 in St Mary's, Forfarshire \u2014 direct evidence\n4. Occupation (Scholar)\n5. Father/mother relationship assertions if needed\n\nGPS three-layer classification for birth assertions:\n- Source classification: original (census enumeration)\n- Information quality: secondary (enumerator recorded from informant's memory 6 years after the event)\n- Evidence type: indirect (census states age, from which birth year is calculated; birthplace stated but less precise than birth certificate)"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 43 ops (1 source + 42 assertions) persisted successfully.\\n\\nSource: src_003 / S3, action: created.\\n\\n42 assertions written (a_020 through a_061):\\n\\nSubject Susan Miller (child_7, p_13822556582) \\u2014 7 assertions:\\n- a_020: name\\n- a_021: sex\\n- a_022: birth (~1865, Forfarshire) \\u2014 indirect, indeterminate\\n- a_023: residence (St Mary's, 1871) \\u2014 direct\\n- a_024: occupation (Scholar) \\u2014 direct\\n- a_025: relationship \\u2014 child of John Miller (in..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"2BLL-3JS\\\",\\n      \\\"name\\\": \\\"Susan Miller\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"2BLB-3WX\\\",\\n      \\\"name\\\": \\\"John Mill..."
+      }
     },
     {
       "tool": "Agent",
@@ -3249,15 +3189,13 @@
         "description": "Extract Ontario death record assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch Ontario death record into the research project.\n\n**Project path:** `/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad`\n**Log entry ID:** `log_005`\n**Results ref:** `results/log_005.json`\n**Record ID:** `ark:/61903/1:1:JKJY-7H7`\n**Subject person ID in tree.gedcomx.json:** `2BLL-3JS`\n\n**Record content (already read):**\n- Collection: Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947 (collection 1307826)\n- Record title: \"Entry for Susan Miller Davies, Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"\n- Citation URL: https://www.familysearch.org/ark:/61903/1:2:KJZF-GT2\n- Principal person (p_12869203745, ark:/61903/1:1:JKJY-7H7): Susan Miller Davies, Female\n  - Birth: 1865 (year only, no place in index)\n  - Death: 1 May 1937, Toronto, Ontario, Canada\n  - Death Registration: 1937\n- Person 2 (p_12869203746, ark:/61903/1:1:JKJY-7HW): Thomas Davies, Male (husband)\n- Person 3 (p_12869203747, ark:/61903/1:1:JKJY-7H4): Susan Miller, Female (listed as parent \u2014 this is the subject's mother Susan Kidd Miller)\n- Relationships: Thomas Davies + Susan Miller = Couple; both ParentChild to Susan Miller Davies (this indexing reflects the death certificate's parent fields, not necessarily accurate)\n- Note: The FamilySearch index does not capture birthplace from this record. The original image (at ark:/61903/1:2:KJZF-GT2) would show the birthplace. The birth year 1865 is secondary information from a family informant at time of death.\n\n**Research context:**\nThe research question is q_001: \"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\" Subject in tree is 2BLL-3JS (Susan Miller, married Thomas Davies, died 1 May 1937, Toronto). This record confirms the subject's death date and provides secondary evidence of birth year 1865. It is already attached to the subject (attachedToSubject: true).\n\nGPS three-layer classification:\n- Source classification: original (civil death registration)\n- Information quality for death facts (date, place): primary \u2014 recorded by official/informant at time of death\n- Information quality for birth year: secondary \u2014 provided by family informant decades after the event\n- Evidence type for birth year: indirect (states birth year, which answers the \"when born\" question indirectly, as the informant likely knew approximately)\n- Evidence type for death: direct\n\nExtract: source entry, birth year assertion (1865, secondary/indirect), death date and place assertions (1 May 1937, Toronto \u2014 primary/direct), and the subject's married name (Susan Miller Davies)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete.\\n\\n**Source:** `src_002` / `S2` \\u2014 action: created\\n\\n**Assertions persisted (9 total):**\\n- `deceased` (Susan Miller Davies): name (`a_012`), sex (`a_013`), death date+place (`a_014`), birth year 1865 (`a_015`)\\n- `spouse_1` (Thomas Davies): name (`a_016`), sex (`a_017`)\\n- `mother_of_deceased` (Susan Miller): name (`a_018`), sex (`a_019`)\\n\\n**Key findings:**\\n- Death 1 May 1937, Toronto \\u2014 primary/direct, confirming the subject's iden..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"2BLL-3JS\\\",\\n      \\\"name\\\": \\\"Susan Miller\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"2BLB-3WX\\\",\\n      \\\"name\\\": \\\"John Mill..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3265,8 +3203,7 @@
         "recordId": "ark:/61903/1:1:JKJY-7H7",
         "resultsRef": "results/log_005.json",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12869203745\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JKJY-7H7\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Davies\\\",\\n          \\\"given\\\": \\\"Susan Miller\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1865\\\",\\n          \\\"standard_date\\\": \\\"1865\\\"\\n        },\\n        {\\n          \\\"t..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3537,8 +3474,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3735,8 +3671,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_012\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_013\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_014\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4578,8 +4513,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[16]: record_persona_id omitted \\u2014 multiple personas in this record (p_13822556582, p_13822556574, p_13822556575, p_13822556576, p_13822556577, p_13822556578, p_13822556579, p_13822556580, p_13822556581, p_13822556583, p_13822556584, p_13822556585) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_13822556582')\\\",\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -4587,8 +4521,7 @@
         "recordId": "ark:/61903/1:1:VB5T-NWS",
         "resultsRef": "results/log_003.json",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_13822556582\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:VB5T-NWS\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Susan\\\",\\n          \\\"surname\\\": \\\"Miller\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Religion\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1865\\\",\\n          \\\"standard_date..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5529,46 +5462,40 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_020\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_021\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_022\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__same_person,mcp__genealogy__research_append,mcp__genealogy__materialize_facts,mcp__genealogy__merge_warnings,mcp__genealogy__tree_edit,mcp__genealogy__person_warnings",
         "max_results": 7
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__gene..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2BLL-3JS\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Susan\",\n10\t          \"surname\": \"Miller\",\n11\t          \"id\": \"2BLL-3JS-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"9381f219-2889-4bfc-9b03-5527232282c1\",\n17\t          \"type\": \"Death\",\n18\t          \"date\": \"1 May 1937\",\n19\t          \"standard_date\": \"1 May 1937\",\n20\t          \"place\": \"Toronto,..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "person_evidence"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "assertions"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 61,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_001\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:X95X-XHR1\\\",\\n      \\\"record_persona_id\\\": \\\"p_307503925979\\\",\\n      \\\"record_role\\\": \\\"child\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susan Miller\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susan\\\",\\n        \\\"surname\\\": \\\"Miller\\\"\\n      },\\n      \\\"information_quality\\\": \\\"primary\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5956,8 +5883,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -6010,30 +5936,26 @@
             "recordRole": "wife"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"personId\\\": \\\"2BLL-3JS\\\",\\n      \\\"created\\\": false,\\n      \\\"factsAdded\\\": 1,\\n      \\\"factsEnriched\\\": 0,\\n      \\\"namesAdded\\\": 0,\\n      \\\"refsAttached\\\": 2,\\n      \\\"conflicts_surfaced\\\": []\\n    },\\n    {\\n      \\\"personId\\\": \\\"2BLB-3WX\\\",\\n      \\\"created\\\": false,\\n      \\\"factsAdded\\\": 0,\\n      \\\"factsEnriched\\\": 0,\\n      \\\"namesAdded\\\": 0,\\n      \\\"refsAttached\\\": 1,\\n      \\\"conflicts_surfaced\\\": []\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "personId": "2BLL-3JS"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6041,8 +5963,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "questions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"count\\\": 1,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\\\",\\n      \\\"rationale\\\": \\\"Susan Miller (2BLL-3JS) has no birth date or place recorded in the tree. Her life sketch states she was born in Scotland. Her marriage record indicates she was 18 at marriage (ca. 1882-1883), placing ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6050,16 +5971,14 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plans\\\",\\n  \\\"count\\\": 1,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"pl_001\\\",\\n      \\\"question_id\\\": \\\"q_001\\\",\\n      \\\"status\\\": \\\"active\\\",\\n      \\\"created\\\": \\\"2026-07-26\\\",\\n      \\\"items\\\": [\\n        {\\n          \\\"id\\\": \\\"pli_001\\\",\\n          \\\"sequence\\\": 1,\\n          \\\"record_type\\\": \\\"vital_record\\\",\\n          \\\"jurisdiction\\\": \\\"Dundee, Forfarshire, Scotland\\\",\\n          \\\"date_range\\\": \\\"1860-1867\\\",\\n          \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "log"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"log\\\",\\n  \\\"count\\\": 5,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"log_001\\\",\\n      \\\"plan_item_id\\\": \\\"pli_001\\\",\\n      \\\"performed\\\": \\\"2026-07-27T04:50:37.757Z\\\",\\n      \\\"tool\\\": \\\"record_search\\\",\\n      \\\"query\\\": {\\n        \\\"collection\\\": \\\"5000163\\\",\\n        \\\"surname\\\": \\\"Miller\\\",\\n        \\\"givenName\\\": \\\"Susan\\\",\\n        \\\"birthYearFrom\\\": 1858,\\n        \\\"birthYearTo\\\": 1868,\\n        \\\"birthPlace\\\": \\\"Forfarshire,..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6091,22 +6010,19 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6114,8 +6030,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 22,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_001\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:X95X-XHR1\\\",\\n      \\\"record_persona_id\\\": \\\"p_307503925979\\\",\\n      \\\"record_role\\\": \\\"child\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susan Miller\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susan\\\",\\n        \\\"surname\\\": \\\"Miller\\\"\\n      },\\n      \\\"information_quality\\\": \\\"primary\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6123,24 +6038,21 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "conflicts",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad",
         "section": "sources"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"sources\\\",\\n  \\\"count\\\": 3,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"src_001\\\",\\n      \\\"citation\\\": \\\"\\\\\\\"Scotland, Civil Registration, 1855-1875, 1881, 1891,\\\\\\\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X95X-XHR1 : accessed 26 July 2026), entry for Susan Miller, 17 Mar 1865; citing Scotland Statutory Registers, Dundee, Forfarshire.\\\",\\n      \\\"citation_detail\\\": {\\n        \\\"who\\\": \\\"Susan Miller\\\",\\n        \\\"w..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -6148,8 +6060,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/tree.gedcomx.json",
         "offset": 0,
         "limit": 50
-      },
-      "response_summary": "0\t{\n1\t  \"persons\": [\n2\t    {\n3\t      \"id\": \"2BLL-3JS\",\n4\t      \"gender\": \"Female\",\n5\t      \"living\": false,\n6\t      \"names\": [\n7\t        {\n8\t          \"given\": \"Susan\",\n9\t          \"surname\": \"Miller\",\n10\t          \"id\": \"2BLL-3JS-name-1\",\n11\t          \"sources\": [\n12\t            {\n13\t              \"ref\": \"S1\",\n14\t              \"quality\": 3\n15\t            },\n16\t            {\n17\t              \"ref\": \"S3\",\n18\t              \"quality\": 3\n19\t            }\n20\t          ]\n21\t        },\n22\t        {\n..."
+      }
     },
     {
       "tool": "Read",
@@ -6157,8 +6068,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/tree.gedcomx.json",
         "offset": 50,
         "limit": 100
-      },
-      "response_summary": "50\t        },\n51\t        {\n52\t          \"id\": \"6d2f5b00-b617-4a7b-91f9-5020da478fd1\",\n53\t          \"type\": \"Residence\",\n54\t          \"date\": \"1871\",\n55\t          \"standard_date\": \"1871\",\n56\t          \"place\": \"St Mary'S, Forfarshire (Angus), Scotland\",\n57\t          \"standard_place\": \"S\u00e3o Tom\u00e9 and Pr\u00edncipe\"\n58\t        },\n59\t        {\n60\t          \"id\": \"f716455d-dbc5-4773-8829-748369339526\",\n61\t          \"type\": \"Residence\",\n62\t          \"date\": \"1881\",\n63\t          \"standard_date\": \"1881\",\n64..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6195,8 +6105,7 @@
           "exhaustive_search_summary": "Searched FamilySearch collection 5000163 (Scotland Civil Registration, 1855-1875, 1881, 1891) for Susan Miller's birth in Forfarshire, with both Miller and Millar spelling variants; found the definitive civil registration entry. Searched FamilySearch collection 2028677 (Scotland Census 1861) to bound the birth window \u2014 Susan absent, confirming post-April 1861 birth. Searched FamilySearch collection 2028678 (Scotland Census 1871) \u2014 found Susan Miller age ~6 in John Miller's household, corroborating 1865 birth year and Forfarshire birthplace. Searched FamilySearch collection 1307826 (Ontario Deaths, 1869-1937) \u2014 found 1937 death registration for Susan Miller Davies, birth year 1865 confirmed. Conducted FAN search in collection 5000163 for siblings of John Miller / Susan Kidd, confirming Dundee as the consistent registration district. ScotlandsPeople (pli_006) was planned as a fallback but not needed given pli_001 success. Research declared reasonably exhaustive.",
           "narrative_markdown": "## When and Where Was Susan Miller Born?\n\n**Research question:** When and where was Susan Miller, daughter of John Miller (born 1829, Blairgowrie, Perthshire) and Susan Kidd (born 1832, Kirriemuir, Forfarshire), born?\n\n**Conclusion:** Susan Miller was born on **17 March 1865 in Dundee, Forfarshire, Scotland**. The evidence conclusively establishes this conclusion. All five components of the Genealogical Proof Standard (GPS) are satisfied.\n\n---\n\n### The Primary Source: Scotland Civil Registration Birth Record\n\nScotland's Statutory Registers of Births commenced 1 January 1855, fully covering the subject's birth. A search of FamilySearch collection 5000163 (Scotland, Civil Registration, 1855\u20131875, 1881, 1891) \u2014 searching both \"Miller\" and \"Millar\" spelling variants as required by local practice \u2014 identified an entry for Susan Miller born 17 March 1865 in Dundee, Forfarshire.[^1] The record names her father as John Miller and her mother as Susan Kidd Miller, with the mother's maiden name explicitly recorded as Kidd. Both parents match the subject's tree persons (John Miller, 2BLB-3WX, born 1829 Blairgowrie, Perthshire; Susan Kidd, LQY1-14T, born 1832 Kirriemuir, Forfarshire) in name and origin.\n\nThis record is classified as: **original source** (the Scotland Statutory Registers are a primary government civil record created at registration); **primary information** (the presenting parent appeared at the registrar's office as required under the Registration of Births, Deaths and Marriages (Scotland) Act 1854, and the informant had firsthand knowledge of the birth event); **direct evidence** (the record explicitly states both the birth date and the birth place). This is the highest GPS evidence class available for a birth event. The record image was examined at FamilySearch (ark:/61903/1:2:H4TR-T9XP).\n\n---\n\n### Corroborating Sources\n\n**1871 Scotland Census (independent corroboration).** The household of John Miller enumerated in St Mary's, Forfarshire, in 1871 lists Susan Miller as a child approximately 6 years old, birthplace Forfarshire, occupation Scholar.[^2] St Mary's was a Dundee city parish, consistent with the civil registration district of Dundee. This record is classified as: original source; indeterminate information quality (the informant is unknown); indirect evidence for birth year (calculated from the enumerated age) and direct evidence for the Forfarshire birthplace statement. The census independently corroborates birth year 1865 (within normal one-year census age-rounding tolerance) and the Forfarshire birthplace. It is created by a distinct institution (National Records of Scotland, 1871 census enumeration) with a different informant chain from the civil registration, constituting genuine independent evidence.\n\n**1937 Ontario Death Registration (independent corroboration).** The Ontario death registration for Susan Miller Davies, who died 1 May 1937 in Toronto, Ontario, Canada, records a birth year of 1865.[^3] This information was supplied by a family informant at the time of death registration \u2014 a person who was not present at Susan's 1865 birth and who reported from recalled knowledge 72 years after the event. Classified as: original source; secondary information (informant was not present at the reported birth event); indirect evidence for birth year. Despite its lower evidentiary weight for the birth, this source \u2014 created in Canada, in 1937, by a different informant and institution than either Scottish record \u2014 independently confirms the birth year 1865. The name \"Susan Miller Davies\" on this death record identifies the deceased as Susan Miller (maiden name) who married Thomas Davies, consistent with the subject's biographical record.\n\n---\n\n### Negative Evidence and FAN Corroboration\n\n**1861 Scotland Census (negative evidence).** John Miller's household in Dundee 2nd, Forfarshire, was enumerated on 2 April 1861. Susan Miller does not appear among the children. This absence is consistent with a birth after April 1861 and bounds the birth window to post\u2013April 1861, fully consistent with the civil registration date of 17 March 1865. The negative evidence does not advance the conclusion but confirms that neither a birth year of 1860 nor 1861 is tenable.\n\n**FAN search (siblings' civil registrations).** A search of FamilySearch collection 5000163 for children of John Miller and Susan Kidd born in Forfarshire between 1855 and 1875 identified multiple siblings registered in Dundee: Jean Kidd Miller (1 August 1857), Margory Miller (14 August 1859), Euphemia Wilson Miller (18 April 1862), William Miller (24 March 1867), and Ann Crawford Miller (3 April 1869). Every Dundee-born sibling in this period was registered in the same Dundee district, corroborating Dundee as the family's consistent registration location and confirming that the 1865 entry in Dundee belongs to this specific John Miller and Susan Kidd household.\n\n---\n\n### Apparent Discrepancies \u2014 All Reconciled\n\nThe 1871 census records Susan's birthplace as \"Forfarshire\" (or \"Angus\"), while the birth certificate specifies the city of Dundee, within Forfarshire. These are not in conflict: Dundee is situated in Forfarshire; the census routinely recorded the county rather than the city. Similarly, the census birth year of approximately 1865 (derived from a stated age of ~6 in 1871) is fully consistent with the exact date of 17 March 1865; the one-year tolerance is the standard expectation for age-derived census dates. No source contradicts either the birth date or the birthplace. There are no conflicts requiring resolution.\n\n---\n\n### GPS Component Assessment\n\n| GPS Component | Status |\n|--------------|--------|\n| 1. Reasonably exhaustive research | Met \u2014 declared exhaustive; civil registration, two censuses, death record, and FAN search all searched |\n| 2. Complete and accurate citations | Met \u2014 all sources cited with collection ID, ARK, and access date |\n| 3. Analysis and correlation | Met \u2014 three-layer classification applied to all assertions; sources correlated |\n| 4. Resolution of conflicting evidence | Met \u2014 no genuine conflicts identified; apparent discrepancies are precision differences, not contradictions |\n| 5. Soundly reasoned written conclusion | Met \u2014 reasoning presented in this summary |\n\n---\n\n### Conclusion\n\nThe Scotland Civil Registration birth record (original / primary / direct) conclusively establishes that Susan Miller, daughter of John Miller and Susan Kidd, was born on **17 March 1865 in Dundee, Forfarshire, Scotland**. The 1871 Scotland Census and 1937 Ontario death registration independently corroborate the birth year 1865 at lower evidence classes. The 1861 census absence provides negative evidence consistent with this date. FAN research confirms Dundee as the family's registration district. Research has been declared reasonably exhaustive. All five GPS components are satisfied. This conclusion is subject to revision if new evidence emerges.\n\n---\n\n[^1]: \"Scotland, Civil Registration, 1855-1875, 1881, 1891,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X95X-XHR1 : accessed 26 July 2026), entry for Susan Miller, 17 Mar 1865; citing Scotland Statutory Registers, Dundee, Forfarshire.\n\n[^2]: \"Household of John Miller,\" Scotland, Census, 1871, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VB5T-NWS : accessed 26 July 2026), Susan Miller; citing National Records of Scotland, Edinburgh.\n\n[^3]: \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7 : accessed 2026-07-26), entry for Susan Miller Davies, died 1 May 1937, Toronto, Ontario, Canada; citing registration 1937."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -6208,8 +6117,7 @@
         "fact": {
           "primary": true
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -6217,15 +6125,13 @@
         "description": "GPS mentor proof critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please perform a mandatory proof-critique (GPS review) of the proof summary ps_001 in the research project at:\n\n/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad\n\nThe proof answers question q_001: \"When and where was Susan Miller, daughter of John Miller and Susan Kidd of Forfarshire, Scotland, born?\"\n\nTier declared: proved\nVehicle: summary\n\nKey facts:\n- Birth record (Scotland Civil Registration, collection 5000163, ark:/61903/1:1:X95X-XHR1): Susan Miller, born 17 March 1865, Dundee, Forfarshire. Father: John Miller. Mother: Susan Kidd Miller (maiden name Kidd). Classified: original/primary/direct.\n- 1871 Scotland Census (collection 2028678, ark:/61903/1:1:VB5T-NWS): Susan Miller, age ~6 (born ~1865), Forfarshire, child in John Miller household. Classified: original/indeterminate/indirect.\n- 1937 Ontario death registration (collection 1307826, ark:/61903/1:1:JKJY-7H7): Susan Miller Davies, birth year 1865. Classified: original/secondary/indirect.\n- 1861 Scotland Census: Susan absent from John Miller household \u2014 negative evidence, birth post-April 1861.\n- FAN siblings search: multiple siblings all registered in Dundee, corroborating registration district.\n- Research declared exhaustive (all plan items completed or appropriately skipped).\n- No conflicts recorded.\n\nPlease read the full proof summary from research.json (ps_001 in proof_summaries) and the relevant assertions, then provide your GPS critique. Record your evaluation in research.json via research_append to the evaluations section. Your recommendation is advisory \u2014 it does not force rework."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\nGood work here. The classification discipline is a highlight \\u2014 a_003/a_004 (the civil registration) correctly sit at original/primary/direct, while a_022 (the 1871 census age-derived birth year) is correctly downgraded to indirect, with `informant_bias_notes` reasoning through exactly why. The independence analysis isn't a rubber stamp either: you named the distinct informant chain behind each corroborating source (r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json"
-      },
-      "response_summary": "File content (29850 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -6233,8 +6139,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 1,
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_susan_miller_birth\",\n4\t    \"objective\": \"When and where was Susan Miller born?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2BLL-3JS\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-06\",\n10\t    \"updated\": \"2026-07-06\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"question\": \"Whe..."
+      }
     },
     {
       "tool": "Read",
@@ -6242,8 +6147,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 100,
         "limit": 150
-      },
-      "response_summary": "100\t          \"fallback_for\": null,\n101\t          \"status\": \"completed\"\n102\t        },\n103\t        {\n104\t          \"id\": \"pli_005\",\n105\t          \"sequence\": 5,\n106\t          \"record_type\": \"vital_record\",\n107\t          \"jurisdiction\": \"Toronto, York, Ontario, Canada\",\n108\t          \"date_range\": \"1937\",\n109\t          \"repository\": \"FamilySearch\",\n110\t          \"rationale\": \"Susan Miller Davies died 1 May 1937 in Toronto. Source 9DWZ-81M in the project tree (FamilySearch, 'Canada, Ontario, De..."
+      }
     },
     {
       "tool": "Read",
@@ -6251,8 +6155,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 245,
         "limit": 200
-      },
-      "response_summary": "245\t  \"sources\": [\n246\t    {\n247\t      \"id\": \"src_001\",\n248\t      \"citation\": \"\\\"Scotland, Civil Registration, 1855-1875, 1881, 1891,\\\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X95X-XHR1 : accessed 26 July 2026), entry for Susan Miller, 17 Mar 1865; citing Scotland Statutory Registers, Dundee, Forfarshire.\",\n249\t      \"citation_detail\": {\n250\t        \"who\": \"Susan Miller\",\n251\t        \"what\": \"Birth registration, Scotland, Civil Registration, 1855-1875, 1881, 1891 (collection..."
+      }
     },
     {
       "tool": "Read",
@@ -6260,8 +6163,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 445,
         "limit": 200
-      },
-      "response_summary": "445\t      \"value\": \"Female\",\n446\t      \"information_quality\": \"primary\",\n447\t      \"informant\": \"presenting parent (identity unknown)\",\n448\t      \"informant_proximity\": \"household_member\",\n449\t      \"evidence_type\": \"direct\",\n450\t      \"extracted_for_question_ids\": [],\n451\t      \"log_entry_id\": \"log_001\",\n452\t      \"source_id\": \"src_001\"\n453\t    },\n454\t    {\n455\t      \"id\": \"a_009\",\n456\t      \"record_id\": \"ark:/61903/1:1:X95X-XHR1\",\n457\t      \"record_persona_id\": \"p_307503925981\",\n458\t      \"..."
+      }
     },
     {
       "tool": "Read",
@@ -6269,8 +6171,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 645,
         "limit": 250
-      },
-      "response_summary": "645\t      \"informant_bias_notes\": \"The mother's name was reported by the family informant at time of the decedent's death \u2014 secondhand knowledge about the decedent's parentage. The index associates this person (p_12869203747) with the parent/mother field; confirms the subject's mother was named Susan Miller.\",\n646\t      \"evidence_type\": \"indirect\",\n647\t      \"extracted_for_question_ids\": [\n648\t        \"q_001\"\n649\t      ],\n650\t      \"log_entry_id\": \"log_005\",\n651\t      \"source_id\": \"src_002\"\n6..."
+      }
     },
     {
       "tool": "Read",
@@ -6278,8 +6179,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 895,
         "limit": 250
-      },
-      "response_summary": "895\t      \"informant_proximity\": \"witness\",\n896\t      \"evidence_type\": \"direct\",\n897\t      \"extracted_for_question_ids\": [],\n898\t      \"log_entry_id\": \"log_003\",\n899\t      \"source_id\": \"src_003\",\n900\t      \"standard_place\": \"Angus, Scotland, United Kingdom\"\n901\t    },\n902\t    {\n903\t      \"id\": \"a_031\",\n904\t      \"record_id\": \"ark:/61903/1:1:VB5T-NWS\",\n905\t      \"record_persona_id\": \"p_13822556575\",\n906\t      \"record_role\": \"wife\",\n907\t      \"fact_type\": \"name\",\n908\t      \"value\": \"Susan Mille..."
+      }
     },
     {
       "tool": "Read",
@@ -6287,8 +6187,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 1400,
         "limit": 150
-      },
-      "response_summary": "1400\t        \"surname\": \"Miller\"\n1401\t      },\n1402\t      \"information_quality\": \"indeterminate\",\n1403\t      \"informant\": \"unknown household member\",\n1404\t      \"informant_proximity\": \"household_member\",\n1405\t      \"evidence_type\": \"direct\",\n1406\t      \"extracted_for_question_ids\": [],\n1407\t      \"log_entry_id\": \"log_003\",\n1408\t      \"source_id\": \"src_003\"\n1409\t    },\n1410\t    {\n1411\t      \"id\": \"a_057\",\n1412\t      \"record_id\": \"ark:/61903/1:1:VB5T-NWS\",\n1413\t      \"record_persona_id\": \"p_138..."
+      }
     },
     {
       "tool": "Read",
@@ -6296,8 +6195,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 1550,
         "limit": 150
-      },
-      "response_summary": "1550\t    {\n1551\t      \"id\": \"pe_006\",\n1552\t      \"assertion_id\": \"a_010\",\n1553\t      \"person_id\": \"2BLB-3WX\",\n1554\t      \"confidence\": \"confident\",\n1555\t      \"rationale\": \"Relationship assertion (other side): John Miller named as father on Scotland Civil Registration birth certificate for Susan Miller (2BLL-3JS). 2BLB-3WX is established as father of 2BLL-3JS in the tree. Name 'John Miller' and role match.\",\n1556\t      \"created\": \"2026-07-27\"\n1557\t    },\n1558\t    {\n1559\t      \"id\": \"pe_007\",\n..."
+      }
     },
     {
       "tool": "Read",
@@ -6305,8 +6203,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 1700,
         "limit": 150
-      },
-      "response_summary": "1700\t      \"created\": \"2026-07-27\"\n1701\t    },\n1702\t    {\n1703\t      \"id\": \"pe_025\",\n1704\t      \"assertion_id\": \"a_023\",\n1705\t      \"person_id\": \"2BLL-3JS\",\n1706\t      \"confidence\": \"confident\",\n1707\t      \"rationale\": \"Residence 1871 St Mary's, Forfarshire \u2014 direct census enumeration of Susan Miller child_7. Consistent with tree's existing 1871 residence fact for 2BLL-3JS (same place).\",\n1708\t      \"created\": \"2026-07-27\"\n1709\t    },\n1710\t    {\n1711\t      \"id\": \"pe_026\",\n1712\t      \"assertio..."
+      }
     },
     {
       "tool": "Read",
@@ -6314,8 +6211,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-susan-miller-birth-bw5mcmad/research.json",
         "offset": 1849,
         "limit": 60
-      },
-      "response_summary": "1849\t  ],\n1850\t  \"evaluations\": [],\n1851\t  \"localities\": [\n1852\t    {\n1853\t      \"id\": \"loc_001\",\n1854\t      \"place\": \"Forfarshire, Scotland, United Kingdom\",\n1855\t      \"for_place\": \"Forfarshire (Angus), Scotland\",\n1856\t      \"time_period\": \"1855-1875\",\n1857\t      \"jurisdictions\": [\n1858\t        {\n1859\t          \"name\": \"Forfarshire, Scotland, United Kingdom\",\n1860\t          \"date_range\": \"1801-1928\"\n1861\t        },\n1862\t        {\n1863\t          \"name\": \"Angus, Scotland, United Kingdom\",\n186..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6360,8 +6256,7 @@
           "timestamp": "2026-07-26T18:45:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-26T18-45-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6388,8 +6283,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/hypotheses[0]: missing required field 'claim'\\\",\\n    \\\"ops[0]: research.json/hypotheses[0]: missing required field 'ruled_out'\\\",\\n    \\\"ops[0]: research.json/hypotheses[0]: unexpected property 'hypothesis' (hypotheses allow only id, claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, ruled_out_reason, related_question_ids, notes)\\\",\\n    \\\"ops[0]: research.json/hypothese..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6413,8 +6307,7 @@
           ],
           "notes": "Surfaced by FAN search (log_004). Flagged by gps-mentor (ev_001) as an unaddressed alternative requiring explicit documentation. Ruled out by age-at-census, age-at-marriage, and civil registration identity."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"hypotheses\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"h_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6426,16 +6319,14 @@
         "fields": {
           "narrative_markdown": "## When and Where Was Susan Miller Born?\n\n**Research question:** When and where was Susan Miller, daughter of John Miller (born 1829, Blairgowrie, Perthshire) and Susan Kidd (born 1832, Kirriemuir, Forfarshire), born?\n\n**Conclusion:** Susan Miller was born on **17 March 1865 in Dundee, Forfarshire, Scotland**. The evidence conclusively establishes this conclusion. All five components of the Genealogical Proof Standard (GPS) are satisfied.\n\n---\n\n### The Primary Source: Scotland Civil Registration Birth Record\n\nScotland's Statutory Registers of Births commenced 1 January 1855, fully covering the subject's birth. A search of FamilySearch collection 5000163 (Scotland, Civil Registration, 1855\u20131875, 1881, 1891) \u2014 searching both \"Miller\" and \"Millar\" spelling variants as required by local practice \u2014 identified an entry for Susan Miller born 17 March 1865 in Dundee, Forfarshire.[^1] The record names her father as John Miller and her mother as Susan Kidd Miller, with the mother's maiden name explicitly recorded as Kidd. Both parents match the subject's tree persons (John Miller, 2BLB-3WX, born 1829 Blairgowrie, Perthshire; Susan Kidd, LQY1-14T, born 1832 Kirriemuir, Forfarshire) in name and origin.\n\nThis record is classified as: **original source** (the Scotland Statutory Registers are a primary government civil record created at registration); **primary information** (the presenting parent appeared at the registrar's office as required under the Registration of Births, Deaths and Marriages (Scotland) Act 1854, and the informant had firsthand knowledge of the birth event); **direct evidence** (the record explicitly states both the birth date and the birth place). This is the highest GPS evidence class available for a birth event. The record image was examined at FamilySearch (ark:/61903/1:2:H4TR-T9XP).\n\n---\n\n### Corroborating Sources\n\n**1871 Scotland Census (independent corroboration).** The household of John Miller enumerated in St Mary's, Forfarshire, in 1871 lists Susan Miller as a child approximately 6 years old, birthplace Forfarshire, occupation Scholar.[^2] St Mary's was a Dundee city parish, consistent with the civil registration district of Dundee. This record is classified as: original source; indeterminate information quality (the informant is unknown); indirect evidence for birth year (calculated from the enumerated age) and direct evidence for the Forfarshire birthplace statement. The census independently corroborates birth year 1865 (within normal one-year census age-rounding tolerance) and the Forfarshire birthplace. It is created by a distinct institution (National Records of Scotland, 1871 census enumeration) with a different informant chain from the civil registration, constituting genuine independent evidence.\n\n**1937 Ontario Death Registration (independent corroboration).** The Ontario death registration for Susan Miller Davies, who died 1 May 1937 in Toronto, Ontario, Canada, records a birth year of 1865.[^3] This information was supplied by a family informant at the time of death registration \u2014 a person who was not present at Susan's 1865 birth and who reported from recalled knowledge 72 years after the event. Classified as: original source; secondary information (informant was not present at the reported birth event); indirect evidence for birth year. Despite its lower evidentiary weight for the birth, this source \u2014 created in Canada, in 1937, by a different informant and institution than either Scottish record \u2014 independently confirms the birth year 1865. The name \"Susan Miller Davies\" on this death record identifies the deceased as Susan Miller (maiden name) who married Thomas Davies, consistent with the subject's biographical record.\n\n---\n\n### Negative Evidence, FAN Corroboration, and Alternative Candidate Eliminated\n\n**1861 Scotland Census (negative evidence).** John Miller's household in Dundee 2nd, Forfarshire, was enumerated on 2 April 1861. Susan Miller does not appear among the children. This absence is consistent with a birth after April 1861 and bounds the birth window to post\u2013April 1861, fully consistent with the civil registration date of 17 March 1865.\n\n**FAN search \u2014 siblings' civil registrations.** A search of FamilySearch collection 5000163 for children of John Miller and Susan Kidd born in Forfarshire between 1855 and 1875 identified multiple siblings registered in Dundee: Jean Kidd Miller (1 August 1857), Margory Miller (14 August 1859), Euphemia Wilson Miller (18 April 1862), William Miller (24 March 1867), and Ann Crawford Miller (3 April 1869). Every Dundee-born sibling in this period was registered in the same Dundee district, corroborating Dundee as the family's consistent registration location and confirming that the 1865 entry in Dundee belongs to this specific John Miller and Susan Kidd household.\n\n**Alternative candidate: earlier Susan Miller (born 1857, St Vigeans) \u2014 ruled out.** The same FAN search also surfaced an earlier child named Susan Miller, born 11 December 1857 in St Vigeans, Forfarshire, to the same parents John Miller and Susan Kidd. The possibility that this 1857 Susan \u2014 rather than the 1865 Susan \u2014 is the research subject (2BLL-3JS) must be considered and eliminated. Three independent lines of evidence rule out the 1857 birth as belonging to the ancestor:\n\n1. **Age in the 1871 census.** The 1871 census records child_7 Susan Miller as approximately 6 years old, a figure consistent only with a birth circa 1865. A child born in December 1857 would have appeared as approximately 13 years old in the April 1871 enumeration \u2014 not 6.\n\n2. **Age at marriage.** The subject's marriage record evidence places Susan Miller at approximately 18 years of age at her 1882\u20131883 marriage in Barrow-in-Furness, Lancashire, which corresponds to a birth circa 1864\u20131865. A 1857-born Susan would have been approximately 25\u201326 at that marriage \u2014 inconsistent with the recorded age of 18.\n\n3. **Distinct civil registration.** The 1865 entry (ark:/61903/1:1:X95X-XHR1) is a separate, independently dated civil registration for a child named Susan Miller born to John Miller and Susan Kidd in Dundee. It is not the same registration as the 1857 St Vigeans entry. The existence of both registrations almost certainly reflects the Victorian-Scots practice of giving a surviving child the same given name borne by an earlier child who died in infancy \u2014 a pattern consistent with the family's naming choices (reuse of Kidd as a middle name across two daughters is also visible). No evidence places the 1857 Susan beyond early childhood. This alternative is recorded and ruled out as hypothesis h_001.\n\n---\n\n### Apparent Discrepancies \u2014 All Reconciled\n\nThe 1871 census records Susan's birthplace as \"Forfarshire\" (or \"Angus\"), while the birth certificate specifies the city of Dundee, within Forfarshire. These are not in conflict: Dundee is situated in Forfarshire; the census routinely recorded the county rather than the city. Similarly, the census birth year of approximately 1865 (derived from a stated age of ~6 in 1871) is fully consistent with the exact date of 17 March 1865. No source contradicts either the birth date or the birthplace.\n\n---\n\n### GPS Component Assessment\n\n| GPS Component | Status |\n|--------------|--------|\n| 1. Reasonably exhaustive research | Met \u2014 declared exhaustive; civil registration, two censuses, death record, and FAN search all searched |\n| 2. Complete and accurate citations | Met \u2014 all sources cited with collection ID, ARK, and access date |\n| 3. Analysis and correlation | Met \u2014 three-layer classification applied to all assertions; sources correlated |\n| 4. Resolution of conflicting evidence | Met \u2014 no genuine conflicts identified; apparent discrepancies are precision differences; 1857 alternative candidate explicitly eliminated |\n| 5. Soundly reasoned written conclusion | Met \u2014 reasoning presented in this summary, including alternative candidate analysis |\n\n---\n\n### Conclusion\n\nThe Scotland Civil Registration birth record (original / primary / direct) conclusively establishes that Susan Miller, daughter of John Miller and Susan Kidd, was born on **17 March 1865 in Dundee, Forfarshire, Scotland**. The 1871 Scotland Census and 1937 Ontario death registration independently corroborate the birth year 1865 at lower evidence classes. The 1861 census absence provides negative evidence consistent with this date. FAN research confirms Dundee as the family's registration district and rules out an earlier same-named sibling (born 1857, St Vigeans) as a competing candidate. Research has been declared reasonably exhaustive. All five GPS components are satisfied. This conclusion is subject to revision if new evidence emerges.\n\n---\n\n[^1]: \"Scotland, Civil Registration, 1855-1875, 1881, 1891,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X95X-XHR1 : accessed 26 July 2026), entry for Susan Miller, 17 Mar 1865; citing Scotland Statutory Registers, Dundee, Forfarshire.\n\n[^2]: \"Household of John Miller,\" Scotland, Census, 1871, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VB5T-NWS : accessed 26 July 2026), Susan Miller; citing National Records of Scotland, Edinburgh.\n\n[^3]: \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7 : accessed 2026-07-26), entry for Susan Miller Davies, died 1 May 1937, Toronto, Ontario, Canada; citing registration 1937."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6463,8 +6354,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -6841,5 +6731,6 @@
       ],
       "transcript": "agent-a4c07c47153f4fe72.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

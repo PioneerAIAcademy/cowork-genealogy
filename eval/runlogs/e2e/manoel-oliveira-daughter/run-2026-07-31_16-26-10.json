@@ -2366,45 +2366,39 @@
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[],\\\"persons\\\":[{\\\"id\\\":\\\"GHJ6-2WV\\\",\\\"name\\\":\\\"Manoel Melquiades de Oliveira\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GHJ6-L4F\\\",\\\"name\\\":\\\"C\\u00e2ndida Damasceno de Oliveira\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GHJ6-2BB\\\",\\\"name\\\":\\\"Abel de Oliveira\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GHJQ-G8N\\\",\\\"name\\\":\\\"Maria Lila de Oliveira Serrano\\\",\\\"gender\\\":\\\"Female\\\",\\\"so..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous The research objective is: Did Manoel Melquiades de Oliveira and his wife C\u00e2ndida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married 1926, in addition to their known children Abel and Maria Lila (b. 1901)? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2429,39 +2423,34 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Place: Rio Grande do Norte, Brazil. Time period: 1890\u20131930 (covering parents' marriage, children's births/baptisms, and Josefa's reported 1926 marriage). Research question: q_001 \u2014 Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__place_population,mcp__genealogy__wikipedia_search",
         "max_results": 9
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Rio Grande do Norte",
         "contextName": "Brazil"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Rio Grande do Norte, Brazil\\\",\\\"type\\\":\\\"State\\\",\\\"dateRange\\\":\\\"+1889/\\\",\\\"latitude\\\":-5.6625,\\\"longitude\\\":-35.8242,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Rio%20Grande%20do%20Norte&focusedId=5722\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/Rio Grande do Norte\\\"}]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__wikipedia_search",
       "args": {
         "query": "Rio Grande do Norte Brazil history civil registration Catholic records"
-      },
-      "response_summary": "{\"error\":\"No Wikipedia article found for 'Rio Grande do Norte Brazil history civil registration Catholic records'\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2469,8 +2458,7 @@
         "standardPlace": "Rio Grande do Norte, Brazil",
         "startYear": 1890,
         "endYear": 1930
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"place\\\":{\\\"place_id\\\":\\\"1929894\\\",\\\"name\\\":\\\"Rio Grande do Norte\\\",\\\"level\\\":\\\"province\\\",\\\"parent\\\":{\\\"place_id\\\":\\\"1927159\\\",\\\"name\\\":\\\"Brazil\\\"}},\\\"population\\\":{\\\"populstat\\\":{\\\"source_url\\\":\\\"http://populstat.info/Americas/brazilp.htm\\\",\\\"data\\\":[{\\\"year\\\":1890,\\\"population\\\":268300,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1900,\\\"population\\\":274300,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1908,\\\"population\\\":279000,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1913,\\\"pop..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2478,8 +2466,7 @@
         "standardPlace": "Rio Grande do Norte, Brazil",
         "startYear": 1890,
         "endYear": 1930
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Rio Grande do Norte, Brazil\\\",\\\"startYear\\\":1890,\\\"endYear\\\":1930},\\\"scope\\\":\\\"Brazil\\\",\\\"totalForPlace\\\":50,\\\"results\\\":[{\\\"id\\\":\\\"2820768\\\",\\\"title\\\":\\\"Brazil, Alagoas, Church Records, 1802-2016\\\",\\\"dateRange\\\":\\\"1802-2016\\\",\\\"recordCount\\\":656546,\\\"personCount\\\":8820708,\\\"imageCount\\\":208789,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/2820768\\\"},{\\\"id\\\":\\\"4469403\\\",\\\"title\\\":\\\"Brazil, Alagoas, Civil Registration, 1876-..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2487,8 +2474,7 @@
         "standardPlace": "Rio Grande do Norte, Brazil",
         "startYear": 1890,
         "endYear": 1930
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Rio Grande do Norte, Brazil\\\",\\\"startYear\\\":1890,\\\"endYear\\\":1930},\\\"totalResults\\\":2283,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"004687014_003_M943-751\\\",\\\"imageGroupPrefix\\\":\\\"004687014\\\",\\\"imageCount\\\":204,\\\"recordSearchablePercent\\\":99,\\\"fulltextSearchable\\\":true,\\\"languages\\\":[\\\"pt\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Jucurutu, Rio Grande do Norte, Brazil\\\",\\\"dateRange\\\":\\\"1918\\u20131949\\\",\\\"recordType\\\":\\\"Casamentos paroquiais\\\"}],\\\"title..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2497,93 +2483,81 @@
         "startYear": 1890,
         "endYear": 1930,
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Rio Grande do Norte, Brazil\\\",\\\"startYear\\\":1890,\\\"endYear\\\":1930},\\\"totalForPlace\\\":120,\\\"returned\\\":50,\\\"results\\\":[{\\\"url\\\":\\\"http://files.lib.byu.edu/family-history-library/research-outlines/LatinAmerica/Brazil.pdf\\\",\\\"linkText\\\":\\\"Brazil Research Outline\\\"},{\\\"url\\\":\\\"https://www.worldgenweb.net/brazil/\\\",\\\"linkText\\\":\\\"Brazil World Gen Web\\\"},{\\\"url\\\":\\\"https://www.ancestry.com/search/collections/9798\\\",\\\"linkText\\\":\\\"Brazil Sel..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Rio Grande do Norte Brazil genealogy records research"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":\\\"Rio Grande do Norte Brazil genealogy records research\\\",\\\"total_chunks_searched\\\":1240565,\\\"results\\\":[{\\\"rank\\\":1,\\\"relevance_score\\\":0.941406,\\\"chunk_text\\\":\\\"**Most of your genealogical research for Rio Grande do Norte will be in two main record types: civil registration (*registros civis*) and church records (*registros da igreja*). This article will teach you methods for locating and searching these two record groups.**  \\\\n[BrazilOnline Genealogy ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Rio Grande do Norte, Brazil",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Rio Grande do Norte, Brazil\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Rio Grande do Norte, Brazil",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Rio Grande do Norte, Brazil\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Rio Grande do Norte, Brazil",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Rio Grande do Norte, Brazil\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Rio Grande do Norte, Brazil",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Rio Grande do Norte, Brazil\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wikipedia_search",
       "args": {
         "query": "Rio Grande do Norte state Brazil history"
-      },
-      "response_summary": "{\"error\":\"No Wikipedia article found for 'Rio Grande do Norte state Brazil history'\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Brazil",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Brazil_Genealogy\\\",\\\"content\\\":\\\"# Brazil Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **Brazil Wiki Topics** |\\\\n| [Flag of Brazil](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Brazil.png&filetimestamp=20110731163823& \\\\\\\"Flag of Brazil\\\\\\\") |\\\\n| **Brazil Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/Brazil_Getting_Started \\\\\\\"Brazil Getting Started\\\\\\\") * [Online..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Brazil",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Brazil_Getting_Started\\\",\\\"content\\\":\\\"# Brazil Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Brazil Wiki Topics](https://www.familysearch.org/en/wiki/Brazil_Genealogy \\\\\\\"Brazil Genealogy\\\\\\\")** |\\\\n| [Flag of Brazil](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Brazil.png&filetimestamp=20110731163823& \\\\\\\"Flag of Brazil\\\\\\\") |\\\\n| **Brazil Beginning Research** |\\\\n| * Getting Started * [Online..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Brazil",
         "section": "online_records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Brazil_Online_Genealogy_Records\\\",\\\"content\\\":\\\"# Brazil Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[Brazil](https://www.familysearch.org/en/wiki/Brazil_Genealogy \\\\\\\"Brazil Genealogy\\\\\\\")\\\\n\\\\nOnline Genealogy Records\\\\n\\\\n|  |  |  |  |  |  |\\\\n| --- | --- | --- | --- | --- | --- |\\\\n| These are genealogy links to Brazil online databases and indexes that may include birth records, marriage records, death records, biographies..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Brazil",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Brazil_Research_Tips_and_Strategies\\\",\\\"content\\\":\\\"# Brazil Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Brazil Wiki Topics](https://www.familysearch.org/en/wiki/Brazil_Genealogy \\\\\\\"Brazil Genealogy\\\\\\\")** |\\\\n| [Flag of Brazil](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Brazil.png&filetimestamp=20110731163823& \\\\\\\"Flag of Brazil\\\\\\\") |\\\\n| **Brazil Beginning Research** |\\\\n| *..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_read",
       "args": {
         "url": "https://www.familysearch.org/en/wiki/Rio_Grande_do_Norte,_Brazil_Genealogy"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Rio_Grande_do_Norte,_Brazil_Genealogy\\\",\\\"content\\\":\\\"# Rio Grande do Norte, Brazil Genealogy\\\\n\\\\n\\\\n\\\\n[Brazil](https://www.familysearch.org/en/wiki/Brazil_Genealogy \\\\\\\"Brazil Genealogy\\\\\\\")\\\\n\\\\nState of Rio Grande do Norte\\\\n\\\\nGuide to **State of Rio Grande do Norte family history and genealogy**: birth records, marriage records, death records, census records, and military records.\\\\n\\\\n|  |  |\\\\n| --- | --- |\\\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2664,30 +2638,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"localities\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"loc_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Question q_001: Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk Known tree persons: Manoel Melquiades de Oliveira (GHJ6-2WV, Male), C\u00e2ndida Damasceno de Oliveira (GHJ6-L4F, Female), Abel de Oliveira (GHJ6-2BB, Male), Maria Lila de Oliveira Serrano (GHJQ-G8N, Female, b. 1901). Key locality facts from loc_001: Two main record types \u2014 Catholic church records (collection 2177294, indexed+images, 1788-1967) and civil registration (collection 2821278, indexed+images, 1195-2020). 2,283 digitized volumes for RGdN 1890-1930 on FamilySearch. Marriage records typically name parents of both parties. Marriages took place in hometown of bride. Records in Portuguese."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\.claude\\skills\\research-plan\\references\\planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2824,31 +2794,27 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_item..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute plan items for question q_001 in project C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk. Plan pl_001, starting with pli_001. Subject: Josefa de Oliveira, reportedly married circa 1926 in Rio Grande do Norte, Brazil. Parents to confirm: Manoel Melquiades de Oliveira (father) and C\u00e2ndida Damasceno de Oliveira (mother). Known siblings: Abel de Oliveira, Maria Lila de Oliveira Serrano (b. 1901). Execute pli_001 (civil registration marriage search, collection 2821278), pli_002 (church records marriage, collection 2177294), pli_005 (Josefa baptism church records, collection 2177294 + 1500708), pli_007 (parents' marriage, collections 2177294 + 2821278), pli_008 (siblings' baptism, collection 2177294). pli_003 (Brazil Marriages 1730-1955) and pli_004 (full-text) are fallbacks/routed to other skills. pli_006 is fallback for pli_005."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\.claude\\skills\\search-records\\references\\collection-quirks.md"
-      },
-      "response_summary": "1\t# Collection-Specific Indexing Quirks \u2014 FamilySearch Records API\n2\t\n3\tRead this reference when searching a specific collection family.\n4\tQuirks affect how queries should be constructed for that collection.\n5\t\n6\t## US Federal Censuses (1790\u20131940)\n7\t\n8\t- Indexed by community volunteers; mostly accurate but cursive\n9\t  handwriting causes common transcription errors: S/L, F/T, n/u,\n10\t  U/V confusions; double-S misread as F or \"long s\"\n11\t- **Compensation:** Use surname wildcards (`q.surname=Sm..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2861,8 +2827,7 @@
         "recordType": "marriage",
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Oliveira\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"collectionId\\\":\\\"2821278\\\",\\\"marriageYearFrom\\\":1924,\\\"marriageYearTo\\\":1928,\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\"},\\\"totalMatches\\\":555,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:X9BB-D65N\\\",\\\"events\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2875,8 +2840,7 @@
         "recordType": "marriage",
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Oliveira\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"collectionId\\\":\\\"2177294\\\",\\\"marriageYearFrom\\\":1924,\\\"marriageYearTo\\\":1928,\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\"},\\\"totalMatches\\\":947,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6BGV-MXCZ\\\",\\\"events\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2920,8 +2884,7 @@
             "notes": "947 total matches \u2014 overly broad. Top results include 'Josefa Oliveira', 'Josefa Maria Oliveira', 'Josefa Cabral de Oliveira' (b.1906), 'Josefa Julia de Oliveira' (b.1900). None show Melquiades or Damasceno parental connection. Narrowing required with distinctive father/mother names."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_001\\\",\\\"performed\\\":\\\"2026-07-31T15:42:27.552Z\\\",\\\"resultsRef\\\":\\\"results/log_001.json\\\",\\\"returnedCount\\\":20},{\\\"logId\\\":\\\"log_002\\\",\\\"performed\\\":\\\"2026-07-31T15:42:27.567Z\\\",\\\"resultsRef\\\":\\\"results/log_002.json\\\",\\\"returnedCount\\\":20}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_001.json\\\",\\\"results/log_002.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2934,8 +2897,7 @@
         "recordType": "marriage",
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Oliveira\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"fatherGivenName\\\":\\\"Melquiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"collectionId\\\":\\\"2177294\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\"},\\\"totalMatches\\\":1478,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6BGV-M..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2947,8 +2909,7 @@
         "recordType": "marriage",
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Oliveira\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"motherSurname\\\":\\\"Damasceno\\\",\\\"collectionId\\\":\\\"2177294\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\"},\\\"totalMatches\\\":1443,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6BLT-HPHG\\\",\\\"events\\\":[],\\\"personName\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2960,16 +2921,14 @@
         "recordType": "marriage",
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Oliveira\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"fatherGivenName\\\":\\\"Melquiades\\\",\\\"collectionId\\\":\\\"2821278\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\"},\\\"totalMatches\\\":1539,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:XSFV-2VGR\\\",\\\"events\\\":[],\\\"personNam..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__record_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3004,8 +2963,7 @@
             "notes": "Civil registration (2821278) + givenName Josefa + surname Oliveira + fatherGivenName Melquiades + recordType marriage. Count 1,539 vs baseline 555 \u2014 fatherGivenName is broadening not restricting here too. No match with Melquiades/Damasceno parent link visible in top 20."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_003\\\",\\\"performed\\\":\\\"2026-07-31T15:45:43.687Z\\\",\\\"resultsRef\\\":\\\"results/log_003.json\\\",\\\"returnedCount\\\":20},{\\\"logId\\\":\\\"log_004\\\",\\\"performed\\\":\\\"2026-07-31T15:45:43.711Z\\\",\\\"resultsRef\\\":\\\"results/log_004.json\\\",\\\"returnedCount\\\":20},{\\\"logId\\\":\\\"log_005\\\",\\\"performed\\\":\\\"2026-07-31T15:45:43.729Z\\\",\\\"resultsRef\\\":\\\"results/log_005.json\\\",\\\"returnedCount\\\":20}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_003.json\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3029,8 +2987,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: section 'plan_items' requires a 'planId'\\\",\\\"worked example for 'plan_items':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"plan_items\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  planId: \\\\\\\"pl_001\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"],\\\"opsReceived\\\":2}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3056,8 +3013,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3070,8 +3026,7 @@
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Melquiades\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"isPrincipal\\\":false,\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":21,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":21,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6BLB-N679\\\",\\\"events\\\":[],\\\"person..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3084,8 +3039,7 @@
         "recordCountry": "Brazil",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2821278\\\",\\\"givenName\\\":\\\"Melquiades\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"isPrincipal\\\":false,\\\"recordCountry\\\":\\\"Brazil\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":99,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:XSFN-871B\\\",\\\"events\\\":[],\\\"personN..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3099,8 +3053,7 @@
         "subjectId": "GHJ6-2WV",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Manoel\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"spouseGivenName\\\":\\\"Candida\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"subjectId\\\":\\\"GHJ6-2WV\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":92,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6B..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3116,44 +3069,38 @@
         "birthYearTo": 1915,
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"fatherGivenName\\\":\\\"Melquiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"birth\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"birthYearFrom\\\":1893,\\\"birthYearTo\\\":1915,\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":5366,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6XWC-93RB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_294669120474\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-93R5\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"dc138faa-2e99-4988-849a-53b633377dac\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Vieira de Andrade Serrano\\\",\\\"given\\\":\\\"Carlos\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"673c54cd-d1ab-4320-b216-8ca982500ece\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1901\\\",\\\"standard_date\\\":\\\"1901\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_294669120475\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-93RR\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6XWC-DSZQ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_294669211199\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-QXK1\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"fa0699ca-703e-4e30-99c2-a03e816dd6ec\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Vieira de Andrade Serrano\\\",\\\"given\\\":\\\"Carlos\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"fec575db-a7db-4d31-878f-6bca14f35577\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1901\\\",\\\"standard_date\\\":\\\"1901\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_294669416101\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-DSZ9\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6XWH-BNGZ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_294669051065\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWH-BNG7\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"8f3835e9-cd9a-41ac-bc5b-b793cef70b47\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Da Silva\\\",\\\"given\\\":\\\"Elfridio Justino\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_294669051067\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWH-BNG4\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"9f1ce89f-2ea0-4a5e-a756-096beaef821e\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Ribeiro\\\",\\\"gi..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6XWC-S4SY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_294669150386\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-S4ST\\\",\\\"gender\\\":\\\"Male\\\",\\\"facts\\\":[{\\\"id\\\":\\\"41102614-c090-4523-ac87-4c16454a8cc7\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1860\\\",\\\"standard_date\\\":\\\"1860\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_294669150387\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6XWC-S4SY\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"b6651313-09ce-4387-bcbe-603c812337a0\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"de Oliveira\\\",\\\"given\\\":\\\"Man..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3237,8 +3184,7 @@
             "notes": "READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). Unknown groom (b.1860, son of Manuel Melchiades de Oliveira + Candida de Oliveira) married Rosana Maria Maciel (b.1896, daughter of a SECOND set indexed as Manuel Melchiades de Oliveira + Candida de Oliveira) on 15 Dec 1925 at Natal. This record shows two separate indexer entries for 'Manuel Melchiades de Oliveira + Candida de Oliveira' \u2014 one as groom's parents, one as bride's parents. Rosana Maciel is yet another daughter of this family. The groom being born 1860 would make him an older son of Manoel Melquiades (if same family) \u2014 caution needed on identity."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_006\\\",\\\"performed\\\":\\\"2026-07-31T15:50:08.095Z\\\",\\\"resultsRef\\\":\\\"results/log_006.json\\\",\\\"returnedCount\\\":21},{\\\"logId\\\":\\\"log_007\\\",\\\"performed\\\":\\\"2026-07-31T15:50:08.121Z\\\",\\\"resultsRef\\\":\\\"results/log_007.json\\\",\\\"returnedCount\\\":50},{\\\"logId\\\":\\\"log_008\\\",\\\"performed\\\":\\\"2026-07-31T15:50:08.146Z\\\",\\\"resultsRef\\\":\\\"results/log_008.json\\\",\\\"returnedCount\\\":50},{\\\"logId\\\":\\\"log_009\\\",\\\"performed\\\":\\\"2026-07-31T15:50:08.1..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3264,8 +3210,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3273,15 +3218,13 @@
         "description": "Extract three marriage records into research.json",
         "subagent_type": "record-extractor",
         "prompt": "Extract ALL assertions from the following three FamilySearch marriage records into research.json and tree.gedcomx.json. Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\n\nResearch question context: q_001 \u2014 Was Josefa de Oliveira, reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?\n\nKnown tree persons:\n- GHJ6-2WV: Manoel Melquiades de Oliveira (Male) \u2014 the father\n- GHJ6-L4F: C\u00e2ndida Damasceno de Oliveira (Female) \u2014 the mother  \n- GHJQ-G8N: Maria Lila de Oliveira Serrano (Female, b. 1901) \u2014 known daughter\n- GHJ6-2BB: Abel de Oliveira (Male) \u2014 known son\n\nRECORD 1 \u2014 MOST IMPORTANT (log_012):\nRecord ID: ark:/61903/1:1:6XWH-BNG7  (principal = groom Elfridio Justino Da Silva)\nCollection: Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019 (collection 2177294)\nCitation: \"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWH-BNG7), Entry for Elfridio Justino Da Silva and Jo\u00e3o Francisco Ribeiro, 15 Dec 1924.\nRecord URL: https://www.familysearch.org/ark:/61903/1:2:41CC-DDTJ\n\nContent (from record_read):\n- Marriage date: 15 December 1924, Natal, Rio Grande do Norte, Brasil\n- Groom: Elfridio Justino Da Silva (p_294669051065, ark 6XWH-BNG7), son of Jo\u00e3o Francisco Ribeiro and Cicera Ribeiro Da Silva\n- Bride: Josefa Dias Da Concei\u00e7\u00e3o (p_294669051073, ark 6XWH-BNG6), daughter of Manuel Melchiades de Oliveira and Candida de Oliveira\n- Bride's father: Manuel Melchiades de Oliveira (p_294669051070, ark 6XWH-BNGZ)\n- Bride's mother: Candida de Oliveira (p_294669051072, ark 6XWH-BNGD)\n- Groom's father: Jo\u00e3o Francisco Ribeiro (p_294669051067, ark 6XWH-BNG4)\n- Groom's mother: Cicera Ribeiro Da Silva (p_294669051068, ark 6XWH-BNGH)\n\nKey assertion to extract: Josefa Dias Da Concei\u00e7\u00e3o married Elfridio Justino Da Silva on 15 Dec 1924 in Natal, RGdN, Brazil. Her parents are listed as Manuel Melchiades de Oliveira (father) and Candida de Oliveira (mother). NOTE: The bride's surname \"Dias Da Concei\u00e7\u00e3o\" differs from her parents' \"de Oliveira\" \u2014 note this discrepancy in the assertion's informant_bias_notes; it may reflect a different maternal surname or a naming variant, and requires corroboration. The names \"Manuel Melchiades de Oliveira\" and \"Candida de Oliveira\" are consistent with the tree persons GHJ6-2WV (Manoel Melquiades de Oliveira) and GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira) \u2014 the \"Melchiades\" spelling is a documented Portuguese variant of \"Melquiades\" (qu\u2192ch consonant drift).\n\nRECORD 2 (log_010):\nRecord ID: ark:/61903/1:1:6XWC-93R5 (principal = groom Carlos Vieira de Andrade Serrano)\nCollection: Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019 (collection 2177294)\nCitation: \"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWC-93R5), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 20 Nov 1926.\nRecord URL: https://www.familysearch.org/ark:/61903/1:2:41CC-RKQF\n\nContent (from record_read):\n- Marriage date: 20 November 1926, Natal, Rio Grande do Norte, Brasil\n- Groom: Carlos Vieira de Andrade Serrano (p_294669120474, ark 6XWC-93R5, b. 1901), son of Antonio Serrano Gon\u00e7alves de Andrade and Leontina Vieira de Jesus\n- Bride: Maria Lila de Oliveira (p_294669120477, ark 6XWC-93RY, b. 1902), daughter of Manuel Melchiades de Oliveira and Candida de Oliveira\n- Bride's father: Manuel Melchiades de Oliveira (p_294669120478, ark 6XWC-93RB)\n- Bride's mother: Candida de Oliveira (p_294669120480, ark 6XWC-93TM)\n\nKey assertion: Maria Lila de Oliveira (known tree person GHJQ-G8N, b. 1901 in tree) married Carlos Vieira de Andrade Serrano on 20 Nov 1926 in Natal. Her parents are listed as Manuel Melchiades de Oliveira and Candida de Oliveira \u2014 same as the tree persons GHJ6-2WV and GHJ6-L4F. This is a second corroborating record of the parental couple.\n\nRECORD 3 (log_011):\nRecord ID: ark:/61903/1:1:6XWC-QXK1 (principal = groom Carlos Vieira de Andrade Serrano)\nCollection: Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019 (collection 2177294)\nCitation: \"Brasil, Rio Grande do Norte, Registros da Igreja Cat\u00f3lica, 1755-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XWC-QXK1), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gon\u00e7alves de Andrade, 30 Dec 1922.\nRecord URL: https://www.familysearch.org/ark:/61903/1:2:41CC-8CWX\n\nContent (from record_read):\n- Marriage date: 30 December 1922, Natal, Rio Grande do Norte, Brasil\n- Groom: Carlos Vieira de Andrade Serrano (p_294669211199, ark 6XWC-QXK1, b. 1901), son of Antonio Serrano Gon\u00e7alves de Andrade and Leontina Vieira de Jesus\n- Bride: Maria Lila de Oliveira (p_294669416103, ark 6XWC-DSZ3, b. 1902), daughter of Manuel Melchiades de Oliveira and Candida de Oliveira\n- Bride's father: Manuel Melchiades de Oliveira (p_294669416104, ark 6XWC-DSZQ)\n- Bride's mother: Candida de Oliveira (p_294669416105, ark 6XWC-DSZ7)\n\nNote: This appears to be the same marriage as Record 2 but with a different date (1922 vs 1926) \u2014 possibly two different documents for the same event (a civil registration vs church blessing, or two church records with different dates). Extract both dates as separate assertions. The two records together provide corroboration of the 1920s marriage of Maria Lila.\n\nEXTRACTION INSTRUCTIONS:\n- Create source entries and atomic assertions for all facts\n- Apply first-and-final GPS three-layer classification (source / information / evidence)\n- The sources are original church records containing primary information about the marriages themselves; information about parents is secondary (reported by others)\n- For RECORD 1 (Josefa marriage): This is DIRECT evidence about whether the couple had a daughter named Josefa. The bride's parents (Manuel Melchiades + Candida) are named on the marriage act \u2014 this constitutes secondary information from the record about parentage (it's the marriage record of the child, not the parents themselves), but direct evidence that a person named Josefa had these parents.\n- For RECORDS 2 and 3 (Maria Lila marriage): These are corroborating records establishing the parental couple Manuel Melchiades de Oliveira + Candida de Oliveira as parents of Maria Lila, which is consistent with their being parents of Josefa too.\n- Do NOT create tree persons for Josefa or Elfridio yet \u2014 person-evidence will handle identity linking.\n- Do link Maria Lila de Oliveira from the marriage records to tree person GHJQ-G8N if her birth year (1902 from record, 1901 from tree) and other facts permit a confident identification.\n- Log entry IDs: log_010 (Record 2), log_011 (Record 3), log_012 (Record 1)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All three records persisted successfully. Here is the compact summary:\\n\\n---\\n\\n**Sources created (all action: created):**\\n- src_001 / S1 \\u2014 Record 1 (6XWH-BNG7, Josefa/Elfridio, 15 Dec 1924, log_012)\\n- src_002 / S2 \\u2014 Record 2 (6XWC-93R5, Maria Lila/Carlos, 20 Nov 1926, log_010)\\n- src_003 / S3 \\u2014 Record 3 (6XWC-QXK1, Maria Lila/Carlos, 30 Dec 1922, log_011)\\n\\n**Assertion totals: 46 assertions (a_001\\u2013a_046)**\\n- Record 1: 14 assertions \\u2014 g..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"GHJ6-2WV\\\",\\\"name\\\":\\\"Manoel Melquiades de Oliveira\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GHJ6-L4F\\\",\\\"name\\\":\\\"C\\u00e2ndida Damasceno de Oliveira\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3604,8 +3547,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_004\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3968,8 +3910,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_015\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_016\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_017\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_018\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_019\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4335,24 +4276,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_031\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_032\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_033\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_034\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_035\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Project: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk. Research question: q_001.\n\nThree records just extracted (src_001/S1, src_002/S2, src_003/S3, assertions a_001\u2013a_046).\n\nTREE PERSONS to link:\n- GHJ6-2WV: Manoel Melquiades de Oliveira (Male) \u2014 father\n- GHJ6-L4F: C\u00e2ndida Damasceno de Oliveira (Female) \u2014 mother\n- GHJQ-G8N: Maria Lila de Oliveira Serrano (Female, b. 1901) \u2014 known daughter\n- GHJ6-2BB: Abel de Oliveira (Male) \u2014 known son\n\nLINKAGE TASKS:\n\n1. MARIA LILA (src_002/S2 and src_003/S3): The bride \"Maria Lila de Oliveira\" (b. 1902 per records; 1901 in tree) who married Carlos Vieira de Andrade Serrano should be linked to tree person GHJQ-G8N. The groom's surname \"Serrano\" matches the tree's \"Serrano\" married name for GHJQ-G8N. The 1-year birth-year difference is within normal variation. Link this bride persona to GHJQ-G8N.\n\n2. FATHER (src_001/S1, src_002/S2, src_003/S3): \"Manuel Melchiades de Oliveira\" is named as bride's father in all three records. \"Melchiades\" is a confirmed Portuguese spelling variant of \"Melquiades\" (qu\u2192ch consonant drift documented in the locality guide quirks). Link to GHJ6-2WV (Manoel Melquiades de Oliveira). Note: GHJ6-2WV currently has no dated/placed facts, which is why the matcher couldn't rank him earlier \u2014 once this link is established it will anchor future searches.\n\n3. MOTHER (src_001/S1, src_002/S2, src_003/S3): \"Candida de Oliveira\" is named as bride's mother in all three records. This matches GHJ6-L4F (C\u00e2ndida Damasceno de Oliveira) \u2014 the \"Damasceno\" part of her name does not appear in these records (maiden surname sometimes omitted in marriage registers). Link to GHJ6-L4F.\n\n4. JOSEFA (src_001/S1): The bride \"Josefa Dias Da Concei\u00e7\u00e3o\" who married Elfridio Justino Da Silva on 15 Dec 1924, daughter of Manuel Melchiades de Oliveira + Candida de Oliveira \u2014 this is the key candidate for our research question. She is NOT yet in the tree. Add her as a new tree person (Josefa de Oliveira, Female) with the marriage fact from this record. Note the surname discrepancy (\"Dias Da Concei\u00e7\u00e3o\" vs. expected \"de Oliveira\") in the person record \u2014 this needs corroboration from a baptism or civil record before the ParentChild link to GHJ6-2WV/GHJ6-L4F can be made with full confidence, but establish the candidate and the potential ParentChild relationships.\n\nUse same_person checks before linking where appropriate."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__same_person,mcp__genealogy__materialize_facts,mcp__genealogy__tree_edit,mcp__genealogy__merge_warnings",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4360,8 +4298,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:6XWH-BNG7"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":14,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWH-BNG7\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Elfridio Justino Da Silva\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Elfridio Justino\\\",\\\"surname\\\":\\\"Da Silva\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Elfridio Justino Da Silva\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[],\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4369,8 +4306,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:6XWC-93R5"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":16,\\\"items\\\":[{\\\"id\\\":\\\"a_015\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWC-93R5\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Carlos Vieira\\\",\\\"surname\\\":\\\"de Andrade Serrano\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_fo..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4378,8 +4314,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:6XWC-QXK1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":16,\\\"items\\\":[{\\\"id\\\":\\\"a_031\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWC-QXK1\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Carlos Vieira\\\",\\\"surname\\\":\\\"de Andrade Serrano\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_fo..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4431,8 +4366,7 @@
             "recordRole": "mother_of_bride"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"I1\\\",\\\"created\\\":true,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"GHJQ-G8N\\\",\\\"created\\\":false,\\\"factsAdded\\\":1,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":2,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"GHJQ-G8N\\\",\\\"factType\\\":\\\"Birth\\\",\\\"values\\\":[\\\"7 de novembro de 1901, Para\\u00edba, Brazil\\\",\\\"~1902\\\"]}]},{\\\"personId\\\":\\\"GHJQ-G8N\\\",\\\"created\\\":f..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4759,40 +4693,35 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_001\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_002\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_003\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_004\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_005\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":1,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"missingFactsAndRelatives\\\",\\\"severity\\\":\\\"warning\\\",\\\"personId\\\":\\\"I1\\\",\\\"personName\\\":\\\"Josefa Dias Da Concei\\u00e7\\u00e3o\\\",\\\"message\\\":\\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"}]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "personId": "GHJQ-G8N"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":0,\\\"warnings\\\":[]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "personId": "GHJ6-2WV"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":0,\\\"warnings\\\":[]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4807,8 +4736,7 @@
         "birthYearTo": 1915,
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"fatherGivenName\\\":\\\"Melchiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"birth\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"birthYearFrom\\\":1893,\\\"birthYearTo\\\":1915,\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":3,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":3,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4823,8 +4751,7 @@
         "anyYearTo": 1910,
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Melchiades\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"spouseGivenName\\\":\\\"Candida\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"anyYearFrom\\\":1885,\\\"anyYearTo\\\":1910,\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":17,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":17,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4839,16 +4766,14 @@
         "birthYearTo": 1915,
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"collectionId\\\":\\\"2821278\\\",\\\"givenName\\\":\\\"Josefa\\\",\\\"fatherGivenName\\\":\\\"Melchiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"birth\\\",\\\"recordCountry\\\":\\\"Brazil\\\",\\\"birthYearFrom\\\":1893,\\\"birthYearTo\\\":1915,\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"count\\\":50},\\\"totalMatches\\\":0,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__research_query",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4909,8 +4834,7 @@
             "notes": "0 results in RGdN civil registration collection (2821278) for Josefa daughter of Melchiades de Oliveira. Either record does not exist in this collection, is in an unindexed volume, or the father's name is spelled differently in civil records."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_014\\\",\\\"performed\\\":\\\"2026-07-31T16:06:27.882Z\\\",\\\"resultsRef\\\":\\\"results/log_014.json\\\",\\\"returnedCount\\\":3},{\\\"logId\\\":\\\"log_015\\\",\\\"performed\\\":\\\"2026-07-31T16:06:27.896Z\\\",\\\"resultsRef\\\":\\\"results/log_015.json\\\",\\\"returnedCount\\\":17},{\\\"logId\\\":\\\"log_016\\\",\\\"performed\\\":\\\"2026-07-31T16:06:27.904Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_014.json\\\",\\\"results/log_015..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4945,16 +4869,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_006\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "plan_items"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"section 'plan_items' is not one of: questions, plans, log, sources, assertions, person_evidence, conflicts, hypotheses, timelines, proof_summaries, evaluations\\\"]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4962,8 +4884,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pl_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"status\\\":\\\"active\\\",\\\"created\\\":\\\"2026-07-31\\\",\\\"items\\\":[{\\\"id\\\":\\\"pli_001\\\",\\\"sequence\\\":1,\\\"record_type\\\":\\\"vital_record\\\",\\\"jurisdiction\\\":\\\"Rio Grande do Norte, Brazil\\\",\\\"date_range\\\":\\\"1924-1928\\\",\\\"repository\\\":\\\"FamilySearch\\\",\\\"rationale\\\":\\\"A civil marriage record for Josefa de Oliveira circa 1926 in Rio Grande do Norte would directly name her parents,..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4998,24 +4919,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "conflicts"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5030,8 +4948,7 @@
         "birthYearFrom": 1897,
         "birthYearTo": 1905,
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Maria Lila\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"fatherGivenName\\\":\\\"Melchiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"birth\\\",\\\"birthYearFrom\\\":1897,\\\"birthYearTo\\\":1905,\\\"count\\\":20},\\\"totalMatches\\\":6474,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recor..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5046,16 +4963,14 @@
         "birthYearFrom": 1887,
         "birthYearTo": 1910,
         "count": 20
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"collectionId\\\":\\\"2177294\\\",\\\"givenName\\\":\\\"Abel\\\",\\\"surname\\\":\\\"Oliveira\\\",\\\"fatherGivenName\\\":\\\"Melchiades\\\",\\\"fatherSurname\\\":\\\"Oliveira\\\",\\\"recordType\\\":\\\"birth\\\",\\\"birthYearFrom\\\":1887,\\\"birthYearTo\\\":1910,\\\"count\\\":20},\\\"totalMatches\\\":5651,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5101,8 +5016,7 @@
             "notes": "5,651 results; top 20 reviewed. Various 'Abel de Oliveira' entries, none with clear connection to Melchiades de Oliveira as father. FAN baptism for Abel not found. Both sibling baptism searches negative \u2014 cannot confirm the family's home municipality from this FAN item."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_017\\\",\\\"performed\\\":\\\"2026-07-31T16:09:04.471Z\\\",\\\"resultsRef\\\":\\\"results/log_017.json\\\",\\\"returnedCount\\\":20},{\\\"logId\\\":\\\"log_018\\\",\\\"performed\\\":\\\"2026-07-31T16:09:04.496Z\\\",\\\"resultsRef\\\":\\\"results/log_018.json\\\",\\\"returnedCount\\\":20}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_017.json\\\",\\\"results/log_018.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5113,8 +5027,7 @@
         "yearFrom": 1890,
         "yearTo": 1920,
         "count": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"keywords\\\":\\\"+Damasceno +Melchiades\\\",\\\"recordPlace1\\\":\\\"Brazil\\\",\\\"yearFrom\\\":1890,\\\"yearTo\\\":1920,\\\"count\\\":10},\\\"totalResults\\\":0,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\\":null}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5125,8 +5038,7 @@
         "yearFrom": 1890,
         "yearTo": 1925,
         "count": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"keywords\\\":\\\"+Damasceno +Melquiades\\\",\\\"recordPlace1\\\":\\\"Brazil\\\",\\\"yearFrom\\\":1890,\\\"yearTo\\\":1925,\\\"count\\\":10},\\\"totalResults\\\":0,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\\":null}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5137,16 +5049,14 @@
         "yearFrom": 1890,
         "yearTo": 1930,
         "count": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-manoel-oliveira-daughter-cpaczspk\\\",\\\"keywords\\\":\\\"+Damasceno +Oliveira +Josefa\\\",\\\"recordPlace1\\\":\\\"Brazil\\\",\\\"yearFrom\\\":1890,\\\"yearTo\\\":1930,\\\"count\\\":10},\\\"totalResults\\\":0,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\\":null}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
       "args": {
         "keywords": "+Damasceno +Oliveira",
         "count": 5
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"keywords\\\":\\\"+Damasceno +Oliveira\\\",\\\"count\\\":5},\\\"totalResults\\\":30857,\\\"returned\\\":5,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"id\\\":\\\"ark:/61903/3:1:3Q9M-C37S-B9XQ-Y\\\",\\\"sourceUrl\\\":\\\"https://www.familysearch.org/ark:/61903/3:1:3Q9M-C37S-B9XQ-Y\\\",\\\"collectionId\\\":\\\"M9J1-SYF\\\",\\\"collectionTitle\\\":\\\"Brazil, Rio de Janeiro, Legal, from 21 October 1265 to 11 August 2945\\\",\\\"title\\\":\\\"Rio de Janeiro, Rio de Janeiro, Brasil Probate Estate File 1935\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5196,8 +5106,7 @@
             "notes": "Three-term co-occurrence +Damasceno +Oliveira +Josefa returned 0 results. The RGdN Catholic Church collection (2177294) does not appear to be covered by the FamilySearch FTS corpus \u2014 indexed records exist but page-level transcript text is not in the FTS index. Full-text approach for Josefa's baptism is not available in this repository. pli_004 is exhausted."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_019\\\",\\\"performed\\\":\\\"2026-07-31T16:10:37.853Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_020\\\",\\\"performed\\\":\\\"2026-07-31T16:10:37.853Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_021\\\",\\\"performed\\\":\\\"2026-07-31T16:10:37.853Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5245,8 +5154,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[2]: research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\\"ops[2]: research.json/conflicts[0]: unexpected property 'resolution' (conflicts allow only id, conflict_type, description, disputed_attribute, identity_question, competing_assertion_ids, status, preferred_assertion_id, resolution_rationale, independence_analysis, weighing_analysis, blocks_question_ids)\\\",\\\"ops[3]: research.json/conflicts[1]: missing required fi..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5306,8 +5214,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[2]: research.json/conflicts[0]: fact conflict requires at least 2 competing_assertion_ids\\\",\\\"ops[3]: research.json/conflicts[1]: fact conflict requires at least 2 competing_assertion_ids\\\",\\\"worked example for 'conflicts':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"conflicts\\\\\\\",\\\\n  op: \\\\\\\"append\\\\\\\",\\\\n  entry: {\\\\n    \\\\\\\"conflict_type\\\\\\\": \\\\\\\"fact\\\\\\\",\\\\n    \\\\\\\"descripti..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5333,8 +5240,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_008\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5342,8 +5248,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":16,\\\"items\\\":[{\\\"id\\\":\\\"a_015\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWC-93R5\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Carlos Vieira\\\",\\\"surname\\\":\\\"de Andrade Serrano\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_fo..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5351,8 +5256,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "sourceId": "src_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":16,\\\"items\\\":[{\\\"id\\\":\\\"a_031\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWC-QXK1\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Carlos Vieira\\\",\\\"surname\\\":\\\"de Andrade Serrano\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Carlos Vieira de Andrade Serrano\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_fo..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5376,8 +5280,7 @@
           "status": "unresolved",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"c_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5416,8 +5319,7 @@
             "stop_criteria": "No additional online FamilySearch indexed or FTS searches remain. Baptism and civil birth records for Josefa not found in available online collections. The FTS corpus does not cover collection 2177294. Parents' marriage record not found. A baptism record remains the highest-yield remaining source but is not accessible online."
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5425,8 +5327,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk",
         "section": "assertions",
         "sourceId": "src_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":14,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6XWH-BNG7\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Elfridio Justino Da Silva\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Elfridio Justino\\\",\\\"surname\\\":\\\"Da Silva\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Elfridio Justino Da Silva\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[],\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5453,8 +5354,7 @@
           "contradicting_assertion_ids": [],
           "narrative": "RESEARCH QUESTION: Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?\n\nCONCLUSION (Probable): Yes. The evidence supports at the probable level that Josefa Dias Da Concei\u00e7\u00e3o was a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira.\n\nPRIMARY EVIDENCE (src_001):\nA Catholic church marriage record from Natal, Rio Grande do Norte, dated 15 December 1924 (FamilySearch ark:/61903/1:1:6XWH-BNG7, collection 2177294) records the marriage of Josefa Dias Da Concei\u00e7\u00e3o to Elfridio Justino Da Silva. The record explicitly names her father as Manuel Melchiades de Oliveira and her mother as Candida de Oliveira. This is original source / primary information / direct evidence for the parentage relationship (a_009, a_010). The informant is the bride herself \u2014 a person with firsthand knowledge of her own parentage \u2014 giving testimony at a legal and religious act.\n\nNAME ANALYSIS:\n'Manuel Melchiades de Oliveira' (in the record) = 'Manoel Melquiades de Oliveira' (in the tree, person GHJ6-2WV). The spelling 'Melchiades' is a documented Portuguese consonant-drift variant of 'Melquiades' (qu\u2192ch), confirmed across multiple records in this collection. 'Candida de Oliveira' (in the record) = 'C\u00e2ndida Damasceno de Oliveira' (tree person GHJ6-L4F). The maiden surname 'Damasceno' is consistently omitted in RGdN Catholic marriage registers \u2014 the same pattern is observed across all three daughters' marriage records found in this research.\n\nCORROBORATING EVIDENCE (src_002, src_003):\nTwo marriage records for Maria Lila de Oliveira (an established daughter of Manoel Melquiades de Oliveira in the existing tree, GHJQ-G8N) in Natal, dated 20 November 1926 and 30 December 1922, both independently name the same parents: Manuel Melchiades de Oliveira and Candida de Oliveira (a_025, a_026, a_041, a_042). These records establish that Manoel Melquiades de Oliveira had daughters by this name in Natal, RGdN, in the 1920s \u2014 the same time and place as Josefa's marriage. The consistent spelling of the father's name across all three records (always 'Melchiades') and the consistent omission of the mother's maiden surname reinforce that all three records derive from the same family.\n\nEVIDENCE CONCERNS:\n\n1. Surname discrepancy: Josefa is recorded under the surname 'Dias Da Concei\u00e7\u00e3o' rather than 'de Oliveira'. In Brazilian Catholic naming practice of this era, children sometimes used a religious surname (Da Concei\u00e7\u00e3o = of the Immaculate Conception) or a godparent's surname rather than the father's. The 'Dias' element may derive from a godfather's name or maternal line. The marriage record is unambiguous in explicitly naming her parents \u2014 the discrepancy in surname usage does not negate this statement, but it does mean a corroborating record (baptism, census) would be needed to upgrade the conclusion to 'proved'.\n\n2. Marriage date vs. premise: The research question premises the marriage 'circa 1926'; the record found is dated 15 December 1924. A two-year difference is within the normal range of imprecision for genealogical tradition. The 'circa 1926' premise likely derived from Maria Lila's 1926 marriage date being conflated with Josefa's 1924 marriage.\n\n3. Informant independence: All three supporting records (Josefa's marriage, Maria Lila's two records) share the same informant class \u2014 daughters testifying at their own weddings. From a GPS perspective, these constitute one evidence class, not three independent confirmations. The corroborating records strengthen but do not independently establish the parentage.\n\n4. Missing records: No baptism or birth record for Josefa was found (searches of collection 2177294 and civil registration 2821278 were negative). The parents' marriage record was not found. These negative results do not disprove the conclusion \u2014 they indicate records are unindexed, not yet digitized, or held in physical archives outside the online FamilySearch corpus. Searches of FamilySearch's full-text corpus (FTS) returned zero results, confirming collection 2177294 is not covered by the FTS index.\n\nGPS ELEMENTS:\n1. Reasonably Exhaustive Research: 21 log entries document searches across civil marriage, church marriage, church baptism, civil birth, parents' marriage, full-text co-occurrence, and FAN items. All available online FamilySearch resources for RGdN 1890-1930 are exhausted.\n2. Complete and Accurate Citations: Sources are cited by FamilySearch ARK, collection ID, and log entry.\n3. Analysis and Correlation: Name variants (Melchiades/Melquiades, Damasceno/omitted), informant independence, and the surname discrepancy have all been assessed.\n4. Soundly Reasoned Conclusion: One direct record with primary information names Josefa's parents. Corroborating sibling records establish the parents in the right time and place. No contradicting evidence was found. The evidence meets the probable standard; the proved standard requires an additional independent record placing Josefa within the Oliveira household."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"research.json/proof_summaries[0]: missing required field 'tier'\\\",\\\"research.json/proof_summaries[0]: missing required field 'vehicle'\\\",\\\"research.json/proof_summaries[0]: missing required field 'resolved_conflict_ids'\\\",\\\"research.json/proof_summaries[0]: missing required field 'exhaustive_search_summary'\\\",\\\"research.json/proof_summaries[0]: missing required field 'narrative_markdown'\\\",\\\"research.json/proof_summaries[0]: unexpected pr..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5482,8 +5382,7 @@
           "exhaustive_search_summary": "21 searches logged across civil marriage (collection 2821278), Catholic church records (collection 2177294), Brazil Marriages 1730-1955 (1500709), full-text co-occurrence (FTS corpus, 3 keyword variants), church baptism for Josefa 1893-1915, civil birth for Josefa 1893-1915, parents' marriage 1885-1910, and FAN items (siblings' baptism for Maria Lila and Abel). All FamilySearch online resources for Rio Grande do Norte 1890-1930 are exhausted. The FTS corpus does not index collection 2177294. No baptism or birth record for Josefa was found. Parents' marriage record not found. Physical diocesan archives or cart\u00f3rio civil would require in-person access.",
           "narrative_markdown": "## Josefa Dias Da Concei\u00e7\u00e3o as a Daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira\n\n### Research Question\n\nWas Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?\n\n### Conclusion\n\n**Probable.** A Catholic church marriage record from Natal, Rio Grande do Norte, dated 15 December 1924, provides direct, primary-information evidence that Josefa Dias Da Concei\u00e7\u00e3o was a daughter of Manuel Melchiades de Oliveira and Candida de Oliveira \u2014 the same couple as Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira in the existing tree. The evidence meets the GPS probable standard. It cannot yet reach proved, as no independent record (baptism, census, probate) placing Josefa within the Oliveira household has been found.\n\n### Primary Evidence\n\nFamilySearch collection 2177294 (Brazil, Rio Grande do Norte, Catholic Church Records, 1755\u20132019), ARK `ark:/61903/1:1:6XWH-BNG7`, records the marriage of Josefa Dias Da Concei\u00e7\u00e3o to Elfridio Justino Da Silva on 15 December 1924 in Natal, Rio Grande do Norte (a_008). The record explicitly names the bride's father as **Manuel Melchiades de Oliveira** and her mother as **Candida de Oliveira** (a_009, a_010). As the bride providing information at her own marriage, Josefa is a primary informant with firsthand knowledge of her parentage. This is original source / primary information / direct evidence of the parent\u2013child relationship.\n\n**Name-variant analysis:** 'Melchiades' is a documented Portuguese consonant-drift variant of 'Melquiades' (qu\u2192ch), confirmed consistent across all three daughters' marriage records found in this research. 'Candida de Oliveira' matches C\u00e2ndida Damasceno de Oliveira (GHJ6-L4F); the maiden surname 'Damasceno' is absent in all three daughters' records, consistent with the practice of recording married women by married surname only in RGdN Catholic registers of this period.\n\n### Corroborating Evidence\n\nTwo marriage records for Maria Lila de Oliveira (an established daughter of Manoel Melquiades de Oliveira, tree person GHJQ-G8N) \u2014 dated 20 November 1926 (a_025\u2013a_026, src_002) and 30 December 1922 (a_041\u2013a_042, src_003) \u2014 both name the same parents: Manuel Melchiades de Oliveira and Candida de Oliveira. These records establish that the couple had daughters in Natal, RGdN, in the 1920s, the same time and place as Josefa's marriage. The spelling of the father's name and the pattern of omitting the mother's maiden surname are identical across all three records, consistent with a shared family and recording context.\n\n### Evidence Concerns and Limitations\n\n**Surname discrepancy.** Josefa appears in the record as 'Josefa Dias Da Concei\u00e7\u00e3o,' not 'Josefa de Oliveira.' In Brazilian Catholic naming practice of the early twentieth century, children sometimes bore a religious surname (Da Concei\u00e7\u00e3o = of the Immaculate Conception) or a godparent's surname alongside or instead of the father's. The element 'Dias' may derive from a godfather or maternal-line usage. The marriage record's explicit statement of parentage is the primary evidence; the surname difference is an unexplained but not disqualifying anomaly. A baptism record would resolve this discrepancy.\n\n**Marriage date.** The research question premises a marriage 'circa 1926'; the record found is dated 15 December 1924 \u2014 a two-year difference within the range of normal imprecision for genealogical tradition. The 'circa 1926' premise likely derived from Maria Lila's 1926 marriage date being associated with Josefa.\n\n**Informant independence.** All three supporting records share the same informant class: daughters providing parental names at their own weddings. From a GPS perspective, this constitutes one evidence class; the corroborating records strengthen but do not independently establish the parentage.\n\n**Missing records.** No baptism or civil birth record for Josefa was found after thorough searching of all available online FamilySearch resources (see exhaustive search summary). The parents' own marriage record was not located. These negative results indicate records are unindexed or held in physical archives; they do not disprove the conclusion.\n\n### GPS Elements\n\n1. **Reasonably exhaustive research:** All available FamilySearch online resources for RGdN 1890\u20131930 were searched across eight plan items and 21 log entries.\n2. **Complete and accurate citations:** All evidence is cited by FamilySearch ARK, collection ID, and log entry ID.\n3. **Analysis and correlation:** Name variants, informant independence, the surname discrepancy, and the marriage date difference have all been assessed.\n4. **Soundly reasoned conclusion:** One direct original record with primary information names Josefa's parents. Corroborating sibling-marriage records establish the parents in the right time and place. No contradicting evidence found. The probable standard is met; the proved standard requires a record independently placing Josefa within the Oliveira household.\n\n### Path to Proved\n\nTo upgrade this conclusion to proved, a researcher should: (1) consult physical Catholic diocesan archives in Natal (Arquidiocese de Natal) for baptism registers circa 1893\u20131912 not yet digitized; (2) examine cart\u00f3rio civil birth registers for the relevant municipality; (3) search for a godparent named 'Dias' in the baptism register, which would explain the surname; (4) examine the original image of ARK `6XWH-BNG7` to verify the transcribed parental names."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ps_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5502,8 +5401,7 @@
             "a_041"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -5511,15 +5409,13 @@
         "description": "GPS mentor proof critique of ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "You are the GPS mentor agent. Perform a mandatory proof-critique of proof summary ps_001 for research question q_001 in the project at:\n\nC:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\n\nProject context:\n- Research question q_001: \"Was Josefa de Oliveira, who reportedly married circa 1926 in Rio Grande do Norte, Brazil, a daughter of Manoel Melquiades de Oliveira and C\u00e2ndida Damasceno de Oliveira?\"\n- Proof summary ps_001 is at tier \"probable\"\n- Key evidence: src_001 = Catholic church marriage record (Natal, RGdN, 15 Dec 1924, ARK 6XWH-BNG7) \u2014 bride Josefa Dias Da Concei\u00e7\u00e3o names father Manuel Melchiades de Oliveira and mother Candida de Oliveira. Two corroborating sibling marriage records (src_002, src_003) for Maria Lila de Oliveira name the same parents.\n- Conflict c_001 is registered but unresolved (Maria Lila marriage date 1926 vs 1922)\n- No baptism or birth record found for Josefa. Parents' marriage not found. All plan items completed/skipped. Exhaustive declaration filed.\n\nPlease read the project files, evaluate ps_001 against the four GPS elements, and append your evaluation to research.json via the evaluations section. Return your structured verdict: strengths, must_address items, consider_addressing items, and narrative summary. This is an advisory review \u2014 do not modify any existing research.json content other than appending the evaluation entry."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"## Mentor review: proof-critique on ps_001\\n\\n**Verdict: address_first** (advisory \\u2014 does not reopen q_001 or block the proof; ps_001 is already persisted)\\n\\n### What you've done well\\n\\nThis is careful work. You correctly recognized that a_009, a_025, and a_041 \\u2014 the three marriage records naming Manuel Melchiades de Oliveira as father \\u2014 all share the same informant class (a daughter reporting her own parentage at her wedding), and you did not let t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json"
-      },
-      "response_summary": "File content (30884 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -5527,8 +5423,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json",
         "offset": 1,
         "limit": 400
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_manoel_oliveira_daughter\",\n4\t    \"objective\": \"Did Manoel Melquiades de Oliveira and his wife C\u00e2ndida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married 1926, in addition to their known children Abel and Maria Lila (b. 1901)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GHJ6-2WV\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-24\",\n10\t    \"updated\": \"2026-07-24\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"e..."
+      }
     },
     {
       "tool": "Read",
@@ -5536,8 +5431,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json",
         "offset": 400,
         "limit": 400
-      },
-      "response_summary": "400\t      \"tool\": \"record_read\",\n401\t      \"query\": {\n402\t        \"recordId\": \"ark:/61903/1:1:6XWC-S4SY\"\n403\t      },\n404\t      \"outcome\": \"partial\",\n405\t      \"results_examined\": 1,\n406\t      \"external_site\": null,\n407\t      \"results_ref\": null,\n408\t      \"notes\": \"READ: Marriage record, Brasil RGdN Catholic Church Records (2177294). Unknown groom (b.1860, son of Manuel Melchiades de Oliveira + Candida de Oliveira) married Rosana Maria Maciel (b.1896, daughter of a SECOND set indexed as Manu..."
+      }
     },
     {
       "tool": "Read",
@@ -5545,8 +5439,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json",
         "offset": 800,
         "limit": 400
-      },
-      "response_summary": "800\t      \"fact_type\": \"relationship\",\n801\t      \"value\": \"child of Candida de Oliveira\",\n802\t      \"structured_value\": {\n803\t        \"relationship_type\": \"child\",\n804\t        \"related_person_role\": \"mother_of_bride\"\n805\t      },\n806\t      \"information_quality\": \"primary\",\n807\t      \"informant\": \"Josefa Dias Da Concei\u00e7\u00e3o\",\n808\t      \"informant_proximity\": \"self\",\n809\t      \"evidence_type\": \"direct\",\n810\t      \"informant_bias_notes\": \"Bride stated her mother as Candida de Oliveira, consistent ..."
+      }
     },
     {
       "tool": "Read",
@@ -5554,8 +5447,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json",
         "offset": 1200,
         "limit": 400
-      },
-      "response_summary": "1200\t      \"fact_type\": \"name\",\n1201\t      \"value\": \"Carlos Vieira de Andrade Serrano\",\n1202\t      \"structured_value\": {\n1203\t        \"given\": \"Carlos Vieira\",\n1204\t        \"surname\": \"de Andrade Serrano\"\n1205\t      },\n1206\t      \"information_quality\": \"primary\",\n1207\t      \"informant\": \"Carlos Vieira de Andrade Serrano\",\n1208\t      \"informant_proximity\": \"self\",\n1209\t      \"evidence_type\": \"direct\",\n1210\t      \"extracted_for_question_ids\": [],\n1211\t      \"log_entry_id\": \"log_011\",\n1212\t     ..."
+      }
     },
     {
       "tool": "Read",
@@ -5563,8 +5455,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-manoel-oliveira-daughter-cpaczspk\\research.json",
         "offset": 1600,
         "limit": 400
-      },
-      "response_summary": "1600\t    {\n1601\t      \"id\": \"pe_012\",\n1602\t      \"assertion_id\": \"a_023\",\n1603\t      \"person_id\": \"GHJQ-G8N\",\n1604\t      \"confidence\": \"confident\",\n1605\t      \"match_score\": null,\n1606\t      \"rationale\": \"Birth year ~1902 from marriage register vs 1901 in tree. Note: materialize_facts surfaced a Birth fact conflict (7 Nov 1901 Para\u00edba vs ~1902). One-year discrepancy is within normal recording variation for this period. Conflict flagged for conflict-resolution review. Overall strong match \u2192 co..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5612,8 +5503,7 @@
           "timestamp": "2026-07-31T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ev_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\",\\\"evaluations/proof-critique-ps_001-2026-07-31T00-00-00.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5635,8 +5525,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"research.json/hypotheses[0]: missing required field 'claim'\\\",\\\"research.json/hypotheses[0]: missing required field 'ruled_out'\\\",\\\"research.json/hypotheses[0]: unexpected property 'description' (hypotheses allow only id, claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, ruled_out_reason, related_question_ids, notes)\\\",\\\"worked example for 'hypotheses':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5661,8 +5550,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"hypotheses\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"h_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5685,8 +5573,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5919,5 +5806,6 @@
       "required_skill": "proof-conclusion",
       "question_id": "q_001"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

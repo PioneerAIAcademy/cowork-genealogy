@@ -41,75 +41,65 @@
       "args": {
         "query": "select:TodoWrite",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": ".claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/resolution-writing.md\n.claude/skills/conflict-resolution/references/weighing-evidence.md\n.claude/skills/convert-dates/references/calendar-conflicts.md\n.claude/skills/historical-context/references/historical-terminology.md\n.claude/skills/hypothesis-tracking/references/hypothesis-gps-guidance.md\n.claude/skills/init-..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "research.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_spriggs_parents_1898\",\n4\t    \"objective\": \"Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?\",\n5\t    \"subject_person_ids\": [\"L64C-QQX\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-06-23T00:00:00Z\",\n8\t    \"updated\": \"2026-06-23T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "tree.gedcomx.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "tree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"L64C-QQX\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"L64C-QQX-name-1\",\n10\t          \"given\": \"Reuben Spencer\",\n11\t          \"surname\": \"Spriggs\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-reuben-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"6 November 1898\",\n19\t          \"standard_date\": \"6 Nov 1898\",\n20\t          \"place\": \"Maddock, Benson, ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -134,51 +124,44 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), vital records (death/birth cert), probate (will), church (baptism..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__volume_search,mcp__genealogy__wiki_search",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Benson County, North Dakota"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Benson, North Dakota, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1889/\\\",\\n      \\\"latitude\\\": 48.04167,\\n      \\\"longitude\\\": -99.45,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Benson&focusedId=394414\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Benson_County,_North_Dakota\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Benson, Dou..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "North Dakota genealogy records census vital records 1900"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"North Dakota genealogy records census vital records 1900\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.871094,\\n      \\\"chunk_text\\\": \\\"* **1885, 1915, 1925** [North Dakota, Territorial and State Censuses, 1885, 1915, 1925](https://www.ancestry.com/search/collections/1078) at Ancestry \\u2013 - index & images ($)\\\\n* **1915** [North Dakota Census, 1915](https://www.familysearch.o..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -186,8 +169,7 @@
         "standardPlace": "Benson, North Dakota, United States",
         "startYear": 1895,
         "endYear": 1920
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Benson, North Dakota, United States\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1920\\n  },\\n  \\\"scope\\\": \\\"North Dakota\\\",\\n  \\\"totalForPlace\\\": 9,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3241319\\\",\\n      \\\"title\\\": \\\"North Dakota and South Dakota Naturalization Records, 1851-1924\\\",\\n      \\\"dateRange\\\": \\\"1851-1924\\\",\\n      \\\"recordCount\\\": 6198,\\n      \\\"personCount\\\": 6835,\\n      \\\"imageCount\\\": 3285,\\n      \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -195,8 +177,7 @@
         "standardPlace": "Benson, North Dakota, United States",
         "startYear": 1895,
         "endYear": 1920
-      },
-      "response_summary": "{\"error\":\"FamilySearch rejected the request (status 429). This usually means rate limiting or a User-Agent block. Wait 60 seconds and retry once. If it persists, surface this to the user.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -204,15 +185,13 @@
         "standardPlace": "Benson, North Dakota, United States",
         "startYear": 1895,
         "endYear": 1920
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Benson, North Dakota, United States\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1920\\n  },\\n  \\\"totalResults\\\": 13,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"004120517_002_M9LK-PZ1\\\",\\n      \\\"imageGroupPrefix\\\": \\\"004120517\\\",\\n      \\\"imageCount\\\": 234,\\n      \\\"recordSearchablePercent\\\": 92,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"coverages\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Benson County North Dakota genealogy birth records vital records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Benson County North Dakota genealogy birth records vital records\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.9375,\\n      \\\"chunk_text\\\": \\\"### Tax Records  \\\\nCounty tax records are at the county treasurer's, auditor's or clerk's office in the county courthouse. Some tax records may have been moved to the [North Dakota State Archives](http://history.nd.gov/archives/genealogy...."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -225,8 +204,7 @@
           "status": "active",
           "created": "2026-06-23"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/plans[0]: missing required field 'items'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -240,8 +218,7 @@
           "created": "2026-06-23",
           "items": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plans\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pl_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -260,8 +237,7 @@
           "fallback_for": null,
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -280,8 +256,7 @@
           "fallback_for": "pli_001",
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -300,8 +275,7 @@
           "fallback_for": null,
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -320,8 +294,7 @@
           "fallback_for": null,
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -340,8 +313,7 @@
           "fallback_for": null,
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -360,23 +332,20 @@
           "fallback_for": null,
           "status": "planned"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__same_person,mcp__genealogy__source_attachments,mcp__genealogy__record_read,mcp__genealogy__research_log_append",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__source_attachments\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -387,29 +356,25 @@
         "residenceYearTo": 1900,
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"residencePlace\\\": \\\"Benson, North Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1900,\\n    \\\"residenceYearTo\\\": 1900,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M316-6G8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_96753371\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M316-6G8\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f5d1a32e-7e20-4e92-9eef-63b0b8af8532\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"John H\\\",\\n          \\\"surname\\\": \\\"Spriggs\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"27680252-b6ab-44f3-9a7a-afdfdda36742\\\",\\n          \\\"type\\\": \\\"Birt..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M31D-R23"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_96737103\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M31D-R23\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c6a60fa9-f6c6-41cf-9173-2d0d70b2aa7b\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Jesse L\\\",\\n          \\\"surname\\\": \\\"Spriggs\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Single\\\"\\n        },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M316-Y7T"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_96765476\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M316-Y7T\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"cbf44943-e1d0-4c24-8bb8-39607c561dc1\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Spriggs\\\",\\n          \\\"given\\\": \\\"Silas B\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -430,8 +395,7 @@
         "resultsAvailable": 4,
         "notes": "4 results returned; 3 are 1900 census households (John H, Jesse L, Silas B Spriggs) but all resolve to West Virginia (Kanawha Co.) not Benson County ND. The place filter expanded beyond the target jurisdiction. 4th result is an 1890-91 city directory, irrelevant. Retrying with specific Benson County 1900 census imageGroupNumber to restrict to the correct film.",
         "stagedResultsRef": "results/.staging/9eb86f14-1587-4253-90bf-cf7cae3f91cf.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-06-23T21:37:34.656Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -440,8 +404,7 @@
         "imageGroupNumber": "004120517_002_M9LK-PZ1",
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"imageGroupNumber\\\": \\\"004120517_002_M9LK-PZ1\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -450,8 +413,7 @@
         "imageGroupNumber": "004120517_002_M9LK-PZ1",
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Sprigg\\\",\\n    \\\"imageGroupNumber\\\": \\\"004120517_002_M9LK-PZ1\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -463,15 +425,13 @@
         "residenceYearFrom": 1900,
         "residenceYearTo": 1900,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (63.4KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-spriggs-parents-1898-lmyd2sfo/390fff35-51f7-4a7c-9274-7482881dfa01/tool-results/toolu_015i9z7mTL1vBfbvV8twEnbS.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"North..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-spriggs-parents-1898-lmyd2sfo/390fff35-51f7-4a7c-9274-7482881dfa01/tool-results/toolu_015i9z7mTL1vBfbvV8twEnbS.json"
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"North Dakota\\\",\\n    \\\"residenceYearFrom\\\": 1900,\\n    \\\"residenceYearTo\\\": 1900,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 5,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 5,\\n  \\\"offset\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -488,8 +448,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for surname variant 'Sprigg' (singular) in the specific Benson County ND 1900 census image group. Neither 'Spriggs' nor 'Sprigg' appears in the indexed portion of this film."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-06-23T21:38:48.750Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -510,8 +469,7 @@
         "resultsAvailable": 5,
         "notes": "5 results returned, all from the same household \u2014 Ruben Spriggs (b. Dec 1865, MN) in Grand Forks County, ND with wife Florence L (b. May 1872, PA) and children Florence L (b.1895), Cora H (b.1896), Leroy J (b.Sep 1898). No child named Reuben; wrong county (Grand Forks, not Benson). This is a different Spriggs family. The Benson County household for Reuben Spencer Spriggs is absent from the 1900 index \u2014 likely in the unindexed ~8% of the film. Proceeding to 1910 census (pli_002).\"",
         "stagedResultsRef": "results/.staging/733084e3-5bc9-439c-bff5-6186eb72687a.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-06-23T21:38:59.610Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -524,8 +482,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -537,8 +494,7 @@
         "residenceYearTo": 1910,
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"givenName\\\": \\\"Spencer\\\",\\n    \\\"residencePlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1910,\\n    \\\"residenceYearTo\\\": 1910,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -559,8 +515,7 @@
         "resultsAvailable": 2,
         "notes": "Strong match: 'Rueben S Spriggs' (b.1899, ND) in Household of John W Spriggs, Prairie Belle, Beadle, SD, 1910. treeMatch L64C-QQX (5 stars) confirms this is our Reuben Spencer Spriggs. Father = John W Spriggs (b.1872, Iowa); Mother = Charlotte Spriggs (b.1877, Norway). Siblings: Lillian F (b.1900, Iowa), Leonard W (b.1907, SD). Household ark: ark:/61903/1:2:9JX9-6LD. Second result is an 1890 directory entry, irrelevant.",
         "stagedResultsRef": "results/.staging/503cd25d-512f-4972-b109-209b1e0d44a8.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-06-23T21:39:37.645Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -573,61 +528,53 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract assertions from the 1910 US Census record for the Household of John W Spriggs, Prairie Belle, Beadle, South Dakota. Record ARK: ark:/61903/1:2:9JX9-6LD. This record was found in search log log_004 for plan item pli_002 of question q_001. The household contains: John W Spriggs (head, b.1872 Iowa), Charlotte Spriggs (wife, b.1877 Norway), Rueben S Spriggs (child, b.1899 ND) = our subject Reuben Spencer Spriggs (L64C-QQX), Lillian F Spriggs (child, b.1900 Iowa), Leonard W Spriggs (child, b.1907 SD), and Selvin Christianson (b.1884 Iowa, likely hired hand)."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_spriggs_parents_1898\",\n4\t    \"objective\": \"Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L64C-QQX\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-23T00:00:00Z\",\n10\t    \"updated\": \"2026-06-23T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/tree.gedcomx.json"
-      },
-      "response_summary": "Wasted call \u2014 file unchanged since your last Read. Refer to that earlier tool_result instead."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read,mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__research_log_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:2:9JX9-6LD"
-      },
-      "response_summary": "{\"error\":\"Record 9JX9-6LD was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__same_person",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -639,8 +586,7 @@
         "residenceYearTo": 1910,
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"givenName\\\": \\\"Spencer\\\",\\n    \\\"residencePlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1910,\\n    \\\"residenceYearTo\\\": 1910,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -651,8 +597,7 @@
           "title": "Household of John W Spriggs, \"United States, Census, 1910\"",
           "url": "https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -680,8 +625,7 @@
           "transcription": null,
           "log_entry_id": "log_004"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"sources\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"src_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -714,15 +658,13 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/assertions[0]: record_id 'https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD' does not match any result's recordId in sidecar 'results/log_004.json'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/results/log_004.json"
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_004\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-06-23T21:39:08.389Z\",\n5\t  \"returned_count\": 2,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Spriggs\",\n9\t      \"givenName\": \"Spencer\",\n10\t      \"residencePlace\": \"Beadle, South Dakota, United States\",\n11\t      \"residenceYearFrom\": 1910,\n12\t      \"residenceYearTo\": 1910,\n13\t      \"recordType\": \"census\",\n14\t      \"projectPath\": \"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-18..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -755,8 +697,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -789,8 +730,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -822,8 +762,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -856,8 +795,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -890,8 +828,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -923,8 +860,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -957,8 +893,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_007\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -991,8 +926,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_008\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1025,8 +959,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_009\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1058,8 +991,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_010\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1092,8 +1024,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_011\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1126,8 +1057,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_012\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1158,8 +1088,7 @@
           "log_entry_id": "log_004",
           "extracted_for_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_013\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1190,8 +1119,7 @@
           "log_entry_id": "log_004",
           "extracted_for_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_014\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1222,8 +1150,7 @@
           "log_entry_id": "log_004",
           "extracted_for_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_015\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1254,8 +1181,7 @@
           "log_entry_id": "log_004",
           "extracted_for_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_016\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1268,8 +1194,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1282,46 +1207,40 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*assertion*",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "*/",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "*",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills"
-      },
-      "response_summary": ".claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/resolution-writing.md\n.claude/skills/conflict-resolution/references/weighing-evidence.md\n.claude/skills/convert-dates/references/calendar-conflicts.md\n.claude/skills/historical-context/references/historical-terminology.md\n.claude/skills/hypothesis-tracking/references/hypothesis-gps-guidance.md\n.claude/skills/init-..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/assertion-classification/references/three-layer-model.md"
-      },
-      "response_summary": "1\t# The Three-Layer Classification Model\n2\t\n3\t## Core Principle: Independence of Layers\n4\t\n5\tThe three layers -- source, information, and evidence -- are evaluated\n6\tindependently. The classification at one layer does NOT determine the\n7\tclassification at another. An original source can contain secondary\n8\tinformation. A derivative source can provide direct evidence. Each\n9\tlayer operates on its own terms.\n10\t\n11\t---\n12\t\n13\t## Layer 1: Source Classification\n14\t\n15\tSource classification addres..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1336,8 +1255,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Respondent identity unknown; could be John W, Charlotte, or even a neighbor per pre-1940 census protocol"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1352,8 +1270,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Birth year computed from stated age \u2014 indirect evidence. Birthplace Iowa is directly stated but informant unknown; John W himself or Charlotte could both plausibly know his birthplace"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1365,8 +1282,7 @@
         "fields": {
           "evidence_type": "indirect"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1381,8 +1297,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Respondent identity unknown; could be Charlotte, John W, or a neighbor"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1397,8 +1312,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Charlotte's own birthplace (Norway) would be first-hand if she answered; but respondent unknown. Birth year computed from stated age"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1410,8 +1324,7 @@
         "fields": {
           "evidence_type": "indirect"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1425,8 +1338,7 @@
           "informant": "unknown household respondent (1910 census; 1880+ relationship column data provided by a household member, but enumerator did not identify which)",
           "informant_bias_notes": "1910 census relationship column is directly stated by household respondent per post-1880 protocol; respondent identity unknown but household_member classification applies"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_007\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1441,8 +1353,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Child's name reported by unknown respondent; spelling 'Rueben' vs 'Reuben' is a common transcription/enumerator variant"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_008\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1457,8 +1368,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": "Birth year computed from stated age; North Dakota birthplace directly stated. A parent answering would have first-hand knowledge of child's birth, but respondent is unknown"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_009\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1470,8 +1380,7 @@
         "fields": {
           "evidence_type": "indirect"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_010\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1485,8 +1394,7 @@
           "informant": "unknown household respondent (1910 census; 1880+ relationship column provided by household member, enumerator did not identify which)",
           "informant_bias_notes": "1910 census has explicit relationship-to-head column (direct statement, not position inference). Respondent identity unknown but household_member classification applies per post-1880 protocol. This directly answers the parentage question for the father."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_011\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1500,8 +1408,7 @@
           "informant": "unknown household respondent (1910 census; 1880+ relationship column provided by household member, enumerator did not identify which)",
           "informant_bias_notes": "Relationship to Charlotte as mother is inferred from her role as wife of head plus GedcomX ParentChild; the census does not state 'son of Charlotte' directly \u2014 only 'son' relative to the head is stated"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_012\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1516,8 +1423,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_013\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1532,8 +1438,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_014\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1548,8 +1453,7 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_015\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1564,39 +1468,34 @@
           "informant_proximity": "unknown",
           "informant_bias_notes": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"a_016\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "L64C-QQX"
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "L64C-QQX"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -1920,8 +1819,7 @@
           ]
         },
         "primaryId2": "L64C-QQX"
-      },
-      "response_summary": "{\"error\":\"FamilySearch matchTwoExamples rejected the payload (400 ).\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1938,8 +1836,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I1\\\",\\n    \\\"names\\\": [\\n      \\\"N1\\\"\\n    ]\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1956,8 +1853,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I2\\\",\\n    \\\"names\\\": [\\n      \\\"N2\\\"\\n    ]\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1974,8 +1870,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I3\\\",\\n    \\\"names\\\": [\\n      \\\"N3\\\"\\n    ]\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1992,8 +1887,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I4\\\",\\n    \\\"names\\\": [\\n      \\\"N4\\\"\\n    ]\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2008,8 +1902,7 @@
           "rationale": "Name 'John W Spriggs' matches stub I1. Head of household in Prairie Belle, Beadle County, SD in 1910. New stub created from this record \u2014 single-record identification. Born ~1872 Iowa, consistent with internal household logic (eldest child born 1900 Iowa suggests family arrived in SD after ~1900).",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2024,8 +1917,7 @@
           "rationale": "Birth ~1872 Iowa for household head John W Spriggs (I1). Estimated from stated age. Iowa birthplace directly stated in record.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2040,8 +1932,7 @@
           "rationale": "1910 census residence Prairie Belle, Beadle County, SD for household head John W Spriggs (I1). Enumerator-witnessed fact placing the household at this location.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2056,8 +1947,7 @@
           "rationale": "Name 'Charlotte Spriggs' matches stub I2. Wife of household head John W Spriggs in Prairie Belle, Beadle County, SD in 1910. New stub created from this record \u2014 single-record identification. Born ~1877 Norway.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2072,8 +1962,7 @@
           "rationale": "Birth ~1877 Norway for Charlotte Spriggs (I2), wife in the John W Spriggs household. Birth year estimated from stated age; Norway birthplace directly stated.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2088,8 +1977,7 @@
           "rationale": "1910 census residence Prairie Belle, Beadle County, SD for Charlotte Spriggs (I2) as wife in the John W Spriggs household.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2104,8 +1992,7 @@
           "rationale": "1910 census relationship column states Charlotte is 'Wife' of head John W Spriggs. This assertion establishes the spousal link between I2 (Charlotte) and I1 (John W). Direct statement in a 1880+ census relationship column.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_007\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2120,8 +2007,7 @@
           "rationale": "1910 census relationship column states Charlotte is 'Wife' of head John W Spriggs (I1). This assertion also bears on I1 as the husband/head of household to whom Charlotte's relationship is stated.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_008\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2136,8 +2022,7 @@
           "rationale": "Name 'Rueben S Spriggs' matches Reuben Spencer Spriggs (L64C-QQX): 'Rueben' is a common enumerator/transcription variant of 'Reuben'; 'S' is the middle initial for 'Spencer'. Birth ~1899 ND (a_009) matches known birth 6 Nov 1898 Maddock, Benson County, ND. 1910 residence Prairie Belle, Beadle SD matches tree fact f-reuben-res-1910. FamilySearch treeMatch returned 5 stars for L64C-QQX on this record. Strong match on name, birth year, birthplace, and 1910 location.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_009\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2152,8 +2037,7 @@
           "rationale": "Birth ~1899 North Dakota for Rueben S Spriggs (child_1). Consistent with L64C-QQX's known birth 6 November 1898 in Maddock, Benson County, ND. One-year discrepancy within normal census age-estimation error.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_010\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2168,8 +2052,7 @@
           "rationale": "1910 residence Prairie Belle, Beadle County, SD for Rueben S Spriggs (child_1). Matches tree fact f-reuben-res-1910 (Belle Prairie Township, Beadle, SD, 1910) and corroborates the L64C-QQX identification.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_011\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2184,8 +2067,7 @@
           "rationale": "1910 census relationship column states Rueben S Spriggs is 'Son' of head John W Spriggs. Directly answers q_001: John W Spriggs is the father of Reuben Spencer Spriggs (L64C-QQX). Post-1880 census relationship column is a direct statement, not inferred from position.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_012\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2200,8 +2082,7 @@
           "rationale": "1910 census relationship column states Rueben S Spriggs is 'Son' of head John W Spriggs (I1). This assertion also bears on I1 as the father: John W Spriggs is identified as father of Reuben Spencer Spriggs (L64C-QQX).",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_013\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2216,8 +2097,7 @@
           "rationale": "Charlotte Spriggs is the wife of head John W Spriggs; GedcomX ParentChild relationship links Charlotte as mother of Rueben S Spriggs (child_1 = L64C-QQX). Relationship to mother is indirect (inferred from Charlotte's wife role), not directly stated in the relationship column.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_014\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2232,8 +2112,7 @@
           "rationale": "Charlotte Spriggs (I2) identified as mother of Rueben S Spriggs (child_1) via GedcomX ParentChild relationship and her role as wife of head. This assertion bears on I2 as the mother of L64C-QQX.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_015\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2248,8 +2127,7 @@
           "rationale": "Name 'Lillian F Spriggs' matches stub I3. Child_2 in the John W Spriggs household, Prairie Belle, Beadle SD, 1910. Born ~1900 Iowa. New stub created from this record.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_016\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2264,8 +2142,7 @@
           "rationale": "Birth ~1900 Iowa for Lillian F Spriggs (I3), child_2 in the John W Spriggs 1910 household.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_017\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2280,8 +2157,7 @@
           "rationale": "Name 'Leonard W Spriggs' matches stub I4. Child_3 in the John W Spriggs household, Prairie Belle, Beadle SD, 1910. Born ~1907 South Dakota. New stub created from this record.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_018\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2296,63 +2172,55 @@
           "rationale": "Birth ~1907 South Dakota for Leonard W Spriggs (I4), child_3 in the John W Spriggs 1910 household.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_019\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "L64C-QQX"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"personName\\\": \\\"John W Spriggs\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"personName\\\": \\\"Charlotte Spriggs\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__image_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:K68M-VHS"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14175826442\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:K68M-VHS\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Reuben Spencer\\\",\\n          \\\"surname\\\": \\\"Spriggs\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Other\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"from 1917 to 1918\\\",\\n          \\\"standard_date\\\": \\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__image_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_search\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2360,8 +2228,7 @@
         "standardPlace": "Beadle, South Dakota, United States",
         "startYear": 1917,
         "endYear": 1918
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"startYear\\\": 1917,\\n    \\\"endYear\\\": 1918\\n  },\\n  \\\"totalResults\\\": 12,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"007191178_007_M99J-5Q4\\\",\\n      \\\"imageGroupPrefix\\\": \\\"007191178\\\",\\n      \\\"imageCount\\\": 253,\\n      \\\"recordSearchablePercent\\\": 62,\\n      \\\"fulltextSearchable\\\": true,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"coverages\\\": [\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2369,31 +2236,27 @@
         "standardPlace": "South Dakota, United States",
         "startYear": 1917,
         "endYear": 1918
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"South Dakota, United States\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "South Dakota",
         "contextName": "United States"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"South, Grayson, Kentucky, United States\\\",\\n      \\\"type\\\": \\\"Village\\\",\\n      \\\"dateRange\\\": \\\"+1882/\\\",\\n      \\\"latitude\\\": 37.3292,\\n      \\\"longitude\\\": -86.3647,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=South&focusedId=4127375\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"South, Covington, Alabama, United States\\\",\\n      \\\"type\\\": \\\"Locality\\\",\\n      \\\"latitude\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "South Dakota"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"South, Cameroon\\\",\\n      \\\"type\\\": \\\"Region\\\",\\n      \\\"latitude\\\": 2.5,\\n      \\\"longitude\\\": 11.75,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=South&focusedId=3127\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://fr.wikipedia.org/wiki/R%C3%A9gion_du_Sud\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"South, Lebanon\\\",\\n      \\\"type\\\": \\\"Governorate\\\",\\n      \\\"latitude\\\": 33.41667,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2401,8 +2264,7 @@
         "standardPlace": "Huron, Beadle, South Dakota, United States",
         "startYear": 1917,
         "endYear": 1918
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Huron, Beadle, South Dakota, United States\\\",\\n    \\\"startYear\\\": 1917,\\n    \\\"endYear\\\": 1918\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"results\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2420,8 +2282,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "record_read of WWI draft card K68M-VHS confirmed Reuben Spencer Spriggs, born 6 Nov 1898, registered in Beadle County SD 1917-18. Indexed fields: name, birth date, citizenship, race, place Beadle SD. Image 3:1:33SQ-G1WS-756 could not be accessed via image_read \u2014 the 3:1: image ARK does not translate to the NUMBER_NUMBER image group format required, and volume_search returned no WWI draft card volumes for Beadle County. The 'nearest relative' field (key for parentage) is not indexed and requires direct image browsing on FamilySearch. Parentage evidence not retrieved from this source; 1910 census (pli_002) already established parents with confidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-06-23T22:20:46.793Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2434,8 +2295,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2457,8 +2317,7 @@
           "captureReceived": false
         },
         "notes": "BLM General Land Office records at glorecords.blm.gov are not accessible via MCP tools. URL generated for manual search: https://glorecords.blm.gov/results/default.aspx?searchCriteria=type=patent|st=ND|sw=true|cn=Spriggs \u2014 searches for Spriggs land patents in North Dakota. This search should be performed manually to confirm John W Spriggs as a homestead patentee in Benson County circa 1883-1910. Parentage already established via 1910 census; this is a corroborating source."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-06-23T22:21:23.193Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2471,8 +2330,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2484,8 +2342,7 @@
         "birthPlace": "Benson, North Dakota",
         "recordType": "birth",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Reuben\\\",\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"birthYearFrom\\\": 1898,\\n    \\\"birthYearTo\\\": 1898,\\n    \\\"birthPlace\\\": \\\"Benson, North Dakota\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"result..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2496,8 +2353,7 @@
         "birthYearTo": 1902,
         "recordType": "birth",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (56.3KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-spriggs-parents-1898-lmyd2sfo/390fff35-51f7-4a7c-9274-7482881dfa01/tool-results/toolu_01VUtqhYPxPJzVrWxbYTLbs5.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"birthPlace\\\": \\\"North Dakota\\\",\\n    \\\"birthYearFrom\\\": 1895,\\n    \\\"birthYearTo\\\": 1902,\\n    \\\"recordT..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2517,8 +2373,7 @@
         "resultsExamined": 13,
         "resultsAvailable": 13,
         "notes": "13 results returned but all from Pennsylvania Philadelphia city birth collections \u2014 birthPlace filter expanded far beyond North Dakota. No North Dakota birth records for Reuben Spriggs found. Benson County civil birth registration was in its infancy in 1898; early records may be unindexed or undigitized on FamilySearch. The birth record (if created) would name both parents, but this source is currently inaccessible via indexed search. 1910 census (pli_002) remains the primary parentage source."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-06-23T22:21:54.678Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2531,8 +2386,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2540,8 +2394,7 @@
         "surname": "Spriggs",
         "collectionId": "3155904",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"collectionId\\\": \\\"3155904\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:72BY-43MM\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\\": \\\"Biography\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2559,16 +2412,14 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/204fd121-60db-4107-b748-a3add5f56f71.json",
         "notes": "2 results returned \u2014 both for 'John H Spriggs' (born Washington DC) and 'Mary Spriggs' (born Bismarck, Burleigh County ND) \u2014 a different Spriggs family. Our subject is John W Spriggs (born ~1872 Iowa) of Benson County ND; wrong given-name initial, wrong birthplace, wrong county. No Pioneer File entry found for the John W Spriggs family of Benson County. This FAN-cluster compiled source does not corroborate the 1910 census parentage finding."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-06-23T22:23:07.902Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -2576,8 +2427,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json",
         "limit": 80,
         "offset": 1
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_spriggs_parents_1898\",\n4\t    \"objective\": \"Who were the parents of Reuben Spencer Spriggs, born 6 November 1898 in Maddock, Benson County, North Dakota?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L64C-QQX\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-23T00:00:00Z\",\n10\t    \"updated\": \"2026-06-23T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "Read",
@@ -2585,8 +2435,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json",
         "limit": 60,
         "offset": 80
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"land\",\n82\t          \"jurisdiction\": \"Benson County, North Dakota\",\n83\t          \"date_range\": \"1883-1910\",\n84\t          \"repository\": \"other\",\n85\t          \"rationale\": \"The Benson County population tripled between 1890 and 1900, driven by homestead settlement. Reuben's father almost certainly acquired land in Benson County during this period. BLM General Land Office records (glorecords.blm.gov) are free and indexed; a land patent entry..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2599,22 +2448,19 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
@@ -2622,8 +2468,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json",
         "limit": 300,
         "offset": 140
-      },
-      "response_summary": "140\t      \"query\": {\n141\t        \"surname\": \"Sprigg\",\n142\t        \"imageGroupNumber\": \"004120517_002_M9LK-PZ1\",\n143\t        \"recordType\": \"census\"\n144\t      },\n145\t      \"outcome\": \"negative\",\n146\t      \"results_examined\": 0,\n147\t      \"external_site\": null,\n148\t      \"results_ref\": null,\n149\t      \"results_available\": 0,\n150\t      \"notes\": \"Zero results for surname variant 'Sprigg' (singular) in the specific Benson County ND 1900 census image group. Neither 'Spriggs' nor 'Sprigg' appears in ..."
+      }
     },
     {
       "tool": "Read",
@@ -2631,8 +2476,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json",
         "limit": 350,
         "offset": 440
-      },
-      "response_summary": "440\t      \"informant_bias_notes\": null,\n441\t      \"evidence_type\": \"indirect\",\n442\t      \"log_entry_id\": \"log_004\",\n443\t      \"extracted_for_question_ids\": [\n444\t        \"q_001\"\n445\t      ]\n446\t    },\n447\t    {\n448\t      \"id\": \"a_007\",\n449\t      \"source_id\": \"src_001\",\n450\t      \"record_id\": \"ark:/61903/1:1:MPXD-MZC\",\n451\t      \"record_role\": \"wife\",\n452\t      \"record_persona_id\": \"p_570564308\",\n453\t      \"fact_type\": \"relationship\",\n454\t      \"value\": \"wife of John W Spriggs (head of househo..."
+      }
     },
     {
       "tool": "Read",
@@ -2640,16 +2484,14 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json",
         "limit": 200,
         "offset": 790
-      },
-      "response_summary": "790\t    {\n791\t      \"id\": \"pe_011\",\n792\t      \"assertion_id\": \"a_010\",\n793\t      \"person_id\": \"L64C-QQX\",\n794\t      \"confidence\": \"confident\",\n795\t      \"rationale\": \"1910 residence Prairie Belle, Beadle County, SD for Rueben S Spriggs (child_1). Matches tree fact f-reuben-res-1910 (Belle Prairie Township, Beadle, SD, 1910) and corroborates the L64C-QQX identification.\",\n796\t      \"match_score\": null,\n797\t      \"created\": \"2026-06-23\"\n798\t    },\n799\t    {\n800\t      \"id\": \"pe_012\",\n801\t      \"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2661,8 +2503,7 @@
         "residenceYearTo": 1920,
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"residencePlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1920,\\n    \\\"residenceYearTo\\\": 1920,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"has..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2673,16 +2514,14 @@
         "residenceYearTo": 1920,
         "recordType": "census",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (58KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-spriggs-parents-1898-lmyd2sfo/390fff35-51f7-4a7c-9274-7482881dfa01/tool-results/toolu_01WYmJMEd4vRnnEaAEmVa6Sk.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"residencePlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1920,\\n    \\\"reside..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-spriggs-parents-1898-lmyd2sfo/390fff35-51f7-4a7c-9274-7482881dfa01/tool-results/toolu_01WYmJMEd4vRnnEaAEmVa6Sk.json",
         "limit": 200
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spriggs\\\",\\n    \\\"residencePlace\\\": \\\"Beadle, South Dakota, United States\\\",\\n    \\\"residenceYearFrom\\\": 1920,\\n    \\\"residenceYearTo\\\": 1920,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo\\\"\\n  },\\n  \\\"totalMatches\\\": 11,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 11,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2701,16 +2540,14 @@
           "fallback_for": null,
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pli_007\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2730,8 +2567,7 @@
         "resultsAvailable": 11,
         "stagedResultsRef": "results/.staging/5c10a0cf-4823-418b-80c3-0062c72fae7f.json",
         "notes": "Household of Will Spriggs, Belle Prairie Township, Beadle County, SD, 1920. 'Will' is an enumerator abbreviation for the 'W' initial of John W Spriggs from the 1910 census \u2014 same wife (Charlott/Charlotte, b. Norway), same son Spencer (b.1899 ND, 5-star treeMatch to L64C-QQX), same son Leonard (b.1907 SD), same location. Father born 1873 Iowa (vs 1872 in 1910 \u2014 within census age estimation error). Provides second independent source corroborating John W Spriggs and Charlotte Spriggs as parents of Reuben Spencer Spriggs."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-06-23T22:52:14.258Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_009.json\\\",\\n  \\\"returnedCount\\\": 11,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_009.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2759,16 +2595,14 @@
           "transcription": null,
           "log_entry_id": "log_009"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[1]: gedcomx_source_description_id 'S2' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2779,8 +2613,7 @@
           "title": "Household of Will Spriggs, \"United States, Census, 1920\"",
           "url": "https://www.familysearch.org/ark:/61903/1:2:MDM6-ZQW"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S2\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2808,8 +2641,7 @@
           "transcription": null,
           "log_entry_id": "log_009"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"sources\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"src_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2842,8 +2674,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_017\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2876,8 +2707,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_018\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2910,8 +2740,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_019\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2944,8 +2773,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_020\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2978,8 +2806,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_021\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3012,8 +2839,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_022\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3046,8 +2872,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_023\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3080,8 +2905,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"a_024\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3096,8 +2920,7 @@
           "rationale": "1920 census: 'Spencer Spriggs', male, born 1899 ND, in Belle Prairie Township, Beadle County, SD \u2014 5-star FamilySearch treeMatch to L64C-QQX. 'Spencer' is Reuben Spencer Spriggs's middle name, used as a given name throughout his life (corroborated by 1930, 1935, 1940 census sources in tree). Birth year and place match exactly.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_020\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3112,8 +2935,7 @@
           "rationale": "Birth ~1899 North Dakota for Spencer Spriggs (1920 census). Consistent with L64C-QQX's known birth 6 November 1898, Maddock, Benson County, ND. One-year discrepancy within normal census age-estimation range.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_021\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3128,8 +2950,7 @@
           "rationale": "1920 census relationship column states Spencer Spriggs is 'Son' of head Will Spriggs. Directly answers q_001: Will Spriggs (= John W Spriggs) is the father of Reuben Spencer Spriggs (L64C-QQX). Second independent census corroborating paternity.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_022\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3144,8 +2965,7 @@
           "rationale": "Will Spriggs (1920 head) = John W Spriggs (1910 head, stub I1). Same household composition: wife Charlotte/Charlott (born Norway), son Spencer (born 1899 ND, L64C-QQX), son Leonard (born 1907 SD). Same location: Belle Prairie Township, Beadle County, SD. Same birth state: Iowa. Birth year 1873 (1920) vs 1872 (1910) within census estimation error. 'Will' is an enumerator/transcription variant of 'W' (middle initial of John W). This assertion names I1 as father of L64C-QQX.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_023\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3160,8 +2980,7 @@
           "rationale": "Charlott Spriggs is wife of head Will Spriggs; Spencer is son of head. Charlotte is inferred as mother from her role as wife. Same inference structure as the 1910 census a_012/pe_014 link.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_024\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3176,8 +2995,7 @@
           "rationale": "Charlott Spriggs (1920 wife) = Charlotte Spriggs (1910 wife, stub I2). Both born Norway, both wives of the head in the same household and location. This assertion identifies I2 as the inferred mother of L64C-QQX via the 1920 census.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_025\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3192,8 +3010,7 @@
           "rationale": "Will Spriggs (1920 head, a_021 name assertion) matches stub I1 (John W Spriggs). 'Will' is an enumerator variant of 'W' (middle initial). Same location, wife, children, and birth state as John W in 1910. Single name discrepancy explained by enumerator practice.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_026\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3208,8 +3025,7 @@
           "rationale": "Birth ~1873 Iowa for Will Spriggs (I1). Consistent with the 1910 entry (~1872 Iowa). One-year difference within normal census estimation error.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_027\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3224,8 +3040,7 @@
           "rationale": "Charlott Spriggs (1920 wife, a_023 name assertion) matches stub I2 (Charlotte Spriggs from 1910). 'Charlott' is a spelling variant of 'Charlotte'. Same Norway birthplace, same household role, same location.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_028\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3240,40 +3055,35 @@
           "rationale": "Birth ~1878 Norway for Charlott Spriggs (I2). Consistent with 1910 entry (~1877 Norway). One-year difference within normal census estimation error.",
           "match_score": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_029\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "L64C-QQX"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"personName\\\": \\\"John W Spriggs\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"personName\\\": \\\"Charlotte Spriggs\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3309,22 +3119,19 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3359,8 +3166,7 @@
           "exhaustive_search_summary": "Nine searches across seven record categories (FamilySearch and attempted BLM). 1910 US Census (positive): Rueben S Spriggs listed as son of John W Spriggs and Charlotte Spriggs, Belle Prairie Township, Beadle County, SD. 1920 US Census (positive): Spencer Spriggs listed as son of Will Spriggs (= John W Spriggs) and Charlott Spriggs, same township. 1900 US Census (three searches, negative): Spriggs family absent from Benson County ND index. WWI draft card (partial: indexed identity confirmed; image inaccessible via tool). BLM land records (partial: external site inaccessible). Benson County birth records (negative). ND Pioneer Files (negative, different Spriggs family). Research declared exhaustive (log entries log_001 through log_009).",
           "narrative_markdown": "## Parentage of Reuben Spencer Spriggs (Born 6 November 1898, Maddock, Benson County, North Dakota)\n\nThe preponderance of evidence strongly suggests that **Reuben Spencer Spriggs** (born 6 November 1898, Maddock, Benson County, North Dakota; died 21 May 1998, Riverside, California) is the son of **John W. Spriggs** (born about 1872, Iowa) and **Charlotte Spriggs** (born about 1877, Norway).\n\n### Evidence Summary\n\n1. **United States Census, 1910** (derivative; FamilySearch index of NARA microfilm T624, roll 1497).[1] The household of John W. Spriggs in Prairie Belle Township, Beadle County, South Dakota, includes \u201cRueben S. Spriggs,\u201d male, born approximately 1899 in North Dakota. The 1910 census relationship column\u2014introduced in 1880 and filled by a household respondent\u2014records Rueben as \u201cSon\u201d of household head John W. Spriggs, providing **direct evidence** of paternity. Charlotte Spriggs, born about 1877 in Norway, is listed as wife of the head; her role as mother is inferred indirectly from her position as wife and from the GedcomX ParentChild relationship carried in the FamilySearch record. Information quality for all assertions from this source is **indeterminate**: the enumerator did not record which household member answered, and no X-marker appears in the indexed record. The record carries a FamilySearch five-star tree match to L64C-QQX (Reuben Spencer Spriggs), providing strong algorithmic corroboration of identity. The minor spelling variant \u201cRueben\u201d for \u201cReuben\u201d is a documented enumerator transcription pattern.\n\n2. **United States Census, 1920** (derivative; FamilySearch index of NARA microfilm T625).[2] Ten years later, the same family appears in Belle Prairie Township, Beadle County, South Dakota. The household head is recorded as \u201cWill Spriggs,\u201d born about 1873 in Iowa; his wife is \u201cCharlott Spriggs,\u201d born about 1878 in Norway; and the household includes \u201cSpencer Spriggs,\u201d male, born about 1899 in North Dakota\u2014again with a FamilySearch five-star tree match to L64C-QQX\u2014and \u201cLeonard Spriggs,\u201d born about 1907 in South Dakota. \u201cSpencer\u201d is Reuben Spencer Spriggs\u2019s middle name, used as a given name throughout his life (corroborated by 1930, 1935, and 1940 census entries in the existing research tree). The identity of \u201cWill Spriggs\u201d with \u201cJohn W. Spriggs\u201d from 1910 rests on the full constellation of matching details: identical township, identical wife (Charlotte/Charlott, born Norway), identical younger sibling (Leonard, born 1907, South Dakota), and identical birth state for the head (Iowa). \u201cWill\u201d is almost certainly an enumerator\u2019s rendering of the initial \u201cW\u201d in John **W.** Spriggs. The 1920 relationship column records Spencer as \u201cSon\u201d of the head, providing a second independent direct statement of paternity. Information quality is again **indeterminate** under pre-1940 census protocols.\n\n### Source Classifications\n\nBoth sources are **derivative** records (FamilySearch indexes of NARA microfilm). The original census images exist on FamilySearch but were inaccessible through the research tool environment used (the images\u2019 3:1: ARK format could not be converted to the DGS format required for image retrieval). All parentage assertions carry **indeterminate** information quality: pre-1940 census enumerators did not record the household respondent, and no X-markers appear in these indexed records. Both sources provide **direct evidence** of paternity (relationship column stating \u201cSon\u201d of head) and **indirect evidence** of maternity (inferred from the wife\u2019s household role). This combination\u2014derivative sources with indeterminate information quality\u2014places the evidence below the \u201coriginal source with primary information\u201d threshold required for a GPS-proved conclusion.\n\n### Discrepancy Analysis\n\nThree minor discrepancies exist between the 1910 and 1920 records:\n\n- **Head\u2019s given name:** \u201cJohn W.\u201d (1910) vs. \u201cWill\u201d (1920). Explained by enumerator practice: \u201cWill\u201d is a plausible rendering of the middle initial \u201cW.\u201d The full family composition is otherwise identical, making confusion with another Spriggs family implausible.\n- **Head\u2019s birth year:** approximately 1872 (1910) vs. approximately 1873 (1920). A one-year difference falls within normal census age-estimation variation.\n- **Wife\u2019s given name:** \u201cCharlotte\u201d (1910) vs. \u201cCharlott\u201d (1920). A common spelling variant.\n\nNone of these discrepancies challenge the parentage finding.\n\n### Negative Evidence\n\nThree searches of the 1900 United States Census for Benson County, North Dakota\u2014including a film-specific search of image group 004120517\u2014returned no entry for a Spriggs family in Benson County. The family appears to be among the approximately 8% of the 1900 Benson County film that remains unindexed. This absence does not contradict the parentage conclusion. A Benson County birth record for Reuben Spriggs was also not located on FamilySearch; civil registration in Benson County was nascent in 1898, and early records from this period are largely unindexed. The North Dakota Red River Valley Genealogical Society Pioneer Files returned two entries for the Spriggs surname, both for a different family (John H. Spriggs, Burleigh County). None of these negative results point to a different father or mother.\n\n### Assessment\n\nThe evidence strongly suggests\u2014at the **probable** tier\u2014that John W. Spriggs (born about 1872, Iowa) and Charlotte Spriggs (born about 1877, Norway) are the parents of Reuben Spencer Spriggs. Two independent census records, created ten years apart by different enumerators, place the same individual (confirmed by a five-star algorithmic tree match in both) as son of the same man and woman in the same location. No source reviewed contradicts this conclusion.\n\nThe conclusion cannot be advanced to **proved** because both supporting sources are derivative rather than original, and all parentage assertions carry indeterminate rather than primary information quality. To advance to proved, a researcher should: (1) access the original census images directly (FamilySearch microfilm T624 roll 1497 for 1910; T625 for 1920); and (2) locate a third independent source with primary information\u2014such as a Benson County birth certificate, John W. Spriggs\u2019s death record listing children, or Reuben\u2019s 1926 marriage record identifying his parents.\n\n### Citations\n\n1. \u201cUnited States, Census, 1910,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD : accessed 23 June 2026), Household of John W Spriggs, Prairie Belle Township, Beadle County, South Dakota; citing NARA microfilm publication T624, roll 1497.\n2. \u201cUnited States, Census, 1920,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MDM6-ZQW : accessed 23 June 2026), Household of Will Spriggs, Belle Prairie Township, Beadle County, South Dakota; citing NARA microfilm publication T625."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3373,8 +3179,7 @@
           "citation": "\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD : accessed 23 June 2026), Household of John W Spriggs, Prairie Belle Township, Beadle County, South Dakota; citing NARA microfilm publication T624, roll 1497.",
           "url": "https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3387,8 +3192,7 @@
           "citation": "\"United States, Census, 1920,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MDM6-ZQW : accessed 23 June 2026), Household of Will Spriggs, Belle Prairie Township, Beadle County, South Dakota; citing NARA microfilm publication T625.",
           "url": "https://www.familysearch.org/ark:/61903/1:2:MDM6-ZQW"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3410,8 +3214,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_relationship\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"relationship\\\": \\\"R1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3433,8 +3236,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_relationship\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"relationship\\\": \\\"R2\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3456,8 +3258,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_relationship\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"relationship\\\": \\\"R3\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3481,8 +3282,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3506,8 +3306,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F2\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3526,8 +3325,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F3\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3546,8 +3344,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F4\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3566,8 +3363,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F5\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3586,39 +3382,34 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F6\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "L64C-QQX"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3635,15 +3426,13 @@
             "a_019"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "grep -n '\"status\"' /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-spriggs-parents-1898-lmyd2sfo/research.json | head -5"
-      },
-      "response_summary": "8:    \"status\": \"active\",\n24:      \"status\": \"resolved\",\n63:      \"status\": \"active\",\n75:          \"status\": \"completed\"\n86:          \"status\": \"completed\""
+      }
     }
   ],
   "error": "wall-clock timeout after 3600s",
@@ -3652,5 +3441,6 @@
     "era": "1900s",
     "geography": "US-SD"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }
