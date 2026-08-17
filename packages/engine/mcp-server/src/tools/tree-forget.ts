@@ -32,7 +32,7 @@ import type {
   SimplifiedFact,
   SimplifiedRelationship,
 } from "../types/gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-io.js";
 import { formatIssues } from "./merge-shared.js";
@@ -820,6 +820,9 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const sanitized = sanitizeTree(raw);
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // Post-heal, pre-removal snapshot: block only on errors THIS call
+    // introduces, not pre-existing drift in a section it never touches (#1572).
+    const beforeTree = structuredClone(tree);
 
     const targets = resolveSelectors(tree, forget);
     const { removed, factSharingNotices } = applyForget(tree, targets);
@@ -828,7 +831,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     // dangling person reference from research.json (person_evidence,
     // subject_person_ids, timelines, known holdings) — this tool does not
     // repair those, by design, so the error names them and the caller decides.
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
@@ -842,7 +845,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       restoreFile: null,
       validation: {
         valid: true,
-        warnings: [...sanitized.warnings, ...factSharingNotices],
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...factSharingNotices],
       },
     };
     if (dryRun) return result;

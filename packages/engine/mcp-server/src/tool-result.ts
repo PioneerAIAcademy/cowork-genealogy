@@ -60,6 +60,7 @@ export const OK_FALSE_IS_FAILURE = [
   "convert_calendar",
   "research_query",
   "project_context",
+  "project_create",
 ] as const;
 
 /**

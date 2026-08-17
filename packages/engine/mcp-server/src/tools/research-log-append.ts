@@ -19,7 +19,8 @@
 
 import { join } from "path";
 import { readFile, unlink } from "fs/promises";
-import { validateParsed, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
@@ -386,6 +387,10 @@ export async function researchLogAppend(
     const { tree } = sanitizeTree(
       await readProjectJson(projectPath, "tree.gedcomx.json"),
     );
+    // Pre-mutation snapshot (applyLogAppendOp mutates research in place; tree
+    // is read-only here): block only on errors THIS call introduces, not
+    // pre-existing drift in a section it never touched (#1572).
+    const beforeResearch = structuredClone(research);
     const sidecarsCreated: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
@@ -408,7 +413,7 @@ export async function researchLogAppend(
         }
       }
 
-      const validation = await validateParsed(research, tree, { projectPath });
+      const validation = await validateIntroduced({ research: beforeResearch, tree }, { research, tree }, { projectPath });
       if (!validation.valid) {
         await cleanupSidecars(projectPath, sidecarsCreated);
         return { ok: false, errors: formatIssues(validation.errors) };
@@ -458,7 +463,7 @@ export async function researchLogAppend(
       throw e;
     }
 
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research: beforeResearch, tree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       return { ok: false, errors: formatIssues(validation.errors) };
