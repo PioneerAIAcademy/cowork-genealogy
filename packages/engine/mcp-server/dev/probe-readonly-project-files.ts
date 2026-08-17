@@ -97,6 +97,37 @@ await attempt("chmod 644 then write", async () => {
   await writeFile(target, "x", { flag: "w" });
 });
 
+// THE PROPOSED FIX, measured on both platforms rather than reasoned about.
+// Windows reported `fs.rename over a read-only target` as EPERM (2026-08-17),
+// where POSIX succeeds — so the write layer cannot simply rename and re-apply
+// the mode. It has to CLEAR the attribute first, rename, then re-apply:
+//
+//     chmod(target, 0o644)   // no-op if absent
+//     writeFile(tmp)
+//     rename(tmp, target)
+//     chmod(target, 0o444)
+//
+// This section runs that sequence end to end and then checks the file is
+// protected again afterwards. Both lines must pass on every platform for the
+// file-mode approach to be shippable.
+await reset();
+const tmp2 = join(dir, "research.json.tmp2");
+await attempt("FIX: unlock, rename, re-lock", async () => {
+  await chmod(target, 0o644).catch(() => {});
+  await writeFile(tmp2, '{"log":[{"id":"log_001"}]}');
+  await rename(tmp2, target);
+  await chmod(target, 0o444);
+});
+await attempt("FIX: still blocks a shell-style write after", async () => {
+  // Inverted on purpose: this SUCCEEDS only if the write was refused.
+  try {
+    await writeFile(target, "x", { flag: "w" });
+  } catch {
+    return;
+  }
+  throw new Error("write was allowed — protection did not survive the fix");
+});
+
 await rm(dir, { recursive: true, force: true });
 
 console.log(`platform: ${process.platform}  node: ${process.version}\n`);
@@ -104,7 +135,12 @@ for (const [label, outcome] of results) {
   console.log(`  ${label.padEnd(36)} ${outcome}`);
 }
 console.log(
-  "\nDECIDES THE DESIGN: if 'fs.rename over a read-only target' failed, keeping the\n" +
-    "project files read-only breaks every sanctioned write on this platform, and the\n" +
-    "write layer must clear the attribute before renaming rather than only after.",
+  "\nMEASURED SO FAR:\n" +
+    "  macOS  2026-08-17 — rename over a read-only target SUCCEEDS.\n" +
+    "  win32  2026-08-17 — rename over a read-only target FAILS (EPERM), so a\n" +
+    "         plain rename-and-re-apply design breaks every sanctioned write there.\n" +
+    "\nBOTH 'FIX:' LINES MUST PASS for the file-mode approach to be shippable: the\n" +
+    "first proves the sanctioned write still works, the second that protection\n" +
+    "survives it. A pass on one platform proves nothing about the other — that\n" +
+    "asymmetry is the whole reason this probe exists.",
 );

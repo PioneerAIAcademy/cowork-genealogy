@@ -715,14 +715,41 @@ each write. Measured on macOS: mode 444 blocks `>`, `>>`, `tee` and
 over the target and POSIX rename ignores the target's mode. The mode does not
 survive the rename (it becomes 644), so re-applying it is the whole mechanism.
 
-**Blocked on one measurement, deliberately not designed around.** Windows
-`MoveFileEx` over an existing read-only target is reported to fail where POSIX
-rename succeeds. If that holds, this breaks every sanctioned write on the
-platform the genealogist team runs, and the write layer must clear the attribute
-before renaming rather than only after. Run
-`packages/engine/mcp-server/dev/probe-readonly-project-files.ts` on Windows
-before building it. The same platform asymmetry already produced one silent
-no-op in this guard's own path splitting.
+**The platform asymmetry is real, and it changes the design.** Measured
+2026-08-17 with `packages/engine/mcp-server/dev/probe-readonly-project-files.ts`:
+
+| | macOS | Windows |
+|---|---|---|
+| `fs.rename` over a **read-only** target | succeeds | **fails (EPERM)** |
+| open for write / append | blocked | blocked |
+| read | works | works |
+| `chmod` back, then write | works | works |
+
+So a design that leaves the files read-only and simply renames over them would
+**break every sanctioned write on Windows** — the platform the genealogist team
+runs. This is the third time that asymmetry has mattered here; the guard's own
+path splitting was a silent no-op on Windows until someone noticed.
+
+**The write layer must therefore unlock, rename, and re-lock**, not rename and
+re-apply:
+
+```
+chmod(target, 0o644)      # no-op when the file does not exist yet
+writeFile(tmp); rename(tmp, target)
+chmod(target, 0o444)
+```
+
+Both halves are exercised by the probe's two `FIX:` lines — the first that the
+sanctioned write still works, the second that protection survives it — and both
+pass on macOS. **They must be run on Windows before this ships**; a pass on one
+platform proves nothing about the other, which is the whole reason the probe
+exists.
+
+Two costs, both accepted rather than hidden. There is a microsecond window in
+which the file is writable, which no agent is positioned to exploit. And the
+mode is trivially removable by an agent that thinks to (`chmod` then write) — the
+point is not a wall but converting a one-step accident into a two-step deliberate
+act, which is what today's `python open(w)` bypass was.
 
 **Write-shape matching is held back on purpose.** Denying the narrow, unambiguous
 write forms a read-only file misses — `sed -i`, `mv` over the target, and an
