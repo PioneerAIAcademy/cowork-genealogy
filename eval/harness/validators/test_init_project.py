@@ -100,7 +100,16 @@ def test_init_empty_sections(after_state, test):
 # --- The write PATH, not just the resulting state ----------------------
 
 def test_project_files_written_through_the_writer_tools(tool_calls, test):
-    """init-project must create the project by CALLING the writer tools.
+    """init-project must create the project by CALLING `project_create`.
+
+    One assertion, on one tool, because `project_create` writes BOTH documents
+    in a single validated call — there is no second write to check and no order
+    to get right. An earlier version of this validator required a
+    `research_append` with `section: "project"`, which encoded a design that was
+    abandoned before it shipped: it failed 8 of 11 tests on a skill that was
+    behaving correctly, and because a failed validator skips the judge, it also
+    threw away the grades. A check that encodes a stale design is worse than no
+    check, because its red looks like the skill's fault.
 
     Every check above reads the after-state, and the after-state cannot see
     this. The unit harness grants `Write` and `Edit` to every skill from a fixed
@@ -126,26 +135,10 @@ def test_project_files_written_through_the_writer_tools(tool_calls, test):
     if "no-premature-write" in test.get("tags", []):
         pytest.skip("no-premature-write test: correct behavior is to write nothing yet")
 
-    sections_written = set()
-    tree_writers = set()
-    for call in tool_calls or []:
-        bare = (call.get("tool") or "").rsplit("__", 1)[-1]
-        args = call.get("args") or {}
-        if bare == "research_append":
-            ops = args.get("ops") if isinstance(args.get("ops"), list) else [args]
-            for op in ops:
-                if isinstance(op, dict) and op.get("section"):
-                    sections_written.add(op["section"])
-        elif bare in {"tree_edit", "materialize_facts"}:
-            tree_writers.add(bare)
+    called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 
-    assert "project" in sections_written, (
-        "init-project never called research_append with section 'project' — the "
-        "objective, title and subject person ids reached research.json some other "
-        "way, and in Cowork that route is the one the write lockdown denies"
-    )
-    assert tree_writers, (
-        "init-project never called tree_edit or materialize_facts — "
-        "tree.gedcomx.json was hand-serialized, which is the write the lockdown "
-        "denies"
+    assert "project_create" in called, (
+        "init-project never called project_create — both project files reached "
+        "disk some other way, and in Cowork that route is the one the write "
+        f"lockdown denies. Tools called: {sorted(called) or 'none'}"
     )

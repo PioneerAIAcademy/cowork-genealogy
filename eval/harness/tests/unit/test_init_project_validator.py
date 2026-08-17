@@ -33,16 +33,17 @@ def call(tool, **args):
 
 
 def compliant():
-    """The call shape the rewritten SKILL.md is supposed to produce."""
+    """The call shape the rewritten SKILL.md produces: one create, then the
+    two sections the create deliberately leaves out."""
     return [
-        call("tree_edit", ops=[{"operation": "add_person"}]),
-        call("research_append", section="project", op="update", fields={"objective": "x"}),
+        call("project_create", projectPath="/p", objective="x", tree={"persons": []}),
         call(
             "research_append",
             section="researcher_profile",
             op="update",
             fields={"experience_level": "novice"},
         ),
+        call("research_append", section="known_holdings", op="append", entry={}),
     ]
 
 
@@ -54,43 +55,32 @@ def test_a_hand_serialized_run_fails_even_though_the_files_would_look_right():
     """The whole point. Zero writer calls, and the after-state would be identical."""
     with pytest.raises(AssertionError) as e:
         check([], POSITIVE)
+    assert "project_create" in str(e.value)
+
+
+def test_the_profile_and_holdings_calls_alone_are_not_enough():
+    """They write into a project; they cannot bring one into being."""
+    calls = [c for c in compliant() if not c["tool"].endswith("project_create")]
+    with pytest.raises(AssertionError) as e:
+        check(calls, POSITIVE)
+    assert "project_create" in str(e.value)
+    # The message names what WAS called, so a reader can see the route taken.
     assert "research_append" in str(e.value)
 
 
-def test_missing_the_project_write_fails():
-    calls = [c for c in compliant() if c["args"].get("section") != "project"]
-    with pytest.raises(AssertionError) as e:
-        check(calls, POSITIVE)
-    assert "section 'project'" in str(e.value)
+def test_project_create_alone_is_enough():
+    """It writes both documents, so there is no second call to require. A
+    project with no volunteered holdings and no answered interview legitimately
+    makes exactly one call."""
+    check([call("project_create", projectPath="/p", objective="x")], POSITIVE)
 
 
-def test_missing_the_tree_write_fails():
-    calls = [c for c in compliant() if not c["tool"].endswith("tree_edit")]
-    with pytest.raises(AssertionError) as e:
-        check(calls, POSITIVE)
-    assert "tree_edit" in str(e.value)
-
-
-def test_materialize_facts_satisfies_the_tree_half():
-    """Either tree writer is legitimate — the rule is 'not hand-serialized'."""
-    calls = [c for c in compliant() if not c["tool"].endswith("tree_edit")]
-    calls.append(call("materialize_facts", personId="I1"))
-    check(calls, POSITIVE)
-
-
-def test_a_batched_project_write_is_seen():
-    """The ops[] form has to be walked, not just the single-op form."""
-    calls = [
-        call("tree_edit", ops=[{"operation": "add_person"}]),
-        call(
-            "research_append",
-            ops=[
-                {"section": "known_holdings", "op": "append", "entry": {}},
-                {"section": "project", "op": "update", "fields": {"objective": "x"}},
-            ],
-        ),
-    ]
-    check(calls, POSITIVE)
+def test_a_namespaced_tool_name_is_recognised():
+    """Cowork namespaces MCP tools per run mode; the bare tail is what matches."""
+    check(
+        [{"tool": "mcp__remote-devices__Genealogy_Research__project_create", "args": {}}],
+        POSITIVE,
+    )
 
 
 def test_a_no_premature_write_test_is_skipped():
