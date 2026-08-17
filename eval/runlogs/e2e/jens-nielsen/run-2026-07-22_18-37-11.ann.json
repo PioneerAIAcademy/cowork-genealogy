@@ -1,11 +1,13 @@
 {
+  "annotator": "Florence Mashipei",
   "per_finding": {
     "f1": "true",
     "f2": "true",
     "f3": "partial"
   },
-  "proof_quality_score": 1,
+  "proof_quality_score": 2,
   "notes": {
+    "f1": "Re-graded true, up from partial. The spouse link is present in the tree (R33, Couple, KWVQ-475 to I1, marriage 5 Jan 1849 Lyngs, sourced to S1), and that link is the whole of this relationship finding. Dorthe's 4 Jun 1852 death and her birthplace are absent, but both are identifying detail rather than links, so they do not lower the label.",
     "f3": "Both persons correctly identified and present in the tree (Ane Cathrine Jensen, b. 29 Nov 1850, Lyngs; Dorthe Kirstine Jensen, m. 1849), but no relationship or assertion was ever written connecting them — the corroborating mother-daughter link itself was never made. Right people, missing link."
   }
 }
