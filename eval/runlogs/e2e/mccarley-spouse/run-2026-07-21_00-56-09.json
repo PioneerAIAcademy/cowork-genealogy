@@ -1691,51 +1691,44 @@
       "args": {
         "pattern": "**/*.json",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json\n.claude/settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_mccarley_spouse\",\n4\t    \"objective\": \"Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L7P6-3TT\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [],\n18..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"L7P6-3TT\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Moses J\",\n11\t          \"surname\": \"McCarley\",\n12\t          \"suffix\": \"Sr\"\n13\t        }\n14\t      ],\n15\t      \"facts\": [\n16\t        {\n17\t          \"id\": \"248eaba5-34ae-4182-9874-bfcc07166241\",\n18\t          \"type\": \"Birth\",\n19\t          \"date\": \"17 January 1767\",\n20\t          \"standard_date\": \"17 Jan 1767\",\n21\t    ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1760,47 +1753,41 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Garrard County",
         "contextName": "Kentucky"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Garrard, Kentucky, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1796/\\\",\\n      \\\"latitude\\\": 37.61667,\\n      \\\"longitude\\\": -84.55,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Garrard&focusedId=394148\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Garrard_County,_Kentucky\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Garrard, Clay, K..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Owen County",
         "contextName": "Indiana"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Owen, Indiana, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1819/\\\",\\n      \\\"latitude\\\": 39.31,\\n      \\\"longitude\\\": -86.84,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Owen&focusedId=392678\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Owen_County,_Indiana\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Owen, Owen Township, Clark, In..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Kentucky marriage records genealogy research early 1800s"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1808,8 +1795,7 @@
         "standardPlace": "Garrard, Kentucky, United States",
         "startYear": 1785,
         "endYear": 1844
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Garrard, Kentucky, United States\\\",\\n    \\\"startYear\\\": 1785,\\n    \\\"endYear\\\": 1844\\n  },\\n  \\\"scope\\\": \\\"Kentucky\\\",\\n  \\\"totalForPlace\\\": 22,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1674843\\\",\\n      \\\"title\\\": \\\"Kentucky, Births and Christenings, 1839-1960\\\",\\n      \\\"dateRange\\\": \\\"1839-1960\\\",\\n      \\\"recordCount\\\": 381231,\\n      \\\"personCount\\\": 1032346,\\n      \\\"imageCount\\\": 381231,\\n      \\\"url\\\": \\\"https://w..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1817,15 +1803,13 @@
         "standardPlace": "Owen, Indiana, United States",
         "startYear": 1820,
         "endYear": 1844
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Owen, Indiana, United States\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1844\\n  },\\n  \\\"scope\\\": \\\"Indiana\\\",\\n  \\\"totalForPlace\\\": 21,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1674814\\\",\\n      \\\"title\\\": \\\"Indiana, Births and Christenings, 1773-1933\\\",\\n      \\\"dateRange\\\": \\\"1773-1933\\\",\\n      \\\"recordCount\\\": 230558,\\n      \\\"personCount\\\": 652305,\\n      \\\"imageCount\\\": 230663,\\n      \\\"url\\\": \\\"https://www.fami..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1833,15 +1817,13 @@
         "standardPlace": "Garrard, Kentucky, United States",
         "startYear": 1785,
         "endYear": 1844
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Garrard, Kentucky, United States\\\",\\n    \\\"startYear\\\": 1785,\\n    \\\"endYear\\\": 1844\\n  },\\n  \\\"totalForPlace\\\": 368,\\n  \\\"returned\\\": 309,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/48033/\\\",\\n      \\\"linkText\\\": \\\"Genealogies of Kentucky Families from The Register of the Kentucky Historical Society, Vol. II\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"http://www.archives.gov/research/mil..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1948,24 +1930,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "q_001 pli_001 \u2014 search Kentucky County Marriages 1786-1965 (collection 1804888) for Moses McCarley/McCaley/McCauley marriage, date range 1785-1800, Garrard/Madison/Lincoln counties Kentucky"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1978,8 +1957,7 @@
         "marriageYearTo": 1805,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1804888\\\",\\n    \\\"marriageYearFrom\\\": 1783,\\n    \\\"marriageYearTo\\\": 1805,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1988,16 +1966,14 @@
         "stagedResultsRef": "results/.staging/537ecc4d-ab7c-4fc9-a1d7-2c6939930bb3.json",
         "subjectId": "L7P6-3TT",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L7P6-3TT\\\",\\n  \\\"scoredCount\\\": 4,\\n  \\\"returnedCount\\\": 4,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:Q28D-NHWN\\\",\\n      \\\"matchScore\\\": 0.62024873,\\n      \\\"primaryId\\\": \\\"p_102337459396\\\",\\n      \\\"personName\\\": \\\"Moses McCarley\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Kentucky, County Marriages, 1786..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2005,8 +1981,7 @@
         "recordId": "ark:/61903/1:1:Q28D-NHWN",
         "resultsRef": "results/.staging/537ecc4d-ab7c-4fc9-a1d7-2c6939930bb3.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102337459396\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:Q28D-NHWN\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Moses\\\",\\n          \\\"surname\\\": \\\"McCarley\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Unknown\\\",\\n          \\\"primary\\\": true,\\n          \\\"place\\\": \\\"Lincoln\\\",\\n          \\\"standard_place\\\": \\\"Lincoln, Ken..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2014,8 +1989,7 @@
         "recordId": "ark:/61903/1:1:Q28D-N9Z9",
         "resultsRef": "results/.staging/537ecc4d-ab7c-4fc9-a1d7-2c6939930bb3.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102337453201\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:Q28D-N9Z9\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Moses\\\",\\n          \\\"surname\\\": \\\"Mccarley\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_102337453199\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:Q28D-N9C..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2036,8 +2010,7 @@
         "resultsAvailable": 4,
         "stagedResultsRef": "results/.staging/537ecc4d-ab7c-4fc9-a1d7-2c6939930bb3.json",
         "notes": "Top match: Moses McCarley married Elizabeth Patt, 24 Jul 1792, Lincoln County, KY (ark:/61903/1:1:Q28D-NHWN); already attached to L7P6-3TT. Second result is Moses McCarley Jr. marrying Betsy Lawson 1817 \u2014 Moses Sr. appears as father/surety, not principal. Flag: Sophia's birth (19 Apr 1792) predates marriage bond date (24 Jul 1792); may indicate prior ceremony or earlier relationship."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:18:23.481Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2050,16 +2023,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract assertions from log_001 results. Two records to process: (1) ark:/61903/1:1:Q28D-NHWN \u2014 \"Moses McCarley and Elizabeth Patt, Kentucky County Marriages, 24 Jul 1792, Lincoln County, KY\" \u2014 principal record for q_001, Moses Sr. as groom; (2) ark:/61903/1:1:Q28D-N9C1 \u2014 \"Moses McCarley and Betsy Lawson, Kentucky County Marriages, 21 Nov 1817, Jessamine County, KY\" \u2014 Moses Sr. appears as father of the groom (FAN). projectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8 logId: log_001"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2067,15 +2038,13 @@
         "description": "Extract record 1: Moses McCarley & Elizabeth Patt marriage 1792",
         "subagent_type": "record-extractor",
         "prompt": "Please extract all GPS-conformant assertions from the following FamilySearch record and persist them to the project.\n\n**projectPath:** /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\n**recordId:** ark:/61903/1:1:Q28D-NHWN\n**logId:** log_001\n**resultsRef:** results/log_001.json\n**Open research question:** q_001 \u2014 \"Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\"\n\n**Full record content (from record_read via the log_001 sidecar):**\n\n```json\n{\n  \"persons\": [\n    {\n      \"id\": \"p_102337459396\",\n      \"ark\": \"ark:/61903/1:1:Q28D-NHWN\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Moses\", \"surname\": \"McCarley\"}],\n      \"facts\": [\n        {\"type\": \"Unknown\", \"primary\": true, \"place\": \"Lincoln\", \"standard_place\": \"Lincoln, Kentucky, United States\"}\n      ],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102337459399\",\n      \"ark\": \"ark:/61903/1:1:Q28D-NHWK\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Elizabeth\", \"surname\": \"Patt\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"type\": \"Couple\",\n      \"person1\": \"p_102337459396\",\n      \"person2\": \"p_102337459399\",\n      \"facts\": [\n        {\"type\": \"Marriage\", \"primary\": true, \"date\": \"24 Jul 1792\", \"standard_date\": \"24 Jul 1792\", \"place\": \"Lincoln, Kentucky, United States\", \"standard_place\": \"Lincoln, Kentucky, United States\"}\n      ]\n    }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_102937068311\",\n      \"title\": \"Entry for Moses McCarley and Elizabeth Patt, \\\"Kentucky, County Marriages, 1786-1965\\\"\",\n      \"citation\": \"\\\"Kentucky, County Marriages, 1786-1965\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN : Sat Feb 24 07:50:21 UTC 2024), Entry for Moses McCarley and Elizabeth Patt, 24 Jul 1792.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:QLWS-5MZ8\"\n    },\n    {\n      \"id\": \"sd_da1\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BK-BSZ8-3\"\n    }\n  ]\n}\n```\n\n**Context from tree.gedcomx.json:**\n- Moses J McCarley Sr (L7P6-3TT): born 17 Jan 1767 (United States), died 9 Apr 1844 (Owen, Indiana). He is the subject of the research project.\n- No spouse is currently linked to Moses Sr. in the tree.\n- Many children are linked to Moses Sr. as ParentChild relationships, the eldest being Sophia (LHD2-QCN, born 19 Apr 1792 in Garrard, Kentucky).\n\n**Notes for extraction:**\n- The record is a Kentucky county marriage index entry \u2014 a derivative source (from a county marriage register, which is the original).\n- Moses McCarley (p_102337459396) is the groom \u2014 likely Moses J McCarley Sr (the subject).\n- Elizabeth Patt is the bride; her identity in the tree is currently unknown.\n- The marriage date (24 Jul 1792) is slightly after the birth of Sophia (19 Apr 1792). This may reflect that the record date is a marriage bond date rather than the ceremony date, or there may be a prior relationship. Please note this in the rationale/notes of the marriage assertion \u2014 do not treat it as a conflict requiring resolution at this stage, just flag it analytically.\n- This is the primary positive result for research question q_001.\n- Do NOT create person_evidence links \u2014 identity resolution is handled separately by the person-evidence skill.\n"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\n**Source:** src_001 / S1 \\u2014 created (new source). `sourceReuse.action: created`.\\n\\n**Assertions persisted: 4 total**\\n- `a_001` \\u2014 groom (`p_102337459396`, Moses McCarley): `name`, direct, primary, self\\n- `a_002` \\u2014 bride (`p_102337459399`, Elizabeth Patt): `name`, direct, primary, self\\n- `a_003` \\u2014 groom: `marriage` 24 Jul 1792, Lincoln, Kentucky, direct, primary, official_duty (clerk)\\n- `a_004` \\u201..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"L7P6-3TT\\\",\\n      \\\"name\\\": \\\"Moses J McCarley\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LHD2-QCN\\\",\\n      \\\"name\\\": \\\"Sophia McCar..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2210,8 +2179,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Agent",
@@ -2219,15 +2187,13 @@
         "description": "Extract record 2: Moses McCarley Jr. & Betsy Lawson marriage 1817 (Moses Sr. as father)",
         "subagent_type": "record-extractor",
         "prompt": "Please extract all GPS-conformant assertions from the following FamilySearch record and persist them to the project.\n\n**projectPath:** /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\n**recordId:** ark:/61903/1:1:Q28D-N9C1\n**logId:** log_001\n**resultsRef:** results/log_001.json\n**Open research question:** q_001 \u2014 \"Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\"\n\n**Full record content (from record_read via the log_001 sidecar):**\n\n```json\n{\n  \"persons\": [\n    {\n      \"id\": \"p_102337453201\",\n      \"ark\": \"ark:/61903/1:1:Q28D-N9Z9\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Moses\", \"surname\": \"Mccarley\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102337453199\",\n      \"ark\": \"ark:/61903/1:1:Q28D-N9C1\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Moses\", \"surname\": \"McCarley\"}],\n      \"facts\": [\n        {\"type\": \"Unknown\", \"primary\": true, \"place\": \"Jessamine\", \"standard_place\": \"Jessamine, Kentucky, United States\"}\n      ],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102337453209\",\n      \"ark\": \"ark:/61903/1:1:Q28D-N9ZC\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Betsy\", \"surname\": \"Lawson\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\"type\": \"ParentChild\", \"parent\": \"p_102337453201\", \"child\": \"p_102337453199\"},\n    {\"type\": \"Couple\", \"person1\": \"p_102337453199\", \"person2\": \"p_102337453209\"}\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_102937065211\",\n      \"title\": \"Entry for Moses McCarley and Betsy Lawson, \\\"Kentucky, County Marriages, 1786-1965\\\"\",\n      \"citation\": \"\\\"Kentucky, County Marriages, 1786-1965\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1 : Sat Feb 24 06:22:54 UTC 2024), Entry for Moses McCarley and Moses Mccarley, 21 Nov 1817.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:QLWS-PTY9\"\n    },\n    {\n      \"id\": \"sd_da1\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9B2-9R8X\"\n    }\n  ]\n}\n```\n\n**Record interpretation notes:**\n- The principal groom is Moses McCarley Jr. (p_102337453199, ark Q28D-N9C1), marrying Betsy Lawson on 21 Nov 1817 in Jessamine County, Kentucky.\n- Moses Mccarley (p_102337453201, ark Q28D-N9Z9) appears as the father of the groom \u2014 this is Moses J McCarley Sr., the research subject (L7P6-3TT), appearing in a non-principal (FAN) role.\n- This record is FAN evidence: it corroborates that Moses Sr. was alive in 1817, was resident in or near Jessamine County, Kentucky, and had a son named Moses McCarley Jr. (already in tree as M6M6-LLW).\n- The record is a derivative source (index of county marriage register).\n- Do NOT create person_evidence links \u2014 identity resolution is handled separately.\n- Context: Moses Sr. (L7P6-3TT) is the research subject; Moses Jr. (M6M6-LLW) is already in the tree as his son.\n"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction persisted successfully. Here is the compact summary:\\n\\n**Source:** src_002 / S2 \\u2014 created (new source, derivative index)\\n**Original not examined** \\u2014 only the FamilySearch index entry was accessed; the Jessamine County marriage register itself was not examined. Index transcription errors are possible.\\n\\n**Assertions persisted: 8 total**\\n- groom (Moses McCarley Jr., p_102337453199): a_005 (name), a_006 (marriage event), a_007 (relationship: ch..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"L7P6-3TT\\\",\\n      \\\"name\\\": \\\"Moses J McCarley\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LHD2-QCN\\\",\\n      \\\"name\\\": \\\"Sophia McCar..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2428,8 +2394,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_id 'ark:/61903/1:1:Q28D-N9C1' does not match any result in sidecar 'results/log_001.json' \\u2014 expected one of: ark:/61903/1:1:Q28D-NHWN, ark:/61903/1:1:Q28D-N9Z9, ark:/61903/1:1:Q28D-XWSS, ark:/61903/1:1:Q28D-J323\\\",\\n    \\\"ops[2]: record_id 'ark:/61903/1:1:Q28D-N9C1' does not match any result in sidecar 'results/log_001.json' \\u2014 expected one of: ark:/61903/1:1:Q28D-NHWN, ark:/61903/1:1:Q28D-N9Z9, ark..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2630,31 +2595,27 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_007\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Link personas from newly extracted records to tree persons. Records: src_001 (Moses McCarley & Elizabeth Patt, 24 Jul 1792 Lincoln Co. KY marriage) and src_002 (Moses McCarley Jr. & Betsy Lawson, 21 Nov 1817 Jessamine Co. KY marriage). Personas needing links: (1) p_102337459396 Moses McCarley groom 1792 \u2192 likely L7P6-3TT (Moses J McCarley Sr.); (2) p_102337459399 Elizabeth Patt bride 1792 \u2192 no tree person yet, create stub; (3) p_102337453201 Moses Mccarley Sr. father of groom 1817 \u2192 likely L7P6-3TT; (4) p_102337453199 Moses McCarley Jr. groom 1817 \u2192 likely M6M6-LLW; (5) p_102337453209 Betsy Lawson bride 1817 \u2192 no tree person yet. Project: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__materialize_facts,mcp__genealogy__same_person",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_mccarley_spouse\",\n4\t    \"objective\": \"Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L7P6-3TT\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t ..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2663,8 +2624,7 @@
         "personId": "L7P6-3TT",
         "recordId": "ark:/61903/1:1:Q28D-NHWN",
         "recordRole": "groom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"L7P6-3TT\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2672,8 +2632,7 @@
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8",
         "recordId": "ark:/61903/1:1:Q28D-NHWN",
         "recordRole": "bride"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2682,8 +2641,7 @@
         "personId": "M6M6-LLW",
         "recordId": "ark:/61903/1:1:Q28D-N9Z9",
         "recordRole": "groom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"M6M6-LLW\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2692,8 +2650,7 @@
         "personId": "L7P6-3TT",
         "recordId": "ark:/61903/1:1:Q28D-N9Z9",
         "recordRole": "father_of_groom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"L7P6-3TT\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2701,8 +2658,7 @@
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8",
         "recordId": "ark:/61903/1:1:Q28D-N9Z9",
         "recordRole": "bride"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2897,16 +2853,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2930,8 +2884,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_relationship: the added relationship edge must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2965,8 +2918,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R25\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R26\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3006,8 +2958,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F6\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3020,39 +2971,34 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "q_001 \u2014 evaluate whether research on \"Who did Moses J McCarley Sr marry?\" is reasonably exhaustive. Found: Kentucky County Marriages derivative index entry (src_001) showing Moses McCarley married Elizabeth Patt, 24 Jul 1792, Lincoln County, KY. Original register image not examined. Remaining planned items: pli_002 (1840 census, Owen Co. IN), pli_003 (Owen Co. probate 1819-1845), pli_004 (1830 census), pli_005 (Ancestry KY marriages fallback), pli_006 (FS KY Marriages 1785-1979 fallback). Project: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "Execute pli_002: 1840 US Federal Census, Owen County, Indiana \u2014 searching for Moses McCarley Sr. (born 17 Jan 1767, died 9 Apr 1844). Subject ID: L7P6-3TT. projectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__research_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3067,8 +3013,7 @@
         "birthYearTo": 1772,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"residencePlace\\\": \\\"Owen County, Indiana\\\",\\n    \\\"birthYearFrom\\\": 1762,\\n    \\\"birthYearTo\\\": 1772,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCapp..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3077,8 +3022,7 @@
         "stagedResultsRef": "results/.staging/2b0fc530-5e2d-4dbd-8be0-49627164c731.json",
         "subjectId": "L7P6-3TT",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L7P6-3TT\\\",\\n  \\\"scoredCount\\\": 2,\\n  \\\"returnedCount\\\": 2,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XHTB-WQ6\\\",\\n      \\\"matchScore\\\": 0.017867815,\\n      \\\"primaryId\\\": \\\"p_10422221533\\\",\\n      \\\"personName\\\": \\\"Job M Carley\\\",\\n      \\\"collectionTitle\\\": \\\"United States, Census, 1840\\\",\\n      \\\"recordArk\\\": \\\"ark:/6..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3102,8 +3046,7 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/2b0fc530-5e2d-4dbd-8be0-49627164c731.json",
         "notes": "Returned 2 results (\"Job M Carley\", \"J M Carley\") with match scores near zero \u2014 not the subject. Birth year filter may have been too narrow. Broadening to Indiana state level without birth year filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:32:57.841Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3116,8 +3059,7 @@
         "residencePlace": "Indiana, United States",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"residencePlace\\\": \\\"Indiana, United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3130,8 +3072,7 @@
         "residencePlace": "Indiana, United States",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Carley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"residencePlace\\\": \\\"Indiana, United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"h..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3143,8 +3084,7 @@
         "residenceYearTo": 1840,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarly\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 34,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 34,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3153,8 +3093,7 @@
         "stagedResultsRef": "results/.staging/eb6ca5d0-808c-45be-94d8-179188c81b08.json",
         "subjectId": "L7P6-3TT",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L7P6-3TT\\\",\\n  \\\"scoredCount\\\": 34,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 6,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XHR1-TDV\\\",\\n      \\\"matchScore\\\": 0.18489362,\\n      \\\"primaryId\\\": \\\"p_10421456778\\\",\\n      \\\"personName\\\": \\\"Moses McCarley\\\",\\n      \\\"collectionTitle\\\": \\\"United States, Census, 1840\\\",\\n      \\\"recordArk\\\": \\\"ark..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3176,8 +3115,7 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/b3ae338b-b5eb-4656-a85e-144fbf67aa67.json",
         "notes": "Broadened to all Indiana, no birth year filter \u2014 still only the same two \"J M Carley\" / \"Job M Carley\" results, not the subject. Trying national search with spelling variant."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:34:13.959Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3198,8 +3136,7 @@
         "resultsAvailable": 34,
         "stagedResultsRef": "results/.staging/eb6ca5d0-808c-45be-94d8-179188c81b08.json",
         "notes": "National search with spelling variant McCarly returned 34 results (4 named \"Moses McCarley\"), all in GA, AR, KY, or OH \u2014 none in Indiana. Top-ranked by match score was Garrard, KY (0.185, attached to other person). No Owen County, Indiana result found. The 1840 census index for Owen County, Indiana does not appear to contain Moses McCarley Sr. \u2014 the record may be unindexed or indexed under a form not returned by any tested variant (McCarley/Carley/McCarly). Proceeding to probate records."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:34:22.323Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 34,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3212,8 +3149,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3226,8 +3162,7 @@
         "anyYearTo": 1845,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"residencePlace\\\": \\\"Owen County, Indiana\\\",\\n    \\\"anyYearFrom\\\": 1819,\\n    \\\"anyYearTo\\\": 1845,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": f..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3238,8 +3173,7 @@
         "residencePlace": "Indiana, United States",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"residencePlace\\\": \\\"Indiana, United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3251,8 +3185,7 @@
         "anyYearTo": 1850,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Carley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"anyYearFrom\\\": 1819,\\n    \\\"anyYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 38,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 38,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3273,8 +3206,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results. FamilySearch has no indexed probate records for Owen County, Indiana in this period. Trying Indiana state level."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:35:13.581Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3296,8 +3228,7 @@
         "resultsAvailable": 38,
         "stagedResultsRef": "results/.staging/a0ae5ede-9cc6-47f1-aed5-6fe04cff81bc.json",
         "notes": "38 results, all from England, Ireland, Australia, or wrong US states \u2014 none in Indiana. FamilySearch does not have Owen County, Indiana probate records 1819-1845 indexed. This data gap is a known limitation: early Indiana county probate records are largely undigitized on FamilySearch. These records would need to be checked at the Indiana State Archives or via Ancestry."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:35:21.692Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 38,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3310,8 +3241,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3324,8 +3254,7 @@
         "residencePlace": "Owen County, Indiana",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1830,\\n    \\\"residenceYearTo\\\": 1830,\\n    \\\"residencePlace\\\": \\\"Owen County, Indiana\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"h..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3338,8 +3267,7 @@
         "residencePlace": "Indiana, United States",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1830,\\n    \\\"residenceYearTo\\\": 1830,\\n    \\\"residencePlace\\\": \\\"Indiana, United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3351,8 +3279,7 @@
         "residenceYearTo": 1830,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarly\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1830,\\n    \\\"residenceYearTo\\\": 1830,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 22,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 22,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3361,8 +3288,7 @@
         "stagedResultsRef": "results/.staging/c153ad66-2b68-4726-a4d7-0d80d5491b7f.json",
         "subjectId": "L7P6-3TT",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L7P6-3TT\\\",\\n  \\\"scoredCount\\\": 22,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 6,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XHPB-PHN\\\",\\n      \\\"matchScore\\\": 0.18925612,\\n      \\\"primaryId\\\": \\\"p_10419806956\\\",\\n      \\\"personName\\\": \\\"Moses Mccarley\\\",\\n      \\\"collectionTitle\\\": \\\"United States, Census, 1830\\\",\\n      \\\"recordArk\\\": \\\"ark..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3383,8 +3309,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Owen County, Indiana 1830 census. Tried Indiana state level next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:37:45.718Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3405,8 +3330,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results at Indiana state level. Trying national spelling variant."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:37:58.526Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3427,8 +3351,7 @@
         "resultsAvailable": 22,
         "stagedResultsRef": "results/.staging/c153ad66-2b68-4726-a4d7-0d80d5491b7f.json",
         "notes": "22 results nationally, including multiple \"Moses McCarley\" entries. Top match by score: Garrard County, Kentucky (0.189, attached to different person). No Indiana result in any of 22 records. The 1830 US Census for Owen County, Indiana does not appear indexed on FamilySearch for this surname. Consistent with 1840 census gap \u2014 early Owen County census records are not indexed on FamilySearch."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:38:11.299Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_009.json\\\",\\n  \\\"returnedCount\\\": 22,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_009.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3441,8 +3364,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3455,8 +3377,7 @@
         "marriageYearTo": 1800,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"McCarley\\\",\\n    \\\"givenName\\\": \\\"Moses\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"residencePlace\\\": \\\"Kentucky, United States\\\",\\n    \\\"marriageYearFrom\\\": 1785,\\n    \\\"marriageYearTo\\\": 1800,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\\\"\\n  },\\n  \\\"totalMatches\\\": 5,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 5,\\n  \\\"offset\\\": 0,\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3465,8 +3386,7 @@
         "stagedResultsRef": "results/.staging/54bbaf8c-0cea-4690-8c39-947052e05035.json",
         "subjectId": "L7P6-3TT",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L7P6-3TT\\\",\\n  \\\"scoredCount\\\": 5,\\n  \\\"returnedCount\\\": 5,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:Q28D-NHWN\\\",\\n      \\\"matchScore\\\": 0.9167159,\\n      \\\"primaryId\\\": \\\"p_102337459396\\\",\\n      \\\"personName\\\": \\\"Moses McCarley\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Kentucky, County Marriages, 1786-..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3488,8 +3408,7 @@
         "resultsAvailable": 5,
         "stagedResultsRef": "results/.staging/54bbaf8c-0cea-4690-8c39-947052e05035.json",
         "notes": "Returned 5 results, all from Kentucky County Marriages (same collection as pli_001). Top result Q28D-NHWN (Moses McCarley & Elizabeth Patt, score 0.917, attachedToSubject) is already extracted as src_001. Q28D-N9Z9 (Moses Jr. & Betsy Lawson) already extracted as src_002. New: Q28D-XWSS \u2014 'Mofes [Moses] Mccarley' in the Westley Alverson & Salvina Mccarley marriage record, also attachedToSubject (FAN \u2014 likely Moses Sr. as Salvina's father); not yet extracted. pli_006 is the same underlying collection as pli_001 \u2014 no independent corroboration added. Skipping further fallback since the primary is already complete."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:39:41.711Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3515,16 +3434,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Read the original Lincoln County, Kentucky marriage register image for the Moses McCarley / Elizabeth Patt entry (src_001, log_001). The derivative index record Q28D-NHWN is already extracted as src_001. The original register image ARK is ark:/61903/3:1:3Q9M-C9BK-BSZ8-3. Use image-reader to transcribe the register page, then pass the transcription to record-extractor to refine src_001 in place \u2014 upgrading it from a derivative index entry to reflect the original register content. projectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8. logId: log_001. Question: q_001 (Who did Moses J McCarley Sr marry?). Looking for: the register entry naming Moses McCarley as groom and his bride, in Lincoln County, Kentucky circa 24 Jul 1792."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -3532,8 +3449,7 @@
         "description": "Read Lincoln County KY marriage register image",
         "subagent_type": "image-reader",
         "prompt": "Please read FamilySearch image ARK: ark:/61903/3:1:3Q9M-C9BK-BSZ8-3\n\nlooking_for: any entry naming a \"McCarley\" or \"McCarly\" as groom, on a page from Lincoln County, Kentucky marriage records circa 1790-1795\n\nproject_path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8\n\nReturn a full verbatim transcription of every visible entry on the page, followed by a list of extracted facts for any McCarley entry found."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"NOT READ: ark:/61903/3:1:3Q9M-C9BK-BSZ8-3\\n\\nThe exact error returned by `image_transcribe` was: \\\"Could not reach OpenRouter. (fetch failed)\\\"\\n\\nThis is a connectivity failure \\u2014 `image_transcribe` could not reach the OpenRouter API, which it uses to run the vision model (Qwen3-VL) that performs the OCR. No transcription was produced, and none has been fabricated here.\\n\\n**What to do next:**\\n\\n1. Check that an OpenRouter API key is configured \\u2014 if none ..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -3541,16 +3457,14 @@
         "ark": "ark:/61903/3:1:3Q9M-C9BK-BSZ8-3",
         "lookingFor": "any entry naming a \"McCarley\" or \"McCarly\" as groom, on a page from Lincoln County, Kentucky marriage records circa 1790-1795",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "{\"error\":\"Could not reach OpenRouter. (fetch failed)\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3565,16 +3479,14 @@
         "outcome": "error",
         "resultsExamined": 0,
         "notes": "image-reader returned NOT READ: \"Could not reach OpenRouter. (fetch failed)\" \u2014 transient connectivity failure, not a missing key. The original Lincoln County, Kentucky marriage register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) could not be transcribed. src_001 remains a derivative index entry. The image exists on FamilySearch and is the original register backing the Q28D-NHWN indexed record; retry in a future session when OpenRouter connectivity is restored. Per skill guidance: do not treat NOT READ as evidence; pivot to indexes (already done \u2014 indexed content is in src_001)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-21T00:42:31.222Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3618,24 +3530,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "Evaluate q_001: \"Who did Moses J McCarley Sr marry?\" All plan items for pl_001 are now completed or skipped.\n\nEvidence gathered:\n- src_001 (S1): Kentucky County Marriages 1786-1965, derivative index entry \u2014 Moses McCarley groom, Elizabeth Patt bride, 24 Jul 1792, Lincoln County, KY (ark:/61903/1:1:Q28D-NHWN). Assertions a_001\u2013a_004 linked to L7P6-3TT (Moses Sr.) and I1 (Elizabeth Patt stub).\n- src_002 (S2): Same collection, Moses McCarley Jr. & Betsy Lawson marriage 21 Nov 1817, Jessamine Co. KY \u2014 Moses Sr. appears as father-of-groom (a_008, a_009 linked to L7P6-3TT at confident/0.089). FAN corroboration that Moses Sr. was living 1817, but same collection as src_001.\n\nSearched and found nothing:\n- pli_002: 1840 US Census, Owen Co. Indiana \u2014 4 variants tried, no Indiana result indexed on FamilySearch\n- pli_003: Owen Co. Indiana probate 1819-1845 \u2014 3 variants, no result; collection not indexed on FamilySearch  \n- pli_004: 1830 US Census, Indiana \u2014 3 variants, no Indiana result indexed on FamilySearch\n- pli_006: FS KY Marriages 1785-1979 \u2014 same collection as src_001, same records already extracted\n\nOriginal register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) attempted but could not be read \u2014 OpenRouter connectivity failure (transient, not a missing key, not sealed by privacy law).\n\nprojectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "limit": 120
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_mccarley_spouse\",\n4\t    \"objective\": \"Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L7P6-3TT\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t ..."
+      }
     },
     {
       "tool": "Read",
@@ -3643,8 +3552,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 120,
         "limit": 200
-      },
-      "response_summary": "120\t      \"query\": {\n121\t        \"collection\": \"Kentucky, County Marriages, 1786-1965 (1804888)\",\n122\t        \"surname\": \"McCarley\",\n123\t        \"givenName\": \"Moses\",\n124\t        \"recordType\": \"marriage\",\n125\t        \"marriageYearFrom\": 1783,\n126\t        \"marriageYearTo\": 1805\n127\t      },\n128\t      \"outcome\": \"positive\",\n129\t      \"results_examined\": 4,\n130\t      \"external_site\": null,\n131\t      \"results_ref\": \"results/log_001.json\",\n132\t      \"results_available\": 4,\n133\t      \"notes\": \"Top ..."
+      }
     },
     {
       "tool": "Read",
@@ -3652,8 +3560,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 320,
         "limit": 300
-      },
-      "response_summary": "320\t      \"results_ref\": \"results/log_010.json\",\n321\t      \"results_available\": 5,\n322\t      \"notes\": \"Returned 5 results, all from Kentucky County Marriages (same collection as pli_001). Top result Q28D-NHWN (Moses McCarley & Elizabeth Patt, score 0.917, attachedToSubject) is already extracted as src_001. Q28D-N9Z9 (Moses Jr. & Betsy Lawson) already extracted as src_002. New: Q28D-XWSS \u2014 'Mofes [Moses] Mccarley' in the Westley Alverson & Salvina Mccarley marriage record, also attachedToSubje..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3690,39 +3597,34 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "Write a proof summary for q_001: \"Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\"\n\nResearch has been terminated early on resource-limit grounds (exhaustive_declaration.declared: false). The accessible FamilySearch evidence has been exhausted. The conclusion must be written at the honest tier that the available evidence supports.\n\nEvidence available:\n- src_001 (S1): Kentucky County Marriages 1786-1965, DERIVATIVE index \u2014 Moses McCarley, groom; Elizabeth Patt, bride; 24 Jul 1792; Lincoln County, Kentucky. Assertions a_001 (groom name, primary, direct), a_002 (bride name, primary, direct), a_003 (groom marriage event, primary, direct), a_004 (bride marriage event, primary, direct). Match score 0.917 for L7P6-3TT; attachedToSubject on FamilySearch.\n- src_002 (S2): Same collection, DERIVATIVE index \u2014 Moses McCarley Jr. groom, Betsy Lawson bride, 21 Nov 1817, Jessamine County, KY. Assertions a_008 (father-of-groom name \"Moses Mccarley\", indeterminate, indirect), a_009 (father-of-groom relationship, indeterminate, indirect). FAN corroboration \u2014 Moses Sr. was alive in 1817 as father of the groom, but src_002 does not name Elizabeth Patt.\n\nWhat was NOT found: No independent corroboration from a different repository or record type; original register image unread (OpenRouter failure); Indiana census/probate nil on FamilySearch.\n\nUnresolved discrepancy: Sophia McCarley born 19 Apr 1792 predates the 24 Jul 1792 marriage bond date (~3 months). Likely explanation: bond date \u2260 ceremony date (common Kentucky practice). Cannot confirm without original register.\n\nPerson tree IDs: Moses Sr. = L7P6-3TT; Elizabeth Patt (stub) = I1.\nprojectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__tree_correct,mcp__genealogy__tree_edit",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_mccarley_spouse\",\n4\t    \"objective\": \"Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L7P6-3TT\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t ..."
+      }
     },
     {
       "tool": "Read",
@@ -3730,8 +3632,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 100,
         "limit": 150
-      },
-      "response_summary": "100\t          \"sequence\": 4,\n101\t          \"record_type\": \"census\",\n102\t          \"jurisdiction\": \"Indiana\",\n103\t          \"date_range\": \"1830\",\n104\t          \"repository\": \"FamilySearch\",\n105\t          \"rationale\": \"The 1830 US Federal Census provides an earlier household snapshot roughly 14 years before Moses's death. If the family had already migrated to Indiana by 1830, his wife appears as a female age column entry. Comparing 1830 and 1840 household compositions helps confirm which adult ..."
+      }
     },
     {
       "tool": "Read",
@@ -3739,8 +3640,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 400,
         "limit": 250
-      },
-      "response_summary": "400\t  \"assertions\": [\n401\t    {\n402\t      \"id\": \"a_001\",\n403\t      \"record_id\": \"ark:/61903/1:1:Q28D-NHWN\",\n404\t      \"record_persona_id\": \"p_102337459396\",\n405\t      \"record_role\": \"groom\",\n406\t      \"fact_type\": \"name\",\n407\t      \"value\": \"Moses McCarley\",\n408\t      \"structured_value\": {\n409\t        \"given\": \"Moses\",\n410\t        \"surname\": \"McCarley\"\n411\t      },\n412\t      \"information_quality\": \"primary\",\n413\t      \"informant\": \"Moses McCarley (groom)\",\n414\t      \"informant_proximity\": \"se..."
+      }
     },
     {
       "tool": "Read",
@@ -3748,8 +3648,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 649,
         "limit": 150
-      },
-      "response_summary": "649\t  ],\n650\t  \"person_evidence\": [\n651\t    {\n652\t      \"id\": \"pe_001\",\n653\t      \"assertion_id\": \"a_001\",\n654\t      \"person_id\": \"L7P6-3TT\",\n655\t      \"confidence\": \"confident\",\n656\t      \"match_score\": 0.62,\n657\t      \"rationale\": \"Groom 'Moses McCarley' in Lincoln County, KY marriage of 24 Jul 1792 matches Moses J McCarley Sr. (L7P6-3TT) on all key identifiers: exact name, male gender, age ~25 at marriage (born 17 Jan 1767 \u2713), KY location consistent with early family residence. FamilySearc..."
+      }
     },
     {
       "tool": "Read",
@@ -3757,15 +3656,13 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 795,
         "limit": 100
-      },
-      "response_summary": "795\t    {\n796\t      \"id\": \"pe_017\",\n797\t      \"assertion_id\": \"a_011\",\n798\t      \"person_id\": \"M6M6-LLW\",\n799\t      \"confidence\": \"confident\",\n800\t      \"match_score\": null,\n801\t      \"rationale\": \"Bride's marriage assertion names Moses McCarley as the other party \u2014 bears on M6M6-LLW (Moses Jr., the groom per a_005 analysis) as well.\",\n802\t      \"created\": \"2026-07-21\"\n803\t    }\n804\t  ],\n805\t  \"conflicts\": [],\n806\t  \"hypotheses\": [],\n807\t  \"timelines\": [],\n808\t  \"proof_summaries\": [],\n809\t  \"..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"L7P6-3TT\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Moses J\",\n11\t          \"surname\": \"McCarley\",\n12\t          \"suffix\": \"Sr\"\n13\t        },\n14\t        {\n15\t          \"id\": \"N15\",\n16\t          \"type\": \"BirthName\",\n17\t          \"given\": \"Moses\",\n18\t          \"surname\": \"McCarley\",\n19\t          \"sources\": [\n20\t            {\n21\t              \"ref\": \"S1\",\n22\t         ..."
+      }
     },
     {
       "tool": "Read",
@@ -3773,8 +3670,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-mccarley-spouse-mgi6t5j8/research.json",
         "offset": 300,
         "limit": 105
-      },
-      "response_summary": "300\t      \"results_available\": 0,\n301\t      \"notes\": \"Zero results at Indiana state level. Trying national spelling variant.\"\n302\t    },\n303\t    {\n304\t      \"id\": \"log_009\",\n305\t      \"plan_item_id\": \"pli_004\",\n306\t      \"performed\": \"2026-07-21T00:38:11.299Z\",\n307\t      \"tool\": \"record_search\",\n308\t      \"query\": {\n309\t        \"surname\": \"McCarly\",\n310\t        \"givenName\": \"Moses\",\n311\t        \"recordType\": \"census\",\n312\t        \"residenceYearFrom\": 1830,\n313\t        \"residenceYearTo\": 1830,..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3798,8 +3694,7 @@
           "exhaustive_search_summary": "FamilySearch's Kentucky, County Marriages, 1786-1965 collection was searched (pli_001, pli_006) and yielded a derivative index entry naming Elizabeth Patt as Moses McCarley's bride in Lincoln County, Kentucky, 24 July 1792. The original Lincoln County register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) was attempted but unreadable due to transient OpenRouter connectivity failure. Indiana census (1830, 1840) and Owen County probate (1819-1845) were searched on FamilySearch with multiple spelling variants; these collections are not indexed for this jurisdiction and period and returned no results. Ancestry (Kentucky Compiled Marriages; Indiana probate; Indiana census) was not accessible in this autonomous session. Research was terminated on resource-limitation grounds; the exhaustive_declaration is declared: false.",
           "narrative_markdown": "## Who Did Moses J. McCarley Sr. Marry?\n\n**Research Question:** Who did Moses J. McCarley Sr. (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\n\n**Conclusion (Probable):** The available evidence strongly suggests that Moses J. McCarley Sr. married **Elizabeth Patt**, in Lincoln County, Kentucky, about 24 July 1792. The conclusion rests on a single derivative index entry from a contemporary county marriage collection; the original register was not examined, and no independent repository corroborates the identification. Research was terminated on resource-limitation grounds before all relevant sources were searched. The GPS threshold for \"proved\" is not met; the tier is **probable**.\n\n---\n\n### Principal Source\n\n\"Kentucky, County Marriages, 1786-1965,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN : accessed 20 July 2026), entry for Moses McCarley and Elizabeth Patt, 24 July 1792, Lincoln County, Kentucky [a_001\u2013a_004; src_001 / S1].\n\nThis derivative index entry records the marriage of Moses McCarley to Elizabeth Patt on 24 July 1792 in Lincoln County, Kentucky, drawn from records maintained by the Lincoln County clerk at the time of the event. Informants for a Kentucky marriage bond were ordinarily the groom and a bondsman \u2014 parties with direct knowledge \u2014 making the information **primary**. The evidence is **direct**: the record expressly names Elizabeth Patt as Moses McCarley's bride. Source classification: *derivative; primary information; direct evidence.*\n\nThe identity of the groom as Moses J. McCarley Sr. (L7P6-3TT) is established with confidence: the exact name matches; Moses Sr.'s approximate age was 25 in 1792 (born 17 January 1767), consistent with the record; the Kentucky location aligns with the family's known residence in what became Garrard County; and FamilySearch's own system had attached this record to L7P6-3TT (match score 0.917). No competing candidate has been identified.\n\n### FAN Corroboration\n\n\"Kentucky, County Marriages, 1786-1965,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1 : accessed 20 July 2026), entry for Moses McCarley and Betsy Lawson, 21 November 1817, Jessamine County, Kentucky [a_008\u2013a_009; src_002 / S2].\n\nMoses Mccarley [Sr.] appears as father of the groom in Moses Jr.'s 1817 Jessamine County marriage record. This confirms Moses Sr. was alive in 1817, but it does not name Elizabeth Patt and provides no independent evidence of her spousal identity. Because this record derives from the same *Kentucky, County Marriages, 1786-1965* collection as the principal source, it is not an independent source under evidence-independence rules. Source classification: *derivative; indeterminate information; indirect evidence* as to Moses Sr.'s marriage.\n\n### Negative Findings\n\nSearches of FamilySearch for Owen County, Indiana \u2014 where Moses Sr. died in 1844 \u2014 returned no results for the 1840 census (pli_002), 1830 census (pli_004), or Owen County probate (pli_003) under any tested surname variant. These collections appear unindexed for this jurisdiction and period on FamilySearch. The probate record of Moses Sr.'s estate, which would likely name his surviving wife, remains a significant unsearched gap.\n\n### Date Discrepancy\n\nSophia McCarley, the eldest known child of Moses Sr., was born 19 April 1792 \u2014 about three months before the recorded bond date of 24 July 1792. In early Kentucky practice, the marriage bond date and the ceremony date often differed. This discrepancy concerns the precise date of the marriage, not the identity of the parties, and does not constitute a conflict disputing the concluded fact. Examining the original Lincoln County register (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3, unread due to transient infrastructure failure) would resolve this detail.\n\n### Tier and Limitations\n\nResearch is not exhaustive (declaration: false). Only derivative sources were examined; the original register was not read; Ancestry, Indiana probate, and Indiana census records were not searched. The GPS threshold for \"proved\" requires at least two independent original sources with primary information and fully exhaustive research \u2014 conditions not met here. The evidence is nonetheless clearly weighted toward Elizabeth Patt as Moses Sr.'s wife: a contemporary civil record directly names her, the groom has been confidently identified as Moses Sr., and no conflicting evidence points to another candidate.\n\nThe conclusion is **probable**. To advance to proved: (1) read the original Lincoln County register when OpenRouter connectivity is restored; (2) search Ancestry for Moses Sr.'s Owen County, Indiana estate probate (ca. 1844\u20131848); (3) search Ancestry or Indiana State Archives for the 1830 and 1840 Indiana census."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -3838,8 +3733,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3848,15 +3742,13 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3875,8 +3767,7 @@
             "a_004"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3895,8 +3786,7 @@
             "a_004"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3907,8 +3797,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -4050,5 +3939,6 @@
       ],
       "transcript": "agent-a771a5c0f4f77d251.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

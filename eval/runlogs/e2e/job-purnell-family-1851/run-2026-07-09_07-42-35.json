@@ -1423,53 +1423,46 @@
       "args": {
         "query": "select:TodoWrite,WebSearch,WebFetch",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}, {\"type\": \"tool_reference\", \"tool_name\": \"WebSearch\"}, {\"type\": \"tool_reference\", \"tool_name\": \"WebFetch\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.json",
         "path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_family_1851\",\n4\t    \"objective\": \"Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?\",\n5\t    \"subject_person_ids\": [\"LHKV-VKD\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-09T00:00:00Z\",\n8\t    \"updated\": \"2026-07-09T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"co..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1494,53 +1487,46 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHKV-VKD\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        { \"id\": \"N1\", \"preferred\": true, \"given\": \"Job\", \"surname\": \"Purnell\", \"type\": \"BirthName\" }\n9\t      ],\n10\t      \"facts\": [\n11\t        { \"id\": \"F1\", \"type\": \"Birth\", \"date\": \"from 1826 to 1827\", \"standard_date\": \"Bet 1826 and 1827\", \"place\": \"Trowbridge, Wiltshire, England\", \"standard_place\": \"Trowbridge, Wiltshire, England, United Kingdom\" },\n12\t        { \"id..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Trowbridge, Wiltshire",
         "contextName": "England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Trowbridge, Wiltshire, England, United Kingdom\\\",\\n      \\\"type\\\": \\\"Town\\\",\\n      \\\"dateRange\\\": \\\"+1801/\\\",\\n      \\\"latitude\\\": 51.3195,\\n      \\\"longitude\\\": -2.2093,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Trowbridge&focusedId=2969014\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Trowbridge,_Wiltshire\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Tro..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1548,8 +1534,7 @@
         "standardPlace": "Wiltshire, England, United Kingdom",
         "startYear": 1840,
         "endYear": 1860
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Wiltshire, England, United Kingdom\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1860\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 13,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCount..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1557,23 +1542,20 @@
         "standardPlace": "England, United Kingdom",
         "startYear": 1851,
         "endYear": 1851
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"England, United Kingdom\\\",\\n    \\\"startYear\\\": 1851,\\n    \\\"endYear\\\": 1851\\n  },\\n  \\\"scope\\\": \\\"United Kingdom\\\",\\n  \\\"totalForPlace\\\": 13,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4324570\\\",\\n      \\\"title\\\": \\\"United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005\\\",\\n      \\\"dateRange\\\": \\\"1761-2005\\\",\\n      \\\"recordCount\\\": 2878200,\\n      \\\"personCount\\\": 3994242,\\n      \\\"imageCount\\\": 2767114..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__wiki_search,mcp__genealogy__external_links_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "1851 England Census Wiltshire genealogy research"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"1851 England Census Wiltshire genealogy research\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.785156,\\n      \\\"chunk_text\\\": \\\"# Charlton All Saints, Wiltshire, England Genealogy  \\\\n|  |  |\\\\n| --- | --- |\\\\n| **Charlton All Saints** | |\\\\n| **[Type](https://www.familysearch.org/en/wiki/England_Jurisdictions#Parishes \\\\\\\"England Jurisdictions\\\\\\\")** | [Ecclesiastical Parish](h..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1581,8 +1563,7 @@
         "standardPlace": "Trowbridge, Wiltshire, England, United Kingdom",
         "startYear": 1840,
         "endYear": 1860
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Trowbridge, Wiltshire, England, United Kingdom\\\" to a FamilySearch place. Use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1590,8 +1571,7 @@
         "standardPlace": "Trowbridge, Wiltshire, England",
         "startYear": 1840,
         "endYear": 1860
-      },
-      "response_summary": "Error: result (85,863 characters across 2,286 lines) exceeds maximum allowed tokens. Output has been saved to /Users/macbookpro/.claude/projects/-private-var-folders-ys-gs7l5hcx1rs6dvjt0ys-n05h0000gn-T-e2e-job-purnell-family-1851-0vrm5l4m/4505ffda-cd94-4752-8f3b-f554e022714b/tool-results/mcp-genealogy-external_links_search-1783581063506.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires r..."
+      }
     },
     {
       "tool": "Grep",
@@ -1601,8 +1581,7 @@
         "output_mode": "content",
         "-i": true,
         "head_limit": 40
-      },
-      "response_summary": "10:      \"url\": \"https://www.ancestry.com/search/collections/61766/\",\n26:      \"url\": \"https://www.ancestry.com/search/collections/62335/\",\n30:      \"url\": \"https://search.findmypast.co.uk/search-world-records/england-and-wales-government-probate-death-index-1858-2019\",\n34:      \"url\": \"http://www.findmypast.co.uk/search/army-service-records/chelsea-pensioners\",\n46:      \"url\": \"https://search.findmypast.com/search-world-Records/england-and-wales-government-probate-death-index-1858-2019\",\n50:..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1664,24 +1643,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1694,8 +1670,7 @@
         "residenceYearTo": 1851,
         "count": 50,
         "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"2563939\\\",\\n    \\\"residencePlace\\\": \\\"Trowbridge, Wiltshire, England\\\",\\n    \\\"residenceYearFrom\\\": 1851,\\n    \\\"residenceYearTo\\\": 1851,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1704,23 +1679,20 @@
         "stagedResultsRef": "results/.staging/60070cce-8feb-452a-88ec-314ee9b0b8e9.json",
         "subjectId": "LHKV-VKD",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LHKV-VKD\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:SGZ4-PNP\\\",\\n      \\\"matchScore\\\": 0.986407,\\n      \\\"primaryId\\\": \\\"p_2000910203\\\",\\n      \\\"personName\\\": \\\"Job Purnell\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"1826\\\",\\n      \\\"birthPlace\\\": \\\"England, Unit..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:SGZ4-PNP"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_2000910203\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:SGZ4-PNP\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"35281530-5262-4514-b982-ce6895f42856\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Job\\\",\\n          \\\"surname\\\": \\\"Purnell\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Occupation\\\",\\n          \\\"value\\\": \\\"Lab\\\"\\n        },\\n        {..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1742,8 +1714,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/60070cce-8feb-452a-88ec-314ee9b0b8e9.json",
         "notes": "Single result: ARK ark:/61903/1:1:SGZ4-PNP, matchScore 0.986, already attached to LHKV-VKD. Record title: 'Household of Job Purnell, England and Wales Census, 1851'. Household: Job Purnell (head, b.1826, labourer), Serinah Purnell (wife, b.1824, weaver), Samuel Purnell (son, b.1851). Answers both q_001 (wife = Serinah) and q_002 (child = Samuel)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-09T07:12:46.251Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1756,38 +1727,33 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Record ARK ark:/61903/1:1:SGZ4-PNP (record_id), plan item pli_001, log log_001. Full record already in context: household of Job Purnell, 1851 England and Wales Census, Trowbridge, Wiltshire. Three persons: (1) Job Purnell, p_2000910203, male, head, born 1826 England, occupation Lab, married; (2) Serinah Purnell, p_2000910204, female, born 1824 England, occupation Weaver, married \u2014 relationship Couple with Job; (3) Samuel Purnell, p_2000910205, male, born 1851 England, unmarried \u2014 ParentChild relationship: both Job and Serinah are parents. Source citation: \"England and Wales, Census, 1851\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZ4-PNP : Mon Mar 11 00:38:38 UTC 2024), Entry for Job Purnell and Serinah Purnell, 1851. Record URL: https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_family_1851\",\n4\t    \"objective\": \"Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHKV-VKD\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narrat..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LHKV-VKD\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        { \"id\": \"N1\", \"preferred\": true, \"given\": \"Job\", \"surname\": \"Purnell\", \"type\": \"BirthName\" }\n9\t      ],\n10\t      \"facts\": [\n11\t        { \"id\": \"F1\", \"type\": \"Birth\", \"date\": \"from 1826 to 1827\", \"standard_date\": \"Bet 1826 and 1827\", \"place\": \"Trowbridge, Wiltshire, England\", \"standard_place\": \"Trowbridge, Wiltshire, England, United Kingdom\" },\n12\t        { \"id..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2240,8 +2206,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[0]: gedcomx_source_description_id 'S1' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2252,8 +2217,7 @@
           "title": "England and Wales, Census, 1851",
           "url": "https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2706,8 +2670,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2720,16 +2683,14 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2854,47 +2815,41 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_006\\\"\\n    },\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "--autonomous LHKV-VKD"
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__person_quality",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_quality\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m",
         "personId": "LHKV-VKD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_quality",
       "args": {
         "personId": "LHKV-VKD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"personId\\\": \\\"LHKV-VKD\\\",\\n  \\\"segment\\\": \\\"United Kingdom 1800 - 1920\\\",\\n  \\\"overallScore\\\": 0.8333333333333334,\\n  \\\"issueCount\\\": 5,\\n  \\\"categories\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COMPLETENESS\\\",\\n      \\\"count\\\": 4,\\n      \\\"score\\\": 0.5\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"VERIFIABILITY\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 1\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"CONSISTENCY\\\",\\n      \\\"count\\\": 0,\\n      \\\"score\\\": 1\\n    },\\n    {\\n      \\..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link all roles in record ark:/61903/1:1:SGZ4-PNP (src_001, log_001). Roles: head_of_household (Job Purnell, a_001\u2013a_006, record_persona_id p_2000910203) maps to tree person LHKV-VKD; wife (Serinah Purnell, a_007\u2013a_013) \u2014 no tree person yet, create stub; child_1 (Samuel Purnell, a_014\u2013a_019) \u2014 no tree person yet, create stub."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2930,8 +2885,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N3\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3170,39 +3124,34 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"personName\\\": \\\"Serinah Purnell\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"personName\\\": \\\"Samuel Purnell\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3228,8 +3177,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3257,50 +3205,43 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_family_1851\",\n4\t    \"objective\": \"Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHKV-VKD\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narrat..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__person_warnings",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3320,8 +3261,7 @@
           "exhaustive_search_summary": "FamilySearch collection 2563939 ('England and Wales, Census, 1851') was searched for Job Purnell in Trowbridge, Wiltshire on 9 July 2026 (log_001). One result was returned and confirmed via rank_search_matches (matchScore 0.986), already linked to research subject LHKV-VKD. The record was verified via record_read (ARK ark:/61903/1:1:SGZ4-PNP). Two fallback plan items\u2014a FindMyPast redundant census search (pli_002) and a FAN neighbor search (pli_003)\u2014were skipped after the primary search definitively answered the question. Research exhaustiveness was declared 9 July 2026; the question is bounded to what a specific record says, and that record was accessed in original digital-image form.",
           "narrative_markdown": "# Serinah Purnell: Wife of Job Purnell per the 1851 England and Wales Census\n\nThe preponderance of available evidence strongly indicates that **Serinah Purnell** (born about 1824 in England, occupation Weaver) was the wife of **Job Purnell** (born about 1826\u20131827, Labourer) of Trowbridge, Wiltshire, England, as recorded in the 1851 England and Wales Census.\n\n**Evidence.** FamilySearch collection 2563939\u2014the digitized original household schedules of the 1851 England and Wales Census from The National Archives, Kew\u2014was searched for Job Purnell in Trowbridge, Wiltshire. A single result was returned, matching with a similarity score of 0.986 and already linked to FamilySearch person LHKV-VKD (Job Purnell, b. Bet 1826\u20131827, Trowbridge, Wiltshire; d. 1866, Melksham, Wiltshire). The record entry, accessed 9 July 2026, identifies the household at Trowbridge, Wiltshire as containing: Job Purnell, head, Labourer, born about 1826; Serinah Purnell, wife, Weaver, born about 1824; and Samuel Purnell, son, born about 1851.\u00b9\n\nThe 1851 England census included an explicit \"Relationship to Head of Family\" column. The entry for Serinah Purnell states \"Wife\" directly\u2014a stated relationship, not one inferred from household position (assertion a_013, `evidence_type: direct`). The source is classified as **original** (digital image of original enumeration schedules). Information quality for the relationship and name facts is classified **indeterminate** (pre-1940 census; the enumerator did not record which household member answered the questions). No conflicting evidence was identified; the household entry is internally consistent. Research was declared reasonably exhaustive on 9 July 2026.\n\n**Confidence: Probable.** The `probable` tier reflects one structural limitation: the question asks what a specific named record says, and by definition only that record can answer it\u2014independent corroboration from a second source is logically inapplicable to this question form. All other GPS components are fully met: the source is original; citations are complete and accurate; all assertions are classified and linked; no conflicts exist; and the conclusion is directly supported by a stated relationship column entry.\n\n\u00b9 \"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3 : accessed 9 July 2026), entry for Job Purnell and Serinah Purnell, 1851, Trowbridge, Wiltshire, England; digital image of original household schedules, The National Archives, Kew."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3410,16 +3350,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m",
         "personId": "LHKV-VKD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3428,8 +3366,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3437,15 +3374,13 @@
         "description": "GPS mentor proof-critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review the proof conclusion ps_001 for research project rp_job_purnell_family_1851, located at /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/. \n\nThe proof answers question q_001: \"Who is listed as the wife of Job Purnell in the 1851 Census of England and Wales for Trowbridge, Wiltshire?\" Conclusion: Serinah Purnell, tier: probable, vehicle: statement. \n\nPlease provide a GPS-standard mentor critique: assess all five GPS components, flag any deficiencies, and advise on whether the tier and form are appropriate."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n**A note on tooling first:** this session gave me only a `Read` tool \\u2014 no `Write`/`Bash`/`collections_search`/`wiki_place_page` access. That means I can complete the substantive review below, but I cannot execute steps 1\\u20133 of the output protocol (create `evaluations/`, write the verdict JSON, append to `research.json`'s `evaluations[]` array). I'm reporting that explicitly rather than silently skipping it, per t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_family_1851\",\n4\t    \"objective\": \"Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHKV-VKD\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidan..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3495,24 +3430,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "docs/specs/research-schema-spec.md",
         "path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/proof-conclusion"
-      },
-      "response_summary": ".claude/skills/proof-conclusion/references/gps-proof-writing.md\n.claude/skills/proof-conclusion/references/validation-protocol.md\n.claude/skills/proof-conclusion/SKILL.md"
+      }
     },
     {
       "tool": "Grep",
@@ -3522,24 +3454,21 @@
         "glob": "**/*.md",
         "output_mode": "content",
         "context": 2
-      },
-      "response_summary": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/hypothesis-tracking/SKILL.md-248-## Re-invocation behavior\n/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/hypothesis-tracking/SKILL.md-249-\n.claude/skills/hypothesis-tracking/SKILL.md:250:Updates existing hypotheses in place. Creates a new `h_` entry only for a genuinely new hypothesis. If a hypothesis about the same claim a..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "mkdir -p /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations",
         "description": "Create evaluations directory"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations/proof-critique-ps_001-2026-07-09.json",
         "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"performed\": \"2026-07-09\",\n  \"strengths\": [\n    \"Conservative, well-reasoned information_quality classification across a_001-a_019 \u2014 all identity-bearing census facts correctly marked 'indeterminate' rather than assuming primary informant status.\",\n    \"Narrative is self-contained, properly footnoted, hedging language matches the probable tier, and vehicle choice (statement) fits the single-source, no-conflict case.\"\n  ],\n  \"must_address\": [\n    {\n      \"standard\": \"Standard 14 \u2014 topical breadth\",\n      \"issue\": \"Uncommon given name 'Serinah' was never tested against an independent source; no marriage record search was planned or attempted.\",\n      \"suggested_skill\": \"research-plan\",\n      \"specific_action\": \"Add a marriage-record plan item for Job Purnell, Wiltshire, 1848-1851.\"\n    },\n    {\n      \"standard\": \"Standard 43 \u2014 evidence integrity\",\n      \"issue\": \"Narrative originally framed the single-source limitation as 'logically inapplicable to this question form' rather than naming it as an open research gap. Corrected in ps_001 narrative update.\",\n      \"specific_action\": \"Revised confidence paragraph to state plainly that Probable reflects an as-yet-uncorroborated single source.\"\n    }\n  ],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 1 / question scoping\",\n      \"issue\": \"q_001 was scoped to 'what does this record say' partly to ease the exhaustiveness bar; this proof cannot yet answer the project's broader identity objective at Proved confidence.\",\n      \"specific_action\": \"Note explicitly in future proofs when a narrowed question scope is a stepping-stone.\"\n    }\n  ]\n}\n"
-      },
-      "response_summary": "File created successfully at: /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations/proof-critique-ps_001-2026-07-09.json (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3567,23 +3496,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous resolve q_001 and open q_002 for the child"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3627,8 +3553,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3672,16 +3597,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous q_002"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3728,21 +3651,18 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"wa..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"outcome 'undefined' is not one of positive/negative/partial/error\\\"\\n  ]\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3763,8 +3683,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Same household record retrieved for q_001 (log_001) also answers q_002. Samuel Purnell (son, b. ~1851) explicitly named in 1851 England census relationship column as child of Job Purnell."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-09T07:36:50.772Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3856,8 +3775,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_014\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_015\\\"\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3872,16 +3790,14 @@
           "match_score": null,
           "rationale": "Assertion a_019 records 'son of Job Purnell and Serinah Purnell' \u2014 the relationship explicitly names Serinah Purnell (I1) as the mother of Samuel Purnell. The 1851 census relationship column states Samuel as 'Son' of the head of household; Serinah, listed as wife, is thereby co-identified as the mother. Single-record introduction; probable confidence."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"pe_022\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous q_002"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3909,8 +3825,7 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3930,8 +3845,7 @@
           "exhaustive_search_summary": "FamilySearch collection 2563939 ('England and Wales, Census, 1851') was searched for Job Purnell in Trowbridge, Wiltshire as part of q_001 research (log_001, 9 July 2026); the same household record (ARK ark:/61903/1:1:SGZ4-PNP) was confirmed for q_002 via log_002. Samuel Purnell, the only child in the household, is listed as 'son' in the explicit 1851 census relationship column. The FindMyPast fallback (pli_005) was skipped as the primary search definitively answered the question. Research exhaustiveness declared 9 July 2026.",
           "narrative_markdown": "# Samuel Purnell: Child of Job Purnell per the 1851 England and Wales Census\n\nThe preponderance of available evidence strongly indicates that **Samuel Purnell** (born about 1851 in England, unmarried infant) was a child of **Job Purnell** (born about 1826\u20131827, Labourer) and **Serinah Purnell** (born about 1824, Weaver) of Trowbridge, Wiltshire, England, as recorded in the 1851 England and Wales Census.\n\n**Evidence.** The same FamilySearch collection 2563939 household record (ARK ark:/61903/1:1:SGZ4-PNP), accessed 9 July 2026, lists Samuel Purnell in the household of Job Purnell at Trowbridge, Wiltshire. The 1851 England census included an explicit \"Relationship to Head of Family\" column; the entry for Samuel Purnell states \"Son\" directly\u2014a stated relationship, not one inferred from household position (assertion a_019, `evidence_type: direct`). Samuel is the only child recorded in the household. The source is classified as **original** (digital image of original enumeration schedules from The National Archives, Kew). Information quality is classified **indeterminate** (pre-1940 census; respondent unknown). No conflicting evidence was identified. Research was declared reasonably exhaustive on 9 July 2026.\u00b9\n\n**Confidence: Probable.** The `probable` tier reflects that only one source has been consulted; independent corroboration from a second original source (such as a baptism register or civil birth registration for Samuel Purnell circa 1851 in Trowbridge, Wiltshire) has not yet been attempted. All other GPS components are fully met: the source is original; citations are complete and accurate; all assertions are classified and linked; no conflicts exist; and the conclusion is directly supported by the stated relationship column entry.\n\n\u00b9 \"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3 : accessed 9 July 2026), entry for Job Purnell and Serinah Purnell, 1851, Trowbridge, Wiltshire, England; digital image of original household schedules, The National Archives, Kew."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3940,8 +3854,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3949,30 +3862,26 @@
         "description": "GPS mentor proof-critique for ps_002",
         "subagent_type": "gps-mentor",
         "prompt": "Please review the proof conclusion ps_002 for research project rp_job_purnell_family_1851, located at /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/. \n\nThe proof answers question q_002: \"Who is listed as the child of Job Purnell in the 1851 Census of England and Wales for Trowbridge, Wiltshire?\" Conclusion: Samuel Purnell (son), tier: probable, vehicle: statement. \n\nPlease provide a GPS-standard mentor critique: assess all five GPS components, flag any deficiencies, and advise on whether the tier and form are appropriate."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"## Mentor review: proof-critique on ps_002\\n\\n*Note on persistence: I was invoked in this session with read-only file access \\u2014 I do not have a write-capable tool available, so I could not create the `evaluations/` directory, write `evaluations/proof-critique-ps_002-<timestamp>.json`, or append the `ev_002` pointer to `research.json`. The full verdict is below; if you want it committed to the audit trail, please re-run this review through an invocation with writ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_family_1851\",\n4\t    \"objective\": \"Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LHKV-VKD\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidan..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations/proof-critique-ps_001-2026-07-09.json"
-      },
-      "response_summary": "1\t{\n2\t  \"focus\": \"proof-critique\",\n3\t  \"target_id\": \"ps_001\",\n4\t  \"target_type\": \"proof_summary\",\n5\t  \"verdict\": \"address_first\",\n6\t  \"performed\": \"2026-07-09\",\n7\t  \"strengths\": [\n8\t    \"Conservative, well-reasoned information_quality classification across a_001-a_019 \u2014 all identity-bearing census facts correctly marked 'indeterminate' rather than assuming primary informant status.\",\n9\t    \"Narrative is self-contained, properly footnoted, hedging language matches the probable tier, and vehicl..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations/proof-critique-ps_002-2026-07-09.json",
         "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_002\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"performed\": \"2026-07-09\",\n  \"strengths\": [\n    \"a_019 (relationship 'Son') is classified with disciplined restraint \u2014 evidence_type direct, information_quality indeterminate given unknown census respondent.\",\n    \"Narrative names the single-source limitation plainly ('has not yet been attempted'), correcting the euphemistic framing flagged in ps_001 review (ev_001) \u2014 good follow-through generalizing a prior lesson.\"\n  ],\n  \"must_address\": [\n    {\n      \"standard\": \"Standard 14 \u2014 topical breadth\",\n      \"issue\": \"No civil birth-registration (GRO) or Wiltshire baptism search for Samuel Purnell (b. ~1851, Trowbridge) was planned or logged; mirrors the marriage-record gap already flagged for ps_001.\",\n      \"what_would_change_my_mind\": \"An executed GRO/baptism search, positive or documented nil, closes the breadth gap.\",\n      \"suggested_skill\": \"research-plan\",\n      \"specific_action\": \"Add a civil-registration/baptism plan item to pl_002 for Samuel Purnell, Trowbridge, c.1851.\"\n    }\n  ],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 14 / repository diversity\",\n      \"issue\": \"Only FamilySearch was consulted; the exhaustive_declaration's repository_breadth rationale narrows the question scope in a way that risks satisfying Standard 14 by definition rather than by search.\",\n      \"specific_action\": \"Run a quick FindMyPast or Ancestry index cross-check; note question-scoping as a stepping-stone explicitly in future declarations.\"\n    }\n  ],\n  \"tier_and_form_assessment\": \"Probable tier and statement vehicle are both appropriate: direct original-source relationship statement supports more than Possible, but lack of independent corroboration keeps it below Proved; no conflict exists requiring a full proof argument.\"\n}\n"
-      },
-      "response_summary": "File created successfully at: /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-family-1851-0vrm5l4m/evaluations/proof-critique-ps_002-2026-07-09.json (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3988,16 +3897,14 @@
           "file_path": "evaluations/proof-critique-ps_002-2026-07-09.json",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous resolve q_002 and complete the project"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4025,8 +3932,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -4035,5 +3941,6 @@
     "era": "1850s",
     "geography": "GB-ENG"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

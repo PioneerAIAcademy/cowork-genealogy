@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
+    _summarize_changes,
+    _summarize_before_state_sources,
     _build_warnings,
     _compute_outcome,
     _negative_judge_context,
@@ -1153,3 +1155,94 @@ def test_compute_validators_passed_behavioral_failure_always_fails():
     results = [_FakeValidator("test_log_append_only", False)]
     assert compute_validators_passed(results, intentionally_invalid=True) is False
     assert compute_validators_passed(results, intentionally_invalid=False) is False
+
+# --------------------------------------------------------------------------
+# The judge's "persisted artifact" block — array-sampler truncation
+# --------------------------------------------------------------------------
+
+
+def _plan_changes(n_items: int):
+    """A research.json diff whose single added entry nests an n-item plan."""
+    return {
+        "research.json": {
+            "sections_modified": ["research_plans"],
+            "diff": {
+                "research_plans": {
+                    "added": [
+                        {
+                            "plan_id": "pl_001",
+                            "items": [
+                                {"id": f"pli_{i:03d}", "rationale": f"cites loc_{i:03d}"}
+                                for i in range(n_items)
+                            ],
+                        }
+                    ],
+                    "modified": [],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+
+
+def test_persisted_artifact_block_shows_every_plan_item():
+    """The block header tells the judge to grade "the persisted artifact", and it
+    was showing the first 3 of 9 items — so a note saying "read the persisted
+    plan items" pointed at a third of them. The outer added[] list is length 1,
+    so nothing looked truncated; the cap bit at the nested depth."""
+    out = _summarize_changes(_plan_changes(9), [], include_content=True)
+
+    assert "_summary_truncated" not in out
+    for i in range(9):
+        assert f"pli_{i:03d}" in out, f"pli_{i:03d} missing from the artifact block"
+
+
+def test_persisted_artifact_block_shows_every_item_on_the_modified_branch():
+    """The modified branch had the identical hole and no test covered it."""
+    changes = {
+        "research.json": {
+            "sections_modified": ["research_plans"],
+            "diff": {
+                "research_plans": {
+                    "added": [],
+                    "modified": [
+                        {
+                            "id": "pl_001",
+                            "changed_fields": {
+                                "items": {
+                                    "after": [{"id": f"pli_{i:03d}"} for i in range(9)]
+                                }
+                            },
+                        }
+                    ],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+    out = _summarize_changes(changes, [], include_content=True)
+
+    assert "_summary_truncated" not in out
+    for i in range(9):
+        assert f"pli_{i:03d}" in out
+
+
+def test_before_state_path_is_unchanged_by_the_artifact_fix():
+    """Only the file-content path is uncapped. The before-state block keeps its
+    own workaround — summarizing per source rather than handing the array over —
+    because the default cap still applies inside each source. Lifting the cap
+    globally would have made that workaround look redundant and invited its
+    removal, which is the misgrade it exists to prevent."""
+    sources = [{"id": f"src_{i:03d}", "citation": f"c{i}"} for i in range(9)]
+
+    out = _summarize_before_state_sources(sources)
+
+    assert out["count"] == 9
+    assert out["all_ids"] == [f"src_{i:03d}" for i in range(9)]
+    assert len(out["detail"]) == 9
+
+    # And the generic sampler it calls per source still caps by default, which
+    # is what makes the per-source loop necessary rather than decorative.
+    from harness.judge import _summarize_response
+
+    assert _summarize_response(sources)["_summary_truncated"] is True
