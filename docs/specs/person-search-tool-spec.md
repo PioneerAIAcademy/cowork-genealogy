@@ -234,94 +234,17 @@ away.
 
 ## Tool Schema
 
-```typescript
-{
-  name: "person_search",
-  description:
-    "Search the FamilySearch Family Tree for a person. Requires a surname " +
-    "plus at least one other search field (a given name, a life-event year " +
-    "or place, or a relative's name; sex and exact-match toggles don't " +
-    "count). Additional fields narrow the ranking. Returns a ranked list " +
-    "of candidate tree persons with their key facts and a tree-person ID, so " +
-    "the user can pick which one to research. To expand a chosen match into " +
-    "parents, spouses, and children, call person_read with relatives: true. " +
-    "Requires authentication — call the login tool first if not logged in. " +
-    "For ambiguous place names, call the place_search tool first.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      // Person
-      givenName:            { type: "string", description: "Given (first) name. Counts as a qualifying 'other' field alongside the required surname." },
-      surname:              { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count." },
-      sex:                  { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the person. Case-insensitive on input." },
-      givenNameExact:       { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants)." },
-      surnameExact:         { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants)." },
+The advertised schema for `person_search` is **not duplicated here.** Read it at
+[`packages/engine/mcp-server/src/tools/person-search.ts`](../../packages/engine/mcp-server/src/tools/person-search.ts) —
+it is the only copy the model ever sees, and a paste of it in this file has no
+reader that the source does not serve.
 
-      // Birth
-      birthYearFrom:        { type: "number", description: "Lower bound of the birth-year range. 4-digit year. Must be paired with `birthYearTo`." },
-      birthYearTo:          { type: "number", description: "Upper bound of the birth-year range. 4-digit year. Must be paired with `birthYearFrom`." },
-      birthYearExact:       { type: "boolean", description: "When `true`, the birth-year range is matched exactly." },
-      birthPlace:           { type: "string", description: "Birth place name. For ambiguous places, call `place_search` first." },
-      birthPlaceExact:      { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Death
-      deathYearFrom:        { type: "number", description: "Lower bound of the death-year range. 4-digit year. Must be paired with `deathYearTo`." },
-      deathYearTo:          { type: "number", description: "Upper bound of the death-year range. 4-digit year. Must be paired with `deathYearFrom`." },
-      deathYearExact:       { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
-      deathPlace:           { type: "string", description: "Death place name." },
-      deathPlaceExact:      { type: "boolean", description: "When `true`, requires an exact place match." },
-
-      // Marriage
-      marriageYearFrom:     { type: "number", description: "Lower bound of the marriage-year range. 4-digit year. Must be paired with `marriageYearTo`." },
-      marriageYearTo:       { type: "number", description: "Upper bound of the marriage-year range. 4-digit year. Must be paired with `marriageYearFrom`." },
-      marriageYearExact:    { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
-      marriagePlace:        { type: "string", description: "Marriage place name." },
-      marriagePlaceExact:   { type: "boolean", description: "When `true`, requires an exact place match." },
-
-      // Residence
-      residenceYearFrom:    { type: "number", description: "Lower bound of the residence-year range. 4-digit year. Must be paired with `residenceYearTo`." },
-      residenceYearTo:      { type: "number", description: "Upper bound of the residence-year range. 4-digit year. Must be paired with `residenceYearFrom`." },
-      residenceYearExact:   { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
-      residencePlace:       { type: "string", description: "Residence place name." },
-      residencePlaceExact:  { type: "boolean", description: "When `true`, requires an exact place match." },
-
-      // Spouse
-      spouseGivenName:      { type: "string", description: "Spouse's given name." },
-      spouseSurname:        { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact:   { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
-
-      // Father
-      fatherGivenName:      { type: "string", description: "Father's given name." },
-      fatherSurname:        { type: "string", description: "Father's family name." },
-      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact:   { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
-      fatherBirthPlace:     { type: "string", description: "Father's birth place name." },
-      fatherBirthPlaceExact:{ type: "boolean", description: "When `true`, requires an exact match on the father's birth place." },
-
-      // Mother
-      motherGivenName:      { type: "string", description: "Mother's given name." },
-      motherSurname:        { type: "string", description: "Mother's family name." },
-      motherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact:   { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
-      motherBirthPlace:     { type: "string", description: "Mother's birth place name." },
-      motherBirthPlaceExact:{ type: "boolean", description: "When `true`, requires an exact match on the mother's birth place." },
-
-      // Parent (sex unknown)
-      parentGivenName:      { type: "string", description: "A parent's given name when the parent's sex is unknown." },
-      parentSurname:        { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact:   { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
-      parentBirthPlace:     { type: "string", description: "A parent's birth place name." },
-      parentBirthPlaceExact:{ type: "boolean", description: "When `true`, requires an exact match on the parent's birth place." },
-
-      // Pagination
-      count:                { type: "number", description: "Results per call. Default 20, range 1–100." },
-      offset:               { type: "number", description: "0-based index of the first result. Default 0, range 0–4999." }
-    }
-  }
-}
-```
+A verbatim copy used to live here and drifted: it was not updated alongside the
+tool, no check compared the two, and prose written against the stale block
+contradicted the shipped descriptions. Do not reintroduce one. If a rendered
+schema is ever wanted in the docs, generate it from `allToolSchemas` at build
+time the way `packages/schema/src/enums.generated.ts` is generated — never by
+hand.
 
 The surname-plus-one rule is enforced in `validateInput`, not via JSON
 Schema's `required`. Although `surname` is always required (which JSON

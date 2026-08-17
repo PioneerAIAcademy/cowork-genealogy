@@ -382,7 +382,9 @@ Sequence (validate-before-persist, tree-only):
 2. Apply the operation **in memory**: allocate ids, run the primary/preferred
    swaps, resolve `standard_place`.
 3. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`
-   before any write. If invalid → write nothing, return `{ ok: false, errors }`.
+   before any write. If the call introduces an error → write nothing, return
+   `{ ok: false, errors }`; a pre-existing error the call did not introduce rides
+   as a warning.
 4. Persist: back up `tree.gedcomx.json` → `tree.gedcomx.json.bak`, then
    `atomicWriteJson` the new tree. **Only `tree.gedcomx.json` is written** —
    `research.json` is untouched (ad-hoc adds create ids nothing references yet;
@@ -450,7 +452,7 @@ Sequence (validate-before-persist, tree-only):
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
 | `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
-| Resulting tree fails project validation | write nothing; return `{ ok: false, errors }` |
+| Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 
 ---
 

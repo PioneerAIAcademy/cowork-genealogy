@@ -1,0 +1,38 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Caroline",
+          "surname": "Voss",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1839",
+          "place": "Rowan County, North Carolina",
+          "sources": []
+        },
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "~1858",
+          "place": "Rowan County, North Carolina",
+          "sources": [{ "ref": "S1", "page": "Rowan County marriage record" }]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "Rowan County, North Carolina Marriage Records", "author": "Rowan County Clerk" }
+  ]
+}
