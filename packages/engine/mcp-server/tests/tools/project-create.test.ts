@@ -119,12 +119,24 @@ describe("project_create", () => {
     const r = await projectCreate({ projectPath: dir, objective: "a different objective" });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/already exist/);
+    expect(r.errors.join(" ")).toMatch(/exists in projectPath/);
     // The audit trail this would have destroyed is unreconstructible.
     expect(JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).project.objective).toBe(
       "existing",
     );
     expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
+  it("refuses a complete existing project, and points at the writer tools", async () => {
+    // Both present is the ordinary "this is already a project" case, and there
+    // the writers DO work — unlike the half-present case below.
+    await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
+    await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
+    const r = await projectCreate({ projectPath: dir, objective: "a different objective" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/already exist in projectPath/);
+    expect(r.errors.join(" ")).toMatch(/research_append/);
   });
 
   it("refuses when only tree.gedcomx.json exists", async () => {
@@ -137,6 +149,37 @@ describe("project_create", () => {
     expect(r.errors.join(" ")).toMatch(/tree\.gedcomx\.json/);
     expect(await exists("research.json")).toBe(false);
   });
+
+  it.each([
+    ["research.json", "tree.gedcomx.json"],
+    ["tree.gedcomx.json", "research.json"],
+  ])(
+    "names the MISSING file when only %s is present, and never says delete",
+    async (present, missing) => {
+      // Measured: with either file alone, project_create, research_append AND
+      // tree_edit all refuse — every writer reads both documents. So a refusal
+      // that points at the other writers points at another dead end, which is
+      // the failure this whole tool exists to remove.
+      //
+      // And it must not offer "delete the one that survived" as the way out:
+      // when that is research.json it is the audit trail, the half nothing can
+      // reconstruct.
+      const body =
+        present === "research.json"
+          ? '{"project":{}}'
+          : '{"persons":[],"relationships":[],"sources":[]}';
+      await writeFile(join(dir, present), body);
+      const r = await projectCreate({ projectPath: dir, objective: "an objective" });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(missing);
+      expect(msg).toMatch(/restore/i);
+      expect(msg).not.toMatch(/use research_append and the tree tools/);
+      expect(msg).not.toMatch(/^(?!.*Do not delete).*\bdelete\b.*$/);
+      expect(await exists(missing)).toBe(false);
+    },
+  );
 
   // ── An objective is not optional ─────────────────────────────────────────
 

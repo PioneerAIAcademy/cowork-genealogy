@@ -99,7 +99,7 @@ def test_init_empty_sections(after_state, test):
 
 # --- The write PATH, not just the resulting state ----------------------
 
-def test_project_files_written_through_the_writer_tools(tool_calls, test):
+def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test):
     """init-project must create the project by CALLING `project_create`.
 
     One assertion, on one tool, because `project_create` writes BOTH documents
@@ -142,3 +142,16 @@ def test_project_files_written_through_the_writer_tools(tool_calls, test):
         "disk some other way, and in Cowork that route is the one the write "
         f"lockdown denies. Tools called: {sorted(called) or 'none'}"
     )
+
+    # `project_create` deliberately writes no `researcher_profile` — the seed
+    # must never invent one. So a profile in the output can only have arrived
+    # through `research_append`, or through a raw write the lockdown denies in
+    # production but the harness permits. Conditional on the profile existing,
+    # because a run where the researcher volunteered nothing legitimately makes
+    # exactly one call.
+    if (after_state.get("research_json") or {}).get("researcher_profile"):
+        assert "research_append" in called, (
+            "research.json ends with a researcher_profile but research_append was "
+            "never called — project_create does not write one, so it arrived by a "
+            f"route the lockdown denies. Tools called: {sorted(called) or 'none'}"
+        )

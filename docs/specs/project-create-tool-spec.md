@@ -119,7 +119,10 @@ the write ahead of the validation and watching two cases go red.
   holds no `person_read`. A freshly created project yields an empty timeline.
 - **Nothing in CI verifies the skill half.** The unit harness grants `Write` to
   every skill and has no lockdown; every e2e fixture starts from an existing
-  project. The check is the live Cowork repro in §1 — `make plugin`, reinstall,
+  project. The check is the live Cowork repro in §1 — `make cowork-install`
+  (**not** `make plugin`: `project_create` ships in the `.mcpb` and the rewritten
+  skill body in the plugin zip, so installing one of the two leaves the skill
+  calling a tool that is not there), reinstall both,
   fully restart Claude Desktop, ask for a new project in an empty folder — and it
   must reach a created project rather than a `device_bash` write. The mechanical
   half that *can* run is the write-path validator in

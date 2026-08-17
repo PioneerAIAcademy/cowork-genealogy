@@ -115,14 +115,37 @@ export async function projectCreate(
     // Create, not upsert. Overwriting an existing project would destroy an
     // audit trail that cannot be reconstructed, and the caller that wants to
     // add to a project already has the writer tools for it.
-    const existing: string[] = [];
-    if (await fileExists(researchPath)) existing.push("research.json");
-    if (await fileExists(treePath)) existing.push("tree.gedcomx.json");
-    if (existing.length > 0) {
+    const hasResearch = await fileExists(researchPath);
+    const hasTree = await fileExists(treePath);
+    if (hasResearch && hasTree) {
       throw new ProjectCreateError(
-        `${existing.join(" and ")} already exist(s) in projectPath — project_create ` +
-          "never overwrites. This project already exists: use research_append and the " +
-          "tree tools to add to it.",
+        "research.json and tree.gedcomx.json already exist in projectPath — " +
+          "project_create never overwrites. This project already exists: use " +
+          "research_append and the tree tools to add to it.",
+      );
+    }
+    // Half-present. Every writer reads BOTH documents and throws on either, so
+    // naming them here would send the caller somewhere that also refuses —
+    // measured: with one file alone, project_create, research_append and
+    // tree_edit all reject. The only route out is restoring the missing file.
+    //
+    // Deliberately does NOT suggest deleting the one that survived. When that
+    // is research.json it is the audit trail, which is the irreplaceable half —
+    // the tree can largely be rebuilt from FamilySearch, the research log cannot.
+    if (hasResearch || hasTree) {
+      const present = hasResearch ? "research.json" : "tree.gedcomx.json";
+      const missing = hasResearch ? "tree.gedcomx.json" : "research.json";
+      const keepWarning = hasResearch
+        ? "Do not delete research.json to clear the way — it is the research audit " +
+          "trail, and nothing can reconstruct it."
+        : "Do not delete tree.gedcomx.json to clear the way; move it aside if you " +
+          "must, so the work in it is not lost.";
+      throw new ProjectCreateError(
+        `${present} exists in projectPath but ${missing} does not, so this is a ` +
+          `half-present project rather than an empty folder, and project_create never ` +
+          `overwrites. Restore ${missing} from wherever it went — a backup, an export, ` +
+          `or version control — or start the new project in a different, empty folder. ` +
+          keepWarning,
       );
     }
 
