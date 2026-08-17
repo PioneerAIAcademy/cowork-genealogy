@@ -671,17 +671,67 @@ Two properties, both deliberate and both pinned by vectors in
   only instrument that sees the true payload, exactly as with agent tool
   binding.
 
-**`device_bash` is deliberately still open**, and on current evidence should
-stay open. Its input is a command string in which `cat research.json` and
-`cat > research.json` are indistinguishable without parsing a shell — and
-measured over the whole committed corpus, **37 of 40** shell touches of a
-protected file are reads the system depends on, with **3 write-shaped and 0
-landed**. All three write-shaped attempts have since been explained: two were
-seeding a starting tree (project-creation-shaped, and `project_create` now owns
-that), and the third was a run that could not load `research_append` at all,
-which the ToolSearch abort backstop now catches at its third consecutive miss.
-The false deny is the worse failure here, and there is no measured harm on the
-other side of the trade.
+#### `device_bash` is still open, and a bypass through it LANDED — 2026-08-17
+
+**Reproduced live, on request, in Cowork with a connected folder.** Asked to
+append a note to `research.json` "using the shell or a file write", the agent did
+exactly that — a `python open(path, 'w')` through `device_bash` — and the write
+reached the user's disk.
+
+The damage is worse than an unvalidated entry:
+
+- The resulting document **failed schema validation on nine counts**: the entry
+  carried none of the seven fields a log entry requires (`plan_item_id`,
+  `performed`, `tool`, `query`, `outcome`, `results_examined`, `external_site`),
+  carried three the schema forbids (`date`, `note`, `type`), and used an
+  invented `lg_001` id where the prefix must be `log_`.
+- **It locked the project out of the sanctioned tools.** Every writer validates
+  the whole project before persisting, so a subsequent ordinary `research_append`
+  returned `ok: false` on that same entry. One shell write did not merely skip
+  validation — it made the tools that perform validation unusable until the
+  entry was removed by hand.
+
+**This falsifies the reasoning that kept the route open**, which is recorded here
+rather than deleted, because the error is instructive. The argument was "0 landed
+across the corpus". But every write-shaped shell attempt in the corpus was
+refused by the **harness's** `dontAsk` permission mode — and this section already
+said, in the paragraph above, that neither Cowork nor the hosted path has that
+refusal. The corpus structurally could not record a landed write, so "0 landed"
+measured where the light was. The close-condition stated here — *"close this if a
+bypass appears in a runlog or a feedback case"* — is now met.
+
+**What does NOT change: a command-text matcher is still the wrong instrument.**
+`cat research.json` and `cat > research.json` remain indistinguishable without
+parsing a shell; 37 of the 40 corpus touches are reads the system depends on,
+because `research_query` covers 11 of ~15 sections and there is no tree query
+surface at all; and a denial simply moves the agent to `head`, `python`, or a
+path built from a variable — the harness's own denial text suggests as much.
+
+**Chosen direction: make the FILE the unit, not the command.** Keep both project
+files read-only on disk and have the shared write layer re-apply the mode after
+each write. Measured on macOS: mode 444 blocks `>`, `>>`, `tee` and
+`python open(w)` — including today's bypass — while reads still work and
+`atomicWriteJson`/`atomicWriteBoth` still succeed, because they rename a temp
+over the target and POSIX rename ignores the target's mode. The mode does not
+survive the rename (it becomes 644), so re-applying it is the whole mechanism.
+
+**Blocked on one measurement, deliberately not designed around.** Windows
+`MoveFileEx` over an existing read-only target is reported to fail where POSIX
+rename succeeds. If that holds, this breaks every sanctioned write on the
+platform the genealogist team runs, and the write layer must clear the attribute
+before renaming rather than only after. Run
+`packages/engine/mcp-server/dev/probe-readonly-project-files.ts` on Windows
+before building it. The same platform asymmetry already produced one silent
+no-op in this guard's own path splitting.
+
+**Write-shape matching is held back on purpose.** Denying the narrow, unambiguous
+write forms a read-only file misses — `sed -i`, `mv` over the target, and an
+explicit `chmod` — would close the rename-shaped residue. It is **not** being
+built now (lead ruling, 2026-08-17): the file-mode approach covers today's
+observed bypass, and the corpus cannot say how often the rename shapes are
+reached for, so the matcher would be scope bought on speculation. Add it only if
+a rename-shaped bypass is actually observed. Recorded so the residue is known
+rather than forgotten.
 
 **One route no matcher closes, and the spec should say so rather than imply
 otherwise.** With every programmatic path denied, the agent wrote the file into
