@@ -305,12 +305,18 @@ has nothing to compare to.
 > changes how the run is graded, so doing it *after* a run invalidates that
 > run — if you've already run, set them and run again.
 
-Now read each run and correct the judge. The UI pre-fills every dimension with
+Now read the **sampled** tests and correct the judge. The sidebar marks the
+rest `not sampled` — five tests per run get reviewed, not all of them, and the
+Release button only waits on those five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
-- **Write a comment on every dimension that isn't passing** — whether or not
-  you agree with the score.
+- **Write a comment on every sampled dimension that isn't a clean pass** — any
+  score you change, and any 1 or 2 you agree with. A confirmed pass or a
+  confirmed N/A — the judge said 3, or said the dimension didn't apply, and you
+  agree — needs nothing. CI blocks the rest. In practice that is
+  about three sentences a run, and they are the whole point of reviewing five
+  tests properly instead of clicking through all twenty.
 
 That second one is the part people skip, and it's what makes the difference in
 step 5. The improver only proposes a body edit when a problem either recurs
@@ -346,9 +352,12 @@ Run the rubric audit first — it's a health check on the *grading*, so you're
 not chasing a score that was wrong to begin with. The **rubric-critic** agent
 reads the skill's run logs, your corrections and its `rubric.md`, and flags
 dimensions that never discriminate (always pass or always fail), flaky ones,
-and ones no test exercises. Then **skill-improver** reads the annotated run log
-and proposes an evidence-cited diff. Both are read-only: they propose, **you**
-apply the edits.
+and ones no test exercises. Delete a dimension that always passes rather than
+rewriting it — a skill may legitimately end up with no dimensions left, in
+which case delete its `rubric.md` file and the skill is graded on the base
+dimensions alone. Then **skill-improver** reads the
+annotated run log and proposes an evidence-cited diff. Both are read-only: they
+propose, **you** apply the edits.
 
 #### The lane rule — classify every finding before touching skill prose
 
@@ -861,7 +870,7 @@ make eval-skill SKILL=citation               # Windows: eval\RunTests.bat
 make eval-ui                                 # Windows: eval\Start.bat
 ```
 
-Grade every dimension (**Agree with all**, then correct the few you disagree
+Grade every dimension of each sampled test (correct the few you disagree
 with), then commit the skill edit + the new test *and its scenario folder and
 mock fixtures* + the run log + the grades, and open the PR. A senior
 genealogist reads the corrected grades and merges.
@@ -875,6 +884,7 @@ Everyday docs:
 | You want to… | Go to |
 |---|---|
 | Write a SKILL.md well | [`docs/skill-authoring-guide.md`](skill-authoring-guide.md) |
+| Audit one skill for defects nothing has caught | [`docs/skill-deep-dive-guide.md`](skill-deep-dive-guide.md) |
 | Run the harness / read a run log | [`eval/README.md`](../eval/README.md) |
 | Audit a skill's rubric quality | `/audit-rubric <name>` — the `rubric-critic` agent |
 | Improve a SKILL.md body from eval results | `/improve-skill <name>` — the `skill-improver` agent |

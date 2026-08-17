@@ -1843,51 +1843,44 @@
       "args": {
         "pattern": "**/*.json",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_cruz_corona_ancestry\",\n4\t    \"objective\": \"Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?\",\n5\t    \"subject_person_ids\": [\"PID-TODO\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-06-19T00:00:00Z\",\n8\t    \"updated\": \"2026-06-19T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"na..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"PID-TODO\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Mauro\",\n10\t          \"surname\": \"Cruz Corona\",\n11\t          \"id\": \"PID-TODO-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"fact-mauro-birth-approx\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"about 1910\",\n19\t          \"standard_date\": \"Abt 1910\",\n20\t          \"place\": \"near Nueva Italia, M..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1912,69 +1905,60 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__external_links_search,mcp__genealogy__volume_search",
         "max_results": 6
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Nueva Italia",
         "contextName": "Michoac\u00e1n"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Nueva, Santiago de Cuba, Cuba\\\",\\n      \\\"type\\\": \\\"Populated Place\\\",\\n      \\\"dateRange\\\": \\\"+1976/\\\",\\n      \\\"latitude\\\": 20.0685,\\n      \\\"longitude\\\": -76.02262,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Nueva&focusedId=2228396\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Nueva, Villa Clara, Cuba\\\",\\n      \\\"type\\\": \\\"Populated Place\\\",\\n      \\\"latitude\\\": 22.75,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Par\u00e1cuaro",
         "contextName": "Michoac\u00e1n"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Par\\u00e1cuaro, Michoacan, Mexico\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\n      \\\"dateRange\\\": \\\"+1861/\\\",\\n      \\\"latitude\\\": 19.1454,\\n      \\\"longitude\\\": -102.2204,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Par%C3%A1cuaro&focusedId=2945307\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://es.wikipedia.org/wiki/Municipio_de_Par%C3%A1cuaro\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Coahuayutla",
         "contextName": "Guerrero"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Coahuayutla de Jos\\u00e9 Mar\\u00eda Izazaga, Guerrero, Mexico\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\n      \\\"dateRange\\\": \\\"+1868/\\\",\\n      \\\"latitude\\\": 18.3121,\\n      \\\"longitude\\\": -101.7381,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Coahuayutla%20de%20Jos%C3%A9%20Mar%C3%ADa%20Izazaga&focusedId=2943952\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://es.wikipedia.org/wiki/Coah..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Mexico civil registration birth records genealogy Michoac\u00e1n"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1982,8 +1966,7 @@
         "standardPlace": "Michoacan, Mexico",
         "startYear": 1895,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Michoacan, Mexico\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1940\\n  },\\n  \\\"scope\\\": \\\"Mexico, Michoacan\\\",\\n  \\\"totalForPlace\\\": 0,\\n  \\\"results\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1991,23 +1974,20 @@
         "standardPlace": "Guerrero, Mexico",
         "startYear": 1895,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Guerrero, Mexico\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1940\\n  },\\n  \\\"scope\\\": \\\"Mexico, Guerrero\\\",\\n  \\\"totalForPlace\\\": 2,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1823323\\\",\\n      \\\"title\\\": \\\"Mexico, Guerrero, Catholic Church Records, 1576-1979\\\",\\n      \\\"dateRange\\\": \\\"1576-1979\\\",\\n      \\\"recordCount\\\": 2559828,\\n      \\\"personCount\\\": 21119902,\\n      \\\"imageCount\\\": 1584621,\\n      \\\"url\\\": \\\"https:/..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "La Uni\u00f3n",
         "contextName": "Guerrero"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Louisiana, United States\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1812/\\\",\\n      \\\"latitude\\\": 31,\\n      \\\"longitude\\\": -92,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Louisiana&focusedId=355\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Louisiana\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Los Angeles, Los Angeles, California, United State..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
       "args": {
         "standardPlace": "Michoacan, Mexico"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Michoacan, Mexico\\\"\\n  },\\n  \\\"scope\\\": \\\"Mexico, Michoacan\\\",\\n  \\\"totalForPlace\\\": 0,\\n  \\\"results\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2015,8 +1995,7 @@
         "standardPlace": "Michoacan, Mexico",
         "startYear": 1895,
         "endYear": 1930
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Michoacan, Mexico\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1930\\n  },\\n  \\\"totalResults\\\": 18437,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"004731956\\\",\\n      \\\"imageGroupPrefix\\\": \\\"004731956\\\",\\n      \\\"imageCount\\\": 755,\\n      \\\"recordSearchablePercent\\\": 100,\\n      \\\"fulltextSearchable\\\": true,\\n      \\\"languages\\\": [\\n        \\\"es\\\"\\n      ],\\n      \\\"coverages\\\": [\\n        {\\n          \\\"place..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2024,8 +2003,7 @@
         "standardPlace": "Guerrero, Mexico",
         "startYear": 1895,
         "endYear": 1930
-      },
-      "response_summary": "<persisted-output>\nOutput too large (54.7KB). Full output saved to: /Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-cruz-corona-ancestry-oy3y4sy9/45c83074-41a1-473a-b038-6f207a38aa10/tool-results/toolu_01TGQw5Nvb1W2jGaEbzoe72c.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Guerrero, Mexico\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1930\\n  },\\n  \\\"totalResults\\\": 4700,\\n  \\\"results\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2033,8 +2011,7 @@
         "standardPlace": "Michoacan, Mexico",
         "startYear": 1895,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Michoacan, Mexico\\\",\\n    \\\"startYear\\\": 1895,\\n    \\\"endYear\\\": 1940\\n  },\\n  \\\"totalForPlace\\\": 0,\\n  \\\"results\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2141,24 +2118,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2171,8 +2145,7 @@
         "recordCountry": "Mexico",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Cruz\\\",\\n    \\\"givenName\\\": \\\"Mauro\\\",\\n    \\\"birthYearFrom\\\": 1905,\\n    \\\"birthYearTo\\\": 1915,\\n    \\\"collectionId\\\": \\\"1918291\\\",\\n    \\\"recordCountry\\\": \\\"Mexico\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\\\"\\n  },\\n  \\\"totalMatches\\\": 370,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2181,8 +2154,7 @@
         "stagedResultsRef": "results/.staging/a7ba1583-dae0-4bdf-979c-06242ab7eefe.json",
         "subjectId": "PID-TODO",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"PID-TODO\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QG7G-BG3M\\\",\\n      \\\"matchScore\\\": 0.030515939,\\n      \\\"primaryId\\\": \\\"p_103658095890\\\",\\n      \\\"personName\\\": \\\"Mauro Cruz\\\",\\n      \\\"birthDate\\\": \\\"7 December 1910\\\",\\n      \\\"birthPlace\\\": \\\"Mexico\\\",\\n      \\\"co..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2205,15 +2177,13 @@
         "resultsAvailable": 370,
         "stagedResultsRef": "results/.staging/a7ba1583-dae0-4bdf-979c-06242ab7eefe.json",
         "notes": "Strong candidate at search rank 3: 'Mauro Cruz Corona', birth registration 22 Nov 1910 (registered 6 Dec 1910), La Uni\u00f3n de Isidoro Montes de Oca, Guerrero \u2014 exact name match; birthplace same municipality as sibling Miguel Cruz (born 1913 in La Uni\u00f3n). Record ARK: ark:/61903/1:1:QGWQ-MCFV. Already attached to FamilySearch tree person GXS1-15Q. Proceeding to read full record for parents' names."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-08T21:47:57.732Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QGWQ-MCFV"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103667048568\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QGWQ-MCFV\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"e91c3abc-2d52-461a-9732-065a4461d83c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Mauro\\\",\\n          \\\"surname\\\": \\\"Cruz Co??na\\\"\\n        },\\n        {\\n          \\\"id\\\": \\\"649dd9ca-8d2c-4fb3-b98d-3971862c3fdb\\\",\\n          \\\"type\\\": \\\"AlsoKnownAs\\\",\\n          \\\"surname\\\": \\\"Cruz Co??na\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2226,31 +2196,27 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Record ark:/61903/1:1:QGWQ-MCFV \u2014 Guerrero Civil Registration birth record for Mauro Cruz Corona, 22 November 1910, La Uni\u00f3n, Guerrero. Father: S\u00f3stenes Cruz. Mother: Apolinar Corona. Plan item pli_001, log_001."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_cruz_corona_ancestry\",\n4\t    \"objective\": \"Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-19T00:00:00Z\",\n10\t    \"updated\": \"2026-06-19T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "La Uni\u00f3n de Isidoro Montes de Oca",
         "contextName": "Guerrero"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Louisiana, United States\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1812/\\\",\\n      \\\"latitude\\\": 31,\\n      \\\"longitude\\\": -92,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Louisiana&focusedId=355\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Louisiana\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Los Angeles, Los Angeles, California, United State..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2471,16 +2437,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[0]: gedcomx_source_description_id 'S1' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2491,8 +2455,7 @@
           "title": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996 \u2014 acta de nacimiento de Mauro Cruz Corona, 22 noviembre 1910",
           "url": "https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2713,22 +2676,19 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2764,8 +2724,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N1\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2789,8 +2748,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2918,78 +2876,68 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "PID-TODO, I1, I2"
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"hasEventBeforeBirth365_2\\\",\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"personId\\\": \\\"PID-TODO\\\",\\n      \\\"personName\\\": \\\"Mauro Cruz Corona\\\",\\n      \\\"factIds\\\": [\\n        \\\"fact-mauro-birth-approx\\\",\\n        \\\"fact-mauro-residence-1930\\\",\\n        \\\"fact-mauro-death\\\"\\n      ],\\n      \\\"message\\\": \\\"An event is dated more than 2 years before this person..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_cruz_corona_ancestry\",\n4\t    \"objective\": \"Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-19T00:00:00Z\",\n10\t    \"updated\": \"2026-06-19T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3002,8 +2950,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3038,24 +2985,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "Execute plan item pli_003 for question q_001. Search the 1930 Mexico Census for Mauro Cruz (born about 1910, residing Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n). A pre-existing source citation already documents the Erculano Hernandez household at FamilySearch image ARK 3:1:S3HT-66R3-LH4 (Michoac\u00e1n de Ocampo > Par\u00e1cuaro > Nueva Italia > image 39 of 49). Read the indexed record if available, extract assertions from the full household (Mauro Cruz and his known siblings Miguel, Liborio, Facundo), and log the result. This is for independent corroboration of Mauro's birth year and family membership \u2014 the birth record (acta de nacimiento) is already in hand. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__record_read,mcp__genealogy__research_log_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3071,8 +3015,7 @@
         "recordCountry": "Mexico",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Cruz\\\",\\n    \\\"givenName\\\": \\\"Mauro\\\",\\n    \\\"residenceYearFrom\\\": 1930,\\n    \\\"residenceYearTo\\\": 1930,\\n    \\\"residencePlace\\\": \\\"Michoac\\u00e1n, Mexico\\\",\\n    \\\"birthYearFrom\\\": 1905,\\n    \\\"birthYearTo\\\": 1915,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"recordCountry\\\": \\\"Mexico\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\\\"\\n  },\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3081,15 +3024,13 @@
         "stagedResultsRef": "results/.staging/f5ba4038-d00d-4ef1-b19b-02e1a09bf71a.json",
         "subjectId": "PID-TODO",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"PID-TODO\\\",\\n  \\\"scoredCount\\\": 22,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MP5H-ZCT\\\",\\n      \\\"matchScore\\\": 0.041653026,\\n      \\\"primaryId\\\": \\\"p_578565296\\\",\\n      \\\"personName\\\": \\\"Mauro Cruz\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"1914\\\",\\n      \\\"birthPlace\\\": \\\"Guerrero, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MP5H-ZCT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_578565290\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MP5H-ZC2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"b877edae-e2a6-41fe-a113-5081a3b0fe55\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Feliciano\\\",\\n          \\\"surname\\\": \\\"Anguiano\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"a2ae6c4b-2a19-4dd3-8128-e50070d13a1d\\\",\\n          \\\"type\\\": \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3116,8 +3057,7 @@
         "resultsAvailable": 22,
         "stagedResultsRef": "results/.staging/f5ba4038-d00d-4ef1-b19b-02e1a09bf71a.json",
         "notes": "Top match: Mauro Cruz (ark:/61903/1:1:MP5H-ZCT), Male, born 1914, Guerrero, Nueva Italia de Ruiz, Michoac\u00e1n \u2014 same image as pre-existing tree citation (3:1:S3HT-66R3-LH4). Full record read via record_read. Household includes Apolinar Corona (born 1881, Guerrero, widowed) with Primitivo, Mauro, Migel, Libario, and Facundo Cruz \u2014 all born Guerrero, single males. Apolinar Corona in same household as Cruz children is independent corroboration of her as their mother. Birth years in census are 4 years later than birth records (known Mexican 1930 census age estimation issue). Erculano Hernandez also appears in this household."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-08T22:04:32.281Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 22,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3130,24 +3070,21 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract assertions from the 1930 Mexico Census record for the Feliciano Anguiano household (record_id: ark:/61903/1:1:MP5H-ZCT, image ARK 3:1:S3HT-66R3-LH4, log_entry_id: log_002, plan item pli_003, question q_001). This is a derivative source (FamilySearch digital image of original census page) accessed 2026-07-08. The record was found via record_search and read via record_read.\n\nFull household from record_read (all born Guerrero unless noted):\n\n1. Feliciano Anguiano (p_578565290, ark:/61903/1:1:MP5H-ZC2): Male, born 1903, Michoac\u00e1n; Married in Church \u2014 household head\n2. Senaida Ferrel (p_578565291, ark:/61903/1:1:MP5H-ZCL): Female, born 1906, Michoac\u00e1n; Married in Church\n3. Erculano Hern\u00e1ndez (p_578565292, ark:/61903/1:1:MP5H-ZCG): Male, born 1885, Michoac\u00e1n; Divorced\n4. Primitivo Cruz (p_578565293, ark:/61903/1:1:MP5H-ZCP): Male, born 1908, Guerrero; Single\n5. Apolinar Corona (p_578565294, ark:/61903/1:1:MP5H-ZC5): Female, born 1881, Guerrero; **Widowed** \u2014 this is the mother of the Cruz children per the birth record (a_006/a_008)\n6. Maria Calder\u00f3n (p_578565295, ark:/61903/1:1:MP5H-ZCR): Female, born 1914, Guerrero; Single\n7. Mauro Cruz (p_578565296, ark:/61903/1:1:MP5H-ZCT): Male, born 1914, Guerrero; Single \u2014 research subject (PID-TODO)\n8. Migel Cruz (p_578565297, ark:/61903/1:1:MP5H-ZCY): Male, born 1916, Guerrero \u2014 sibling (p-sibling-miguel)\n9. Libario Cruz (p_578565298, ark:/61903/1:1:MP5H-ZCB): Male, born 1918, Guerrero \u2014 sibling (p-sibling-liborio)\n10. Facundo Cruz (p_578565299, ark:/61903/1:1:MP5H-ZC1): Male, born 1920, Guerrero \u2014 sibling (p-sibling-facundo)\n11. Cebera Rivera (p_578565300): Male, born 1929, Guerrero\n12. Juan Calvillo (p_578565301): Male, born 1885, Michoac\u00e1n; Divorced\n13. Guadalupe N\u00fa\u00f1es (p_578566202): Female, born 1903, Michoac\u00e1n; Single\n14. Tenidad N\u00fa\u00f1es (p_578566203): Female, born 1906, Michoac\u00e1n; Single\n15. Elo\u00edsa Calvillo (p_578566204): Female, born 1927, Michoac\u00e1n\n\nFocus on extracting assertions for: Mauro Cruz (record_role: registrant or child), Apolinar Corona (record_role: mother_of_registrant), Primitivo Cruz (record_role: child_2 \u2014 previously unknown sibling), Migel/Libario/Facundo Cruz (record_role: child_3/child_4/child_5). Skip unrelated members.\n\nSource citation: \"M\u00e9xico censo nacional, 1930,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT : accessed 8 July 2026), entry for Mauro Cruz in Feliciano Anguiano household, Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n; citing Archivo General de la Naci\u00f3n, Distrito Federal. Image at https://www.familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4.\n\nNote: All Cruz siblings' birth years are 2-4 years later in the census than in their civil registration birth records (e.g., Mauro shows 1914 in census vs 1910 in birth record; Facundo shows 1920 vs 1918). This is a known Mexican 1930 Census issue \u2014 enumerators often estimated ages. The Guerrero birthplaces are consistent across all siblings in both sources. Apolinar Corona appearing as 'widowed' in 1930 indicates S\u00f3stenes Cruz had died before the census was taken.\n\nProject path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3176,8 +3113,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I3\\\",\\n        \\\"names\\\": [\\n          \\\"N3\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3201,8 +3137,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R4\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3712,8 +3647,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_011\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3726,24 +3660,21 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Link assertions a_009\u2013a_029 from the 1930 Mexico Census (src_002, log_002) to the appropriate persons in tree.gedcomx.json. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\n\nPersona \u2192 person mappings:\n- lodger_1 (Apolinar Corona, p_578565294): a_009, a_010, a_011, a_012, a_013 \u2192 I2 (Apolinar Corona stub in tree)\n- lodger_2 (Mauro Cruz, p_578565296): a_014, a_015, a_016, a_017 \u2192 PID-TODO (research subject)\n- lodger_3 (Primitivo Cruz, p_578565293): a_018, a_019, a_020 \u2192 I3 (new stub just created for Primitivo Cruz)\n- lodger_4 (Migel Cruz, p_578565297): a_021, a_022, a_023 \u2192 p-sibling-miguel\n- lodger_5 (Libario Cruz, p_578565298): a_024, a_025, a_026 \u2192 p-sibling-liborio\n- lodger_6 (Facundo Cruz, p_578565299): a_027, a_028, a_029 \u2192 p-sibling-facundo\n\nRecord source details: record_id = https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT (found via record_search, staged in results/log_002.json)\n\nIdentity rationale notes:\n- Apolinar Corona (I2): exact name match \"Apolinar Corona\" to the mother stub created from the 1910 birth record. Born 1881, Guerrero \u2014 consistent with being mother of children born 1908\u20131920. Listed as widowed, consistent with S\u00f3stenes Cruz being deceased. Same household as all four Cruz brothers. Confidence: confident (multiple corroborating attributes).\n- Mauro Cruz (PID-TODO): name \"Mauro Cruz\" (surname without \"Corona\" second element \u2014 census typically records only paternal surname). Born ~1914 in census (1910 per birth record \u2014 systematic enumerator estimation shift). Birthplace Guerrero. Same household as known siblings and mother. Confidence: confident.\n- Primitivo Cruz (I3): new stub created from this record. Single source. Confidence: probable.\n- Migel/Libario/Facundo Cruz: name + birthplace Guerrero match p-sibling-miguel/liborio/facundo; birth years slightly off due to census estimation but consistent pattern. Confidence: confident for each.\n\nNote on Mauro's name: census shows \"Mauro Cruz\" (not \"Mauro Cruz Corona\"). In Mexican census practice, compound surnames (paterno+materno) were sometimes abbreviated to just the paternal surname in informal records. This does not create identity doubt given all other corroborating attributes."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -3751,8 +3682,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 1,
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_cruz_corona_ancestry\",\n4\t    \"objective\": \"Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-19T00:00:00Z\",\n10\t    \"updated\": \"2026-06-19T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Read",
@@ -3760,8 +3690,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 80,
         "limit": 120
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"vital_record\",\n82\t          \"jurisdiction\": \"Guerrero and Michoac\u00e1n, Mexico\",\n83\t          \"date_range\": \"1900-1925\",\n84\t          \"repository\": \"FamilySearch\",\n85\t          \"rationale\": \"Per the record-type guide, a full-text co-occurrence search for the two surname elements 'Cruz' and 'Corona' as independent required terms (not as a phrase) will surface unindexed civil registration and church records where indexed search fails. Mauro'..."
+      }
     },
     {
       "tool": "Read",
@@ -3769,8 +3698,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 200,
         "limit": 150
-      },
-      "response_summary": "200\t      \"notes\": \"Digital image of 1930 Mexico National Census schedule. Cruz siblings' birth years are 2\u20134 years later than civil registrations (systematic enumerator age estimation). Apolinar Corona listed as widowed, corroborating she is the Cruz children's mother and indicating S\u00f3stenes Cruz had died before 1930. Primitivo Cruz (born 1908) is a previously unrecorded fifth Cruz sibling. FamilySearch standard_place for census place is incorrectly tagged as Santiago de Cuba, Cuba; correct ..."
+      }
     },
     {
       "tool": "Read",
@@ -3778,8 +3706,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 350,
         "limit": 200
-      },
-      "response_summary": "350\t    },\n351\t    {\n352\t      \"id\": \"a_008\",\n353\t      \"source_id\": \"src_001\",\n354\t      \"record_id\": \"ark:/61903/1:1:QGWQ-MCFV\",\n355\t      \"record_persona_id\": null,\n356\t      \"record_role\": \"mother\",\n357\t      \"fact_type\": \"name\",\n358\t      \"value\": \"Apolinar Corona\",\n359\t      \"structured_value\": {\n360\t        \"given\": \"Apolinar\",\n361\t        \"surname\": \"Corona\"\n362\t      },\n363\t      \"information_quality\": \"primary\",\n364\t      \"informant\": \"S\u00f3stenes Cruz, declarant (reporting wife's name..."
+      }
     },
     {
       "tool": "Read",
@@ -3787,8 +3714,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 550,
         "limit": 250
-      },
-      "response_summary": "550\t      \"information_quality\": \"primary\",\n551\t      \"informant\": \"census enumerator\",\n552\t      \"informant_proximity\": \"witness\",\n553\t      \"evidence_type\": \"direct\",\n554\t      \"log_entry_id\": \"log_002\",\n555\t      \"extracted_for_question_ids\": [\n556\t        \"q_001\"\n557\t      ]\n558\t    },\n559\t    {\n560\t      \"id\": \"a_018\",\n561\t      \"source_id\": \"src_002\",\n562\t      \"record_id\": \"https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT\",\n563\t      \"record_persona_id\": \"p_578565293\",\n564\t      \"r..."
+      }
     },
     {
       "tool": "Read",
@@ -3796,8 +3722,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 800,
         "limit": 250
-      },
-      "response_summary": "800\t    },\n801\t    {\n802\t      \"id\": \"pe_002\",\n803\t      \"assertion_id\": \"a_002\",\n804\t      \"person_id\": \"PID-TODO\",\n805\t      \"confidence\": \"confident\",\n806\t      \"match_score\": null,\n807\t      \"rationale\": \"Birth date 22 November 1910 from this record belongs to the same registrant persona (Mauro Cruz Corona) that matched PID-TODO in a_001. The sibling record for Miguel Cruz (born 1913, same municipality La Uni\u00f3n, Guerrero) is fully consistent with the same family.\",\n808\t      \"superseded_b..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4036,80 +3961,70 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_012\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_013\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "PID-TODO, I2, I3, p-sibling-miguel, p-sibling-liborio, p-sibling-facundo"
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"hasEventBeforeBirth365_2\\\",\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"personId\\\": \\\"PID-TODO\\\",\\n      \\\"personName\\\": \\\"Mauro Cruz Corona\\\",\\n      \\\"factIds\\\": [\\n        \\\"fact-mauro-birth-approx\\\",\\n        \\\"fact-mauro-residence-1930\\\",\\n        \\\"fact-mauro-death\\\"\\n      ],\\n      \\\"message\\\": \\\"An event is dated more than 2 years before this person..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "I3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "p-sibling-miguel"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "p-sibling-liborio"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "p-sibling-facundo"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4125,16 +4040,14 @@
           "place": "La Uni\u00f3n, Guerrero, Mexico",
           "standard_place": "La Uni\u00f3n, Guerrero, Mexico"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4149,16 +4062,14 @@
         "anyYearTo": 1915,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Cruz\\\",\\n    \\\"givenName\\\": \\\"S\\u00f3stenes\\\",\\n    \\\"spouseGivenName\\\": \\\"Apolinar\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1918291\\\",\\n    \\\"recordCountry\\\": \\\"Mexico\\\",\\n    \\\"anyYearFrom\\\": 1895,\\n    \\\"anyYearTo\\\": 1915,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\\\"\\n  },\\n  \\\"totalMatches\\\": 23,\\n  \\\"paginationC..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__rank_search_matches",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -4168,38 +4079,33 @@
         "subjectId": "I1",
         "checkAttachments": true,
         "top": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 23,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QGWQ-4XR3\\\",\\n      \\\"matchScore\\\": 0.024653593,\\n      \\\"primaryId\\\": \\\"p_103667242353\\\",\\n      \\\"personName\\\": \\\"S\\u00f3stenes Cr\\u00faz\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Mexico, Guerrero, Civil Re..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QGWQ-4XR3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103667242350\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QGWQ-4XRM\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1ae3d6ef-1ced-4c60-9dbd-26b7ced5d1dd\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Corona\\\",\\n          \\\"given\\\": \\\"Primitivo\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"8f5c2fc1-fa88-4432-8ccf-224dfb5573e4\\\",\\n          \\\"type\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QG7L-CXQ2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103656765712\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QG7L-CX3G\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"753f19bf-ba50-4196-a492-d968542e18b9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Corona\\\",\\n          \\\"given\\\": \\\"Primitivo\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"07d5c1bd-5b6c-4ffc-9afe-3cf75801e104\\\",\\n          \\\"type\\\":..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4223,8 +4129,7 @@
         "resultsAvailable": 23,
         "stagedResultsRef": "results/.staging/02c1cd93-f91e-467e-9d8b-dfb5850ff6d1.json",
         "notes": "No direct S\u00f3stenes Cruz \u00d7 Apolinar Corona marriage record found. Top two results (ark:/61903/1:1:QGWQ-4XR3 and ark:/61903/1:1:QG7L-CXQ2) are two indexings of the same image \u2014 the 1935 marriage of Primitivo Corona (son of S\u00f3stenes Cruz and Apolinar Corona), dated 22\u201324 July 1935 at Montes de Oca, Guerrero. Both records list a Couple relationship between S\u00f3stenes Cruz and Apolinar Corona and name them as parents of the groom. This independently confirms the parental couple from a source 25 years after Mauro's birth. Apolinar's surname is indexed as Corona in one record and Cor?? (OCR corruption) in the other \u2014 the same OCR pattern seen in Mauro's 1910 birth record. Retrying from Apolinar's perspective as bride."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-08T22:24:43.802Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 23,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4239,8 +4144,7 @@
         "anyYearTo": 1912,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Corona\\\",\\n    \\\"givenName\\\": \\\"Apolinar\\\",\\n    \\\"spouseGivenName\\\": \\\"S\\u00f3stenes\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1918291\\\",\\n    \\\"recordCountry\\\": \\\"Mexico\\\",\\n    \\\"anyYearFrom\\\": 1890,\\n    \\\"anyYearTo\\\": 1912,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"pagination..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4264,8 +4168,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/956da21d-12e7-4118-be30-1cde479d25ca.json",
         "notes": "Returned 1 result: same 1935 Primitivo Corona marriage record (ark:/61903/1:1:QGWQ-4XRH), Apolinar's persona in that record. No direct S\u00f3stenes \u00d7 Apolinar marriage record found from the bride's perspective either."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-08T22:24:58.734Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4277,8 +4180,7 @@
         "recordCountry": "Mexico",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Cruz\\\",\\n    \\\"givenName\\\": \\\"S\\u00f3stenes\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1918291\\\",\\n    \\\"recordCountry\\\": \\\"Mexico\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9\\\"\\n  },\\n  \\\"totalMatches\\\": 245,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4300,8 +4202,7 @@
         "resultsAvailable": 245,
         "stagedResultsRef": "results/.staging/279565d9-af05-4166-8f9f-06ddd87e0da7.json",
         "notes": "Broad search for all S\u00f3stenes Cruz marriage records in Guerrero Civil Registration. 245 results. High-scoring Male 'S\u00f3stenes Cruz/Cr\u00faz' entries are all witnesses or parents in other people's records \u2014 the two highest-ranked (Primitivo Corona 1935) are already identified. No record found where S\u00f3stenes Cruz appears as the groom in his own marriage. The parents' marriage is not in the indexed portion of this collection. Three attempts (groom perspective, bride perspective, broad) all exhausted. Evidence for the parental couple S\u00f3stenes Cruz \u00d7 Apolinar Corona rests on: (1) 1910 birth record \u2014 father appeared in person; (2) 1930 census \u2014 Apolinar Corona widowed in same household as Cruz children; (3) 1935 Primitivo Corona marriage \u2014 explicit GedcomX Couple relationship between S\u00f3stenes Cruz and Apolinar Corona, naming them as parents of their son."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-08T22:27:07.540Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4318,8 +4219,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4330,8 +4230,7 @@
           "title": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996 \u2014 acta de matrimonio de Primitivo Corona y Hilaria Guillen, 24 julio 1935",
           "url": "https://www.familysearch.org/ark:/61903/1:1:QGWQ-4XRM"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S3\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4513,8 +4412,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_030\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_031\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_032\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4599,26 +4497,22 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_032\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_033\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_034\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__research_append",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4650,16 +4544,14 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4693,16 +4585,14 @@
           "exhaustive_search_summary": "Searched FamilySearch Mexico, Guerrero, Civil Registration 1860\u20131996 (collection 1918291) for Mauro Cruz Corona\u2019s birth record \u2014 found at ark:/61903/1:1:QGWQ-MCFV (pli_001, log_001). Searched Mexico National Census 1930 (collection 1307314) for independent corroboration of identity and family household \u2014 found at ark:/61903/1:1:MP5H-ZCT (pli_003, log_002). Searched Guerrero Civil Registration for parents\u2019 marriage (S\u00f3stenes Cruz \u00d7 Apolinar Corona) via three strategies: groom perspective 1895\u20131915 (log_003), bride perspective 1890\u20131912 (log_004), and broad groom-only (log_005) \u2014 no direct marriage record found; record is pursued-and-unavailable in the indexed portion of the collection. During the marriage search, found the 1935 civil marriage of son Primitivo Corona (log_003), which independently confirms the parental couple. Catholic church records (pli_002) and full-text co-occurrence search (pli_004) were planned fallbacks not needed after the primary source was found. Michoac\u00e1n civil registration (pli_006) was skipped as a fallback after the Guerrero birth record was confirmed. The original birth record image (ark:/61903/3:1:33S7-9T8R-68V) is accessible but was not explicitly transcribed \u2014 the one gap that holds the tier to probable.",
           "narrative_markdown": "## Birth Date, Birthplace, and Parentage of Mauro Cruz Corona\n\n**Tier: Probable**\n\nThree independent sources establish Mauro Cruz Corona\u2019s birth on **22 November 1910** at **La Uni\u00f3n, Guerrero, Mexico**, and name his parents as **S\u00f3stenes Cruz** and **Apolinar Corona**. Research was declared reasonably exhaustive (log_001\u2013log_005). The tier is *probable* rather than *proved* because the primary civil registration was accessed via a FamilySearch derivative index; the original image (ark:/61903/3:1:33S7-9T8R-68V) is accessible and explicit review would advance the tier.\n\n### Birth Date and Birthplace\n\nThe Guerrero civil registration birth entry for Mauro Cruz Corona \u2014 registered 6 December 1910 at Montes de Oca, Guerrero \u2014 records his birth on **22 November 1910** at **La Uni\u00f3n, Guerrero, Mexico**.\u00b9 His father, S\u00f3stenes Cruz, appeared before the civil registrar as the *padre declarante* (the declarant who witnessed and reported the birth). This constitutes primary, direct evidence: a first-hand witness stated the date and place to a civil official in person, fourteen days after the birth.\n\nThe 1930 Mexico National Census corroborates Mauro\u2019s identity and Guerrero origin. The census enumerated \u201cMauro Cruz\u201d as a resident of Nueva Italia de Ruiz, Michoac\u00e1n with birthplace Guerrero.\u00b2 The census birth year of approximately 1914 conflicts with the civil registration\u2019s 1910 by four years. This discrepancy is explained by a documented systematic age-estimation pattern: all four Cruz brothers whose civil registrations survive (Mauro, Miguel, Liborio, and Facundo) appear in the same 1930 census with birth years 2\u20134 years later than their civil registrations. The pattern indicates enumerator-estimated ages rather than reported birth dates; the civil registration, supported by the father\u2019s personal testimony, governs the exact date.\n\n### Parentage\n\nThe 1910 civil registration names **S\u00f3stenes Cruz** as father and **Apolinar Corona** as mother.\u00b9 The father\u2019s in-person appearance as declarant is primary direct evidence of paternity; his naming of Apolinar Corona as the mother is primary evidence of maternity from a witness present at the birth.\n\nTwo independent sources corroborate this parental pair from different record types, informants, and time periods:\n\n**1930 Census (indirect corroboration):** Apolinar Corona \u2014 widowed, born approximately 1881 in Guerrero \u2014 was enumerated as a lodger in the same household as Mauro Cruz and four brothers: Primitivo, Migel (Miguel), Libario (Liborio), and Facundo Cruz.\u00b2 All five men share the surname Cruz and were born in Guerrero; their birth years are consistent with being sons of a woman born approximately 1881. Her widowed status indicates S\u00f3stenes Cruz had died before the 1930 enumeration. The co-residence of a widow whose surname (Corona) matches the children\u2019s maternal surname, together with five adult sons named Cruz born in Guerrero, is strong indirect corroboration of the maternal relationship established in the birth record. The census informant is unknown (pre-1940 Mexican census practice), so the information quality for parentage-related assertions is indeterminate; the record functions as circumstantial corroboration from an institutional origin entirely independent of the 1910 civil registration.\n\n**1935 Civil Marriage of Primitivo Corona (indirect corroboration):** The civil marriage registration at Montes de Oca, Guerrero for Primitivo Corona (24 July 1935) records the groom as the son of S\u00f3stenes Cruz (father) and Apolinar Corona (mother) and encodes an explicit couple relationship between them in the record\u2019s GedcomX.\u00b3 The informant is the groom \u2014 a son of the couple \u2014 who stated his own parentage in a legal civil registration context. S\u00f3stenes Cruz was deceased before 1930 and could not confirm; his name as reported by a son twenty-five years after the 1910 birth record is secondary information. Apolinar Corona was alive in 1930 and may have been present at the 1935 registration. The convergence of name, generation, geographic origin, and institutional context with the 1910 birth record makes a coincidental match to a different parental pair implausible.\n\n### Parents\u2019 Marriage Record\n\nThree search strategies in the indexed Guerrero Civil Registration (collection 1918291) found no direct marriage record for S\u00f3stenes Cruz and Apolinar Corona. The record may exist in unindexed registers. This gap does not undermine the parentage conclusion: the father\u2019s direct personal testimony in the birth record is the highest-quality evidence of paternity, and two independent subsequent sources independently confirm the couple.\n\n### Conclusion\n\n**Mauro Cruz Corona** was born **22 November 1910** at **La Uni\u00f3n, Guerrero, Mexico**, the son of **S\u00f3stenes Cruz** and **Apolinar Corona**. Three sources \u2014 different record types, different institutional origins, different informants, spanning 1910\u20131935 \u2014 converge on the same conclusion. The tier is *probable* because the birth record was accessed via a FamilySearch derivative index rather than the original civil registration image; viewing the original image at ark:/61903/3:1:33S7-9T8R-68V would, absent contradictory content, advance this conclusion to *proved*.\n\n---\n\n**Sources**\n\n\u00b9 \u201cM\u00e9xico, Guerrero, Registro Civil, 1860-1996,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV : accessed 8 July 2026), entry for Mauro Cruz Corona, 6 December 1910; citing Archivo General del Estado, Guerrero.\n\n\u00b2 \u201cM\u00e9xico censo nacional, 1930,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT : accessed 8 July 2026), Mauro Cruz in Feliciano Anguiano household, Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n; Archivo General de la Naci\u00f3n, Distrito Federal.\n\n\u00b3 \u201cM\u00e9xico, Guerrero, Registro Civil, 1860-1996,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-4XRM : accessed 8 July 2026), entry for Primitivo Corona and Hilaria Guillen, 24 July 1935; citing Archivo General del Estado, Guerrero."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_cruz_corona_ancestry\",\n4\t    \"objective\": \"Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-06-19T00:00:00Z\",\n10\t    \"updated\": \"2026-06-19T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Read",
@@ -4710,8 +4600,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 80,
         "limit": 100
-      },
-      "response_summary": "80\t        },\n81\t        {\n82\t          \"id\": \"pli_003\",\n83\t          \"sequence\": 3,\n84\t          \"record_type\": \"census\",\n85\t          \"jurisdiction\": \"Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico\",\n86\t          \"date_range\": \"1930\",\n87\t          \"repository\": \"FamilySearch\",\n88\t          \"rationale\": \"A pre-existing source citation already documents Mauro Cruz and siblings in the Erculano Hernandez household in the 1930 Mexico Census (FamilySearch ARK: 3:1:S3HT-66R3-LH4). The census must be e..."
+      }
     },
     {
       "tool": "Read",
@@ -4719,16 +4608,14 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/research.json",
         "offset": 180,
         "limit": 150
-      },
-      "response_summary": "180\t      \"performed\": \"2026-07-08T22:24:43.802Z\",\n181\t      \"tool\": \"record_search\",\n182\t      \"query\": {\n183\t        \"collection\": \"Mexico, Guerrero, Civil Registration, 1860-1996\",\n184\t        \"collectionId\": \"1918291\",\n185\t        \"surname\": \"Cruz\",\n186\t        \"givenName\": \"S\u00f3stenes\",\n187\t        \"spouseGivenName\": \"Apolinar\",\n188\t        \"recordType\": \"marriage\",\n189\t        \"anyYearFrom\": 1895,\n190\t        \"anyYearTo\": 1915,\n191\t        \"count\": 50\n192\t      },\n193\t      \"outcome\": \"pa..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4773,61 +4660,53 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F1\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"hasEventBeforeBirth365_2\\\",\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"personName\\\": \\\"Apolinar Corona\\\",\\n      \\\"factIds\\\": [\\n        \\\"F1\\\"\\n      ],\\n      \\\"message\\\": \\\"An event is dated more than 2 years before this person's earliest birth-like fact.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-cruz-corona-ancestry-oy3y4sy9/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4861,8 +4740,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4896,8 +4774,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -4906,5 +4783,6 @@
     "era": "1910s",
     "geography": "MX"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

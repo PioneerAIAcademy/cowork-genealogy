@@ -15,6 +15,35 @@ The researcher wants to know whether you can actually *do* the research, not
 whether you can read an answer off a tree that already contains it. This skill
 removes a chosen slice of the local tree so the question becomes genuine.
 
+## Prerequisite
+
+`tree_forget` is required. **Do not substitute `tree_edit`** under any
+circumstance — `tree_edit` cannot cascade removals, cannot write the restore
+file, and is the mechanism `tree_forget` replaced. Using it here causes the
+data damage this skill exists to prevent.
+
+If `tree_forget` is unavailable or fails, stop immediately and tell the
+researcher why, based on the failure mode:
+
+**If the tool is absent** (ToolSearch returns no match, or a call errors with
+"unknown tool"):
+
+> The `tree_forget` tool is not available in your current MCP server.
+> Rebuild and reinstall the extension from a current repo pull, then retry.
+
+**If the tool is present but returns `{ok: false}`** (most commonly due to
+validation errors in `research.json`):
+
+> `tree_forget` failed with the following error:
+>
+> [Quote the exact error from the tool response]
+>
+> This is often caused by `research.json` entries (assertions,
+> person-evidence, timeline) that reference a person you are trying to
+> remove. Review the error, clear the blocking entries if needed, or
+> choose a narrower slice (fact-level selectors like `birth-of` or
+> `death-of` instead of `person`).
+
 ## The two halves — both are required
 
 Stripping the local tree is only half the mechanism.
@@ -49,8 +78,18 @@ resolve parents, children and spouses.
 **Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
 about to remove, and you are better off not having them in context.
 
-If the researcher hasn't seeded a project yet, run `init-project` first. This
-skill edits an existing tree; it does not create one.
+**The canonical setup is build-full-then-forget.** When a project is seeded
+specifically to test re-derivation, `init-project` builds the *complete* tree
+first — every person, relationship, and documentary fact — and this skill then
+strips the slice under test. A test is **never** set up by hand-omitting
+information at construction time: a hand-built partial tree drops the
+relationship but keeps the documentary fact that carries the same conclusion (a
+`Parents` or `Marriage` fact), leaking the answer, and it has no restore file.
+`tree_forget` removes both the structure and the fact, and is the only mechanism
+that does.
+
+If the researcher hasn't seeded a project yet, run `init-project` first (which
+builds the full tree). This skill edits an existing tree; it does not create one.
 
 ### 2. Always dry-run first
 
@@ -62,9 +101,9 @@ Each entry in `forget` is `{ selector, … }`:
 
 | Selector | Fields | Removes |
 |---|---|---|
-| `parents-of` | `personId` | the person's parents, and the links to them |
+| `parents-of` | `personId` | the person's parents, the links to them, and the person's own `Parents` documentary facts |
 | `children-of` | `personId` | the person's children, and the links to them |
-| `spouses-of` | `personId` | the person's spouses, and the couple relationships |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, and the person's own `Marriage`/`Divorce`/`Annulment` facts |
 | `birth-of` | `personId` | that person's birth facts |
 | `death-of` | `personId` | that person's death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |
@@ -108,7 +147,13 @@ are worth reading carefully rather than routing around:
 ### 4. Research it
 
 Proceed exactly as you would for a real question — `/research`, or the relevant
-sub-skills. **Extract everything a record documents, not only the fact the
+sub-skills. If the forgotten slice isn't already covered by an open research
+question, create or reopen one (via `question-selection`) that targets exactly
+what was forgotten, and let it drive a plan — do not fall back to ad-hoc
+`record_search` calls with no `plan_item_id`. A forgotten relationship is a new
+question in its own right, even when an unrelated question is mid-plan.
+
+**Extract everything a record documents, not only the fact the
 researcher asked about.** A record found while deriving the answer routinely
 names other people too — a spouse in a marriage record, children in a household
 census entry, a sibling in a death record's informant line. Assert all of it

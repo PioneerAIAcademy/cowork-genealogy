@@ -202,18 +202,30 @@ read the whole diff yourself.
 Arrive at step 9 with this done. A reviewer's round should go to whether the
 approach is right, not to what a free command would have caught.
 
-### 7. File the follow-on work
+### 7. Fold in what you can, then file the rest
 
-Everything you decided not to do becomes a GitHub issue, in this PR. Have Claude
-file them:
+**Fold first.** Most of what you turned up belongs in this PR, not in a new
+issue — you have the context loaded and whoever picks up a ticket has to rebuild
+it from nothing. An issue costs four people: someone to vet it, someone to
+implement it, and two reviewers. Walk the steps in CLAUDE.md's "Work you find
+along the way" and stop at the first that fits: fix it here, drop it if it's a
+nit, or comment on the issue that already covers it. Filing is the last resort,
+and it needs one of the four exemptions named there — in both the PR body and
+the issue body.
 
-> File a GitHub issue with `gh issue create` for each thing we decided not to
-> do. A few sentences each: what the work is, and why it's still open. Label it
-> `developer` if it has a mechanical pass/fail — lints, CI, validators,
-> harness/Python, MCP tools, refactors, tooling bugs — or `genealogist` for
-> fixture adjudication, run-log annotation, record research, doctrine prose. Add
-> `icebox` as well if it's a maybe rather than a decision. Don't run any
-> `gh project` command.
+What's genuinely left over becomes a GitHub issue, in this PR. Have Claude file
+them:
+
+> For each thing we decided not to do, first tell me whether it could be folded
+> into this PR instead — name the files and roughly the lines. For the ones that
+> genuinely can't, file a GitHub issue with `gh issue create`. A few sentences
+> each: what the work is, why it's still open, and which CLAUDE.md exemption
+> puts it out of scope for this PR. Open the body with a `**Touches:**` line
+> naming the files it would change. Label it `developer` if it has a mechanical
+> pass/fail — lints, CI, validators, harness/Python, MCP tools, refactors,
+> tooling bugs — or `genealogist` for fixture adjudication, run-log annotation,
+> record research, doctrine prose. Add `icebox` as well if it's a maybe rather
+> than a decision. Don't run any `gh project` command.
 
 The board takes care of itself — a workflow files the card. Don't leave a `TODO`
 comment and don't start a to-do file. Put the issue numbers in your PR
@@ -318,17 +330,16 @@ returns as an input to your review, never as your review.
    whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
    lists, your approval doesn't unblock merge. Say which is still owed rather
    than leaving the author to discover it at the merge button.
+5. **Pushing a small fix to their branch is fine.** It costs nobody a
+   reapproval: a push doesn't clear the approvals already on the PR, and nothing
+   is required after it. That cuts both ways — whatever you push merges unread,
+   so push only what you'd approve on sight, and leave anything bigger to the
+   author.
 
 ### "It says approved, but it won't merge"
 
-Four rules can each hold a green, approved PR. Check them in this order:
+Three rules can each hold a green, approved PR. Check them in this order:
 
-- **Someone pushed after the approvals.** At least one approval has to land
-  *after* the most recent push, from someone other than whoever pushed it. The
-  old approvals are not cancelled — they still count toward the two — so you
-  need one fresh approval, not two. **Senior developers are exempt**, so a
-  senior who pushes a small fix rather than asking the author for it can still
-  merge it themselves.
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
 - **A code owner hasn't approved yet.** `.github/CODEOWNERS` decides which team

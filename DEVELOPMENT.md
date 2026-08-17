@@ -32,6 +32,31 @@ After building, both artifacts land in `releases/`:
 ls releases/
 ```
 
+### On Windows
+
+Without Git Bash or WSL there is no `make`. Native `cmd.exe` wrappers for the
+developer targets live in `scripts\windows\` — the same commands, one file per
+target:
+
+```
+scripts\windows\install.bat     REM == make install
+scripts\windows\test-all.bat    REM == make test-all, the pre-PR gate
+```
+
+[`scripts/windows/README.md`](./scripts/windows/README.md) lists all of them.
+Running e2e fixtures, skill evals, and building the shipped artifacts go
+through the double-clickable scripts in `eval\` instead — see
+[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) and
+[docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md).
+
+The wrappers reimplement each recipe rather than shelling out to `make`, so a
+recipe change has to be made in both places. `windows-wrappers.test.ts` (under
+`make engine-test`) checks that every wrapper names a live target, resolves the
+repo root, calls its siblings and `npm`/`pnpm` correctly, and that the index
+matches the directory; it cannot check that the commands still match. Before
+editing a wrapper, read the "Changing these" rules in
+[`scripts/windows/README.md`](./scripts/windows/README.md).
+
 ## Git hooks
 
 Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
@@ -121,7 +146,8 @@ issue is easy to create and easy to forget; a PR that closes the gap it found
 needs nothing else to remember it. File a new issue instead of fixing it here
 only when at least one of these holds, and say which in the PR description:
 the fix needs a different reviewer or skill (a code fix found during fixture
-work, or vice versa); it depends on a decision only the lead can make; it's
+work, or vice versa); it depends on a decision only the lead can make and he
+is not reachable — a decision is a question, so if you can ask, ask; it's
 a different skill's eval slot and bundling it would force a second paid run;
 or it is too big for this PR — **and you have opened the call sites and
 counted**, and can say how many files and roughly how many lines. "It feels
@@ -195,10 +221,12 @@ stops the call and puts the four steps in front of him before anything is
 filed. It's a prompt, not a refusal —
 approving it files the issue. Answer it by saying which exemption applies.
 It costs about 15 ms per Bash call and fails open, so a crash in the gate can
-never block a command you were entitled to run. `python3
-scripts/claude-hooks/test-gate-issue-create.py` proves it fires on the real
-shapes (including inside a compound command) and stays quiet on
-`gh issue list`, `gh pr create`, and malformed input.
+never block a command you were entitled to run. `make hooks-test` proves it
+fires on the real shapes (including inside a compound command) and stays quiet
+on `gh issue list`, `gh pr create`, and malformed input. CI runs it too, in
+`workflow-logic-tests.yml` alongside the other repo-governance checks — the
+fail-open design means a broken gate is otherwise indistinguishable from a
+working one.
 
 Do not agonise past that one search. `/audit-board` merges, rewrites and drops
 issues across the whole pool weekly, which is the only vantage point from which
@@ -648,6 +676,9 @@ A match means the new code is built; no match means the build is stale.
 make test-all        # `./scripts/test.sh` is the same command — the target delegates to it
 ```
 
+On Windows without Git Bash, `scripts\windows\test-all.bat` runs the same
+suites in the same order.
+
 It runs every suite (never stopping at the first failure) and exits non-zero if
 any failed:
 
@@ -661,7 +692,8 @@ any failed:
 | Eval harness | `eval/harness/` | pytest | Harness internals, **including** the `e2e`-marked contract test (a real billed Anthropic call; skips itself with no key) |
 
 To run one suite, use `make engine-test` / `make harness-test` / `make test-js`
-/ `make server-test` / `make eval-ui-test` — see
+/ `make server-test` / `make eval-ui-test` (Windows: the same names under
+[`scripts\windows\`](./scripts/windows/README.md)) — see
 [`docs/architecture.md`](./docs/architecture.md) §9.1 for exactly what each
 covers and misses.
 

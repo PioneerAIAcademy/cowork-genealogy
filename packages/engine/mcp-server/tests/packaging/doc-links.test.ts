@@ -454,7 +454,7 @@ describe("docs/ cite symbols, not line numbers", () => {
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 7,
   "docs/architecture.md": 20,
-  "docs/specs/e2e-test-spec.md": 12,
+  "docs/specs/e2e-test-spec.md": 10,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 1,
   "docs/specs/guardrail-enforcement-spec.md": 16,
@@ -476,7 +476,7 @@ const ISSUE_REF_BASELINE: Record<string, number> = {
   "docs/specs/tree-forget-tool-spec.md": 1,
   "docs/specs/tree-materialization-spec.md": 7,
   "docs/specs/unit-test-spec-v2.md": 1,
-  "docs/specs/unit-test-spec.md": 7,
+  "docs/specs/unit-test-spec.md": 4,
 };
 
 /** `#1234`, but not `owner/repo#1234` and not a `#anchor`. */

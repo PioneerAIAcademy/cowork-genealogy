@@ -260,10 +260,10 @@ def check_runnable(
                 )
 
     rubric_path = Path(tests_dir) / spec.skill / "rubric.md"
-    # Rubric is opt-in per unit-test-spec-v2.md: a missing or empty file
-    # is fine — the skill is graded on base dimensions only. A present-
-    # but-malformed file is still a runnability failure (it's a typo,
-    # not an opt-out).
+    # Rubric is opt-in per unit-test-spec-v2.md: a missing file is fine —
+    # the skill is graded on base dimensions only. A present-but-malformed
+    # file is a runnability failure (it's a typo, not an opt-out), and so
+    # is a blank one — opting out means deleting the file.
     try:
         parse_rubric_or_empty(
             spec.skill,

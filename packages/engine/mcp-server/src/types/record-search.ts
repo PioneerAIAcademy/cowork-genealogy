@@ -3,6 +3,7 @@
 
 import type { SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
+import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 
 export interface FSDisplay {
@@ -38,6 +39,10 @@ export interface FSPerson {
   gender?: { type?: string };
   facts?: FSFact[];
   identifiers?: Record<string, string[]>;
+  // Person-level indexing fields — `PR_AGE`, `Role`. Declared so the shape is
+  // honest, and deliberately NOT read: the batch number lives on the gedcomx
+  // root's `fields[]`, never here (#1592).
+  fields?: FSField[];
 }
 
 export interface FSSourceTitle {
@@ -51,9 +56,27 @@ export interface FSSourceDescription {
   identifiers?: Record<string, string[]>;
 }
 
+export interface FSFieldValue {
+  labelId?: string;
+  text?: string;
+}
+
+/**
+ * An entry-level indexing field. FamilySearch hangs several of these off the
+ * gedcomx root (batch number, film number, record group, unique id); the same
+ * `fields` key also appears on persons, names, facts and places, carrying
+ * entirely different content (`PR_AGE`, `Role`) — so only the ROOT array is
+ * the batch's home.
+ */
+export interface FSField {
+  type?: string;
+  values?: FSFieldValue[];
+}
+
 export interface FSGedcomx {
   persons?: FSPerson[];
   sourceDescriptions?: FSSourceDescription[];
+  fields?: FSField[];
 }
 
 export interface FSEntryContent {
@@ -243,6 +266,26 @@ export interface RecordSearchResult {
   // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
   // `same_person` as primaryId1/primaryId2.
   primaryId?: string;
+  // Whether the relative(s) the caller anchored the search on are actually
+  // named on this record. Present only when a relative NAME was supplied.
+  // Survives the staged slim block that strips `gedcomx`, which is the point:
+  // without it a father-anchored hit that names no father is indistinguishable
+  // from one that confirms him (#1324).
+  relativeTerms?: RelativeTerms;
+  // The IGI/extraction batch this record came out of, e.g. "M01048-5". Feed it
+  // straight back as `record_search`'s `batchNumber` input to enumerate the rest
+  // of the batch — the loop that was prescribed on five prose surfaces and
+  // executable on none until this field existed (#1592).
+  //
+  // Flat and top-level rather than left inside `gedcomx`, for the same reason as
+  // `relativeTerms` above: the staged slim block strips `gedcomx`, and a batch
+  // number the model cannot see in the staged (i.e. normal) case is the one case
+  // that matters.
+  //
+  // Absent on most records — see the extraction note in tools/record-search.ts.
+  // Absence means "this record does not trace to a batch", NEVER "this
+  // collection has none".
+  batchNumber?: string;
 }
 
 export interface RecordSearchToolResponse {
