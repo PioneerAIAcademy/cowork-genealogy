@@ -65,14 +65,16 @@ behind pointers:
 1. **`name` + `description`** — always in the orchestrator's context for
    every session. Treat this as a scarce budget (see §3).
 2. **SKILL.md body** — loaded whenever the skill triggers. Prefer a short
-   body, but **length is not the thing that fails**: measured over a real
-   309-turn session, every rule with a **structural anchor** held at 100%
-   while the two unanchored ones decayed to 45% and 3%. If a rule has to
-   survive a long session, anchor it — have the tool reject the violation,
-   feed its output into a step that cannot proceed without it, or leave a
-   durable trace the agent re-reads. Moving it behind a pointer does not
-   help; splitting an **agent** body into `references/` was measured and
-   reverted (see CLAUDE.md).
+   body for cost, but **length is not what makes a rule fail**: what
+   decides whether a rule survives a long session is whether it is
+   *anchored* — the tool rejects the violation, its output feeds a step
+   that cannot proceed without it, or it leaves a durable trace the agent
+   re-reads. Anchor any rule that must hold past the turn the body is
+   evicted. `docs/adrs/ADR-0003-anchor-cross-turn-rules-structurally.md`
+   is the decision and carries the measurement; don't restate its
+   figures here. Note what does **not** work: moving prose behind a
+   pointer. Splitting an **agent** body into `references/` was measured
+   and reverted (see CLAUDE.md).
 3. **`references/`, `templates/`, `scripts/`** — loaded or executed only
    when the body tells the model to.
 
@@ -164,7 +166,7 @@ Cowork's orchestrator decides whether to invoke a skill from its
   principle; let the model apply it.
 - **Draft, then read it cold.** Write a first version, then re-read it
   against this guide with fresh eyes — is it lean, are the MUSTs
-  justified, did the body stay under 500 lines? This pass is cheap and
+  justified, is every long-session rule anchored? This pass is cheap and
   catches the most.
 
 ## 6. Lack of surprise
@@ -182,8 +184,8 @@ fix the divergence before shipping.
       confusable skills it defers to.
 - [ ] Opens with the `**Narration:**` line; ends with
       `## Re-invocation behavior`.
-- [ ] Body under ~500 lines; depth pushed into this skill's own
-      `references/`.
+- [ ] Every rule that must survive a long session is anchored in a
+      tool contract, not just stated in the body.
 - [ ] No network code; any bundled script is Python stdlib only.
 - [ ] camelCase tool params, snake_case persisted fields.
 - [ ] MUSTs are real invariants; everything else explains its why.
