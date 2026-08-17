@@ -183,13 +183,15 @@ After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct
 
 **Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
-### 7. Do not modify the question
+### 7. Resolve the question
 
-**This skill does not write the `questions` section.** Leave it entirely untouched, including the question referenced by `proof_summaries[].question_id`.
+**Concluding a question includes resolving it — this skill owns that transition.** Once the `proof_summaries` entry from §5 exists, call `research_append({ projectPath, section: "questions", op: "update", entryId: "<the q_ this conclusion answers>", fields: { status: "resolved", resolved: "<today, YYYY-MM-DD>", resolution_assertion_ids: [ /* the a_ ids the conclusion rests on */ ] } })`.
 
-Marking the question `resolved` (setting `resolved`, `resolution_assertion_ids`) is `question-selection`'s job; the `exhaustive_declaration` belongs to `research-exhaustiveness`. The proof's only link to its question is `proof_summaries[].question_id`. After writing the proof, recommend `question-selection` as the next step.
+`research_append` refuses that update — on `status` and on the `resolved` date alike — unless a proof summary already references the question. If both go in one call, order the `proof_summaries` append **before** this update.
 
-**Never set `status`, `resolved`, `resolution_assertion_ids`, or `exhaustive_declaration` on the question.** This skill writes only `proof_summaries` and `project` on `research.json`, plus `persons`/`relationships`/`sources` on `tree.gedcomx.json`.
+**A question closed with nothing found is still resolved here.** Write a `not_proved` summary stating what was searched and not found (§2's documented-negative doctrine), then resolve the question against it — concluding it that way is the only way to close it.
+
+**Never set `exhaustive_declaration`** — that belongs to `research-exhaustiveness`. On the question, this skill writes only `status`, `resolved`, and `resolution_assertion_ids`.
 
 ### 8. Update project status
 
@@ -234,8 +236,8 @@ is already persisted.
 
 ## Re-invocation behavior
 
-**Writes:** `proof_summaries[]` and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
+**Writes:** `proof_summaries[]`, the concluded question's `status` (→ `resolved`), `resolved`, and `resolution_assertion_ids` in `questions[]`, and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
 
 **On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
-**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write to the `questions` section (see §7).
+**Never duplicate:** more than one `proof_summary` for the same `question_id`. On the `questions` section, write only the three fields in §7.
