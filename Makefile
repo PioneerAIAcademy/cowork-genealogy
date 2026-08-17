@@ -390,8 +390,8 @@ eval-timings: ## Weekly timing review: scan the latest run log per skill, rank t
 	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: prune-runlogs
-prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
-	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [STRIP=1|DAYS] [DRY=1]
+	# Read-modify-write over eval/runlogs/. Commit the result.
 	#
 	# You should not normally need PRUNE: the harness prunes to the newest 5
 	# candidates per skill on every write (harness/runlog.py), so the cap holds
@@ -402,9 +402,17 @@ prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune
 	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
+	#
+	# STRIP=1 drops response_summary from e2e run logs older than 14 days
+	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
+	# the unit corpus this is keyed on age and strips rather than deletes — e2e
+	# has no per-skill run-log invariant to protect, and response_summary is the
+	# only field with no programmatic reader. The .ann.json / .final-tree /
+	# .final-research calibration triple is never touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
+	  $(if $(STRIP),--strip-e2e-captures $(if $(filter-out 1,$(STRIP)),$(STRIP),),) \
 	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill

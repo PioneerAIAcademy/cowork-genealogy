@@ -1880,53 +1880,46 @@
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[],\\\"persons\\\":[{\\\"id\\\":\\\"LZ3Z-RHM\\\",\\\"name\\\":\\\"Eulojia del Carmen Gatica Alfaro\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"MX45-9HH\\\",\\\"name\\\":\\\"Carmen Alfaro Vilches\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"KNT6-7ZR\\\",\\\"name\\\":\\\"Buenaventura Gatica \\u00c1rias\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GDV2-WWJ\\\",\\\"name\\\":\\\"Mar\\u00eda Lu\\u00edsa del Rosario\\\",\\\"gender\\\":\\\"Fema..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "section": "questions"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nSubject: Eulojia del Carmen Gatica Alfaro (FamilySearch ID: LZ3Z-RHM), female, Santiago, Chile.\n\nResearch objective: Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?\n\nNo questions exist yet. Derive the first research question from the objective above."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1951,68 +1944,59 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nQuestion: q_001 \u2014 Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or burial record record?\n\nSubject: Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM), female, Santiago, Chile. Approximate period: late 19th\u2013early 20th century (exact dates unknown).\n\nSurvey the research landscape for Santiago, Chile \u2014 specifically cemetery/burial records, civil death registers, and church burial registers \u2014 and persist a localities entry so research-plan can stage the searches."
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\locality-guide\\references\\output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\locality-guide\\references\\locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\locality-guide\\references\\locality-broad-context.md"
-      },
-      "response_summary": "1\t# Broad Context Factors for Locality Research\n2\t\n3\tEffective locality research requires understanding the historical,\n4\tsocial, economic, and legal context of the place and time period.\n5\tThese contextual factors determine what records were created, what\n6\tinformation they contain, and where they are likely to be held.\n7\t\n8\tThis reference corresponds to the GPS principle that research planning\n9\tmust consider boundaries, migration, and the full range of factors\n10\tthat shape record creation..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\locality-guide\\references\\reference-source-types.md"
-      },
-      "response_summary": "1\t# Reference Source Types for Locality Research\n2\t\n3\tReference sources provide information about places, time periods, and\n4\trecord types. They do NOT contain information about specific\n5\tindividuals. Instead, they tell the researcher what records were\n6\tcreated, when and where, and how to find them.\n7\t\n8\t## Categories of reference sources\n9\t\n10\t### Atlases and historical maps\n11\t\n12\tCollections of maps showing political boundaries, geographic features,\n13\tand place names at specific dates. ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Santiago",
         "contextName": "Chile"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Santiago, Chile\\\",\\\"type\\\":\\\"Province\\\",\\\"dateRange\\\":\\\"+1826/\\\",\\\"latitude\\\":-33.3863,\\\"longitude\\\":-70.6608,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Santiago&focusedId=442372\\\",\\\"wikipediaUrl\\\":\\\"https://es.wikipedia.org/wiki/Provincia_de_Santiago#Historia\\\"},{\\\"standardPlace\\\":\\\"Metropolitana de Santiago, Chile\\\",\\\"type\\\":\\\"Region\\\",\\\"dateRange\\\":\\\"+1976/\\\",\\\"latitude\\\":-33.5,\\\"longitude\\\":-70...."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_search",
         "max_results": 6
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2020,8 +2004,7 @@
         "standardPlace": "Santiago, Chile",
         "startYear": 1860,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"place\\\":{\\\"place_id\\\":\\\"1939419\\\",\\\"name\\\":\\\"Santiago\\\",\\\"level\\\":\\\"province\\\",\\\"parent\\\":{\\\"place_id\\\":\\\"1927143\\\",\\\"name\\\":\\\"Chile\\\"}},\\\"population\\\":{\\\"populstat\\\":{\\\"source_url\\\":\\\"http://populstat.info/Americas/chilep.htm\\\",\\\"data\\\":[{\\\"year\\\":1865,\\\"population\\\":341700,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1865,\\\"population\\\":115400,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1868,\\\"population\\\":364200,\\\"data_type\\\":\\\"estimate\\\"},{\\\"year\\\":1870,\\\"population\\\":374..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2029,8 +2012,7 @@
         "standardPlace": "Santiago, Chile",
         "startYear": 1860,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Santiago, Chile\\\",\\\"startYear\\\":1860,\\\"endYear\\\":1940},\\\"scope\\\":\\\"Chile\\\",\\\"totalForPlace\\\":6,\\\"results\\\":[{\\\"id\\\":\\\"1520549\\\",\\\"title\\\":\\\"Chile, Baptisms, 1585-1932\\\",\\\"dateRange\\\":\\\"1585-1932\\\",\\\"recordCount\\\":1539058,\\\"personCount\\\":4224144,\\\"imageCount\\\":1562005,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/1520549\\\"},{\\\"id\\\":\\\"3405096\\\",\\\"title\\\":\\\"Chile, Catholic Church Records, 1633-2015\\\",\\\"dateRange\\\":\\\"1633-2015\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2038,8 +2020,7 @@
         "standardPlace": "Santiago, Chile",
         "startYear": 1860,
         "endYear": 1940
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Santiago, Chile\\\",\\\"startYear\\\":1860,\\\"endYear\\\":1940},\\\"totalResults\\\":5589,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"007685061_007_M934-8KG\\\",\\\"imageGroupPrefix\\\":\\\"007685061\\\",\\\"imageCount\\\":0,\\\"recordSearchablePercent\\\":null,\\\"fulltextSearchable\\\":false,\\\"languages\\\":[\\\"es\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},{\\\"place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},{\\\"place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2048,47 +2029,41 @@
         "startYear": 1860,
         "endYear": 1940,
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Santiago, Chile\\\",\\\"startYear\\\":1860,\\\"endYear\\\":1940},\\\"totalForPlace\\\":46,\\\"returned\\\":45,\\\"results\\\":[{\\\"url\\\":\\\"https://www.myheritage.com/research/collection-20739/chile-santiago-burials\\\",\\\"linkText\\\":\\\"Chile, Santiago Burials\\\"},{\\\"url\\\":\\\"https://www.ancestry.com/search/collections/9811\\\",\\\"linkText\\\":\\\"Chile, Select Baptisms, 1585-1932\\\"},{\\\"url\\\":\\\"https://www.findmypast.com/search/results?sourcecategory=travel+%26+migration..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Chile",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Chile_Genealogy\\\",\\\"content\\\":\\\"# Chile Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **Chile Wiki Topics** |\\\\n| [Flag of Chile](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Chile.png&filetimestamp=20170816133355& \\\\\\\"Flag of Chile\\\\\\\") |\\\\n| **Chile Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/Chile_Getting_Started \\\\\\\"Chile Getting Started\\\\\\\") * [Online Learning..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Chile",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Chile_Getting_Started\\\",\\\"content\\\":\\\"# Chile Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Chile Wiki Topics](https://www.familysearch.org/en/wiki/Chile_Genealogy \\\\\\\"Chile Genealogy\\\\\\\")** |\\\\n| [Flag of Chile](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Chile.png&filetimestamp=20170816133355& \\\\\\\"Flag of Chile\\\\\\\") |\\\\n| **Chile Beginning Research** |\\\\n| * Getting Started * [Online Learning..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Chile",
         "section": "online_records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Chile_Online_Genealogy_Records\\\",\\\"content\\\":\\\"# Chile Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[Chile](https://www.familysearch.org/en/wiki/Chile_Genealogy \\\\\\\"Chile Genealogy\\\\\\\")\\\\n\\\\nOnline Genealogy Records\\\\n\\\\n|  |  |  |  |  |  |\\\\n| --- | --- | --- | --- | --- | --- |\\\\n| These are genealogy links to Chile online databases and indexes that may include birth records, marriage records, death records, biographies, ceme..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Chile",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Chile_Research_Tips_and_Strategies\\\",\\\"content\\\":\\\"# Chile Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Chile Wiki Topics](https://www.familysearch.org/en/wiki/Chile_Genealogy \\\\\\\"Chile Genealogy\\\\\\\")** |\\\\n| [Flag of Chile](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Chile.png&filetimestamp=20170816133355& \\\\\\\"Flag of Chile\\\\\\\") |\\\\n| **Chile Beginning Research** |\\\\n| * [Getting..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Santiago Chile cemetery burial records genealogy research"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":\\\"Santiago Chile cemetery burial records genealogy research\\\",\\\"total_chunks_searched\\\":1240565,\\\"results\\\":[{\\\"rank\\\":1,\\\"relevance_score\\\":0.910156,\\\"chunk_text\\\":\\\"## Background  \\\\nCemetery records include tombstone records and sexton records. Cemetery records may give more information than parish burial registers or civil certificates of deaths. They may include the name of the deceased, age at death, date of death or burial, birth year or date of bi..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2185,30 +2160,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"localities\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"loc_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nQuestion: q_001 \u2014 Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or burial record record?\n\nSubject: Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM), female, Santiago, Chile.\n\nLocality guide loc_001 is available for Santiago, Chile (1860\u20131940). Key collections identified:\n1. FamilySearch \"Chile, Cemetery Records, 1701-2021\" (collection 1428897) \u2014 indexed + images \u2014 PRIMARY\n2. FamilySearch \"Chile, Civil Registration, 1880-1933\" (collection 1630787) \u2014 indexed + images\n3. FamilySearch \"Chile, Catholic Church Records, 1633-2015\" (collection 3405096) \u2014 indexed + images\n4. FamilySearch \"Chile, Deaths, 1700-1920\" (collection 1520559) \u2014 index only\n5. MyHeritage \"Chile, Santiago Burials\" (collection 20739) \u2014 external, subscription\n6. Ancestry \"Chile, Santiago, Cementerio General, 1821-2011\" (collection 9814) \u2014 external, subscription\n\nQuirks: women may be indexed under married name; check spelling variants Eulogia/Eulalia; civil registration began 1885 (pre-1885 = church records only).\n\nCreate a prioritized research plan for q_001."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\research-plan\\references\\planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2330,24 +2301,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_item..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nExecute plan items for q_001 on FamilySearch. Start with pli_001, then pli_002, pli_003, pli_004 in sequence (all FamilySearch repositories). Log every search including nil results.\n\nSubject: Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM), female, Santiago, Chile. Parents: Buenaventura Gatica \u00c1rias (father), Carmen Alfaro Vilches (mother). Husband: Juan de Dios Gonz\u00e1lez. Children include: Manuel Jesus, Jos\u00e9 Antonio, Luisa del Carmen, Zoila Blanca, Sara Gonz\u00e1lez Gatica.\n\nPlan items to execute:\n- pli_001: FamilySearch collection 1428897 \"Chile, Cemetery Records, 1701-2021\" \u2014 search surname Gatica, given name Eulojia (+ variants Eulogia, Eulalia); also try married name Gonz\u00e1lez if not found\n- pli_002: FamilySearch collection 1630787 \"Chile, Civil Registration, 1880-1933\" \u2014 death record search\n- pli_003: FamilySearch collection 1520559 \"Chile, Deaths, 1700-1920\" \u2014 church death/burial index \u2014 fallback for pli_002\n- pli_004: FamilySearch collection 3405096 \"Chile, Catholic Church Records, 1633-2015\" \u2014 church burials \u2014 fallback for pli_003\n\nAlso execute pli_007 (FAN): search collections 1428897 and 1630787 for husband Juan de Dios Gonz\u00e1lez and children with surname Gonz\u00e1lez Gatica.\n\nPass promising records to record-extraction."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2359,16 +2327,14 @@
         "sex": "Female",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "subjectId": "LZ3Z-RHM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gatica\\\",\\\"givenName\\\":\\\"Eulojia\\\",\\\"collectionId\\\":\\\"1428897\\\",\\\"recordCountry\\\":\\\"Chile\\\",\\\"sex\\\":\\\"Female\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\Dell\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-eulogia-gatica-burial-w0eidpt0\\\",\\\"subjectId\\\":\\\"LZ3Z-RHM\\\"},\\\"totalMatches\\\":262,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:6PX1-JJ3Z\\\",\\\"events\\\":[{\\\"type\\\":\\\"Burial\\\",\\\"date\\\":\\\"12 A..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2376,8 +2342,7 @@
         "recordId": "ark:/61903/1:1:6PVG-GDQP",
         "resultsRef": "results/.staging/a87fb238-3327-447c-8d15-b58868e6ec6b.json",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_301532824943\\\",\\\"ark\\\":\\\"ark:/61903/1:1:6PVG-GDQP\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Eulogia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Burial\\\",\\\"primary\\\":true,\\\"date\\\":\\\"30 May 1908\\\",\\\"standard_date\\\":\\\"30 May 1908\\\",\\\"place\\\":\\\"Santiago, Chile\\\",\\\"standard_place\\\":\\\"Santiago, Chile\\\"},{\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1865\\\",\\\"standard_date\\\":\\\"1865\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]}]..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2390,8 +2355,7 @@
         "resultsAvailable": 262,
         "stagedResultsRef": "results/.staging/a87fb238-3327-447c-8d15-b58868e6ec6b.json",
         "notes": "Rank-1 match: Eulogia Gatica Alfaro (matchScore 0.692), buried 30 May 1908, Santiago, Chile; birth year 1865. Both surnames match subject (Gatica Alfaro). Given-name variant Eulogia vs. Eulojia. Not attached to subject or other. Record ARK ark:/61903/1:1:6PVG-GDQP. Image at ark:/61903/3:1:3QS7-89MX-NVF4. This is the primary burial find for q_001."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_001\\\",\\\"performed\\\":\\\"2026-07-28T16:42:58.649Z\\\",\\\"resultsRef\\\":\\\"results/log_001.json\\\",\\\"returnedCount\\\":50,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_001.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2404,8 +2368,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2420,8 +2383,7 @@
         "sex": "Female",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "subjectId": "LZ3Z-RHM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gatica\\\",\\\"givenName\\\":\\\"Eulogia\\\",\\\"collectionId\\\":\\\"1630787\\\",\\\"recordCountry\\\":\\\"Chile\\\",\\\"recordType\\\":\\\"death\\\",\\\"deathYearFrom\\\":1905,\\\"deathYearTo\\\":1912,\\\"sex\\\":\\\"Female\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\Dell\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-eulogia-gatica-burial-w0eidpt0\\\",\\\"subjectId\\\":\\\"LZ3Z-RHM\\\"},\\\"totalMatches\\\":7,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":7,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/619..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2429,8 +2391,7 @@
         "recordId": "ark:/61903/1:1:Q2S2-4XV5",
         "resultsRef": "results/.staging/8177ba19-e850-44d6-8dc8-f7d5862d1d92.json",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102125002164\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q2S2-4XV5\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Eulojia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Death\\\",\\\"date\\\":\\\"29 de mayo de 1908\\\",\\\"standard_date\\\":\\\"29 May 1908\\\"},{\\\"type\\\":\\\"DeathRegistration\\\",\\\"primary\\\":true,\\\"place\\\":\\\"Santiago, Santiago, Metropolitana de Santiago, Chile\\\",\\\"standard_place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},{\\\"type\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2438,8 +2399,7 @@
         "recordId": "ark:/61903/1:1:Q2S2-4XS9",
         "resultsRef": "results/.staging/8177ba19-e850-44d6-8dc8-f7d5862d1d92.json",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102125001661\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q2S2-4XS9\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Eulojia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"DeathRegistration\\\",\\\"primary\\\":true,\\\"place\\\":\\\"Santiago, Santiago, Metropolitana de Santiago, Chile\\\",\\\"standard_place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},{\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1865\\\",\\\"standard_date\\\":\\\"1865\\\"},{\\\"type\\\":\\\"Death\\\",\\\"date\\\":\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2452,8 +2412,7 @@
         "resultsAvailable": 7,
         "stagedResultsRef": "results/.staging/8177ba19-e850-44d6-8dc8-f7d5862d1d92.json",
         "notes": "Two duplicate index entries for same death registration: Eulojia Gatica Alfaro (ARKs Q2S2-4XV5 and Q2S2-4XS9), death 29 May 1908, Santiago Centro, birth year 1865. Both already attached to subject LZ3Z-RHM. Parents: Ventura Gatica + C\u00e1rmen Alfaro; husband Juan Gonz\u00e1lez. Corroborates cemetery record (pli_001) \u2014 death 29 May 1908 consistent with burial 30 May 1908. Q2S2-4XV5 selected as primary; Q2S2-4XS9 is duplicate. Also note rank-3 result Q241-Q8ZN is a death record for Zoila Gonz\u00e1lez Gatica listing Eulogia Gatica as related party (FAN corroboration of children)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_002\\\",\\\"performed\\\":\\\"2026-07-28T16:44:03.902Z\\\",\\\"resultsRef\\\":\\\"results/log_002.json\\\",\\\"returnedCount\\\":7,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_002.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2497,16 +2456,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nExtract assertions from two records for question q_001. Subject: Eulojia del Carmen Gatica Alfaro (tree person LZ3Z-RHM), female, Santiago, Chile.\n\nRECORD 1 \u2014 Cemetery record\nrecordId: ark:/61903/1:1:6PVG-GDQP\nlogId: log_001 (resultsRef: results/log_001.json)\nplanItemId: pli_001\nContent from record_read:\n- Person: Eulogia Gatica Alfaro, Female\n- Burial: 30 May 1908, Santiago, Chile (standard_place: Santiago, Chile)\n- Birth: 1865\n- Source title: \"Chile, registros de cementerios, 1701-2021\"\n- Source citation: \"Chile, registros de cementerios, 1701-2021\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PVG-GDQP : Tue Apr 23 19:34:19 UTC 2024), Entry for Eulogia Gatica Alfaro, 30 May 1908.\n- Source URL: https://www.familysearch.org/ark:/61903/1:2:HQCK-2ZY9\n- Image ARK: ark:/61903/3:1:3QS7-89MX-NVF4\n\nRECORD 2 \u2014 Civil death registration\nrecordId: ark:/61903/1:1:Q2S2-4XV5\nlogId: log_002 (resultsRef: results/log_002.json)\nplanItemId: pli_002\nContent from record_read:\n- Person: Eulojia Gatica Alfaro, Female\n- Death: 29 May 1908 (\"29 de mayo de 1908\")\n- DeathRegistration place: Santiago, Santiago, Metropolitana de Santiago, Chile (standard_place: Santiago Centro, Santiago, Chile)\n- Birth: 1865\n- Father: Ventura Gatica\n- Mother: C\u00e1rmen Alfaro\n- Husband: Juan Gonz\u00e1lez (Male)\n- Source title: \"Chile, Registro Civil, 1880-1933\"\n- Source citation: \"Chile, Registro Civil, 1880-1933\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5 : Thu Nov 20 02:12:27 UTC 2025), Entry for Eulojia Gatica Alfaro and Ventura Gatica.\n- Source URL: https://www.familysearch.org/ark:/61903/1:2:QLMZ-TZ9Z\n- Image ARK: ark:/61903/3:1:939K-LP7F-6\n\nExtract all assertions from both records for q_001. Apply GPS three-layer classification to each assertion."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2514,15 +2471,13 @@
         "description": "Extract cemetery record for Eulojia Gatica Alfaro",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch cemetery record into the research project.\n\n**projectPath:** C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n**recordId:** ark:/61903/1:1:6PVG-GDQP\n**logId:** log_001\n**resultsRef:** results/log_001.json\n**question ids this record bears on:** q_001\n\n**Record content (from record_read via sidecar):**\n\nPerson (record persona):\n- id: p_301532824943\n- ark: ark:/61903/1:1:6PVG-GDQP\n- gender: Female\n- name: given=Eulogia, surname=Gatica Alfaro (BirthName)\n- facts:\n  - Burial (primary): date=30 May 1908, standard_date=30 May 1908, place=Santiago, Chile, standard_place=Santiago, Chile\n  - Birth: date=1865, standard_date=1865\n\nSource:\n- title: \"Chile, registros de cementerios, 1701-2021\"\n- citation: \"Chile, registros de cementerios, 1701-2021\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PVG-GDQP : Tue Apr 23 19:34:19 UTC 2024), Entry for Eulogia Gatica Alfaro, 30 May 1908.\n- url: https://www.familysearch.org/ark:/61903/1:2:HQCK-2ZY9\n- image ARK (sd_da1): ark:/61903/3:1:3QS7-89MX-NVF4 (original image not yet transcribed)\n- collection: Chile, Cemetery Records, 1701-2021 (collection 1428897)\n- source type: derivative (indexed cemetery record derived from original burial registers)\n\n**Context:** The research subject is Eulojia del Carmen Gatica Alfaro (tree person LZ3Z-RHM), female, of Santiago, Chile. The research question q_001 asks where and when she was buried, and whether a cemetery record corroborates her recorded death date and birth year. This cemetery record gives burial date 30 May 1908 and birth year 1865. A civil death registration (separate record, to be extracted next) gives death date 29 May 1908 \u2014 one day earlier, consistent with same-day or next-day burial.\n\nExtract all assertions (burial event, birth year) with GPS three-layer classification (source classification, information quality, evidence type) for each. The original image has not been transcribed \u2014 note this but do not block extraction on it; the indexed record is sufficient for assertions."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All assertions persisted successfully. Here is the extraction summary.\\n\\n---\\n\\n**Source:** src_001 / S1 \\u2014 created (new source)\\n**Source classification:** derivative \\u2014 indexed cemetery record derived from original burial registers\\n**Original not examined:** image ark:/61903/3:1:3QS7-89MX-NVF4 has not been transcribed; the index is sufficient for assertions but image review is recommended to confirm name spelling, burial date, and birth year\\n\\n**Asserti..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or buri\\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"LZ3Z-RHM\\\",\\\"name\\\":\\\"Eulojia del Carmen Gatica Alfaro\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"MX45-9HH\\\",\\\"name\\\":\\\"Carmen Alfaro Vilches\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2644,8 +2599,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_004\\\"}],\\\"sourceDescriptionId\\\":\\\"S1\\\",\\\"sourceReuse\\\":{\\\"action\\\":\\\"created\\\",\\\"srcId\\\":\\\"src_001\\\",\\\"sId\\..."
+      }
     },
     {
       "tool": "Agent",
@@ -2653,15 +2607,13 @@
         "description": "Extract civil death registration for Eulojia Gatica Alfaro",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch civil death registration into the research project.\n\n**projectPath:** C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n**recordId:** ark:/61903/1:1:Q2S2-4XV5\n**logId:** log_002\n**resultsRef:** results/log_002.json\n**question ids this record bears on:** q_001\n\n**Record content (from record_read via sidecar):**\n\nPersons on the record:\n1. Principal (deceased):\n   - id: p_102125002164\n   - ark: ark:/61903/1:1:Q2S2-4XV5\n   - gender: Female\n   - name: given=Eulojia, surname=Gatica Alfaro (BirthName)\n   - facts:\n     - Death (primary): date=\"29 de mayo de 1908\", standard_date=29 May 1908\n     - DeathRegistration: place=Santiago, Santiago, Metropolitana de Santiago, Chile, standard_place=Santiago Centro, Santiago, Chile\n     - Birth: date=1865, standard_date=1865\n\n2. Father:\n   - id: p_102125002170 / ark Q2S2-4XKM\n   - name: given=Ventura, surname=Gatica (BirthName)\n\n3. Mother:\n   - id: p_102125002178 / ark Q2S2-4XKH\n   - name: given=C\u00e1rmen, surname=Alfaro (BirthName)\n\n4. Husband:\n   - id: p_102125002182 / ark Q2S2-4XKD\n   - gender: Male\n   - name: given=Juan, surname=Gonzalez (BirthName)\n\nRelationships:\n- Couple: Ventura Gatica + C\u00e1rmen Alfaro (parents)\n- ParentChild: Ventura Gatica \u2192 Eulojia Gatica Alfaro\n- ParentChild: C\u00e1rmen Alfaro \u2192 Eulojia Gatica Alfaro\n- Couple: Eulojia Gatica Alfaro + Juan Gonz\u00e1lez\n\nSource:\n- title: \"Chile, Registro Civil, 1880-1933\"\n- citation: \"Chile, Registro Civil, 1880-1933\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5 : Thu Nov 20 02:12:27 UTC 2025), Entry for Eulojia Gatica Alfaro and Ventura Gatica.\n- url: https://www.familysearch.org/ark:/61903/1:2:QLMZ-TZ9Z\n- image ARK (sd_da1): ark:/61903/3:1:939K-LP7F-6 (original image not yet transcribed)\n- collection: Chile, Civil Registration, 1880-1933 (collection 1630787)\n- source type: original (official civil registration death record)\n\n**Context:** The research subject is Eulojia del Carmen Gatica Alfaro (tree person LZ3Z-RHM), female, Santiago, Chile. Research question q_001 seeks her burial location/date and whether a cemetery record corroborates her death date and birth year. This civil death registration gives:\n- Death date: 29 May 1908 (consistent with cemetery burial date of 30 May 1908 from the already-extracted cemetery record src_001)\n- Birth year: 1865 (corroborates cemetery record)\n- Registration place: Santiago Centro, Santiago, Chile\n- Parents: Ventura Gatica (father) + C\u00e1rmen Alfaro (mother) \u2014 consistent with tree persons Buenaventura Gatica \u00c1rias (KNT6-7ZR) and Carmen Alfaro Vilches (MX45-9HH). Note that \"Ventura\" is a common short form of \"Buenaventura.\"\n- Husband: Juan Gonz\u00e1lez \u2014 consistent with tree person Juan de Dios Gonz\u00e1lez (GDVK-Y8P)\n\nA duplicate index entry exists (ark:/61903/1:1:Q2S2-4XS9 / log_002) \u2014 both point to the same underlying civil registration image. Extract only this record; the duplicate need not be separately extracted.\n\nExtract all assertions (death, death registration place, birth year, name, sex, parentage relationships, spouse relationship) with GPS three-layer classification. The civil registration is an original record; the informant for the death and registration facts is an official registrar acting in official capacity. The birth year appearing on a death record is secondary information \u2014 the registrar was not present at the birth in 1865."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 13 assertions and the source persisted cleanly. Here is the summary:\\n\\n**Source:** src_002 / S2 \\u2014 created (new source, no reuse). URL: https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5\\n\\n**Original not examined.** This is a derivative index entry pointing to the unread original image (ark:/61903/3:1:939K-LP7F-6). The original civil registration was not transcribed; the index is what was extracted. Downstream exhaustiveness analysis must inherit this l..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or buri\\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"LZ3Z-RHM\\\",\\\"name\\\":\\\"Eulojia del Carmen Gatica Alfaro\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"MX45-9HH\\\",\\\"name\\\":\\\"Carmen Alfaro Vilches\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2669,8 +2621,7 @@
         "recordId": "ark:/61903/1:1:Q2S2-4XV5",
         "resultsRef": "results/log_002.json",
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102125002164\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q2S2-4XV5\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Eulojia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Death\\\",\\\"date\\\":\\\"29 de mayo de 1908\\\",\\\"standard_date\\\":\\\"29 May 1908\\\"},{\\\"type\\\":\\\"DeathRegistration\\\",\\\"primary\\\":true,\\\"place\\\":\\\"Santiago, Santiago, Metropolitana de Santiago, Chile\\\",\\\"standard_place\\\":\\\"Santiago Centro, Santiago, Chile\\\"},{\\\"type\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2970,32 +2921,28 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_006\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_007\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_008\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_009\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Project path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\nLink record personas from the two newly extracted records to tree persons for question q_001.\n\nEXTRACTED SOURCES:\n- src_001 (cemetery record, a_001\u2013a_004): persona p_301532824943 \"Eulogia Gatica Alfaro\", Female, burial 30 May 1908 Santiago, birth 1865\n- src_002 (civil death registration, a_005\u2013a_016): persona p_102125002164 \"Eulojia Gatica Alfaro\", Female, death 29 May 1908, Santiago Centro, birth 1865; plus related personas:\n  - p_102125002170 \"Ventura Gatica\" (father)\n  - p_102125002178 \"C\u00e1rmen Alfaro\" (mother)\n  - p_102125002182 \"Juan Gonz\u00e1lez\" (husband, Male)\n\nTREE PERSONS (from project context):\n- LZ3Z-RHM: Eulojia del Carmen Gatica Alfaro, Female \u2014 subject\n- KNT6-7ZR: Buenaventura Gatica \u00c1rias, Male \u2014 father (\"Ventura\" is short form of \"Buenaventura\")\n- MX45-9HH: Carmen Alfaro Vilches, Female \u2014 mother\n- GDVK-Y8P: Juan de Dios Gonz\u00e1lez, Male \u2014 husband\n\nPlease link:\n1. p_301532824943 \u2192 LZ3Z-RHM (subject)\n2. p_102125002164 \u2192 LZ3Z-RHM (subject)\n3. p_102125002170 (Ventura Gatica) \u2192 KNT6-7ZR (Buenaventura Gatica \u00c1rias) \u2014 confirm \"Ventura\" = \"Buenaventura\"\n4. p_102125002178 (C\u00e1rmen Alfaro) \u2192 MX45-9HH (Carmen Alfaro Vilches)\n5. p_102125002182 (Juan Gonz\u00e1lez) \u2192 GDVK-Y8P (Juan de Dios Gonz\u00e1lez)"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__research_append,mcp__genealogy__same_person,mcp__genealogy__materialize_facts",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "section": "person_evidence"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"person_evidence\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -3003,8 +2950,7 @@
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:6PVG-GDQP"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":4,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:6PVG-GDQP\\\",\\\"record_persona_id\\\":\\\"p_301532824943\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Eulogia Gatica Alfaro\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Eulogia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown\\\",\\\"informant_proximity\\\":\\\"unknown\\\",\\\"informant_bias_notes\\\":\\\"Derivative ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -3012,31 +2958,27 @@
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:Q2S2-4XV5"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":12,\\\"items\\\":[{\\\"id\\\":\\\"a_005\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:Q2S2-4XV5\\\",\\\"record_persona_id\\\":\\\"p_102125002164\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Eulojia Gatica Alfaro\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Eulojia\\\",\\\"surname\\\":\\\"Gatica Alfaro\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown declarant who presented the death to the registrar\\\",\\\"informant_proximity\\..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"LZ3Z-RHM\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Eulojia del Carmen\",\n11\t          \"surname\": \"Gatica Alfaro\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ddb21ddf-0042-4808-af3c-5b2e94e08922\",\n17\t          \"type\": \"Death\",\n18\t          \"date\": \"29 May 1908\",\n19\t          \"standard_date\": \"29 May 1908\",\n20\t          \"place\": ..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "Get-Item \"C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_001.json\" | Select-Object Length; Get-Item \"C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_002.json\" | Select-Object Length",
         "description": "Check sidecar file sizes"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_001.json",
         "limit": 50
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_001\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-28T16:42:18.275Z\",\n5\t  \"returned_count\": 50,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Gatica\",\n9\t      \"givenName\": \"Eulojia\",\n10\t      \"collectionId\": \"1428897\",\n11\t      \"recordCountry\": \"Chile\",\n12\t      \"sex\": \"Female\",\n13\t      \"projectPath\": \"C:\\\\Users\\\\Dell\\\\AppData\\\\Local\\\\Temp\\\\e2e-eulogia-gatica-burial-w0eidpt0\",\n14\t      \"subjectId\": \"LZ3Z-RHM\"\n15\t    },\n16\t    \"totalMatches\": 262,\n17\t ..."
+      }
     },
     {
       "tool": "Grep",
@@ -3045,8 +2987,7 @@
         "path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_001.json",
         "output_mode": "content",
         "context": 2
-      },
-      "response_summary": "649-      },\n650-      {\n651:        \"recordId\": \"ark:/61903/1:1:6PVG-GDQP\",\n652-        \"events\": [\n653-          {\n--\n672-            {\n673-              \"id\": \"p_301532824943\",\n674:              \"ark\": \"ark:/61903/1:1:6PVG-GDQP\",\n675-              \"gender\": \"Female\",\n676-              \"names\": [\n--\n707-              \"id\": \"src_r_178110639811\",\n708-              \"title\": \"Registro para Eulogia Gatica Alfaro, \\\"Chile, registros de cementerios, 1701-2021\\\"\",\n709:              \"citation\": \"\\\"C..."
+      }
     },
     {
       "tool": "Grep",
@@ -3055,8 +2996,7 @@
         "path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_002.json",
         "output_mode": "content",
         "context": 2
-      },
-      "response_summary": "162-      },\n163-      {\n164:        \"recordId\": \"ark:/61903/1:1:Q2S2-4XV5\",\n165-        \"events\": [\n166-          {\n--\n185-            {\n186-              \"id\": \"p_102125002164\",\n187:              \"ark\": \"ark:/61903/1:1:Q2S2-4XV5\",\n188-              \"gender\": \"Female\",\n189-              \"names\": [\n--\n294-              \"id\": \"src_r_102797811040\",\n295-              \"title\": \"Registro para Eulojia Gatica Alfaro, \\\"Chile, Registro Civil, 1880-1933\\\"\",\n296:              \"citation\": \"\\\"Chile, Regi..."
+      }
     },
     {
       "tool": "Read",
@@ -3064,8 +3004,7 @@
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_001.json",
         "offset": 649,
         "limit": 100
-      },
-      "response_summary": "649\t      },\n650\t      {\n651\t        \"recordId\": \"ark:/61903/1:1:6PVG-GDQP\",\n652\t        \"events\": [\n653\t          {\n654\t            \"type\": \"Burial\",\n655\t            \"date\": \"30 May 1908\",\n656\t            \"place\": \"Santiago, Chile\"\n657\t          }\n658\t        ],\n659\t        \"treeMatches\": [],\n660\t        \"personName\": \"Eulogia Gatica Alfaro\",\n661\t        \"score\": 4.8928804,\n662\t        \"confidence\": 4,\n663\t        \"sex\": \"Female\",\n664\t        \"birthDate\": \"1865\",\n665\t        \"collectionId\": ..."
+      }
     },
     {
       "tool": "Read",
@@ -3073,8 +3012,7 @@
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\results\\log_002.json",
         "offset": 163,
         "limit": 160
-      },
-      "response_summary": "163\t      {\n164\t        \"recordId\": \"ark:/61903/1:1:Q2S2-4XV5\",\n165\t        \"events\": [\n166\t          {\n167\t            \"type\": \"DeathRegistration\",\n168\t            \"place\": \"Santiago, Santiago, Metropolitana de Santiago, Chile\"\n169\t          }\n170\t        ],\n171\t        \"treeMatches\": [],\n172\t        \"personName\": \"Eulojia Gatica Alfaro\",\n173\t        \"score\": 5.52788,\n174\t        \"confidence\": 3,\n175\t        \"sex\": \"Female\",\n176\t        \"birthDate\": \"1865\",\n177\t        \"deathDate\": \"29 May 1..."
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -3535,8 +3473,7 @@
           ]
         },
         "primaryId2": "LZ3Z-RHM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"matched\\\":true,\\\"score\\\":0.864779,\\\"queryArk\\\":\\\"ark:/61903/1:1:ZQ97-K7Q\\\",\\\"candidateArk\\\":\\\"ark:/61903/1:1:QWP2S06\\\",\\\"apiTitle\\\":\\\"Matches for ark:/61903/1:1:ZQ97-K7Q\\\",\\\"updated\\\":\\\"2026-07-28T16:54:18.128Z\\\",\\\"confidence\\\":5}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -4071,8 +4008,7 @@
           ]
         },
         "primaryId2": "LZ3Z-RHM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"matched\\\":true,\\\"score\\\":0.94094694,\\\"queryArk\\\":\\\"ark:/61903/1:1:GP4V-YV1\\\",\\\"candidateArk\\\":\\\"ark:/61903/1:1:LN1H-552\\\",\\\"apiTitle\\\":\\\"Matches for ark:/61903/1:1:GP4V-YV1\\\",\\\"updated\\\":\\\"2026-07-28T16:54:40.868Z\\\",\\\"confidence\\\":5}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -4604,8 +4540,7 @@
         },
         "primaryId2": "LZ3Z-RHM",
         "matchRelatives": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"matchRelatives\\\":true,\\\"matches\\\":[{\\\"role\\\":\\\"parent\\\",\\\"targetId\\\":\\\"p_102125002178\\\",\\\"candidateId\\\":\\\"MX45-9HH\\\",\\\"score\\\":0.99734724,\\\"preScore\\\":0.5714285714285714,\\\"confidence\\\":5},{\\\"role\\\":\\\"parent\\\",\\\"targetId\\\":\\\"p_102125002170\\\",\\\"candidateId\\\":\\\"KNT6-7ZR\\\",\\\"score\\\":0.99734724,\\\"preScore\\\":0.536,\\\"confidence\\\":5},{\\\"role\\\":\\\"spouse\\\",\\\"targetId\\\":\\\"p_102125002182\\\",\\\"candidateId\\\":\\\"LZ3Z-R41\\\",\\\"score\\\":0.99734724,\\\"preScore\\\":0.6333333333333333,\\\"co..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4803,8 +4738,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_001\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_002\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_003\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_004\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_005\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4837,8 +4771,7 @@
             "recordRole": "husband"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"LZ3Z-RHM\\\",\\\"created\\\":false,\\\"factsAdded\\\":2,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":3,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"LZ3Z-RHM\\\",\\\"created\\\":false,\\\"factsAdded\\\":1,\\\"factsEnriched\\\":2,\\\"namesAdded\\\":1,\\\"refsAttached\\\":4,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"KNT6-7ZR\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"person..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4846,24 +4779,21 @@
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pl_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"status\\\":\\\"active\\\",\\\"created\\\":\\\"2026-07-28\\\",\\\"items\\\":[{\\\"id\\\":\\\"pli_001\\\",\\\"sequence\\\":1,\\\"record_type\\\":\\\"cemetery\\\",\\\"jurisdiction\\\":\\\"Santiago, Chile\\\",\\\"date_range\\\":\\\"1860-1940\\\",\\\"repository\\\":\\\"FamilySearch\\\",\\\"rationale\\\":\\\"FamilySearch collection 1428897 'Chile, Cemetery Records, 1701-2021' is indexed + images and covers both the Cementerio General d..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__merge_warnings",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0",
         "personId": "LZ3Z-RHM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":4,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"hasEventBeforeBirth365_2\\\",\\\"severity\\\":\\\"error\\\",\\\"personId\\\":\\\"LZ3Z-RHM\\\",\\\"personName\\\":\\\"Eulojia del Carmen Gatica Alfaro\\\",\\\"factIds\\\":[\\\"ddb21ddf-0042-4808-af3c-5b2e94e08922\\\",\\\"52729987-b801-4c05-9589-48bab887e5ec\\\",\\\"f49f8217-39b6-48b9-9412-9043b5fa1fab\\\",\\\"F2\\\",\\\"F3\\\",\\\"F4\\\"],\\\"message\\\":\\\"An event is dated more than 2 years before this person's earliest birth-like fact.\\\"},{\\\"sc..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4907,8 +4837,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_006\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4940,8 +4869,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: research.json/proof_summaries[0]: missing required field 'tier'\\\",\\\"ops[0]: research.json/proof_summaries[0]: missing required field 'vehicle'\\\",\\\"ops[0]: research.json/proof_summaries[0]: missing required field 'resolved_conflict_ids'\\\",\\\"ops[0]: research.json/proof_summaries[0]: missing required field 'exhaustive_search_summary'\\\",\\\"ops[0]: research.json/proof_summaries[0]: missing required field 'narrative_markdown'\\\",\\\"ops[0]:..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4971,8 +4899,7 @@
           "exhaustive_search_summary": "FamilySearch collection 1428897 (Chile, Cemetery Records, 1701-2021) searched on surname Gatica, given name Eulojia, sex Female: 50 results returned, target record identified (ark:/61903/1:1:6PVG-GDQP, same_person score 0.865). FamilySearch collection 1630787 (Chile, Civil Registration, 1880-1933) searched on the same parameters: 7 results returned, target record identified (ark:/61903/1:1:Q2S2-4XV5, same_person score 0.941). Fallback sources (pli_003 church deaths index, pli_004 Catholic church records, pli_005 full-text co-occurrence search, pli_006 MyHeritage burials) were not executed because both primary searches succeeded with positive, corroborating results. Two independent sources directly answering the burial/death-date question satisfy the reasonably exhaustive scope for q_001. Known limitation: original image scans for both records (ark:/61903/3:1:3QS7-89MX-NVF4, ark:/61903/3:1:939K-LP7F-6) were not transcribed \u2014 both sources are indexed derivative entries; original-image confirmation is recommended.",
           "narrative_markdown": "## Burial Date, Death Date, and Birth Year of Eulojia del Carmen Gatica Alfaro\n\n### Sources and Evidence\n\nTwo independent records address q_001:\n\n**Record 1 \u2014 Cemetery burial register (src_001):** \"Chile, registros de cementerios, 1701-2021\", FamilySearch ark:/61903/1:1:6PVG-GDQP. The indexed entry names the deceased **Eulogia Gatica Alfaro**, Female, burial **30 May 1908**, Santiago, Chile, birth year **1865**. This is a derivative source (indexed burial register); the burial date and place carry primary information quality (recorded by the burial registrar contemporaneously at the time of interment). Name and birth year are indeterminate (informant unknown). Original image ark:/61903/3:1:3QS7-89MX-NVF4 not examined.\n\n**Record 2 \u2014 Civil death registration (src_002):** \"Chile, Registro Civil, 1880-1933\", FamilySearch ark:/61903/1:1:Q2S2-4XV5. The civil register entry names the deceased **Eulojia Gatica Alfaro**, Female, death **29 May 1908** (\"29 de mayo de 1908\"), registration place Santiago Centro, Santiago, birth year **1865**. This is an original source; the death date and registration place carry primary information quality (recorded by the civil registrar under official duty). Birth year is secondary information (reported by an unknown declarant who was not present at the 1865 birth). Parents named: Ventura Gatica (= Buenaventura Gatica \u00c1rias, KNT6-7ZR; matchRelatives score 0.997) and C\u00e1rmen Alfaro (= Carmen Alfaro Vilches, MX45-9HH; score 0.997). Husband named: Juan Gonz\u00e1lez (= Juan Jos\u00e9 Gonz\u00e1lez, LZ3Z-R41; score 0.997). Original image ark:/61903/3:1:939K-LP7F-6 not examined.\n\n### Identity Assessment\n\nThe cemetery record's 'Eulogia Gatica Alfaro' is the same as LZ3Z-RHM 'Eulojia del Carmen Gatica Alfaro': 'Eulogia' and 'Eulojia' are attested spelling variants of the same name in Chilean records; surname 'Gatica Alfaro' is an exact compound-surname match; burial 30 May 1908, Santiago, Chile is consistent with the known death date; same_person score 0.865 (matched, confidence 5). The civil registration's 'Eulojia Gatica Alfaro' matches LZ3Z-RHM with given-name and compound-surname identity plus consistent death date; same_person score 0.941 (matched, confidence 5); all named relatives corroborate the tree family unit.\n\n### Corroboration Between Sources\n\nThe two records are from different collections, different record types (cemetery register vs. civil registration), and different administrative systems \u2014 they are independent of each other. Their findings agree:\n\n- **Death and burial dates:** Civil registration records death 29 May 1908; cemetery records burial 30 May 1908. A one-day interval is historically normal for Santiago in 1908 (same-day or next-day burial was standard before refrigeration). These are consistent, not conflicting.\n- **Birth year:** Both records independently record birth year 1865 \u2014 the burial register (indeterminate information, unknown informant) and the civil registrar's entry (secondary information, unknown declarant). Independent agreement strengthens the birth year finding, though neither informant was present at the 1865 birth.\n- **Place:** Both records place the events in Santiago, Chile.\n\n### Conflicting Evidence\n\nOne conflict is identified but not resolved:\n\nThe tree carries a pre-existing Christening fact of **2 October 1862**, Los Andes, Aconcagua, Chile, sourced from baptism records (src 9LS6-KMM / 3C18-8CL, 'Chile Baptisms, 1585-1932'). The two death-era records report birth year 1865. A christening in 1862 logically precedes a birth in 1865 \u2014 an impossibility. Possible resolutions: (a) the 1865 birth year is a retrospective approximation off by 1\u20133 years, common in 19th-century death registrations; (b) the 1862 baptism record may belong to a different individual. This conflict does not affect the burial-date and death-date conclusion of q_001, but warrants dedicated follow-on research.\n\n### Conclusion\n\nEulojia del Carmen Gatica Alfaro (LZ3Z-RHM) **died 29 May 1908** and was **buried 30 May 1908 in Santiago, Chile**. The cemetery record records the burial date as 30 May 1908 and the birth year as 1865. These findings are corroborated by an independent civil death registration recording death on 29 May 1908 and birth year 1865. The GPS standard of reasonably exhaustive research is met for the burial-date and death-date facts addressed by q_001."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"tier 'proved' requires question 'q_001' to already carry exhaustive_declaration.declared === true from BEFORE this call (a batch may not declare exhaustiveness and consume it for a tier in the same call) \\u2014 invoke research-exhaustiveness first, in its own call.\\\",\\\"worked example for 'proof_summaries':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"proof_summaries\\\\\\\",\\\\n  op: \\\\\\\"a..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4993,8 +4920,7 @@
             ]
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"research.json/questions[0]/exhaustive_declaration: missing required field 'log_entry_ids'\\\",\\\"research.json/questions[0]/exhaustive_declaration: unexpected property 'declared_date' (exhaustive_declaration objects allow only declared, log_entry_ids, stop_criteria, justification)\\\",\\\"research.json/questions[0]/exhaustive_declaration: unexpected property 'basis' (exhaustive_declaration objects allow only declared, log_entry_ids, stop_criteri..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5014,8 +4940,7 @@
             "justification": "GPS Standard 17 (reasonably exhaustive research) is met for q_001: (1) the highest-probability indexed sources for burial and death were searched; (2) two independent sources from different administrative systems agree on the key facts; (3) the subject's name, the corroborating family relationships, and the same_person scores (0.865 and 0.941) confirm identity. Known gap: original images were not examined. This does not affect the exhaustiveness determination for a burial-date question \u2014 the indexed facts (date, place, birth year) are complete, and image examination would refine source classification from derivative to original but would not change the substantive answer."
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5045,8 +4970,7 @@
           "exhaustive_search_summary": "FamilySearch collection 1428897 (Chile, Cemetery Records, 1701-2021) searched on surname Gatica, given name Eulojia, sex Female: 50 results returned, target record identified (ark:/61903/1:1:6PVG-GDQP, same_person score 0.865, matched). FamilySearch collection 1630787 (Chile, Civil Registration, 1880-1933) searched on the same parameters: 7 results returned, target record identified (ark:/61903/1:1:Q2S2-4XV5, same_person score 0.941, matched). Fallback sources (pli_003 church deaths index 1520559, pli_004 Catholic church records 3405096, pli_005 full-text surname co-occurrence search, pli_006 MyHeritage burials) were correctly skipped because both primary searches succeeded with positive, corroborating results. Known limitation: original image scans (ark:/61903/3:1:3QS7-89MX-NVF4 and ark:/61903/3:1:939K-LP7F-6) were not examined \u2014 original-image transcription is recommended to confirm indexed name spellings.",
           "narrative_markdown": "## Burial Date, Death Date, and Birth Year of Eulojia del Carmen Gatica Alfaro\n\n### Sources and Evidence\n\nTwo independent records address q_001:\n\n**Record 1 \u2014 Cemetery burial register (src_001):** \"Chile, registros de cementerios, 1701-2021\", FamilySearch ark:/61903/1:1:6PVG-GDQP. The indexed entry names the deceased **Eulogia Gatica Alfaro**, Female, burial **30 May 1908**, Santiago, Chile, birth year **1865**. Classification: derivative source (indexed burial register); burial date and place carry primary information quality (recorded by the burial registrar contemporaneously); name and birth year are indeterminate (informant unknown). Original image ark:/61903/3:1:3QS7-89MX-NVF4 not examined.\n\n**Record 2 \u2014 Civil death registration (src_002):** \"Chile, Registro Civil, 1880-1933\", FamilySearch ark:/61903/1:1:Q2S2-4XV5. The civil register entry names the deceased **Eulojia Gatica Alfaro**, Female, death **29 May 1908** (\"29 de mayo de 1908\"), registration place Santiago Centro, Santiago, birth year **1865**. Classification: original source; death date and registration place carry primary information quality (recorded by the civil registrar under official duty); birth year is secondary information (reported by an unknown declarant not present at the 1865 birth). Parents: Ventura Gatica (= Buenaventura Gatica \u00c1rias, KNT6-7ZR; matchRelatives score 0.997) and C\u00e1rmen Alfaro (= Carmen Alfaro Vilches, MX45-9HH; score 0.997). Husband: Juan Gonz\u00e1lez (= Juan Jos\u00e9 Gonz\u00e1lez, LZ3Z-R41; score 0.997). Original image ark:/61903/3:1:939K-LP7F-6 not examined.\n\n### Identity Assessment\n\nThe cemetery record's 'Eulogia Gatica Alfaro' is identified as LZ3Z-RHM 'Eulojia del Carmen Gatica Alfaro': 'Eulogia' and 'Eulojia' are attested spelling variants of the same name in Chilean records; compound surname 'Gatica Alfaro' is an exact match; burial date and place are consistent with the known death context; same_person score 0.865 (matched, confidence 5). The civil registration's 'Eulojia Gatica Alfaro' matches LZ3Z-RHM with exact given name and compound surname; death date and place consistent; same_person score 0.941 (matched, confidence 5); all three named relatives (father, mother, husband) corroborate the tree's family unit via matchRelatives scores of 0.997 each.\n\n### Corroboration Between Sources\n\nThe two records derive from different administrative systems (cemetery registry vs. civil registration office) and have no derivation relationship \u2014 they are independent of each other. Their findings agree on all key facts:\n\n- **Death and burial dates:** Civil registration records death on 29 May 1908; cemetery records burial on 30 May 1908. A one-day interval is historically normal for Santiago in 1908 (same-day or next-day burial was standard practice before refrigeration). These findings are consistent, not conflicting.\n- **Birth year:** Both records independently record birth year 1865 \u2014 the burial register from an unknown informant at burial time, the civil registrar from an unknown declarant. Independent agreement from two separate informants in separate administrative contexts strengthens the birth year finding.\n- **Place:** Both records place the events in Santiago, Chile.\n\n### Conflicting Evidence\n\nOne conflict is identified but not resolved by this proof:\n\nThe tree carries a pre-existing Christening fact of **2 October 1862**, Los Andes, Aconcagua, Chile, sourced from baptism records ('Chile Baptisms, 1585-1932', sources 9LS6-KMM and 3C18-8CL). The two death-era records report birth year 1865. A christening dated 1862 logically precedes a reported birth in 1865 \u2014 an impossibility that generates a coherence warning. Possible resolutions: (a) the 1865 birth year is a retrospective approximation off by a few years, common in 19th-century death registrations; (b) the 1862 baptism record may belong to a different individual sharing the same name. This conflict does not affect the burial-date and death-date conclusion of q_001 \u2014 those facts are firmly established by both records. Resolving the birth-year discrepancy requires a dedicated follow-on research question.\n\n### Conclusion\n\nEulojia del Carmen Gatica Alfaro (LZ3Z-RHM) **died 29 May 1908** and was **buried 30 May 1908 in Santiago, Chile**. The cemetery record (src_001) records the burial date as 30 May 1908 and the birth year as 1865. These findings are fully corroborated by an independent civil death registration (src_002) recording death on 29 May 1908 and birth year 1865. The one-day death-to-burial interval is historically consistent. Two independent sources from separate administrative systems, with no derivation link, agreeing on all key facts, satisfy the GPS standard for a proved conclusion on burial date, death date, and birth year for q_001."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ps_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -5054,15 +4978,13 @@
         "description": "GPS mentor proof critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review proof summary ps_001 for question q_001 in the research project at:\n\nProject path: C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\n\n**Question q_001:** \"Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or burial record record?\"\n\n**Subject:** Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM), female, Santiago, Chile.\n\n**What was done:**\n- Searched FamilySearch collection 1428897 (Chile, Cemetery Records, 1701-2021): found ark:/61903/1:1:6PVG-GDQP, \"Eulogia Gatica Alfaro\", burial 30 May 1908, Santiago, birth year 1865. same_person score 0.865, matched.\n- Searched FamilySearch collection 1630787 (Chile, Civil Registration, 1880-1933): found ark:/61903/1:1:Q2S2-4XV5, \"Eulojia Gatica Alfaro\", death 29 May 1908, Santiago Centro, birth year 1865. same_person score 0.941, matched. All three named relatives (Ventura Gatica = KNT6-7ZR, C\u00e1rmen Alfaro = MX45-9HH, Juan Gonz\u00e1lez = LZ3Z-R41) score 0.997 via matchRelatives.\n- 19 person_evidence links created (pe_001\u2013pe_019), all at \"confident\" confidence.\n- Original images NOT examined \u2014 both sources are derivative indexed entries.\n- Known conflict: pre-existing Christening 2 Oct 1862 (Los Andes) conflicts with materialized birth year 1865 \u2014 unresolved, not blocking the burial/death-date conclusion.\n\n**Proof summary ps_001** is in research.json at the project path. Please read it directly and evaluate whether it meets the GPS standard. Provide a structured verdict including: strengths, must-address items (if any), consider-addressing items, and an overall recommendation. Record your evaluation in the project's evaluations section via research_append."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\n\\nThe identity case here is genuinely strong. pe_005 leans on a same_person score of 0.941 plus matchRelatives scores of 0.997 across all three named relatives (father KNT6-7ZR, mother MX45-9HH, husband LZ3Z-R41) \\u2014 that's exactly the kind of FAN-anchored triangulation that makes an identity conclusion defensible rather than name-matching guesswork. I also want to call out pe_015/pe_018: you ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\Dell\\AppData\\Local\\Temp\\e2e-eulogia-gatica-burial-w0eidpt0\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_eulogia_gatica_burial\",\n4\t    \"objective\": \"Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?\",\n5\t    \"subject_person_ids\": [\n6\t      \"LZ3Z-RHM\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-24\",\n10\t    \"updated\": \"2026-07-24\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5115,8 +5037,7 @@
           "timestamp": "2026-07-28T18:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ev_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\",\\\"evaluations/proof-critique-ps_001-2026-07-28T18-00-00.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5145,8 +5066,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\\"ops[0]: research.json/conflicts[0]: 'open' is not a valid conflict_status (expected one of: moot, resolved, unresolved)\\\",\\\"worked example for 'conflicts':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"conflicts\\\\\\\",\\\\n  op: \\\\\\\"append\\\\\\\",\\\\n  entry: {\\\\n    \\\\\\\"conflict_type\\\\\\\": \\\\\\\"fact\\\\\\\",\\\\n    \\\\\\\"de..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5182,8 +5102,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"conflicts\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"c_001\\\"},{\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"ps_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5214,8 +5133,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: research.json/questions[0]: 'proved' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"],\\\"opsReceived\\\":3}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5246,8 +5164,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\"},{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5459,5 +5376,6 @@
       "required_skill": "proof-conclusion",
       "question_id": null
     }
-  ]
+  ],
+  "captures_stripped": true
 }
