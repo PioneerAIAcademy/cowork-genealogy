@@ -24,12 +24,14 @@ from app.main import app
 
 _DEFAULT_SESSION_SECRET = Settings.model_fields["session_secret"].default
 _DEFAULT_WS_SIGNING_KEY = Settings.model_fields["ws_signing_key"].default
+_DEFAULT_FS_TOKEN_ENC_KEY = Settings.model_fields["fs_token_enc_key"].default
 
-# A fully-configured production deploy: https host, both secrets set, real Postgres.
+# A fully-configured production deploy: https host, all secrets set, real Postgres.
 _PROD = {
     "public_url": "https://genealogy-workbench.fly.dev",
     "session_secret": "0f9c3a1e7b524d68a0c5e2f8d31b47a9",
     "ws_signing_key": "6d2b8f04c7e19a35bd80f6127ce4a9db",
+    "fs_token_enc_key": "b1e7c93a4f0d5286a7c1e0f9d2463a8f",
     "database_url": "postgresql://u:p@ep-x.aws.neon.tech/db?sslmode=require",
 }
 
@@ -53,7 +55,7 @@ def test_secret_defaults_are_literals_so_the_comparison_can_work():
     `default_factory` they would compare `PydanticUndefined` against itself and
     stay green. This is the one assertion that fails, and it fails immediately.
     """
-    for field in ("session_secret", "ws_signing_key"):
+    for field in ("session_secret", "ws_signing_key", "fs_token_enc_key"):
         assert isinstance(Settings.model_fields[field].default, str), (
             f"{field} no longer declares a literal default. "
             f"assert_production_config compares against "
@@ -71,9 +73,10 @@ def test_prod_with_everything_set_returns_cleanly():
 @pytest.mark.parametrize(
     ("field", "value", "named", "not_named"),
     [
-        ("session_secret", _DEFAULT_SESSION_SECRET, "SESSION_SECRET", ("WS_SIGNING_KEY", "DATABASE_URL")),
-        ("ws_signing_key", _DEFAULT_WS_SIGNING_KEY, "WS_SIGNING_KEY", ("SESSION_SECRET", "DATABASE_URL")),
-        ("database_url", None, "DATABASE_URL", ("SESSION_SECRET", "WS_SIGNING_KEY")),
+        ("session_secret", _DEFAULT_SESSION_SECRET, "SESSION_SECRET", ("WS_SIGNING_KEY", "FS_TOKEN_ENC_KEY", "DATABASE_URL")),
+        ("ws_signing_key", _DEFAULT_WS_SIGNING_KEY, "WS_SIGNING_KEY", ("SESSION_SECRET", "FS_TOKEN_ENC_KEY", "DATABASE_URL")),
+        ("fs_token_enc_key", _DEFAULT_FS_TOKEN_ENC_KEY, "FS_TOKEN_ENC_KEY", ("SESSION_SECRET", "WS_SIGNING_KEY", "DATABASE_URL")),
+        ("database_url", None, "DATABASE_URL", ("SESSION_SECRET", "WS_SIGNING_KEY", "FS_TOKEN_ENC_KEY")),
     ],
 )
 def test_prod_with_a_default_refuses_and_names_only_it(field, value, named, not_named):
@@ -99,12 +102,14 @@ def test_refusal_names_every_offender_at_once():
             _settings(
                 session_secret=_DEFAULT_SESSION_SECRET,
                 ws_signing_key=_DEFAULT_WS_SIGNING_KEY,
+                fs_token_enc_key=_DEFAULT_FS_TOKEN_ENC_KEY,
                 database_url=None,
             )
         )
     message = str(exc.value)
     assert "SESSION_SECRET" in message
     assert "WS_SIGNING_KEY" in message
+    assert "FS_TOKEN_ENC_KEY" in message
     assert "DATABASE_URL" in message
 
 

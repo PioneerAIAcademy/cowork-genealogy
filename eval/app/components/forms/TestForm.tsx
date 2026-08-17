@@ -395,7 +395,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
               <Stack gap="sm">
                 <Title order={5}>Judge context</Title>
                 <Textarea
-                  description="Background the AI judge should know when scoring this test. For example: 'A correct answer should mention the 1850 census' or 'Look for emigration records, not just baptism records'. Leave blank if no extra context is needed."
+                  description="Background the AI judge could not get from the input — what makes THIS scenario unusual. Describe the reasoning to look for, not the verdict: 'Resolution should weigh informant proximity as one factor, regardless of which birthplace it prefers', not 'A correct answer should cite the Irish birthplace'. A note that states the answer biases every dimension toward it. State a conclusion only where a validator, expected_classifications, or the fixture text already pins it. Leave blank if no extra context is needed."
                   autosize
                   minRows={3}
                   value={(form.values.judge_context ?? []).join('\n\n')}
