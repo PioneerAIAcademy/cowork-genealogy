@@ -146,9 +146,13 @@ customs, governance, laws, and regulations.
 - Latter-day Saints migrated as organized companies (e.g. the
   Mormon Trail migrations from Nauvoo to Utah) and kept separate
   record systems — church membership, ward, and emigration
-  records — distinct from civil records before Utah became a
-  territory in 1850. Search LDS church records as a distinct
-  record set, not just civil records, for this population.
+  records — distinct from civil vital records. This distinction
+  did not end when Utah became a territory in 1850: Utah had no
+  statewide vital registration requirement until 1905, so LDS
+  church records remained the primary — often the only — record
+  of births, blessings, and burials for decades afterward. Search
+  LDS church records as a distinct record set, not just civil
+  records, for this population, especially before 1905.
 
 ### 7. Military factors
 

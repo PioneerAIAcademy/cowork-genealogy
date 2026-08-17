@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_historical_context_hbt",
+    "skill": "historical-context",
+    "name": "Natural parent appointed guardian of own children",
+    "type": "positive",
+    "description": "Tests whether the skill correctly explains that a natural parent named as legal guardian of their own minor children in a probate/guardianship record reflects inheritance law, not evidence the child was orphaned, estranged, or unrelated to the petitioner. Guards against the most likely real-world misreading of the historical-broad-context guardianship bullet (issue #1618).",
+    "tags": ["guardianship", "probate", "legal-terms", "inheritance", "issue-1618"]
+  },
+  "input": {
+    "user_message": "I found an 1851 probate record where William Whitfield petitioned the orphans' court to be appointed legal guardian of his own son Thomas, age 9, after Thomas's mother died and left him a small inheritance. Doesn't a guardianship appointment usually mean the child was orphaned, or that William wasn't really his father? What does this record actually tell me?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-guardianship-own-children",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "Must explain that a minor with a legal claim to an inheritance or estate share needed a court-appointed legal guardian to manage it, and that it was routine for the minor's own living parent to be appointed to that role — this is not evidence the child was orphaned, estranged from the petitioner, or not the petitioner's biological child",
+    "Must NOT conclude or imply that Thomas was orphaned, that William was not his father, or that the family was estranged, based on the guardianship appointment alone",
+    "Should identify the likely driver as the mother's death leaving Thomas an inheritance that required a guardian of the estate, distinct from a guardian of the person",
+    "Should suggest the researcher check the mother's probate/estate file to confirm what property or legacy triggered the guardianship petition",
+    "Should not caveat itself into vagueness — the answer should give a direct, confident explanation of the pattern, not merely list it as one of several unweighted possibilities"
+  ]
+}
