@@ -64,9 +64,15 @@ behind pointers:
 
 1. **`name` + `description`** — always in the orchestrator's context for
    every session. Treat this as a scarce budget (see §3).
-2. **SKILL.md body** — loaded whenever the skill triggers. Aim **under
-   ~500 lines**. If you're approaching that, add a layer of hierarchy
-   and point to a `references/` file rather than inlining everything.
+2. **SKILL.md body** — loaded whenever the skill triggers. Prefer a short
+   body, but **length is not the thing that fails**: measured over a real
+   309-turn session, every rule with a **structural anchor** held at 100%
+   while the two unanchored ones decayed to 45% and 3%. If a rule has to
+   survive a long session, anchor it — have the tool reject the violation,
+   feed its output into a step that cannot proceed without it, or leave a
+   durable trace the agent re-reads. Moving it behind a pointer does not
+   help; splitting an **agent** body into `references/` was measured and
+   reverted (see CLAUDE.md).
 3. **`references/`, `templates/`, `scripts/`** — loaded or executed only
    when the body tells the model to.
 
