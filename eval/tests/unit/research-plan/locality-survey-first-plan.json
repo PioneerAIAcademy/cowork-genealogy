@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "First plan for q_001 plans from the persisted locality entry",
     "type": "positive",
-    "description": "No plan exists yet for q_001, but a `localities` entry (loc_001, Schuylkill County / Pennsylvania) is already present because the orchestrator ran locality-guide first. research-plan is a pure consumer: it must READ that entry and plan from its facts — citing actual record availability (probate 1811+, Catholic Diocese of Scranton post-1868, PA statewide vital registration only from 1906, browse-only coal-region films) — WITHOUT calling any place-fact/wiki survey tools (it no longer has wiki_search/wiki_place_page/place_population). It may call collections_search/volume_search/place_search to discover the specific records to plan. Tests the pure-consumer behavior after the orchestration split.",
+    "description": "No plan exists yet for q_001, but a `localities` entry (loc_001, Schuylkill County / Pennsylvania) is already present because the orchestrator ran locality-guide first. research-plan is a pure consumer: it must READ that entry and plan from its facts — citing actual record availability (probate 1811+, Catholic Diocese of Scranton post-1868, browse-only coal-region films) — WITHOUT calling any place-fact/wiki survey tools (it no longer has wiki_search/wiki_place_page/place_population). It may call collections_search/volume_search/place_search to discover the specific records to plan. Tests the pure-consumer behavior after the orchestration split.",
     "tags": [
       "planning",
       "reads-localities-entry",
