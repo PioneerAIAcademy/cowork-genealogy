@@ -976,6 +976,13 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
         "John Becker",
         "Tollev [Nadnesen?]",  # faithful-capture uncertainty marker
         "Emma Schmidt",
+        # Relation words that are really surnames or titles, OUTSIDE brackets.
+        # All three fired under the first version of this rule (senior review,
+        # 2026-08-16). A false positive costs the test's whole grade, because a
+        # failing validator suppresses the judge.
+        "Joseph Parent of Quebec",   # Parent is a common surname
+        "Julia Child of Boston",     # Child is a surname
+        "Mary, Mother of Sorrows",   # a devotional name
     ],
 )
 def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
@@ -994,6 +1001,37 @@ def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
     )
     assert result.passed is True, f"false positive on {value!r}: {result.error}"
 
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("John Becker (grandfather of Frank)", "grandfather of"),
+        ("Rosa (great-grandmother of Emma)", "great-grandmother of"),
+        ("Wm (stepfather of Charles)", "stepfather of"),
+        ("Anna (father-in-law of X)", "father-in-law of"),
+        ("Jacob (s/o Henry Lang)", "s/o"),
+        ("Ellen (d/o Patrick)", "d/o"),
+    ],
+)
+def test_bare_name_rule_catches_the_wider_relation_vocabulary(value, expected):
+    """Shapes the first version missed (senior review, 2026-08-16): step- and
+    grand- prefixes, `-in-law`, and the abbreviated `s/o` / `d/o` / `w/o`
+    forms. Safe to broaden precisely BECAUSE the scan is bracket-scoped — the
+    surname false positives above live in the bare part of the value."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "name",
+                "value": value,
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+    assert expected in (result.error or ""), result.error
 
 def test_bare_name_rule_exempts_negative_evidence():
     """`record_role: absent` values describe an expected-but-missing person,

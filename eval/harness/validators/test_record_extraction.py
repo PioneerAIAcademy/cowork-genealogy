@@ -436,11 +436,46 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     )
 
 
-_RELATIONAL_NAME_RE = re.compile(
-    r"\b(father|mother|parent|wife|husband|spouse|widow|widower|son|"
-    r"daughter|child|brother|sister|sibling)\s+(?:of|to)\b",
+# Only the PARENTHESISED part of a name value is scanned. Both observed
+# collapse shapes put the relation inside brackets —
+# `John Becker (father of Frank Becker)` and
+# `Linda (given name only; spouse of Robert Whitaker)` — while every known
+# false positive is a relation word that is really a surname or a title, sitting
+# in the bare part of the name:
+#
+#     Joseph Parent of Quebec      (Parent is a common surname)
+#     Julia Child of Boston        (Child is a surname)
+#     Mary, Mother of Sorrows      (a devotional name)
+#
+# All three fired under the first version of this rule (caught in review), and a
+# false positive is expensive: a failing validator suppresses the judge, so it
+# costs the test's whole grade, not one dimension. Scoping to brackets removes
+# them and is what makes the wider vocabulary below safe.
+#
+# The cost is a miss on a comma-form collapse (`John Becker, father of Frank`).
+# That is the safer direction to err, and the per-fixture `record_role` matchers
+# catch the collapse independently.
+_PAREN_SEGMENT_RE = re.compile(r"\(([^)]*)\)")
+
+_RELATION_PHRASE_RE = re.compile(
+    # optional step-/grand- prefix, the relation, optional -in-law, then of/to
+    r"\b(?:(?:step|grand|great[-\s]?grand)[-\s]?)?"
+    r"(?:father|mother|parent|wife|husband|spouse|widow|widower|son|daughter|"
+    r"child|brother|sister|sibling|niece|nephew|aunt|uncle|cousin)"
+    r"(?:[-\s]?in[-\s]?law)?\s+(?:of|to)\b"
+    # plus the abbreviated genealogical forms: son/daughter/wife of
+    r"|\b[sdw]/o\b",
     re.IGNORECASE,
 )
+
+
+def _relational_name_hit(value):
+    """The relation phrase found inside a bracketed segment, or None."""
+    for segment in _PAREN_SEGMENT_RE.findall(str(value or "")):
+        m = _RELATION_PHRASE_RE.search(segment)
+        if m:
+            return m.group(0)
+    return None
 
 
 def test_name_value_is_a_bare_name(before_state, after_state):
@@ -483,12 +518,12 @@ def test_name_value_is_a_bare_name(before_state, after_state):
         if a.get("record_role") == "absent":
             continue  # negative evidence describes what was expected
         value = str(a.get("value") or "")
-        hit = _RELATIONAL_NAME_RE.search(value)
+        hit = _relational_name_hit(value)
         if hit:
             errors.append(
                 f"assertions[{a.get('id', '?')}] (record_role="
                 f"'{a.get('record_role')}'): name value={value!r} carries the "
-                f"relational phrase '{hit.group(0)}' — a name assertion's "
+                f"relational phrase '{hit}' — a name assertion's "
                 f"value is the bare name, the tie is its own `relationship` "
                 f"assertion, and the named third party needs their OWN "
                 f"record_role rather than this one"
