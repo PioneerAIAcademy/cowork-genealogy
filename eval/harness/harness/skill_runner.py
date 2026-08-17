@@ -205,6 +205,48 @@ def read_skill_tool_input(tool_input: dict[str, Any]) -> tuple[str | None, list[
     return None, sorted(tool_input)
 
 
+# Longest argument value kept per built-in tool call. Run logs are committed,
+# and an untruncated Write/Edit argument would carry whole file bodies into
+# the corpus. 200 chars keeps the diagnostic part of every argument we care
+# about (a Read `file_path`, a Skill name, a Grep pattern) and bounds the rest.
+BUILTIN_ARG_TRUNCATE = 200
+
+
+def builtin_call_record(
+    tool_name: str, input_data: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Return a run-log record for one **built-in** tool call, or None for MCP.
+
+    The harness records MCP calls two ways (`tool_calls` from the mock,
+    `attempted_mcp_calls` off the message stream) and Skill calls a third
+    (`skills_invoked`), but nothing recorded plain built-ins. A subagent told
+    to `Read` a reference file therefore left no trace whether it read the
+    file, skipped it, or read the wrong one — the run only differed in its
+    assertion values, so the failure had to be diagnosed by hand. This closes
+    that blind spot at the one site that sees every call, including calls made
+    inside a Task-spawned subagent.
+
+    `agent_id` is present only when the hook fires inside a subagent (see
+    context_policy), so it is the field that distinguishes "the extractor
+    agent read it" from "the main thread read it" — the exact question a
+    delegated-reference design has to answer.
+    """
+    if tool_name.startswith("mcp__"):
+        return None
+    tool_input = input_data.get("tool_input") or {}
+    record: dict[str, Any] = {
+        "tool": tool_name,
+        "args": {
+            key: str(value)[:BUILTIN_ARG_TRUNCATE]
+            for key, value in tool_input.items()
+        },
+    }
+    agent_id = input_data.get("agent_id")
+    if agent_id:
+        record["agent_id"] = agent_id
+    return record
+
+
 @dataclass
 class SkillRunResult:
     text_response: str
@@ -241,6 +283,10 @@ class SkillRunResult:
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
     unread_skill_calls: list[list[str]] = field(default_factory=list)
+    # Every built-in (non-MCP) tool call the run emitted, as
+    # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
+    # exists. Telemetry only: nothing reads it to gate, grade, or abort.
+    builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -327,9 +373,17 @@ async def run_skill(
     blocked_context_calls: list[dict[str, Any]] = []
     # Skill calls whose name we couldn't read (see read_skill_tool_input).
     unread_skill_calls: list[list[str]] = []
+    # Every built-in (non-MCP) tool call, for telemetry only — see
+    # builtin_call_record. Collected in the hook rather than off the message
+    # stream because the hook is the only site that sees calls made inside a
+    # Task-spawned subagent, which is where reference reads actually happen.
+    builtin_tool_calls: list[dict[str, Any]] = []
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
+        # Telemetry only — never gates, denies, or counts toward any limit.
+        if (builtin_record := builtin_call_record(tool_name, input_data)):
+            builtin_tool_calls.append(builtin_record)
         # Track skill invocations so we can populate skills_invoked.
         if tool_name == "Skill":
             tool_input = input_data.get("tool_input", {}) or {}
@@ -575,4 +629,5 @@ async def run_skill(
         blocked_context_calls=blocked_context_calls,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
+        builtin_tool_calls=builtin_tool_calls,
     )

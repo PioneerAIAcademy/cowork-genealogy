@@ -494,6 +494,11 @@ async def _execute_single_run(
         _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
+                # Failures only — a passing list is a conclusion, and the judge
+                # grades a conclusion by agreeing with it.
+                validator_failures=[
+                    r.name for r in validator_results if not r.passed
+                ],
                 spec=spec,
                 rubric=rubric,
                 scenario_readme=scenario_readme,
@@ -542,6 +547,17 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
+    # A judge FAIL on a correctly-routed negative test is REPORTED, not floored:
+    # the corpus says the judge is usually right (20 of 24 human-confirmed), and
+    # these dimensions never gated the outcome anyway.
+    flag_routing_negative_judge_fail(
+        judge_result.dimensions,
+        spec=spec,
+        activated=activated,
+        skills_invoked=result.skills_invoked,
+        warnings=judge_dimension_warnings,
+    )
+
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -573,8 +589,10 @@ async def _execute_single_run(
         ended_at=_ended_at,
         skill_attempts=result.attempts,
         # Run-level tokens are SKILL ONLY. Judge tokens live on the
-        # judge block so the spec §11 cache-hit-rate diagnostic
-        # (cached/input on the skill side) stays meaningful.
+        # judge block so the spec's cache-hit-rate diagnostic —
+        # cached / (cached + input) on the skill side — stays meaningful.
+        # The two counts are disjoint (input excludes cache reads), so the
+        # rate is a share of their sum; see unit-test-spec.md § Run Log Format.
         input_tokens=skill_input,
         cached_input_tokens=skill_cached,
         output_tokens=skill_output,
@@ -594,6 +612,14 @@ async def _execute_single_run(
                 for c in result.tool_calls
             ],
             "files_created": files_created,
+            # Omitted when empty so a run that called no built-in tool writes
+            # the same run_output it always has — this field appearing is
+            # itself the signal that something was read.
+            **(
+                {"builtin_tool_calls": result.builtin_tool_calls}
+                if result.builtin_tool_calls
+                else {}
+            ),
             **({"file_changes": file_changes} if file_changes else {}),
             **(
                 {"warnings": warnings}
@@ -854,6 +880,15 @@ _CLASSIFICATION_DIMENSIONS = frozenset(
     {"Evidence type accuracy", "Informant identification"}
 )
 
+# Base dimensions floored on a correctly-routed negative test. On a negative
+# test with a non-empty `correct_skill`, `_compute_outcome` decides pass/fail
+# from routing alone and the judge runs base-only and diagnostically — so a
+# FAIL here grades the routed-to skill's work, which this test does not own.
+# The judge does it anyway: "No such routing occurred" while the transcript's
+# own Skills-invoked block names an accepted skill, across 9 tests in 5 skills.
+# Prose was tried twice (PRs #589 and #1564) and it recurs, so defer instead.
+_ROUTING_DIAGNOSTIC_DIMENSIONS = frozenset({"Correctness", "Completeness"})
+
 
 def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
     """Floor the classification judge-dimensions at partial(2) when the
@@ -883,6 +918,88 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
                 "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
                 "Original judge rationale: " + orig
             )
+    return dimensions
+
+
+def flag_routing_negative_judge_fail(
+    dimensions, *, spec, activated, skills_invoked, warnings=None
+):
+    """Report a judge FAIL on a correctly-routed negative test. Change no score.
+
+    This used to FLOOR Correctness/Completeness from 1 to 2 here, on the theory
+    that the judge was grading the routed-to skill's execution rather than
+    anything this test owns. **The corpus says the opposite.** Replaying the
+    floor's own guards over the 121 committed unit run logs and joining to the
+    annotations: 24 cells were floor-eligible with a judge 1, and a human
+    confirmed that 1 on **20 of them**. All 14 cells where the skill produced
+    non-empty output (102-14,123 chars) were confirmed, with rationales naming
+    the case the old docstring called a rare corner ("instead of declining and
+    routing to convert-dates, it performed the date conversion itself") — the
+    smallest of them, 102 chars, is a fabricated completion claim ("Saved as
+    kirchenbuch.md") on a run that created no file.
+
+    **There is still no mechanical discriminator, and gating on empty output is
+    worse than deleting.** All 4 overrides had `text_response == ""` and
+    `num_turns == 0` — but so did 6 of the 20 confirmations, and the same test
+    (`ut_search_records_003`) carries that identical empty/zero-turn signature in
+    all 8 of its eligible cells: confirmed in two run logs, overridden in two
+    others. So a floor gated on empty output would have fired on 10 cells and
+    been wrong on 6. The floor's real defect was not picking the wrong signal; it
+    was that no signal exists.
+
+    Deleting gives up nothing measurable: `_compute_outcome` decides a
+    negative-with-`correct_skill` purely on routing, so no score this function
+    could change has ever moved a test's outcome.
+
+    What remains is the warning, which is the half that was actually load-bearing
+    and which nobody could see: its kind was never registered in
+    `run_tests.py::_JUDGE_WARNING_KINDS`, so it printed nowhere. It is registered
+    now. A judge 1 here is worth a human's eye — it is either the skill doing the
+    work inline (a real defect this suite would otherwise miss) or the judge
+    misreading a clean decline.
+
+    Returns `dimensions` unmodified; appends to `warnings` when given. No-op
+    unless the test is negative with a non-empty `correct_skill`, the skill under
+    test did not activate, and an accepted skill is in `skills_invoked`.
+    """
+    if not dimensions:
+        return dimensions
+    negative = spec.negative or {}
+    if negative.get("grade_on_invariant"):
+        return dimensions
+    if activated:
+        return dimensions
+    # The `any()` check below is the only guard needed, and it is load-bearing
+    # for three cases at once — do not "clarify" it by adding separate guards.
+    # Each of these leaves `correct` empty, and `any()` over an empty sequence
+    # is False:
+    #   - a POSITIVE test (the schema forbids it a `negative` block at all),
+    #   - an OUT-OF-SCOPE negative (`correct_skill: []`), which must not be
+    #     floored because its base dimensions genuinely DO gate the outcome in
+    #     `_compute_outcome`,
+    #   - a negative that routed nowhere acceptable.
+    # A `if not correct:` and a `spec.type != "negative"` guard were both tried
+    # here; both were unreachable, and each made its own test unable to fail.
+    correct = negative.get("correct_skill", [])
+    if not any(s in (skills_invoked or []) for s in correct):
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            if warnings is not None:
+                warnings.append({
+                    "kind": "routing_negative_judge_fail",
+                    "advisory": (
+                        f"judge scored {dd['name']} 1 on a negative test whose "
+                        f"outcome is decided by routing. Across the committed "
+                        f"corpus a human confirmed this 1 in 20 of 24 such "
+                        f"cells, so read it before overriding it: if the skill "
+                        f"under test carried out its own task inline, the 1 is "
+                        f"right and the routing pass is hiding a real defect."
+                    ),
+                    "name": dd["name"],
+                    "score": dd.get("score"),
+                    "rationale": dd.get("rationale") or "",
+                })
     return dimensions
 
 
@@ -1024,6 +1141,7 @@ def _run_judge(
     before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
+    validator_failures: list[str] | None = None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1053,6 +1171,7 @@ def _run_judge(
         auth=auth,
         model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
+        validator_failures=validator_failures,
     )
 
 
@@ -1121,6 +1240,15 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     # judge can grade a deliverable persisted to a file rather than echoed in
     # the chat reply (e.g. proof-conclusion's narrative_markdown). Per-field and
     # overall truncation bound the judge prompt.
+    #
+    # `array_sample=None` on this path only. The block's own header calls this
+    # "the persisted artifact — grade this", and the default cap of 3 was
+    # applying at every depth, so a nested `items[]` inside one added entry was
+    # cut to its first three while the entry list itself looked complete — a
+    # plan with 9 items showed 3, under a heading telling the judge it was
+    # looking at the artifact. The tool-response and before-state paths keep the
+    # cap: there the first few hits show argument quality and the rest is noise.
+    # `_CHANGES_STRING_MAX` and the overall prompt bound still apply.
     content_lines = [
         "",
         "Content written to files (the persisted artifact — grade this, not just the chat reply):",
@@ -1128,7 +1256,9 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     for fname, fdiff in file_changes.items():
         for section, sdiff in fdiff.get("diff", {}).items():
             for entry in sdiff.get("added", []):
-                summarized = _summarize_response(entry, string_max=_CHANGES_STRING_MAX)
+                summarized = _summarize_response(
+                    entry, string_max=_CHANGES_STRING_MAX, array_sample=None
+                )
                 content_lines.append(
                     f"  {fname} / {section} (added): "
                     f"{json.dumps(summarized, ensure_ascii=False)}"
@@ -1140,7 +1270,7 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
                     for field, change in entry.get("changed_fields", {}).items()
                 }
                 summarized = _summarize_response(
-                    after_values, string_max=_CHANGES_STRING_MAX
+                    after_values, string_max=_CHANGES_STRING_MAX, array_sample=None
                 )
                 content_lines.append(
                     f"  {fname} / {section} (modified {eid}, new values): "

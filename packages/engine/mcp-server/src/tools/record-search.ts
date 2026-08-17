@@ -20,6 +20,7 @@ import type {
 import type {
   FSSearchResponse,
   FSSearchEntry,
+  FSGedcomx,
   FSPerson,
   FSFact,
   RecordSearchInput,
@@ -702,6 +703,42 @@ function pickFactOriginal(
   return undefined;
 }
 
+/**
+ * The extraction batch a record came out of, read off the gedcomx ROOT's
+ * `fields[]`. Feed it back as `batchNumber` to enumerate the rest of the batch
+ * (#1592) — the step that closes the loop `collection-quirks.md` has prescribed
+ * since before the input parameter existed.
+ *
+ * Matched on `labelId` ALONE, never on the `type` URI, and that is the whole
+ * reason this is a named function rather than an inline find. The type suffix is
+ * spelled BOTH `UdeBatchNbr` and `UdeBatchNumber` depending on the collection —
+ * `q.batchNumber=B01883-5` and an English IGI batch return the former, while
+ * collection 1494474 (Germany) and `q.batchNumber=8317102` return the latter,
+ * with nothing caller-visible to predict it from. `labelId` was
+ * `FS_UDE_BATCH_NBR` on every record measured, across both spellings.
+ *
+ * Keying on one type spelling — which is what issue #1592's own quoted payload
+ * would have led to — returns nothing on the collections using the other, and a
+ * batch that is present upstream but unread here is indistinguishable from a
+ * record that has none, so the miss is silent. Matching type as well as labelId
+ * would carry that same risk forward for a third spelling while excluding
+ * nothing: no other field in the corpus uses this labelId. See
+ * `dev/probe-batch-field.ts`.
+ *
+ * Reads only the ROOT array. `fields` also appears on persons, names, facts and
+ * places, where it carries `PR_AGE` / `Role` and never a batch.
+ */
+function extractBatchNumber(
+  gedcomx: FSGedcomx | undefined,
+): string | undefined {
+  for (const field of gedcomx?.fields ?? []) {
+    for (const value of field.values ?? []) {
+      if (value.labelId === "FS_UDE_BATCH_NBR" && value.text) return value.text;
+    }
+  }
+  return undefined;
+}
+
 export function mapEntry(
   entry: FSSearchEntry,
   terms: readonly KinTerm[] = [],
@@ -809,6 +846,13 @@ export function mapEntry(
     result.gedcomx = toSimplified(rawGedcomx as unknown as GedcomX);
   }
   if (person.id) result.primaryId = person.id;
+
+  // Read off the RAW gedcomx, not `result.gedcomx`: `toSimplified` does not
+  // carry the root `fields[]` into the simplified document, and — like
+  // `relativeTerms` below — this has to be resolved before the staged slim block
+  // deletes `result.gedcomx` anyway.
+  const batchNumber = extractBatchNumber(rawGedcomx);
+  if (batchNumber) result.batchNumber = batchNumber;
 
   // Resolved HERE, before the staged slim block deletes `result.gedcomx`, so the
   // finding survives into both the inline response and the staged sidecar
@@ -1036,6 +1080,23 @@ export async function recordSearchTool(
   // treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
   // skips any candidate lacking it (rank-search-matches.ts), so dropping it would
   // silently disable the re-ranker.
+  //
+  // `batchNumber` is KEPT for the same class of reason (#1592): it is the only
+  // route to a batch the agent can enumerate, and the staged case is the normal
+  // one — dropping it here would leave the field working only in the exploratory
+  // searches nobody logs. Being flat and top-level, it survives this block by
+  // construction; the test that pins it is what stops a future `delete`.
+  //
+  // It is not free on every call shape, and the cheap-looking dedupe is declined
+  // deliberately. On an ordinary search most rows carry none. On a
+  // BATCH-ANCHORED search every row repeats the batch the caller just sent —
+  // ~25 bytes x `count`, already echoed in `query.batchNumber`. Suppressing it
+  // when it equals `input.batchNumber` would save that, at the cost of making
+  // presence depend on how the search was phrased: the same record would carry
+  // the field or not depending on the query, and a row read out of the staged
+  // sidecar (where `query` is a sibling, not an ancestor) would lose its only
+  // copy. A field whose meaning is stable is worth more here than 2.5 KB on the
+  // one call shape where the caller demonstrably already knows the value.
   if (out.staged) {
     const collections: Record<string, string> = {};
     for (const r of out.results) {
@@ -1291,7 +1352,7 @@ export const recordSearchToolSchema = {
       otherSurnameExact: { type: "boolean", description: "When `true`, requires the co-occurring family name to be present and match exactly. Assumed to behave as `fatherGivenNameExact` does, not measured: only the father and spouse families were enumerated." },
 
       collectionId: { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
-      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
+      batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. OBTAIN ONE from the `batchNumber` field on a previous result (search the collection by name, then scan the hits for one that carries it — most records carry none, and a hit without one says nothing about the collection); `ranked[]` stubs carry it too. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },

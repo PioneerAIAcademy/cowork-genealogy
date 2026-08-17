@@ -8,8 +8,8 @@ them (that's question-selection).
 
 Ownership enforcement (research-exhaustiveness can write `questions`
 alongside question-selection) is in
-`test_universal.py::test_ownership_table`, driven by the shared
-OWNERSHIP_TABLE. FK integrity for `log_entry_ids` is covered by
+`test_universal.py::test_ownership_table`, driven by
+`docs/specs/schemas/ownership.json`. FK integrity for `log_entry_ids` is covered by
 `test_universal.py::test_id_references_resolve`.
 
 See `test_universal.py` module docstring for the full validator

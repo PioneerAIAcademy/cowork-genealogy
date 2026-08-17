@@ -31,6 +31,12 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   returned about five thousand records, the same batch plus a surname returned
   79, and a nonexistent batch returns **0** rather than being ignored — so a nil
   under it means the batch is wrong, not that the parish is empty.
+- **Where to get one:** the `batchNumber` field on a `record_search` result (and
+  on `ranked[]` stubs). Search the collection by name, scan the hits for one that
+  carries it, then send that batch alone. The batch numbers named in this file
+  are illustrative, not a lookup — do not send one because it appears here.
+  Most records carry none; a hit without one is not a statement about the
+  collection, and the same collection returns hits both with and without.
 - Batch number shape varies: it may lead with a digit or with a letter, and may
   carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5` and the
   all-numeric `8317102`. Send what the source gives
