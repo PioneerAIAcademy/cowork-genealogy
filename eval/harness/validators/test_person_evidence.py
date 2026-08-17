@@ -299,9 +299,9 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
     tree.gedcomx.json and link a_005 to it — not force a bad match onto an
     existing person and not skip the role.
 
-    The schema authorizes this write (research-schema-spec.md §8 line 656);
-    TREE_OWNERSHIP_TABLE in test_universal.py grants person-evidence the
-    `persons` write so a correct stub run isn't failed for ownership.
+    The schema authorizes this write (research-schema-spec.md, "tree.gedcomx.json
+    update timing"); the ownership manifest's tree `persons` row names
+    person-evidence, so a correct stub run isn't failed for ownership.
     """
     if "stub-creation" not in test.get("tags", []):
         pytest.skip("not a stub-creation scenario")

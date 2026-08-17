@@ -214,21 +214,34 @@ date patterns the standardizer recognizes.
 
 Each skill writes to its own section and reads from others. Skills must never write across section boundaries.
 
+**The writer sets below are a rendering of `docs/specs/schemas/ownership.json`, which
+is the machine-readable declaration the checks read.** This table adds what the
+manifest does not carry — who *reads* each section, and how an entry is retired.
+When the two disagree, the manifest is right and this table is stale: it was, on
+four rows, until the manifest was promoted out of a pytest validator.
+
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
-| `known_holdings` | init-project (survey at creation); record-extraction, citation (`promoted` flag when an item is turned into a real source) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete |
-| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is |
-| `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
-| `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
-| `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
-| `assertions` | record-extraction, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
+| `project` | init-project (objective, title, subject_person_ids — **once, at creation**), proof-conclusion (status, updated) | all | Mutable (status, updated). Any skill may refresh `updated` alone — it is a per-session activity ping. The three creation fields are **set-once**: `research_append` refuses to rewrite one that already holds a value, because every later step plans against them. That constrains the system, not the researcher — a human edits the file directly |
+| `researcher_profile` | init-project (at creation, from the interview); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
+| `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question |
+| `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
+| `log` | search-records, search-full-text, search-external-sites, search-images, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
+| `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
+| `assertions` | record-extraction | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
+| `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+
+`research_append` also accepts a `plan_items` pseudo-section, which addresses
+`plans[].items[]` rather than a top-level property of this file. It carries the
+same writers as `plans`, and the manifest gives it its own row so the tool's
+vocabulary leaves no hole.
 
 **General rule:** Append-only sections (`log`) are never rewritten. All other sections
 allow field updates but skills must preserve IDs and never delete entries. This lets you
@@ -258,7 +271,7 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 |---------|-----------|---------|---------------|
 | `persons` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs. **person-evidence is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
@@ -273,7 +286,10 @@ never a name-only stub — and writes the parent-child / spouse edges via
 **assertion-only**: it writes `sources` (the GedcomX `S` entry that
 mirrors each `src_` it appends to `research.json`) plus the assertions,
 and does **not** write `persons` or `relationships`. The harness's
-`test_tree_ownership_table` universal validator enforces this ownership.
+`test_tree_ownership_table` universal validator enforces this ownership, reading
+the same `docs/specs/schemas/ownership.json` as the research.json half — and only
+inside a paid per-skill eval run, which is the whole of this rule's enforcement
+today. Nothing checks it in Cowork or on the hosted path.
 
 ---
 

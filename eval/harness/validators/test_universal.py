@@ -36,6 +36,11 @@ from pathlib import Path
 
 import pytest
 
+from harness.ownership import (
+    RESEARCH_JSON,
+    TREE_GEDCOMX_JSON,
+    writer_sets,
+)
 from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
@@ -43,16 +48,30 @@ from harness.schema_validator import (
 from harness.ts_validator import validate_parsed
 
 
-# Top-level sections of research.json — the diff-aware tests below
-# (`test_log_append_only`, `test_no_entries_deleted`,
-# `test_id_references_resolve`, `test_ownership_table`) iterate over these.
-# Shape, enums, ID prefixes, and required fields are all delegated to
-# jsonschema (research.schema.json) per spec §8; this list is the only
-# enum-table kept in Python.
-REQUIRED_SECTIONS = [
-    "project", "questions", "plans", "log", "sources",
+# The research.json sections the diff-aware tests below iterate —
+# `test_no_entries_deleted` and `test_id_references_resolve`. Shape, enums, ID
+# prefixes, and required fields are all delegated to jsonschema
+# (research.schema.json) per spec §8; this list is the only enum-table kept in
+# Python.
+#
+# It was called REQUIRED_SECTIONS and was neither: it omitted `evaluations`,
+# which the schema does require, and now carries two sections the schema makes
+# optional. What it actually is is the diff set, so that is its name.
+#
+# Every top-level property EXCEPT `researcher_profile`, which is an object rather
+# than an array of id-bearing entries — both tests below iterate entries and read
+# `.get("id")`, so it has nothing for them to check. `plan_items` is likewise
+# absent: it is `research_append`'s pseudo-section for `plans[].items[]`, not a
+# top-level property, and a plan-item change already shows up here under `plans`.
+#
+# The two ownership checks do NOT read this list — they iterate the ownership
+# manifest, which is keyed on a wider vocabulary again. Keeping them on this list
+# is what left `localities` with a declared owner that was never once evaluated.
+DIFFED_SECTIONS = [
+    "project", "known_holdings", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
+    "evaluations", "localities",
 ]
 
 
@@ -192,7 +211,17 @@ def test_log_append_only(before_state, after_state):
 # --- No-delete enforcement ---
 
 def test_no_entries_deleted(before_state, after_state):
-    """No entries should be deleted from any section. Supersede with status instead."""
+    """No entries should be deleted from any section. Supersede with status instead.
+
+    Covers every id-bearing section, including `localities`, `evaluations` and
+    `known_holdings` — the three the old list omitted while the prose ownership
+    table stated the no-delete rule for all three. Widening it is close to free:
+    `research_append`'s op enum is `append | update` with no delete at all, so
+    the only route to a deletion is a raw file write, which is already a
+    violation on two other counts. Nine unit tests run against a scenario
+    carrying entries in any of the three, and no run in the committed e2e corpus
+    deletes an entry from any section.
+    """
     before_research = before_state.get("research_json")
     after_research = after_state.get("research_json")
 
@@ -200,7 +229,7 @@ def test_no_entries_deleted(before_state, after_state):
         pytest.skip("Missing research.json for diff")
 
     errors = []
-    for section in REQUIRED_SECTIONS:
+    for section in DIFFED_SECTIONS:
         if section == "project":
             continue  # project is an object, not an array
 
@@ -233,7 +262,7 @@ def test_id_references_resolve(after_state):
     if project:
         known_ids.add(project.get("id", ""))
 
-    for section in REQUIRED_SECTIONS:
+    for section in DIFFED_SECTIONS:
         if section == "project":
             continue
         for entry in research.get(section, []):
@@ -355,78 +384,27 @@ def test_id_references_resolve(after_state):
     assert not errors, "Broken ID references:\n" + "\n".join(errors)
 
 
-# --- Ownership table ---
+# --- Ownership ---
 #
-# Single source of truth for which skills are *allowed* to write each
-# research.json section. Mirrors the prose table in
-# docs/specs/research-schema-spec.md §4. Update both together — drift here
-# would silently let any skill write any section.
+# Which skills may write each section of each project document is declared in
+# `docs/specs/schemas/ownership.json` and loaded through `harness.ownership`.
+# It used to be two dict literals right here — the "single source of truth",
+# held in a pytest validator that runs in neither Cowork nor the hosted path.
 #
-# A section absent from this dict (e.g., a hypothetical "metadata") has no
-# declared writers and any modification fails the ownership check. A skill
-# absent from every section is read-only (e.g., search-wikipedia,
-# historical-context); they fail the ownership check if they touch
-# research.json at all.
-# Mirrors simplified-gedcomx-spec.md §1: tree.gedcomx.json is the
-# upload-target file. init-project writes the initial stub persons;
-# tree-edit applies user-directed changes; proof-conclusion promotes
-# research → tree when a proof summary reaches `probable` or higher
-# (see research-schema-spec.md §8 "tree.gedcomx.json update timing").
-# person-evidence owns the household skeleton in the tree — it may add both
-# `persons` AND `relationships`. When a newly discovered persona matches no
-# one in the tree, it mints the person via `materialize_facts`
-# create-or-enrich carrying the SOURCED evidence facts (not a name-only
-# stub), then links the assertion to it (SKILL.md Step 5;
-# research-schema-spec.md §8 line 656: "Person stubs may be created by
-# person-evidence when a newly discovered person doesn't yet exist in the
-# GedcomX file"). For a household record (e.g., census) it likewise mints
-# each member — the subject's siblings included — with their sourced facts,
-# and writes the parent-child / spouse `relationships` edges via `tree_edit`
-# add_relationship, each edge carrying a source-ref resolved from the
-# relationship assertion's `source_id` (pre-1880 census parent-child edges
-# are indirect → lower ref quality). A `merge_warnings` dry-run coherence
-# gate runs before the household materialization commits. These sibling
-# stubs + edges are the upstream half of the warnings-architecture chain —
-# what `buildParentMob` discovers and what makes `relativesChildBirthRange40`
-# work end-to-end.
-# record-extraction is assertion-only for tree persons and relationships: it
-# writes the S-entry / GedcomX source description and per-persona assertions
-# (including inferred relationship-type assertions) but never mints tree
-# persons, names, or `relationships` edges — which is why it is removed from
-# `persons` and `relationships` below and kept only under `sources`. When the
-# subject appears as a child on a household record it flags the
-# record-vs-tree children discrepancy as an identity question rather than
-# minting a stub. (The retired `add_household_children` op it used to call is
-# gone; the household skeleton is now person-evidence's.)
-TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
-    "persons": {"init-project", "tree-edit", "proof-conclusion",
-                "person-evidence"},
-    "relationships": {"init-project", "tree-edit", "proof-conclusion",
-                      "person-evidence"},
-    "sources": {"init-project", "tree-edit", "proof-conclusion",
-                "record-extraction"},
-}
-
-
-OWNERSHIP_TABLE: dict[str, set[str]] = {
-    "project": {"init-project", "proof-conclusion"},
-    "questions": {"question-selection", "research-exhaustiveness"},
-    # research-plan owns plan/item structure; search and extraction skills
-    # co-own plans only to update items[].status after executing or
-    # extracting from an item (see spec §4).
-    "plans": {"research-plan", "search-records", "search-external-sites",
-              "search-full-text", "search-images", "record-extraction"},
-    "log": {"search-records", "search-external-sites", "record-extraction",
-            "search-full-text", "search-images"},
-    "sources": {"record-extraction", "citation"},
-    "assertions": {"record-extraction", "convert-dates"},
-    "person_evidence": {"person-evidence"},
-    "conflicts": {"conflict-resolution"},
-    "hypotheses": {"hypothesis-tracking"},
-    "timelines": {"timeline"},
-    "proof_summaries": {"proof-conclusion"},
-    "localities": {"locality-guide"},
-}
+# The two checks below read only the rows the manifest marks enforceable at the
+# `unit` plane, and only the skill callers on them. Two consequences worth
+# knowing, both recorded on the rows themselves:
+#
+#  - A row with an **agent** owner cannot be expressed here at all, because the
+#    only caller identity this tier has is `skill_frontmatter["name"]`.
+#    `evaluations` is that shape and carries no plane.
+#  - A section with no row, or a row this plane cannot enforce, is not checked —
+#    it is not default-denied. Default-deny on an undeclared section denies
+#    correct writes, which is what a replay of the old literals over the
+#    committed corpus measured.
+#
+# A skill named by no row is read-only (search-wikipedia, historical-context);
+# it fails these checks if it touches a project file at all.
 
 
 def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[str]:
@@ -447,7 +425,7 @@ def _only_project_updated_changed(before: dict, after: dict) -> bool:
     `project.updated` is a per-session activity ping: any skill that
     successfully modifies research.json may refresh it. Substantive
     project fields (id, objective, subject_person_ids, status, created)
-    remain restricted to the OWNERSHIP_TABLE writers.
+    remain restricted to the `project` row's declared writers.
     """
     bp = before.get("project")
     ap = after.get("project")
@@ -461,8 +439,8 @@ def _only_project_updated_changed(before: dict, after: dict) -> bool:
 def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify research.json sections it owns.
 
-    Driven by the OWNERSHIP_TABLE above. A skill modifying a section it
-    doesn't own fails the test — that's the single biggest layer-1
+    Driven by the ownership manifest's research.json rows. A skill modifying a
+    section it doesn't own fails the test — that's the single biggest layer-1
     defense for cross-skill state corruption.
 
     The skill name is read from skill_frontmatter["name"]. If the
@@ -491,11 +469,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    modified = _modified_sections(before, after, REQUIRED_SECTIONS)
+    owners = writer_sets(RESEARCH_JSON)
+    modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
-        allowed = OWNERSHIP_TABLE.get(section, set())
-        if skill_name not in allowed:
+        if skill_name not in owners[section]:
             # `project.updated` is an activity ping any skill may touch.
             # If the only delta inside `project` is that timestamp, don't
             # flag it as an ownership violation.
@@ -505,7 +483,7 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
 
     if unauthorized:
         # Sort for stable error messages.
-        owners_summary = {s: sorted(OWNERSHIP_TABLE.get(s, set())) for s in unauthorized}
+        owners_summary = {s: sorted(owners[s]) for s in unauthorized}
         assert False, (
             f"{skill_name} modified sections it doesn't own: {sorted(unauthorized)}. "
             f"Allowed writers per section: {owners_summary}"
@@ -515,10 +493,10 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
 def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
-    Parallel to test_ownership_table, but for tree.gedcomx.json. Driven
-    by TREE_OWNERSHIP_TABLE above. Without this check, tree-edit and
-    proof-conclusion writes to that file would pass vacuously — there
-    was no ownership coverage at all in earlier versions.
+    Parallel to test_ownership_table, but for tree.gedcomx.json. Driven by the
+    ownership manifest's tree.gedcomx.json rows. Without this check, tree-edit
+    and proof-conclusion writes to that file would pass vacuously — there was
+    no ownership coverage at all in earlier versions.
 
     Skipped on negative tests for the same reason as test_ownership_table
     — a routed-to skill's legitimate writes would otherwise be
@@ -539,15 +517,12 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    modified = _modified_sections(before, after, list(TREE_OWNERSHIP_TABLE.keys()))
-    unauthorized = []
-    for section in modified:
-        allowed = TREE_OWNERSHIP_TABLE.get(section, set())
-        if skill_name not in allowed:
-            unauthorized.append(section)
+    owners = writer_sets(TREE_GEDCOMX_JSON)
+    modified = _modified_sections(before, after, sorted(owners))
+    unauthorized = [s for s in modified if skill_name not in owners[s]]
 
     if unauthorized:
-        owners_summary = {s: sorted(TREE_OWNERSHIP_TABLE.get(s, set())) for s in unauthorized}
+        owners_summary = {s: sorted(owners[s]) for s in unauthorized}
         assert False, (
             f"{skill_name} modified tree.gedcomx.json sections it doesn't own: "
             f"{sorted(unauthorized)}. Allowed writers per section: {owners_summary}"
