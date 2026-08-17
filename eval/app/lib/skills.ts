@@ -7,9 +7,10 @@
  *   dimensions per unit-test-spec.md §7.
  *
  * No caching: the scan is sub-millisecond, and dev edits to
- * `rubric.md` show up without a server restart. Malformed rubrics
- * throw with a path pointer — surfaces as a clean 500 from the first
- * request that hits the bad file.
+ * `rubric.md` show up without a server restart. A rubric that fails to
+ * parse is reported on its own skill as `rubricError` and takes only
+ * that skill's dimensions down — one bad file used to throw out of
+ * `listSkills` and 500 the whole picker for every skill.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -109,6 +110,14 @@ function parseAllowedTools(raw: SkillFrontmatter['allowed-tools']): string[] {
  * Throws on malformed input with a file-path pointer.
  */
 export function parseRubric(content: string, filePath: string): SkillRubricDimension[] {
+  // Blank gets its own message. It is the one malformed shape with an
+  // obvious fix, and "no H2 dimension headings found" does not name it.
+  // Matches parse_rubric_or_empty in eval/harness/harness/rubric.py.
+  if (content.trim() === '') {
+    throw new Error(
+      `Malformed rubric: ${filePath} is blank. To grade a skill on the base dimensions only, delete the file.`,
+    );
+  }
   const lines = content.split(/\r?\n/);
   const dimensions: SkillRubricDimension[] = [];
 
@@ -172,15 +181,32 @@ async function readSkillMd(skillName: string): Promise<{ frontmatter: SkillFront
   }
 }
 
-async function readRubricFor(skillName: string): Promise<SkillRubricDimension[]> {
+/**
+ * A skill's rubric dimensions, plus why they are missing when they are.
+ *
+ * `error` is null both when the file parsed and when there is no file at
+ * all — absent is the supported opt-out, so it is not an error. Only a
+ * parse failure fills it in, and only a parse failure is caught: any
+ * other read failure (EACCES, EISDIR) is a broken checkout rather than
+ * bad content, and still throws.
+ */
+async function readRubricFor(
+  skillName: string,
+): Promise<{ dimensions: SkillRubricDimension[]; error: string | null }> {
   const rubricPath = path.join(testsUnitDir(), skillName, 'rubric.md');
+  let content: string;
   try {
-    const content = await fs.readFile(rubricPath, 'utf8');
-    return parseRubric(content, rubricPath);
+    content = await fs.readFile(rubricPath, 'utf8');
   } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT') return [];
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { dimensions: [], error: null };
+    }
     throw err;
+  }
+  try {
+    return { dimensions: parseRubric(content, rubricPath), error: null };
+  } catch (err) {
+    return { dimensions: [], error: (err as Error).message };
   }
 }
 
@@ -207,12 +233,13 @@ export async function listSkills(): Promise<SkillInfo[]> {
     if (!stat?.isDirectory()) continue;
     const parsed = await readSkillMd(name);
     const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools']);
-    const rubricDimensions = await readRubricFor(name);
+    const rubric = await readRubricFor(name);
     out.push({
       name,
       description: parsed?.frontmatter.description?.trim() ?? null,
       allowedTools,
-      rubricDimensions,
+      rubricDimensions: rubric.dimensions,
+      rubricError: rubric.error,
       stateless: isStateless(allowedTools),
     });
   }
@@ -226,12 +253,13 @@ export async function readSkill(name: string): Promise<SkillInfo | null> {
   if (!stat?.isDirectory()) return null;
   const parsed = await readSkillMd(name);
   const allowedTools = parseAllowedTools(parsed?.frontmatter['allowed-tools']);
-  const rubricDimensions = await readRubricFor(name);
+  const rubric = await readRubricFor(name);
   return {
     name,
     description: parsed?.frontmatter.description?.trim() ?? null,
     allowedTools,
-    rubricDimensions,
+    rubricDimensions: rubric.dimensions,
+    rubricError: rubric.error,
     stateless: isStateless(allowedTools),
   };
 }

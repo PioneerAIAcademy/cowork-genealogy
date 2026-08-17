@@ -119,3 +119,116 @@ def test_promote_partial_to_scratch_renames(tmp_path):
     assert classify(scratch.name).kind == "scratch"
     assert not partial.exists()  # the dotfile was moved, not copied
     validate_run_log(json.loads(scratch.read_text(encoding="utf-8")))
+
+
+# --- the flush guard -------------------------------------------------------
+#
+# `_flush_partials()` is called from inside the drain loop, whose `try` catches
+# only KeyboardInterrupt. Anything else escaping it unwinds past the summary,
+# the promote-to-scratch block and the return, so every finished test is left
+# in a gitignored dotfile that nothing surfaces. That is how one out-of-range
+# `judge_cost_usd` took a whole suite down: `build_run_log` validates, so a
+# schema violation on one test discarded the others.
+#
+# `test_cli.py` cannot catch this — it monkeypatches `write_partial_runlog`
+# away in every test that drives `main()`, so the failure mode is invisible
+# there by construction. Hence this test, with a writer that really raises.
+
+import sys as _sys
+from pathlib import Path as _Path
+
+_HARNESS_ROOT = _Path(__file__).resolve().parents[2]
+if str(_HARNESS_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_HARNESS_ROOT))
+
+import run_tests as _run_tests  # noqa: E402
+
+
+def test_a_raising_partial_writer_does_not_discard_finished_tests(tmp_path, monkeypatch):
+    """A failure in the save step must not lose the work it is saving.
+
+    The writer here succeeds once and raises forever after — the real shape,
+    since `build_run_log` re-validates every completed entry on each flush, so
+    one bad entry poisons every flush after it while the earlier partial is
+    already on disk. The run must still reach the promote-to-scratch block and
+    report a failure, rather than unwinding and stranding the dotfile.
+    """
+    import json as _json
+    from harness.auth import AuthConfig
+
+    # main()'s staleness gate runs before anything else and exits 2 on a
+    # checkout without a compiled engine, which would mask the behaviour under
+    # test. Nothing here executes a real skill, so the gate is not needed.
+    # (test_cli.py isolates itself the same way, via an autouse fixture.)
+    monkeypatch.setattr(_run_tests, "_check_mcp_build_fresh", lambda: [])
+
+    # Likewise the judge key-validity preflight, which would otherwise make a
+    # real API call and abort on the stub key.
+    import anthropic as _anthropic
+
+    class _FakeMessages:
+        def create(self, **kwargs):
+            return None
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            self.messages = _FakeMessages()
+
+    monkeypatch.setattr(_anthropic, "Anthropic", _FakeClient)
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(3):
+        (skill_dir / f"t{i}.json").write_text(_json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                     "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        _run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    monkeypatch.setattr(_run_tests, "run_one_test",
+                        lambda spec, **kw: _entry(test_id=spec.id, outcome="pass"))
+    monkeypatch.setattr(_run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename, **kw: tmp_path / filename)
+
+    calls = {"n": 0}
+    real_partial = _run_tests.write_partial_runlog
+
+    def flaky_partial(log, *, runlogs_root, skill, timestamp):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return real_partial(log, runlogs_root=runlogs_root, skill=skill,
+                                timestamp=timestamp)
+        raise ValueError("-0.0001 is less than the minimum of 0")
+
+    monkeypatch.setattr(_run_tests, "write_partial_runlog", flaky_partial)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = _run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # Reported as a harness failure rather than a clean run...
+    assert rc == 1
+    # ...the raising path was taken (call 2), and submission then STOPPED —
+    # a third call would mean test 3 was run, judged and paid for after the
+    # guard fired, which is what stop_submitting exists to prevent.
+    assert calls["n"] == 2, (
+        "stop_submitting must halt the third test; a third flush means it did not"
+    )
+    # ...and the finished work survives as a scratch log the CRUD UI can open,
+    # not as an orphaned gitignored dotfile.
+    scratch = list((runlogs / "unit" / "skill-a").glob("scratch_*.json"))
+    assert scratch, "the partial that DID land was never promoted to a scratch run log"

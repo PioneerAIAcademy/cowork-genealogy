@@ -1,0 +1,109 @@
+{
+  "tool": "record_read",
+  "description": "The C00558-7 (St. Michael and All Angels) extraction of the SAME christening. Names John, father Thomas Richardson, and mother Mary, with ParentChild relationships — the answer to the scenario's question, reachable only through the batch the skill enumerated. CAPTURED LIVE 2026-08-13, verbatim. Two fixtures rather than one wildcard, because the two extractions genuinely differ in what they name and that difference is the point of the test: enumerating the batch is what surfaces the father. The earlier hand-authored wildcard returned a father-less record for EVERY recordId, so in run v1_2026-08-14_00-56-33 the skill read the father persona three times and could never find him. The `~JMF4-CL` predicate deliberately matches both JMF4-CL9 and JMF4-CLS: those are two personas of the same record and the live API returns the same document for both, so re-reading is correct behavior, not a loop.",
+  "args": {
+    "recordId": "~JMF4-CL"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_12405347731",
+        "ark": "ark:/61903/1:1:JMF4-CL9",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Richardson"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Christening",
+            "primary": true,
+            "date": "25 Sep 1832",
+            "standard_date": "25 Sep 1832",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ]
+      },
+      {
+        "id": "p_12405347732",
+        "ark": "ark:/61903/1:1:JMF4-CLS",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Richardson"
+          }
+        ]
+      },
+      {
+        "id": "p_12405347733",
+        "ark": "ark:/61903/1:1:JMF4-CL3",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Mary"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "MM9.1.6/PFZJ-GYJ7",
+        "type": "ParentChild",
+        "parent": "p_12405347732",
+        "child": "p_12405347731"
+      },
+      {
+        "id": "MM9.1.6/PFZJ-GYJW",
+        "type": "ParentChild",
+        "parent": "p_12405347733",
+        "child": "p_12405347731"
+      },
+      {
+        "id": "MM9.1.6/PFZJ-GYJ4",
+        "type": "Couple",
+        "person1": "p_12405347732",
+        "person2": "p_12405347733"
+      }
+    ],
+    "sources": [
+      {
+        "id": "sd_c_1473014",
+        "title": "England, Births and Christenings, 1538-1975",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1473014"
+      },
+      {
+        "id": "src_r_947429014",
+        "title": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:9H1K-BYQ : 4 February 2023), Entry for John Richardson, 1832.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9H1K-BYQ"
+      },
+      {
+        "id": "sd_p_12405347731",
+        "title": "John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JMF4-CL9 : 4 February 2023), John Richardson, 1832.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:JMF4-CL9"
+      },
+      {
+        "id": "sd_p_12405347732",
+        "title": "Thomas Richardson in entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JMF4-CLS : 4 February 2023), Thomas Richardson in entry for John Richardson, 1832.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:JMF4-CLS"
+      },
+      {
+        "id": "sd_p_12405347733",
+        "title": "Mary in entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JMF4-CL3 : 4 February 2023), Mary in entry for John Richardson, 1832.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:JMF4-CL3"
+      }
+    ],
+    "places": [
+      {}
+    ]
+  }
+}

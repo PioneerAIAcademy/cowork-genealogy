@@ -1,10 +1,8 @@
 """Skill-specific validators for the validate-schema skill.
 
-validate-schema has no `rubric.md` (deleted in the criteria-demotion
-rollout). All
-mechanical checks live here; narrative judgment about validation
-reporting lands on the base Correctness + Completeness dimensions in
-the LLM judge.
+Mechanical checks live here; narrative judgment about validation
+reporting lands on the validate-schema `rubric.md` dimensions plus the
+base Correctness + Completeness dimensions in the LLM judge.
 
 The skill is read-only: it calls the validate_research_schema MCP tool
 and reports findings, but never edits research.json or tree.gedcomx.json.

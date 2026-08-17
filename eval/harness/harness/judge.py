@@ -210,6 +210,7 @@ def render_prompt(
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> str:
     """Fill the judge prompt template slots into one flat string.
 
@@ -227,6 +228,7 @@ def render_prompt(
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
         before_state=before_state,
+        validator_failures=validator_failures,
     )
     return prefix + suffix
 
@@ -242,6 +244,7 @@ def render_prompt_parts(
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> tuple[str, str]:
     """Render the prompt as (stable_prefix, varying_suffix).
 
@@ -264,6 +267,17 @@ def render_prompt_parts(
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
     tool_calls_text = _render_tool_calls_with_size_guard(tool_calls)
+    # FAILURES only, never the full validator list. A passing validator list is
+    # a *conclusion*, and handing the judge a conclusion is the defect diagnosed
+    # across issues #1007, #1330 and #1603 — the test tells the judge what to
+    # find and the judge finds it. "All validators passed" would invite exactly
+    # that and raise the pinned-at-3 rate. A failure is an observation the judge
+    # would otherwise miss, and it cannot be rubber-stamped into a pass.
+    failures_text = (
+        "\n".join(f"- {name}" for name in validator_failures)
+        if validator_failures
+        else "(none failed)"
+    )
 
     stable_slots = {
         "rubric": rubric_text,
@@ -277,6 +291,7 @@ def render_prompt_parts(
         "text_response": text_response or "(empty)",
         "file_changes_summary": file_changes_summary or "(no file changes)",
         "tool_calls": tool_calls_text,
+        "validator_failures": failures_text,
     }
 
     template = judge_prompt_template()
@@ -411,6 +426,7 @@ def grade(
     auth: AuthConfig,
     model: str = DEFAULT_JUDGE_MODEL,
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> JudgeOutput:
     """Run the judge and return structured dimensions + cost."""
     prefix, suffix = render_prompt_parts(
@@ -423,6 +439,7 @@ def grade(
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
         before_state=before_state,
+        validator_failures=validator_failures,
     )
 
     client = _make_client(auth)
@@ -920,8 +937,18 @@ def _compute_cost(response, model: str) -> float:
     inp = getattr(usage, "input_tokens", 0) or 0
     cached = getattr(usage, "cache_read_input_tokens", 0) or 0
     out = getattr(usage, "output_tokens", 0) or 0
+    # `input_tokens` and `cache_read_input_tokens` are DISJOINT in the API's
+    # accounting — `input_tokens` already excludes cache reads, so the two are
+    # summed, never subtracted. Subtracting `cached` here double-counted the
+    # discount and drove the fresh-input term negative on any warm cache; when
+    # the output term could not cover it the total went negative, tripping
+    # `judge_cost_usd`'s `minimum: 0` and killing the run mid-suite.
+    #
+    # Every term is now a non-negative count times a non-negative rate, so the
+    # result cannot be negative and needs no clamp — a clamp would have hidden
+    # the ~19% under-count rather than fixing it.
     return (
-        (inp - cached) * pricing["input"] / 1_000_000
+        inp * pricing["input"] / 1_000_000
         + cached * pricing["cached_input"] / 1_000_000
         + out * pricing["output"] / 1_000_000
     )

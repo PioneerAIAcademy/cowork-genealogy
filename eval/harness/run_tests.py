@@ -60,12 +60,81 @@ from harness.runlog import (
 )
 from harness.skill_runner import DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
+from harness.review_sample import select_review_sample
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
+    classify,
     is_releasable_invocation,
     next_filename_for,
     now_utc_filename_timestamp,
 )
+
+
+def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
+    """The newest released-or-candidate run log for a skill that was
+    ANNOTATED, or None.
+
+    A run log with no sibling `.ann.json` is one nobody reviewed. Taking its
+    cursor would mark its 5 sampled tests covered and rotate straight past them
+    — the same hole the scratch-run guard in `main()` closes, arriving by a
+    different route. It is the normal path, not a corner case: 12 of the 121
+    committed run logs have no annotation, and CI only ever checks the newest
+    one, so nothing downstream would catch it. Under the pre-sampling rule a
+    discarded run cost nothing, because the next annotation covered every test.
+
+    Sorts by `classify()`'s (version, timestamp), NOT by filename: a
+    lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
+    every suite at v1, and cheap to avoid here.
+
+    A RELEASED `v{N}.json` has `timestamp=None` and must sort **last** within its
+    version — it supersedes every candidate of that version. Release renames
+    `v{N}_<ts>.json` in place and leaves the earlier candidates behind (pruning
+    keeps 5), so treating None as `""` would let a superseded candidate outrank
+    the blessed release and hand the next run a stale cursor and a stale
+    `previous_tests` baseline.
+    """
+    if not skill_runlog_dir.is_dir():
+        return None
+    dated = []
+    for p in skill_runlog_dir.iterdir():
+        if not p.name.endswith(".json") or p.name.endswith(".ann.json"):
+            continue
+        c = classify(p.name)
+        if c.kind not in ("released", "candidate") or c.version is None:
+            continue
+        if not (skill_runlog_dir / ann_filename_for(p.name)).exists():
+            continue  # nobody reviewed it — its cursor is not evidence
+        # A released log has timestamp=None and must sort LAST within its
+        # version — it supersedes every candidate of that version.
+        dated.append(((c.version, c.timestamp or "￿"), p))
+    if not dated:
+        return None
+    newest = max(dated, key=lambda pair: pair[0])[1]
+    try:
+        return json.loads(newest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        # A corrupt predecessor must not take down the run that is writing a
+        # new one — the sample simply starts a fresh sweep.
+        return None
+
+
+def _review_sample_for(
+    skill: str, entries: list[dict], skill_runlog_dir: Path, timestamp: str
+) -> dict:
+    """Compute this run's review sample from its predecessor's cursor.
+
+    The seed is derived from the skill name and the invocation timestamp, so
+    the random slot varies run to run but is reproducible from the committed
+    artifact — the seed itself is stored in the envelope.
+    """
+    previous = _newest_releasable_runlog(skill_runlog_dir)
+    return select_review_sample(
+        tests=entries,
+        prior_sample=(previous or {}).get("review_sample"),
+        previous_tests=(previous or {}).get("tests"),
+        seed=sum(ord(c) for c in (skill + timestamp)),
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -785,32 +854,70 @@ def main(argv: list[str] | None = None) -> int:
     def _flush_partials() -> None:
         """(Over)write the partial scratch envelope for every skill that has
         at least one completed test. Cheap relative to a minutes-long test;
-        called after each completion and once more on interrupt."""
+        called after each completion and once more on interrupt.
+
+        Never raises. It is called from inside the drain loop, whose `try` only
+        catches KeyboardInterrupt, so anything escaping here would unwind past
+        the summary, the promote-to-scratch block and the return — discarding
+        every finished test into a gitignored dotfile. That is exactly how a
+        single bad `judge_cost_usd` took down a whole suite: `build_run_log`
+        validates, and a schema violation on one test killed the other nine.
+        The save step must not be the thing that loses the work it is saving,
+        so a failure here is recorded and reported, not propagated.
+        """
+        nonlocal harness_error, stop_submitting
         by_skill: dict[str, list[dict]] = {}
         for i, sp in enumerate(specs):
             e = results_by_index.get(i)
             if e is not None:
                 by_skill.setdefault(sp.skill, []).append(e)
         for skill, entries in by_skill.items():
-            log = build_run_log(
-                skill=skill,
-                version=None,
-                released=False,
-                releasable=False,
-                invocation=mode,
-                timestamp=invocation_timestamp,
-                harness_version=HARNESS_VERSION,
-                model=DEFAULT_MODEL,
-                judge_prompt_hash=judge_hash,
-                snapshot=_snapshot_for(skill),
-                tests=entries,
-            )
-            partial_paths[skill] = write_partial_runlog(
-                log,
-                runlogs_root=paths.runlogs_root,
-                skill=skill,
-                timestamp=invocation_timestamp,
-            )
+            try:
+                log = build_run_log(
+                    skill=skill,
+                    version=None,
+                    released=False,
+                    releasable=False,
+                    invocation=mode,
+                    timestamp=invocation_timestamp,
+                    harness_version=HARNESS_VERSION,
+                    model=DEFAULT_MODEL,
+                    judge_prompt_hash=judge_hash,
+                    snapshot=_snapshot_for(skill),
+                    tests=entries,
+                )
+                partial_paths[skill] = write_partial_runlog(
+                    log,
+                    runlogs_root=paths.runlogs_root,
+                    skill=skill,
+                    timestamp=invocation_timestamp,
+                )
+            except Exception as e:  # noqa: BLE001 — the save step must not lose the save
+                # Loudly, and on stderr: a silently-skipped partial write looks
+                # identical to a healthy run right up until the results are gone.
+                # Per skill, because one skill's bad entry must not suppress
+                # another's partial — the remaining skills still write below.
+                print(
+                    f"    ✗ HARNESS ERROR writing partial run log for {skill}: "
+                    f"{type(e).__name__}: {e}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                # Recorded so the run reports a failure and exits 1 rather than
+                # claiming success; the existing harness_error path already
+                # promotes whatever partials did land and prints the reason.
+                if harness_error is None:
+                    harness_error = e
+                # ...and STOP SUBMITTING, exactly as the last-resort guard on
+                # fut.result() does. This failure is not transient: build_run_log
+                # re-validates every accumulated entry on each flush, so one bad
+                # entry poisons every later flush for that skill. Without this,
+                # `harness_error` makes the end-of-run block short-circuit to
+                # promote-and-return, so every test that finishes after this
+                # point is executed, judged, PAID FOR, and then discarded — a
+                # slower and more expensive version of the crash this guard
+                # exists to prevent.
+                stop_submitting = True
 
     def _budget_blocks_next(spec) -> bool:
         """True (and flips stop_submitting) when a suite cap would be
@@ -1046,6 +1153,16 @@ def main(argv: list[str] | None = None) -> int:
             releasable=releasable,
             timestamp=invocation_timestamp,
         )
+        # Only a releasable run carries a review sample. A scratch run is
+        # gitignored and never faces rule 3, and letting one advance the
+        # rotation cursor would skip tests nobody reviewed.
+        sample = (
+            _review_sample_for(
+                skill, entries, skill_runlog_dir, invocation_timestamp
+            )
+            if releasable
+            else None
+        )
         log = build_run_log(
             skill=skill,
             version=version,
@@ -1058,6 +1175,7 @@ def main(argv: list[str] | None = None) -> int:
             judge_prompt_hash=judge_hash,
             snapshot=_snapshot_for(skill),
             tests=entries,
+            review_sample=sample,
         )
         path = write_run_log(
             log,
