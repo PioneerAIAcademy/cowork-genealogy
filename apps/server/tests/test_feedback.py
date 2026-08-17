@@ -15,8 +15,13 @@ from app.sandbox.base import PROJECT_DIR, DirEntry
 
 
 class _FakeResp:
+    """Simulates a successful Apps Script response (HTTP 200, {ok: true})."""
+
     def raise_for_status(self):  # 2xx
         return None
+
+    def json(self):
+        return {"ok": True}
 
 
 def test_feedback_context_and_drive_upload(monkeypatch):
@@ -343,5 +348,49 @@ def test_envelope_omits_token_when_feedback_secret_is_none(monkeypatch):
         )
         assert r.status_code == 200
         assert "token" not in captured["envelope"]
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_rejected_upload_surfaces_as_502(monkeypatch):
+    """When the Apps Script endpoint returns {ok: false} (e.g. token mismatch),
+    the control plane must surface it as a 502 — not silently report success.
+    Apps Script always returns HTTP 200, so raise_for_status() alone won't catch it."""
+
+    class _FakeRejectedResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"ok": False, "error": "unauthorized"}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            return _FakeRejectedResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
+            },
+        )
+        assert r.status_code == 502
+        assert "unauthorized" in r.json()["detail"]
 
         client.delete(f"/api/sessions/{sid}")

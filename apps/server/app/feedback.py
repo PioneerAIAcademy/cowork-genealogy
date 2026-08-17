@@ -470,7 +470,7 @@ async def submit_feedback(
         "filename": filename,
         "zipBase64": base64.b64encode(buf.getvalue()).decode("ascii"),
     }
-    if settings.feedback_secret is not None:
+    if settings.feedback_secret:
         envelope["token"] = settings.feedback_secret
 
     url = settings.feedback_url
@@ -478,7 +478,14 @@ async def submit_feedback(
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             res = await client.post(url, json=envelope)
             res.raise_for_status()
+            body = res.json()
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Feedback upload failed: {exc}") from exc
+
+    if body.get("ok") is not True:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Feedback endpoint rejected the upload: {body.get('error', 'unknown error')}",
+        )
 
     return {"ok": True, "filename": filename}
