@@ -136,10 +136,6 @@ def parse_tool_result(response_summary: Any) -> dict | None:
     # quotes arrive escaped (`\"ok\": true`). Unescaping once lets one set of
     # patterns read both the escaped and the plain form, and — unlike
     # `json.loads` — it survives a response truncated mid-object.
-    # The ledger stores the tool's JSON *inside* a JSON string, so the inner
-    # quotes arrive escaped (`\"ok\": true`). Unescaping once lets one set of
-    # patterns read both the escaped and the plain form, and — unlike
-    # `json.loads` — it survives a response truncated mid-object.
     text = text.replace('\\"', '"').replace("\\n", "\n")
     ok_m = _OK_RE.search(text)
     if ok_m is None:

@@ -73,6 +73,19 @@ describe("questionStatus — the state ladder", () => {
     });
     const s = questionStatus(d, question());
     expect(s.state).toBe("critiqued");
+    // Critiqued is the last rung, not the end of the work: the `resolved` write
+    // is still outstanding, and it is the transition no skill body claims.
+    expect(s.nextStep).toMatch(/mark the question resolved/);
+  });
+
+  it("critiqued AND resolved is the only state with nothing outstanding", () => {
+    const d = doc({
+      questions: [question({ status: "resolved" })],
+      proof_summaries: [{ id: "ps_001", question_id: Q }],
+      evaluations: [{ id: "ev_1", focus: "proof-critique", target_id: "ps_001", superseded_by: null }],
+    });
+    const s = questionStatus(d, question({ status: "resolved" }));
+    expect(s.state).toBe("critiqued");
     expect(s.nextStep).toBeNull();
   });
 

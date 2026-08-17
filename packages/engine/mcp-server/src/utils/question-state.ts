@@ -100,9 +100,15 @@ export function questionStatus(research: any, question: any): QuestionStatus {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (uncritiqued.length > 0) {
     nextStep = `gps-mentor (proof-critique) — ${uncritiqued.map((s) => s?.id).join(", ")}`;
+  } else if (state === "critiqued" && !resolved) {
+    // The last rung of the ladder is not the end of the work: the `resolved`
+    // write is still outstanding, and it is the transition no skill body claims.
+    // Reporting null here would tell the router nothing is left to do on the one
+    // step this design most needs routed.
+    nextStep = "question-selection — concluded and critiqued; mark the question resolved";
   } else if (resolved && summaries.length === 0) {
-    // Legitimate for a side question closed with no candidates, so it is a
-    // prompt rather than a problem — and the completion gate lets it pass.
+    // Only reachable in a document seeded this way — the resolve gate refuses
+    // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
     nextStep = "research-plan";

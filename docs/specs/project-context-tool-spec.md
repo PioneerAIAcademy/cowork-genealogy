@@ -125,9 +125,16 @@ artifact is what every downstream check joins on.
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
 `nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing summary. A superseded verdict does not count
-— a replacement is itself present and satisfies the join; if nothing replaced it,
-the critique no longer stands.
+critique, which outranks a missing resolve, which outranks a missing summary. A
+superseded verdict does not count — a replacement is itself present and satisfies
+the join; if nothing replaced it, the critique no longer stands.
+
+**`critiqued` is the last rung of the ladder, not the end of the work.** The
+ladder tracks what was *produced*, and the `resolved` write produces nothing, so
+it has no rung of its own — but it is still outstanding, and it is the transition
+no skill body claims. A question that is `critiqued` and not yet resolved reports
+that resolve as its next step. `nextStep` is null only when the question is both
+`critiqued` and resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`
 computes its completion preconditions independently, so this can never be the
