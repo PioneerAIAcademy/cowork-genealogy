@@ -547,7 +547,6 @@ These are not included in v1 but are good candidates for extension:
 | Warning ID | Severity | Description |
 |-----------|----------|-------------|
 | `MOTHER_TOO_YOUNG` | `warning` | Mother's age at child's birth < 12 |
-| `MOTHER_TOO_OLD` | `warning` | Mother's age at child's birth > 50 |
 | `FATHER_TOO_OLD` | `warning` | Father's age at child's birth > 75 |
 | `LIVED_TOO_LONG` | `warning` | Age at death > 120 years |
 | `BORN_TOO_EARLY` | `warning` | Birth year < 1000 |
@@ -562,6 +561,18 @@ These are not included in v1 but are good candidates for extension:
 > record, so it isn't a problem (Richard). Some candidates above —
 > notably mother/father child-spacing checks — need **full-date**
 > precision, not year-only; see the date-parsing note.
+>
+> **`MOTHER_TOO_OLD` struck — built:** shipped as
+> `latestChildBirthToBirthFemale45` (`person-warnings.ts`), female-gated,
+> on a >= cutoff (not the `> 50` this table listed). Cutoff is 45, lowered
+> from an original 55; severity unchanged (`warning`, not promoted — the
+> check fired 0 times at 55 across the e2e corpus, so promotion would be
+> an unmeasured doctrine commitment). Two alternatives were rejected: a
+> gender-neutral 45 (flags 31 people vs. 6, 25 of them men — a 45-74 gap
+> is unremarkable for a father, unlike a mother); and keeping 55 plus a
+> second check banded to [50, 55) (superseded once both bands share one
+> severity, since two checks on one predicate double-fire on a single fact
+> and double-count in the check-warnings cluster rule).
 
 ---
 

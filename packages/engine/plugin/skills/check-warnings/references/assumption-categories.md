@@ -37,7 +37,7 @@ documented evidence. They are reasonable defaults that should be
 assumed true until proven otherwise.
 
 Examples relevant to the tool's checks:
-- Mothers conceive children between approximately ages 12 and 55
+- Mothers conceive children between approximately ages 12 and 45
 - Fathers conceive children between approximately ages 14 and the
   late decades
 - Marriage occurs between approximately ages 14 and 90
@@ -50,7 +50,7 @@ Examples relevant to the tool's checks:
   ~40 years between oldest and youngest)
 
 **Tool emission:** `severity: "warning"`. Note and recommend
-verification. A 55-year-old mother is rare but documented; a
+verification. A 45-year-old mother is rare but documented; a
 13-year-old bride is unusual by modern standards but occurred in
 some historical contexts.
 

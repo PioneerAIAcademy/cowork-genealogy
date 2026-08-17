@@ -49,6 +49,59 @@ const finalWarnings = (mob: Mob) => calculateWarnings(mob, mob, mob, true);
 // checks still fire in merge mode.
 const nonFinalWarnings = (mob: Mob) => calculateWarnings(mob, mob, mob, false);
 
+// Shared by the Female45 emitter tests below: a parent with one child, one
+// Birth fact apiece. Caller picks which id is the Mob anchor.
+function buildParentChildTree(opts: {
+  parentId?: string;
+  childId?: string;
+  parentGender: "Male" | "Female";
+  childGender?: "Male" | "Female";
+  parentBirthYear?: number;
+  childBirthYear: number;
+}) {
+  const {
+    parentId = "P",
+    childId = "C",
+    parentGender,
+    childGender = "Male",
+    parentBirthYear = 1786,
+    childBirthYear,
+  } = opts;
+  return {
+    persons: [
+      {
+        id: parentId,
+        gender: parentGender,
+        names: [{ id: "N", given: "Parent", surname: "S" }],
+        facts: [
+          {
+            id: "F1",
+            type: "Birth",
+            date: String(parentBirthYear),
+            standard_date: String(parentBirthYear),
+          },
+        ],
+      },
+      {
+        id: childId,
+        gender: childGender,
+        names: [{ id: "N", given: "Child", surname: "S" }],
+        facts: [
+          {
+            id: "F2",
+            type: "Birth",
+            date: String(childBirthYear),
+            standard_date: String(childBirthYear),
+          },
+        ],
+      },
+    ],
+    relationships: [
+      { id: "R", type: "ParentChild", parent: parentId, child: childId },
+    ],
+  } satisfies SimplifiedGedcomX;
+}
+
 // ────────────────────────────────────────────────────────────────────
 // getPersonName
 // ────────────────────────────────────────────────────────────────────
@@ -1659,6 +1712,43 @@ describe("calculateWarnings — orchestrator", () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
+// checkLatestChildBirthToBirthFemale45 (issue #1191 — cutoff lowered
+// from 55 to 45; female-gated, unchanged from the original ruling)
+// ────────────────────────────────────────────────────────────────────
+
+describe("calculateWarnings — latestChildBirthToBirthFemale45 emitter", () => {
+  it("silent at a 44-year gap (just under the cutoff)", () => {
+    const tags = finalWarnings(
+      new Mob(
+        buildParentChildTree({ parentGender: "Female", childBirthYear: 1830 }),
+        "P",
+      ),
+    ).map((w) => w.issueType);
+    expect(tags).not.toContain("latestChildBirthToBirthFemale45");
+  });
+
+  it("fires at exactly a 45-year gap", () => {
+    const tags = finalWarnings(
+      new Mob(
+        buildParentChildTree({ parentGender: "Female", childBirthYear: 1831 }),
+        "P",
+      ),
+    ).map((w) => w.issueType);
+    expect(tags).toContain("latestChildBirthToBirthFemale45");
+  });
+
+  it("gender-gated: silent for a MALE anchor at the same 45-year gap", () => {
+    const tags = finalWarnings(
+      new Mob(
+        buildParentChildTree({ parentGender: "Male", childBirthYear: 1831 }),
+        "P",
+      ),
+    ).map((w) => w.issueType);
+    expect(tags).not.toContain("latestChildBirthToBirthFemale45");
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
 // childMarriageToMarriage predicate (warnings.java:1656)
 // ────────────────────────────────────────────────────────────────────
 
@@ -1963,6 +2053,58 @@ describe("calculateWarnings — relative-mob emitters", () => {
       (w) => w.issueType,
     );
     expect(tags.filter((t) => t.startsWith("relatives") || t.includes("Relatives"))).toEqual([]);
+  });
+
+  it("femaleRelativesLatestChildBirthToBirth45: silent at a 44-year gap on the relative", () => {
+    const tags = finalWarnings(
+      new Mob(
+        buildParentChildTree({
+          parentId: "I3",
+          childId: "I1",
+          parentGender: "Female",
+          childBirthYear: 1830,
+        }),
+        "I1",
+      ),
+    ).map((w) => w.issueType);
+    expect(tags).not.toContain("femaleRelativesLatestChildBirthToBirth45");
+  });
+
+  it("femaleRelativesLatestChildBirthToBirth45: fires at exactly a 45-year gap", () => {
+    const warnings = finalWarnings(
+      new Mob(
+        buildParentChildTree({
+          parentId: "I3",
+          childId: "I1",
+          parentGender: "Female",
+          childBirthYear: 1831,
+        }),
+        "I1",
+      ),
+    );
+    const matching = warnings.filter(
+      (w) => w.issueType === "femaleRelativesLatestChildBirthToBirth45",
+    );
+    expect(matching).toHaveLength(1);
+    // Gendered shape (like maleRelativesEarliestChildBirthToBirth14): a
+    // single warning anchored on the ORIGINAL anchor, not the failing
+    // relative — unlike the per-relative shape used elsewhere in this file.
+    expect(matching[0].personId).toBe("I1");
+  });
+
+  it("femaleRelativesLatestChildBirthToBirth45: gender-gated — silent for a MALE relative at the same 45-year gap", () => {
+    const tags = finalWarnings(
+      new Mob(
+        buildParentChildTree({
+          parentId: "I3",
+          childId: "I1",
+          parentGender: "Male",
+          childBirthYear: 1831,
+        }),
+        "I1",
+      ),
+    ).map((w) => w.issueType);
+    expect(tags).not.toContain("femaleRelativesLatestChildBirthToBirth45");
   });
 });
 

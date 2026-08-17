@@ -92,9 +92,9 @@ already organized around them:
 - Each event date should be plausible given the others
 
 ### Reasonable age differences
-- Parent-child age gap: typically 12-55 years for mothers, 14+ for
+- Parent-child age gap: typically 12-45 years for mothers, 14+ for
   fathers -- covered by `earliestChildBirthToBirth12`,
-  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale55`,
+  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale45`,
   `latestChildBirthToBirth80`
 - Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
