@@ -46,7 +46,7 @@ def _suite(n, **kw):
 def test_zero_dimension_tests_are_not_sampled():
     """A test whose judge was skipped has no dimensions, so rule 3 would demand
     zero corrections for it — sampling one wastes a slot. All such tests in the
-    corpus also match targeted rule 4 (outcome != expected), so without this the
+    corpus also match `_outcome_disagrees` (outcome != expected), so without this the
     targeted slot is biased toward tests with nothing to annotate."""
     tests = _suite(4)
     tests.append(
@@ -146,7 +146,8 @@ def test_targeted_falls_through_when_all_null_tests_recently_sampled():
     Simulation over the committed corpus showed the un-guarded version pinning
     one test on 20 of 20 chained runs in 10 of 25 suites. Here ut_000-ut_002
     carry a null and are already swept, so rule 1 has no fresh candidate and the
-    slot falls through to ut_003, which carries no null but matches rule 4."""
+    slot falls through to ut_003, which carries no null but does have an
+    outcome disagreeing with its expectation."""
     tests = _suite(4)
     for t in tests[:3]:
         t["outcome_summary"]["aggregated_dimensions"] = [
@@ -163,7 +164,7 @@ def test_targeted_falls_through_when_all_null_tests_recently_sampled():
 def test_targeted_prefers_a_test_the_sweep_has_not_covered():
     """Within a matched rule, order by not-yet-covered first. Otherwise a
     lowest-test_id implementation re-picks one test forever."""
-    tests = _suite(4, outcome="fail")  # all match rule 4
+    tests = _suite(4, outcome="fail")  # all match _outcome_disagrees
     prior = {"cursor": ["ut_000", "ut_001"]}
     out = select_review_sample(
         tests=tests, prior_sample=prior, n_rotation=0, n_random=0
@@ -180,32 +181,10 @@ def test_targeted_pick_is_distinct_from_rotation():
     the targeted slot from re-picking a rotation pick. On a larger suite both
     mechanisms protect the same case and the test cannot fail.
     """
-    tests = _suite(3, outcome="fail")  # every test matches rule 4
+    tests = _suite(3, outcome="fail")  # every test matches _outcome_disagrees
     out = select_review_sample(tests=tests, n_random=0)
     assert out["tests"] == ["ut_000", "ut_001", "ut_002"]
     assert len(set(out["tests"])) == len(out["tests"])
-
-
-def test_validator_judge_conflict_wins_over_lower_rules():
-    tests = _suite(6, outcome="fail")  # every test matches rule 4
-    # The rule reads the `passed` AGGREGATE, which `compute_validators_passed`
-    # computes with the intentionally_invalid exemption applied — not the raw
-    # results, which report a permanent conflict for those tests.
-    tests[4]["runs"] = [
-        {"validators": {"passed": False, "results": [{"name": "v", "passed": False}]}}
-    ]
-    out = select_review_sample(tests=tests, n_rotation=0, n_random=0)
-    assert out["tests"] == ["ut_004"]
-
-
-def test_score_moved_against_previous_run_is_targeted():
-    tests = _suite(6)
-    previous = _suite(6)
-    previous[4]["outcome_summary"]["aggregated_dimensions"] = [_dim(score=2)]
-    out = select_review_sample(
-        tests=tests, previous_tests=previous, n_rotation=0, n_random=0
-    )
-    assert out["tests"] == ["ut_004"]
 
 
 # --- Random -------------------------------------------------------------
@@ -234,12 +213,11 @@ def test_sample_never_exceeds_the_suite():
 
 
 def test_sample_is_full_size_on_a_clean_suite():
-    """A fully-green suite with a previous run matches no targeted rule, so the
-    slot degrades to rotation rather than to nothing. Leaving it empty sampled 4
-    while the docstring and the CI error message both claimed 5."""
+    """A fully-green suite matches no targeted rule, so the slot degrades to
+    rotation rather than to nothing. Leaving it empty sampled 4 while the
+    docstring and the CI error message both claimed 5."""
     tests = _suite(12)
-    previous = _suite(12)
-    out = select_review_sample(tests=tests, previous_tests=previous)
+    out = select_review_sample(tests=tests)
     assert len(out["tests"]) == 5
     assert len(set(out["tests"])) == 5
 
@@ -303,7 +281,7 @@ def test_released_runlog_outranks_a_superseded_candidate(tmp_path):
     """A released `v{N}.json` has timestamp=None and must sort LAST within its
     version. Release renames the candidate in place and leaves the earlier ones
     behind, so treating None as "" lets a superseded candidate win and hands the
-    next run a stale cursor and a stale `previous_tests` baseline."""
+    next run a stale cursor."""
     import json
     import sys
     from pathlib import Path

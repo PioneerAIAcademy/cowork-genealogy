@@ -4125,61 +4125,53 @@
       "args": {
         "query": "select:TodoWrite",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GN29-3TT\\\",\\\"name\\\":\\\"James Grice\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"PQQT-5G1\\\",\\\"name\\\":\\\"Edwin Grice\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"PQQT-GJC\\\",\\\"name\\\":\\\"William Grice\\..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Objective: Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "*.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json\n.claude/settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9DJ7-219\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Hannah\",\n10\t          \"surname\": \"Earnest\",\n11\t          \"id\": \"N-9DJ7-219-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ee6d581a-0748-497b-b7d1-5181e0f43449\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1857\",\n19\t          \"standard_date\": \"1857\",\n20\t          \"place\": \"Darlaston, Staffordsh..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4204,59 +4196,51 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Research question q_001: Did Edwin Grice and Hannah Earnest have any children other than their five known ones? The family lived in West Bromwich, Staffordshire (1877\u2013c.1887) and then Birmingham, Warwickshire (by 1891). Need locality guide for both jurisdictions covering c. 1876\u20131900 to plan a children-enumeration search. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/locality-guide/references/output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/locality-guide/references/locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/locality-guide/references/locality-broad-context.md"
-      },
-      "response_summary": "1\t# Broad Context Factors for Locality Research\n2\t\n3\tEffective locality research requires understanding the historical,\n4\tsocial, economic, and legal context of the place and time period.\n5\tThese contextual factors determine what records were created, what\n6\tinformation they contain, and where they are likely to be held.\n7\t\n8\tThis reference corresponds to the GPS principle that research planning\n9\tmust consider boundaries, migration, and the full range of factors\n10\tthat shape record creation..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__volume_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_search,mcp__genealogy__place_population",
         "max_results": 8
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}, {\"type\": \"tool_reference\", \"tool_na..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "West Bromwich, Staffordshire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"West Bromwich, West Midlands, England, United Kingdom\\\",\\\"type\\\":\\\"Town\\\",\\\"dateRange\\\":\\\"+1974/\\\",\\\"latitude\\\":52.5191,\\\"longitude\\\":-1.9944,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=West%20Bromwich&focusedId=10909776\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/West_Bromwich\\\"},{\\\"standardPlace\\\":\\\"West Bromwich, Staffordshire, England, United Kingdom\\\",\\\"type\\\":\\\"Town\\\",\\\"dateRange\\\":\\\"+18..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Birmingham, Warwickshire"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Birmingham, West Midlands, England, United Kingdom\\\",\\\"type\\\":\\\"City\\\",\\\"dateRange\\\":\\\"+1974/\\\",\\\"latitude\\\":52.48,\\\"longitude\\\":-1.895,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Birmingham&focusedId=10735572\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/Birmingham\\\"},{\\\"standardPlace\\\":\\\"Birmingham, Warwickshire, England, United Kingdom\\\",\\\"type\\\":\\\"City\\\",\\\"dateRange\\\":\\\"+1801/+1974\\\",\\\"latit..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -4264,8 +4248,7 @@
         "standardPlace": "West Bromwich, Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"West Bromwich, Staffordshire, England, United Kingdom\\\" to a single FamilySearch place. Use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -4273,8 +4256,7 @@
         "standardPlace": "Birmingham, Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Birmingham, Warwickshire, England, United Kingdom\\\" to a single FamilySearch place. Use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -4282,8 +4264,7 @@
         "standardPlace": "West Bromwich, Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"West Bromwich, Staffordshire, England, United Kingdom\\\",\\\"startYear\\\":1876,\\\"endYear\\\":1900},\\\"scope\\\":\\\"United Kingdom\\\",\\\"totalForPlace\\\":17,\\\"results\\\":[{\\\"id\\\":\\\"3499259\\\",\\\"title\\\":\\\"Ireland, Thom's Official Directory of the United Kingdom of Great Britain and Ireland, 1894, Irish Section\\\",\\\"dateRange\\\":\\\"1894-1894\\\",\\\"recordCount\\\":121181,\\\"personCount\\\":120989,\\\"imageCount\\\":120989,\\\"url\\\":\\\"https://www.familysearch.org/search..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -4291,8 +4272,7 @@
         "standardPlace": "West Bromwich, Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"West Bromwich, Staffordshire, England, United Kingdom\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -4300,8 +4280,7 @@
         "standardPlace": "Birmingham, Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Birmingham, Warwickshire, England, United Kingdom\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -4309,8 +4288,7 @@
         "standardPlace": "West Bromwich, Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"West Bromwich, Staffordshire, England, United Kingdom\\\" to a FamilySearch place. Use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -4318,61 +4296,53 @@
         "standardPlace": "Birmingham, Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"Birmingham, Warwickshire, England, United Kingdom\\\" to a FamilySearch place. Use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "West Bromwich Staffordshire England genealogy birth records civil registration"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":\\\"West Bromwich Staffordshire England genealogy birth records civil registration\\\",\\\"total_chunks_searched\\\":1240565,\\\"results\\\":[{\\\"rank\\\":1,\\\"relevance_score\\\":0.902344,\\\"chunk_text\\\":\\\"### Civil Registration  \\\\nBirth, marriages and deaths were kept by the government, from July 1837 to the present day.  \\\\n* *See [EnglandCivil Registration](https://www.familysearch.org/en/wiki/England_Civil_Registration \\\\\\\"England Civil Registration\\\\\\\") for online re..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/England_Genealogy\\\",\\\"content\\\":\\\"# England Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **England Wiki Topics** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/England_Getting_Started \\\\\\\"England Getting Started\\\\\\\") ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/England_Getting_Started\\\",\\\"content\\\":\\\"# England Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy \\\\\\\"England Genealogy\\\\\\\")** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research** |\\\\n| * Getting Started ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (73.1KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-hannah-earnest-children-ufuh6gj8/1b1bbcab-944a-487e-9faf-4df08440196e/tool-results/toolu_01JzD4atB1pxjtGE6VBZN9U7.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records\\\",\\\"content\\\":\\\"# England Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[England](http..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies\\\",\\\"content\\\":\\\"# England Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy \\\\\\\"England Genealogy\\\\\\\")** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research*..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Staffordshire, England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Staffordshire, England, United Kingdom\\\",\\\"type\\\":\\\"County (Top level)\\\",\\\"dateRange\\\":\\\"+1801/\\\",\\\"latitude\\\":52.77951,\\\"longitude\\\":-1.91711,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Staffordshire&focusedId=3582\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/Staffordshire,_England\\\"},{\\\"standardPlace\\\":\\\"Staffordshire, England\\\",\\\"type\\\":\\\"County (Top level)\\\",\\\"dateRange\\\":\\\"+1013/+1801\\\",\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Warwickshire, England"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Warwickshire, England, United Kingdom\\\",\\\"type\\\":\\\"County (Top level)\\\",\\\"dateRange\\\":\\\"+1801/\\\",\\\"latitude\\\":52.33781,\\\"longitude\\\":-1.56089,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Warwickshire&focusedId=3612\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/Warwickshire,_England\\\"},{\\\"standardPlace\\\":\\\"Warwickshire, England\\\",\\\"type\\\":\\\"County (Top level)\\\",\\\"dateRange\\\":\\\"+1001/+1801\\\",\\\"lati..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -4380,8 +4350,7 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Staffordshire, England, United Kingdom\\\",\\\"startYear\\\":1876,\\\"endYear\\\":1900},\\\"scope\\\":\\\"United Kingdom\\\",\\\"totalForPlace\\\":17,\\\"results\\\":[{\\\"id\\\":\\\"3499259\\\",\\\"title\\\":\\\"Ireland, Thom's Official Directory of the United Kingdom of Great Britain and Ireland, 1894, Irish Section\\\",\\\"dateRange\\\":\\\"1894-1894\\\",\\\"recordCount\\\":121181,\\\"personCount\\\":120989,\\\"imageCount\\\":120989,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/349..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -4389,8 +4358,7 @@
         "standardPlace": "Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Warwickshire, England, United Kingdom\\\",\\\"startYear\\\":1876,\\\"endYear\\\":1900},\\\"scope\\\":\\\"United Kingdom\\\",\\\"totalForPlace\\\":17,\\\"results\\\":[{\\\"id\\\":\\\"3499259\\\",\\\"title\\\":\\\"Ireland, Thom's Official Directory of the United Kingdom of Great Britain and Ireland, 1894, Irish Section\\\",\\\"dateRange\\\":\\\"1894-1894\\\",\\\"recordCount\\\":121181,\\\"personCount\\\":120989,\\\"imageCount\\\":120989,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/3499..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -4398,8 +4366,7 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Staffordshire, England, United Kingdom\\\",\\\"startYear\\\":1876,\\\"endYear\\\":1900},\\\"totalResults\\\":2172,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"007566574_001_M92C-ZB4\\\",\\\"imageGroupPrefix\\\":\\\"007566574\\\",\\\"imageCount\\\":0,\\\"recordSearchablePercent\\\":null,\\\"fulltextSearchable\\\":false,\\\"languages\\\":[\\\"en\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Great Wyrley, Staffordshire, England, United Kingdom\\\",\\\"dateRange\\\":\\\"1897-1908\\\",\\\"recordType\\\":\\\"Marriage Re..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -4407,8 +4374,7 @@
         "standardPlace": "Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Warwickshire, England, United Kingdom\\\",\\\"startYear\\\":1876,\\\"endYear\\\":1900},\\\"totalResults\\\":1269,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"004291991_007_M923-QPD\\\",\\\"imageGroupPrefix\\\":\\\"004291991\\\",\\\"imageCount\\\":54,\\\"recordSearchablePercent\\\":85,\\\"fulltextSearchable\\\":false,\\\"languages\\\":[\\\"en\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Hartshill, Warwickshire, England, United Kingdom\\\",\\\"dateRange\\\":\\\"1848-1876\\\",\\\"recordType\\\":\\\"Marriages\\\"}]},{\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -4416,8 +4382,7 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"FamilySearch rejected the request (status 429). This usually means rate limiting or a User-Agent block. Wait 60 seconds and retry once. If it persists, surface this to the user.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -4425,8 +4390,7 @@
         "standardPlace": "Warwickshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"FamilySearch rejected the request (status 429). This usually means rate limiting or a User-Agent block. Wait 60 seconds and retry once. If it persists, surface this to the user.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -4434,8 +4398,7 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1871,
         "endYear": 1901
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"error\\\":\\\"Place not found\\\",\\\"place_id\\\":\\\"1927859\\\"}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -4443,40 +4406,35 @@
         "standardPlace": "Warwickshire, England, United Kingdom",
         "startYear": 1871,
         "endYear": 1901
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"error\\\":\\\"Place not found\\\",\\\"place_id\\\":\\\"1927848\\\"}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Staffordshire, England, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Staffordshire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Staffordshire, England, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Staffordshire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Warwickshire, England, United Kingdom",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Warwickshire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Warwickshire, England, United Kingdom",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"No wiki page found for \\\"Warwickshire, England, United Kingdom\\\".\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -4484,16 +4442,14 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1876,
         "endYear": 1900
-      },
-      "response_summary": "Error: result (81,050 characters across 1 line) exceeds maximum allowed tokens. Output has been saved to /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-hannah-earnest-children-ufuh6gj8/1b1bbcab-944a-487e-9faf-4df08440196e/tool-results/mcp-genealogy-external_links_search-1785181403099.txt.\nFormat: Plain text\n- For targeted searches (find a string): use grep on the file directly.\n- For analysis or summarization that requires reading the full content:..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "England, United Kingdom",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/England_Getting_Started\\\",\\\"content\\\":\\\"# England Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[England Wiki Topics](https://www.familysearch.org/en/wiki/England_Genealogy \\\\\\\"England Genealogy\\\\\\\")** |\\\\n| [Flag of England](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_England.png&filetimestamp=20100526164529& \\\\\\\"Flag of England\\\\\\\") |\\\\n| **England Beginning Research** |\\\\n| * Getting Started ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4575,30 +4531,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"localities\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"loc_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Question q_001: Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children other than John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 1886)? Locality guide loc_001 is available. Key sources: 1911 census (Hannah's children-born count), GRO birth indexes via FreeBMD/FamilySearch for \"Grice\" in West Bromwich and Birmingham Registration Districts 1876-1900, 1901 census, FamilySearch collection 2364451 (Staffordshire Church Records), GRO Death Indexes for Grice infant deaths. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4606,8 +4558,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4729,24 +4680,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_item..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute plan items pli_001 through pli_004 and pli_006 for question q_001 (pl_001). Subject: Edwin Grice (b. c.1854, West Bromwich, Staffordshire) and Hannah Earnest (b. c.1857, Darlaston, Staffordshire), married couple resident West Bromwich 1877\u2013c.1887 then Birmingham, Warwickshire by 1891. Known children: John (b.1877), Hannah Grace (b.1880), Edwin (b.1883), William (b.1885), James (b.9 Sep 1886). All in Birmingham area by 1891. pli_001: 1911 England census \u2014 search for Hannah Grice / Edwin Grice in Birmingham, Warwickshire; pli_002: 1901 England census \u2014 same household; pli_003: England births/christenings index \"Grice\" West Bromwich and Birmingham Registration Districts 1876\u20131900; pli_004: FamilySearch collection 2364451 (England, Staffordshire, Church Records 1538\u20131944) \u2014 \"Grice\" christenings West Bromwich 1876\u20131891; pli_006: England Deaths and Burials \u2014 \"Grice\" infant deaths West Bromwich + Birmingham RDs 1876\u20131901. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4762,8 +4710,7 @@
         "birthYearTo": 1859,
         "subjectId": "9DJ7-2BY",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residencePlace\\\":\\\"Birmingham, Warwickshire, England\\\",\\\"residenceYearFrom\\\":1911,\\\"residenceYearTo\\\":1911,\\\"spouseGivenName\\\":\\\"Hannah\\\",\\\"birthYearFrom\\\":1849,\\\"birthYearTo\\\":1859,\\\"subjectId\\\":\\\"9DJ7-2BY\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":0,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4779,16 +4726,14 @@
         "birthYearTo": 1859,
         "subjectId": "9DJ7-2BY",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residencePlace\\\":\\\"Birmingham, Warwickshire, England\\\",\\\"residenceYearFrom\\\":1901,\\\"residenceYearTo\\\":1901,\\\"spouseGivenName\\\":\\\"Hannah\\\",\\\"birthYearFrom\\\":1849,\\\"birthYearTo\\\":1859,\\\"subjectId\\\":\\\"9DJ7-2BY\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":0,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__record_search,mcp__genealogy__research_query",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4834,8 +4779,7 @@
             "notes": "1901 census search for Edwin Grice, Birmingham, Warwickshire, with spouse Hannah and birth year constraints returned 0 results. Retrying with broader parameters."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_001\\\",\\\"performed\\\":\\\"2026-07-27T19:51:19.098Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_002\\\",\\\"performed\\\":\\\"2026-07-27T19:51:19.098Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4848,8 +4792,7 @@
         "recordCountry": "England",
         "subjectId": "9DJ7-2BY",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1911,\\\"residenceYearTo\\\":1911,\\\"recordCountry\\\":\\\"England\\\",\\\"subjectId\\\":\\\"9DJ7-2BY\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":107,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:XWZD-GFP\\\",\\\"events\\\":[..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4862,8 +4805,7 @@
         "recordCountry": "England",
         "subjectId": "9DJ7-2BY",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1901,\\\"residenceYearTo\\\":1901,\\\"recordCountry\\\":\\\"England\\\",\\\"subjectId\\\":\\\"9DJ7-2BY\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":415,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:XSZK-F7C\\\",\\\"events\\\":[..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4889,8 +4831,7 @@
             "notes": "Broader 1901 census - 415 results. Rank 8 shows child Edwin Grice (b.1883, Darlaston) in household of 'John Grice' in Birmingham - suggesting the adult John Grice (b.1877, known child) was head of household in 1901 with sibling Edwin. Father Edwin possibly deceased. Will search for Hannah Grice and for the 1891 census."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_003\\\",\\\"performed\\\":\\\"2026-07-27T19:52:26.027Z\\\",\\\"resultsRef\\\":\\\"results/log_003.json\\\",\\\"returnedCount\\\":50},{\\\"logId\\\":\\\"log_004\\\",\\\"performed\\\":\\\"2026-07-27T19:52:26.034Z\\\",\\\"resultsRef\\\":\\\"results/log_004.json\\\",\\\"returnedCount\\\":50}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_003.json\\\",\\\"results/log_004.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4905,8 +4846,7 @@
         "birthYearTo": 1862,
         "subjectId": "9DJ7-219",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Hannah\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1911,\\\"residenceYearTo\\\":1911,\\\"recordCountry\\\":\\\"England\\\",\\\"birthYearFrom\\\":1852,\\\"birthYearTo\\\":1862,\\\"subjectId\\\":\\\"9DJ7-219\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":18,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":18,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"record..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4921,8 +4861,7 @@
         "birthYearTo": 1862,
         "subjectId": "9DJ7-219",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Hannah\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1901,\\\"residenceYearTo\\\":1901,\\\"recordCountry\\\":\\\"England\\\",\\\"birthYearFrom\\\":1852,\\\"birthYearTo\\\":1862,\\\"subjectId\\\":\\\"9DJ7-219\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":41,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":41,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"record..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4937,8 +4876,7 @@
         "birthYearTo": 1859,
         "subjectId": "9DJ7-2BY",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1891,\\\"residenceYearTo\\\":1891,\\\"recordCountry\\\":\\\"England\\\",\\\"birthYearFrom\\\":1849,\\\"birthYearTo\\\":1859,\\\"subjectId\\\":\\\"9DJ7-2BY\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":35,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":35,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordI..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4973,30 +4911,26 @@
             "notes": "1891 census for Edwin Grice - rank 1 is Edwin Grice, born 1853, Staffordshire, married, Labourer, Birmingham 1891. matchScore 0.816, already attached to subject (9DJ7-2BY). This is the Edwin Grice household record showing the family in Birmingham in 1891. Will read to see household composition."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_005\\\",\\\"performed\\\":\\\"2026-07-27T19:53:16.751Z\\\",\\\"resultsRef\\\":\\\"results/log_005.json\\\",\\\"returnedCount\\\":18},{\\\"logId\\\":\\\"log_006\\\",\\\"performed\\\":\\\"2026-07-27T19:53:16.754Z\\\",\\\"resultsRef\\\":\\\"results/log_006.json\\\",\\\"returnedCount\\\":41},{\\\"logId\\\":\\\"log_007\\\",\\\"performed\\\":\\\"2026-07-27T19:53:16.760Z\\\",\\\"resultsRef\\\":\\\"results/log_007.json\\\",\\\"returnedCount\\\":35}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_005.json\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:WLS8-YZM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_4886241600\\\",\\\"ark\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"90d8dda5-ca28-49e8-a28e-4768de4f69da\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"f77a12c7-0bee-4ef4-ae1a-01b987349052\\\",\\\"type\\\":\\\"Census\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1891\\\",\\\"standard_date\\\":\\\"1891\\\",\\\"place\\\":\\\"Birmingham, Warwickshire, England, United Kingdom\\\"},{\\\"id\\\":\\\"ee12d6cd-bd2a-4958-b5d3-9aa5fa6..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XWWX-NJK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_10357052928\\\",\\\"ark\\\":\\\"ark:/61903/1:1:XWWX-NJV\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"b9753f60-0292-48ac-a0af-59db37235b3d\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"John\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"902d872f-194e-4718-94e6-706af4b30f6d\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1858\\\",\\\"standard_date\\\":\\\"1858\\\",\\\"place\\\":\\\"Quarrybank, Worcestershire\\\"},{\\\"id\\\":\\\"73b8c543-fd79-4b78-ac63-57a1f7094ad8\\\",\\\"type\\\":\\\"Census\\\",\\\"primary\\\":t..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5024,24 +4958,21 @@
             "notes": "1911 household of John Grice, Rowley Regis \u2014 WRONG FAMILY. This John Grice (b.1858, Quarrybank) married Hannah (b.1857, Rowley Regis) in 1880 \u2014 not our subject family. Different John Grice entirely."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_008\\\",\\\"performed\\\":\\\"2026-07-27T19:54:25.045Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_009\\\",\\\"performed\\\":\\\"2026-07-27T19:54:25.045Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "sources"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"sources\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Autonomous session. Extract ALL persons and facts from the 1891 England census household record for Edwin Grice in Birmingham.\n\nRecord ID: ark:/61903/1:1:WLS8-YZM\nLog entry ID: log_008\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\nQuestion ID: q_001\n\nThe household contains 7 persons:\n1. Edwin Grice (Head, Male, born 1853, Staffordshire, Labourer, Married) \u2014 our research subject 9DJ7-2BY\n2. Hannah Grice (Wife, Female, born 1855, Staffordshire, Married) \u2014 research subject 9DJ7-219\n3. John Grice (Son, Male, born 1877, Staffordshire, Baker's Assistant, Single)\n4. LYDIA Grice (Daughter, Female, born 1879, Staffordshire, Scholar, Single) \u2014 **UNKNOWN CHILD, not in tree**\n5. Edwin Grice Jr (Son, Male, born 1883, Staffordshire, Scholar, Single)\n6. William Grice (Son, Male, born 1885, Staffordshire, Scholar, Single)\n7. James Grice (Son, Male, born 1887, Staffordshire, Single)\n\nKey for q_001 (did Edwin and Hannah have other children?): Lydia Grice born 1879 appears in the household but is NOT among the five known children (John b.1877, Hannah Grace b.1880, Edwin b.1883, William b.1885, James b.1886). Hannah Grace (b.1880) is absent from this 1891 census \u2014 likely deceased.\n\nExtract all assertions including: all birth facts, all census residences, all relationships (parent-child, spousal), and the occupation/marital status facts. Classify each assertion with full GPS three-layer classification. Note Lydia as new/unknown child.\n\nSource title: \"England and Wales, Census, 1891\" collection 1865747, FamilySearch.\nCitation: \"England and Wales, Census, 1891\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WLS8-YZM), Entry for Edwin Grice and Hannah Grice, 1891."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -5049,15 +4980,13 @@
         "description": "Extract 1891 census household record for Edwin Grice",
         "subagent_type": "record-extractor",
         "prompt": "Extract ALL assertions from the 1891 England census household record for Edwin Grice in Birmingham, Warwickshire.\n\n**Project path:** /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\n**Record ID:** ark:/61903/1:1:WLS8-YZM\n**Log entry ID:** log_008\n**Question IDs this bears on:** q_001\n\n**Record content (already fetched via record_read):**\n\nThe record is \"Household of Edwin Grice, England and Wales, Census, 1891\", FamilySearch collection 1865747.\nCitation: \"England and Wales, Census, 1891\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WLS8-YZM : Tue Jul 09 14:21:19 UTC 2024), Entry for Edwin Grice and Hannah Grice, 1891.\nRecord URL: https://www.familysearch.org/ark:/61903/1:2:1VVC-W76\n\n**Persons in household:**\n\n1. Edwin Grice (ark:/61903/1:1:WLS8-YZM) \u2014 Head, Male, born 1853, Staffordshire, England; Occupation: Labourer; MaritalStatus: Married; Census 1891, Birmingham, Warwickshire, England, United Kingdom. This is the research subject with FamilySearch tree ID 9DJ7-2BY.\n\n2. Hannah Grice (ark:/61903/1:1:WLSD-QPZ) \u2014 Wife, Female, born 1855, Staffordshire, England; MaritalStatus: Married; Census 1891, Birmingham, Warwickshire, England, United Kingdom. This is the research subject with FamilySearch tree ID 9DJ7-219.\n\n3. John Grice (ark:/61903/1:1:WLSD-F3Z) \u2014 Son, Male, born 1877, Staffordshire, England; Occupation: Baker's Assistant; MaritalStatus: Single; Census 1891, Birmingham, Warwickshire, England, United Kingdom.\n\n4. Lydia Grice (ark:/61903/1:1:WLSD-YPZ) \u2014 Daughter, Female, born 1879, Staffordshire, England; Occupation: Scholar; MaritalStatus: Single; Census 1891, Birmingham, Warwickshire, England, United Kingdom. **NOTE: This child is NOT among the five known children of Edwin and Hannah Grice (John b.1877, Hannah Grace b.1880, Edwin b.1883, William b.1885, James b.1886). Lydia appears to be a previously unknown daughter. Hannah Grace (b.1880) is absent from this census and may have died before 1891.**\n\n5. Edwin Grice Jr (ark:/61903/1:1:WLS6-WW2) \u2014 Son, Male, born 1883, Staffordshire, England; Occupation: Scholar; MaritalStatus: Single; Census 1891, Birmingham, Warwickshire, England, United Kingdom.\n\n6. William Grice (ark:/61903/1:1:WLSX-CPZ) \u2014 Son, Male, born 1885, Staffordshire, England; Occupation: Scholar; MaritalStatus: Single; Census 1891, Birmingham, Warwickshire, England, United Kingdom.\n\n7. James Grice (ark:/61903/1:1:WLSX-6PZ) \u2014 Son, Male, born 1887, Staffordshire, England; MaritalStatus: Single; Census 1891, Birmingham, Warwickshire, England, United Kingdom.\n\n**Relationships in record:**\n- Edwin Grice (head) and Hannah Grice (wife): Couple\n- Edwin Grice (head) \u2192 John Grice: Parent-Child\n- Edwin Grice (head) \u2192 Lydia Grice: Parent-Child\n- Edwin Grice (head) \u2192 Edwin Grice Jr: Parent-Child\n- Edwin Grice (head) \u2192 William Grice: Parent-Child\n- Edwin Grice (head) \u2192 James Grice: Parent-Child\n- Hannah Grice (wife) \u2192 John Grice: Parent-Child\n- Hannah Grice (wife) \u2192 Lydia Grice: Parent-Child\n- Hannah Grice (wife) \u2192 Edwin Grice Jr: Parent-Child\n- Hannah Grice (wife) \u2192 William Grice: Parent-Child\n- Hannah Grice (wife) \u2192 James Grice: Parent-Child\n\n**Research context:**\nThe research question q_001 asks whether Edwin Grice and Hannah Earnest (married name Grice) had any children beyond their five known ones (John b.1877, Hannah Grace b.1880, Edwin b.1883, William b.1885, James b.1886). This 1891 census is the first record found in this project showing Lydia Grice (born 1879) as their daughter \u2014 making her a previously unknown child. Hannah Grace (b.1880) is conspicuously absent from this census, suggesting she may have died in childhood.\n\nPlease extract all assertions with full GPS three-layer classification (source classification, information quality, evidence type). Do not create person_evidence links \u2014 identity resolution will happen separately. Note Lydia as a previously unknown child in your extraction summary."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 59 assertions persisted successfully. Source `src_001` / `S1` created.\\n\\nSummary:\\n\\n**Source:** src_001 / S1 \\u2014 created. Derivative (FamilySearch indexed record from TNA original). Original not examined \\u2014 original image at TNA / FamilySearch not directly consulted; transcription accuracy should be verified against the image.\\n\\n**Assertions persisted: 59 total (a_001 \\u2013 a_059)**\\n\\n- head_of_household (Edwin Grice): 7 assertions \\u2014 name, sex, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children \\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GN29-3TT\\\",\\\"name\\\":\\\"Jam..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -6355,8 +6284,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[1]: log entry 'log_008' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH projectPath so the results are staged, then re-append.\\\",\\\"ops[2]: log entry 'log_008' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH p..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -7596,8 +7524,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[1]: log entry 'log_008' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH projectPath so the results are staged, then re-append.\\\",\\\"ops[2]: log entry 'log_008' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH p..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -7611,8 +7538,7 @@
         "resultsExamined": 1,
         "planItemId": null,
         "notes": "Record content for 1891 England and Wales Census household of Edwin Grice, Birmingham, Warwickshire \u2014 provided by caller via record_read. 7 persons in household: Edwin Grice (head), Hannah Grice (wife), John Grice (son, b.1877), Lydia Grice (daughter, b.1879 \u2014 previously unknown child), Edwin Grice Jr (son, b.1883), William Grice (son, b.1885), James Grice (son, b.1887). Hannah Grace Grice (b.1880, known child) absent \u2014 possible childhood death before 1891."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_010\\\",\\\"performed\\\":\\\"2026-07-27T19:59:54.764Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null,\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -8852,31 +8778,27 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_004\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Autonomous session. Link all personas from the 1891 census extraction (src_001, a_001\u2013a_059) to tree persons.\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\nQuestion ID: q_001\n\nThe 1891 England census (ark:/61903/1:1:WLS8-YZM) extracted 7 household personas:\n\n1. Edwin Grice (head, b.1853, Staffordshire, Labourer) \u2192 likely tree person 9DJ7-2BY (Edwin Grice, b.1854 West Bromwich \u2014 already attached in FamilySearch)\n2. Hannah Grice (wife, b.1855, Staffordshire) \u2192 likely tree person 9DJ7-219 (Hannah Earnest, b.1857 Darlaston \u2014 note birth year discrepancy of ~2 years, normal for census)\n3. John Grice (son, b.1877, Staffordshire, Baker's Assistant) \u2192 likely tree person GRF6-NG7 (John Grice, b.1877 West Bromwich)\n4. Lydia Grice (daughter, b.1879, Staffordshire, Scholar) \u2192 NOT in tree \u2014 needs to be created as a new person\n5. Edwin Grice Jr (son, b.1883, Staffordshire, Scholar) \u2192 likely tree person PQQT-5G1 (Edwin Grice, b.1883 Darlaston)\n6. William Grice (son, b.1885, Staffordshire, Scholar) \u2192 likely tree person PQQT-GJC (William Grice, b.1885 West Bromwich)\n7. James Grice (son, b.1887, Staffordshire) \u2192 likely tree person GN29-3TT (James Grice, b.1886 West Bromwich \u2014 ~1 year birth year discrepancy, normal for census)\n\nKey task: Create a new tree person for Lydia Grice (b.1879, Staffordshire, daughter of Edwin and Hannah Grice) and establish ParentChild relationships from both parents to her. Use same_person to verify the matches for the known persons before linking."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__same_person,mcp__genealogy__materialize_facts,mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__merge_warnings",
         "max_results": 6
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9DJ7-219\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Hannah\",\n10\t          \"surname\": \"Earnest\",\n11\t          \"id\": \"N-9DJ7-219-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ee6d581a-0748-497b-b7d1-5181e0f43449\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1857\",\n19\t          \"standard_date\": \"1857\",\n20\t          \"place\": \"Darlaston, Staffordsh..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -8884,8 +8806,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:WLS8-YZM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":59,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -8894,8 +8815,7 @@
         "section": "assertions",
         "recordId": "ark:/61903/1:1:WLS8-YZM",
         "offset": "50"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":59,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -9197,31 +9117,27 @@
             "p_4886310400"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"candidateGedcomx/persons[0]/names[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[1]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[2]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[3]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[1]/names[0]: missing required field 'id'\\\",\\\"candidateGedcomx/perso..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__merge_warnings,mcp__genealogy__materialize_facts,mcp__genealogy__tree_edit,mcp__genealogy__research_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:WLS8-YZM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_4886241600\\\",\\\"ark\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"90d8dda5-ca28-49e8-a28e-4768de4f69da\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"f77a12c7-0bee-4ef4-ae1a-01b987349052\\\",\\\"type\\\":\\\"Census\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1891\\\",\\\"standard_date\\\":\\\"1891\\\",\\\"place\\\":\\\"Birmingham, Warwickshire, England, United Kingdom\\\"},{\\\"id\\\":\\\"ee12d6cd-bd2a-4958-b5d3-9aa5fa6..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -9545,8 +9461,7 @@
             "p_4886310400"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"candidateGedcomx/persons[0]/facts[2]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[3]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[1]/facts[2]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[2]/facts[2]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[2]/facts[3]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[3]/facts[2]: missing required field 'id'\\\",\\\"candidateGedcomx/perso..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -9894,16 +9809,14 @@
             "p_4886310400"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"warningCount\\\":18,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"relativesBirthLikeRangeGreaterThan8\\\",\\\"severity\\\":\\\"warning\\\",\\\"personId\\\":\\\"9DJ7-2BY\\\",\\\"personName\\\":\\\"Edwin Grice\\\",\\\"factIds\\\":[\\\"ee6d581a-0748-497b-b7d1-5181e0f43449\\\",\\\"b058634e-e8c2-4a6e-9e13-0bcf4d898eb3\\\",\\\"28f53f0c-43fa-4914-b7f1-c4d3740eb770\\\",\\\"F6\\\"],\\\"relatedPersonId\\\":\\\"9DJ7-219\\\",\\\"message\\\":\\\"A relative of this person has birth-like fact dates spanning more t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -9911,8 +9824,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:WLS8-YZM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":59,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -9954,8 +9866,7 @@
             "recordRole": "child_5"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"9DJ7-2BY\\\",\\\"created\\\":false,\\\"factsAdded\\\":3,\\\"factsEnriched\\\":2,\\\"namesAdded\\\":0,\\\"refsAttached\\\":6,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"9DJ7-2BY\\\",\\\"factType\\\":\\\"Birth\\\",\\\"values\\\":[\\\"1854, West Bromwich, Staffordshire, England, United Kingdom\\\",\\\"~1853\\\"]}]},{\\\"personId\\\":\\\"9DJ7-219\\\",\\\"created\\\":false,\\\"factsAdded\\\":2,\\\"factsEnriched\\\":2,\\\"namesAdded\\\":1,\\\"refsAttached\\\":5,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"9DJ7..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -9981,8 +9892,7 @@
             "sourceAssertionId": "a_032"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"operation\\\":\\\"add_relationship\\\",\\\"assignedIds\\\":{\\\"relationship\\\":\\\"R15\\\"}},{\\\"operation\\\":\\\"add_relationship\\\",\\\"assignedIds\\\":{\\\"relationship\\\":\\\"R16\\\"}}],\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -9991,8 +9901,7 @@
         "section": "assertions",
         "recordId": "ark:/61903/1:1:WLS8-YZM",
         "recordRole": "child_5"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":8,\\\"items\\\":[{\\\"id\\\":\\\"a_051\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"child_5\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"James Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"James\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_001\\\"],\\\"l..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -10001,8 +9910,7 @@
         "section": "assertions",
         "recordId": "ark:/61903/1:1:WLS8-YZM",
         "recordRole": "negative_evidence"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -10010,8 +9918,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":59,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "Grep",
@@ -10020,8 +9927,7 @@
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "output_mode": "content",
         "-C": 5
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Grep",
@@ -10029,8 +9935,7 @@
         "pattern": "\"id\":\"a_05[0-9]\"",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "output_mode": "content"
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Grep",
@@ -10039,8 +9944,7 @@
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "output_mode": "content",
         "-C": 2
-      },
-      "response_summary": "1286-    },\n1287-    {\n1288:      \"id\": \"a_051\",\n1289-      \"record_id\": \"ark:/61903/1:1:WLS8-YZM\",\n1290-      \"record_role\": \"child_5\","
+      }
     },
     {
       "tool": "Grep",
@@ -10049,8 +9953,7 @@
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "output_mode": "content",
         "-C": 3
-      },
-      "response_summary": "1436-      \"source_id\": \"src_001\"\n1437-    },\n1438-    {\n1439:      \"id\": \"a_059\",\n1440-      \"record_id\": \"ark:/61903/1:1:WLS8-YZM\",\n1441-      \"record_role\": \"absent\",\n1442-      \"fact_type\": \"presence\","
+      }
     },
     {
       "tool": "Read",
@@ -10058,8 +9961,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 1438,
         "limit": 25
-      },
-      "response_summary": "1438\t    {\n1439\t      \"id\": \"a_059\",\n1440\t      \"record_id\": \"ark:/61903/1:1:WLS8-YZM\",\n1441\t      \"record_role\": \"absent\",\n1442\t      \"fact_type\": \"presence\",\n1443\t      \"value\": \"Hannah Grace Grice (born c.1880) absent from 1891 Birmingham census where expected as child of Edwin and Hannah Grice\",\n1444\t      \"date\": \"1891\",\n1445\t      \"information_quality\": \"indeterminate\",\n1446\t      \"informant\": \"the researcher\",\n1447\t      \"informant_proximity\": \"researcher\",\n1448\t      \"evidence_type\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -10767,8 +10669,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_001\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_002\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_003\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_004\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_005\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -10776,16 +10677,14 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pl_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"status\\\":\\\"active\\\",\\\"created\\\":\\\"2026-07-27\\\",\\\"items\\\":[{\\\"id\\\":\\\"pli_001\\\",\\\"sequence\\\":1,\\\"record_type\\\":\\\"census\\\",\\\"jurisdiction\\\":\\\"England and Wales\\\",\\\"date_range\\\":\\\"1911\\\",\\\"repository\\\":\\\"FamilySearch\\\",\\\"rationale\\\":\\\"The 1911 England and Wales census (enumerated 2 April 1911) uniquely required all married women to declare the total number of childre..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "log"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"log\\\",\\\"count\\\":10,\\\"items\\\":[{\\\"id\\\":\\\"log_001\\\",\\\"plan_item_id\\\":\\\"pli_001\\\",\\\"performed\\\":\\\"2026-07-27T19:51:19.098Z\\\",\\\"tool\\\":\\\"record_search\\\",\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"givenName\\\":\\\"Edwin\\\",\\\"recordType\\\":\\\"census\\\",\\\"residencePlace\\\":\\\"Birmingham, Warwickshire, England\\\",\\\"residenceYearFrom\\\":1911,\\\"residenceYearTo\\\":1911,\\\"spouseGivenName\\\":\\\"Hannah\\\",\\\"birthYearFrom\\\":1849,\\\"birthYearTo\\\":1859},\\\"outcome\\\":\\\"negative\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -10809,8 +10708,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: section 'plan_items' requires a 'planId'\\\",\\\"worked example for 'plan_items':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"plan_items\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  planId: \\\\\\\"pl_001\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"],\\\"opsReceived\\\":2}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -10836,16 +10734,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -10859,8 +10755,7 @@
         "recordType": "birth",
         "recordCountry": "England",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"fatherGivenName\\\":\\\"Edwin\\\",\\\"fatherSurname\\\":\\\"Grice\\\",\\\"birthPlace\\\":\\\"West Bromwich, Staffordshire, England\\\",\\\"birthYearFrom\\\":1876,\\\"birthYearTo\\\":1891,\\\"recordType\\\":\\\"birth\\\",\\\"recordCountry\\\":\\\"England\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":1212,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -10874,16 +10769,14 @@
         "recordType": "birth",
         "recordCountry": "England",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"fatherGivenName\\\":\\\"Edwin\\\",\\\"fatherSurname\\\":\\\"Grice\\\",\\\"birthPlace\\\":\\\"Birmingham, Warwickshire, England\\\",\\\"birthYearFrom\\\":1887,\\\"birthYearTo\\\":1900,\\\"recordType\\\":\\\"birth\\\",\\\"recordCountry\\\":\\\"England\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":631,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -10909,29 +10802,25 @@
             "notes": "Birmingham/Warwickshire Grice births 1887-1900, father Edwin Grice. Results are generic GRO index stubs with uniform scores (4.60) and no father attribution \u2014 father name filter did not narrow results to Edwin Grice's children. No Birmingham-born children of Edwin and Hannah Grice identified. Consistent with Edwin's likely death in the early 1890s before any post-move Birmingham children were born."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_011\\\",\\\"performed\\\":\\\"2026-07-27T20:17:51.857Z\\\",\\\"resultsRef\\\":\\\"results/log_011.json\\\",\\\"returnedCount\\\":20},{\\\"logId\\\":\\\"log_012\\\",\\\"performed\\\":\\\"2026-07-27T20:17:51.860Z\\\",\\\"resultsRef\\\":\\\"results/log_012.json\\\",\\\"returnedCount\\\":20}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_011.json\\\",\\\"results/log_012.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL3R-C5SR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102882414685\\\",\\\"ark\\\":\\\"ark:/61903/1:1:QL3R-C5SR\\\",\\\"names\\\":[{\\\"id\\\":\\\"a76d3425-3f02-4123-bde7-59c11bd7aacf\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Grice\\\",\\\"given\\\":\\\"Lydia\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"db077a73-dc6d-4727-a38b-a0565c014e64\\\",\\\"type\\\":\\\"Baptism\\\",\\\"primary\\\":true,\\\"date\\\":\\\"8 Aug 1878\\\",\\\"standard_date\\\":\\\"8 Aug 1878\\\",\\\"place\\\":\\\"West Bromwich, Staffordshire, England, United Kingdom\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"i..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL3R-6ZDW"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102882510366\\\",\\\"ark\\\":\\\"ark:/61903/1:1:QL3R-6ZDW\\\",\\\"names\\\":[{\\\"id\\\":\\\"20313b61-3332-4f01-b6e7-783e570542c9\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Grice\\\",\\\"given\\\":\\\"Fanny\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"cbc9215a-ee7e-4ae1-a98a-76888dcad43f\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"15 Feb 1889\\\",\\\"standard_date\\\":\\\"15 Feb 1889\\\"},{\\\"id\\\":\\\"457b88c5-982e-4d90-8fdd-d3d248947c31\\\",\\\"type\\\":\\\"Baptism\\\",\\\"primary\\\":true,\\\"date\\\":\\\"6 Mar 1889\\\",\\\"standard_date..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL3R-VWY9"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102882642211\\\",\\\"ark\\\":\\\"ark:/61903/1:1:QL3R-VWY9\\\",\\\"names\\\":[{\\\"id\\\":\\\"68589f55-202b-4d47-b361-d4e581d168ad\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Grice\\\",\\\"given\\\":\\\"Hannah\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"18aefe4c-630d-4c78-8782-3a7278c7b952\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"3 Apr 1880\\\",\\\"standard_date\\\":\\\"3 Apr 1880\\\"},{\\\"id\\\":\\\"7c1725c4-31b4-44f7-946e-7d6ed94d4301\\\",\\\"type\\\":\\\"Baptism\\\",\\\"primary\\\":true,\\\"date\\\":\\\"5 May 1880\\\",\\\"standard_date\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -10969,8 +10858,7 @@
             "notes": "Hannah Grace Grice baptism, England Staffordshire Church Records 2364451. Birth 3 Apr 1880. Baptism 5 May 1880, West Bromwich. Father: Edwin Grice (Male). Mother: Hannah (Female, no surname). Confirms Hannah Grace Grice (9DJ7-2B2) birth date and parentage. Adds precise birth date (3 Apr 1880) not previously in tree."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_013\\\",\\\"performed\\\":\\\"2026-07-27T20:18:53.683Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_014\\\",\\\"performed\\\":\\\"2026-07-27T20:18:53.683Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_015\\\",\\\"performed\\\":\\\"2026-07-27T20:18:53.683Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -10979,15 +10867,13 @@
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from a Staffordshire Church Record for Lydia Grice's baptism, for research project q_001 (\"Did Edwin Grice and Hannah Earnest have any children other than their five known ones?\").\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\nRecord ID: ark:/61903/1:1:QL3R-C5SR\nLog entry ID: log_013\nQuestion ID: q_001\n\nThe record content (from record_read):\n- Collection: England, Staffordshire, Church Records, 1538-1944 (collection 2364451)\n- Citation: \"England, Staffordshire, Church Records, 1538-1944\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-C5SR), Entry for Lydia Grice and Edwin Grice, 8 Aug 1878.\n\nPersons:\n1. Lydia Grice (ark:/61903/1:1:QL3R-C5SR) \u2014 the baptised child (Female, inferred from given name Lydia)\n   - Baptism: 8 Aug 1878, West Bromwich, Staffordshire, England, United Kingdom\n2. Edwin Grice (ark:/61903/1:1:QL3R-C5SB) \u2014 Father (Male)\n3. Hannah (ark:/61903/1:1:QL3R-C539) \u2014 Mother (Female, no surname given in record)\n\nRelationships:\n- Edwin Grice \u2192 parent of Lydia Grice\n- Hannah \u2192 parent of Lydia Grice\n- Couple: Edwin Grice + Hannah\n\nKey context:\n- Lydia Grice is a PREVIOUSLY UNKNOWN child of Edwin Grice (9DJ7-2BY) and Hannah Earnest/Grice (9DJ7-219). She was found in the 1891 census (src_001) but this is her baptism record.\n- Lydia is already in tree.gedcomx.json as person I1 (minted from the 1891 census assertions).\n- The mother is recorded only as \"Hannah\" with no surname \u2014 typical of Victorian church records.\n- This is the primary record for Lydia's baptism date (8 Aug 1878). The 1891 census estimated her birth as ~1879, but the baptism record shows Aug 1878.\n\nExtract all assertions with full GPS three-layer classification (source/information/evidence):\n- Source: church register (original record \u2014 the register itself is the original; this FamilySearch entry is a digital image of the register)\n- Information: The baptism date and place are primary information (the register was created at the time of baptism). The father and mother names are primary information (recorded at baptism). \n- Evidence: Baptism date is direct evidence of baptism event; indirect evidence of birth (baptism \u2248 birth proxy in this era, typically within weeks). Parentage stated in the register is direct evidence of the parent-child relationships.\n\nPlease extract:\n1. Lydia's baptism fact (date, place) \u2014 direct evidence\n2. Lydia's approximate birth date (inferred from baptism \u2014 born shortly before 8 Aug 1878)\n3. Lydia's name\n4. Father: Edwin Grice \u2014 name assertion\n5. Mother: Hannah (no surname) \u2014 name assertion\n6. Parent-child relationships: Edwin Grice \u2192 Lydia, Hannah \u2192 Lydia\n7. Spousal relationship: Edwin Grice + Hannah\n\nNote: The mother's surname is not given in the record (common for Victorian church records). Do not add \"Grice\" as her surname \u2014 record only \"Hannah\" as given.",
         "run_in_background": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All assertions persisted successfully. Here is the extraction summary:\\n\\nSource: `src_002` / `S2` (action: created). Source classification: original (digital image of parish register).\\n\\nAssertions written (12 total across log_013):\\n\\n- `baptised_child` (Lydia Grice): name (a_060), sex (a_061), baptism date+place (a_062), birth approximate date inferred from baptism (a_063), relationship child-of-Edwin (a_068), relationship child-of-Hannah (a_069)\\n- `father` (Ed..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children \\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GN29-3TT\\\",\\\"name\\\"..."
+      }
     },
     {
       "tool": "Agent",
@@ -10996,15 +10882,13 @@
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from a Staffordshire Church Record for Fanny Grice's baptism, for research project q_001 (\"Did Edwin Grice and Hannah Earnest have any children other than their five known ones?\").\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\nRecord ID: ark:/61903/1:1:QL3R-6ZDW\nLog entry ID: log_014\nQuestion ID: q_001\n\nThe record content (from record_read):\n- Collection: England, Staffordshire, Church Records, 1538-1944 (collection 2364451)\n- Citation: \"England, Staffordshire, Church Records, 1538-1944\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-6ZDW), Entry for Fanny Grice and Edwin Grice, 6 Mar 1889.\n\nPersons:\n1. Fanny Grice (ark:/61903/1:1:QL3R-6ZDW) \u2014 the baptised child\n   - Birth: 15 Feb 1889\n   - Baptism: 6 Mar 1889, West Bromwich, Staffordshire, England, United Kingdom\n2. Edwin Grice (ark:/61903/1:1:QL3R-6ZDH) \u2014 Father (Male)\n3. Anne (ark:/61903/1:1:QL3R-6ZD8) \u2014 Mother (Female, given name only \u2014 listed as \"Anne\" in the indexed record)\n\nRelationships:\n- Edwin Grice \u2192 parent of Fanny Grice\n- Anne \u2192 parent of Fanny Grice\n- Couple: Edwin Grice + Anne\n\nIMPORTANT NOTE \u2014 MOTHER'S NAME DISCREPANCY:\nThe known wife of Edwin Grice (9DJ7-2BY) in this project is Hannah Earnest/Grice (9DJ7-219). This record lists the mother as \"Anne\" not \"Hannah.\" This is a significant discrepancy that must be recorded in the assertions. Possible explanations:\n1. Transcription error: \"Hannah\" misread as \"Anne\" by the indexer (H can be dropped, \"annah\" \u2192 \"anne\")\n2. Different Edwin Grice family in West Bromwich (there may be more than one)\n3. Second wife of Edwin Grice (unlikely given the 1891 census shows \"Married\" to Hannah)\n\nThe extraction should:\n- Record the mother's name as \"Anne\" (exactly as the indexed record states) \u2014 do not change it to \"Hannah\"\n- Flag this as a discrepancy in the informant_bias_notes or a note\n- Classify the attribution to Edwin Grice (9DJ7-2BY) and Hannah Earnest (9DJ7-219) as SPECULATIVE until original image is examined\n- Note that original image verification is needed to resolve the mother's name\n\nContext on Fanny:\n- Fanny is a PREVIOUSLY UNKNOWN child. She does not appear in the five known children (John b.1877, Lydia b.1878, Hannah Grace b.1880, Edwin b.1883, William b.1885, James b.1886/Sep 1886).\n- She would be ~2 years old in the April 1891 census but does NOT appear in the household \u2014 strongly suggesting she died between Feb 1889 and April 1891.\n- This is a critical finding for q_001.\n\nExtract all assertions with full GPS three-layer classification:\n1. Fanny's birth fact: 15 Feb 1889 (primary information, from register created contemporaneously)\n2. Fanny's baptism fact: 6 Mar 1889, West Bromwich, Staffordshire (primary information, direct evidence)\n3. Fanny's name: Fanny Grice\n4. Father's name: Edwin Grice\n5. Mother's name: Anne (as indexed \u2014 flag the discrepancy)\n6. Parent-child relationships (flagged as requiring image verification)\n7. Spousal relationship\n\nPlease explicitly note in the assertion for the mother's name that the indexed value \"Anne\" may be a transcription error for \"Hannah\" and that original image verification is required.",
         "run_in_background": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All assertions persisted cleanly. Here is the compact summary:\\n\\n**Source:** src_003 / S3 (action: created). 12 assertions across 3 record personas.\\n\\n**Assertion counts by record role:**\\n- child_1 (Fanny Grice): 6 assertions \\u2014 name, sex, birth (15 Feb 1889), christening (6 Mar 1889 West Bromwich), relationship to father, relationship to mother\\n- father_1 (Edwin Grice): 3 assertions \\u2014 name, sex, relationship to mother (spousal)\\n- mother_1 (Anne [?]): ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children \\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GN29-3TT\\\",\\\"name\\\"..."
+      }
     },
     {
       "tool": "Agent",
@@ -11013,15 +10897,13 @@
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from a Staffordshire Church Record for Hannah Grace Grice's baptism, for research project q_001 (\"Did Edwin Grice and Hannah Earnest have any children other than their five known ones?\").\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\nRecord ID: ark:/61903/1:1:QL3R-VWY9\nLog entry ID: log_015\nQuestion ID: q_001\n\nThe record content (from record_read):\n- Collection: England, Staffordshire, Church Records, 1538-1944 (collection 2364451)\n- Citation: \"England, Staffordshire, Church Records, 1538-1944\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-VWY9), Entry for Hannah Grice and Edwin Grice, 5 May 1880.\n\nPersons:\n1. Hannah Grice (ark:/61903/1:1:QL3R-VWY9) \u2014 the baptised child (Female)\n   - Birth: 3 Apr 1880\n   - Baptism: 5 May 1880, West Bromwich, Staffordshire, England, United Kingdom\n2. Edwin Grice (ark:/61903/1:1:QL3R-VWYS) \u2014 Father (Male)\n3. Hannah (ark:/61903/1:1:QL3R-VWY7) \u2014 Mother (Female, no surname given in record)\n\nRelationships:\n- Edwin Grice \u2192 parent of Hannah Grice\n- Hannah (mother) \u2192 parent of Hannah Grice\n- Couple: Edwin Grice + Hannah\n\nKey context:\n- The baptised child, Hannah Grice, is the same person as Hannah Grace Grice (tree person 9DJ7-2B2, b.1880 West Bromwich).\n- The tree already has her christening date (5 May 1880) from a prior record (the tree entry shows \"christened 5 May 1880\"). This extraction adds the precise birth date (3 Apr 1880) which may be new.\n- Hannah Grace is ABSENT from the 1891 census (assertion a_059, already in research.json), suggesting she died between birth (Apr 1880) and April 1891.\n- The mother is recorded only as \"Hannah\" with no surname \u2014 typical of Victorian church records. The mother is Hannah Earnest/Grice (9DJ7-219).\n\nExtract all assertions with full GPS three-layer classification:\n1. Hannah Grace's birth fact: 3 Apr 1880, West Bromwich implied (primary information, direct evidence)\n2. Hannah Grace's baptism fact: 5 May 1880, West Bromwich, Staffordshire (primary information, direct evidence)\n3. Hannah Grace's name: Hannah Grice\n4. Father: Edwin Grice \u2014 name\n5. Mother: Hannah (no surname given) \u2014 name\n6. Parent-child relationships\n7. Spousal relationship\n\nNote on source reuse: The tree likely already has a source for Hannah Grace's christening. The tool should handle source deduplication automatically (if the same FamilySearch record already has a source in research.json, it will update rather than duplicate).",
         "run_in_background": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All written successfully. Here is the summary:\\n\\n**Source:** src_004 / S4 \\u2014 created (new source, new S entry). Source classification: derivative (FamilySearch index; original register image not examined).\\n\\n**Assertions written: 12 total across 3 personas**\\n\\n- `deceased` (Hannah Grice, the baptised child): name (a_082), sex (a_083), birth 3 Apr 1880 West Bromwich (a_084), christening 5 May 1880 West Bromwich (a_085), relationship to father (a_090), relation..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children \\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GN29-3TT\\\",\\\"name\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -11280,8 +11162,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_060\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_061\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_062\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_063\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_064\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -11542,8 +11423,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_071\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_072\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_073\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_074\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_075\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -11815,8 +11695,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[1]: record_persona_id must be null \\u2014 log entry 'log_015' has no results sidecar (results_ref is null; record_read/PDF/image/pasted records carry no persona ids)\\\",\\\"ops[2]: record_persona_id must be null \\u2014 log entry 'log_015' has no results sidecar (results_ref is null; record_read/PDF/image/pasted records carry no persona ids)\\\",\\\"ops[3]: record_persona_id must be null \\u2014 log entry 'log_015' has no results sidecar (resu..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -12077,8 +11956,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_004\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_082\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_083\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_084\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_085\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_086\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12086,8 +11964,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_060\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-C5SR\\\",\\\"record_role\\\":\\\"baptised_child\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Lydia Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Lydia\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) at baptism\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12095,8 +11972,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_071\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-6ZDW\\\",\\\"record_role\\\":\\\"child_1\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Fanny Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Fanny\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) at baptism\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_001\\\"],..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12104,8 +11980,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_004"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_082\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-VWY9\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Hannah Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Hannah\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) or officiating minister\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_id..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -12152,16 +12027,14 @@
             "recordRole": "mother_of_deceased"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"I1\\\",\\\"created\\\":false,\\\"factsAdded\\\":2,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":3,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"I1\\\",\\\"factType\\\":\\\"Birth\\\",\\\"values\\\":[\\\"~1879, Staffordshire, England, United Kingdom\\\",\\\"~1878\\\"]}]},{\\\"personId\\\":\\\"9DJ7-2BY\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"9DJ7-219\\\",\\\"created\\\":fals..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__research_query",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12169,8 +12042,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_071\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-6ZDW\\\",\\\"record_role\\\":\\\"child_1\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Fanny Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Fanny\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) at baptism\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_001\\\"],..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12178,8 +12050,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_060\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-C5SR\\\",\\\"record_role\\\":\\\"baptised_child\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Lydia Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Lydia\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) at baptism\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12187,8 +12058,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "sourceId": "src_004"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_082\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:QL3R-VWY9\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Hannah Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Hannah\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"presenting parent(s) or officiating minister\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_id..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -12201,8 +12071,7 @@
           "child": "I2"
         },
         "sourceAssertionId": "a_079"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"tree.gedcomx.json/relationships[16]: 'http://gedcomx.org/ParentChild' is not a valid relationship_type (expected one of: Couple, ParentChild)\\\"]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -12215,8 +12084,7 @@
           "child": "I2"
         },
         "sourceAssertionId": "a_079"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"operation\\\":\\\"add_relationship\\\",\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]},\\\"assignedIds\\\":{\\\"relationship\\\":\\\"R17\\\"}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12224,8 +12092,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "person_evidence",
         "assertionId": "a_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"person_evidence\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pe_001\\\",\\\"assertion_id\\\":\\\"a_001\\\",\\\"person_id\\\":\\\"9DJ7-2BY\\\",\\\"confidence\\\":\\\"confident\\\",\\\"rationale\\\":\\\"1891 census Birmingham (WLS8-YZM). Edwin Grice, head, Male, b.~1853 Staffs, Labourer, Married. Matches 9DJ7-2BY: b.1854 West Bromwich Staffs (1yr census rounding), Birmingham 1891, Labourer. Strong multi-attribute match; no same_person score (record_read).\\\",\\\"created\\\":\\\"2026-07-27\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -12233,8 +12100,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "plan_items",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"section 'plan_items' is not one of: questions, plans, log, sources, assertions, person_evidence, conflicts, hypotheses, timelines, proof_summaries, evaluations\\\"]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -12647,8 +12513,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[38]: research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\\"ops[38]: research.json/conflicts[0]: unexpected property 'resolution' (conflicts allow only id, conflict_type, description, disputed_attribute, identity_question, competing_assertion_ids, status, preferred_assertion_id, resolution_rationale, independence_analysis, weighing_analysis, blocks_question_ids)\\\",\\\"ops[38]: research.json/conflicts[0]: 'open' is not a ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13036,8 +12901,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_071\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_072\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_073\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_074\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_075\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13076,8 +12940,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"conflicts\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"c_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13085,16 +12948,14 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pl_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"status\\\":\\\"active\\\",\\\"created\\\":\\\"2026-07-27\\\",\\\"items\\\":[{\\\"id\\\":\\\"pli_001\\\",\\\"sequence\\\":1,\\\"record_type\\\":\\\"census\\\",\\\"jurisdiction\\\":\\\"England and Wales\\\",\\\"date_range\\\":\\\"1911\\\",\\\"repository\\\":\\\"FamilySearch\\\",\\\"rationale\\\":\\\"The 1911 England and Wales census (enumerated 2 April 1911) uniquely required all married women to declare the total number of childre..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -13105,8 +12966,7 @@
         "birthYearFrom": 1876,
         "birthYearTo": 1892,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Grice\\\",\\\"fatherGivenName\\\":\\\"Edwin\\\",\\\"collectionId\\\":\\\"2364451\\\",\\\"birthYearFrom\\\":1876,\\\"birthYearTo\\\":1892,\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":291,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:QL3R-X2D1\\\",\\\"events\\\":[{\\\"type\\\":\\\"Baptism\\\",\\\"date\\\":\\\"30 Jul 1884\\\",\\\"place\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -13119,8 +12979,7 @@
         "resultsAvailable": 291,
         "resultsExamined": 20,
         "notes": "Staffordshire Church Records (2364451) sweep for Grice christenings with father Edwin, 1876-1892. Top confidence (score 4.23) results: William (b.12 Jul 1884), Fanny (b.15 Feb 1889, already extracted), Hannah Grace (b.3 Apr 1880, already extracted), Lydia (b.~1878, already extracted), James (b.10 Oct 1886), Edwin in Darlaston 1882 (QL3K-GK6H \u2014 lower score 4.23 but West Bromwich not confirmed; Darlaston is nearby; possible Edwin Jr). Lower confidence: Thomas Grice (QL3R-VJNJ, b.7 Oct 1879, West Bromwich) \u2014 father name may differ from 'Edwin'; requires record_read to assess. John Grice (b.1877) not in top 20; targeted search needed. Partial outcome: William and James are known children confirmed; two records (Thomas, Edwin-Darlaston) need checking; John not yet found."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_016\\\",\\\"performed\\\":\\\"2026-07-27T20:33:59.726Z\\\",\\\"resultsRef\\\":\\\"results/log_016.json\\\",\\\"returnedCount\\\":20,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_016.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -13132,30 +12991,26 @@
         "birthYearFrom": 1875,
         "birthYearTo": 1879,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"givenName\\\":\\\"John\\\",\\\"surname\\\":\\\"Grice\\\",\\\"fatherGivenName\\\":\\\"Edwin\\\",\\\"collectionId\\\":\\\"2364451\\\",\\\"birthYearFrom\\\":1875,\\\"birthYearTo\\\":1879,\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":60,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:QL3V-QPWK\\\",\\\"events\\\":[],\\\"personName\\\":\\\"John Grice\\\",\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL3R-VJNJ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102882651797\\\",\\\"ark\\\":\\\"ark:/61903/1:1:QL3R-VJNJ\\\",\\\"names\\\":[{\\\"id\\\":\\\"a3f9322a-4c94-4c38-ba28-00b707ec4e33\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Thomas\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"e8b6f9a7-2f78-4440-94af-6be97ff109d2\\\",\\\"type\\\":\\\"Baptism\\\",\\\"primary\\\":true,\\\"date\\\":\\\"5 Dec 1879\\\",\\\"standard_date\\\":\\\"5 Dec 1879\\\",\\\"place\\\":\\\"West Bromwich, Staffordshire, England, United Kingdom\\\"},{\\\"id\\\":\\\"c04f01e4-970e-4dd6-ab6f-409446..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL3K-GK6H"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102877901498\\\",\\\"ark\\\":\\\"ark:/61903/1:1:QL3K-GK6H\\\",\\\"names\\\":[{\\\"id\\\":\\\"eb772ea3-2273-4bf9-922f-fcce7dfcfb71\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Grice\\\",\\\"given\\\":\\\"Edwin\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"67adfb74-6c8a-47d7-ad3c-954dc7851f98\\\",\\\"type\\\":\\\"Baptism\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1882\\\",\\\"standard_date\\\":\\\"1882\\\",\\\"place\\\":\\\"Darlaston, Staffordshire, England, United Kingdom\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_10287790..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -13167,8 +13022,7 @@
         "birthYearTo": 1878,
         "anyPlace": "West Bromwich",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"givenName\\\":\\\"John\\\",\\\"surname\\\":\\\"Grice\\\",\\\"collectionId\\\":\\\"2364451\\\",\\\"birthYearFrom\\\":1876,\\\"birthYearTo\\\":1878,\\\"anyPlace\\\":\\\"West Bromwich\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\"},\\\"totalMatches\\\":60,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:QL76-XGKF\\\",\\\"events\\\":[{\\\"type\\\":\\\"Residence\\\",\\\"place\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -13205,8 +13059,7 @@
             "notes": "Search for John Grice baptism b.1876-1878 in West Bromwich, Staffordshire Church Records (2364451). No baptism record for John Grice as the principal child appeared in the top results. All returned hits show 'John Grice' as a parent in other families' records. John Grice's own baptism is either not in this collection or indexed in a way that did not surface here. Possible explanations: Nonconformist chapel (not CofE), different registration area, or not christened."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_017\\\",\\\"performed\\\":\\\"2026-07-27T20:36:11.686Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_018\\\",\\\"performed\\\":\\\"2026-07-27T20:36:11.686Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_019\\\",\\\"performed\\\":\\\"2026-07-27T20:36:11.686Z\\\",\\\"resultsRef\\\":\\\"results/log_019.json\\\",\\\"returnedCount\\\":20}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_019.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13232,8 +13085,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -13246,8 +13098,7 @@
         "recordCountry": "England",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "subjectId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"givenName\\\":\\\"Fanny\\\",\\\"surname\\\":\\\"Grice\\\",\\\"recordType\\\":\\\"death\\\",\\\"deathYearFrom\\\":1889,\\\"deathYearTo\\\":1895,\\\"recordCountry\\\":\\\"England\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\",\\\"subjectId\\\":\\\"I2\\\"},\\\"totalMatches\\\":274,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:2JVS-PRZ\\\",\\\"events\\\":[],\\\"personName\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -13260,29 +13111,25 @@
         "recordCountry": "England",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "subjectId": "9DJ7-2B2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"givenName\\\":\\\"Hannah\\\",\\\"surname\\\":\\\"Grice\\\",\\\"recordType\\\":\\\"death\\\",\\\"deathYearFrom\\\":1880,\\\"deathYearTo\\\":1891,\\\"recordCountry\\\":\\\"England\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\\\",\\\"subjectId\\\":\\\"9DJ7-2B2\\\"},\\\"totalMatches\\\":325,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:661Z-W73Y\\\",\\\"events\\\":[{\\\"type..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:2JF2-BCK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_15005815489\\\",\\\"ark\\\":\\\"ark:/61903/1:1:2JF2-BCK\\\",\\\"names\\\":[{\\\"id\\\":\\\"bd609f35-1e9c-4880-86e7-b71cf5b1964f\\\",\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Grice\\\",\\\"given\\\":\\\"Fanny\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"ba7c6e41-3db7-417d-8876-ae658cb48000\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1889\\\",\\\"standard_date\\\":\\\"1889\\\"},{\\\"id\\\":\\\"0eed9589-a24b-4795-92c2-ac293f5a8c9a\\\",\\\"type\\\":\\\"Death\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1890\\\",\\\"standard_date\\\":\\\"1890\\\",\\\"place\\\":\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:2JD2-9FY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_15003361377\\\",\\\"ark\\\":\\\"ark:/61903/1:1:2JD2-9FY\\\",\\\"names\\\":[{\\\"id\\\":\\\"31dfe708-32cd-4900-9bc0-8e4ed4b6d48b\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Hannah\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"c3e64ad8-ff6f-4aaa-b8c6-7bcc11b76b7b\\\",\\\"type\\\":\\\"Death\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1881\\\",\\\"standard_date\\\":\\\"1881\\\",\\\"place\\\":\\\"Walsall, Staffordshire, England\\\"},{\\\"id\\\":\\\"d5d1825a-1aca-43e4-b475-b6cb13cdce35\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:2JD1-Q7B"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_15003606778\\\",\\\"ark\\\":\\\"ark:/61903/1:1:2JD1-Q7B\\\",\\\"names\\\":[{\\\"id\\\":\\\"f1a8fbd8-7c45-461e-87a9-9d72f349b971\\\",\\\"type\\\":\\\"BirthName\\\",\\\"given\\\":\\\"Hannah\\\",\\\"surname\\\":\\\"Grice\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"304a3e87-4f85-4da5-be1f-38857f784d1a\\\",\\\"type\\\":\\\"Death\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1883\\\",\\\"standard_date\\\":\\\"1883\\\",\\\"place\\\":\\\"West Bromwich, Staffordshire, England\\\"},{\\\"id\\\":\\\"4a08b431-e85d-40d9-b8b2-53e2c31cbdbf\\\",\\\"type\\\":\\\"Birth\\\",\\\"da..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -13308,8 +13155,7 @@
             "notes": "Search for Hannah Grice death 1880-1891, England (pli_006). Top-ranked match (score 0.552): ark:/61903/1:1:2JD2-9FY \u2014 Hannah Grice, born 1880, died 1881, Walsall, Staffordshire. Birth year 1880 matches Hannah Grace Grice (9DJ7-2B2, b.3 Apr 1880, West Bromwich), but death place is Walsall district (not West Bromwich). Without parental names in GRO index, attribution is uncertain. Rank-2 match (2JD1-Q7B, b.1882, d.1883, West Bromwich) is clearly a different person (birth year mismatch). Hannah Grace's actual death record not confirmed with confidence; original GRO certificate would be needed to establish parentage. Hannah Grace is absent from 1891 census at age ~11, so death before April 1891 is established; exact death record remains unconfirmed."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_020\\\",\\\"performed\\\":\\\"2026-07-27T20:38:17.573Z\\\",\\\"resultsRef\\\":\\\"results/log_020.json\\\",\\\"returnedCount\\\":50},{\\\"logId\\\":\\\"log_021\\\",\\\"performed\\\":\\\"2026-07-27T20:38:17.576Z\\\",\\\"resultsRef\\\":\\\"results/log_021.json\\\",\\\"returnedCount\\\":50}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_020.json\\\",\\\"results/log_021.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -13347,8 +13193,7 @@
             "notes": "Hannah Grice, GRO Death Registration Index: born 1882, died 1883, West Bromwich. Birth year 1882 is incompatible with Hannah Grace Grice (b.3 Apr 1880). This is a different Hannah Grice from a different Grice family in West Bromwich. Not relevant to the research question."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_022\\\",\\\"performed\\\":\\\"2026-07-27T20:38:27.824Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_023\\\",\\\"performed\\\":\\\"2026-07-27T20:38:27.824Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null},{\\\"logId\\\":\\\"log_024\\\",\\\"performed\\\":\\\"2026-07-27T20:38:27.824Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -13356,15 +13201,13 @@
         "description": "Extract Fanny Grice death record",
         "subagent_type": "record-extractor",
         "prompt": "Extract ALL assertions from ONE genealogical death record for Fanny Grice into the research project.\n\nPROJECT PATH: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\n\nRECORD ID: ark:/61903/1:1:2JF2-BCK\nLOG ENTRY ID: log_022\nQUESTION ID: q_001\n\nRECORD CONTENT (already read via record_read):\n```json\n{\n  \"persons\": [{\n    \"id\": \"p_15005815489\",\n    \"ark\": \"ark:/61903/1:1:2JF2-BCK\",\n    \"names\": [{\"type\": \"BirthName\", \"given\": \"Fanny\", \"surname\": \"Grice\"}],\n    \"facts\": [\n      {\"type\": \"Birth\", \"date\": \"1889\", \"standard_date\": \"1889\"},\n      {\"type\": \"Death\", \"primary\": true, \"date\": \"1890\", \"standard_date\": \"1890\", \"place\": \"Birmingham, Warwickshire, England\"}\n    ]\n  }],\n  \"sources\": [{\n    \"id\": \"src_r_22961257689\",\n    \"title\": \"Entry for Fanny Grice, \\\"England and Wales, Death Registration Index 1837-2007\\\"\",\n    \"citation\": \"\\\"England and Wales, Death Registration Index 1837-2007\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2JF2-BCK : Fri Feb 28 13:42:36 UTC 2025), Entry for Fanny Grice, 1890.\",\n    \"url\": \"https://www.familysearch.org/ark:/61903/1:2:99XY-WBNC\"\n  }]\n}\n```\n\nCONTEXT:\n- The research subject is the family of Edwin Grice (tree person 9DJ7-2BY) and Hannah Earnest Grice (9DJ7-219) of West Bromwich/Birmingham, Staffordshire/Warwickshire, England.\n- Fanny Grice (tree person I2) is a recently minted person \u2014 born 15 Feb 1889, baptized 6 Mar 1889 in West Bromwich \u2014 identified as an additional (previously unknown) child of Edwin and Hannah.\n- Fanny is ABSENT from the April 1891 census household, strongly indicating she died between her baptism (6 Mar 1889) and the census (April 1891).\n- This GRO Death Registration Index record matches Fanny exactly: born 1889, died 1890, Birmingham, Warwickshire.\n- The GRO Death Registration Index (collection 2285341) is a DERIVATIVE source (an index of the original GRO death register). The index contains only: name, birth year (derived from age at death), death year, and registration district. Parental names do NOT appear in the index \u2014 they appear only on the death certificate itself.\n- The only person in this record is the deceased (Fanny Grice herself). There are no parents, witnesses, or other family members listed in the index.\n\nEXTRACTION INSTRUCTIONS:\n1. Create a source entry for this record (England and Wales, Death Registration Index 1837-2007, collection 2285341).\n2. Extract assertions for the deceased persona:\n   - Name: Fanny Grice\n   - Birth: ~1889 (year only, derived from death index)\n   - Death: 1890, Birmingham, Warwickshire, England\n   All classified as: source = derivative (GRO index, not the original register); information = primary (Fanny herself is the subject); evidence = direct for death, indirect for birth year (derived from stated age at death in the register)\n3. There are NO relationship assertions \u2014 the GRO death index does not include parents or other family members.\n4. This record corroborates I2's death but does not establish parentage. Do NOT create parent-child relationship assertions from this record.\n5. Use GPS three-layer classification throughout.\n6. The source is NOT the original GRO death register \u2014 it is an index. Note this in the informant_bias_notes as \"derivative source (index of GRO register); original death certificate should be obtained to confirm details including age and parental names.\"\n\nPlease extract all assertions from this record and write them to research.json and tree.gedcomx.json."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\n**Source:** src_005 / S5 \\u2014 created (new source, `sourceReuse.action: created`)\\n\\n**Assertions persisted (4 total, all record_role: deceased):**\\n- a_093 \\u2014 `name`: Fanny Grice (direct, primary, official_duty)\\n- a_094 \\u2014 `sex`: Female (direct, primary, official_duty)\\n- a_095 \\u2014 `birth` date ~1889 (indirect, primary, official_duty) \\u2014 birth year derived from age at death in the index\\n- a_096 \\u2014 ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children \\u2026\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"9DJ7-219\\\",\\\"name\\\":\\\"Hannah Earnest\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\",\\\"S2\\\",\\\"S4\\\"]},{\\\"id\\\":\\\"9DJ7-2B2\\\",\\\"name\\\":\\\"Hannah Grace\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S4\\\"]},{\\\"id\\\":\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -13482,16 +13325,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_093\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_094\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_095\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_096\\\"}],\\\"sourceDescriptionId\\\":\\\"S5\\\",\\\"sourceReuse\\\":{\\\"action\\\":\\\"created\\\",\\\"srcId\\\":\\\"src_005\\\",\\\"sId\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -13500,8 +13341,7 @@
         "personId": "I2",
         "recordId": "ark:/61903/1:1:2JF2-BCK",
         "recordRole": "deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"personId\\\":\\\"I2\\\",\\\"created\\\":false,\\\"factsAdded\\\":1,\\\"factsEnriched\\\":1,\\\"namesAdded\\\":0,\\\"refsAttached\\\":3,\\\"conflicts_surfaced\\\":[],\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13567,23 +13407,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_109\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_110\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_111\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_112\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_006\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"}],\\..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous q_001 project:/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13591,16 +13428,14 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "questions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children other than John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 1886)?\\\",\\\"rationale\\\":\\\"The objective asks whether the couple had additional children beyond the five known ones. This is a completene..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search,mcp__genealogy__image_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -13608,8 +13443,7 @@
         "standardPlace": "West Bromwich, Staffordshire, England, United Kingdom",
         "startYear": 1885,
         "endYear": 1895
-      },
-      "response_summary": "{\"error\":\"Could not resolve \\\"West Bromwich, Staffordshire, England, United Kingdom\\\" to a single place; use place_search to get a standard place name first.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -13617,16 +13451,14 @@
         "standardPlace": "Staffordshire, England, United Kingdom",
         "startYear": 1885,
         "endYear": 1895
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Staffordshire, England, United Kingdom\\\",\\\"startYear\\\":1885,\\\"endYear\\\":1895},\\\"totalResults\\\":1617,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"007566574_020_M92C-ZB6\\\",\\\"imageGroupPrefix\\\":\\\"007566574\\\",\\\"imageCount\\\":0,\\\"recordSearchablePercent\\\":null,\\\"fulltextSearchable\\\":false,\\\"languages\\\":[\\\"en\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Hanley, Staffordshire, England, United Kingdom\\\",\\\"dateRange\\\":\\\"1891\\u20131915\\\",\\\"recordType\\\":\\\"Baptism Regi..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13677,31 +13509,27 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous q_001 project:/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13709,8 +13537,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":57,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13718,8 +13545,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":57,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:WLS8-YZM\\\",\\\"record_role\\\":\\\"head_of_household\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Edwin Grice\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Edwin\\\",\\\"surname\\\":\\\"Grice\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown household member\\\",\\\"informant_proximity\\\":\\\"household_member\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13727,16 +13553,14 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "conflicts",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"c_001\\\",\\\"conflict_type\\\":\\\"fact\\\",\\\"description\\\":\\\"Mother's given name discrepancy in Fanny Grice's baptism record (QL3R-6ZDW, 6 Mar 1889, West Bromwich): the FamilySearch index records the mother as 'Anne' (assertion a_077), but Edwin Grice's known wife in all other records \\u2014 including Lydia's baptism (src_002, a_066: 'Hannah') and the 1891 census (src_001) \\u2014 is Hannah Earnest Grice..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "sources"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"sources\\\",\\\"count\\\":5,\\\"items\\\":[{\\\"id\\\":\\\"src_001\\\",\\\"citation\\\":\\\"\\\\\\\"England and Wales, Census, 1891,\\\\\\\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WLS8-YZM : accessed 27 July 2026), entry for Edwin Grice and Hannah Grice, 1891; citing The National Archives of the UK, Kew, Surrey, England.\\\",\\\"citation_detail\\\":{\\\"who\\\":\\\"Edwin Grice household\\\",\\\"what\\\":\\\"1891 England and Wales Census schedule, FamilySearch collection 1..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -13744,8 +13568,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8",
         "section": "questions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children other than John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 1886)?\\\",\\\"rationale\\\":\\\"The objective asks whether the couple had additional children beyond the five known ones. This is a completene..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -13793,23 +13616,20 @@
           "exhaustive_search_summary": "Searched FamilySearch indexed collections: England and Wales census 1891, 1901, and 1911; Staffordshire Church Records baptisms 1813\u20131900 (collection 2364451); GRO civil birth registration index 1837\u20132007 (collection 2285341); GRO civil death registration index 1837\u20132007. Name variants of Grice were tried across all searches. Ancestry.com and FreeBMD were identified as additional repositories but not searched (external sites; plan items pli_005 and pli_007 skipped). Original GRO birth and death certificates for this period require a paid formal application to the General Register Office and were not obtained. The original Staffordshire parish register image for Fanny Grice's baptism entry (West Bromwich Baptisms 1878\u20131900, imageGroupNumber 007567149_010_M99G-9ZK) has imageCount: 0 and is inaccessible via any available MCP tool. These gaps are documented and, given the positive findings already obtained, do not undermine the probable conclusion.",
           "narrative_markdown": "## Probable Conclusion: Lydia Grice and Fanny Grice as Additional Children of Edwin Grice and Hannah Earnest\n\n### Research Question\n\nDid Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children other than the five previously known \u2014 John (born 1877), Hannah Grace (born 1880), Edwin (born 1883), William (born 1885), and James (born 1886)?\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that the couple had at least two additional children: **Lydia Grice** (baptised 8 August 1878, West Bromwich, Staffordshire) and **Fanny Grice** (born 15 February 1889, baptised 6 March 1889, West Bromwich; died 1890, Birmingham). This conclusion is reached at the `probable` tier because the 1891 census was accessed only through a derivative (FamilySearch index) rather than the original schedule, and because one unresolved source discrepancy precludes firm attribution of Fanny to Hannah Earnest specifically. Research has been declared reasonably exhaustive.\n\n### Lydia Grice (baptised 8 August 1878)\n\nTwo independent sources establish Lydia as an additional daughter of Edwin and Hannah Grice.\n\nFirst, the 1891 England and Wales census for a Birmingham household lists Lydia Grice as a daughter of Edwin Grice, enumerated between her known siblings.\u00b9 The 1891 census carried an explicit relationship-to-head column; Lydia's entry constitutes direct evidence of a parent-child bond with Edwin Grice (Head, labourer, aged approximately 38). Hannah Grice is listed as Wife, aged approximately 36. This source is a derivative record (the FamilySearch-indexed abstract, not the original schedule at The National Archives, Kew); the informant's identity is indeterminate.\n\nSecond, an original church register entry in the Staffordshire Church Records 1538\u20131944 records the baptism of Lydia Grice on 8 August 1878 at West Bromwich, Staffordshire, naming Edwin Grice as father and \"Hannah\" as mother (original record; primary information; direct evidence for parentage).\u00b2 The mother is recorded only as \"Hannah\" with no surname, consistent with Victorian parish practice. The two sources differ in informant, institutional origin, and date of creation \u2014 the baptism register (1878) and the census (1891) are genuinely independent. They agree on Lydia's identity as a child of Edwin Grice in the West Bromwich / Birmingham area. The baptism register is the more reliable source for approximate birth year: 1878, not the census-implied c. 1879.\n\n### Fanny Grice (born 15 February 1889; died 1890)\n\nTwo corroborating derivative sources indicate that Fanny Grice was an additional child of Edwin Grice.\n\nA baptism register entry in the Staffordshire Church Records 1538\u20131944 records the birth of Fanny Grice on 15 February 1889 and her baptism on 6 March 1889 at West Bromwich, Staffordshire, with Edwin Grice named as father.\u00b3 This entry is an indexed derivative of the original parish register; the original image was not accessed (the West Bromwich Baptisms 1878\u20131900 volume has imageCount: 0). The father name is consistent with the known research subject in name, location, and time period. The birth date of 15 February 1889 was supplied by the presenting parents (primary information for the birth event).\n\nThe England and Wales Death Registration Index 1837\u20132007 contains an entry for Fanny Grice (born approximately 1889) who died in 1890 in the Birmingham registration district, Warwickshire.\u2074 This derivative GRO index corroborates the existence of a child named Fanny Grice in this family \u2014 born 1889 in the West Bromwich/Staffordshire corridor and dying in Birmingham the following year \u2014 consistent with the family's known Birmingham residence by April 1891 (when Fanny is absent from the census household, most plausibly because she had died).\n\n**Mother's name discrepancy (conflict c_001):** Fanny's baptism index records the mother's given name as \"Anne,\" whereas Edwin Grice's known wife in all other records is Hannah Earnest Grice.\u2075 Three other sources consistently name \"Hannah\" as Edwin's wife or as the mother of their children: Lydia's baptism (1878),\u00b2 Hannah Grace's baptism (1880),\u2076 and the 1891 census.\u00b9 The preponderance of evidence strongly favors a transcription error \u2014 the indexer likely misread \"Hannah\" as \"Anne\" in the original handwritten register \u2014 but this cannot be confirmed because the original register image is inaccessible (imageCount: 0, volume 007567149_010_M99G-9ZK). Accordingly, the **father-child relationship** (Edwin Grice \u2192 Fanny Grice) is concluded at `probable` (no conflict; two corroborating sources); the **mother-child relationship** (Hannah Earnest Grice \u2192 Fanny Grice) remains at `possible` pending verification of the original register image or an alternative original record naming both parents (such as the GRO birth certificate for Fanny Grice, 1st quarter 1889, West Bromwich registration district).\n\n### Evidence Classification\n\n| Source | Classification | Information | Evidence | Key finding |\n|--------|---------------|-------------|----------|-------------|\n| 1891 census (src_001)\u00b9 | Derivative | Indeterminate | Direct | Lydia in household as child of Edwin Grice |\n| Lydia baptism (src_002)\u00b2 | Original | Primary | Direct | Edwin Grice + Hannah = Lydia's parents |\n| Fanny baptism (src_003)\u00b3 | Derivative (index) | Primary (father/birth); Indeterminate (mother) | Direct | Edwin Grice = Fanny's father; mother indexed as \"Anne [?]\" |\n| GRO Death Index (src_005)\u2074 | Derivative (index) | Primary | Direct | Fanny Grice died 1890, Birmingham |\n\n### Research Scope\n\nSearched FamilySearch collections: England and Wales census 1891, 1901, and 1911; Staffordshire Church Records baptisms 1813\u20131900 (collection 2364451); GRO civil birth registration index 1837\u20132007; GRO civil death registration index 1837\u20132007. Name variants of Grice were tried. Ancestry.com and FreeBMD were identified as additional repositories but not searched on this platform. Original GRO birth and death certificates for this period require a paid application to the GRO and were not obtained; this is noted as a remaining avenue to advance the tier for Fanny, not as an exhaustiveness gap for the overall conclusion.\n\n### Citations\n\n\u00b9 \"England and Wales, Census, 1891,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WLS8-YZM : accessed 27 July 2026), entry for Edwin Grice and Hannah Grice, 1891; citing The National Archives of the UK, Kew, Surrey, England.\n\n\u00b2 \"England, Staffordshire, Church Records, 1538-1944,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-C5SR), Entry for Lydia Grice and Edwin Grice, 8 Aug 1878.\n\n\u00b3 \"England, Staffordshire, Church Records, 1538-1944\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-6ZDW), Entry for Fanny Grice and Edwin Grice, 6 Mar 1889.\n\n\u2074 \"England and Wales, Death Registration Index 1837-2007,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2JF2-BCK : accessed 2026-07-27), entry for Fanny Grice, 1890.\n\n\u2075 Conflict c_001: Fanny's baptism index (src_003) names mother as \"Anne\" (a_077); Lydia's baptism (src_002) names mother as \"Hannah\" (a_066); Hannah Grace's baptism (src_004) names mother as \"Hannah\"; the 1891 census (src_001) names wife as \"Hannah Grice\" (a_008). Three independent sources vs. one indexed value. Original register inaccessible (imageCount: 0).\n\n\u2076 \"England, Staffordshire, Church Records, 1538-1944\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL3R-VWY9), Entry for Hannah Grice and Edwin Grice, 5 May 1880."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ps_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9DJ7-219\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Hannah\",\n10\t          \"surname\": \"Earnest\",\n11\t          \"id\": \"N-9DJ7-219-1\"\n12\t        },\n13\t        {\n14\t          \"id\": \"N1\",\n15\t          \"type\": \"BirthName\",\n16\t          \"given\": \"Hannah\",\n17\t          \"surname\": \"Grice\",\n18\t          \"sources\": [\n19\t            {\n20\t              \"ref\": \"S1\",\n21\t              \"quality\": 3\n22\t ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -13878,8 +13698,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"operation\\\":\\\"update_fact\\\"},{\\\"operation\\\":\\\"update_fact\\\"},{\\\"operation\\\":\\\"update_source\\\"},{\\\"operation\\\":\\\"update_source\\\"},{\\\"operation\\\":\\\"update_source\\\"},{\\\"operation\\\":\\\"update_source\\\"},{\\\"operation\\\":\\\"update_source\\\"}],\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -13887,15 +13706,13 @@
         "description": "GPS mentor proof critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please conduct a mandatory GPS proof critique (proof-critique) on proof summary ps_001 for question q_001 in this project.\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8\n\nContext:\n- Question q_001: \"Did Edwin Grice (born c. 1854, West Bromwich, Staffordshire) and Hannah Earnest (born c. 1857, Darlaston, Staffordshire) have any children other than John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 1886)?\"\n- Proof summary ps_001: tier = `probable`, vehicle = `summary`\n- Finding: Two additional children identified \u2014 Lydia Grice (baptised 8 Aug 1878, West Bromwich) and Fanny Grice (born 15 Feb 1889, died 1890 Birmingham)\n- Research declared exhaustive (status: exhaustive_declared)\n\nKey points to evaluate:\n1. GPS Component 1 (exhaustive research): Five source types searched. The West Bromwich Baptisms 1878-1900 original image volume (imageGroupNumber 007567149_010_M99G-9ZK) has imageCount: 0 \u2014 inaccessible. GRO birth/death certificates not obtained (require paid application). Ancestry and FreeBMD not searched. Research declared exhaustive with these limitations noted.\n2. GPS Component 3 (analysis/correlation): Sources classified: src_001 (1891 census) = derivative; src_002 (Lydia baptism) = original, primary; src_003 (Fanny baptism) = derivative index; src_005 (GRO death index) = derivative.\n3. GPS Component 4 (conflict resolution): c_001 unresolved \u2014 \"Anne\" vs \"Hannah\" as mother on Fanny's baptism index (a_077 vs a_066). Original image inaccessible. Three sources name \"Hannah,\" one names \"Anne.\" Conflict is documented with weighing analysis but not formally resolved.\n4. Tier rationale: `probable` because census is derivative (not original TNA schedule) and c_001 is unresolved.\n\nPlease read research.json and tree.gedcomx.json as needed and record the evaluation in research.json. This is an autonomous run \u2014 the mentor's recommendation is advisory only and does not force rework."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"## Mentor review: proof-critique on ps_001\\n\\n**Files written:** `/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json` (evaluations[] entry `ev_001`), `/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/evaluations/proof-critique-ps_001-2026-07-27T00-00-00.json`\\n\\n### What you've done well\\n\\nYour identity-resolution confidence scaling is a genuine strength here. Lydi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json"
-      },
-      "response_summary": "File content (54622 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -13903,8 +13720,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 1,
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_hannah_earnest_children\",\n4\t    \"objective\": \"Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details.\",\n5\t    \"subject_person_ids\": [\n6\t      \"9DJ7-219\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03\",\n10\t    \"updated\": \"2026-07-03\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n..."
+      }
     },
     {
       "tool": "Read",
@@ -13912,8 +13728,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 100,
         "limit": 500
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_003\",\n102\t          \"sequence\": 3,\n103\t          \"record_type\": \"vital_record\",\n104\t          \"jurisdiction\": \"West Bromwich Registration District, Staffordshire, England; Birmingham Registration District, Warwickshire, England\",\n105\t          \"date_range\": \"1876-1900\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"Civil registration of births was mandatory in England and Wales from July 1837. GRO quarterly indexes enumerate eve..."
+      }
     },
     {
       "tool": "Read",
@@ -13921,8 +13736,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 600,
         "limit": 500
-      },
-      "response_summary": "600\t      \"outcome\": \"negative\",\n601\t      \"results_examined\": 1,\n602\t      \"external_site\": null,\n603\t      \"results_ref\": null,\n604\t      \"notes\": \"Hannah Grice, GRO Death Registration Index: born 1882, died 1883, West Bromwich. Birth year 1882 is incompatible with Hannah Grace Grice (b.3 Apr 1880). This is a different Hannah Grice from a different Grice family in West Bromwich. Not relevant to the research question.\"\n605\t    }\n606\t  ],\n607\t  \"sources\": [\n608\t    {\n609\t      \"id\": \"src_001\"..."
+      }
     },
     {
       "tool": "Read",
@@ -13930,8 +13744,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 1100,
         "limit": 400
-      },
-      "response_summary": "1100\t      \"informant_proximity\": \"household_member\",\n1101\t      \"evidence_type\": \"direct\",\n1102\t      \"informant_bias_notes\": \"1891 census explicit relationship-to-head column; stated relationships from 1880 onward are direct.\",\n1103\t      \"extracted_for_question_ids\": [\n1104\t        \"q_001\"\n1105\t      ],\n1106\t      \"log_entry_id\": \"log_010\",\n1107\t      \"source_id\": \"src_001\"\n1108\t    },\n1109\t    {\n1110\t      \"id\": \"a_023\",\n1111\t      \"record_id\": \"ark:/61903/1:1:WLS8-YZM\",\n1112\t      \"recor..."
+      }
     },
     {
       "tool": "Read",
@@ -13939,8 +13752,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 1900,
         "limit": 500
-      },
-      "response_summary": "1900\t      \"log_entry_id\": \"log_013\",\n1901\t      \"source_id\": \"src_002\"\n1902\t    },\n1903\t    {\n1904\t      \"id\": \"a_065\",\n1905\t      \"record_id\": \"ark:/61903/1:1:QL3R-C5SR\",\n1906\t      \"record_role\": \"father\",\n1907\t      \"fact_type\": \"sex\",\n1908\t      \"value\": \"Male\",\n1909\t      \"information_quality\": \"primary\",\n1910\t      \"informant\": \"Edwin Grice (father, presenting at baptism)\",\n1911\t      \"informant_proximity\": \"household_member\",\n1912\t      \"evidence_type\": \"direct\",\n1913\t      \"extracted..."
+      }
     },
     {
       "tool": "Read",
@@ -13948,8 +13760,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 2400,
         "limit": 400
-      },
-      "response_summary": "2400\t      \"informant_proximity\": \"self\",\n2401\t      \"evidence_type\": \"direct\",\n2402\t      \"extracted_for_question_ids\": [\n2403\t        \"q_001\"\n2404\t      ],\n2405\t      \"log_entry_id\": \"log_015\",\n2406\t      \"informant_bias_notes\": \"Mother's given name stated in baptism register entry (surname omitted per Victorian convention). Relationship is direct because it is explicitly recorded.\",\n2407\t      \"source_id\": \"src_004\"\n2408\t    },\n2409\t    {\n2410\t      \"id\": \"a_092\",\n2411\t      \"record_id\": \"..."
+      }
     },
     {
       "tool": "Read",
@@ -13957,8 +13768,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 2800,
         "limit": 400
-      },
-      "response_summary": "2800\t      \"confidence\": \"probable\",\n2801\t      \"rationale\": \"Birth year ~1879 for child_2 Lydia. I1 minted with this birth year from this census entry.\",\n2802\t      \"created\": \"2026-07-27\"\n2803\t    },\n2804\t    {\n2805\t      \"id\": \"pe_038\",\n2806\t      \"assertion_id\": \"a_027\",\n2807\t      \"person_id\": \"I1\",\n2808\t      \"confidence\": \"probable\",\n2809\t      \"rationale\": \"Birthplace Staffordshire for Lydia. I1 minted with this birthplace.\",\n2810\t      \"created\": \"2026-07-27\"\n2811\t    },\n2812\t    {\n2..."
+      }
     },
     {
       "tool": "Read",
@@ -13966,8 +13776,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8/research.json",
         "offset": 3200,
         "limit": 400
-      },
-      "response_summary": "3200\t      \"confidence\": \"probable\",\n3201\t      \"rationale\": \"Birth 15 Feb 1889 matches I2's birth date (minted from this record). Probable pending original image verification of the mother's name.\",\n3202\t      \"created\": \"2026-07-27\"\n3203\t    },\n3204\t    {\n3205\t      \"id\": \"pe_088\",\n3206\t      \"assertion_id\": \"a_074\",\n3207\t      \"person_id\": \"I2\",\n3208\t      \"confidence\": \"probable\",\n3209\t      \"rationale\": \"Christening 6 Mar 1889, West Bromwich \u2014 primary information from officiating ministe..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14011,16 +13820,14 @@
           "timestamp": "2026-07-27T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ev_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\",\\\"evaluations/proof-critique-ps_001-2026-07-27T00-00-00.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous project:/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-hannah-earnest-children-ufuh6gj8"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14041,8 +13848,7 @@
             "a_079"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14063,8 +13869,7 @@
             "a_079"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14075,8 +13880,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"cannot set project.status = \\\\\\\"completed\\\\\\\": unresolved blocking conflict(s) c_001 (fact). GPS Component 4 requires conflicting evidence to be resolved before concluding. Run conflict-resolution for each \\u2014 set its status to 'resolved' (with independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' (with a rationale for why it no longer matters) \\u2014 then retry completing the project.\\\",\\\"worked example for 'pr..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14089,8 +13893,7 @@
           "status": "resolved",
           "resolution_rationale": "Resolved on preponderance of evidence in favor of 'Hannah' (a_066 and corroborating sources), against the single indexed value 'Anne' (a_077). Analysis: (1) The conflict is acknowledged \u2014 the FamilySearch index for Fanny Grice's baptism (QL3R-6ZDW, src_003) records the mother's given name as 'Anne,' while all other project sources name Edwin Grice's wife as 'Hannah.' (2) Reliability assessed \u2014 a_077 comes from a derivative indexed entry of the original parish register; the indexer is not a household informant and may have misread the original handwriting. By contrast, three other records independently name the mother 'Hannah': Lydia's baptism register (src_002, a_066 \u2014 original, primary, direct); Hannah Grace's baptism register (src_004 \u2014 original, primary, direct); and the 1891 census (src_001, a_008 \u2014 indeterminate informant, but consistent with the other two). (3) Preferred version \u2014 'Hannah' is more credible because it is corroborated by three independent sources with different informants and institutional origins, while 'Anne' appears only in a single derivative (indexed) entry and conflicts with all other evidence. (4) Plausible explanation \u2014 the most probable cause is an indexer transcription error in which the handwritten name 'Hannah' (beginning with a looped H and ending '-annah') was misread as 'Anne' when the index was compiled. This type of OCR or manual transcription error is well-documented in Victorian church record indexes. The original West Bromwich Baptisms 1878\u20131900 register image (imageGroupNumber 007567149_010_M99G-9ZK, imageCount: 0) is inaccessible and cannot be examined to confirm, but the absence of image verification does not prevent resolution when the preponderance of evidence is this strongly one-sided. Limitation: this resolution is at the preponderance-of-evidence standard; the original image remains the definitive check and should be examined if the volume becomes accessible. The proof summary (ps_001) correctly tiers the Hannah-to-Fanny mother-child relationship at 'possible' to reflect this residual uncertainty."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"c_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -14101,8 +13904,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     }
   ],
   "error": null,
@@ -14557,5 +14359,6 @@
       ],
       "transcript": "agent-aaf0c9fd50593ab92.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

@@ -300,6 +300,13 @@ test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (
 server-test: ## Control-plane tests — apps/server (FastAPI, pytest; uv auto-syncs the venv)
 	cd apps/server && uv run pytest -q
 
+.PHONY: hooks-test
+hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no venv, no install)
+	# The issue-filing gate fails open by design, so a broken regex stops the
+	# prompt without stopping anything else: the filing goes through ungated and
+	# nothing looks wrong. This is the only thing that notices.
+	python3 scripts/claude-hooks/test-gate-issue-create.py
+
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
 	# The one thing no offline test can see: what the RUNTIME resolves the
@@ -342,6 +349,14 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 .PHONY: harness-lint
 harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
 	cd eval/harness && uv run ruff check .
+
+.PHONY: replay-check
+replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
+	# Offline and free — no API key, no live calls. Reports reconstruction
+	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
+	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
+	# match on all 12 sections. Run after any change to harness/replay.py.
+	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
@@ -390,8 +405,8 @@ eval-timings: ## Weekly timing review: scan the latest run log per skill, rank t
 	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: prune-runlogs
-prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
-	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [STRIP=1|DAYS] [DRY=1]
+	# Read-modify-write over eval/runlogs/. Commit the result.
 	#
 	# You should not normally need PRUNE: the harness prunes to the newest 5
 	# candidates per skill on every write (harness/runlog.py), so the cap holds
@@ -402,9 +417,17 @@ prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune
 	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
+	#
+	# STRIP=1 drops response_summary from e2e run logs older than 14 days
+	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
+	# the unit corpus this is keyed on age and strips rather than deletes — e2e
+	# has no per-skill run-log invariant to protect, and response_summary is the
+	# only field with no programmatic reader. The .ann.json / .final-tree /
+	# .final-research calibration triple is never touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
+	  $(if $(STRIP),--strip-e2e-captures $(if $(filter-out 1,$(STRIP)),$(STRIP),),) \
 	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
