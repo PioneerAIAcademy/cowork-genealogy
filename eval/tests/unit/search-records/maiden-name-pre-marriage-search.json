@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "user_message": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke). Since this is 1860 and she didn't marry until 1872, search under her maiden name.",
+    "user_message": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke).",
     "scenario": "mullen-price-multiple-marriages"
   },
   "execution": {

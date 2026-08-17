@@ -555,6 +555,12 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
+  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. That is the whole difference between `record-extraction`, which states conclusions freely and is the one suite with no dead dimensions, and a note that is simply an answer key: its conclusions are checked by `expected_classifications` and the judge defers to that check, so the note cannot become the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
+
+  **The leak is not confined to `judge_context`.** An `input.user_message` that hands the skill the reasoning under test defeats the same dimension, and no rule about notes reaches it. If the note says "score 3 if it reasons about X", the input must not state X. Apply the neutrality test to the user message too.
+
+  **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them.
+
   Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`
