@@ -1139,6 +1139,34 @@ describe("tree_forget", () => {
     expect(r.errors[0]).toMatch(/matched nothing/);
   });
 
+  it("a modifier on only one side of a Bet range never voids the other side's real bound", async () => {
+    // "Bet 1840 and Bef 1860": the start (1840) is a real, unmodified
+    // bound. Only the END carries "Bef", so only latestYear's computed
+    // value is a fudge, not earliestYear's. A whole-string open-ended
+    // check would wrongly treat 1840 as unbounded too, since "Bef"
+    // appears somewhere in the string, and refuse a genuinely confident
+    // match (found by an independent follow-up review).
+    await writeProject({
+      persons: [
+        {
+          id: "P3",
+          gender: "Male",
+          names: [{ id: "N3", given: "E", surname: "F", preferred: true }],
+          facts: [{ id: "PF3", type: "Residence", standard_date: "Bet 1840 and Bef 1860" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-after", personId: "P3", year: 1830 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+  });
+
   it("facts-between rejects fromYear > toYear", async () => {
     await writeProject(datedFixture());
     const r = await treeForget({

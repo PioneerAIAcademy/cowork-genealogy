@@ -38,7 +38,7 @@ import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-i
 import { formatIssues } from "./merge-shared.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
-import { earliestYear, latestYear } from "../utils/date-helpers.js";
+import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -425,13 +425,18 @@ function datedFacts(
       // just up to 1860. Treating the fudge as a real bound let facts-before
       // sweep a fact that was never confidently before the threshold (found
       // by review) — unbounded on the open side instead, so the confident-
-      // match predicates never fire there.
+      // match predicates never fire there. earliestIsUnbounded/
+      // latestIsUnbounded (not a bare string test) so a `Bet X and Y` range
+      // where the modifier sits on only ONE side never voids the OTHER
+      // side's already-real bound (found by an independent follow-up
+      // review — a whole-string test over-refuses, never over-deletes, but
+      // it's cheap to get exactly right while this function is open).
       entries.push({
         ownerKind,
         ownerId,
         fact,
-        earliest: /\bBef\b/.test(std) ? -Infinity : earliest,
-        latest: /\bAft\b/.test(std) ? Infinity : latest,
+        earliest: earliestIsUnbounded(std) ? -Infinity : earliest,
+        latest: latestIsUnbounded(std) ? Infinity : latest,
       });
     }
   };
