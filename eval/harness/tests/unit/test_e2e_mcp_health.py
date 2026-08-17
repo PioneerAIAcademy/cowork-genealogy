@@ -326,6 +326,28 @@ def _fold(calls: list) -> tuple[int | None, int, int]:
     return fired_at, len(calls), mcp_calls
 
 
+def test_capture_strip_exempts_every_run_this_arm_pins():
+    """`--strip-e2e-captures` must not reclaim this arm's evidence.
+
+    The detector decides a ToolSearch miss by matching a marker *inside*
+    `response_summary`, so a stripped run log cannot trip the backstop. That
+    fails the three `LOST_RUNS` cases loudly, but it turns
+    `test_backstop_never_fires_on_the_healthy_run` into a check that cannot
+    fail — the exact silent-green shape #941 exists to end. Asserting the
+    coverage here, next to the evidence, is what keeps the sweep's exemption
+    set and this arm from drifting apart.
+    """
+    from scripts.prune_runlogs import E2E_STRIP_EXEMPT
+
+    pinned = {(FERBER.name, name) for name, _ in LOST_RUNS}
+    pinned.add((FERBER.name, HEALTHY_RUN))
+
+    assert pinned <= E2E_STRIP_EXEMPT, (
+        "these run logs are replayed for their response_summary but the capture "
+        f"strip would reclaim them: {sorted(pinned - E2E_STRIP_EXEMPT)}"
+    )
+
+
 @pytest.mark.parametrize(("filename", "expected_call"), LOST_RUNS)
 def test_backstop_fires_on_each_lost_run(filename: str, expected_call: int):
     """The three runs #941 was filed for: abort in the first fifth of the run."""
