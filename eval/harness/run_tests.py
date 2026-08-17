@@ -465,13 +465,22 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
     print(f"  transient retries {retries} across {tests_with_retry} test(s)")
 
 
-#: Warning kinds `judge._extract_dimensions` owns — the judge breaking one of
-#: its own prompt rules. `output.warnings` also carries harness-side advisories
-#: from `orchestrator._build_warnings` (`unread_skill_call`,
+#: Warning kinds about the JUDGE — either the judge breaking one of its own
+#: prompt rules (`judge._extract_dimensions`) or a judge score the harness wants
+#: a human to re-read (`orchestrator.flag_routing_negative_judge_fail`). Both
+#: files emit into this class; it is not judge.py's alone.
+#:
+#: `output.warnings` also carries harness-side advisories from
+#: `orchestrator._build_warnings` (`unread_skill_call`,
 #: `missing_tool_usage_dimension`, `uncovered_tool_call`) which are about the
-#: skill or the fixtures, not the judge; those are deliberately not tallied
-#: here. A new kind added in judge.py must be added here too, or it prints
-#: nowhere — which is the state this whole section exists to end.
+#: skill or the fixtures, not the judge; those are deliberately not tallied here.
+#:
+#: A new judge-warning kind in EITHER file must be added here too, or it prints
+#: nowhere — which is the state this whole section exists to end, and which is
+#: exactly what happened to the routing warning: it was emitted from
+#: orchestrator.py, the guard scanned only judge.py, and it printed nowhere for
+#: its entire life. `test_summary_ignores_non_judge_warning_kinds` now scans
+#: both.
 _JUDGE_WARNING_KINDS = frozenset({
     "dropped_unknown_rubric_dimension",
     "dropped_unknown_base_dimension",

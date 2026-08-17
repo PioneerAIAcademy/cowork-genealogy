@@ -931,17 +931,23 @@ def flag_routing_negative_judge_fail(
     anything this test owns. **The corpus says the opposite.** Replaying the
     floor's own guards over the 121 committed unit run logs and joining to the
     annotations: 24 cells were floor-eligible with a judge 1, and a human
-    confirmed that 1 on **20 of them**. Split by evidence, the pattern is clean —
-    all 14 cells where the skill produced substantive output (784-14,123 chars)
-    were human-confirmed, with rationales naming exactly the case the old
-    docstring called a rare corner ("instead of declining and routing to
-    convert-dates, it performed the date conversion itself"), while all 4
-    genuine overrides had `text_response == ""` and `num_turns == 0`.
+    confirmed that 1 on **20 of them**. All 14 cells where the skill produced
+    non-empty output (102-14,123 chars) were confirmed, with rationales naming
+    the case the old docstring called a rare corner ("instead of declining and
+    routing to convert-dates, it performed the date conversion itself") — the
+    smallest of them, 102 chars, is a fabricated completion claim ("Saved as
+    kirchenbuch.md") on a run that created no file.
 
-    So the claim that there is "no mechanical discriminator" was false, and the
-    floor fired hardest where it was most wrong. Gating it on empty output was
-    the alternative; deleting it is simpler and gives up almost nothing, since
-    the dimensions are diagnostic here either way — `_compute_outcome` decides a
+    **There is still no mechanical discriminator, and gating on empty output is
+    worse than deleting.** All 4 overrides had `text_response == ""` and
+    `num_turns == 0` — but so did 6 of the 20 confirmations, and the same test
+    (`ut_search_records_003`) carries that identical empty/zero-turn signature in
+    all 8 of its eligible cells: confirmed in two run logs, overridden in two
+    others. So a floor gated on empty output would have fired on 10 cells and
+    been wrong on 6. The floor's real defect was not picking the wrong signal; it
+    was that no signal exists.
+
+    Deleting gives up nothing measurable: `_compute_outcome` decides a
     negative-with-`correct_skill` purely on routing, so no score this function
     could change has ever moved a test's outcome.
 

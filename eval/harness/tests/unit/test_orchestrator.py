@@ -160,17 +160,6 @@ def test_reported_warning_carries_the_judge_score_and_rationale():
     assert warnings[0]["rationale"] == "No such routing occurred"
 
 
-def test_reported_warning_kind_is_registered_so_it_prints():
-    """The floor's warning existed all along and printed NOWHERE: its kind was
-    never added to `_JUDGE_WARNING_KINDS`, whose own comment calls a missing kind
-    'the state this whole section exists to end'. Keeping the report while
-    leaving it unregistered would preserve that bug and drop the only thing the
-    floor was still doing."""
-    from run_tests import _JUDGE_WARNING_KINDS
-
-    assert "routing_negative_judge_fail" in _JUDGE_WARNING_KINDS
-
-
 def test_no_warning_when_the_judge_did_not_fail():
     dims = _routing_dims(correctness=3, completeness=3)
     warnings: list = []
