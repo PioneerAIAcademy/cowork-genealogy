@@ -293,7 +293,7 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
     review and before anything marks the question resolved.
  3. **This is a hard gate — and so, separately, is the proof-critique mentor
     gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
-    table): never let `question-selection` mark the question resolved, and
+    table): never let the question be marked resolved, and
     never write `project.status = "completed"`, while either check fails —
     any tier-≥-probable conclusion unencoded in the tree, or any resolved
     question's `ps_id` with no `proof-critique` verdict on record. A run does
