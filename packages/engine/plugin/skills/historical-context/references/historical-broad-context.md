@@ -188,11 +188,18 @@ customs, governance, laws, and regulations.
 - Illegitimacy affected how children were recorded. Terms like
   "base son," "base born," or "natural child" indicate parents
   were not married at the time of birth. The child might carry the
-  mother's surname, the father's surname, or neither. If the
-  parents married after the birth, the child was often
-  retroactively legitimized by that marriage — the birth entry may
-  or may not carry a notation of this. Do not treat "base born" as
-  a permanent status; check for a later marriage of the parents.
+  mother's surname, the father's surname, or neither. Whether a
+  later marriage of the parents retroactively legitimizes the
+  child is jurisdiction- and era-dependent, not universal: many
+  US states and civil-law jurisdictions (and Scotland, for
+  centuries) recognized legitimation by subsequent marriage, but
+  English common law explicitly did not — "once a bastard, always
+  a bastard" held until the Legitimacy Act 1926, so an English
+  birth before 1926 stays illegitimate regardless of a later
+  marriage. Check the jurisdiction and era before assuming either
+  way, and do not treat "base born" as a permanent status without
+  that check — the birth entry may or may not carry a notation
+  either way.
 - Social standing affected record detail. Wealthy families left
   more records (wills, deeds, tax records) than poor families.
 - Literacy levels affected record accuracy and the existence of
