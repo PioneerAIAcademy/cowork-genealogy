@@ -164,9 +164,9 @@ customs, governance, laws, and regulations.
   called to give depositions and affidavits attesting to service,
   age, marriage, or disability. Your research subject may appear in
   a *neighbor's* or *fellow soldier's* pension file as a witness,
-  swearing to having known the applicant for decades or farmed
-  next to him. Search pension files for the subject as a witness,
-  not only as the applicant.
+  swearing to having known the applicant for decades, or to having
+  farmed next to him. Search pension files for the subject as a
+  witness, not only as the applicant.
 - Military conflicts destroyed courthouses and archives, creating
   gaps in the civil record (many Southern US counties during the
   Civil War, European archives during WWII).
