@@ -89,6 +89,46 @@ describe("tree_forget", () => {
       () => false,
     );
 
+  // ─── #1572: pre-existing drift must not false-block after reindexing ─────────
+
+  it("tolerates pre-existing tree drift that reindexes when a person is removed (#1572)", async () => {
+    // I5 (a surviving spouse) is missing its required `gender` — a pre-existing
+    // error at persons[2] that the heal does not fix. Forgetting parent I2
+    // (persons[0]) slides I5 down to persons[1]. A before/after diff keyed on the
+    // array path would read the reindexed error as new and false-block the whole
+    // removal; keyed on the person id it is recognized as pre-existing, so the
+    // call succeeds and the drift rides as a warning. This is the guard the fix
+    // exists for — a naive diff fails it.
+    const tree = {
+      persons: [
+        { id: "I2", gender: "Male", names: [{ id: "N2", given: "Michael", surname: "Ryan", preferred: true }] },
+        { id: "I1", gender: "Male", names: [{ id: "N1", given: "Patrick", surname: "Ryan", preferred: true }] },
+        // Missing `gender`: the pre-existing error, and it survives sanitizeTree.
+        { id: "I5", names: [{ id: "N5", given: "Ellen", surname: "Walsh", preferred: true }] },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+        { id: "R2", type: "Couple", person1: "I1", person2: "I5" },
+      ],
+      sources: [],
+    };
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // The parent was removed; the drifted (and reindexed) spouse survived.
+    const ids = (await readTree()).persons.map((p: any) => p.id);
+    expect(ids).not.toContain("I2");
+    expect(ids).toContain("I5");
+    // The pre-existing drift is surfaced as a warning, not silently swallowed.
+    expect(r.validation.warnings.join(" ")).toMatch(/pre-existing/);
+  });
+
   // ─── selectors ─────────────────────────────────────────────────────────────
 
   it("parents-of removes both parents and cascades their other relationships", async () => {
