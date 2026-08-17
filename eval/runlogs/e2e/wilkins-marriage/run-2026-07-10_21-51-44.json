@@ -1072,67 +1072,58 @@
       "tool": "Skill",
       "args": {
         "skill": "init-project"
-      },
-      "response_summary": "Launching skill: init-project"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "research.json",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_marriage\",\n4\t    \"objective\": \"Who did Elijah Wilkins marry?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [],\n18\t  \"plans\": [],\n19\t  \"log\": [],\n20\t  \"sources\": [],\n21\t  \"assert..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "tree.gedcomx.json",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "tree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"97YZ-J3D\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Elijah\",\n11\t          \"surname\": \"Wilkins\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ae8b941e-aabf-4dbb-bbbd-fce7ce87e1a7\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1814\",\n19\t          \"standard_date\": \"1814\",\n20\t          \"place\": \"Muhlenberg, Kentucky, United Stat..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1157,24 +1148,21 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1182,8 +1170,7 @@
         "standardPlace": "Muhlenberg, Kentucky, United States",
         "startYear": 1830,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Muhlenberg, Kentucky, United States\\\",\\n    \\\"startYear\\\": 1830,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"scope\\\": \\\"Kentucky\\\",\\n  \\\"totalForPlace\\\": 21,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1674843\\\",\\n      \\\"title\\\": \\\"Kentucky, Births and Christenings, 1839-1960\\\",\\n      \\\"dateRange\\\": \\\"1839-1960\\\",\\n      \\\"recordCount\\\": 381231,\\n      \\\"personCount\\\": 1032346,\\n      \\\"imageCount\\\": 381231,\\n      \\\"url\\\": \\\"https:..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1191,22 +1178,19 @@
         "standardPlace": "Muhlenberg, Kentucky, United States",
         "startYear": 1830,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Muhlenberg, Kentucky, United States\\\",\\n    \\\"startYear\\\": 1830,\\n    \\\"endYear\\\": 1875\\n  },\\n  \\\"totalForPlace\\\": 368,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/48033/\\\",\\n      \\\"linkText\\\": \\\"Genealogies of Kentucky Families from The Register of the Kentucky Historical Society, Vol. II\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"http://www.archives.gov/research/military/vietnam-war/c..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Kentucky marriage records genealogy Muhlenberg County"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1328,24 +1312,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "q_001 pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1359,8 +1340,7 @@
         "recordType": "marriage",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"marriagePlace\\\": \\\"Muhlenberg, Kentucky\\\",\\n    \\\"marriageYearFrom\\\": 1830,\\n    \\\"marriageYearTo\\\": 1845,\\n    \\\"collectionId\\\": \\\"1804888\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn\\\"\\n  },\\n  \\\"totalMatches\\\": 6,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"ret..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1369,16 +1349,14 @@
         "stagedResultsRef": "results/.staging/de9a4da9-9faa-4d19-b28e-23a86208a30c.json",
         "subjectId": "97YZ-J3D",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"97YZ-J3D\\\",\\n  \\\"scoredCount\\\": 6,\\n  \\\"returnedCount\\\": 6,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:V65W-T27\\\",\\n      \\\"matchScore\\\": 0.026922233,\\n      \\\"primaryId\\\": \\\"p_13457526005\\\",\\n      \\\"personName\\\": \\\"Elijah E Wilkins\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Kentucky, County Marriages, 178..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1386,8 +1364,7 @@
         "recordId": "ark:/61903/1:1:V65W-T27",
         "resultsRef": "results/.staging/de9a4da9-9faa-4d19-b28e-23a86208a30c.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_13457526005\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:V65W-T27\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"Elijah E\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_13457526004\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:V65W-T2Q\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1410,8 +1387,7 @@
         "resultsAvailable": 6,
         "stagedResultsRef": "results/.staging/de9a4da9-9faa-4d19-b28e-23a86208a30c.json",
         "notes": "Top hit (ark:/61903/1:1:V65W-T27) is 'Elijah E Wilkins and Eliza A France, 1 Feb 1887' \u2014 this record post-dates our subject's death (30 Nov 1875) and is the marriage of a younger Elijah E Wilkins (born 1862, likely a son). The record was already attached to subject 97YZ-J3D by the FamilySearch tree, probably in error. Remaining results are noise. No marriage record for Elijah Wilkins (born 1814) found in this date-filtered search. Broadening search to remove date constraint."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:19:26.469Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 6,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1425,8 +1401,7 @@
         "recordSubdivision": "Kentucky",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"birthYearFrom\\\": 1809,\\n    \\\"birthYearTo\\\": 1819,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Kentucky\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn\\\"\\n  },\\n  \\\"totalMatches\\\": 151,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1435,8 +1410,7 @@
         "stagedResultsRef": "results/.staging/9669d496-ce38-413b-9134-cfc6dbeaa0b9.json",
         "subjectId": "97YZ-J3D",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"97YZ-J3D\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 4,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FWY5-7HW\\\",\\n      \\\"matchScore\\\": 0.65096366,\\n      \\\"primaryId\\\": \\\"p_11103322746\\\",\\n      \\\"personName\\\": \\\"Elijah Wilkins\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Kentucky, Marriages, 1785-1979\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1444,8 +1418,7 @@
         "recordId": "ark:/61903/1:1:FWY5-7HW",
         "resultsRef": "results/.staging/9669d496-ce38-413b-9134-cfc6dbeaa0b9.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11103322746\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:FWY5-7HW\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elijah\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_11103322745\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:FWY5-7H7\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1470,8 +1443,7 @@
         "resultsAvailable": 151,
         "stagedResultsRef": "results/.staging/9669d496-ce38-413b-9134-cfc6dbeaa0b9.json",
         "notes": "Top-ranked match (score 0.65, already attached to 97YZ-J3D): ark:/61903/1:1:FWY5-7HW \u2014 'Entry for Elijah Wilkins, Kentucky Marriages, 1785-1979' \u2014 Elijah Wilkins married Sally Miller, Dec 1834, Kentucky. This is a compiled index (collection 1674849); the underlying county marriage bond image should be sought in collection 1804888 (Kentucky, County Marriages, 1786-1965)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:20:24.275Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1484,8 +1456,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1497,8 +1468,7 @@
         "collectionId": "1804888",
         "count": 20,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"spouseGivenName\\\": \\\"Sally\\\",\\n    \\\"spouseSurname\\\": \\\"Miller\\\",\\n    \\\"collectionId\\\": \\\"1804888\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn\\\"\\n  },\\n  \\\"totalMatches\\\": 14,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 14,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1510,8 +1480,7 @@
         "collectionId": "1804888",
         "count": 20,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Miller\\\",\\n    \\\"givenName\\\": \\\"Sally\\\",\\n    \\\"spouseGivenName\\\": \\\"Elijah\\\",\\n    \\\"spouseSurname\\\": \\\"Wilkins\\\",\\n    \\\"collectionId\\\": \\\"1804888\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn\\\"\\n  },\\n  \\\"totalMatches\\\": 100,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1532,15 +1501,13 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "No result for Elijah Wilkins / Sally Miller marriage bond in the county-level collection (1804888). The compiled index in collection 1674849 (log_002) identifies the marriage as Dec 1834, but the original Muhlenberg County bond is apparently not yet indexed in 1804888. The bond image may be accessible by browsing the Muhlenberg County marriage volume directly."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:21:10.005Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M65N-SY7"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_335774615\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M65N-SY7\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"0eeaeaa9-5657-4394-bfa8-bb9bdb6f3c79\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"Elijah\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"bf35dde8-046b-47cf-ab38-3cef6fb60242\\\",\\n          \\\"type\\\": \\\"Cen..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1557,15 +1524,13 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "1850 census for Elijah Wilkins household, Muhlenberg County, KY. Wife is 'Sarah Wilkins', female, born 1819 in Kentucky. Household also includes: Mary J (b.1836), Wm J (b.1838), Elizabeth M (b.1840), Jessee (b.1845), Polly (b.1847), and James Wilkins (b.1830 \u2014 likely sibling, not son, as he predates the Dec 1834 marriage). Citation: FamilySearch ark:/61903/1:2:MHFP-6JJ. Sarah confirms the marriage index 'Sally Miller' \u2014 Sally is the common nickname for Sarah; Miller is the maiden name."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:22:00.626Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MZBF-FLX"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_266099144\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MZBF-FLX\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"4897adf6-eb2e-4a40-a552-f94535a4b55c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"Elijah\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"b285fb17-ea39-499b-a91c-34e4d98af933\\\",\\n          \\\"type\\\": \\\"Bir..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1582,15 +1547,13 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "1860 census for Elijah Wilkins household, District 1, Muhlenburg [sic] Co., KY. Wife is 'Sarah Wilkins', female, born 1821 in N Carolina. Children in household: Margaret E (b.1841), Jesse (b.1844), Polly (b.1847), Ivy (b.1850), Edmond (b.1856), Josephine (b.1857). Citation: ark:/61903/1:2:M4L2-LBQ. Note minor discrepancy: 1850 census says Sarah born Kentucky; 1860 says North Carolina \u2014 both give approx. age 39-41. Three independent sources now consistently identify wife as Sarah (Sally) Miller Wilkins."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:22:31.550Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MXWT-TB2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_345786260\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MXWT-TB2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"6bb9e31a-5910-48e8-88f6-a10f13514c4e\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elijah\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"15627962-2667-4558-abce-264cb44eb83b\\\",\\n          \\\"type\\\": \\\"Bir..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1607,8 +1570,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "1870 census for Elijah Wilkins household, South Carrollton, Muhlenberg Co., KY. Wife is 'Sarah Wilkins', female, born 1820 in Kentucky. Children: Elizabeth (b.1847), Mary (b.1850), Ira (b.1851), Edmond (b.1856), Josephine (b.1860), Adison/Addison (b.1863). Citation: ark:/61903/1:2:MHV8-TDB. This is the fourth independent source \u2014 marriage index (Sally Miller, Dec 1834) + 1850/1860/1870 censuses all consistently name 'Sarah' as wife. Birth year cluster ~1819-1821, birthplace mostly Kentucky (1860 outlier says North Carolina)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-10T21:22:54.212Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1643,32 +1605,28 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract from four records for q_001: (1) marriage index ark:/61903/1:1:FWY5-7HW \u2014 Elijah Wilkins married Sally Miller, Dec 1834 (collection 1674849, log_002); (2) 1850 census ark:/61903/1:1:M65N-SY7 \u2014 household with wife Sarah Wilkins born ~1819 KY (collection 1401638, log_004); (3) 1860 census ark:/61903/1:1:MZBF-FLX \u2014 household with wife Sarah Wilkins born ~1821 NC (collection 1473181, log_005); (4) 1870 census ark:/61903/1:1:MXWT-TB2 \u2014 household with wife Sarah Wilkins born ~1820 KY (collection 1438024, log_006). Subject is Elijah Wilkins (97YZ-J3D). Key assertions needed: marriage of Elijah to Sally/Sarah Miller; her identity as wife in each census."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "Grep",
@@ -1676,8 +1634,7 @@
         "pattern": "\"id\":\\s*\"S",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "output_mode": "content"
-      },
-      "response_summary": "881:      \"id\": \"S7V4-3HS\","
+      }
     },
     {
       "tool": "Grep",
@@ -1687,8 +1644,7 @@
         "output_mode": "content",
         "glob": "*.json",
         "head_limit": 60
-      },
-      "response_summary": "4:      \"id\": \"97YZ-J3D\",\n9:          \"id\": \"N1\",\n16:          \"id\": \"ae8b941e-aabf-4dbb-bbbd-fce7ce87e1a7\",\n24:          \"id\": \"bfb9d146-3053-46a1-876a-5ac5c2db2456\",\n32:          \"id\": \"540ce2e1-ebea-4f72-af24-0d8ebf1b5ffd\",\n40:          \"id\": \"868d42ec-84f9-4404-b1dc-862a44f9e166\",\n48:          \"id\": \"4bb8cae0-7bd8-47e8-8f51-00c0d2e21a4e\",\n56:          \"id\": \"b2debc39-24e7-47bb-9b4b-9d27f3232646\",\n64:          \"id\": \"26697b22-44c6-41b0-ad07-8eb2ff79e6ed\",\n74:      \"id\": \"LY4X-T9N\",\n79:    ..."
+      }
     },
     {
       "tool": "Read",
@@ -1696,8 +1652,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "offset": 870,
         "limit": 50
-      },
-      "response_summary": "870\t      \"title\": \"Elija Wilkins in entry for Ivy Wilkins, \\\"Kentucky Death Records, 1911-1963\\\"\",\n871\t      \"citation\": \"\\\"Kentucky, Deaths, 1911-1967\\\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NS5C-JQS : Thu Nov 28 21:01:53 UTC 2024), Entry for Ivy Wilkins and Elija Wilkins, 11 April 1923.\",\n872\t      \"url\": \"https://familysearch.org/ark:/61903/1:1:NS5C-JQ3\"\n873\t    },\n874\t    {\n875\t      \"id\": \"96TG-9JM\",\n876\t      \"title\": \"Elijah Wilkins, \\\"United States, Census..."
+      }
     },
     {
       "tool": "Grep",
@@ -1705,8 +1660,7 @@
         "pattern": "FWY5-7HW\\|1674849\\|marriages.*1785\\|Marriages.*1785",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "output_mode": "content"
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Grep",
@@ -1714,8 +1668,7 @@
         "pattern": "9JPJ-R9P\\|9JPJ-N2Z",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "output_mode": "content"
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Read",
@@ -1723,8 +1676,7 @@
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "offset": 810,
         "limit": 110
-      },
-      "response_summary": "810\t      \"id\": \"R15\",\n811\t      \"type\": \"ParentChild\",\n812\t      \"parent\": \"97YZ-J3D\",\n813\t      \"child\": \"L7WM-ZMY\",\n814\t      \"subtype\": \"Biological\"\n815\t    },\n816\t    {\n817\t      \"id\": \"R17\",\n818\t      \"type\": \"ParentChild\",\n819\t      \"parent\": \"97YZ-J3D\",\n820\t      \"child\": \"27H3-98M\",\n821\t      \"subtype\": \"Biological\"\n822\t    },\n823\t    {\n824\t      \"id\": \"R19\",\n825\t      \"type\": \"ParentChild\",\n826\t      \"parent\": \"97YZ-J3D\",\n827\t      \"child\": \"27H3-SJL\",\n828\t      \"subtype\": \"Biologic..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -1739,8 +1691,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S1\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2280,8 +2231,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_004\\\"\\n    },\\n    ..."
+      }
     },
     {
       "tool": "Grep",
@@ -2289,47 +2239,41 @@
         "pattern": "\"id\": \"R\\d",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/tree.gedcomx.json",
         "output_mode": "content"
-      },
-      "response_summary": "745:      \"id\": \"R2\",\n761:      \"id\": \"R3\",\n768:      \"id\": \"R4\",\n775:      \"id\": \"R5\",\n782:      \"id\": \"R7\",\n789:      \"id\": \"R9\",\n796:      \"id\": \"R11\",\n803:      \"id\": \"R13\",\n810:      \"id\": \"R15\",\n817:      \"id\": \"R17\",\n824:      \"id\": \"R19\",\n831:      \"id\": \"R21\","
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/docs"
-      },
-      "response_summary": "<tool_use_error>Directory does not exist: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/docs. Note: your current working directory is /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn.</tool_use_error>"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/record-extraction"
-      },
-      "response_summary": ".claude/skills/record-extraction/references/information-classification-at-extraction.md\n.claude/skills/record-extraction/references/note-taking-standards.md\n.claude/skills/record-extraction/references/places-guidance.md\n.claude/skills/record-extraction/references/source-classification-guide.md\n.claude/skills/record-extraction/SKILL.md"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*person*evidence*",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/SKILL.md",
         "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude"
-      },
-      "response_summary": ".claude/skills/convert-dates/SKILL.md\n.claude/skills/historical-context/SKILL.md\n.claude/skills/search-wikipedia/SKILL.md\n.claude/skills/translation/SKILL.md\n.claude/skills/validate-schema/SKILL.md\n.claude/skills/assertion-classification/SKILL.md\n.claude/skills/hypothesis-tracking/SKILL.md\n.claude/skills/init-project/SKILL.md\n.claude/skills/person-evidence/SKILL.md\n.claude/skills/search-familysearch-wiki/SKILL.md\n.claude/skills/tree-edit/SKILL.md\n.claude/skills/check-warnings/SKILL.md\n.claude..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/person-evidence/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: person-evidence\n3\tmodel: claude-sonnet-4-6\n4\tdescription: >-\n5\t  Links assertions to GedcomX persons \u2014 identity resolution. Evaluates whether\n6\t  a record's person is the same as a GedcomX person, creates person_evidence\n7\t  entries with confidence and rationale, and creates stub persons when none\n8\t  match. Also reviews and audits existing person_evidence links. GPS Step 3 \u2014\n9\t  Analysis and Correlation. Use when the user says \"is this the same person?\",\n10\t  \"link this to [per..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2403,8 +2347,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N13\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2610,15 +2553,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/research-exhaustiveness/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research-exhaustiveness\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Evaluates whether research on a question is reasonably\n5\t  exhaustive \u2014 applies the five threshold questions and the 7-point\n6\t  stop criteria, then either writes the exhaustive_declaration on the\n7\t  question or explains what's missing. GPS Step 1 \u2014 Reasonably\n8\t  Exhaustive Research. Use when the user says \"is this research\n9\t  exhaustive?\", \"are we done?\", \"have we searched enough?\", \"can we\n10\t  declare exhaus..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2682,15 +2623,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n   ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/.claude/skills/proof-conclusion/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the\n5\t  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses\n6\t  the proof conclusion form (Statement/Summary/Argument), and produces a\n7\t  self-contained narrative markdown that can be uploaded to FamilySearch.\n8\t  Updates tree.gedcomx.json when the tier reaches probable or higher.\n9\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2733,8 +2672,7 @@
             "fields": {}
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -2742,15 +2680,13 @@
         "description": "GPS mentor advisory review of ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review the proof summary ps_001 for the Wilkins marriage project and provide your advisory assessment. The project is at:\n\n/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn\n\nKey context:\n- Research question q_001: \"Who did Elijah Wilkins (born 1814, Muhlenberg County, Kentucky; died 30 November 1875) marry, as identified in Kentucky marriage records and contemporary household sources?\"\n- Conclusion in ps_001: Elijah married Sarah \"Sally\" Miller, December 1834, Kentucky (tier: probable)\n- Four sources used: Kentucky Marriages compiled index (ark:/61903/1:1:FWY5-7HW, collection 1674849) + US Census 1850, 1860, 1870 for the Elijah Wilkins household in Muhlenberg County KY\n- All sources are derivative (indexed); informants are parties to the marriage and household members (primary information)\n- One minor conflict: 1860 census records birthplace as North Carolina; 1850 and 1870 give Kentucky\n- Original Muhlenberg County marriage bond image not accessed (unindexed in collection 1804888; would require browse-only image search)\n- Tier rationale: probable not proved because all sources are derivative, not original manuscript images\n\nPlease provide your BCG-style senior genealogist assessment of: (1) whether the tier is correctly calibrated, (2) whether the evidence is adequately corroborated, (3) whether there are any GPS weaknesses to flag, and (4) any recommendations for improving the conclusion or advancing the tier to proved."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n*(Note on process: my toolkit in this session only exposes file-reading, not the write/append tools needed to create `evaluations/<file>.json` or append to `research.json`'s `evaluations[]` array. Per the output protocol's error-handling rule, I'm reporting that explicitly rather than pretending the file write succeeded. The review below is complete and actionable \\u2014 the orchestrator or a follow-up pass with write acc..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_marriage\",\n4\t    \"objective\": \"Who did Elijah Wilkins marry?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"question\": \"Who did Elija..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2781,8 +2717,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'focus'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'target_id'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'target_type'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'verdict'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 's..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2802,16 +2737,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: required field 'file_path' is null\\\",\\n    \\\"research.json/evaluations[0]: 'proof_critique' is not a valid evaluation_focus (expected one of: conclusion-readiness, on-demand, pre-exhaustiveness, proof-critique)\\\",\\n    \\\"research.json/evaluations[0]: 'Tier 'probable' confirmed. Two must-address items identified: (1) identity-linkage gap for marriage index county; (2) census informant_quality o..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/evaluations/proof-critique-ps_001-2026-07-10.md",
         "content": "# GPS Mentor Review: ps_001 \u2014 Elijah Wilkins Marriage\n\n**Reviewed:** 2026-07-10  \n**Proof summary:** ps_001  \n**Question:** q_001 \u2014 Who did Elijah Wilkins marry?  \n**Tier reviewed:** probable  \n**Verdict:** address_first\n\n---\n\n## Strengths\n\n- Independence reasoning is sound: 1850, 1860, and 1870 censuses treated as three independent enumerations, not one repeated source.\n- Birthplace discrepancy (NC in 1860 vs. KY in 1850/1870) handled with proper preponderance reasoning; correctly kept separate from the identity question.\n- Narrative is self-contained, footnoted, and readable without the JSON.\n- No hedging language that would oversell the tier.\n\n---\n\n## Must Address\n\n### 1. Identity-linkage gap for the marriage index\n\nThe compiled marriage index (src_001, ark:/61903/1:1:FWY5-7HW) specifies only \"Kentucky\" \u2014 no county. The link to subject 97YZ-J3D rests on a FamilySearch pre-existing attachment, and log_001 already demonstrated that this same subject (97YZ-J3D) had a different record wrongly attached (a post-mortem 1887 marriage). Competing \"Elijah Wilkins\" candidates marrying in Kentucky ca. 1830-1840 were not documented or eliminated. The proof narrative does not surface this risk or show that alternatives were ruled out. This is a BCG Standard 43 issue \u2014 elimination of alternatives claimed but not performed.\n\n**Scope note:** The three census records independently establish that Elijah's wife was named Sarah/Sally in Muhlenberg County, so the core identity finding is well-supported. What is at risk is specifically the maiden name \"Miller\" and the exact date \"December 1834,\" both of which currently depend on the unconfirmed-county index entry.\n\n### 2. Census name assertions information_quality overstated\n\nAssertions a_005, a_009, and a_013 (wife's name in 1850, 1860, 1870 censuses) are classified `information_quality: \"primary\"` on an unidentified household informant. The informant is described as \"unknown household member (likely self or spouse)\" \u2014 but \"likely\" is an assumption. The informant could have been a neighbor, a child, or a different household member. Classifying these as primary inflates their weight; a more conservative classification with an explicit caveat (\"primary or secondary \u2014 informant identity unconfirmed\") would be more accurate.\n\n---\n\n## Advisory (Consider Addressing)\n\n- **Tier rationale wording:** The current narrative states that \"proved requires two or more independent original sources with primary information\" and implies derivative sources cap at probable. GPS does not categorically bar proved on well-corroborated derivatives. The actual blocker here is the identity-linkage gap above, not source type alone. Sharpening the rationale teaches the right lesson.\n\n- **Evidence-type inconsistency:** a_001 (groom's name from the marriage index) is tagged `evidence_type: \"indirect\"` while a_003 (bride's name from the same record) is `\"direct\"`. Both are Name assertions from the same record; the asymmetry should be reconciled (non-blocking).\n\n- **Skipped probate (pli_005):** Elijah's estate file (1875-1885) could independently name Sarah as surviving widow \u2014 corroborating the census evidence without depending on the marriage index. The skip was defensible for the current tier, but probate is a natural next step if the tier is to advance.\n\n---\n\n## Advancement Path to Proved\n\n1. **(Higher priority)** Access the original Muhlenberg County marriage bond image via browse search of collection 1804888 volumes, or run a statewide search for other \"Elijah Wilkins\" marriages in Kentucky ca. 1830-1840 and document that no viable competing candidate exists. Either approach closes the identity-linkage gap.\n\n2. **(Supporting)** Search Muhlenberg County probate records 1875-1885 for Elijah's estate naming a surviving spouse. An independent naming of \"Sarah\" as widow would corroborate the census evidence without relying on the marriage index.\n\n3. Reclassify a_005, a_009, a_013 informant_quality with a caveat on informant identification.\n\n---\n\n## Summary\n\n**Tier \"probable\" is correctly calibrated for the current evidence set.** The three census records provide genuine independent corroboration that Elijah's wife was Sarah/Sally (Wilkins), and the marriage index directly names the bride. The gap is the maiden name \"Miller\" and the exact date/place, which rest on a single derivative source whose county is unconfirmed and whose pre-attachment to 97YZ-J3D cannot be taken at face value given this project's log. Addressing the identity-linkage gap and the informant-quality overstating are the prerequisites for moving this conclusion to proved.\n"
-      },
-      "response_summary": "File created successfully at: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-wilkins-marriage-t4b95pcn/evaluations/proof-critique-ps_001-2026-07-10.md (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2831,8 +2764,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2864,8 +2796,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -2874,5 +2805,6 @@
     "era": "1830s",
     "geography": "US-KY"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

@@ -1858,45 +1858,39 @@
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_death_kentucky\",\n4\t    \"objective\": \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous The objective is: \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\" Derive the first research question from this objective."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"97YZ-J3D\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Elijah\",\n11\t          \"surname\": \"Wilkins\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ae8b941e-aabf-4dbb-bbbd-fce7ce87e1a7\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1814\",\n19\t          \"standard_date\": \"1814\",\n20\t          \"place\": \"Muhlenberg, Kentucky, United Stat..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1921,32 +1915,28 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Kentucky death certificates, circa 1911\u20131960s, for question q_001: date and place of death of Elijah Wilkins born circa 1814 Muhlenberg County Kentucky"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_read",
         "max_results": 9
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_n..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Kentucky",
         "contextName": "United States"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Kentucky, United States\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1792/\\\",\\n      \\\"latitude\\\": 37.5,\\n      \\\"longitude\\\": -85.25,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Kentucky&focusedId=354\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Kentucky\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Kentucky, Edgar, Illinois, United States\\\",\\n   ..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -1954,8 +1944,7 @@
         "standardPlace": "Kentucky, United States",
         "startYear": 1911,
         "endYear": 1967
-      },
-      "response_summary": "{\"error\":\"Population data service is unavailable. Is the Pop Stats API running?\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1963,8 +1952,7 @@
         "standardPlace": "Kentucky, United States",
         "startYear": 1911,
         "endYear": 1967
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Kentucky, United States\\\",\\n    \\\"startYear\\\": 1911,\\n    \\\"endYear\\\": 1967\\n  },\\n  \\\"scope\\\": \\\"Kentucky\\\",\\n  \\\"totalForPlace\\\": 22,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1674843\\\",\\n      \\\"title\\\": \\\"Kentucky, Births and Christenings, 1839-1960\\\",\\n      \\\"dateRange\\\": \\\"1839-1960\\\",\\n      \\\"recordCount\\\": 381231,\\n      \\\"personCount\\\": 1032346,\\n      \\\"imageCount\\\": 381231,\\n      \\\"url\\\": \\\"https://www.family..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -1972,8 +1960,7 @@
         "standardPlace": "Kentucky, United States",
         "startYear": 1911,
         "endYear": 1967
-      },
-      "response_summary": "<persisted-output>\nOutput too large (64.8KB). Full output saved to: /home/tife/.claude/projects/-tmp-e2e-wilkins-death-kentucky-utzm6evl/0bcd7329-a26e-4992-8998-5aa8951d4155/tool-results/toolu_01HTmnqHBUD476dtFFPkamCf.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Kentucky, United States\\\",\\n    \\\"startYear\\\": 1911,\\n    \\\"endYear\\\": 1967\\n  },\\n  \\\"totalResults\\\": 12608,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"004..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1982,47 +1969,41 @@
         "startYear": 1911,
         "endYear": 1967,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Kentucky, United States\\\",\\n    \\\"startYear\\\": 1911,\\n    \\\"endYear\\\": 1967\\n  },\\n  \\\"totalForPlace\\\": 368,\\n  \\\"returned\\\": 50,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/48033/\\\",\\n      \\\"linkText\\\": \\\"Genealogies of Kentucky Families from The Register of the Kentucky Historical Society, Vol. II\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"http://www.archives.gov/research/military/viet..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Kentucky death records certificates genealogy research 1911"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Kentucky, United States",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Kentucky, United States",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Kentucky, United States",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Kentucky, United States",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2098,30 +2079,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Create a research plan for q_001: \"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky), and what identifying information does the certificate contain?\" Use locality guide loc_001 already persisted for Kentucky death certificates 1911-1967."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2228,31 +2205,27 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute pli_001: search FamilySearch collection 1417491 \"Kentucky, Deaths, 1911-1967\" for Elijah Wilkins, born circa 1814, Muhlenberg County, Kentucky. Also execute pli_006: search for children George Addison Wilkins and any other children whose death certificates may name Elijah's death information. Project path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/search-records/references/research-log-protocol.md"
-      },
-      "response_summary": "1\t# Research Log Protocol\n2\t\n3\tThis protocol must be followed by every skill that searches for or\n4\tprocesses genealogical records. The research log is the GPS audit trail\n5\tthat makes \"reasonably exhaustive\" claims provable.\n6\t\n7\tThe mechanical side of logging is owned by the **`research_log_append`**\n8\tMCP tool: it assigns the `log_` id, stamps the timestamp, finalizes the\n9\tstaged search payload into the `results/<log_id>.json` sidecar (counting\n10\tthe results itself), validates before per..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2263,8 +2236,7 @@
         "recordType": "death",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"1417491\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 175,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NSMS-XXQ\\\",\\n      \\\"events\\\": [],\\n      \\\"t..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2273,8 +2245,7 @@
         "stagedResultsRef": "results/.staging/d644002f-dfe3-4dc4-b641-325ae293a309.json",
         "subjectId": "97YZ-J3D",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"97YZ-J3D\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 14,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NS4X-3LR\\\",\\n      \\\"matchScore\\\": 0.56679976,\\n      \\\"primaryId\\\": \\\"p_11718651355\\\",\\n      \\\"personName\\\": \\\"Elias Wilkins\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Kentucky, Deaths, 1911-1967\\\",\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2282,8 +2253,7 @@
         "recordId": "ark:/61903/1:1:NSMS-XXQ",
         "resultsRef": "results/.staging/d644002f-dfe3-4dc4-b641-325ae293a309.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11712667024\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NSMS-XXQ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elijah\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Death\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1940\\\",\\n          \\\"standard_date\\\": \\\"1940\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2291,8 +2261,7 @@
         "recordId": "ark:/61903/1:1:N9YP-FBF",
         "resultsRef": "results/.staging/d644002f-dfe3-4dc4-b641-325ae293a309.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11710805355\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:N9YP-FBF\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elijah\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Death\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1918\\\",\\n          \\\"standard_date\\\": \\\"1918\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2300,8 +2269,7 @@
         "recordId": "ark:/61903/1:1:NS4X-3LR",
         "resultsRef": "results/.staging/d644002f-dfe3-4dc4-b641-325ae293a309.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11718651355\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NS4X-3LR\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"Elias\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_11718651354\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NS4X-3L5\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2313,8 +2281,7 @@
         "birthYearTo": 1820,
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"1417491\\\",\\n    \\\"birthYearFrom\\\": 1809,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 115,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:N9YP-FBF\\\",\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2335,8 +2302,7 @@
         "resultsAvailable": 175,
         "stagedResultsRef": "results/.staging/d644002f-dfe3-4dc4-b641-325ae293a309.json",
         "notes": "175 total results. Two direct 'Elijah Wilkins' hits at top: (1) NSMS-XXQ died 1940 Central City Muhlenberg \u2014 father indexed as 'Ison Wilkins', not James Wilkins \u2014 different person. (2) N9YP-FBF died 1918 Paducah McCracken \u2014 very sparse index, no parents. Also several 'Elija/Eligah Wilkins' as father-field entries (Polly Shover, Ivy Wilkins). N9YP-FBF is most promising for our subject \u2014 needs image examination."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:26:24.081Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2347,8 +2313,7 @@
         "recordType": "death",
         "count": 10,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"George Addison\\\",\\n    \\\"collectionId\\\": \\\"1417491\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 10,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 250,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 10,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:N9F4-HVC\\\",\\n      \\\"events\\\": [],\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2356,15 +2321,13 @@
         "recordId": "ark:/61903/1:1:N9F4-HVC",
         "resultsRef": "results/.staging/9cc5f99f-2957-4f40-b59a-5977315fc2b4.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11700646749\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:N9F4-HVC\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"George Addison\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Death\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1934\\\",\\n          \\\"standard_date\\\": \\\"1934\\\",\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:N9YP-FBF"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11710805355\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:N9YP-FBF\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9b3d121a-e633-46d1-8640-3070566aab6e\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elijah\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"6a1d76af-9a6c-46fd-8fb2-f22b45b22c9d\\\",\\n          \\\"type\\\": \\\"D..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2386,8 +2349,7 @@
         "resultsAvailable": 115,
         "stagedResultsRef": "results/.staging/6e7620ac-ca52-40af-9c70-90519113c7af.json",
         "notes": "Birth-year-filtered search (1809-1820). N9YP-FBF (Elijah Wilkins, died 1918 Paducah McCracken) ranked #1 \u2014 confirms the underlying record encodes a birth year in the 1809-1820 range consistent with our subject born ~1814. This is the primary candidate for Elijah Wilkins's own death certificate. Image needed for identity confirmation."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:27:41.753Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2408,8 +2370,7 @@
         "resultsAvailable": 250,
         "stagedResultsRef": "results/.staging/9cc5f99f-2957-4f40-b59a-5977315fc2b4.json",
         "notes": "George Addison Wilkins (K4LQ-7GM), died 1934 Muhlenberg KY. Father indexed as 'Eligie Wilkins' (= Elijah Wilkins, transcription variant) and mother 'Sallie Millard'. Image URL: https://www.familysearch.org/ark:/61903/1:2:M6ZT-WR3. Confirms father's name and provides previously unknown mother maiden name 'Millard' (possibly Sally's maiden name)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:27:47.164Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 10,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2435,16 +2396,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Extract assertions from two Kentucky death certificate records found in search log entries log_002 and log_003:\n\n1. recordId: ark:/61903/1:1:N9YP-FBF \u2014 \"Elijah Wilkins, Kentucky Deaths 1911-1967\" \u2014 died 1918, Paducah, McCracken County, Kentucky. logId: log_002, planItemId: pli_001. This is the primary candidate for the death certificate of research subject Elijah Wilkins (97YZ-J3D), born ~1814 Muhlenberg County KY. The birth-year-filtered search ranked this #1 for persons born 1809-1820. Image URL: https://www.familysearch.org/ark:/61903/1:2:M68N-R23\n\n2. recordId: ark:/61903/1:1:N9F4-HVC \u2014 \"George Addison Wilkins, Kentucky Deaths 1911-1967\" \u2014 died 1934, Muhlenberg County, Kentucky. logId: log_003, planItemId: pli_006. FAN record: George Addison Wilkins (K4LQ-7GM) is a child of our subject. Father indexed as \"Eligie Wilkins\" (= Elijah Wilkins), mother \"Sallie Millard\". Image URL: https://www.familysearch.org/ark:/61903/1:2:M6ZT-WR3\n\nProject path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2452,8 +2411,7 @@
         "description": "Read Elijah Wilkins 1918 death certificate image",
         "subagent_type": "image-reader",
         "prompt": "Please transcribe the FamilySearch death certificate image at ARK: ark:/61903/3:1:3Q9M-C9YG-VS9K-C\n\nI am looking for the full death certificate entry for Elijah Wilkins who died in 1918 in Paducah, McCracken County, Kentucky. Extract all fields visible on the certificate: name, date of death, place of death, age, birthplace, parents' names, spouse, occupation, cause of death, informant name and relationship, and any other identity-confirming fields.\n\nProject path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"**imageId:** ark:/61903/3:1:3Q9M-C9YG-VS9K-C\\n**Page description:** Kentucky State Board of Health Certificate of Death, McCracken County, Paducah, 1918. English.\\n**Saved image:** images/ark_61903_3_1_3Q9M-C9YG-VS9K-C.jpg\\n\\n---\\n\\n**FULL TRANSCRIPTION**\\n\\nCommonwealth of Kentucky\\nSTATE BOARD OF HEALTH\\nBUREAU OF VITAL STATISTICS\\nCERTIFICATE OF DEATH\\n\\nFile No. 35585\\nRegistered No. 551\\n\\n1. PLACE OF DEATH\\nCounty: McCracken\\nVol. Pot. 720\\nTown/City: Paducah ..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -2461,8 +2419,7 @@
         "ark": "ark:/61903/3:1:3Q9M-C9YG-VS9K-C",
         "lookingFor": "death certificate entry for Elijah Wilkins who died in 1918 in Paducah, McCracken County, Kentucky",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"transcription\\\": \\\"Commonwealth of Kentucky\\\\nSTATE BOARD OF HEALTH\\\\nBUREAU OF VITAL STATISTICS\\\\nCERTIFICATE OF DEATH\\\\n\\\\nFile No. 35585\\\\nRegistered No. 551\\\\n\\\\n1 PLACE OF DEATH\\\\nCounty McCracken\\\\nVol. Pot. 720\\\\nIno. Town Paducah\\\\nCity Paducah  (No. City Hall Str. 3 Ward)\\\\nRegistration District No. 2340\\\\nPrimary Registration District No. 2340\\\\n[Illegible] death occurred in a hospital or institution, give its NAME instead of street and number.]\\\\n\\..."
+      }
     },
     {
       "tool": "Agent",
@@ -2470,8 +2427,7 @@
         "description": "Read George Addison Wilkins 1934 death certificate image",
         "subagent_type": "image-reader",
         "prompt": "Please transcribe the FamilySearch death certificate image at ARK: ark:/61903/3:1:3Q9M-C9TF-679H\n\nI am looking for the full death certificate entry for George Addison Wilkins who died in 1934 in Muhlenberg County, Kentucky. Pay close attention to the parents section \u2014 specifically the father's name and birthplace, and the mother's maiden name and birthplace. Also capture: full name of deceased, date of death, place of death, age, birthplace, informant name and relationship, and any other visible fields.\n\nProject path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"**imageId:** ark:/61903/3:1:3Q9M-C9TF-679H\\n**Page description:** Kentucky Certificate of Death, State Board of Health Bureau of Vital Statistics, Muhlenberg County, 1934, English.\\n**Saved image:** images/ark_61903_3_1_3Q9M-C9TF-679H.jpg\\n\\n---\\n\\n## Full Transcription\\n\\nForm V. S. 1-B-50m-11-1-29\\nCOMMONWEALTH OF KENTUCKY\\nState Board of Health\\nBUREAU OF VITAL STATISTICS\\nCERTIFICATE OF DEATH\\nFile No. 10215\\nRegistered No. 8\\n\\n**1. PLACE OF DEATH**\\nCounty: Mu..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -2479,8 +2435,7 @@
         "ark": "ark:/61903/3:1:3Q9M-C9TF-679H",
         "lookingFor": "death certificate entry for George Addison Wilkins, died 1934, Muhlenberg County, Kentucky \u2014 father's name and birthplace, mother's maiden name and birthplace",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"transcription\\\": \\\"Form V. S. 1-B-50m-11-1-29\\\\nCOMMONWEALTH OF KENTUCKY\\\\nState Board of Health\\\\nBUREAU OF VITAL STATISTICS\\\\nCERTIFICATE OF DEATH\\\\nFile No. 10215\\\\nRegistered No. 8\\\\n\\\\n1 PLACE OF DEATH\\\\nCounty Muhlenberg\\\\nVot. Pct. Bremen\\\\nRegistration District No. 1086\\\\nInc. Town\\\\nPrimary Registration District No. 68/5-\\\\nCity\\\\n(No. St. Ward)\\\\n(If death occurred in a hospital or institution, give its NAME instead of street and number)\\\\n\\\\n2 FULL..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2488,8 +2443,7 @@
         "recordId": "ark:/61903/1:1:NSZF-87C",
         "resultsRef": "results/log_001.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11721115059\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NSZF-87C\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"Elijah\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_11721115058\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NSZF-87H\\\",..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2500,8 +2454,7 @@
         "deathPlace": "Muhlenberg, Kentucky",
         "count": 20,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"1417491\\\",\\n    \\\"deathPlace\\\": \\\"Muhlenberg, Kentucky\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 22,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NSMS-XXQ\\\",\\n      \\\"events\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2522,8 +2475,7 @@
         "resultsAvailable": 22,
         "stagedResultsRef": "results/.staging/1b9401d1-08ca-403c-8ab4-a2a0bee34e21.json",
         "notes": "Muhlenberg-specific search. No direct death certificate for Elijah Wilkins born ~1814 in Muhlenberg. NSMS-XXQ (died 1940, father=Ison Wilkins) and NSZF-87C (Elijah as FATHER of infant died 1920 in Central City) confirmed as different individuals. N9RJ-LBZ shows 'Eligah Wilkins' as father of Albert Wilkins \u2014 another FAN reference. No certificate for subject himself identified in this county."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:33:08.122Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2531,15 +2483,13 @@
         "recordId": "ark:/61903/1:1:N9RJ-LBZ",
         "resultsRef": "results/.staging/1b9401d1-08ca-403c-8ab4-a2a0bee34e21.json",
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "{\"error\":\"stagedResultsRef 'results/.staging/1b9401d1-08ca-403c-8ab4-a2a0bee34e21.json' does not exist or is invalid JSON.\"}"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json"
-      },
-      "response_summary": "Wasted call \u2014 file unchanged since your last Read. Refer to that earlier tool_result instead."
+      }
     },
     {
       "tool": "Agent",
@@ -2547,22 +2497,19 @@
         "description": "Extract N9F4-HVC George Addison Wilkins 1934 death cert",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this Kentucky death certificate into the research project.\n\n**Project path:** /tmp/e2e-wilkins-death-kentucky-utzm6evl\n**Record ID:** ark:/61903/1:1:N9F4-HVC\n**Log entry ID:** log_003\n**Plan item:** pli_006\n**Open question:** q_001\n\n**Context:** This is a FAN (Family/Associates/Neighbors) record. George Addison Wilkins (K4LQ-7GM in tree.gedcomx.json) is a child of the research subject Elijah Wilkins (97YZ-J3D). His 1934 Muhlenberg County death certificate names the father as \"Eligie Wilkins\" (index value) / \"Eliza Wilkins\" (OCR of image \u2014 suspected transcription of \"Elijah Wilkins\"). This record bears on q_001 because: (a) it names Elijah Wilkins as father, confirming he existed and fathered George Addison; (b) it may indirectly constrain Elijah's death date if the informant (presumably a family member) knew when he died.\n\n**Image transcription** (image already read by image-reader, saved as images/ark_61903_3_1_3Q9M-C9TF-679H.jpg):\n\nKentucky State Certificate of Death\nName: George Addison Wilkins\nDate of death: April 1, 1934\nPlace of death: Bremen, Muhlenberg County, Kentucky\nAge: approximately 72 years (born July 20, 1861 per tree \u2014 OCR rendered the date field as \"12 8 10\" which is unreliable)\nCause of death: Pulmonary Tuberculosis; Nephritis and Pyelitis\nBurial: Shawneetown, April 2, 1934\nFather's name: \"Eliza Wilkins\" \u2014 the image-reader flagged this as a likely OCR misread of \"Elijah Wilkins\"; the FamilySearch index transcription of this same field reads \"Eligie Wilkins\". Both are suspected variants of the name Elijah. Record this name TENTATIVE ([?]) pending original image confirmation, with the doubt noted in informant_bias_notes.\nMother's maiden name: \"Sallie Wilberd\" per image OCR; the FamilySearch index gives \"Sallie Millard\". Record the index value with the OCR variant noted.\nSource collection: FamilySearch collection 1417491 \"Kentucky, Deaths, 1911-1967\"\nImage ARK: ark:/61903/3:1:3Q9M-C9TF-679H\n\n**Classification guidance:**\n- The death date, place, cause, and burial are facts about George Addison Wilkins himself \u2014 primary information from official registration\n- The father's name (\"Eliza/Eligie/Elijah Wilkins\") and mother's name are secondary information about third parties, reported by an informant with family knowledge\n- This is an original source (a government-issued death certificate, not a derivative)\n- The father name field bears on q_001 (it corroborates Elijah Wilkins as father); classify its evidence type accordingly (indirect evidence \u2014 it does not directly state Elijah's death date/place, but it places him as a named ancestor of George Addison)\n\n**Do NOT link this persona to subject 97YZ-J3D** \u2014 do not create person_evidence entries. Identity linking is handled separately by the person-evidence skill. Just extract the source and assertions, and return the source id and assertion count."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Summary:\\n\\n**Source:** src_001 / S1 (action: created). Original Kentucky State Certificate of Death, FamilySearch collection 1417491.\\n\\n**Assertions persisted: 13 total**\\n- deceased (George Addison Wilkins, p_11700646749): 9 assertions \\u2014 name (a_001), sex (a_002), death date+place (a_003), age (a_004), birth year computed (a_005), cause of death (a_006), burial (a_007), relationship to father (a_010), relationship to mother (a_013)\\n- fa..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky)\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"97YZ-J3D\\\",\\n      \\\"name\\\": \\\"Elijah Wilkins\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:N9F4-HVC"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11700646749\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:N9F4-HVC\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"ab812f50-e956-4448-bf7e-74c59ebf08f9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\",\\n          \\\"given\\\": \\\"George Addison\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"021e939f-ed16-469b-ac0b-b2091c8358e5\\\",\\n          \\\"typ..."
+      }
     },
     {
       "tool": "Agent",
@@ -2570,15 +2517,13 @@
         "description": "Extract N9YP-FBF ruled-out Elijah Wilkins 1918 Paducah cert",
         "subagent_type": "record-extractor",
         "prompt": "Extract assertions from this Kentucky death certificate. This record was examined and found to be a DIFFERENT person \u2014 not the research subject.\n\n**Project path:** /tmp/e2e-wilkins-death-kentucky-utzm6evl\n**Record ID:** ark:/61903/1:1:N9YP-FBF\n**Log entry ID:** log_002\n**Plan item:** pli_001\n**Open question:** q_001\n\n**Context:** The research subject is Elijah Wilkins (97YZ-J3D), born circa 1814 in Muhlenberg County, Kentucky. This record is for an \"Elijah Wilkins\" who died in 1918 in Paducah, McCracken County, KY. However, image examination (image saved as images/ark_61903_3_1_3Q9M-C9YG-VS9K-C.jpg) confirmed his age at death was 75 years, meaning he was born circa 1843 \u2014 approximately 29 years too late to be our subject born circa 1814. This person is a different Elijah Wilkins and should NOT be linked to subject 97YZ-J3D.\n\n**Image transcription** (image read and saved as images/ark_61903_3_1_3Q9M-C9YG-VS9K-C.jpg):\n\nKentucky State Certificate of Death\nName: Elijah Wilkins\nDate of death: November 2, 1918\nPlace of death: Paducah, McCracken County, Kentucky\nAge at death: 75 years (born approximately 1843)\nCause of death: Unknown (coroner's case)\nFile No. 35585, Registered No. 551\nInformant: Mrs. Hattie Honeyman, 925 Clay St., Paducah\nFather's name: not recorded on certificate\nMother's name: not recorded on certificate\n\n**Classification guidance:**\n- All facts on this certificate are primary information from official death registration\n- This is an original source\n- This record constitutes NEGATIVE evidence for q_001: it was a candidate for the research subject's death certificate but is confirmed to be a different person (born ~1843 vs subject born ~1814)\n- The evidence_type for the purposes of q_001 is negative (it is a same-name record that does NOT resolve q_001)\n- Do not attempt to link this to research subject 97YZ-J3D; do not create person_evidence entries\n\nExtract the source and all assertions about this individual (death date, place, age, etc.) so the record is on file as having been examined and ruled out. Return source id and assertion count."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. The resolved standard place \\\"Paducah, McCracken, Kentucky, United States\\\" is correct for Paducah, McCracken County, KY.\\n\\n---\\n\\nSource created: **src_002** / **S2** (action: created)\\n\\nAssertions written: 7 (a_014 through a_020), grouped by role:\\n- `deceased` (6): name, sex, death (date + place), age, birth (calculated ~1843), cause_of_death\\n- `absent` (1): negative evidence for q_001 \\u2014 research subject 97YZ-J3D ruled out by ~29-y..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky)\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"97YZ-J3D\\\",\\n      \\\"name\\\": \\\"Elijah Wilkins\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2748,8 +2693,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_persona_id omitted \\u2014 multiple personas in this record (p_11710805355, p_102264241473) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_11710805355')\\\",\\n    \\\"ops[2]: record_persona_id omitted \\u2014 multiple personas in this record (p_11710805355, p_102264241473) and the batch spans multiple record_rol..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3046,8 +2990,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3221,46 +3164,40 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_014\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_015\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_016\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link extracted assertions to tree persons. \n\nThree new record personas need identity evaluation:\n\n1. p_11700646749 (deceased in src_001 / S1): \"George Addison Wilkins\", died April 1 1934, Bremen, Muhlenberg KY \u2014 likely the same as tree person K4LQ-7GM (George Addison Wilkins, born 20 Jul 1861, died 1 Apr 1934, Muhlenberg KY). logId: log_003.\n\n2. p_11700646750 (father persona in src_001 / S1): \"Eligie Wilkins\" [?] (suspected Elijah Wilkins), named as father of George Addison Wilkins \u2014 likely the same as tree subject Elijah Wilkins 97YZ-J3D. The name is tentative pending image confirmation. logId: log_003.\n\n3. p_11700646751 (mother persona in src_001 / S1): \"Sallie Millard\", named as mother of George Addison Wilkins \u2014 likely the same as tree person Sally Wilkins (subject's wife). logId: log_003.\n\n4. p_11710805355 (src_002 / S2): \"Elijah Wilkins\", died November 2 1918, Paducah, McCracken KY, age 75 (born ~1843) \u2014 DIFFERENT person from research subject 97YZ-J3D (born ~1814). Should NOT be linked to 97YZ-J3D. logId: log_002.\n\nProject path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__materialize_facts,mcp__genealogy__same_person,mcp__genealogy__merge_warnings",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_death_kentucky\",\n4\t    \"objective\": \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"97YZ-J3D\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Elijah\",\n11\t          \"surname\": \"Wilkins\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ae8b941e-aabf-4dbb-bbbd-fce7ce87e1a7\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1814\",\n19\t          \"standard_date\": \"1814\",\n20\t          \"place\": \"Muhlenberg, Kentucky, United Stat..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/results/log_003.json",
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_003\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-25T00:26:26.979Z\",\n5\t  \"returned_count\": 10,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Wilkins\",\n9\t      \"givenName\": \"George Addison\",\n10\t      \"collectionId\": \"1417491\",\n11\t      \"recordType\": \"death\",\n12\t      \"count\": 10,\n13\t      \"projectPath\": \"/tmp/e2e-wilkins-death-kentucky-utzm6evl\"\n14\t    },\n15\t    \"totalMatches\": 250,\n16\t    \"paginationCappedAt\": 4999,\n17\t    \"returned\": 10,\n18\t    \"offs..."
+      }
     },
     {
       "tool": "Read",
@@ -3268,8 +3205,7 @@
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/results/log_003.json",
         "offset": 80,
         "limit": 80
-      },
-      "response_summary": "80\t              ]\n81\t            },\n82\t            {\n83\t              \"id\": \"p_11700646751\",\n84\t              \"ark\": \"ark:/61903/1:1:N9F4-HV8\",\n85\t              \"gender\": \"Female\",\n86\t              \"names\": [\n87\t                {\n88\t                  \"type\": \"BirthName\",\n89\t                  \"surname\": \"Millard\",\n90\t                  \"given\": \"Sallie\"\n91\t                }\n92\t              ],\n93\t              \"sources\": [\n94\t                {\n95\t                  \"ref\": \"sd_da1\"\n96\t          ..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -3381,8 +3317,7 @@
             "p_11700646751"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"candidateGedcomx/sources[0]: missing required field 'title'\\\",\\n    \\\"candidateGedcomx/persons[0]/names[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[0]/facts[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[1]/names[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[2]/names[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/relationships[0]: missing required ..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -3498,8 +3433,7 @@
             "p_11700646751"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"warningCount\\\": 6,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"relativesHasEventBeforeBirth365_2\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"K4LQ-7GM\\\",\\n      \\\"personName\\\": \\\"George Addison Wilkins\\\",\\n      \\\"factIds\\\": [\\n        \\\"F19\\\",\\n        \\\"0fe5d44d-5b03-462b-ac31-a8b2d4775fb9\\\",\\n        \\\"d54839e3-8ee9-4757-8c36-00ee9fde2f04\\\",\\n        \\\"9609b96c-5594-4ddd-bcdf-22ef09..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3508,8 +3442,7 @@
         "personId": "K4LQ-7GM",
         "recordId": "ark:/61903/1:1:N9F4-HVC",
         "recordRole": "deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"K4LQ-7GM\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 3,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 5,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"K4LQ-7GM\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"20 July 1861, Muhlenberg, Kentucky, United States\\\",\\n        \\\"~1862\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3518,8 +3451,7 @@
         "personId": "97YZ-J3D",
         "recordId": "ark:/61903/1:1:N9F4-HVC",
         "recordRole": "father_of_deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"97YZ-J3D\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3527,8 +3459,7 @@
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl",
         "recordId": "ark:/61903/1:1:N9YP-FBF",
         "recordRole": "deceased"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 3,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 4,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3778,8 +3709,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[9]: confidence 'confident' is not available here: assertion 'a_010' carries an uncertain reading ([?]) and no other record independently ties person 'K4LQ-7GM' to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, and record what would resolve it \\u2014 a second independent record, or the original image. A confident wrong parent is worse than a flagged uncertain one.\\\",\\n    \\\"worked..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4029,8 +3959,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4056,24 +3985,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute pli_002: Search FamilySearch collection 1674848 \"Kentucky, Deaths and Burials, 1843-1970\" for Elijah Wilkins, born circa 1814 Muhlenberg County Kentucky. Subject person ID: 97YZ-J3D. This is the fallback for pli_001 \u2014 collection 1417491 (statewide death certificates 1911-1967) found no direct certificate for a person born ~1814. Collection 1674848 covers pre-registration deaths (1843-1910) that would not appear in collection 1417491. Try name variants: Elijah Wilkins, Elija Wilkins, Eligah Wilkins, E. Wilkins. Try with and without Muhlenberg County filter. Project path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4084,8 +4010,7 @@
         "recordType": "death",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"1674848\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 36,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 36,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FWT1-WZP\\\",\\n      \\\"events\\\": [\\n        {\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -4094,16 +4019,14 @@
         "stagedResultsRef": "results/.staging/c557831c-ee89-41b6-82d4-1eee3fa2b414.json",
         "subjectId": "97YZ-J3D",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"97YZ-J3D\\\",\\n  \\\"scoredCount\\\": 36,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 30,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FWY3-S2Z\\\",\\n      \\\"matchScore\\\": 0.011116587,\\n      \\\"primaryId\\\": \\\"p_11102753410\\\",\\n      \\\"personName\\\": \\\"Wilkinson\\\",\\n      \\\"sex\\\": \\\"Unknown\\\",\\n      \\\"deathDate\\\": \\\"December 1877\\\",\\n      \\\"deathPlace\\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__record_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4123,8 +4046,7 @@
         "planItemId": "pli_002",
         "stagedResultsRef": "results/.staging/c557831c-ee89-41b6-82d4-1eee3fa2b414.json",
         "notes": "Broad search returned 36 results; rank_search_matches top score 0.011 (a Wilkinson from Louisville). No result named 'Elijah Wilkins' born ~1814 Muhlenberg County. No candidate attached to 97YZ-J3D."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:52:12.346Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 36,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4136,8 +4058,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"section 'plan_items' requires a 'planId'\\\",\\n    \\\"worked example for 'plan_items':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"plan_items\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  planId: \\\\\\\"pl_001\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4148,8 +4069,7 @@
         "recordType": "death",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elija\\\",\\n    \\\"collectionId\\\": \\\"1674848\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 36,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 36,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FWT1-WZP\\\",\\n      \\\"events\\\": [\\n        {\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4162,8 +4082,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4184,8 +4103,7 @@
         "planItemId": "pli_002",
         "stagedResultsRef": "results/.staging/8b7cff21-c52f-427b-880d-75c53f8ea934.json",
         "notes": "Spelling variant 'Elija' returned same 36 results as 'Elijah' \u2014 all Wilkerson/Wilkins from Louisville or other KY counties. No match for Muhlenberg County born ~1814."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:52:32.883Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 36,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4196,8 +4114,7 @@
         "recordType": "death",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Eligah\\\",\\n    \\\"collectionId\\\": \\\"1674848\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 36,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 36,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FWT1-WZP\\\",\\n      \\\"events\\\": [\\n        {\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4218,8 +4135,7 @@
         "planItemId": "pli_002",
         "stagedResultsRef": "results/.staging/963be4f6-7f90-4676-9385-99ed0532651c.json",
         "notes": "Variant 'Eligah Wilkins' (spelling from George Addison's cert) returned identical 36 results \u2014 all Louisville/Jefferson area, no Muhlenberg County entries. Collection 1674848 appears sparsely indexed for Muhlenberg County."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:52:56.457Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 36,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4229,8 +4145,7 @@
         "collectionId": "1674848",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"deathPlace\\\": \\\"Muhlenberg, Kentucky\\\",\\n    \\\"collectionId\\\": \\\"1674848\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 18,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 18,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FW5W-PYH\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4250,8 +4165,7 @@
         "planItemId": "pli_002",
         "stagedResultsRef": "results/.staging/63fea960-9f6f-4407-adf9-4721999061d9.json",
         "notes": "Muhlenberg place filter returned 18 results \u2014 all Louisville/Jefferson or generic KY entries. No results actually placed in Muhlenberg County. Collection 1674848 has no indexed Muhlenberg County Wilkins death records. Confirms subject likely died pre-1911 before civil registration or this collection's pre-1911 coverage is absent for this county."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:53:18.240Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 18,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4264,8 +4178,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4278,8 +4191,7 @@
         "fields": {
           "status": "skipped"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4290,8 +4202,7 @@
         "recordType": "probate",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"1875188\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4310,8 +4221,7 @@
         "resultsAvailable": 0,
         "planItemId": "pli_004",
         "notes": "Zero results for Elijah Wilkins in Kentucky Probate Records 1727-1990. Trying broader variant searches."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:53:42.165Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4322,8 +4232,7 @@
         "deathPlace": "Kentucky",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"deathPlace\\\": \\\"Kentucky\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:6XN6-4SZ6\\\",\\n      \\\"events\\\": [],\\n      \\\"t..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4344,8 +4253,7 @@
         "planItemId": "pli_004",
         "stagedResultsRef": "results/.staging/000c7a27-5ffe-47b5-89c8-508fe7b96398.json",
         "notes": "4 results from collection 3155869 (Kentucky Wills and Deeds), all stub entries 'W S Wilkins' or bare 'Wilkins' pointing to same image ARK \u2014 no given name Elijah, no dates, no Muhlenberg County specifics. No match."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:53:57.990Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4356,8 +4264,7 @@
         "anyPlace": "Muhlenberg",
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"collectionId\\\": \\\"3155869\\\",\\n    \\\"anyPlace\\\": \\\"Muhlenberg\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4376,8 +4283,7 @@
         "resultsAvailable": 0,
         "planItemId": "pli_004",
         "notes": "Zero results for Elijah Wilkins in Kentucky Wills and Deeds with Muhlenberg place filter. Collection likely has sparse index coverage for Muhlenberg County. Probate records for this county pre-1911 likely require browse-only image searching."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:54:10.404Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4390,8 +4296,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4404,8 +4309,7 @@
         "birthYearTo": 1820,
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"recordType\\\": \\\"other\\\",\\n    \\\"anyPlace\\\": \\\"Muhlenberg, Kentucky\\\",\\n    \\\"birthYearFrom\\\": 1809,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 314,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordI..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4428,8 +4332,7 @@
         "planItemId": "pli_005",
         "stagedResultsRef": "results/.staging/0e1f7f57-fa2d-45eb-8132-94892a363d49.json",
         "notes": "314 results all from Social Security NUMIDENT (5000016) \u2014 wrong record type. No cemetery records. Need targeted cemetery collection search."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:54:44.149Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4444,16 +4347,14 @@
         "birthYearTo": 1820,
         "count": 50,
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wilkins\\\",\\n    \\\"givenName\\\": \\\"Elijah\\\",\\n    \\\"anyPlace\\\": \\\"Muhlenberg, Kentucky\\\",\\n    \\\"anyYearFrom\\\": 1870,\\n    \\\"anyYearTo\\\": 1920,\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"birthYearFrom\\\": 1809,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-wilkins-death-kentucky-utzm6evl\\\"\\n  },\\n  \\\"totalMatches\\\": 241,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__rank_search_matches,mcp__genealogy__record_read",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -4463,15 +4364,13 @@
         "subjectId": "97YZ-J3D",
         "checkAttachments": true,
         "top": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"97YZ-J3D\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:M65N-SY7\\\",\\n      \\\"matchScore\\\": 0.9475975,\\n      \\\"primaryId\\\": \\\"p_335774615\\\",\\n      \\\"personName\\\": \\\"Elijah Wilkins\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"1814\\\",\\n      \\\"birthPlace\\\": \\\"Kentucky..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:NSQ2-RBH"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11716403348\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NSQ2-RBH\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"5b6eca1b-9724-4514-991e-3bd6bc0ebfa7\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Elias\\\",\\n          \\\"surname\\\": \\\"Wilkins\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"369d8e7c-88d3-4894-9ed3-c31e64e16499\\\",\\n          \\\"type\\\": \\\"De..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4496,8 +4395,7 @@
         "planItemId": "pli_005",
         "stagedResultsRef": "results/.staging/04be7189-c214-4b87-8e67-6c0986ef9f40.json",
         "notes": "rank_search_matches top 4 all already-attached census records for 97YZ-J3D (1850/1860/1870 census + Polly Shover parent). No cemetery records returned. Checked NSQ2-RBH (Elias Wilkins 1914 Bremen): ruled out \u2014 MaritalStatus=Single, father=John Wilkins, mother=Nancy Strocbaugh, inconsistent with married Elijah who had children. FamilySearch yields no indexed cemetery records for Muhlenberg County. FindAGrave browse required."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:56:26.829Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_013.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_013.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4519,8 +4417,7 @@
           "captureReceived": false
         },
         "notes": "FindAGrave URL generated for Elijah Wilkins, Muhlenberg County KY, born ~1814-1816, died 1870-1920. Autonomous run cannot capture web pages. Manual verification recommended."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_014\\\",\\n  \\\"performed\\\": \\\"2026-07-25T00:56:32.744Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4533,31 +4430,27 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Evaluate q_001: \"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky)?\" All plan items for pl_001 are completed/skipped. Searches performed: (1) pli_001 \u2014 4 searches in collection 1417491 (Kentucky Deaths 1911-1967), no direct death cert for Elijah Wilkins born ~1814; (2) pli_002 \u2014 4 searches in collection 1674848 (Kentucky Deaths and Burials 1843-1970), all negative; (3) pli_003 \u2014 skipped (Ancestry, no subscription); (4) pli_004 \u2014 Kentucky Probate Records (1875188 and 3155869), all negative; (5) pli_005 \u2014 FamilySearch cemetery search negative, FindAGrave URL generated but not captured; (6) pli_006 \u2014 FAN: George Addison Wilkins 1934 death cert (N9F4-HVC) extracted, names father as \"Eligie Wilkins [?]\" (tentative reading of Elijah) and mother as \"Sallie Millard\". Subject's last confirmed record is 1870 census. No death cert found \u2014 subject almost certainly died before 1911 (before KY statewide civil registration). Project path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_death_kentucky\",\n4\t    \"objective\": \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Read",
@@ -4565,8 +4458,7 @@
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json",
         "offset": 100,
         "limit": 200
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"vital_record\",\n104\t          \"jurisdiction\": \"Kentucky, United States\",\n105\t          \"date_range\": \"1911-1940\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"FAN search: two children's Kentucky death certificates already in the tree name Elijah as father \u2014 Ivy Wilkins (d. 11 Apr 1923, McCracken Co., src 9GGJ-56V) and Polly Shover (d. 30 Nov 1935, Muhlenberg Co., s..."
+      }
     },
     {
       "tool": "Read",
@@ -4574,8 +4466,7 @@
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json",
         "offset": 300,
         "limit": 300
-      },
-      "response_summary": "300\t        \"givenName\": \"Elijah\",\n301\t        \"recordType\": \"probate\",\n302\t        \"deathPlace\": \"Kentucky\",\n303\t        \"count\": 50,\n304\t        \"note\": \"broad KY probate, no collection filter\"\n305\t      },\n306\t      \"outcome\": \"negative\",\n307\t      \"results_examined\": 4,\n308\t      \"external_site\": null,\n309\t      \"results_ref\": \"results/log_010.json\",\n310\t      \"results_available\": 4,\n311\t      \"notes\": \"4 results from collection 3155869 (Kentucky Wills and Deeds), all stub entries 'W S Wi..."
+      }
     },
     {
       "tool": "Read",
@@ -4583,8 +4474,7 @@
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json",
         "offset": 600,
         "limit": 400
-      },
-      "response_summary": "600\t      ],\n601\t      \"log_entry_id\": \"log_003\",\n602\t      \"source_id\": \"src_001\"\n603\t    },\n604\t    {\n605\t      \"id\": \"a_010\",\n606\t      \"record_id\": \"ark:/61903/1:1:N9F4-HVC\",\n607\t      \"record_persona_id\": \"p_11700646749\",\n608\t      \"record_role\": \"deceased\",\n609\t      \"fact_type\": \"relationship\",\n610\t      \"value\": \"child of Eligie Wilkins [?] (stated on death certificate)\",\n611\t      \"structured_value\": {\n612\t        \"relationship_type\": \"child\",\n613\t        \"related_person_role\": \"fath..."
+      }
     },
     {
       "tool": "Read",
@@ -4592,8 +4482,7 @@
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json",
         "offset": 999,
         "limit": 100
-      },
-      "response_summary": "999\t    },\n1000\t    {\n1001\t      \"id\": \"pe_022\",\n1002\t      \"assertion_id\": \"a_020\",\n1003\t      \"person_id\": \"97YZ-J3D\",\n1004\t      \"confidence\": \"confident\",\n1005\t      \"match_score\": null,\n1006\t      \"rationale\": \"Negative evidence: 97YZ-J3D (Elijah Wilkins, born ~1814 Muhlenberg KY) is definitively absent from N9YP-FBF. The decedent was born ~1843 \u2014 a ~29-year birth gap is disqualifying. This record does not resolve q_001. Linked to 97YZ-J3D because this negative evidence directly addresse..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4634,45 +4523,39 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Write the proof conclusion for q_001: \"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky)?\" The research is exhaustive (exhaustive_declaration.declared == true, status: \"exhaustive_declared\"). No direct death certificate for Elijah Wilkins was found \u2014 he almost certainly died before Kentucky civil registration began 1 January 1911. Key evidence: (1) FAN record: George Addison Wilkins 1934 death cert (src_001, a_001\u2013a_010) names father as \"Eligie Wilkins\" [tentative for Elijah], mother \"Sallie Millard\", place Muhlenberg Co KY; (2) Additional FAN: Polly Shover's death cert names father \"Eligah Wilkins\"; Ivy Wilkins's death cert names father \"Elija Wilkins\"; (3) 1870 census last known record; (4) 1880 census absent; (5) All post-1911 Kentucky death cert collections searched exhaustively \u2014 negative. Conclusion tier expected to be \"probably\" or lower given only indirect FAN evidence and no direct certificate. Project path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_death_kentucky\",\n4\t    \"objective\": \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"97YZ-J3D\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Elijah\",\n11\t          \"surname\": \"Wilkins\"\n12\t        },\n13\t        {\n14\t          \"id\": \"N14\",\n15\t          \"type\": \"BirthName\",\n16\t          \"given\": \"Eligie [?]\",\n17\t          \"surname\": \"Wilkins\",\n18\t          \"sources\": [\n19\t            {\n20\t              \"ref\": \"S1\",\n21\t              \"quality\": 2\n22\t      ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__tree_edit",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4696,8 +4579,7 @@
           "exhaustive_search_summary": "Fourteen searches across FamilySearch collections 1417491 (Kentucky, Deaths, 1911-1967 \u2014 four searches with name variants Elijah/Elija/Eligah/Eligie Wilkins, statewide and Muhlenberg County filters, birth-year filter 1809-1820), 1674848 (Kentucky, Deaths and Burials, 1843-1970 \u2014 four searches, same variants plus Muhlenberg place filter), 1875188 and 3155869 (Kentucky probate records \u2014 three searches), and cemetery/FindAGrave (two FamilySearch searches). All searches returned negative results for Elijah Wilkins born circa 1814. A same-name candidate death certificate (ark:/61903/1:1:N9YP-FBF, 1918 Paducah) was examined and ruled out by a ~29-year birth-year gap (decedent born circa 1843). Sources not consulted: Ancestry Death Index collection 3077 (no subscription); FindAGrave (autonomous session limitation \u2014 URL generated but not captured); Muhlenberg County probate browse-only images (indexed search returned zero results but image series may hold unindexed estate records).",
           "narrative_markdown": "## Research Conclusion: No Kentucky Death Certificate Found for Elijah Wilkins (Born circa 1814)\n\nThe research question asks what date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky; tree identifier 97YZ-J3D), and what identifying information such a certificate contains. The preponderance of evidence establishes that no Kentucky death certificate for this person was ever created: he almost certainly died before 1 January 1911, when Kentucky began mandatory statewide death registration. Based on census evidence, his death is bounded to the period after his documented presence in the 1870 census and before his absence from the 1880 census \u2014 most probably in the first half of the 1870s, in Muhlenberg County, Kentucky. **This conclusion is rated probable.**\n\n### Jurisdictional Context\n\nKentucky did not establish statewide civil registration of deaths until 1 January 1911. Deaths before that date were recorded, if at all, only in local church registers, county court records, or similar non-centralized sources. Muhlenberg County's indexed holdings on FamilySearch show no death entry for this individual in any pre-1911 or post-1911 collection.\n\n### Exhaustive Search \u2014 Documented Negative\n\nFourteen separate searches across all accessible indexed Kentucky death-record collections were conducted and logged:\n\n**Collection 1417491 (\"Kentucky, Deaths, 1911-1967\")** \u2014 four searches using name variants Elijah, Elija, Eligah, and Eligie Wilkins, with filters for Kentucky statewide and Muhlenberg County specifically, and with birth-year filtering (1809\u20131820). No death certificate for the research subject was found.\n\n**Collection 1674848 (\"Kentucky, Deaths and Burials, 1843-1970\")** \u2014 four searches using the same name variants and a Muhlenberg County filter. Results were predominantly from Louisville and Jefferson County; no Muhlenberg County Wilkins death records appear in the index, indicating sparse or absent pre-1911 coverage for Muhlenberg County in this collection.\n\n**Probate collections 1875188 and 3155869** \u2014 three searches for Elijah Wilkins in Kentucky probate records, including Muhlenberg County filtering. Zero results; indexed probate coverage for Muhlenberg County appears incomplete for the 1870\u20131911 period.\n\n**Cemetery and FindAGrave** \u2014 two FamilySearch searches returned no indexed cemetery records for this person. A FindAGrave URL was generated for manual follow-up but could not be captured in this autonomous session.\n\nThe consistent negative result across all accessible indexed collections, combined with the jurisdictional fact that Kentucky had no death registration before 1 January 1911, establishes that no Kentucky death certificate for Elijah Wilkins (born circa 1814) exists in any indexed repository consulted.\n\n### Same-Name Candidate Ruled Out\n\nOne Kentucky death certificate for an \"Elijah Wilkins\" was found and examined. The certificate \u2014 for a person who died 2 November 1918 in Paducah, McCracken County, Kentucky \u2014 was retrieved as a digital image.^1 The informant, Mrs. Hattie Honeyman of 925 Clay St., Paducah, stated the decedent's age as 75 years, placing birth circa 1843. The research subject was born circa 1814 \u2014 a gap of approximately 29 years. The certificate lists no parents, and the cause of death was \"unknown\" (coroner's case). This record belongs to a different person and does not advance the research question.\n\n^1 Kentucky State Board of Health, Certificate of Death, File No. 35585, Registered No. 551, Elijah Wilkins, died 2 November 1918, Paducah, McCracken County, Kentucky; FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N9YP-FBF : accessed 2026-07-25), digital image of original certificate; image saved as images/ark_61903_3_1_3Q9M-C9YG-VS9K-C.jpg.\n\n### Bounded Death Date from Census Evidence\n\nElijah Wilkins is documented in the federal censuses of 1840, 1850, 1860, and 1870, all in Kentucky.^2 He is absent from the 1880 census, while his wife Sally (K2BS-YMD) and surviving children appear in Muhlenberg County, Kentucky that year. The absence of the head of household from a household that his wife and multiple children occupied is strong evidence of death before 1880. No death certificate confirms he survived past 1880. The combination of census absence and the exhaustive negative search bounds his death to after the 1870 census and before 1880 \u2014 most probably in the first half of the 1870s.\n\n^2 \"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2 : Thu Oct 23 05:27:13 UTC 2025), Entry for Elijah Wilkins and Sarah Wilkins, 1870.\n\n### FAN Corroboration\n\nThree of Elijah Wilkins's children's Kentucky death certificates name him as father under variants of \"Elijah Wilkins,\" confirming that his identity persisted in family memory into the 1920s\u20131930s:\n\n- **George Addison Wilkins** (died 1 April 1934, Muhlenberg County): the personal informant stated the father's name; the FamilySearch professional index transcription reads \"Eligie Wilkins\" \u2014 a suspected transcription of \"Elijah.\" The mother was named \"Sallie Millard,\" consistent with the tree identification of the subject's wife as Sally Millard/Wilkins (K2BS-YMD).^3\n\n- **Ivy Wilkins** (died 11 April 1923, McCracken County): the father was named \"Elija Wilkins.\"^4\n\n- **Polly Shover** (died 30 November 1935, Muhlenberg County): the father was named \"Eligah [elijah] Wilkins.\"^5\n\nAll three certificates use \"Eli-\" variants consistent with \"Elijah.\" None states a death date or death place for the father, confirming that he was understood to be deceased but that the death date was not retained by the informants.\n\n^3 \"Kentucky, Deaths, 1911-1967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N9F4-HVC : accessed 2026-07-25), entry for George Addison Wilkins, died 1 April 1934, Muhlenberg County, Kentucky; citing Kentucky Department for Libraries and Archives, Frankfort, Kentucky.\n\n^4 \"Kentucky, Deaths, 1911-1967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NS5C-JQS : Thu Nov 28 21:01:53 UTC 2024), Entry for Ivy Wilkins and Elija Wilkins, 11 April 1923.\n\n^5 \"Kentucky, Deaths, 1911-1967,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2 : Sat Mar 09 15:10:18 UTC 2024), Entry for Polly Shover and Eligah [elijah] Wilkins, 30 November 1935.\n\n### Limitations\n\nThe following sources were not consulted and could refine the conclusion:\n- **FindAGrave** (Elijah Wilkins, Muhlenberg County, KY): URL generated but not captured in this autonomous session. A memorial with a death date would supplement the bounded conclusion.\n- **Ancestry Death Index (collection 3077)**: not checked (no subscription available). Could confirm absence or surface a spelling variant.\n- **Muhlenberg County probate browse-only images**: indexed search returned zero results, but unindexed estate administration images from the 1870\u20131890 period may exist and could narrow the death bracket.\n\nNone of these limitations is likely to overturn the core finding \u2014 that no Kentucky death certificate for this person was ever created \u2014 since the death almost certainly predated the 1911 registration start.\n\n### Conclusion\n\nThe preponderance of evidence **strongly suggests** that no Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky) was ever created. He almost certainly died between 1870 and 1880, well before the commencement of Kentucky statewide death registration on 1 January 1911. His death is bounded by his documented presence in the 1870 federal census and his unexplained absence from the 1880 census, with his wife and children documented in Muhlenberg County that year. Three children's death certificates from the 1920s\u20131930s name him as father using \"Eli-\" variants of \"Elijah Wilkins,\" confirming that family memory of him persisted but preserving no death date or death place. The research question's premise \u2014 that a Kentucky death certificate records his date and place of death \u2014 is not supported by the evidence. This finding is rated **probable**: the evidence strongly favors the documented negative, but the absence of a direct death record and the unchecked sources (FindAGrave, Ancestry, probate images) leave room for future refinement."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4721,8 +4603,7 @@
           ]
         },
         "resolveStandardPlace": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F8\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4731,8 +4612,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4740,22 +4620,19 @@
         "description": "GPS mentor proof critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please provide a mandatory GPS proof-critique for proof summary ps_001 in the project at /tmp/e2e-wilkins-death-kentucky-utzm6evl.\n\nContext:\n- Question q_001: \"What date and place of death are recorded in a Kentucky death certificate for Elijah Wilkins (born circa 1814, Muhlenberg County, Kentucky), and what identifying information does the certificate contain?\"\n- Proof summary ps_001: tier = \"probable\", vehicle = \"argument\"\n- The conclusion is a documented negative: no Kentucky death certificate was found; death bounded to after 1870 census, before 1880 census. Kentucky civil registration began 1 January 1911. The research question's premise cannot be fulfilled.\n- Supporting assertions: a_008 (FAN: George Addison Wilkins 1934 cert names father \"Eligie Wilkins [?]\"), a_009, a_010, a_017, a_018, a_020 (negative: 97YZ-J3D absent from same-name 1918 cert N9YP-FBF).\n- Exhaustive declaration: declared true, 14 log entries.\n\nPlease review the proof for GPS compliance across all five components and provide your structured verdict. The recommendation is advisory and does not force rework. Record the evaluation in the project's evaluations[] section."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\nThis is a well-disciplined negative-conclusion proof. You rated it **probable** and the narrative's hedging language matches that tier consistently \\u2014 \\\"almost certainly,\\\" \\\"most probably,\\\" \\\"strongly suggests\\\" \\u2014 rather than reaching for \\\"Proved\\\" just because fourteen searches came back empty (Standard 43). And the same-name candidate at Paducah (N9YP-FBF, person I1) is eliminated c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-wilkins-death-kentucky-utzm6evl/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_wilkins_death_kentucky\",\n4\t    \"objective\": \"Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?\",\n5\t    \"subject_person_ids\": [\n6\t      \"97YZ-J3D\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-25\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscription..."
+      }
     },
     {
       "tool": "mcp__genealogy__validate_research_schema",
       "args": {
         "projectPath": "/tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"valid\\\": true,\\n  \\\"errors\\\": [],\\n  \\\"warnings\\\": [],\\n  \\\"message\\\": \\\"Both project files pass all validation checks.\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4806,16 +4683,14 @@
           "timestamp": "2026-07-25T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-25T00-00-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous q_001 has a proof summary ps_001 at tier \"probable\" (a documented negative: no Kentucky death certificate was found for Elijah Wilkins born circa 1814; death bounded to after 1870 census, before 1880 census). The exhaustive declaration is declared true. The GPS mentor critique (ev_001) is advisory and does not block q_001. Assess whether the project objective is now answered at a defensible tier and mark q_001 resolved. If the objective is fully answered, signal project completion. Project path: /tmp/e2e-wilkins-death-kentucky-utzm6evl"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4847,8 +4722,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4880,8 +4754,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5122,5 +4995,6 @@
       ],
       "transcript": "agent-a72f761c42f23fabd.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

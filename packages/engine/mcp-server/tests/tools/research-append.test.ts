@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -21,6 +22,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
@@ -55,7 +57,26 @@ const validAssertion = (id: string, sourceId = "src_001") => ({
   extracted_for_question_ids: [],
 });
 
-function baseResearch() {
+// Explicitly typed: with a bare `return { ... }` TypeScript infers every
+// empty-array field as `never[]`, so a test that later assigns a real entry
+// (`research.person_evidence = [{ ... }]`) fails to assign to `never`. The
+// arrays are heterogeneous fixture shapes rather than the strict schema types,
+// so `Record<string, unknown>[]` is the honest annotation — it says "objects,
+// shape checked by the validator under test", which is what these fixtures are.
+function baseResearch(): {
+  project: Record<string, unknown>;
+  questions: Record<string, unknown>[];
+  plans: Record<string, unknown>[];
+  log: Record<string, unknown>[];
+  sources: Record<string, unknown>[];
+  assertions: Record<string, unknown>[];
+  person_evidence: Record<string, unknown>[];
+  conflicts: Record<string, unknown>[];
+  hypotheses: Record<string, unknown>[];
+  timelines: Record<string, unknown>[];
+  proof_summaries: Record<string, unknown>[];
+  evaluations: Record<string, unknown>[];
+} {
   return {
     project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
@@ -130,7 +151,7 @@ describe("research_append (Phase 1)", () => {
     const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("src_002");
+    expect(singleOk(r).entryId).toBe("src_002");
     expect(r.filesWritten).toEqual(["research.json"]);
     const research = await readResearch();
     expect(research.sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
@@ -152,7 +173,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.ok, `${supplied} should append`).toBe(true);
       if (!r.ok) continue;
       const research = await readResearch();
-      const persisted = research.sources.find((s: any) => s.id === r.entryId);
+      const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
   });
@@ -161,7 +182,7 @@ describe("research_append (Phase 1)", () => {
     await writeProject();
     const { id: _omit, ...assertionNoId } = validAssertion("x", "src_001");
     const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: assertionNoId });
-    expect(r.ok && r.entryId).toBe("a_002");
+    expect(r.ok && singleOk(r).entryId).toBe("a_002");
   });
 
   it("normalizes a GedcomX date object ({original}) on an appended assertion to a plain string", async () => {
@@ -179,7 +200,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const appended = (await readResearch()).assertions.find((a: any) => a.id === r.entryId);
+    const appended = (await readResearch()).assertions.find((a: any) => a.id === singleOk(r).entryId);
     expect(appended.date).toBe("~1818");
   });
 
@@ -226,7 +247,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok, `${supplied} should append`).toBe(true);
       if (!r.ok) continue;
-      const persisted = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const persisted = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(persisted.fact_type, `${supplied} → ${expected}`).toBe(expected);
     }
   });
@@ -250,7 +271,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
@@ -266,7 +287,7 @@ describe("research_append (Phase 1)", () => {
       const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
@@ -297,7 +318,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("pe_001");
+    expect(singleOk(r).entryId).toBe("pe_001");
     const pe = (await readResearch()).person_evidence[0];
     expect(pe.person_id).toBe("I1");
     expect(typeof pe.created).toBe("string"); // tool-stamped
@@ -322,7 +343,7 @@ describe("research_append (Phase 1)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("loc_001");
+    expect(singleOk(r).entryId).toBe("loc_001");
     const loc = (await readResearch()).localities[0];
     expect(loc.place).toBe("Norway");
     expect(loc.source).toBe("locality-guide");
@@ -336,7 +357,7 @@ describe("research_append (Phase 1)", () => {
     await writeProject(research);
     const { id: _omit, ...sourceNoId } = validSource("x");
     const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: sourceNoId });
-    expect(r.ok && r.entryId).toBe("src_004");
+    expect(r.ok && singleOk(r).entryId).toBe("src_004");
   });
 
   it("updates a field on an existing entry, preserving the id", async () => {
@@ -367,7 +388,7 @@ describe("research_append (Phase 1)", () => {
       op: "append",
       entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "stronger match", superseded_by: null },
     });
-    expect(appended.ok && appended.entryId).toBe("pe_002");
+    expect(appended.ok && singleOk(appended).entryId).toBe("pe_002");
 
     const superseded = await researchAppend({
       projectPath: dir,
@@ -509,7 +530,7 @@ describe("research_append (Phase 2)", () => {
     await writeProject();
     const { id: _o, created: _c, ...q } = validQuestion("x");
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
-    expect(r.ok && r.entryId).toBe("q_002");
+    expect(r.ok && singleOk(r).entryId).toBe("q_002");
     const created = (await readResearch()).questions.find((x: any) => x.id === "q_002").created;
     expect(typeof created).toBe("string");
   });
@@ -546,7 +567,7 @@ describe("research_append (Phase 2)", () => {
     await writeProject();
     const { id: _o, ...plan } = validPlan("x", "q_001", "active");
     const first = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan });
-    expect(first.ok && first.entryId).toBe("pl_001");
+    expect(first.ok && singleOk(first).entryId).toBe("pl_001");
 
     const { id: _o2, ...plan2 } = validPlan("y", "q_001", "active");
     const second = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
@@ -584,7 +605,7 @@ describe("research_append (Phase 2)", () => {
       planId: "pl_001",
       entry: validPlanItem(),
     });
-    expect(r.ok && r.entryId).toBe("pli_001");
+    expect(r.ok && singleOk(r).entryId).toBe("pli_001");
     const items = (await readResearch()).plans[0].items;
     expect(items).toHaveLength(1);
     expect(items[0].id).toBe("pli_001");
@@ -601,7 +622,7 @@ describe("research_append (Phase 2)", () => {
   it("appends a fact conflict referencing two assertions", async () => {
     await writeProject();
     const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry: validConflict() });
-    expect(r.ok && r.entryId).toBe("c_001");
+    expect(r.ok && singleOk(r).entryId).toBe("c_001");
   });
 
   it("rejects resolving a conflict without the resolution analysis fields", async () => {
@@ -757,7 +778,7 @@ describe("research_append (Phase 3)", () => {
       op: "append",
       entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [] },
     });
-    expect(r.ok && r.entryId).toBe("t_001");
+    expect(r.ok && singleOk(r).entryId).toBe("t_001");
     const t = (await readResearch()).timelines[0];
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
@@ -778,7 +799,7 @@ describe("research_append (Phase 3)", () => {
         narrative_markdown: "## Conclusion\n...",
       },
     });
-    expect(r.ok && r.entryId).toBe("ps_001");
+    expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
@@ -889,7 +910,7 @@ describe("research_append (Phase 3)", () => {
         narrative_markdown: "## Conclusion\n...",
       },
     });
-    expect(r.ok && r.entryId).toBe("ps_001");
+    expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
   it("does not re-trigger the tier guardrail on an unrelated update to an already-proved entry", async () => {
@@ -942,7 +963,7 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("ev_001");
+    expect(singleOk(r).entryId).toBe("ev_001");
     expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
   });
 
@@ -954,7 +975,7 @@ describe("research_append (Phase 3)", () => {
       op: "append",
       entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
     });
-    expect(r.ok && r.entryId).toBe("kh_001");
+    expect(r.ok && singleOk(r).entryId).toBe("kh_001");
     const kh = (await readResearch()).known_holdings[0];
     expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
   });
@@ -984,7 +1005,7 @@ describe("research_append (project singleton section)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entryId).toBe("project"); // singleton echoes the section name
+    expect(singleOk(r).entryId).toBe("project"); // singleton echoes the section name
     expect(r.filesWritten).toEqual(["research.json"]);
     const research = await readResearch();
     expect(research.project.status).toBe("completed");
@@ -1004,8 +1025,135 @@ describe("research_append (project singleton section)", () => {
     expect(r.errors.join(" ")).toMatch(/only op 'update'/);
   });
 
-  it("rejects a field that isn't allowed on project (e.g. objective)", async () => {
+  it("creates researcher_profile on first write when the section is absent", async () => {
+    // The seed never fabricates a profile — an observed run invented
+    // "intermediate experience, no paid subscriptions" the user was never asked
+    // for — so the object has to appear on the first REAL write. Without
+    // createWhenAbsent the singleton branch throws "missing or not an object"
+    // and the section stays writable by nothing.
+    const r0 = baseResearch();
+    expect((r0 as Record<string, unknown>).researcher_profile).toBeUndefined();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: {
+        experience_level: "professional",
+        subscriptions: ["Ancestry"],
+        narration_guidance: "Terse; assume GPS fluency.",
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+    expect(research.researcher_profile.narration_guidance).toBe("Terse; assume GPS fluency.");
+  });
+
+  it("lets a researcher correct their profile afterwards — it is not set-once", async () => {
     await writeProject();
+    const first = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "novice" },
+    } as never);
+    expect(first.ok).toBe(true);
+    const second = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "professional" },
+    } as never);
+    expect(second.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+  });
+
+  it("stamps no timestamp on researcher_profile", async () => {
+    // Its schema is additionalProperties:false with no timestamp field, so a
+    // stamp would fail validation on every write.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { intended_audience: "family" },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(Object.keys(research.researcher_profile)).toEqual(["intended_audience"]);
+  });
+
+  it("rejects a field that is on no allow-list at all (e.g. created)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { created: "2020-01-01" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+  });
+
+  it("sets objective, title and subject_person_ids once on a fresh project", async () => {
+    // The whole point of the widening: init-project holds no writer tool today
+    // and creates the project with a bare `Write`, which the lockdown denies.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "", subject_person_ids: [] };
+    delete (r0.project as Record<string, unknown>).title;
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: {
+        objective: "Identify the parents of John Smith",
+        title: "Smith parentage",
+        subject_person_ids: ["I1"],
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Identify the parents of John Smith");
+    expect(research.project.title).toBe("Smith parentage");
+    expect(research.project.subject_person_ids).toEqual(["I1"]);
+  });
+
+  it("treats an empty string and an empty array as unset, not as set", async () => {
+    // `subject_person_ids` is seeded as `[]` rather than omitted, so a
+    // truthiness test would have refused the very first legitimate write.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "   ", subject_person_ids: [] };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { objective: "Real objective", subject_person_ids: ["I1"] },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still allows status through, which is not set-once", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { status: "paused" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses to rewrite an objective that is already set", async () => {
+    // `objective` moved onto allowedFields so init-project can write it once.
+    // The refusal it now hits is the set-once one, not the not-allowed one —
+    // the ownership declaration's stated harm is a skill REWRITING the goal
+    // every later step plans against.
+    await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
@@ -1014,7 +1162,9 @@ describe("research_append (project singleton section)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Test"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {
@@ -1125,6 +1275,274 @@ describe("research_append (project singleton section)", () => {
         description: "Minor date variance between two censuses; does not bear on any open question.",
       }),
     );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
+  // Prose carried this rule since PR #1029 ("verify BOTH gates, in order — do
+  // not write completed until both hold") and 23% of completed runs in the
+  // committed e2e corpus reach `completed` with at least one uncritiqued
+  // summary anyway. This is that rule at the write boundary.
+
+  const resolvedQuestion = () => ({
+    id: "q_001",
+    question: "Who were the parents of John Smith?",
+    rationale: "Objective-answering question.",
+    selection_basis: "objective_decomposition",
+    priority: "high",
+    status: "resolved",
+    depends_on: [],
+    unblocks: [],
+    created: "2026-01-01",
+    resolved: "2026-01-02",
+    resolution_assertion_ids: ["a_001"],
+    exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: {} },
+  });
+  const summary = (id = "ps_001", questionId = "q_001") => ({
+    id,
+    question_id: questionId,
+    tier: "proved",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_001"],
+    resolved_conflict_ids: [],
+    exhaustive_search_summary: "Every identified repository was searched.",
+    narrative_markdown: "The evidence establishes the parentage.",
+  });
+  const critique = (targetId = "ps_001", extra: Record<string, unknown> = {}) => ({
+    id: "ev_001",
+    focus: "proof-critique",
+    target_id: targetId,
+    target_type: "proof_summary",
+    verdict: "looks_solid",
+    file_path: "evaluations/proof-critique-ps_001.json",
+    timestamp: "2026-01-02T00:00:00Z",
+    superseded_by: null,
+    ...extra,
+  });
+  const withProof = (evaluations: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    r.questions.push(resolvedQuestion());
+    r.proof_summaries.push(summary());
+    r.evaluations.push(...evaluations);
+    return r;
+  };
+
+  // ── questions: `resolved` requires a proof summary ──
+  // `status: "resolved"` is the orchestrator's stop condition and was a free
+  // write — neither proof-conclusion nor question-selection claims it, and it
+  // landed from 11 different skill contexts across the corpus. Measured cost of
+  // this gate: 0 refusals across all 150 questions that ever reached resolved.
+
+  it("refuses status resolved when no proof summary references the question", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/q_001/);
+    expect(msg).toMatch(/proof-conclusion/);
+    const research = await readResearch();
+    expect(research.questions[0].status).toBe("open"); // nothing written
+  });
+
+  it("refuses the `resolved` DATE with no summary, not just the status", async () => {
+    // The two fields are one transition. Gating only `status` left the date as
+    // an ungated synonym, so an agent refused above could reach the same state
+    // by writing the date instead — and `project_context` would then report the
+    // question resolved while this gate had never seen it.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { resolved: "2026-01-02" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/q_001/);
+    const research = await readResearch();
+    expect(research.questions[0].resolved).toBe(null); // nothing written
+  });
+
+  it("allows status resolved once a summary references it", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows the summary and the resolve in ONE batch, summary first", async () => {
+    // Reads live state on purpose: the summary and the resolve are two halves of
+    // one author's conclusion, unlike the mentor verdict which must come from a
+    // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
+    // the summary ordered first — a pre-call snapshot would refuse all 7.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    // tier `possible` — a proved/probable summary additionally requires a prior
+    // exhaustive declaration, which is a different invariant than the one under
+    // test and would mask it.
+    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "proof_summaries", op: "append", entry: summaryEntry as never },
+        { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not re-trigger on an unrelated update to an already-resolved question", async () => {
+    // The op must be the one SETTING status, or every later edit to a resolved
+    // question re-runs the gate — the same discipline the tier invariant uses.
+    const r0 = baseResearch();
+    r0.questions.push(resolvedQuestion());
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { rationale: "Clarified after review." },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("a batch cannot resolve its own blocking conflict and complete", async () => {
+    // The conflict gate used to read `research.conflicts` LIVE, and applyOne
+    // mutates in place per op — so one batch could settle the conflict and
+    // complete in the same call. Same defect the mentor gate's snapshot avoids.
+    await writeProject(withConflict(conflictBase()));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "conflicts",
+          op: "update",
+          entryId: "c_001",
+          fields: {
+            status: "resolved",
+            resolution_rationale: "The certificate names a different man.",
+            independence_analysis: "Sources are independent.",
+            weighing_analysis: "The parish register is decisive.",
+            preferred_assertion_id: "a_001",
+          },
+        },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/c_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("refuses completed when a resolved question's proof summary has no mentor verdict", async () => {
+    await writeProject(withProof());
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/ps_001/);
+    expect(msg).toMatch(/proof-critique/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("allows completed once the summary carries a proof-critique verdict", async () => {
+    await writeProject(withProof([critique()]));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not count a superseded verdict", async () => {
+    // If a newer verdict replaced it, that one is itself in evaluations[] and
+    // satisfies the gate. If nothing replaced it, the critique no longer stands.
+    await writeProject(withProof([critique("ps_001", { superseded_by: "ev_002" })]));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
+  it("a batch cannot satisfy its own precondition", async () => {
+    // The critique set is snapshotted before any op applies, so appending the
+    // verdict and completing in one call must still refuse. Read live, the gate
+    // would grade its own homework.
+    await writeProject(withProof());
+    // The tool assigns entry ids, so an append entry must not carry one.
+    const { id: _id, ...critiqueEntry } = critique();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "evaluations", op: "append", entry: critiqueEntry as never },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("a resolved question with no proof summary passes vacuously, on seeded state", async () => {
+    // Still deliberate, but the state is now reachable only by seeding it:
+    // questionResolvedInvariants refuses the transition through the tool. What
+    // this pins is that an already-seeded document still LOADS and completes —
+    // a gate on a transition must not retroactively invalidate documents that
+    // predate it.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("counts a question resolved by DATE alone toward the critique requirement", async () => {
+    // `resolved` is an ISO date or null, so the old `=== true` never matched and
+    // a date-resolved question's summary escaped the mentor gate entirely.
+    // `question-state.ts` has always read this field as truthy-or-not, so the
+    // two disagreed about the same question.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
+  it("ignores a summary whose question is not resolved", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
     const r = await complete();
     expect(r.ok).toBe(true);
   });
@@ -2462,7 +2880,7 @@ describe("research_append — person_evidence epistemic gate", () => {
     await write(researchWith([uncertain("a_010", "rec_A")]));
     const r = await researchAppend(link("a_010", "confident"));
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/uncertain reading/i);
+    expect(failure(r).errors?.join(" ")).toMatch(/uncertain reading/i);
   });
 
   it("allows 'probable' on the same uncertain, uncorroborated reading", async () => {
@@ -2712,7 +3130,7 @@ describe("research_append — worked examples are themselves valid", () => {
           }
         : {}),
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
   });
 
@@ -2735,7 +3153,7 @@ describe("research_append — worked examples are themselves valid", () => {
       },
     } as any);
     expect(r.ok).toBe(false);
-    const joined = (r.errors ?? []).join("\n");
+    const joined = (failure(r).errors ?? []).join("\n");
     expect(joined).toMatch(/worked example for 'evaluations'/);
     expect(joined).toMatch(/file_path/);
   });
@@ -2812,7 +3230,7 @@ describe("research_append — evaluations verdict composite", () => {
       entry: pointer(),
       verdict: VERDICT,
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
 
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -2838,7 +3256,7 @@ describe("research_append — evaluations verdict composite", () => {
       verdict: VERDICT,
     } as any);
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/use one/i);
+    expect(failure(r).errors?.join(" ")).toMatch(/use one/i);
   });
 
   it("rejects verdict on a non-evaluations section", async () => {
@@ -2860,7 +3278,7 @@ describe("research_append — evaluations verdict composite", () => {
       verdict: VERDICT,
     } as any);
     expect(r.ok).toBe(false);
-    expect(r.errors?.join(" ")).toMatch(/only valid on an `evaluations` append/);
+    expect(failure(r).errors?.join(" ")).toMatch(/only valid on an `evaluations` append/);
   });
 
   // The failure mode the composite exists to prevent: a rejected call must not
@@ -2886,7 +3304,7 @@ describe("research_append — evaluations verdict composite", () => {
       op: "append",
       entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
     } as any);
-    expect(r.errors ?? []).toEqual([]);
+    expect(errorsOf(r) ?? []).toEqual([]);
     expect(r.ok).toBe(true);
   });
 });
@@ -3007,5 +3425,84 @@ describe("research_append — negative evidence role invariant", () => {
       ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
     });
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("research_append — sources-without-assertions nudge (#1478)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-1478-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // A project with n sources and m assertions, all valid. Sources carry
+  // gedcomx_source_description_id "SD-001" (present in baseTree), which also
+  // keeps source-reuse auto-detection from engaging on the appended source —
+  // reuse needs a source append with NO S id plus an assertion in the same
+  // batch (§3.4.1), neither of which these single-source appends do.
+  const researchWith = (nSources: number, nAssertions: number) => ({
+    ...baseResearch(),
+    sources: Array.from({ length: nSources }, (_, i) => validSource(`src_${String(i + 1).padStart(3, "0")}`)),
+    assertions: Array.from({ length: nAssertions }, (_, i) =>
+      validAssertion(`a_${String(i + 1).padStart(3, "0")}`, "src_001"),
+    ),
+  });
+  const write = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const WARN = /source\(s\) recorded but zero assertions drawn from them/;
+  const warned = (warnings: string[]) => warnings.some((w) => WARN.test(w));
+
+  it("warns when a source lands leaving ≥3 sources and 0 assertions — and never blocks", async () => {
+    await write(researchWith(3, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // never blocks: the source still persisted
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(4);
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn, "expected the sources-without-assertions warning").toBeTruthy();
+    expect(warn).toContain("4 source(s)"); // post-write total, not the batch count
+  });
+
+  it("stays silent below the threshold (2 sources, 0 assertions)", async () => {
+    await write(researchWith(1, 0));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent when any assertion already exists", async () => {
+    await write(researchWith(5, 1));
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag an unrelated write that adds no source", async () => {
+    await write(researchWith(5, 0));
+    const { id: _o, created: _c, ...q } = validQuestion("x");
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("fires through extraction_append with a tool-neutral message", async () => {
+    await write(researchWith(3, 0));
+    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const warn = r.validation.warnings.find((w) => WARN.test(w));
+    expect(warn).toBeTruthy();
+    // record-extractor is denied research_append — the nudge must not name it
+    expect(warn).not.toContain("research_append");
   });
 });

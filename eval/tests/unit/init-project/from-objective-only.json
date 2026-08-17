@@ -11,7 +11,7 @@
     "user_message": "Start a new research project. I want to identify the maternal grandmother of Sarah Hennessy, who was born around 1920 in Boston, Massachusetts. Sarah's mother's maiden name was Mary Donovan but I don't know Mary's mother's name. No FamilySearch tree exists for any of these people yet.",
     "scenario": null
   },
-  "mcp_fixtures": ["place-search-boston", "validate-research-schema"],
+  "mcp_fixtures": ["place-search-boston"],
   "runs_per_test": 1,
   "execution": {
     "max_wall_clock_seconds": 480

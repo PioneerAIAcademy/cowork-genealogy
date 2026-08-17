@@ -233,7 +233,11 @@ Sorted by `matchScore` descending; no gedcomx.
       "matchScore": 0.99999,       // 0–1; null on persistent FS-call failure — never dropped
       "matchConfidence": 5,        // 1–10; omitted on no-match
       "attachedToSubject": false,  // only when checkAttachments
-      "attachedToOther": true
+      "attachedToOther": true,
+      "relativeTerms": {           // only when the search anchored on a relative
+        "father": { "status": "absent" }
+      },
+      "batchNumber": "M01048-5"    // only when the record traces to an extraction batch
     }
     // … up to `top` (default 10)
   ]
@@ -242,6 +246,63 @@ Sorted by `matchScore` descending; no gedcomx.
 
 Each stub is ~150 bytes. Returning the top 10 keeps the model-facing payload
 small while the full scored set lives in the score log and the staged file.
+
+### `relativeTerms` — carried, and called out; never scored
+
+Copied verbatim from the staged row when it is there, and omitted when it is
+not. The ranker neither derives it nor lets it move `matchScore`.
+
+It has to reach the stub because the top-ranked result is precisely where a
+father-anchored hit that names no father looks *most* confirmed: it scored well
+on names, dates and places, and nothing on the stub says the father is missing.
+A scorer that cannot see "father absent" keeps rating those hits as
+relative-confirmed, which is why the ranker is in scope for this field at all.
+
+**`relativeTermNote`** (response-level, optional) closes that gap in words.
+Present only when at least one returned match carries an `absent` finding:
+
+```
+Of the 10 matches returned, 3 name no father (`relativeTerms`). The match score
+does not account for this — it measures name, date and place agreement only.
+Those records are CONSISTENT with the relative you searched for, not evidence of
+them, so do not write them up as confirming the relationship.
+```
+
+Counts `absent` only, never `unknown`: "we could not tell" is not a finding to
+warn about, and warning on it would train the caller to ignore the note.
+
+**Why a note and not a weight.** Making `absent` move `matchScore` is a
+scoring-policy change, not plumbing. It needs calibration before any weight can
+be chosen — `absent` is not evidence *against* a match, since a sparse index
+entry legitimately omits parents, so a naive penalty would suppress genuine
+records — and it would shift every ranking in the eval corpus. It also runs
+against this tool's own contract: a **review surface, not a classifier**. The
+note puts the fact in front of the caller and leaves the judgment where the
+spec says it belongs.
+
+See `record-search-tool-spec-v2.md` § `relativeTerms` for the statuses and how
+they are resolved.
+
+### `batchNumber` — carried, never scored and never annotated
+
+Copied verbatim from the staged row when it is there, omitted when it is not.
+The ranker neither derives it nor lets it touch `matchScore`.
+
+It reaches the stub for a reason specific to `record_search`'s own contract: a
+search that supplies `subjectId` ranks host-side and the caller reads `ranked`,
+not `results`. A batch number that stopped at `results` would therefore be
+invisible on the most common call shape, and the enumerate-the-batch workflow it
+exists to enable would dead-end on exactly the searches that matter most.
+
+Unlike `relativeTerms` this gets **no** response-level note. A batch number is a
+lookup key for the *next* search, not a caveat on *this* score — there is nothing
+about it the caller could misread as confirmation, and a note on every ranked
+page that happened to include an extracted record would be noise.
+
+Absence carries no information: most records trace to no batch, and a collection
+routinely returns hits both with and without one. See
+`record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
+it is matched on `labelId`.
 
 ## Tool schema
 

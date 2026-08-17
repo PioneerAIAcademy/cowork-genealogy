@@ -44,46 +44,6 @@ def test_print_rollup_empty():
     assert "no runs" in out
 
 
-def test_print_rollup_all_passes():
-    results = [
-        _make_result("a", "pass"),
-        _make_result("b", "pass"),
-    ]
-    out = _capture(results)
-    assert "2/2 recall pass" in out
-
-
-def test_print_rollup_mixed():
-    results = [
-        _make_result("a", "pass"),
-        _make_result("b", "partial"),
-        _make_result("c", "fail"),
-        _make_result("d", "skipped"),
-    ]
-    out = _capture(results)
-    assert "1/4 recall pass" in out
-    assert "1 partial" in out
-    assert "1 fail" in out
-    assert "1 skipped" in out
-
-
-def test_print_rollup_groups_by_tag():
-    results = [
-        _make_result("a", "pass", tags={"question_type": "parents", "era": "1850s"}),
-        _make_result("b", "pass", tags={"question_type": "parents", "era": "1900s"}),
-        _make_result("c", "fail", tags={"question_type": "siblings", "era": "1850s"}),
-    ]
-    out = _capture(results)
-    # Each tag dimension gets its own line
-    assert "by question_type" in out
-    assert "by era" in out
-    # Pass-counts per tag value
-    assert "parents 2/2" in out
-    assert "siblings 0/1" in out
-    assert "1850s 1/2" in out
-    assert "1900s 1/1" in out
-
-
 def test_print_rollup_reports_cost_and_duration():
     results = [
         _make_result("a", "pass", cost=2.50, duration=600),
@@ -108,95 +68,6 @@ def test_print_rollup_handles_missing_usage_fields():
     # No cost/duration lines printed when nothing to average
     assert "avg cost" not in out
     assert "avg wall-clock" not in out
-
-
-# --- The compliance axis is visible in the roll-up (issue #972) -------------
-
-
-def _noncompliant(test_id: str, verdict: str) -> E2eResult:
-    return E2eResult(
-        test_id=test_id,
-        captured_at="2026-05-26_14-30-45",
-        verdict=verdict,
-        stop_reason="completed",
-        guardrail_bypass_violations=["'same_person' was never called for 'I1'"],
-    )
-
-
-def test_a_correct_but_noncompliant_run_reads_differently_from_a_wrong_one():
-    """The literal ask of issue #972: these two runs used to render
-    identically, because a guardrail bypass rewrote the verdict to `fail`."""
-    correct_but_bypassing = _capture([_noncompliant("isabel-carvajal-daughter", "pass")])
-    genealogically_wrong = _capture([_make_result("other-fixture", "fail")])
-    assert correct_but_bypassing != genealogically_wrong
-
-    # The correct-but-bypassing run is reported as recall pass, gate fail.
-    assert "1/1 recall pass" in correct_but_bypassing
-    assert "isabel-carvajal-daughter" in correct_but_bypassing
-    assert "overall gate: 0/1 pass" in correct_but_bypassing
-
-    # The wrong one fails on recall and is clean on compliance.
-    assert "1/1 clean" in genealogically_wrong
-    assert "0/1 recall pass" in genealogically_wrong
-
-
-def test_rollup_always_states_compliance_even_when_clean():
-    """A silent compliance line puts us back to one number meaning two things."""
-    out = _capture([_make_result("a", "pass")])
-    assert "compliance: 1/1 clean" in out
-    assert "overall gate: 1/1 pass" in out
-
-
-# --- ungradeable runs must not read as failures (#1245) ---------------
-#
-# A run that produced no grade is not a run that failed the genealogy. The
-# rollup used to render an all-ungraded tag as "0/N", byte-identical to a tag
-# where every run genuinely failed, which is the miscount acceptance criterion
-# 4 of #1245 asks about.
-
-
-def test_an_all_ungraded_tag_is_not_rendered_as_an_all_failed_tag():
-    ungraded = _capture(
-        [_make_result(f"t{i}", "skipped", tags={"era": "1800s"}) for i in range(3)]
-    )
-    failed = _capture(
-        [_make_result(f"t{i}", "fail", tags={"era": "1800s"}) for i in range(3)]
-    )
-    assert "0/3" in ungraded and "0/3" in failed  # the recall count is the same...
-    assert ungraded != failed, "...so the line must say which of the two it is"
-    assert "3 ungraded" in ungraded
-    assert "ungraded" not in failed
-
-
-def test_a_mixed_tag_names_only_the_ungraded_ones():
-    out = _capture(
-        [
-            _make_result("a", "pass", tags={"era": "1800s"}),
-            _make_result("b", "fail", tags={"era": "1800s"}),
-            _make_result("c", "skipped", tags={"era": "1800s"}),
-        ]
-    )
-    assert "1/3 (1 ungraded)" in out
-
-
-def test_an_unrecognised_verdict_is_printed_rather_than_swallowed():
-    """`verdict` arrives as whatever string the judge returned, so a value
-    outside the vocabulary is reachable. It used to land in a dict key nothing
-    rendered, leaving the totals quietly failing to reconcile."""
-    out = _capture(
-        [
-            _make_result("a", "pass", tags={"era": "1800s"}),
-            _make_result("b", "kinda-ok?", tags={"era": "1800s"}),
-        ]
-    )
-    assert "1 unrecognised" in out
-
-
-def test_an_unrecognised_verdict_does_not_crash_the_rollup():
-    # The pre-fix bucket seeded four fixed keys; anything else had to be
-    # tolerated by `.get`. Assert the tolerance survives the rewrite.
-    out = _capture([_make_result("a", "???", tags={"era": "1800s"})])
-    assert "era" in out
 
 
 # --- an ungradeable run must say WHY (#1245) --------------------------
@@ -262,28 +133,6 @@ def test_no_grade_is_ever_disclosed():
         assert leaked not in out, f"leaked {leaked!r} into a pre-grading message"
 
 
-def test_an_untagged_unrecognised_verdict_is_named_at_the_headline():
-    """The per-tag loop never sees an untagged run, so the headline has to be
-    where an unreadable verdict surfaces. It previously printed nothing."""
-    out = _capture([_make_result("a", "kinda-ok?")])
-    assert "1 unrecognised" in out
-
-
-def test_the_headline_reconciles_with_the_run_count():
-    out = _capture(
-        [
-            _make_result("a", "pass"),
-            _make_result("b", "fail"),
-            _make_result("c", "skipped"),
-            _make_result("d", "???"),
-        ]
-    )
-    line = next(ln for ln in out.splitlines() if ln.startswith("E2E suite:"))
-    assert "1/4 recall pass" in line
-    for token in ("1 fail", "1 skipped", "1 unrecognised"):
-        assert token in line, f"{token} missing; the headline must sum to 4"
-
-
 # --- gradedness is a separate axis from committability (#1245 / #1239) ---
 #
 # The console block used to key both on `is_committable_run`. That is fine only
@@ -330,3 +179,50 @@ def test_an_ungraded_run_is_also_uncommittable_today():
     r = _skipped(judge_output={"error": "APIStatusError: 401"})
     assert is_ungraded(r) is True
     assert is_committable_run(r.verdict) is False
+
+
+# --- The compliance axis is visible in the roll-up (issue #972) -------------
+
+
+def _noncompliant(test_id: str, verdict: str) -> E2eResult:
+    return E2eResult(
+        test_id=test_id,
+        captured_at="2026-05-26_14-30-45",
+        verdict=verdict,
+        stop_reason="completed",
+        guardrail_bypass_violations=["'same_person' was never called for 'I1'"],
+    )
+
+
+def test_a_correct_but_noncompliant_run_reads_differently_from_a_wrong_one():
+    """The literal ask of issue #972: these two runs used to render
+    identically.  After #1114 removed the verdict lines, the distinction
+    is carried by the compliance line alone."""
+    correct_but_bypassing = _capture([_noncompliant("isabel-carvajal-daughter", "pass")])
+    genealogically_wrong = _capture([_make_result("other-fixture", "fail")])
+    assert correct_but_bypassing != genealogically_wrong
+
+    # The correct-but-bypassing run shows a guardrail bypass.
+    assert "guardrail bypass" in correct_but_bypassing
+    assert "isabel-carvajal-daughter" in correct_but_bypassing
+
+    # The wrong one is clean on compliance.
+    assert "1/1 clean" in genealogically_wrong
+
+
+def test_rollup_always_states_compliance_even_when_clean():
+    """A silent compliance line puts us back to one number meaning two things."""
+    out = _capture([_make_result("a", "pass")])
+    assert "compliance: 1/1 clean" in out
+
+
+# --- Blind grading: verdict must not leak (issue #1114) ---------------------
+
+
+def test_rollup_does_not_leak_verdict():
+    """The roll-up must not contain any verdict-bearing output — the person
+    who runs the fixture usually grades it next (spec §7.4)."""
+    out = _capture([_make_result("a", "pass", tags={"question_type": "parents"})])
+    assert "recall pass" not in out
+    assert "overall gate" not in out
+    assert "by question_type" not in out

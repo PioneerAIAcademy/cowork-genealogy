@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
@@ -28,6 +28,7 @@ function makeOptions(folder: string, overrides: Partial<FeedbackOptions['report'
       email: 'User@Example.com',
       userPrompt: 'Find a marriage record for John Smith.',
       agentDid: 'It searched 1860 census and stopped.',
+      workedAsExpected: false,
       agentShouldHave: 'It should have tried 1870 and 1880.',
       notes: undefined,
       ...overrides
@@ -65,12 +66,26 @@ describe('buildFeedbackZip — feedback.json', () => {
       'project_folder_path',
       'user_prompt',
       'agent_did',
+      'worked_as_expected',
       'agent_should_have',
       'notes'
     ]) {
       expect(payload, `missing field: ${key}`).toHaveProperty(key)
     }
     expect(payload.notes).toBe('')
+  })
+
+  it('stores worked_as_expected as the boolean from the report', async () => {
+    const positive = await readFeedbackJson(
+      (await buildFeedbackZip(makeOptions(folder, { workedAsExpected: true, agentShouldHave: '' })))
+        .zipBase64
+    )
+    expect(positive.worked_as_expected).toBe(true)
+
+    const negative = await readFeedbackJson(
+      (await buildFeedbackZip(makeOptions(folder, { workedAsExpected: false }))).zipBase64
+    )
+    expect(negative.worked_as_expected).toBe(false)
   })
 
   it('round-trips text fields verbatim and lowercases/trims email', async () => {
@@ -322,5 +337,83 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     expect(await zip.file('tree.gedcomx.json')!.async('string')).toBe('not json')
     expect(await zip.file('FEEDBACK.md')!.async('string')).not.toContain('Living people redacted')
+  })
+})
+
+// The "## Session log" section must always render and say why the transcript
+// is or isn't there — so a Cowork bundle's missing log reads as expected, not
+// missing (issue #1481).
+describe('buildFeedbackZip — FEEDBACK.md always states the session-log status', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-slog-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  async function feedbackMarkdown(options: FeedbackOptions): Promise<string> {
+    const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(options)).zipBase64, 'base64'))
+    return zip.file('FEEDBACK.md')!.async('string')
+  }
+
+  it('says the submitter opted out when the log was not requested', async () => {
+    const md = await feedbackMarkdown(makeOptions(folder)) // includeSessionLog: false by default
+    expect(md).toContain('## Session log')
+    expect(md).toContain('No Claude Code session log was included')
+    expect(md).toContain('unticked')
+    expect(md).not.toContain('See `_feedback/session-log.jsonl`')
+  })
+
+  it('flags a requested-but-missing log as expected for Cowork rather than dropping the section', async () => {
+    // The tmp folder has no matching ~/.claude/projects/<hash> dir, so
+    // readSessionLog finds nothing even though a log was requested — the state a
+    // real Cowork bundle lands in, so the Cowork explanation belongs here.
+    const md = await feedbackMarkdown({ ...makeOptions(folder), includeSessionLog: true })
+    expect(md).toContain('## Session log')
+    expect(md).toContain('requested but none was found')
+    // Assert on the parts that actually moved into this branch — the results/
+    // pointer and the doc link — not just 'Cowork', which the pre-swap wording
+    // also contained and so would not catch a regression (chesworthrm review).
+    expect(md).toContain('results/')
+    expect(md).toContain('docs/alpha-user-guide-cowork.md')
+    expect(md).not.toContain('See `_feedback/session-log.jsonl`')
+  })
+
+  it('points at the transcript when a Claude Code log is present', async () => {
+    // readSessionLog reads os.homedir()/.claude/projects/-<folder-with-dashes>/.
+    // Redirect HOME/USERPROFILE at a planted home so the lookup resolves.
+    const homeSaved = process.env.HOME
+    const profileSaved = process.env.USERPROFILE
+    const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+    try {
+      const projectHash = folder.replace(/^\//, '').replace(/\//g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', `-${projectHash}`)
+      await mkdir(projectDir, { recursive: true })
+      await writeFile(
+        join(projectDir, 'session.jsonl'),
+        '{"type":"user","message":{"role":"user","content":"hi"}}\n' +
+          '{"type":"assistant","message":{"role":"assistant","content":"searched census"}}\n',
+        'utf8'
+      )
+      process.env.HOME = fakeHome
+      process.env.USERPROFILE = fakeHome
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64'))
+      const md = await zip.file('FEEDBACK.md')!.async('string')
+      expect(md).toContain('## Session log')
+      expect(md).toContain('See `_feedback/session-log.jsonl`')
+      expect(zip.file('_feedback/session-log.jsonl')).not.toBeNull()
+    } finally {
+      if (homeSaved === undefined) delete process.env.HOME
+      else process.env.HOME = homeSaved
+      if (profileSaved === undefined) delete process.env.USERPROFILE
+      else process.env.USERPROFILE = profileSaved
+      await rm(fakeHome, { recursive: true, force: true })
+    }
   })
 })

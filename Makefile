@@ -5,6 +5,10 @@
 # Running the workbench locally? See DEVELOPMENT.md § "Running the hosted web
 # workbench locally" for the server/web target matrix (provider, agent, login,
 # port) and the rule that the web target must match the server's port.
+#
+# On Windows without Git Bash or WSL: scripts/windows/README.md maps the
+# developer targets to .bat wrappers. Change a recipe there too — the wrappers
+# reimplement it rather than shelling out to make.
 
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
@@ -134,7 +138,7 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 # existing one. Neither builds the engine — `make harness-test` does.
 .PHONY: worktree-link
 worktree-link: ## Link shared gitignored files (secrets, engine node_modules) from the primary worktree and install the pnpm workspace here
-	@scripts/link-worktree.sh
+	@bash scripts/link-worktree.sh
 
 # Install our shared git hooks into the shared .git/hooks (covers every worktree
 # of this clone): post-checkout auto-links shared files into new worktrees.
@@ -275,7 +279,13 @@ test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRU
 	# because it reports every failure instead of stopping at the first.
 	# Everything it runs is offline and deterministic — keep it that way; a
 	# gate slow enough to skip is a gate nobody runs.
-	scripts/test.sh
+	#
+	# Invoked as `bash scripts/test.sh`, not bare. Relying on the shebang makes
+	# make resolve the script itself, which fails on a repo path containing
+	# spaces — `bash: C:\Users\RUKN: No such file or directory` — so the
+	# documented pre-PR gate was unrunnable for anyone whose checkout sits under
+	# a spaced path (a Windows default, e.g. OneDrive\Desktop\New folder).
+	bash scripts/test.sh
 
 .PHONY: test
 test: ## Quick loop: JS workspace + server tests (a subset of test-all)
@@ -289,6 +299,13 @@ test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (
 .PHONY: server-test
 server-test: ## Control-plane tests — apps/server (FastAPI, pytest; uv auto-syncs the venv)
 	cd apps/server && uv run pytest -q
+
+.PHONY: hooks-test
+hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no venv, no install)
+	# The issue-filing gate fails open by design, so a broken regex stops the
+	# prompt without stopping anything else: the filing goes through ungated and
+	# nothing looks wrong. This is the only thing that notices.
+	python3 scripts/claude-hooks/test-gate-issue-create.py
 
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
@@ -332,6 +349,14 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 .PHONY: harness-lint
 harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
 	cd eval/harness && uv run ruff check .
+
+.PHONY: replay-check
+replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
+	# Offline and free — no API key, no live calls. Reports reconstruction
+	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
+	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
+	# match on all 12 sections. Run after any change to harness/replay.py.
+	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
@@ -380,8 +405,8 @@ eval-timings: ## Weekly timing review: scan the latest run log per skill, rank t
 	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: prune-runlogs
-prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
-	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [STRIP=1|DAYS] [DRY=1]
+	# Read-modify-write over eval/runlogs/. Commit the result.
 	#
 	# You should not normally need PRUNE: the harness prunes to the newest 5
 	# candidates per skill on every write (harness/runlog.py), so the cap holds
@@ -392,9 +417,17 @@ prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune
 	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
+	#
+	# STRIP=1 drops response_summary from e2e run logs older than 14 days
+	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
+	# the unit corpus this is keyed on age and strips rather than deletes — e2e
+	# has no per-skill run-log invariant to protect, and response_summary is the
+	# only field with no programmatic reader. The .ann.json / .final-tree /
+	# .final-research calibration triple is never touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
+	  $(if $(STRIP),--strip-e2e-captures $(if $(filter-out 1,$(STRIP)),$(STRIP),),) \
 	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
@@ -434,6 +467,8 @@ e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
+	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
+	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
@@ -572,6 +607,14 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: provenance-report
+provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]
+	# Offline, no API calls. Seven skill bodies carry a don't-fabricate rule in
+	# prose and nothing checked any of them; this is the mechanical half.
+	# Triage the hits before acting — a derived value and a punctuation-carrying
+	# ARK both land here. See issue #1667.
+	cd eval/harness && uv run python -m provenance_report $(if $(SKILL),--skill $(SKILL),)
+
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
@@ -612,7 +655,7 @@ feedback-case: ## Unpack a submitted alpha-feedback zip into a working project d
 	# research project you open in Claude Code and continue, not an archive.
 	# Windows: run scripts\setup-feedback-case.bat instead.
 	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
-	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
+	bash scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
 
 .PHONY: feedback-reset
 feedback-reset: ## Reset a feedback case dir to its imported state between attempts: make feedback-reset CASE=~/feedback/<slug>
@@ -622,7 +665,7 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	# baseline underneath is setup-feedback-case.sh's business, not theirs.
 	# Windows: run scripts\reset-feedback-case.bat instead.
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
-	scripts/reset-feedback-case.sh $(CASE)
+	bash scripts/reset-feedback-case.sh $(CASE)
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows

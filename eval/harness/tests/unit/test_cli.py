@@ -1348,6 +1348,168 @@ def test_preflight_skips_check_for_negative_only(tmp_path, monkeypatch):
     assert rc == 0
 
 
+# --- judge-rule-violation summary (#1401, #1406) -------------------------
+#
+# `_extract_dimensions` records a warning when the judge breaks one of its
+# own prompt rules — an invented rubric dimension (#1361/#1401), or a Tool
+# Arguments score on a run that made no MCP calls (#1406). Those land in
+# the run log's output.warnings and, before this, nowhere a human reads.
+
+
+def _row(test_id, *kinds):
+    return {
+        "test_id": test_id,
+        "skill": "search-records",
+        "outcome": "pass",
+        "judge_warning_kinds": list(kinds),
+    }
+
+
+def test_summary_tallies_judge_warnings(capsys):
+    run_tests._print_summary([
+        _row("ut_a_001", "dropped_unknown_rubric_dimension"),
+        _row("ut_a_002", "coerced_tool_arguments_to_na"),
+        _row("ut_a_003", "dropped_unknown_rubric_dimension"),
+        _row("ut_a_004"),
+    ])
+    out = capsys.readouterr().out
+    assert "Judge rule violations (3 test-kind pair(s), 2 kind(s)):" in out
+    assert "dropped_unknown_rubric_dimension: 2 — ut_a_001, ut_a_003" in out
+    assert "coerced_tool_arguments_to_na: 1 — ut_a_002" in out
+    # The clean test must not appear in the tally section.
+    tally = out.split("Judge rule violations")[1]
+    assert "ut_a_004" not in tally
+
+
+def test_summary_silent_when_no_judge_warnings(capsys):
+    """The common case. A header printed on every clean run trains people
+    to skip the section, which defeats the point of printing it."""
+    run_tests._print_summary([_row("ut_a_001"), _row("ut_a_002")])
+    out = capsys.readouterr().out
+    assert "ut_a_001" in out          # the normal outcome table still prints
+    assert "Judge rule violations" not in out
+
+
+def test_summary_survives_rows_without_the_key(capsys):
+    """Defensive: a row built by an older path has no
+    `judge_warning_kinds`. Printing the summary must not be the thing that
+    crashes a finished run."""
+    run_tests._print_summary([
+        {"test_id": "ut_a_001", "skill": "s", "outcome": "pass"},
+    ])
+    assert "Judge rule violations" not in capsys.readouterr().out
+
+
+def test_summary_reads_warnings_off_the_real_entry(tmp_path, monkeypatch, capsys):
+    """End-to-end through main(): a judge warning on the ENTRY must reach
+    the printed tally.
+
+    The three tests above call `_print_summary` with a hand-built row, so
+    they all still pass if the row-building loop stops reading
+    `runs[].output.warnings` — verified by mutation. This is the one that
+    covers that hop, which is the half that actually breaks.
+    """
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyless_auth(monkeypatch)
+
+    def _entry_with_warning(spec, **k):
+        entry = _stub_log(spec.id, spec.skill, "pass")
+        entry["runs"][0]["output"] = {
+            "warnings": [
+                {"kind": "coerced_tool_arguments_to_na",
+                 "advisory": "scored 3 on a run with zero MCP calls",
+                 "name": "Tool Arguments", "score": 3, "rationale": "..."},
+            ]
+        }
+        return entry
+
+    monkeypatch.setattr(run_tests, "run_one_test", _entry_with_warning)
+    monkeypatch.setattr(run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename, **kwargs:
+                            Path(runlogs_root) / filename)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--allow-missing-judge",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Judge rule violations (1 test-kind pair(s), 1 kind(s)):" in out
+    assert "coerced_tool_arguments_to_na: 1 — ut_a_000" in out
+
+
+def test_summary_ignores_non_judge_warning_kinds():
+    """`output.warnings` is a shared list. orchestrator._build_warnings also
+    puts `unread_skill_call`, `missing_tool_usage_dimension` and
+    `uncovered_tool_call` in it — none of which is the judge misbehaving.
+    Tallying those under a "Judge rule violations" header would report a
+    routine unmatched tool call as a judge fault."""
+    assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
+    assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
+    assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
+
+    # And every judge-warning kind either file emits IS in the set, or it prints
+    # nowhere — which is the state this whole section exists to end.
+    #
+    # BOTH files, not just judge.py. Scanning judge.py alone is how the routing
+    # warning stayed dark for its entire life: it was emitted from
+    # orchestrator.py, so this guard never read the line that declared it and
+    # passed green the whole time. A guard that cannot see the file where the
+    # bug lives is not a guard.
+    from pathlib import Path as _P
+    import re as _re
+
+    harness_dir = _P(__file__).resolve().parents[2] / "harness"
+    emitted: set[str] = set()
+    for name in ("judge.py", "orchestrator.py"):
+        emitted |= set(
+            _re.findall(
+                r'"kind": "([a-z_]+)"',
+                (harness_dir / name).read_text(encoding="utf-8"),
+            )
+        )
+
+    # orchestrator.py emits both classes. These three are harness-side
+    # advisories about the skill or the fixtures, asserted above to be OUT of
+    # the set; everything else either file emits is a judge warning and must be
+    # IN it. Listing them here rather than filtering by call site is deliberate:
+    # a NEW orchestrator kind fails this test until someone classifies it, which
+    # is the decision that was skipped last time.
+    harness_side = {
+        "unread_skill_call",
+        "missing_tool_usage_dimension",
+        "uncovered_tool_call",
+    }
+    judge_side = emitted - harness_side
+    assert judge_side <= run_tests._JUDGE_WARNING_KINDS, (
+        f"judge/orchestrator emit warning kind(s) the summary will never print: "
+        f"{sorted(judge_side - run_tests._JUDGE_WARNING_KINDS)}"
+    )
+
+
+def test_summary_count_matches_the_names_it_shows(capsys):
+    """One test tripping the same kind twice is one test, not two. The
+    headline counted occurrences while the list deduped, so it read as two
+    and showed one name, with no '+N more' to explain the gap."""
+    run_tests._print_summary([
+        {"test_id": "ut_x_001", "skill": "s", "outcome": "pass",
+         "judge_warning_kinds": ["dropped_unknown_rubric_dimension"] * 2},
+    ])
+    out = capsys.readouterr().out
+    line = next(l for l in out.splitlines() if "dropped_unknown" in l)
+    count = int(line.split(":")[1].split("—")[0].strip())
+    names = [n.strip() for n in line.split("—")[1].split("(+")[0].split(",")]
+    assert count == len(names) == 1, line
+
+
 def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
     tmp_path, monkeypatch, capsys
 ):

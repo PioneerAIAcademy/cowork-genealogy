@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every developer issue it moves through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -33,6 +33,15 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 
 Each item carries `id` (the item id you need to move it), `content.number`,
 `status`, `assignees`, `title`, `labels`.
+
+**A closed issue counts for nothing, whatever column its card is in.** It fills
+no pool, holds no eval slot (Gate 4), loses no swap, and is never a blocker.
+`gh project item-list` reports the *column*, and the column follows the issue's
+state only when `.github/workflows/project-status-sync.yml` gets to it — so a
+just-closed card can still read `Review` for a while. Ready / In Progress /
+Review are the three active columns; **Done and Not planned are the terminal
+ones, and "outside Backlog" is never the test for anything**, because it counts
+them too.
 
 **Re-read the board immediately before you apply anything.** The lead edits it
 while you work — in one session nine items moved to Ready and 23 assignments
@@ -86,14 +95,13 @@ self-serve from Ready and the lead hands work out at standup. This skill adds no
 assignee at all; the only pre-assigned items on the board are `cross-cutting`
 ones, and `/find-big-wins` assigns those at filing time (§1).
 
-One exception, and it runs the other way: **remove an assignee whose role does
-not match the label.** `.claude/skills/triage-standup/references/roster.md`
-carries a role column — check it before you believe an existing assignment. A
-genealogist holding a `developer`-labeled harness issue is a mis-route, not a
-choice; unassign, leave the label alone, and put a line in the body naming what
-that person knows that the next taker will need. (This happened with issue
-#1023: the genealogist who found a silent grading-credential failure was
-assigned the Python fix, and only he had the broken-key window.)
+**And never remove one either — a role/label mismatch is not a mis-route.** The
+lead is deliberately teaching the developers to be simple genealogists and the
+genealogists to be simple developers; they reach out to each other as needed. A
+developer holding a `genealogist` issue is the point, not a defect (ruled
+2026-08-14). So the roster's role column tells you which *pool target* an item
+counts against, and nothing else: do not report a mismatch as a finding, do not
+propose unassigning, and do not rewrite the label to match the person.
 
 ## 1. Measure Ready depth before you rank anything
 
@@ -277,11 +285,27 @@ visible, and an idle one is the most expensive stalled card there is.
 Ranking cannot fix a board where work arrives faster than it leaves. Measure
 both, every run, over the last four weeks:
 
+**Do not count with `--search "created:$a..$b"` per week.** GitHub's range is
+inclusive at *both* ends, so consecutive windows both claim the boundary day and
+every week is inflated — on 2026-08-14 that reported 239 filed for a week that
+saw 221, and 92 for one that saw 85. Pull the dates once and bucket them
+locally with a half-open range instead:
+
 ```sh
-for w in 1 2 3 4; do
-  a=$(date -v-${w}w +%Y-%m-%d); b=$(date -v-$((w-1))w +%Y-%m-%d)
-  echo "$a..$b  filed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 500 --search "created:$a..$b" --json number -q 'length')  closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed --limit 500 --search "closed:$a..$b" --json number -q 'length')"
-done
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 2000 \
+  --json number,createdAt,closedAt,state > /tmp/all-issues.json
+python3 - <<'PY'
+import json, datetime
+a = json.load(open('/tmp/all-issues.json', encoding='utf-8'))
+today = datetime.date.today()
+for w in range(4, 0, -1):
+    lo = today - datetime.timedelta(weeks=w); hi = today - datetime.timedelta(weeks=w-1)
+    d = lambda s: datetime.date.fromisoformat(s[:10])
+    f = sum(1 for i in a if lo <= d(i['createdAt']) < hi)
+    c = sum(1 for i in a if i['closedAt'] and lo <= d(i['closedAt']) < hi)
+    print(f'{lo}..{hi}  filed {f:4d}  closed {c:4d}  net {f-c:+d}')
+print('open now:', sum(1 for i in a if i['state'] == 'OPEN'))
+PY
 ```
 
 Baseline measured 2026-08-01, for comparison only — recompute, never quote it:
@@ -500,9 +524,27 @@ Then say it in your report as well, so the lead can hand both to one person.
 
 ### Gate 4 — the skill's eval slot is already taken
 
-**At most one item touching a given skill's eval snapshot may be outside Backlog
-at a time.** If one is already in Ready, In Progress or Review, the next one is
-not Ready — leave it in Backlog and name the holder.
+**At most one item touching a given skill's eval snapshot may be in an active
+column at a time** — Ready, In Progress, or Review. If one is already there, the
+next one is not Ready — leave it in Backlog and name the holder.
+
+**Only an open issue in one of those three columns holds a slot.** Never
+"outside Backlog", which is what this rule used to say and which is wrong in
+both terminal directions: Done and Not planned are outside Backlog too. A closed
+issue holds nothing. Whatever it was going to change, it is not going to change
+it, so nothing is waiting on it and the next item can go.
+
+**When the column and the issue's state disagree, the state wins.** Closing an
+issue does not move its card — `.github/workflows/project-status-sync.yml` does,
+and it is a workflow, not an atomic write. So a card can sit in Review for a
+while after its issue closed, and a pass that reads the column alone will hold a
+whole skill shut on an issue nobody is working. Check `state` on any holder
+before you believe it, and say so when you find one:
+
+```sh
+gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
+  --json number,state,stateReason,title
+```
 
 *Why it is hard rather than soft.* A skill's run log goes inactive the moment any
 file under its snapshot changes, so two such items cannot share a run however they
@@ -634,20 +676,29 @@ auto-add workflow that sets nothing else — a freshly filed issue that belongs 
 Ready still needs this move. (The exception is a `feedback` item, which the same
 workflow files directly into Ready and which you never move at all.)
 
-**Gate the unassigned `developer` shortlist through `/review-ready` before you
-promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
-that skill fans out one agent per item to check the same call against the cited
-code, the architecture guide's site list, and the board's what-nothing-checks
-issues —
-which is where a "junior-safe" item turns out to hide an open API decision.
+**Gate every `developer` issue you are moving into Ready through `/review-ready`
+before you promote it — not just the ones you rank as junior.** Your seniority
+test (§1) is a pre-filter read off the issue body; that skill fans out one agent
+per item to check the same call against the cited code, the architecture guide's
+site list, and the board's what-nothing-checks issues — which is where a
+"junior-safe" item turns out to hide an open API decision.
+
+**"Every" means every one you move, including a `senior`-labeled item.** A senior
+item's body is stale in exactly the ways a junior item's is, and it is the more
+expensive one to hand out wrong. The only issue that skips the gate is one that
+already carries the `reviewed` label from a previous pass **and** has not been
+edited since — check `updatedAt` against the reviewed marker's date. Re-running
+the gate on an unchanged issue pays for the same deep read twice
+(`docs/specs/task-review-spec.md` §2); skipping it on a changed one is how a
+refuted premise reaches a junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
-`needs-a-decision` verdict is a §1 miss caught in time — it stays in Backlog and
-never enters the junior pool. **The two get different labels** (`senior` vs
-`needs-decision`, §6), and the verdict tells you which: `needs-a-decision` means
-one answer unblocks it, `senior` means it is hard regardless. Running the gate
-after promotion instead works, but pays for the same deep read twice — see
-`docs/specs/task-review-spec.md` §2.
+`needs-a-decision` verdict on an item you had ranked junior is a §1 miss caught
+in time — it stays in Backlog and never enters the junior pool. **The two get
+different labels** (`senior` vs `needs-decision`, §6), and the verdict tells you
+which: `needs-a-decision` means one answer unblocks it, `senior` means it is hard
+regardless. Running the gate after promotion instead works, but pays for the same
+deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
@@ -692,14 +743,27 @@ report; the genealogist one is newer and easier to forget.
 ### Reporting — your job is the arithmetic, not the routing
 
 ```sh
-# `needs-decision`, split by whether a ruling has been recorded. A ruling is an
-# issue comment carrying a bold `**Ruling` marker (the convention
-# `/find-big-wins` owns). Match the marker anywhere in the body, not just at
-# character zero: real ruling comments put a heading above it and number it
-# (`## Lead rulings` … `**Ruling 1 — …`), which an exact-prefix test misses.
+# `needs-decision`, split by whether a ruling has been recorded.
+#
+# MATCH BOTH WORDS, AND BOTH MARKUPS. We are instructed to write `**Ruling:**`,
+# but this query does not read what we wrote — it reads what the LEAD wrote, and
+# he writes `## Decision:` and `**Decision (lead, <date>)`. A `**Ruling`-only
+# test called two answered items WAITING on 2026-08-13 (issues #1331 and #1394,
+# both ruled that afternoon), which is the exact inverse of the defect this
+# split exists to catch: it hides a dropped item by reporting the lead as the
+# bottleneck. Bold marker or ATX heading, "Ruling" or "Decision".
+#
+# Match anywhere in the body, not at character zero: real ruling comments put a
+# heading above the marker and number it (`## Lead rulings` … `**Ruling 1 — …`),
+# which an exact-prefix test misses.
+#
+# Prove it before trusting a change to this pattern — run it against a known
+# answered issue and a known waiting one and watch the two land in different
+# buckets. A pattern that matches nothing reports a clean board forever.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,updatedAt,comments \
-  -q '.[] | (if ([.comments[].body | test("\\*\\*Ruling")] | any)
+  -q '.[] | (if ([.comments[].body
+                 | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -885,10 +949,13 @@ list it does not appear in. Add state when it matters.
 6a. **Cross-cutting** — one line per active `cross-cutting` item: who holds it,
    days since it last moved, and any person holding two. Flag any unassigned one
    as a mis-file. Skip the heading when there are none.
-6b. **Skill slots** — one line per skill with anything in flight: the holder, its
-   idle days, and how many are queued behind it. Flag a holder idle ~10 days as a
-   reclaim proposal, and a queue three or more deep as a merge candidate for
-   `/audit-board`. Skip the heading when every slot is free.
+6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
+   in Ready, In Progress or Review: the holder, its idle days, and how many are
+   queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
+   queue three or more deep as a merge candidate for `/audit-board`. A holder
+   whose issue has closed frees the slot immediately — report it as freed, name
+   what is now promotable behind it, and do not wait for the card to move. Skip
+   the heading when every slot is free.
 7. **Grooming** — capped, with verdicts.
 
 Then stop and wait for approval. Apply only what he approves, re-reading the

@@ -2556,45 +2556,39 @@
       "args": {
         "query": "select:mcp__genealogy__project_context,mcp__genealogy__research_query",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[],\\\"persons\\\":[{\\\"id\\\":\\\"GCT1-F3Q\\\",\\\"name\\\":\\\"Amelia Frances Gioiello\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GCT1-Z84\\\",\\\"name\\\":\\\"Joseph Gioiello\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GCT1-CC7\\\",\\\"name\\\":\\\"Lena Manro\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]}],\\\"sources\\\":[],\\\"localities\\\":[]}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Objective: Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2619,58 +2613,50 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Question q_001: Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\research-plan\\references\\planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__collections_search,mcp__genealogy__place_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__auth_status,mcp__genealogy__login",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__auth_status\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__login\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__auth_status",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"loggedIn\\\":true,\\\"expiresAt\\\":\\\"2026-07-30T08:52:28.152Z\\\",\\\"expiresInMinutes\\\":46,\\\"hasRefreshToken\\\":true}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__collections_search",
       "args": {
         "standardPlace": "United States"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"United States\\\"},\\\"scope\\\":\\\"United States\\\",\\\"totalForPlace\\\":175,\\\"results\\\":[{\\\"id\\\":\\\"2822767\\\",\\\"title\\\":\\\"California, San Francisco, List of United States Citizens Arriving at San Francisco, 1930-1949\\\",\\\"dateRange\\\":\\\"1930-1949\\\",\\\"recordCount\\\":438403,\\\"personCount\\\":438409,\\\"imageCount\\\":31787,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/2822767\\\"},{\\\"id\\\":\\\"5000180\\\",\\\"title\\\":\\\"Colorado, United States Naturaliza..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2792,24 +2778,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_item..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute plan pl_001 for question q_001. Start with pli_001 (US Census 1900 for Amelia Gioiello) then pli_002 (1910 census), pli_003 (1920 census), pli_004 (US Marriages 1733-1990), pli_005 (GenealogyBank newspaper marriages). Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2822,8 +2805,7 @@
         "recordCountry": "United States",
         "subjectId": "GCT1-F3Q",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1900,\\\"residenceYearTo\\\":1900,\\\"recordCountry\\\":\\\"United States\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":1,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":1,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:M3FX-2Y1\\\",\\\"events\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2843,8 +2825,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 1,
         "notes": "1 result returned but scored near-zero (Pologillial, male, Alaska \u2014 no match). Genuine negative for exact surname Gioiello in 1900 census. Will retry with spelling variants: Gioello, Joiello, Gioiello fuzzy."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_001\\\",\\\"performed\\\":\\\"2026-07-30T08:08:02.680Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null,\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2855,8 +2836,7 @@
         "residenceYearTo": 1900,
         "recordCountry": "United States",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1900,\\\"residenceYearTo\\\":1900,\\\"recordCountry\\\":\\\"United States\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":109,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":20,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:MSJR-VNX\\\",\\\"events\\\":[{\\\"type\\\":\\\"Immigration\\\",\\\"date\\\":\\\"1897\\\"},{\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2869,8 +2849,7 @@
         "resultsExamined": 20,
         "resultsAvailable": 109,
         "notes": "Surname-only search for Gioiello in 1900 US Census returned 109 results. Top match is Francesco Gioiello in Manhattan (Ward 6, household of Carolina Carrano) \u2014 likely a relative but not Amelia. No female Amelia Gioiello in top 20. Will search father Joseph Gioiello to locate the family household."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_002\\\",\\\"performed\\\":\\\"2026-07-30T08:08:29.455Z\\\",\\\"resultsRef\\\":\\\"results/log_002.json\\\",\\\"returnedCount\\\":20,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_002.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2883,8 +2862,7 @@
         "recordCountry": "United States",
         "subjectId": "GCT1-Z84",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Joseph\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1900,\\\"residenceYearTo\\\":1900,\\\"recordCountry\\\":\\\"United States\\\",\\\"subjectId\\\":\\\"GCT1-Z84\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":5,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":5,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:MSXQ-2JW\\\",\\\"events\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2897,8 +2875,7 @@
         "resultsExamined": 5,
         "resultsAvailable": 5,
         "notes": "Searched father Joseph Gioiello in 1900 US Census to locate family household. All 5 candidates scored below 0.01 \u2014 genuine negative. Family not located in 1900 census under Gioiello. Possible explanations: family may have arrived after 1900, or name is indexed under a variant. Proceeding to 1910 census."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_003\\\",\\\"performed\\\":\\\"2026-07-30T08:08:54.244Z\\\",\\\"resultsRef\\\":\\\"results/log_003.json\\\",\\\"returnedCount\\\":5,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_003.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2911,8 +2888,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2925,8 +2901,7 @@
         "recordCountry": "United States",
         "subjectId": "GCT1-F3Q",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1910,\\\"residenceYearTo\\\":1910,\\\"recordCountry\\\":\\\"United States\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":12,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":12,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:M577-KHQ\\\",\\\"event..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2939,16 +2914,14 @@
         "recordCountry": "United States",
         "subjectId": "GCT1-Z84",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Joseph\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1910,\\\"residenceYearTo\\\":1910,\\\"recordCountry\\\":\\\"United States\\\",\\\"subjectId\\\":\\\"GCT1-Z84\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":24,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":24,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:M5SK-HW3\\\",\\\"event..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_read",
@@ -2956,8 +2929,7 @@
         "personId": "GCT1-F3Q",
         "relatives": true,
         "sourceDescriptions": true
-      },
-      "response_summary": "person_read is disabled in e2e benchmark runs. Reading the tree would hand you the stripped answer for free. Recover it through records instead (record_search, record_read, fulltext_search, image_search, \u2026)."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2983,8 +2955,7 @@
             "notes": "Searched Joseph Gioiello in 1910 US Census to locate family household. 24 results, all scored below 0.01. Top match: Joseph Zygiello (Pennsylvania, 1898) at 0.0011 \u2014 likely a transcription variant but different family. Family not located in 1910 census under Gioiello. Pivoting to marriage records."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"logId\\\":\\\"log_004\\\",\\\"performed\\\":\\\"2026-07-30T08:10:16.805Z\\\",\\\"resultsRef\\\":\\\"results/log_004.json\\\",\\\"returnedCount\\\":12},{\\\"logId\\\":\\\"log_005\\\",\\\"performed\\\":\\\"2026-07-30T08:10:16.812Z\\\",\\\"resultsRef\\\":\\\"results/log_005.json\\\",\\\"returnedCount\\\":24}],\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_004.json\\\",\\\"results/log_005.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3010,8 +2981,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3023,8 +2993,7 @@
         "collectionId": "1675543",
         "subjectId": "GCT1-F3Q",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"United States\\\",\\\"collectionId\\\":\\\"1675543\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":0,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\\":null}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3035,16 +3004,14 @@
         "recordCountry": "United States",
         "subjectId": "GCT1-F3Q",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"marriage\\\",\\\"recordCountry\\\":\\\"United States\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\"},\\\"totalMatches\\\":170,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":50,\\\"offset\\\":0,\\\"hasMore\\\":true,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:Q297-LTPT\\\",\\\"events\\\":[],\\\"personName\\\":\\\"Amelia Frances Gioiello\\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3052,8 +3019,7 @@
         "recordId": "ark:/61903/1:1:Q297-LTPT",
         "resultsRef": "results/.staging/6fdb9259-54ce-42c0-8ff5-6b3b503f89bd.json",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102088941116\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTPT\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"prefix\\\":\\\"Miss\\\",\\\"surname\\\":\\\"Gioiello\\\",\\\"given\\\":\\\"Amelia Frances\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1936\\\",\\\"standard_date\\\":\\\"1936\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_102088941069\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTGC\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"prefix\\\":\\\"Mr\\\",\\\"surnam..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3066,8 +3032,7 @@
         "resultsExamined": 10,
         "resultsAvailable": 170,
         "notes": "Searched Amelia Gioiello in US marriage records (all collections). Top ranked match (matchScore 0.90, attachedToSubject=true): 'Entry for Stanley Datchuk and Amelia Frances Gioiello, Ohio County Marriages 1789-2016' (ark:/61903/1:1:Q297-LTPT). Record read confirms: Amelia Frances Gioiello (b.1936, prefix Miss) married Stanley Datchuk (b.1933, prefix Mr) on 20 Aug 1955 in Trumbull, Ohio. Parents named on record: Joseph Gioiello (father) and Lena Mauro (mother \u2014 note tree has 'Manro', record has 'Mauro', likely phonetic variant of same person). Stanley's parents: Geo Datchuk and Sarah Mynarchyk. Three additional Ohio County Marriage records also attached to subject (ranks 2-4) appear to be marriages of Amelia's descendants. Passing primary record ark:/61903/1:1:Q297-LTPT to record-extraction."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_006\\\",\\\"performed\\\":\\\"2026-07-30T08:11:42.478Z\\\",\\\"resultsRef\\\":\\\"results/log_006.json\\\",\\\"returnedCount\\\":50,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_006.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3080,16 +3045,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Extract record ark:/61903/1:1:Q297-LTPT (Stanley Datchuk and Amelia Frances Gioiello, Ohio County Marriages 1789-2016, 20 Aug 1955, Trumbull Ohio). Log entry: log_006. Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p. Record content already read: Amelia Frances Gioiello (b.1936, Female) married Stanley Datchuk (b.1933, Male) on 20 Aug 1955 in Trumbull, Ohio. Father of Amelia: Joseph Gioiello. Mother of Amelia: Lena Mauro. Father of Stanley: Geo Datchuk. Mother of Stanley: Sarah Mynarchyk. Source: Ohio, County Marriages, 1789-2016, FamilySearch collection 1614804, URL https://www.familysearch.org/ark:/61903/1:2:Q21Z-MPM2"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -3097,15 +3060,13 @@
         "description": "Extract Ohio marriage record for Amelia Gioiello & Stanley Datchuk",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from one FamilySearch historical record into research.json and tree.gedcomx.json.\n\n**Project path:** `C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p`\n\n**Record ID:** `ark:/61903/1:1:Q297-LTPT`\n\n**Log entry ID:** `log_006`\n\n**Open research question this record bears on:** `q_001` \u2014 \"Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage?\"\n\n**Record content (already read via record_read from staged sidecar):**\n\nThe record is \"Entry for Stanley Datchuk and Amelia Frances Gioiello, Ohio, County Marriages, 1789-2016\" from FamilySearch collection 1614804.\n\nSource citation: `\"Ohio, County Marriages, 1789-2016\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955.`\nSource URL: `https://www.familysearch.org/ark:/61903/1:2:Q21Z-MPM2`\n\n**Persons on the record:**\n- `ark:/61903/1:1:Q297-LTPT` \u2014 Amelia Frances Gioiello, Female, prefix: Miss, birth: 1936 (the research subject \u2014 tree person GCT1-F3Q)\n- `ark:/61903/1:1:Q297-LTGC` \u2014 Stanley Datchuk, Male, prefix: Mr, birth: 1933 (the groom \u2014 new person)\n- `ark:/61903/1:1:Q297-LT5Z` \u2014 Joseph Gioiello, Male (father of Amelia \u2014 tree person GCT1-Z84)\n- `ark:/61903/1:1:Q297-LT5R` \u2014 Lena Mauro, Female (mother of Amelia \u2014 tree person GCT1-CC7, listed as \"Lena Manro\" in tree; record spells it \"Mauro\")\n- `ark:/61903/1:1:Q297-LTGY` \u2014 Geo Datchuk, Male (father of Stanley \u2014 new person)\n- `ark:/61903/1:1:Q297-LTPD` \u2014 Sarah Mynarchyk, Female (mother of Stanley \u2014 new person)\n\n**Relationships on the record:**\n- Couple: Stanley Datchuk \u00d7 Amelia Frances Gioiello \u2014 Marriage on **20 Aug 1955** in **Trumbull, Ohio, United States**\n- ParentChild: Joseph Gioiello \u2192 Amelia Frances Gioiello\n- ParentChild: Lena Mauro \u2192 Amelia Frances Gioiello\n- Couple: Joseph Gioiello \u00d7 Lena Mauro\n- ParentChild: Geo Datchuk \u2192 Stanley Datchuk\n- ParentChild: Sarah Mynarchyk \u2192 Stanley Datchuk\n\n**Place:** Trumbull, Ohio, United States (standardPlace confirmed)\n\n**Context note:** The tree currently lists Amelia's mother as \"Lena Manro\"; this record names her \"Lena Mauro\". These are likely phonetic variants of the same person \u2014 record the name as it appears on this source (Mauro) without modifying the existing tree entry for GCT1-CC7.\n\nExtract every fact as an atomic assertion (marriage event, birth years, parent-child relationships, names, place, date). Apply GPS three-layer classification \u2014 source/information/evidence \u2014 to each. Do not create or link person_evidence entries; identity resolution is handled separately."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. Here is the summary.\\n\\n**Source:** `src_001` / `S1` \\u2014 action: `created`\\n\\n**Assertions: 24 total across 6 personas**\\n- `bride` (Amelia Frances Gioiello, `p_102088941116`): a_001\\u2013a_007 \\u2014 name, sex, birth year, marriage event (date+place), relationship to father, relationship to mother\\n- `groom` (Stanley Datchuk, `p_102088941069`): a_008\\u2013a_013 \\u2014 name, sex, birth year, marriage event (date+place), relationship to fat..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"GCT1-F3Q\\\",\\\"name\\\":\\\"Amelia Frances Gioiello\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GCT1-Z84\\\",\\\"name\\\":\\\"Joseph Gioiello\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"GCT1-CC7\\\",\\\"name\\\":\\\"Lena Manro\\\",..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3670,8 +3631,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[1]: record_persona_id 'Q297-LTPT' does not resolve to a person in record 'ark:/61903/1:1:Q297-LTPT' \\u2014 expected one of: p_102088941116, p_102088941069, p_102088941130, p_102088941145, p_102088941087, p_102088941102 (primary persona: p_102088941116)\\\",\\\"ops[2]: record_persona_id 'Q297-LTPT' does not resolve to a person in record 'ark:/61903/1:1:Q297-LTPT' \\u2014 expected one of: p_102088941116, p_102088941069, p_102088941130, p_102..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3679,8 +3639,7 @@
         "recordId": "ark:/61903/1:1:Q297-LTPT",
         "resultsRef": "results/log_006.json",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102088941116\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTPT\\\",\\\"gender\\\":\\\"Female\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"prefix\\\":\\\"Miss\\\",\\\"surname\\\":\\\"Gioiello\\\",\\\"given\\\":\\\"Amelia Frances\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1936\\\",\\\"standard_date\\\":\\\"1936\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_102088941069\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTGC\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"prefix\\\":\\\"Mr\\\",\\\"surnam..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4245,8 +4204,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_004\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4259,24 +4217,21 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link all six record personas from src_001 (Ohio County Marriage record, log_006) to tree persons. Subject: Amelia Frances Gioiello (GCT1-F3Q). Also present on record: Joseph Gioiello (GCT1-Z84), Lena Mauro/Manro (GCT1-CC7), Stanley Datchuk (new), Geo Datchuk (new), Sarah Mynarchyk (new). Question: q_001. Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__same_person,mcp__genealogy__materialize_facts,mcp__genealogy__merge_warnings",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4284,8 +4239,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "assertions",
         "sourceId": "src_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":24,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:Q297-LTPT\\\",\\\"record_persona_id\\\":\\\"p_102088941116\\\",\\\"record_role\\\":\\\"bride\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Amelia Frances Gioiello\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Amelia Frances\\\",\\\"surname\\\":\\\"Gioiello\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Amelia Frances Gioiello\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4320,8 +4274,7 @@
             "recordRole": "mother_of_groom"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"GCT1-F3Q\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":1,\\\"namesAdded\\\":0,\\\"refsAttached\\\":2,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"GCT1-Z84\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"GCT1-CC7\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"person..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4692,38 +4645,33 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_001\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_002\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_003\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_004\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_005\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"GCT1-F3Q\\\",\\\"name\\\":\\\"Amelia Frances Gioiello\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"GCT1-Z84\\\",\\\"name\\\":\\\"Joseph Gioiello\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"GCT1-CC7\\\",\\\"name\\\":\\\"L..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Evaluate whether research on q_001 is reasonably exhaustive. The question: 'Whom did Amelia Frances Gioiello marry, and what records document that marriage?' Evidence found: Ohio County Marriage record (src_001) \u2014 Amelia Frances Gioiello married Stanley Datchuk on 20 Aug 1955 in Trumbull, Ohio. Plan has remaining unexecuted items (pli_005 newspaper marriages, pli_006 1930 census, pli_007 Ancestry). Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\research-exhaustiveness\\references\\research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4731,8 +4679,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "plans",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plans\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"pl_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"status\\\":\\\"active\\\",\\\"created\\\":\\\"2026-07-30\\\",\\\"items\\\":[{\\\"id\\\":\\\"pli_001\\\",\\\"sequence\\\":1,\\\"record_type\\\":\\\"census\\\",\\\"jurisdiction\\\":\\\"United States\\\",\\\"date_range\\\":\\\"1900\\\",\\\"repository\\\":\\\"FamilySearch\\\",\\\"rationale\\\":\\\"The 1900 US Census lists all household members by name with exact birth month/year and birthplace. Searching for Amelia Gioiello (with var..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4740,8 +4687,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "log",
         "planItemId": "pli_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"log\\\",\\\"count\\\":3,\\\"items\\\":[{\\\"id\\\":\\\"log_001\\\",\\\"plan_item_id\\\":\\\"pli_001\\\",\\\"performed\\\":\\\"2026-07-30T08:08:02.680Z\\\",\\\"tool\\\":\\\"record_search\\\",\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1900,\\\"residenceYearTo\\\":1900,\\\"recordCountry\\\":\\\"United States\\\"},\\\"outcome\\\":\\\"negative\\\",\\\"results_examined\\\":0,\\\"external_site\\\":null,\\\"results_ref\\\":null,\\\"results_available\\\":1,\\\"n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4749,8 +4695,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "log",
         "planItemId": "pli_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"log\\\",\\\"count\\\":2,\\\"items\\\":[{\\\"id\\\":\\\"log_004\\\",\\\"plan_item_id\\\":\\\"pli_002\\\",\\\"performed\\\":\\\"2026-07-30T08:10:16.805Z\\\",\\\"tool\\\":\\\"record_search\\\",\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"recordType\\\":\\\"census\\\",\\\"residenceYearFrom\\\":1910,\\\"residenceYearTo\\\":1910,\\\"recordCountry\\\":\\\"United States\\\"},\\\"outcome\\\":\\\"negative\\\",\\\"results_examined\\\":12,\\\"external_site\\\":null,\\\"results_ref\\\":\\\"results/log_004.json\\\",\\\"resu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4758,16 +4703,14 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "log",
         "planItemId": "pli_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"log\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4811,16 +4754,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_006\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4833,8 +4774,7 @@
         "recordCountry": "United States",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "subjectId": "GCT1-F3Q"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"collectionId\\\":\\\"2603807\\\",\\\"marriageYearFrom\\\":1953,\\\"marriageYearTo\\\":1957,\\\"recordCountry\\\":\\\"United States\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\"},\\\"totalMatches\\\":0,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":0,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[],\\\"staged\\\":null}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4845,16 +4785,14 @@
         "recordCountry": "United States",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "subjectId": "GCT1-F3Q"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Gioiello\\\",\\\"givenName\\\":\\\"Amelia\\\",\\\"collectionId\\\":\\\"2603807\\\",\\\"recordCountry\\\":\\\"United States\\\",\\\"projectPath\\\":\\\"C:\\\\\\\\Users\\\\\\\\User\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\",\\\"subjectId\\\":\\\"GCT1-F3Q\\\"},\\\"totalMatches\\\":1,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":1,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:WQYQ-JSMM\\\",\\\"events\\\":[],\\\"personName\\\":\\\"Joseph A Ianniciello\\\",\\\"s..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4867,8 +4805,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/49222bf8-d1dc-4a73-8178-c424a41c00fb.json",
         "notes": "Searched FamilySearch GenealogyBank Historic Newspaper Marriages (collection 2603807) for Amelia Gioiello with and without marriage year filter. Only result was an Ianniciello \u2014 surname-variant false positive, match score 6.7e-7, unrelated. No newspaper marriage announcement found for Amelia Gioiello in Trumbull, Ohio circa 1955. Genuine negative: the 1955 local Trumbull County newspapers (Warren Tribune Chronicle) are likely not included in this digitized collection."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_007\\\",\\\"performed\\\":\\\"2026-07-30T08:25:40.294Z\\\",\\\"resultsRef\\\":\\\"results/log_007.json\\\",\\\"returnedCount\\\":1,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_007.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4894,23 +4831,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:Q297-LTPT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_102088941069\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTGC\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"id\\\":\\\"39a87e9d-47c8-42eb-8102-032fd9b51b2a\\\",\\\"type\\\":\\\"BirthName\\\",\\\"prefix\\\":\\\"Mr\\\",\\\"surname\\\":\\\"Datchuk\\\",\\\"given\\\":\\\"Stanley\\\"}],\\\"facts\\\":[{\\\"id\\\":\\\"b69faceb-b87b-4e91-83a1-869a209bb0ad\\\",\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1933\\\",\\\"standard_date\\\":\\\"1933\\\"}],\\\"sources\\\":[{\\\"ref\\\":\\\"sd_da1\\\"}]},{\\\"id\\\":\\\"p_102088941116\\\",\\\"ark\\\":\\\"ark:/61903/1:1:Q297-LTPT..."
+      }
     },
     {
       "tool": "Agent",
@@ -4918,8 +4852,7 @@
         "description": "Read county register image for marriage record",
         "subagent_type": "image-reader",
         "prompt": "Please transcribe the FamilySearch image at ARK `3:1:3QSQ-G9WJ-M3P` (full ARK: `ark:/61903/3:1:3QSQ-G9WJ-M3P`).\n\nI am looking for: the marriage register entry for Stanley Datchuk and Amelia Frances Gioiello, dated 20 August 1955, in Trumbull County, Ohio.\n\nProject path (for saving the image): C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\n\nPlease return the full transcription of the page and extract any visible facts about the parties (names, ages, birth years, birthplaces, parents' names, date and place of marriage, officiant, witnesses)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"**imageId:** ark:/61903/3:1:3QSQ-G9WJ-M3P\\n**Page type:** Ohio Marriage License Application and Certificate \\u2014 Probate Court, Trumbull County, Ohio \\u2014 dated August 1955 \\u2014 English\\n\\n**Saved image:** images/ark_61903_3_1_3QSQ-G9WJ-M3P.jpg\\n\\n---\\n\\n## Full Transcription\\n\\nMARRIAGE RECORD\\n\\nAPPLICATION FOR MARRIAGE LICENSE\\n(Both Parties Appearing in Court)\\n\\nIn the Matter of\\nStanley Datchuk\\nand\\nAmelia Frances Gioiello\\n\\nNo. 43517\\n\\nProbate Court,..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -4927,8 +4860,7 @@
         "ark": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
         "lookingFor": "marriage register entry for Stanley Datchuk and Amelia Frances Gioiello, dated 20 August 1955, Trumbull County, Ohio",
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"transcription\\\":\\\"MARRIAGE RECORD\\\\n\\\\nAPPLICATION FOR MARRIAGE LICENSE\\\\n(Both Parties Appearing in Court)\\\\n\\\\nIn the Matter of\\\\nStanley Datchuk\\\\nand\\\\nAmelia Frances Gioiello\\\\n\\\\nNo. 43517\\\\n\\\\nProbate Court, Trumbull County, Ohio.\\\\n\\\\nTo the Honorable Judge of the Probate Court of said County:\\\\n\\\\nThe undersigned respectfully make application for a Marriage License for themselves, and upon their respective oaths state as follows:\\\\n\\\\nThat he, the said S..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4943,8 +4875,7 @@
           "imageArk": "ark:/61903/3:1:3QSQ-G9WJ-M3P"
         },
         "notes": "Read original county marriage license and certificate image (Trumbull County Probate Court, license No. 43517). Confirmed: Stanley Datchuk married Amelia Frances Gioiello 20 Aug 1955, Niles, Trumbull County Ohio. Officiant: Father Nicholas Arioli C.P.P.S. (Catholic priest, Niles Ohio). Bride's birthplace: Niles Ohio; age 19, birthday 16 Nov (birth year ~1935, correcting indexed 1936). Groom: age 22, birthday 14 Sep (birth year ~1932, correcting indexed 1933). Mother's maiden name from original: Sarah Synarehyk (indexed as Mynarchyk \u2014 likely handwriting variant). Both parties' sworn application statements, judge's license order, and priest's certificate recorded. Image saved as images/ark_61903_3_1_3QSQ-G9WJ-M3P.jpg."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_008\\\",\\\"performed\\\":\\\"2026-07-30T08:31:32.775Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null,\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4952,15 +4883,13 @@
         "description": "Extract original marriage certificate image assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract assertions from the original county marriage license and certificate image that was just transcribed.\n\n**Project path:** C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\n\n**Record ID:** ark:/61903/3:1:3QSQ-G9WJ-M3P  (this is a 3:1: image page ARK \u2014 the original scan of the Trumbull County Probate Court marriage license register)\n\n**Log entry:** log_008\n\n**Open question this bears on:** q_001 \u2014 \"Whom did Amelia Frances Gioiello marry, and what records document that marriage?\"\n\n**Image transcription (full):**\n\nMARRIAGE RECORD \u2014 APPLICATION FOR MARRIAGE LICENSE (Both Parties Appearing in Court)\nProbate Court, Trumbull County, Ohio \u2014 License No. 43517\n\nGroom: Stanley Datchuk\n- Age 22 on 14 Sep 1954 [formula means born ~14 Sep 1932]\n- Residence: 530 Baldwin, Niles, Ohio\n- Birthplace: [illegible on scan]\n- Occupation: Upp. Carpenter\n- Father: Geo. Datchuk\n- Mother (maiden name): Sarah Synarehyk\n- Previously married: No\n\nBride: Amelia Frances Gioiello\n- Age 19 on 16 Nov 1954 [formula means born ~16 Nov 1935]\n- Residence: 815 Henry St., Niles, Ohio, Trumbull County, Ohio\n- Birthplace: Niles, Ohio\n- Occupation: Clerk\n- Father: Joseph Gioiello\n- Mother (maiden name): Lena Mauro\n- Previously married: No\n- Parental consent signatories: Joseph Gioiello (father), Lena Gioiello (mother)\n\nApplication sworn before: Sydney W. Jones, Probate Judge; Cyril Sherman, Deputy Clerk \u2014 13 Aug 1955\nLicense granted: 18 Aug 1955 \u2014 Sydney W. Jones, Probate Judge\nMedical statements: R. H. Palatini, M.D., filed 8-13-55\nMarriage certificate: \"I hereby certify that on the 20 day of August A.D. 1955, I solemnized the marriage of Mr. Stanley Datchuk with Miss Amelia Frances Gioiello\"\nOfficiant: Father Nicholas Arioli, C.P.P.S., Priest, Niles, Ohio\nFiled and recorded: 22 Aug 1955 \u2014 Thelma M. Randell, Deputy Clerk\n\n**Key source classification notes:**\n- This is the ORIGINAL county marriage register scan \u2014 classify as source_classification: \"original\"\n- Information provided by both parties under oath, and by the officiant: information_quality should be \"primary\" for facts the parties stated about themselves\n- The marriage event assertion is direct evidence answering q_001\n\n**Image filename:** images/ark_61903_3_1_3QSQ-G9WJ-M3P.jpg\n\n**Persons already in tree.gedcomx.json:**\n- GCT1-F3Q = Amelia Frances Gioiello (subject, Female)\n- GCT1-Z84 = Joseph Gioiello (her father, Male)\n- GCT1-CC7 = Lena Manro/Mauro (her mother, Female)\n- I1 = Stanley Datchuk (groom, Male \u2014 added from the FamilySearch index in src_001)\n- I2 = Geo Datchuk (Stanley's father, Male)\n- I3 = Sarah Mynarchyk (Stanley's mother, Female \u2014 note: original image spells maiden name \"Synarehyk\", different from indexed \"Mynarchyk\")\n\n**Important notes for the extractor:**\n1. Do NOT create new person_evidence links \u2014 identity resolution is handled separately by person-evidence skill.\n2. The birth year for Amelia from this original is ~1935 (age 19 on 16 Nov 1954 means born Nov 1935), which differs from the FamilySearch index's \"1936\". Record both. Mark the 1936 indexed value as a discrepancy to note.\n3. The birth year for Stanley from this original is ~1932, differing from the indexed \"1933\". Record the corrected value.\n4. The mother's maiden name \"Synarehyk\" (this original) vs \"Mynarchyk\" (derivative index) \u2014 this is likely a handwriting variant. Record what the original says without collapsing the difference.\n5. Frame the extraction neutrally \u2014 describe what the record says; do not assume corrections to the existing tree or tell the agent to \"fix\" anything."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 28 assertions written successfully. Here is the compact summary:\\n\\n**Source:** src_002 / S2 \\u2014 created (new source, new S entry). Action: `created`.\\n\\n**Assertions written: 28 total (a_025 through a_052)**\\n\\n| Role | Count | Facts |\\n|---|---|---|\\n| groom (Stanley Datchuk) | 11 | name, sex, age, birth-date (calc.), residence, occupation, marital_status, relationship-to-bride, child-of-father, child-of-mother, marriage event |\\n| bride (Amelia Frances Gio..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"GCT1-F3Q\\\",\\\"name\\\":\\\"Amelia Frances Gioiello\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"GCT1-Z84\\\",\\\"name\\\":\\\"Joseph Gioiello\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"GCT1-CC7\\\",\\\"name\\\":\\\"L..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5567,16 +5496,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_025\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_026\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_027\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_028\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_029\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link assertions a_025 through a_052 (from src_002, the original Trumbull County marriage license image) to the appropriate tree persons. Record roles: bride (Amelia Frances Gioiello) \u2192 GCT1-F3Q; groom (Stanley Datchuk) \u2192 I1; father_of_bride (Joseph Gioiello) \u2192 GCT1-Z84; mother_of_bride (Lena Mauro) \u2192 GCT1-CC7; father_of_groom (Geo Datchuk) \u2192 I2; mother_of_groom (Sarah Synarehyk \u2014 note spelling differs from I3's indexed 'Mynarchyk') \u2192 I3. The marriage event assertions (a_051, a_052) bear on both Amelia (GCT1-F3Q) and Stanley (I1). No same_person scoring needed \u2014 these are image-sourced assertions with no record_persona_id. All matches are obvious or strong: same persons identified in the earlier src_001 person-evidence pass, now confirmed by the original image. Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5584,16 +5511,14 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "assertions",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":28,\\\"items\\\":[{\\\"id\\\":\\\"a_025\\\",\\\"record_id\\\":\\\"ark:/61903/3:1:3QSQ-G9WJ-M3P\\\",\\\"record_role\\\":\\\"groom\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Stanley Datchuk\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Stanley\\\",\\\"surname\\\":\\\"Datchuk\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Stanley Datchuk\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",\\\"extracted_for_question_ids\\\":[\\\"q_001\\\"],\\\"log_entry_id\\\":\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -5631,8 +5556,7 @@
             "recordRole": "mother_of_groom"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"I1\\\",\\\"created\\\":false,\\\"factsAdded\\\":4,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":5,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"I1\\\",\\\"factType\\\":\\\"Birth\\\",\\\"values\\\":[\\\"1933\\\",\\\"~1932-09-14\\\"]}]},{\\\"personId\\\":\\\"GCT1-F3Q\\\",\\\"created\\\":false,\\\"factsAdded\\\":3,\\\"factsEnriched\\\":2,\\\"namesAdded\\\":0,\\\"refsAttached\\\":6,\\\"conflicts_surfaced\\\":[{\\\"personId\\\":\\\"GCT1-F3Q\\\",\\\"factType\\\":\\\"Birth\\\",\\\"values\\\":[\\\"1936, Niles, Trum..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6025,8 +5949,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_034\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_035\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_036\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_037\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_038\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6061,23 +5984,20 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Write proof conclusion for q_001: \"Whom did Amelia Frances Gioiello marry, and what records document that marriage?\" Evidence: src_001 (FamilySearch index of Ohio County Marriages, derivative) and src_002 (original Trumbull County Probate Court marriage license and certificate No. 43517, image ark:/61903/3:1:3QSQ-G9WJ-M3P). Conclusion: Amelia Frances Gioiello (GCT1-F3Q) married Stanley Datchuk (I1) on 20 August 1955 in Niles, Trumbull County, Ohio. Officiated by Father Nicholas Arioli C.P.P.S. Supporting assertions: a_051, a_052 (marriage events from src_002 original), a_009, a_010 (marriage events from src_001 derivative). Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\.claude\\skills\\proof-conclusion\\references\\gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6085,8 +6005,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":44,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:Q297-LTPT\\\",\\\"record_persona_id\\\":\\\"p_102088941116\\\",\\\"record_role\\\":\\\"bride\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Amelia Frances Gioiello\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"Amelia Frances\\\",\\\"surname\\\":\\\"Gioiello\\\"},\\\"information_quality\\\":\\\"primary\\\",\\\"informant\\\":\\\"Amelia Frances Gioiello\\\",\\\"informant_proximity\\\":\\\"self\\\",\\\"evidence_type\\\":\\\"direct\\\",..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6094,8 +6013,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "conflicts",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6103,8 +6021,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "sources",
         "sourceId": "src_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"sources\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"src_001\\\",\\\"citation\\\":\\\"\\\\\\\"Ohio, County Marriages, 1789-2016\\\\\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955.\\\",\\\"citation_detail\\\":{\\\"who\\\":\\\"Stanley Datchuk and Amelia Frances Gioiello\\\",\\\"what\\\":\\\"Ohio, County Marriages, 1789-2016 \\u2014 marriage record index entry\\\",\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6112,16 +6029,14 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "sources",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"sources\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"src_002\\\",\\\"citation\\\":\\\"Trumbull County Probate Court, Ohio, Marriage License No. 43517, Stanley Datchuk and Amelia Frances Gioiello, application sworn 13 August 1955, license granted 18 August 1955, marriage solemnized 20 August 1955, filed 22 August 1955; digital image, FamilySearch (ark:/61903/3:1:3QSQ-G9WJ-M3P), accessed 2026-07-30.\\\",\\\"citation_detail\\\":{\\\"who\\\":\\\"Stanley Datchuk (groom) and..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6145,8 +6060,7 @@
           "exhaustive_search_summary": "Marriage records searched on FamilySearch (Ohio County Marriages 1789-2016, positive: license No. 43517). Original county marriage license and certificate image accessed and transcribed (ark:/61903/3:1:3QSQ-G9WJ-M3P). FamilySearch GenealogyBank newspaper marriages searched (negative). U.S. census 1900 and 1910 searched (negative \u2014 family not located). Census 1920 and 1930 inapplicable \u2014 Amelia born approximately 1935, predating those enumeration years. Ancestry Ohio marriage records not separately searched \u2014 they access the same underlying county register as the FamilySearch collection and would not constitute an independent source. Research declared reasonably exhaustive.",
           "narrative_markdown": "## Proof Summary: Marriage of Amelia Frances Gioiello to Stanley Datchuk\n\n**Question:** Whom did Amelia Frances Gioiello marry, and what records document that marriage?\n\n**Conclusion (Probable):** The preponderance of evidence strongly indicates that Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Mauro of Niles, Trumbull County, Ohio, married Stanley Datchuk, son of George Datchuk and Sarah Synarehyk, on 20 August 1955 in Niles, Trumbull County, Ohio.\n\n### Primary Evidence\n\nThe controlling source is the original Trumbull County, Ohio Marriage License No. 43517.[^1] Both Amelia Frances Gioiello and Stanley Datchuk appeared before Probate Judge Sydney W. Jones and swore to their application on 13 August 1955. Amelia, then 19 years old (birthday 16 November, born approximately 1935), gave her residence as 815 Henry Street, Niles, Ohio, and her occupation as Clerk; her father Joseph Gioiello and mother Lena Gioiello (n\u00e9e Mauro) signed as parental consent witnesses. Stanley, then 22 years old (birthday 14 September, born approximately 1932), gave his residence as 530 Baldwin, Niles, Ohio, and his occupation as Carpenter; he named his father as George Datchuk and his mother's maiden name as Sarah Synarehyk. Father Nicholas Arioli, C.P.P.S., a Catholic priest serving Niles, Ohio, solemnized the marriage on 20 August 1955 and certified: \"I hereby certify that on the 20 day of August A.D. 1955, I solemnized the marriage of Mr. Stanley Datchuk with Miss Amelia Frances Gioiello.\" The license was granted 18 August 1955 and filed with the court on 22 August 1955. As an original civil record bearing sworn oaths by both parties, a judicial order, an officiating priest's certification, and a court filing stamp, this document is primary direct evidence of the marriage.\n\n[^1]: Trumbull County Probate Court, Ohio, Marriage License No. 43517, Stanley Datchuk and Amelia Frances Gioiello, application sworn 13 August 1955, license granted 18 August 1955, marriage solemnized 20 August 1955, filed 22 August 1955; digital image, FamilySearch (ark:/61903/3:1:3QSQ-G9WJ-M3P), accessed 2026-07-30.\n\n### Corroborating Source\n\nThe FamilySearch index of Ohio County Marriages, 1789\u20132016 (a derivative record of the same county register) confirms the same parties, date (20 August 1955), and county (Trumbull).[^2] As a derivative of the same register, it is not an independent source; however, its agreement with the original image provides internal consistency verification and confirms the index transcription is accurate on all material facts.\n\n[^2]: \"Ohio, County Marriages, 1789-2016,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955.\n\n### Discrepancies Assessed\n\nThree minor discrepancies between the original image and the derivative index were noted; none affects the identity of the parties or the fact of the marriage:\n\n1. **Bride's birth year.** The derivative index gives 1936; the original application states the bride was 19 years of age as of 16 November 1954, implying birth approximately November 1935. The original sworn testimony controls over the derivative index.\n2. **Groom's birth year.** The derivative index gives 1933; the original application states the groom was 22 years of age as of 14 September 1954, implying birth approximately September 1932. The original sworn testimony controls.\n3. **Groom's mother's maiden name.** The derivative index renders the surname as \"Mynarchyk\"; the original image reads \"Synarehyk.\" Both appear to be alternative handwriting interpretations of the same Eastern European (likely Ukrainian) surname. The original image reading controls; a corroborating record would confirm the correct spelling.\n\n### Confidence Tier\n\nThis conclusion is assessed at the **probable** tier. The original Trumbull County marriage license and certificate is a single high-quality original source with primary information, attested by multiple parties; no second genuinely independent source was located. A \"proved\" conclusion would require at least two independent original sources. The Catholic parish marriage register of Father Arioli's church in Niles, Ohio (a Congregation of the Precious Blood parish) would constitute a genuinely independent source and could advance this conclusion to \"proved\" if located and examined. Absent such a second independent source, the available evidence strongly supports the conclusion but does not yet meet the full GPS proof standard."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ps_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -6168,8 +6082,7 @@
           ]
         },
         "sourceAssertionId": "a_032"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"operation\\\":\\\"add_relationship\\\",\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]},\\\"assignedIds\\\":{\\\"facts\\\":[\\\"F9\\\"],\\\"relationship\\\":\\\"R5\\\"}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6178,8 +6091,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -6187,15 +6099,13 @@
         "description": "GPS mentor proof-critique of ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please conduct a mandatory GPS proof-critique of proof summary ps_001 for question q_001.\n\n**Project path:** C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\n\n**Focus:** proof-critique\n\n**Context:**\n- q_001: \"Whom did Amelia Frances Gioiello marry, and what records document that marriage?\"\n- ps_001: tier = probable, vehicle = summary\n- Key sources: src_001 (FamilySearch derivative index of Ohio County Marriages 1789-2016) and src_002 (original Trumbull County Probate Court marriage license No. 43517, image ark:/61903/3:1:3QSQ-G9WJ-M3P)\n- Evidence: a_051 and a_052 (marriage event assertions from original image, officiant-certified), a_004 and a_010 (marriage assertions from derivative index)\n- Couple relationship R5 (I1 \u00d7 GCT1-F3Q, marriage 20 Aug 1955 Niles Ohio) written to tree\n- Research declared exhaustive (though independent verification limited to single county register source)\n\nPlease evaluate the proof against all five GPS components and record your verdict in the evaluations section of research.json. The mentor's recommendation is advisory \u2014 it does not require rework before the project can be marked complete."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Verdict persisted as `ev_001` at `C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\e2e-amelia-gioiello-marriage-dlxamk3p\\\\evaluations\\\\proof-critique-ps_001-2026-07-30T12-00-00.json`, pointer recorded in `research.json`.\\n\\n# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\n\\nGood craftsmanship here. a_051 and a_052 show real informant-analysis discipline \\u2014 naming Father Arioli specifically as the certifying informant rather than defaulting to \\\"the c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json"
-      },
-      "response_summary": "File content (29082 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -6203,8 +6113,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1,
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_amelia_gioiello_marriage\",\n4\t    \"objective\": \"Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GCT1-F3Q\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-28\",\n10\t    \"updated\": \"2026-07-30\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t ..."
+      }
     },
     {
       "tool": "Read",
@@ -6212,8 +6121,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 100,
         "limit": 250
-      },
-      "response_summary": "100\t          \"date_range\": \"1733-1990\",\n101\t          \"repository\": \"FamilySearch\",\n102\t          \"rationale\": \"FamilySearch 'United States, Marriages, 1733-1990' (collection 1675543) is a national marriage index aggregating state-level marriage records. Searching for Amelia Gioiello (and spelling variants: Giojello, Gioello, Giojello) may return a direct marriage record naming her husband, the marriage date, and county. This is the most direct source for the question; it should be searched ..."
+      }
     },
     {
       "tool": "Read",
@@ -6221,8 +6129,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 350,
         "limit": 100
-      },
-      "response_summary": "350\t      \"extracted_for_question_ids\": [\n351\t        \"q_001\"\n352\t      ],\n353\t      \"log_entry_id\": \"log_006\",\n354\t      \"source_id\": \"src_001\"\n355\t    },\n356\t    {\n357\t      \"id\": \"a_002\",\n358\t      \"record_id\": \"ark:/61903/1:1:Q297-LTPT\",\n359\t      \"record_persona_id\": \"p_102088941116\",\n360\t      \"record_role\": \"bride\",\n361\t      \"fact_type\": \"sex\",\n362\t      \"value\": \"Female\",\n363\t      \"information_quality\": \"primary\",\n364\t      \"informant\": \"Amelia Frances Gioiello\",\n365\t      \"informan..."
+      }
     },
     {
       "tool": "Read",
@@ -6230,8 +6137,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 450,
         "limit": 150
-      },
-      "response_summary": "450\t      \"informant_proximity\": \"self\",\n451\t      \"evidence_type\": \"direct\",\n452\t      \"extracted_for_question_ids\": [\n453\t        \"q_001\"\n454\t      ],\n455\t      \"log_entry_id\": \"log_006\",\n456\t      \"source_id\": \"src_001\"\n457\t    },\n458\t    {\n459\t      \"id\": \"a_007\",\n460\t      \"record_id\": \"ark:/61903/1:1:Q297-LTPT\",\n461\t      \"record_persona_id\": \"p_102088941069\",\n462\t      \"record_role\": \"groom\",\n463\t      \"fact_type\": \"name\",\n464\t      \"value\": \"Stanley Datchuk\",\n465\t      \"structured_val..."
+      }
     },
     {
       "tool": "Read",
@@ -6239,8 +6145,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 600,
         "limit": 50
-      },
-      "response_summary": "600\t      \"source_id\": \"src_001\"\n601\t    },\n602\t    {\n603\t      \"id\": \"a_014\",\n604\t      \"record_id\": \"ark:/61903/1:1:Q297-LTPT\",\n605\t      \"record_persona_id\": \"p_102088941130\",\n606\t      \"record_role\": \"father_of_bride\",\n607\t      \"fact_type\": \"sex\",\n608\t      \"value\": \"Male\",\n609\t      \"information_quality\": \"primary\",\n610\t      \"informant\": \"Amelia Frances Gioiello\",\n611\t      \"informant_proximity\": \"self\",\n612\t      \"evidence_type\": \"direct\",\n613\t      \"extracted_for_question_ids\": [\n614..."
+      }
     },
     {
       "tool": "Read",
@@ -6248,8 +6153,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1300,
         "limit": 150
-      },
-      "response_summary": "1300\t    {\n1301\t      \"id\": \"a_051\",\n1302\t      \"record_id\": \"ark:/61903/3:1:3QSQ-G9WJ-M3P\",\n1303\t      \"record_role\": \"bride\",\n1304\t      \"fact_type\": \"marriage\",\n1305\t      \"value\": \"Married Stanley Datchuk, 20 August 1955, Niles, Ohio\",\n1306\t      \"date\": \"1955-08-20\",\n1307\t      \"date_certainty\": \"exact\",\n1308\t      \"place\": \"Niles, Ohio\",\n1309\t      \"information_quality\": \"primary\",\n1310\t      \"informant\": \"Father Nicholas Arioli\",\n1311\t      \"informant_proximity\": \"official_duty\",\n1312\t..."
+      }
     },
     {
       "tool": "Read",
@@ -6257,8 +6161,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1450,
         "limit": 150
-      },
-      "response_summary": "1450\t      \"created\": \"2026-07-30\"\n1451\t    },\n1452\t    {\n1453\t      \"id\": \"pe_013\",\n1454\t      \"assertion_id\": \"a_010\",\n1455\t      \"person_id\": \"GCT1-F3Q\",\n1456\t      \"confidence\": \"confident\",\n1457\t      \"match_score\": 0.9001964,\n1458\t      \"rationale\": \"The groom's marriage assertion (a_010) names Amelia Frances Gioiello as his spouse \u2014 this assertion bears on GCT1-F3Q as the other party to the marriage. FamilySearch match score 0.90 for the overall record against GCT1-F3Q.\",\n1459\t      \"c..."
+      }
     },
     {
       "tool": "Read",
@@ -6266,8 +6169,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1600,
         "limit": 150
-      },
-      "response_summary": "1600\t      \"confidence\": \"probable\",\n1601\t      \"match_score\": null,\n1602\t      \"rationale\": \"Assertion a_021 names Stanley Datchuk as child of Geo Datchuk. Linked to I1 (Stanley Datchuk) as the named child.\",\n1603\t      \"created\": \"2026-07-30\"\n1604\t    },\n1605\t    {\n1606\t      \"id\": \"pe_030\",\n1607\t      \"assertion_id\": \"a_022\",\n1608\t      \"person_id\": \"I3\",\n1609\t      \"confidence\": \"probable\",\n1610\t      \"match_score\": null,\n1611\t      \"rationale\": \"Name assertion 'Sarah Mynarchyk' on mother..."
+      }
     },
     {
       "tool": "Read",
@@ -6275,8 +6177,7 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1750,
         "limit": 150
-      },
-      "response_summary": "1750\t      \"id\": \"pe_046\",\n1751\t      \"assertion_id\": \"a_034\",\n1752\t      \"person_id\": \"I3\",\n1753\t      \"confidence\": \"probable\",\n1754\t      \"match_score\": null,\n1755\t      \"rationale\": \"'Sarah Synarehyk' named as Stanley's mother's maiden name on original image. I3 is 'Sarah Mynarchyk' (from derivative index src_001). 'Synarehyk' vs 'Mynarchyk' is a substantial spelling difference, likely a handwriting transcription variant between S/M and the vowel sequence \u2014 both appear to be Ukrainian/Sla..."
+      }
     },
     {
       "tool": "Read",
@@ -6284,15 +6185,13 @@
         "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p\\research.json",
         "offset": 1900,
         "limit": 150
-      },
-      "response_summary": "1900\t      \"created\": \"2026-07-30\"\n1901\t    },\n1902\t    {\n1903\t      \"id\": \"pe_063\",\n1904\t      \"assertion_id\": \"a_048\",\n1905\t      \"person_id\": \"I2\",\n1906\t      \"confidence\": \"confident\",\n1907\t      \"match_score\": null,\n1908\t      \"rationale\": \"'Geo. Datchuk' named as father of groom on original county marriage license. I2 is 'Geo Datchuk' \u2014 same person, 'Geo.' = George abbreviation. Exact match.\",\n1909\t      \"created\": \"2026-07-30\"\n1910\t    },\n1911\t    {\n1912\t      \"id\": \"pe_064\",\n1913\t    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__validate_research_schema",
       "args": {
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"valid\\\":true,\\\"errors\\\":[],\\\"warnings\\\":[],\\\"message\\\":\\\"Both project files pass all validation checks.\\\"}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6338,24 +6237,21 @@
           "timestamp": "2026-07-30T12:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ev_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\",\\\"evaluations/proof-critique-ps_001-2026-07-30T12-00-00.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Objective: Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage? Project path: C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p. q_001 has proof summary ps_001 at tier=probable. All plan items are completed or skipped. Exhaustive declaration is true. Mandatory mentor review ev_001 is recorded. Mark q_001 resolved and set project.status = completed."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6363,8 +6259,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "questions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"Whom did Amelia Frances Gioiello, daughter of Joseph Gioiello and Lena Manro, marry, and what records document that marriage?\\\",\\\"rationale\\\":\\\"The research objective is to identify Amelia Frances Gioiello's husband and the evidence for their marriage. No sources currently support a marriage for Amelia in the tree. Marriage records, census records, and vital registrations ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -6372,8 +6267,7 @@
         "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\e2e-amelia-gioiello-marriage-dlxamk3p",
         "section": "proof_summaries",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"ps_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"tier\\\":\\\"probable\\\",\\\"vehicle\\\":\\\"summary\\\",\\\"supporting_assertion_ids\\\":[\\\"a_051\\\",\\\"a_052\\\",\\\"a_004\\\",\\\"a_010\\\",\\\"a_032\\\",\\\"a_043\\\"],\\\"resolved_conflict_ids\\\":[],\\\"exhaustive_search_summary\\\":\\\"Marriage records searched on FamilySearch (Ohio County Marriages 1789-2016, positive: license No. 43517). Original county marriage license and certificate imag..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6405,8 +6299,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: research.json/questions[0]: 'resolved' must be an ISO date (YYYY-MM-DD), got 'true'\\\",\\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"],\\\"opsReceived\\\":2}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6438,8 +6331,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\"},{\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     }
   ],
   "error": null,
@@ -6813,5 +6705,6 @@
       "transcript": "agent-a81c386002bb50d20.jsonl"
     }
   ],
-  "guardrail_shadow_violations": []
+  "guardrail_shadow_violations": [],
+  "captures_stripped": true
 }

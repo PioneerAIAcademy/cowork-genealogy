@@ -144,12 +144,33 @@ camelCase convenience fields the same way `research_log_append` does.
   the id and never removing the entry**. A status transition (e.g. a plan →
   `superseded`, a question → `resolved`) is an `update`. There is **no delete op** —
   the supersede-not-delete rule is structural (`research-schema-spec.md:143`).
-- **`update` on the `project` singleton** — `project` is one object, not a list, so
-  it has no id and no `append`: `op:"update"` shallow-merges `fields` (restricted to
-  `allowedFields: ["status"]`) onto `research.project`, and the tool stamps
-  `project.updated` (iso_date). `proof-conclusion` Step 8 uses this to set
-  `project.status: "completed"`. The return's `entryId` echoes the section name
-  (`"project"`). Making another field settable later = extend `allowedFields`.
+- **`update` on a singleton section** — `project` and `researcher_profile` are each
+  one object, not a list, so neither has an id or an `append`: `op:"update"`
+  shallow-merges `fields` (restricted to that section's `allowedFields`) onto the
+  object. The return's `entryId` echoes the section name.
+
+  `project` allows `status`, `objective`, `title` and `subject_person_ids`, and
+  stamps `project.updated` (iso_date). `proof-conclusion` sets
+  `status: "completed"` here; `init-project` writes the other three at creation.
+  **The three are set-once** — legal while the current value is absent or empty
+  (`""` for a string, `[]` for a list), refused once non-empty. `status` is not.
+
+  `researcher_profile` allows `experience_level`, `subscriptions`,
+  `narration_guidance` and `intended_audience`, stamps **nothing** (its schema is
+  `additionalProperties: false` with no timestamp field), and is **not**
+  set-once — a researcher who picked the wrong experience level needs a route
+  that is not starting the project over. It is also the one section created **on
+  first write when absent**: the schema makes it optional, and an agent must
+  never fabricate a profile, so the object appears when a real interview answer
+  arrives rather than being seeded with assumed values.
+
+  Making another field settable later = extend that section's `allowedFields`.
+
+  > **Set-once constrains the system, not the researcher.** A human who mistyped
+  > an objective edits `research.json` directly: the raw-write lockdown binds the
+  > agent, never a text editor, and preventing a person from editing their own
+  > files is explicitly not a goal of this layer. So the gate needs no override
+  > path, and the refusal message says so.
 
 ### 3.2 Return value (compact — never echoes the section)
 
@@ -171,6 +192,10 @@ camelCase convenience fields the same way `research_log_append` does.
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+`validation.warnings` carries non-blocking advisories: `standard_place` that
+could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
+no-op, and the sources-without-assertions persistence nudge (§5.1).
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
@@ -532,9 +557,12 @@ audit's recommendation #5):
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set; `preferred_assertion_id` ∈ `competing_assertion_ids` | audit; `validator.ts` NULLABLE set |
 | `hypotheses` update → `ruled_out`/`status: ruled_out` | `ruled_out_reason` non-empty | `validator.ts:637–638` |
 | `questions` update → `exhaustive_declared` | `exhaustive_declaration.declared` true ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null; a re-declare on an already-declared question is a **no-op short-circuit** (don't overwrite a settled GPS Component-1 record) | `validator.ts:417–424` + audit |
+| `questions` append/update marking the question **resolved** | a `proof_summaries[]` entry must already carry this question's id in `question_id`. **Both spellings of resolved are gated** — `status: "resolved"` and a truthy `resolved` date — because they are one transition, and gating only the enum leaves the date as an ungated synonym an agent refused on one can reach through the other. Read **live**, not snapshotted: the summary and the resolve are two halves of one author's conclusion, so a batch that appends the summary first satisfies it. Concluding is the only way to close a question; one closed with nothing found still gets a `not_proved` summary saying so | `status: "resolved"` is the orchestrator's stop condition and was a free write — 150 questions reached it across 154 runs from **11 different skill contexts**, neither owning skill claiming it. Measured cost: **0 of 146** corpus writes refused (142 status, 4 date-only). ADR-0011 |
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | audit; `research-schema-spec.md:265` |
+| `project` update setting `objective`, `title` or `subject_person_ids` | rejected when the field already holds a non-empty value — set once, at project creation, never rewritten. Empty is per-type: `""` for a string, `[]` for a list, since `subject_person_ids` is seeded as an empty array rather than omitted | the ownership declaration's own statement of the harm: "a skill rewrites the objective, and every later skill plans against a changed goal it never agreed to." Constrains the system only — a human edits the file directly |
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND (a non-empty `identity_question` string OR non-empty `blocks_question_ids`). `resolved` and `moot` both settle a conflict; an unresolved fact-type conflict with empty `blocks_question_ids` and no `identity_question` does not block. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule) | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4 |
+| `project` update → `status: "completed"` | **every proof summary backing a resolved question carries a gps-mentor verdict** — reject while any `proof_summaries[]` entry whose `question_id` names a question that is resolved — by `status: "resolved"` **or** by a truthy `resolved` date, the same pair the row above gates — has no `evaluations[]` entry with `focus: "proof-critique"`, a matching `target_id`, and a null `superseded_by`. The critique set is snapshotted **before any op in the call applies**, so a batch cannot append its own verdict and consume it in the same call. A resolved question with **no** proof summary still passes vacuously, but that state is no longer reachable through this tool (the row above refuses the transition) — the vacuous pass now covers only documents seeded that way, so a gate on a transition does not retroactively invalidate a document that predates it | The same rule stated in the research orchestrator's prose did not hold: **23% of completed runs in the committed e2e corpus reach `completed` with at least one uncritiqued summary** — measured 2026-08-15 over 154 runs, corroborated to within 2 runs by an independent count. ADR-0011 |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
@@ -554,6 +582,38 @@ each question's `declared` flag **before** the batch is applied and rejects
 establish-and-consume in one call. Any future precondition of the form "X must
 already be true" needs the same treatment; other same-batch orderings have been
 flagged but not audited (`guardrail-enforcement-spec.md` §10).
+
+### 5.1 Sources-without-assertions nudge (warning, not a precondition)
+
+A **warning** — never a rejection — emitted on a successful write when the call
+appended a `sources` entry (a real, non-no-op append) and the resulting project
+holds **≥ 3** sources but **zero** assertions. It rides `validation.warnings`
+and never touches `ok`. Implemented as `sourcesWithoutAssertionsWarning` in
+`research-append.ts`; motivated by three feedback bundles where the
+research log and sources grew while `assertions` stayed empty — a run that
+reasons well but persists no evidence is indistinguishable downstream from one
+that did nothing.
+
+- **Warn, not deny.** A hard block would trip the false-deny asymmetry
+  (`guardrail-enforcement-spec.md` §10): the legitimate "record the sources this
+  turn, extract next turn" rhythm would become a loud availability regression.
+  This is the same warn-not-fail choice as `research_log_append`'s discarded-
+  results warning, which this mirrors.
+- **Threshold and boundary.** 1–2 sources before any assertion is the normal
+  record-then-extract rhythm; ≥3 with none drawn is the reported pathology
+  (bundle 1: 13 sources, 0 assertions). The trigger is **exactly zero**
+  assertions, so it self-silences the instant one lands and never nags a
+  high-source/low-assertion project perpetually. The cost is a false negative —
+  a run that draws 1 assertion from 13 sources does not warn; that
+  partial-extraction shape is out of scope for this warning.
+- **Tool-neutral, because it fires for `extraction_append` too.**
+  `extraction_append` routes through `researchAppend` (§11), and its
+  `record-extractor` caller is denied `research_append`, so the message names no
+  specific write tool — it says "append the assertions this evidence supports,"
+  correct whether the caller reaches for `research_append` or `extraction_append`.
+- **Warnings can be rationalized away.** This surfaces the imbalance; it does not
+  compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
+  first lever, not the last word.
 
 ---
 
@@ -821,6 +881,11 @@ main-session `Skill` invocation at all — is `docs/specs/guardrail-enforcement-
 A `PreToolUse` hook *does* now reach production (Cowork and hosted, via the
 plugin), so the "eval-only" half of the sentence above is no longer true of the
 instrument, only of the caller-attribution rule it would need.
+
+One behavior *does* surface for `extraction_append`: the sources-without-
+assertions nudge (§5.1) fires whenever a call leaves ≥3 sources and zero
+assertions, including calls the `record-extractor` agent makes here — which is
+why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated

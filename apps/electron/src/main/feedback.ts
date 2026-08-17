@@ -163,6 +163,12 @@ export async function walkProject(folder: string): Promise<ProjectFile[]> {
 
 export type SessionLog = { entries: unknown[]; sizeBytes: number }
 
+// Why `_feedback/session-log.jsonl` is or isn't in the bundle. Surfaced in
+// FEEDBACK.md (issue #1481) so triage isn't left hunting for a file that was
+// never written: a Cowork session has no Claude Code transcript on this machine
+// (the agent runs in Cowork's VM), which is expected, not missing.
+type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
+
 export async function readSessionLog(folderPath: string): Promise<SessionLog> {
   // Claude Code stores sessions in ~/.claude/projects/<path-with-dashes>/
   const projectHash = folderPath.replace(/^\//, '').replace(/\//g, '-')
@@ -212,6 +218,10 @@ export type FeedbackReport = {
   email: string
   userPrompt: string
   agentDid: string
+  /** The "Did it work as expected?" answer. true = positive report; the dialog
+   *  then sends empty agentShouldHave/correctAnswer. Not a text field — it skips
+   *  normalizeAndValidate's char-limit loop and is threaded straight to the renderers. */
+  workedAsExpected: boolean
   agentShouldHave: string
   /** Ground truth, when the agent reached a wrong conclusion. Optional. */
   correctAnswer?: string
@@ -352,12 +362,14 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   const fileCount = selected.length
 
   const timestamp = new Date().toISOString()
-  let sessionLogIncluded = false
+  let sessionLogStatus: SessionLogStatus = 'not-requested'
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     if (sessionLog.entries.length > 0) {
       zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
-      sessionLogIncluded = true
+      sessionLogStatus = 'included'
+    } else {
+      sessionLogStatus = 'requested-but-empty'
     }
   }
 
@@ -365,10 +377,11 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     'FEEDBACK.md',
     renderFeedbackMarkdown({
       fields: normalized,
+      workedAsExpected: report.workedAsExpected,
       timestamp,
       projectFolder: folderResolved,
       viewerVersion,
-      sessionLogIncluded,
+      sessionLogStatus,
       skipped,
       redactedLiving
     })
@@ -378,6 +391,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     '_feedback/feedback.json',
     renderFeedbackJson({
       fields: normalized,
+      workedAsExpected: report.workedAsExpected,
       submittedAt: timestamp,
       viewerVersion,
       projectFolderPath: folderResolved
@@ -404,6 +418,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
 
 function renderFeedbackJson(args: {
   fields: NormalizedFields
+  workedAsExpected: boolean
   submittedAt: string
   viewerVersion: string
   projectFolderPath: string
@@ -417,6 +432,7 @@ function renderFeedbackJson(args: {
     project_folder_path: args.projectFolderPath,
     user_prompt: args.fields.userPrompt,
     agent_did: args.fields.agentDid,
+    worked_as_expected: args.workedAsExpected,
     agent_should_have: args.fields.agentShouldHave,
     correct_answer: args.fields.correctAnswer,
     notes: args.fields.notes
@@ -426,19 +442,21 @@ function renderFeedbackJson(args: {
 
 function renderFeedbackMarkdown(args: {
   fields: NormalizedFields
+  workedAsExpected: boolean
   timestamp: string
   projectFolder: string
   viewerVersion: string
-  sessionLogIncluded: boolean
+  sessionLogStatus: SessionLogStatus
   skipped: string[]
   redactedLiving?: number
 }): string {
   const {
     fields,
+    workedAsExpected,
     timestamp,
     projectFolder,
     viewerVersion,
-    sessionLogIncluded,
+    sessionLogStatus,
     skipped,
     redactedLiving = 0
   } = args
@@ -450,6 +468,7 @@ function renderFeedbackMarkdown(args: {
     `- **When:** ${timestamp}`,
     `- **Viewer version:** ${viewerVersion}`,
     `- **Project folder:** ${projectFolder}`,
+    `- **Worked as expected:** ${workedAsExpected ? 'Yes' : 'No'}`,
     '',
     '## What I asked',
     '',
@@ -457,12 +476,14 @@ function renderFeedbackMarkdown(args: {
     '',
     '## What the agent did',
     '',
-    fields.agentDid,
-    '',
-    '## What it should have done',
-    '',
-    fields.agentShouldHave
+    fields.agentDid
   ]
+
+  // Omitted on a positive report and when a bug reporter didn't know the ideal
+  // behavior (both send it empty) — the "Worked as expected" line carries the signal.
+  if (fields.agentShouldHave) {
+    sections.push('', '## What it should have done', '', fields.agentShouldHave)
+  }
 
   if (fields.correctAnswer) {
     sections.push('', '## The correct answer, and the evidence for it', '', fields.correctAnswer)
@@ -472,12 +493,31 @@ function renderFeedbackMarkdown(args: {
     sections.push('', '## Notes', '', fields.notes)
   }
 
-  if (sessionLogIncluded) {
+  // Always state the session log's status — never silently omit the section
+  // (issue #1481). Which "no log" state a submission lands in is decided in the
+  // assembly above: a Cowork bundle submits with the log requested and finds
+  // nothing on the host (the agent ran in Cowork's VM) → requested-but-empty;
+  // not-requested happens only when a transcript was available and the submitter
+  // unticked it. The wording of each branch follows that, not the reverse.
+  sections.push('', '## Session log', '')
+  if (sessionLogStatus === 'included') {
     sections.push(
-      '',
-      '## Session log',
-      '',
       "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
+    )
+  } else if (sessionLogStatus === 'not-requested') {
+    sections.push(
+      'No Claude Code session log was included — the submitter unticked "Include Claude ' +
+        'Code session log" while a transcript was available on their machine. Ask them ' +
+        'for it if the transcript is needed to diagnose this case.'
+    )
+  } else {
+    // requested-but-empty
+    sections.push(
+      'A Claude Code session log was requested but none was found under `~/.claude/projects`. ' +
+        "For a Cowork session that is expected — the agent runs in Cowork's own VM, so there " +
+        'is no Claude Code transcript on this machine to attach (see ' +
+        '`docs/alpha-user-guide-cowork.md`); the `results/` sidecars carry the search/step ' +
+        'record instead. For a Claude Code session, the transcript that should be here is missing.'
     )
   }
 

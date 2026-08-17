@@ -141,7 +141,11 @@ _RESPONSE_MAX_DEPTH = 8  # guard against pathological nested responses
 
 
 def _summarize_response(
-    response: Any, _depth: int = 0, *, string_max: int = _RESPONSE_STRING_MAX
+    response: Any,
+    _depth: int = 0,
+    *,
+    string_max: int = _RESPONSE_STRING_MAX,
+    array_sample: int | None = _RESPONSE_ARRAY_SAMPLE,
 ) -> Any:
     """Produce a tight summary of a tool response for the judge prompt.
 
@@ -165,6 +169,15 @@ def _summarize_response(
     a graded deliverable written to a file (see orchestrator._summarize_changes)
     pass a larger value so e.g. a full proof narrative, including its
     citations, survives.
+
+    `array_sample` overrides the list cap; **None means keep every element.**
+    The default suits a tool response, where the first few hits show argument
+    quality and the rest is noise. It is wrong for a graded artifact: the block
+    the judge is told to grade as "the persisted artifact" was silently showing
+    the first 3 of a plan's items, so a note saying "read the persisted plan
+    items" pointed at a third of them. Sampling applies at every depth, so a
+    nested `items[]` inside one added entry was cut even though the entry list
+    itself was short.
     """
     if _depth >= _RESPONSE_MAX_DEPTH:
         return {"_truncated_for_depth": True, "_max_depth": _RESPONSE_MAX_DEPTH}
@@ -172,18 +185,24 @@ def _summarize_response(
         return None
     if isinstance(response, dict):
         return {
-            k: _summarize_response(v, _depth + 1, string_max=string_max)
+            k: _summarize_response(
+                v, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
             for k, v in response.items()
         }
     if isinstance(response, list):
-        if len(response) <= _RESPONSE_ARRAY_SAMPLE:
+        if array_sample is None or len(response) <= array_sample:
             return [
-                _summarize_response(x, _depth + 1, string_max=string_max)
+                _summarize_response(
+                    x, _depth + 1, string_max=string_max, array_sample=array_sample
+                )
                 for x in response
             ]
         sample = [
-            _summarize_response(x, _depth + 1, string_max=string_max)
-            for x in response[:_RESPONSE_ARRAY_SAMPLE]
+            _summarize_response(
+                x, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
+            for x in response[:array_sample]
         ]
         return {
             "_summary_truncated": True,
@@ -210,6 +229,7 @@ def render_prompt(
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> str:
     """Fill the judge prompt template slots into one flat string.
 
@@ -227,6 +247,7 @@ def render_prompt(
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
         before_state=before_state,
+        validator_failures=validator_failures,
     )
     return prefix + suffix
 
@@ -242,6 +263,7 @@ def render_prompt_parts(
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> tuple[str, str]:
     """Render the prompt as (stable_prefix, varying_suffix).
 
@@ -264,6 +286,17 @@ def render_prompt_parts(
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
     tool_calls_text = _render_tool_calls_with_size_guard(tool_calls)
+    # FAILURES only, never the full validator list. A passing validator list is
+    # a *conclusion*, and handing the judge a conclusion is the defect diagnosed
+    # across issues #1007, #1330 and #1603 — the test tells the judge what to
+    # find and the judge finds it. "All validators passed" would invite exactly
+    # that and raise the pinned-at-3 rate. A failure is an observation the judge
+    # would otherwise miss, and it cannot be rubber-stamped into a pass.
+    failures_text = (
+        "\n".join(f"- {name}" for name in validator_failures)
+        if validator_failures
+        else "(none failed)"
+    )
 
     stable_slots = {
         "rubric": rubric_text,
@@ -277,13 +310,26 @@ def render_prompt_parts(
         "text_response": text_response or "(empty)",
         "file_changes_summary": file_changes_summary or "(no file changes)",
         "tool_calls": tool_calls_text,
+        "validator_failures": failures_text,
     }
 
     template = judge_prompt_template()
     # The template has a clear boundary after the rubric section, before
-    # the per-test context — see judge/prompt.md. Split there so the
+    # the first per-test slot — see judge/prompt.md. Split there so the
     # stable prefix can be cached.
-    split_marker = "# Per-test context"
+    #
+    # This marker must name the first heading whose section contains a
+    # VARYING slot, and nothing above it may contain one. Everything
+    # before the marker is substituted from `stable_slots` ({rubric}
+    # only) and everything after from `varying_slots`; an unmatched slot
+    # is passed through verbatim by the `m.group(0)` fallback below. So a
+    # marker set too late silently ships a prompt containing the literal
+    # text "{user_message}" and puts cache_control on per-test content.
+    # It was "# Per-test context" until that section moved down beside
+    # "How to report" (#1403), which left "# Before-state" first.
+    # Pinned by test_render_prompt_parts_splits_at_context_boundary and
+    # test_render_prompt_parts_leaves_no_unsubstituted_slot.
+    split_marker = "# Before-state"
     if split_marker not in template:
         # Defensive fallback: if the template structure changes, render
         # everything as one big varying slot. Loses caching but stays
@@ -399,6 +445,7 @@ def grade(
     auth: AuthConfig,
     model: str = DEFAULT_JUDGE_MODEL,
     before_state: str = "(none)",
+    validator_failures: list[str] | None = None,
 ) -> JudgeOutput:
     """Run the judge and return structured dimensions + cost."""
     prefix, suffix = render_prompt_parts(
@@ -411,6 +458,7 @@ def grade(
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
         before_state=before_state,
+        validator_failures=validator_failures,
     )
 
     client = _make_client(auth)
@@ -445,7 +493,9 @@ def grade(
                 "Bump max_tokens (currently 4096) or shorten rubric/criteria."
             )
         try:
-            dimensions, extraction_warnings = _extract_dimensions(response, rubric)
+            dimensions, extraction_warnings = _extract_dimensions(
+                response, rubric, tool_calls=tool_calls
+            )
             break
         except JudgeError as e:
             last_parse_error = e
@@ -565,14 +615,21 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
 
 
 def _extract_dimensions(
-    response, rubric: Rubric
+    response, rubric: Rubric, *, tool_calls: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Parse and validate the judge's submit_grading tool_use.
 
     `rubric` supplies the authoritative set of valid `source: "rubric"`
     dimension names for this skill (#1361) — every call site already holds
     one (`grade()` takes it as a parameter), so this is a threading change,
-    not new plumbing.
+    not new plumbing. `tool_calls` is the run's MCP call list, threaded the
+    same way for the Tool Arguments N/A rule below (#1406).
+
+    `tool_calls` is deliberately a REQUIRED keyword argument with no
+    default. A default of `[]` would read as "this run made zero MCP tool
+    calls" at every call site that had not been updated — silently firing
+    the N/A coercion across the whole corpus, including the replay test
+    that exists to measure it.
 
     Returns `(dimensions, warnings)`. Two different failure shapes here,
     by design (#1361):
@@ -720,6 +777,37 @@ def _extract_dimensions(
     # enum toward the valid set, but that's unenforced steering (tool_use
     # input isn't schema-validated without strict mode) — this drop is the
     # actual guarantee.
+    # The same drop for an invented `source: "base"` name. The rubric pass
+    # below only inspects source=="rubric", and the required-base check
+    # further down only verifies the three ARE PRESENT — it never rejects a
+    # fourth. So a judge that emits {"source": "base", "name":
+    # "Thoroughness", "score": 1} sails through, and that 1 reaches
+    # _compute_outcome's fail gate.
+    #
+    # This has never happened: across the committed corpus's 5418
+    # base-sourced dimensions, zero carry a name outside the required three.
+    # It is a floor, not a fix for something observed — added because the
+    # asymmetry is not defensible once noticed, and because the invented-name
+    # guarantee this module advertises was only ever true of rubric names.
+    kept_base: list[dict[str, Any]] = []
+    for d in dims:
+        if d["source"] == "base" and d["name"] not in _REQUIRED_BASE_DIMENSIONS:
+            warnings.append({
+                "kind": "dropped_unknown_base_dimension",
+                "advisory": (
+                    f"judge emitted base dimension {d['name']!r}, which is not "
+                    f"one of the required base dimensions; dropped it. Valid "
+                    f"base dimensions: {sorted(_REQUIRED_BASE_DIMENSIONS)}"
+                ),
+                "name": d["name"],
+                "valid_names": sorted(_REQUIRED_BASE_DIMENSIONS),
+                "score": d.get("score"),
+                "rationale": d.get("rationale"),
+            })
+            continue
+        kept_base.append(d)
+    dims = kept_base
+
     valid_rubric_names = rubric.dimension_names()
     kept: list[dict[str, Any]] = []
     for d in dims:
@@ -743,6 +831,82 @@ def _extract_dimensions(
             continue
         kept.append(d)
     dims = kept
+
+    # Enforce the Tool Arguments N/A rule instead of asking for it (#1406).
+    #
+    # judge/prompt.md states it as an instruction: "the test made zero MCP
+    # tool calls. Report `score: null`." The caller already knows the
+    # answer — `grade()` takes `tool_calls` and renders it into the very
+    # prompt that asks the question — so a run that made no MCP calls has
+    # no arguments to grade and `null` is the only truthful value. The
+    # judge ignores the rule some fraction of the time: measured over the
+    # 43 search-records run logs that were ever in main's own tree, 4
+    # entries scored an integer with zero tool calls (`ut_search_records_003`
+    # in v1_2026-08-01_13-11-14 and v1_2026-08-06_01-03-04, `_005` in
+    # v1_2026-06-23_07-06-12 and v1_2026-07-23_08-43-26).
+    #
+    # Coerce with a warning, never raise — the shape #1361 settled on. A
+    # raise enters grade()'s 3-attempt resample loop, attempt 0 is
+    # temperature-pinned so the model repeats a prompt-correlated mistake,
+    # and a judge that never produces dimensions sets judge_skipped=True,
+    # which _compute_outcome turns into a hard `fail`. Coerce rather than
+    # drop, because annotations key on (test_id, dimension_source,
+    # dimension_name) and dropping the entry would fork that join key.
+    #
+    # KNOWN CONSEQUENCE, deliberate: _compute_outcome has two `1 in scores`
+    # gates — orchestrator.py's positive-test gate, and the out-of-scope
+    # negative gate for `correct_skill: []` tests, where the judge's base
+    # dimensions are the only outcome signal. Coercing a 1 to null on
+    # either shape turns a recorded `fail` into `pass`. That is intended:
+    # a Tool Arguments score on a run with no tool calls grades something
+    # that does not exist, and "the skill did work it should not have" or
+    # "a required action never happened" belong on Correctness/Completeness
+    # per prompt.md's negative-test and Correctness sections.
+    #
+    # It applies to a 2 as well as a 1, so it can also turn `partial` into
+    # `pass` via _compute_outcome's `if 2 in scores` gate. Same reasoning,
+    # same intent — there is nothing to deduct for on a run with no tool
+    # calls, at any band. Pinned by
+    # test_na_rule_coercion_flips_a_positive_test_outcome,
+    # test_na_rule_coercion_flips_a_positive_test_from_partial and
+    # test_na_rule_coercion_flips_an_out_of_scope_negative_outcome.
+    if not tool_calls:
+        for d in dims:
+            if (
+                d.get("source") == "base"
+                and d.get("name") == "Tool Arguments"
+                and d.get("score") is not None
+            ):
+                warnings.append({
+                    "kind": "coerced_tool_arguments_to_na",
+                    "advisory": (
+                        f"judge scored Tool Arguments {d['score']!r} on a run "
+                        f"that made zero MCP tool calls; coerced to null per "
+                        f"the N/A rule in judge/prompt.md"
+                    ),
+                    "name": d["name"],
+                    # The score the judge tried to emit, and its reasoning —
+                    # preserved for the same reason #1361 preserves a dropped
+                    # dimension's: a silently-vanished 1 or 2 is exactly what
+                    # makes this class of defect untrendable.
+                    "score": d.get("score"),
+                    "rationale": d.get("rationale"),
+                })
+                # Rewrite the rationale too, following
+                # orchestrator.apply_deterministic_deference — the established
+                # pattern here for overriding a judge score after the fact.
+                # A null score sitting next to a rationale still arguing about
+                # specific tool arguments reads as a harness bug to whoever
+                # opens the run log, and the CRUD UI never surfaces
+                # output.warnings, so the annotator correcting this dimension
+                # would otherwise see only the stale text.
+                orig = d.get("rationale") or ""
+                d["rationale"] = (
+                    f"[coerced-to-na] the run made zero MCP tool calls, so "
+                    f"Tool Arguments is N/A; the judge's {d['score']!r} was "
+                    f"coerced to null. Original judge rationale: {orig}"
+                )
+                d["score"] = None
 
     # Enforce per-base-dimension null policy. The grading-tool schema
     # accepts null on every score; that flexibility exists for Tool
@@ -792,8 +956,18 @@ def _compute_cost(response, model: str) -> float:
     inp = getattr(usage, "input_tokens", 0) or 0
     cached = getattr(usage, "cache_read_input_tokens", 0) or 0
     out = getattr(usage, "output_tokens", 0) or 0
+    # `input_tokens` and `cache_read_input_tokens` are DISJOINT in the API's
+    # accounting — `input_tokens` already excludes cache reads, so the two are
+    # summed, never subtracted. Subtracting `cached` here double-counted the
+    # discount and drove the fresh-input term negative on any warm cache; when
+    # the output term could not cover it the total went negative, tripping
+    # `judge_cost_usd`'s `minimum: 0` and killing the run mid-suite.
+    #
+    # Every term is now a non-negative count times a non-negative rate, so the
+    # result cannot be negative and needs no clamp — a clamp would have hidden
+    # the ~19% under-count rather than fixing it.
     return (
-        (inp - cached) * pricing["input"] / 1_000_000
+        inp * pricing["input"] / 1_000_000
         + cached * pricing["cached_input"] / 1_000_000
         + out * pricing["output"] / 1_000_000
     )

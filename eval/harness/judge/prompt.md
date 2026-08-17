@@ -16,9 +16,15 @@ characters. Scores are:
 - **3** — pass (the dimension's pass criteria are met)
 - **2** — partial (mostly met, with the gaps described by the partial criteria)
 - **1** — fail (the dimension's fail criteria apply)
-- **null** — N/A. Currently allowed ONLY on the Tool Arguments base
-  dimension when a test made zero MCP tool calls. Correctness and
-  Completeness must always be integer 1, 2, or 3.
+- **null** — N/A, meaning **the situation this dimension grades never arose in
+  this fixture**. Allowed on any **rubric** dimension on that basis, and among
+  the base dimensions only on **Tool Arguments**, only when a test made zero MCP
+  tool calls. Correctness and Completeness must always be integer 1, 2, or 3.
+
+  **`null` never means the skill produced nothing.** If the dimension applied
+  and the skill failed it — including by staying silent when output was
+  required — that is **1**, not N/A. Scoring it null would record the run as a
+  pass, because the outcome gates on 1 and 2 and null is neither.
 
 Be specific in your rationale: cite what the skill did or did not do, not
 generalities. The semantic labels (pass/partial/fail) appear in each
@@ -48,36 +54,6 @@ If any tool call shows `matched.kind == "none"` (meaning the call returned
 Even if the skill's text response looks plausible, a `fixture_not_found` error
 proves the skill called a tool with wrong arguments (or called a tool that
 doesn't exist). This is always a failure.
-
-────────────────────────────────────────
-# Critical: Negative tests (decline / routing / non-activation)
-
-Some tests are **negative tests**: the correct behavior is for the skill
-under test to NOT carry out its own task. When this is the case, the
-**Per-test context** section below states it explicitly ("This is a
-NEGATIVE test…") and names what should have happened instead — decline
-and route to a specific other skill, or (for an out-of-scope request)
-produce no output at all.
-
-On a negative test, grade **Correctness** and **Completeness** against
-that expected behavior — NOT against the quality of any task output that
-happens to appear:
-
-- **Correct decline / routing / non-activation → score 3 (pass).** If the
-  skill declined, and/or the request was handled by the skill it was
-  supposed to route to (or, for an out-of-scope request, no skill acted),
-  Correctness and Completeness are a full pass. Do not lower them because
-  the decline was terse, because the skill performed the handoff by
-  invoking the correct skill, or because that other skill's work appears
-  in the transcript below. Not doing the under-test skill's task is the
-  correct outcome — do not both credit the routing and penalize the base
-  dimensions for "not declining thoroughly enough."
-- **Wrongly performing the task → score 1 (fail).** If the skill instead
-  carried out its own task, or produced substantive output when it should
-  have declined or stayed silent, Correctness and Completeness fail —
-  **even when that output is fluent, accurate-looking, and well-organized.**
-  Polished output for the wrong behavior is a failure, not a pass; do not
-  award craft credit for work that should never have been done.
 
 ────────────────────────────────────────
 # Base rubric (always applies)
@@ -195,17 +171,28 @@ semantically.
 {rubric}
 
 ────────────────────────────────────────
-# Per-test context
+# Which rule wins
 
-The notes below describe what the test author expected the skill to do.
-Use them as background to ground your rationales for the base and
-rubric dimensions. **Do not emit separate dimensions for them.**
-Deterministic checks (filename format, schema validity, exact tool
-call counts) are verified separately by validators — focus your
-grading on the narrative quality the base + rubric dimensions
-measure.
+Three kinds of instruction reach you, and they are not equal. When two
+of them disagree about one dimension, the later one in this list wins:
 
-{judge_context}
+1. **A base rule** in this prompt — the default for every skill.
+2. **A skill rubric's claim on an axis.** A rubric may state that one of
+   its dimensions owns a particular judgement. When it does, that
+   judgement is graded in that dimension and **nowhere else** — do not
+   also reflect it in Correctness or Completeness. Grading one fault
+   twice is itself an error, not thoroughness.
+3. **A per-test override in the Per-test context section.** This is the
+   narrowest instruction you receive and it wins outright.
+
+An override is **binding, not advisory**. If it tells you not to score a
+dimension low for a named pattern, then observing that pattern is not a
+deduction of any size — not a 1, and not a 2 either. Splitting the
+difference is the most common way this goes wrong: "do not score below
+3" means 3, not "one band down from where I was going to land."
+
+If an override seems wrong to you, follow it and say so in your
+rationale. The rationale is where disagreement belongs; the score is not.
 
 ────────────────────────────────────────
 # Before-state — source entries on file BEFORE this skill ran
@@ -253,6 +240,84 @@ skill was invoked but it skipped the citation step.")
 
 {tool_calls}
 
+## Deterministic validators that FAILED
+
+{validator_failures}
+
+These are checks the harness ran and that came back red — facts, not opinions.
+**Only failures appear here.** A check that passed is deliberately not listed:
+you are grading the response, and a list of things that went right would tell
+you what to conclude rather than what to look at.
+
+A failure here does not by itself decide any dimension. Read it as evidence:
+if a validator says the skill deleted an entry it may not delete, that is a
+Correctness problem whatever the prose looks like. If a failure is unrelated to
+the dimension you are scoring, ignore it.
+
+────────────────────────────────────────
+# Critical: Negative tests (decline / routing / non-activation)
+
+Some tests are **negative tests**: the correct behavior is for the skill
+under test to NOT carry out its own task. When this is the case, the
+**Per-test context** section below states it explicitly ("This is a
+NEGATIVE test…") and names what should have happened instead — decline
+and route to a specific other skill, or (for an out-of-scope request)
+produce no output at all.
+
+On a negative test, grade **Correctness** and **Completeness** against
+that expected behavior — NOT against the quality of any task output that
+happens to appear:
+
+- **Correct decline / routing / non-activation → score 3 (pass).** If the
+  skill declined, and/or the request was handled by the skill it was
+  supposed to route to (or, for an out-of-scope request, no skill acted),
+  Correctness and Completeness are a full pass. Do not lower them because
+  the decline was terse, because the skill performed the handoff by
+  invoking the correct skill, or because that other skill's work appears
+  in the transcript below. Not doing the under-test skill's task is the
+  correct outcome — do not both credit the routing and penalize the base
+  dimensions for "not declining thoroughly enough."
+- **Wrongly performing the task → score 1 (fail).** If the skill instead
+  carried out its own task, or produced substantive output when it should
+  have declined or stayed silent, Correctness and Completeness fail —
+  **even when that output is fluent, accurate-looking, and well-organized.**
+  Polished output for the wrong behavior is a failure, not a pass; do not
+  award craft credit for work that should never have been done.
+
+────────────────────────────────────────
+# Per-test context
+
+The notes below describe what the test author expected the skill to do.
+Use them as background to ground your rationales for the base and
+rubric dimensions. **Do not emit separate dimensions for them.**
+Deterministic checks (filename format, schema validity, exact tool
+call counts) are verified separately by validators — focus your
+grading on the narrative quality the base + rubric dimensions
+measure.
+
+A note here may be written as a bulleted list of requirements — "the
+plan **must** include…", "each item's rationale **must**…". That is
+still background. It reads like a rubric and is not one: grade what it
+describes inside the dimensions you were given, and **never add a
+dimension named after one of these bullets.** The dimension list is
+fixed by the "How to report" section below.
+
+Where a note overrides a rule stated earlier in this prompt, the note
+wins — see "Which rule wins" above.
+
+**If a note below says this is a NEGATIVE test, the section immediately
+above governs your Correctness and Completeness scores.** It is placed
+there, after the transcript, for a measured reason: when it sat near the
+top of this prompt instead, three negative tests whose skill correctly
+routed and produced no text of its own were scored Correctness 1 and
+Completeness 1 on byte-identical input that had scored 3 and 3 before.
+An empty response from the skill under test, with the correct other
+skill named in "Skills Claude invoked", is the **pass** condition on
+those tests. It is not an omission, and terseness is never the
+deduction.
+
+{judge_context}
+
 ────────────────────────────────────────
 # How to report
 
@@ -265,10 +330,13 @@ these dimensions, each tagged with the right `source`:
   rubric dimensions.
 
 Each dimension's `score` is one of {1, 2, 3} or `null`: 3 = pass, 2 =
-partial, 1 = fail. Only Tool Arguments may be `null` (N/A — used when
-no MCP tool calls happened). Correctness and Completeness must be
-integer 1, 2, or 3. The semantic labels live in the rubric bullets;
-the score field itself is just the value.
+partial, 1 = fail. A **rubric** dimension may be `null` (N/A) when the
+fixture never created the situation it grades; among the base dimensions
+only Tool Arguments may be `null`, and only when no MCP tool calls
+happened. Correctness and Completeness must be integer 1, 2, or 3.
+**A dimension that applied and was failed is 1, never `null`.** The
+semantic labels live in the rubric bullets; the score field itself is
+just the value.
 
 Rationales must be specific and at least 20 characters long. One-word
 rationales (e.g., "good") will be rejected.

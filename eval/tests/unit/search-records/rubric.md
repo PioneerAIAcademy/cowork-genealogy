@@ -93,6 +93,26 @@ reasoning behind it.** Correctness and Completeness must not re-grade the verdic
 band — they grade whether required actions happened and whether stated facts are
 true.
 
+**Do not split the difference.** The failure this guards against is not disagreeing
+with the ownership rule; it is agreeing with it and then deducting anyway. A judge
+that writes "Result triage owns the verdict" and then scores Correctness 2 for the
+same weak verdict has re-graded it. Partial is a deduction. If the only fault is one
+this dimension already owns, Correctness and Completeness have nothing to deduct for
+and the score is 3 — not 2, not 1. Say what you think of the verdict in Result
+triage's rationale, at whatever band it deserves; that is the one place it counts.
+
+**Nil escalation owns the nil-handling verdict on the same terms.** When a search
+returns nothing, how thoroughly the skill worked the levers is Nil escalation's call
+alone. Correctness and Completeness do not restate it.
+
+Two facts worth keeping in view while grading these. Across this skill's whole
+annotated history, Correctness and Completeness are 3 in every corrected grading but
+one, so a 1 or 2 on either is an unusual claim and needs a concrete artifact behind
+it — a wrong persisted value, a false statement, a required action never taken.
+And `orchestrator._compute_outcome` fails a test outright the moment any dimension
+scores 1, so a base-dimension 1 that duplicates a rubric dimension's finding does not
+merely double-count: it converts the run's recorded outcome.
+
 **No numeric threshold is graded.** Match-score bands genuinely overlap: on live
 data a confirmed record scored 0.632 while a *different* same-name man scored
 0.716, and two dateless obituary stubs differing only by a middle initial scored
@@ -110,7 +130,7 @@ recovering from `rankingError`. Correct in those cases; a redundant second
 ranking of a pool the search already ranked is `partial` (wasted call).
 
 - **pass:** For a search with a known tree subject, `subjectId` was passed and the skill triaged from `ranked.matches[]`, not from raw search order or `results[].score`. Each surfaced candidate is categorized promising / needs-review / not-relevant with per-candidate reasoning naming the discriminating attributes — role in the record, birth-year distance, place, household, collection. Match score is cited as one input among several, and at least one verdict is argued rather than inherited from the ordering (a high-scoring candidate flagged on a failed cross-check, or a middling-scoring one kept for review because independent anchors corroborate it). Thin candidates are treated as low-signal in **both** directions: a low `candidateFactCount`, or a dateless / placeless stub, is a reason to corroborate before accepting *or* dismissing — never a reason to rank-order confidently. Attachment status is used directionally: attached-to-subject is deprioritized when the plan item's goal is *discovering* new evidence, and is the target when the goal is *confirming* a suspected fact.
-- **partial:** Triage happened but the ranking was used as a verdict rather than a surface. Any of: the top match is adopted on score with no independent cross-check; a needs-review-band candidate is written up as a "Top Match" or "almost certainly the right person"; a conflicting date is explained away rather than resolved by corroborating anchors (this counts in **either** direction — the record's imprecision *or* the tree's own estimate being approximate are both excuses); a thin / dateless candidate is confidently dismissed on a low score alone; attachment status is reported but not used to prioritize; `results[].score` is cited alongside or instead of `matchScore` without noticing they are different quantities; or one near-match is silently dropped while the rest are triaged.
+- **partial:** Triage happened but the ranking was used as a verdict rather than a surface. Any of: the top match is adopted on score with no independent cross-check; a needs-review-band candidate is written up as a "Top Match" or "almost certainly the right person"; a conflicting date is explained away rather than resolved by corroborating anchors (this counts in **either** direction — the record's imprecision *or* the tree's own estimate being approximate are both excuses); a thin / dateless candidate is confidently dismissed on a low score alone; attachment status is reported but not used to prioritize; `results[].score` is cited alongside or instead of `matchScore` without noticing they are different quantities; one near-match is silently dropped while the rest are triaged; or a `needs-review` candidate is handed onward as though it were settled — offered to extraction as a next step, or its parents attributed to the subject, when the skill body requires the plan item to stay `in_progress` until independent anchors confirm the identity. **A correct verdict undone by the next sentence is still partial**: warm framing or an extraction hand-off after a needs-review call contradicts the call.
 - **fail:** No match signal was obtained or reconstructed for a search that had a known tree subject — `subjectId` omitted and no ranking recovered — so every candidate was hand-scored from FamilySearch's search order. Or results are bulk-categorized with no per-candidate reasoning ("no matches found" when candidates were returned); near-matches are treated identically to irrelevant ones; or a candidate is presented as confirmed on score alone against a cross-check that visibly contradicts it (impossible role, birth year years off, wrong collection).
 
 **`subjectResolvable: false` — score these clauses only when the response actually

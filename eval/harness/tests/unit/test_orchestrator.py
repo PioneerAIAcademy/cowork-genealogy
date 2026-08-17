@@ -4,11 +4,14 @@ from types import SimpleNamespace
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
+    _summarize_changes,
+    _summarize_before_state_sources,
     _build_warnings,
     _compute_outcome,
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
+    flag_routing_negative_judge_fail,
 )
 
 
@@ -93,6 +96,165 @@ def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched
         dims, [_vr("test_expected_classifications", True)], has_expected_classifications=True
     )
     assert [d["score"] for d in dims] == [2, 3, 1, 1]
+    # Score alone cannot catch a widened predicate: a 2 floored to 2 looks
+    # identical. The deference prefix on the rationale is the observable
+    # difference, so assert on that too.
+    for d in dims:
+        assert "deterministic-deference" not in (d["rationale"] or "")
+
+
+# --- routing deference (correctly-routed negative tests) ----------------
+#
+# `_negative_spec` is defined further down this file; these tests are placed
+# here to sit beside the deference tests they mirror, and Python resolves the
+# name at call time.
+
+
+def _routing_dims(correctness=1, completeness=1):
+    return [
+        {"name": "Correctness", "score": correctness, "rationale": "No such routing occurred"},
+        {"name": "Completeness", "score": completeness, "rationale": "nothing was done"},
+        {"name": "Tool Arguments", "score": None, "rationale": "no calls"},
+    ]
+
+
+def test_judge_fail_on_correctly_routed_negative_is_reported_not_floored():
+    """The behaviour change: scores are left exactly as the judge set them.
+
+    This used to floor 1 -> 2. Replaying the floor's own guards over the 121
+    committed run logs, a human confirmed the judge's 1 on 20 of the 24
+    floor-eligible cells, so the floor overrode a correct grade far more often
+    than a wrong one."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+    # Assert the RATIONALE too: a score-only assertion could not catch a
+    # reintroduced floor that rewrote the text but happened to keep the 1.
+    assert dims[0]["rationale"] == "No such routing occurred"
+    assert [w["kind"] for w in warnings] == [
+        "routing_negative_judge_fail",
+        "routing_negative_judge_fail",
+    ]
+
+
+def test_reported_warning_carries_the_judge_score_and_rationale():
+    """`rubric-critic` flags dimensions that never fail, so the 1 has to stay
+    trendable — and this is now the ONLY signal that the skill may have done its
+    own task inline while `skills_invoked` was empty."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [w["name"] for w in warnings] == ["Correctness", "Completeness"]
+    assert all(w["score"] == 1 for w in warnings)
+    assert warnings[0]["rationale"] == "No such routing occurred"
+
+
+def test_no_warning_when_the_judge_did_not_fail():
+    dims = _routing_dims(correctness=3, completeness=3)
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert warnings == []
+
+
+def test_no_warning_when_skill_activated():
+    """The skill under test activated, so the negative test FAILED on routing.
+    Nothing diagnostic to report."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=True,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+    assert warnings == []
+
+
+def test_no_warning_when_no_accepted_skill_fired():
+    """Declined but routed nowhere acceptable: the test fails on routing."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["timeline"],
+        warnings=warnings,
+    )
+    assert warnings == []
+
+
+def test_no_warning_on_out_of_scope_negative():
+    """An empty `correct_skill` is out-of-scope, where the base dimensions DO
+    gate the outcome in `_compute_outcome`. A 1 there IS the outcome, not a
+    diagnostic worth flagging."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=[]),
+        activated=False,
+        skills_invoked=[],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+    assert warnings == []
+
+
+def test_no_warning_on_grade_on_invariant():
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert warnings == []
+
+
+def test_no_warning_on_positive_test():
+    """Covered by the same `any(correct)` guard as an out-of-scope negative: the
+    schema forbids a positive test a `negative` block, so `correct` is empty."""
+    dims = _routing_dims()
+    warnings: list = []
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": "search-records", "name": "n",
+                 "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    })
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=spec,
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
+    assert warnings == []
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -993,3 +1155,94 @@ def test_compute_validators_passed_behavioral_failure_always_fails():
     results = [_FakeValidator("test_log_append_only", False)]
     assert compute_validators_passed(results, intentionally_invalid=True) is False
     assert compute_validators_passed(results, intentionally_invalid=False) is False
+
+# --------------------------------------------------------------------------
+# The judge's "persisted artifact" block — array-sampler truncation
+# --------------------------------------------------------------------------
+
+
+def _plan_changes(n_items: int):
+    """A research.json diff whose single added entry nests an n-item plan."""
+    return {
+        "research.json": {
+            "sections_modified": ["research_plans"],
+            "diff": {
+                "research_plans": {
+                    "added": [
+                        {
+                            "plan_id": "pl_001",
+                            "items": [
+                                {"id": f"pli_{i:03d}", "rationale": f"cites loc_{i:03d}"}
+                                for i in range(n_items)
+                            ],
+                        }
+                    ],
+                    "modified": [],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+
+
+def test_persisted_artifact_block_shows_every_plan_item():
+    """The block header tells the judge to grade "the persisted artifact", and it
+    was showing the first 3 of 9 items — so a note saying "read the persisted
+    plan items" pointed at a third of them. The outer added[] list is length 1,
+    so nothing looked truncated; the cap bit at the nested depth."""
+    out = _summarize_changes(_plan_changes(9), [], include_content=True)
+
+    assert "_summary_truncated" not in out
+    for i in range(9):
+        assert f"pli_{i:03d}" in out, f"pli_{i:03d} missing from the artifact block"
+
+
+def test_persisted_artifact_block_shows_every_item_on_the_modified_branch():
+    """The modified branch had the identical hole and no test covered it."""
+    changes = {
+        "research.json": {
+            "sections_modified": ["research_plans"],
+            "diff": {
+                "research_plans": {
+                    "added": [],
+                    "modified": [
+                        {
+                            "id": "pl_001",
+                            "changed_fields": {
+                                "items": {
+                                    "after": [{"id": f"pli_{i:03d}"} for i in range(9)]
+                                }
+                            },
+                        }
+                    ],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+    out = _summarize_changes(changes, [], include_content=True)
+
+    assert "_summary_truncated" not in out
+    for i in range(9):
+        assert f"pli_{i:03d}" in out
+
+
+def test_before_state_path_is_unchanged_by_the_artifact_fix():
+    """Only the file-content path is uncapped. The before-state block keeps its
+    own workaround — summarizing per source rather than handing the array over —
+    because the default cap still applies inside each source. Lifting the cap
+    globally would have made that workaround look redundant and invited its
+    removal, which is the misgrade it exists to prevent."""
+    sources = [{"id": f"src_{i:03d}", "citation": f"c{i}"} for i in range(9)]
+
+    out = _summarize_before_state_sources(sources)
+
+    assert out["count"] == 9
+    assert out["all_ids"] == [f"src_{i:03d}" for i in range(9)]
+    assert len(out["detail"]) == 9
+
+    # And the generic sampler it calls per source still caps by default, which
+    # is what makes the per-source loop necessary rather than decorative.
+    from harness.judge import _summarize_response
+
+    assert _summarize_response(sources)["_summary_truncated"] is True

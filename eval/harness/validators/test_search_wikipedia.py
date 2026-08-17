@@ -1,8 +1,7 @@
 """Skill-specific validators for the search-wikipedia skill.
 
-search-wikipedia has no `rubric.md` (deleted in the criteria-demotion
-rollout). All mechanical
-checks live here; narrative judgment lands on the base Correctness +
+Mechanical checks live here; narrative judgment lands on the
+search-wikipedia `rubric.md` dimensions plus the base Correctness +
 Completeness dimensions in the LLM judge.
 
 See test_universal.py module docstring for the full validator

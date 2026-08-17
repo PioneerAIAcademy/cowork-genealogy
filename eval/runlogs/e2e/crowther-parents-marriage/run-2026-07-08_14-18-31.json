@@ -2087,52 +2087,45 @@
       "args": {
         "command": "ls /tmp/e2e-crowther-parents-marriage-pikgy7dz/ 2>/dev/null && echo \"---\" && ls /tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/ 2>/dev/null",
         "description": "Check project directory structure"
-      },
-      "response_summary": "research.json\ntree.gedcomx.json\n---\nagents\nskills"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_crowther_parents_marriage\",\n4\t    \"objective\": \"Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland, and whom did she marry?\",\n5\t    \"subject_person_ids\": [\"218N-WSD\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-01T00:00:00Z\",\n8\t    \"updated\": \"2026-07-01T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"218N-WSD\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Mary\",\n10\t          \"surname\": \"Crowther\",\n11\t          \"id\": \"218N-WSD-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"94461359-56f6-4ce3-b35c-86e778d441eb\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1854\",\n19\t          \"standard_date\": \"10 Jul 1854\",\n20\t          \"place\": \"Balt..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2157,83 +2150,71 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Baltimore, Maryland"
-      },
-      "response_summary": "{\"error\":\"fetch failed\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Baltimore Maryland vital records birth death marriage genealogy 1850 1860 1870"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Maryland, United States",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Wiki markdown directory is not configured. Add \\\"wikiMarkdownDir\\\": \\\"/path/to/wiki/markdown\\\" to ~/.familysearch-mcp/config.json. Ask your team lead for the path to the pre-crawled wiki markdown files.\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__auth_status,mcp__genealogy__login",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__auth_status\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__login\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__auth_status",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"loggedIn\\\": false,\\n  \\\"expiresAt\\\": \\\"2026-07-08T12:39:59.384Z\\\",\\n  \\\"hasRefreshToken\\\": true\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__login",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"FamilySearch login started. A browser tab should have opened for you to sign in.\\\\n\\\\nIf no tab appeared, open this URL yourself:\\\\n\\\\nhttps://ident.familysearch.org/cis-web/oauth2/v3/authorization?client_id=fs-internal-dev-key-000262&redirect_uri=http%3A%2F%2F127.0.0.1%3A1837%2Fcallback&response_type=code&scope=offline_access&state=a958227294e6d4888fe384f690bccbea&code_challenge=rL16rLSXJ9oPsfuC0tROlSAHC3msDT26tt9kXXo5E1M&c..."
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__auth_status",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"loggedIn\\\": false,\\n  \\\"expiresAt\\\": \\\"2026-07-08T12:39:59.384Z\\\",\\n  \\\"hasRefreshToken\\\": true\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2241,8 +2222,7 @@
         "standardPlace": "Maryland, United States",
         "startYear": 1840,
         "endYear": 1880
-      },
-      "response_summary": "{\"error\":\"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2250,15 +2230,13 @@
         "standardPlace": "Maryland, United States",
         "startYear": 1840,
         "endYear": 1880
-      },
-      "response_summary": "<persisted-output>\nOutput too large (55.5KB). Full output saved to: /home/christopher/.claude/projects/-tmp-e2e-crowther-parents-marriage-pikgy7dz/609ea7f5-e6ee-4269-afaf-00afb08a7b21/tool-results/toolu_01Cuvj8wHMjjgfCFoLedUZjw.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Maryland, United States\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1880\\n  },\\n  \\\"totalForPlace\\\": 494,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https:/..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/christopher/.claude/projects/-tmp-e2e-crowther-parents-marriage-pikgy7dz/609ea7f5-e6ee-4269-afaf-00afb08a7b21/tool-results/toolu_01Cuvj8wHMjjgfCFoLedUZjw.json"
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Maryland, United States\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1880\\n  },\\n  \\\"totalForPlace\\\": 494,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/catalog/?keyword=Bible%20Records&location=2\\\",\\n      \\\"linkText\\\": \\\"Card Catalog\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.myheritage.com/research/collection-61963/maryland-directory-1878\\\",\\n      \\\"lin..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2395,24 +2373,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2427,8 +2402,7 @@
         "birthYearTo": 1859,
         "count": 50,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Baltimore, Maryland\\\",\\n    \\\"residenceYearFrom\\\": 1860,\\n    \\\"residenceYearTo\\\": 1860,\\n    \\\"birthYearFrom\\\": 1849,\\n    \\\"birthYearTo\\\": 1859,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offse..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2437,15 +2411,13 @@
         "stagedResultsRef": "results/.staging/802c2483-4f23-4208-8a29-d880a64a28c3.json",
         "subjectId": "218N-WSD",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"218N-WSD\\\",\\n  \\\"scoredCount\\\": 2,\\n  \\\"returnedCount\\\": 2,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:M69G-C7T\\\",\\n      \\\"matchScore\\\": 0.81420195,\\n      \\\"primaryId\\\": \\\"p_317312276\\\",\\n      \\\"personName\\\": \\\"Mary Crowther\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1854\\\",\\n      \\\"birthPlace\\\": \\\"Maryland..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M69G-C7T"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_317312273\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M69G-C7P\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f3bf9aa9-963f-49d3-b7c4-7212943c188a\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Bosley\\\",\\n          \\\"given\\\": \\\"William\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"13b70def-2244-4f4a-969b-261830f42e80\\\",\\n          \\\"type\\\": \\\"Bir..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2469,8 +2441,7 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/802c2483-4f23-4208-8a29-d880a64a28c3.json",
         "notes": "Found Mary Crowther (b.1854, MD) in 8th District Baltimore household of William Bosley. Household contains John Crowther (b.1832, MD) and Fanny E. Crowther (b.1834, MD) \u2014 likely father and mother. Younger Crowther children: John S. (1857), William B. (1857), Charles (1859). Mary's son John Crowther Prizer likely named for grandfather John Crowther. Record: ark:/61903/1:1:M69G-C7T; match score 0.814, attached to subject."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:43:13.474Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2483,16 +2454,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Record ID ark:/61903/1:1:M69G-C7T (1860 US Census, household of William Bosley, 8th District Baltimore), log_001, pli_001. Extract assertions for Mary Crowther (218N-WSD) and her apparent parents John Crowther (b.1832 MD) and Fanny E. Crowther (b.1834 MD)."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2977,16 +2946,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[0]: gedcomx_source_description_id 'S1' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2997,8 +2964,7 @@
           "title": "United States, Census, 1860",
           "url": "https://www.familysearch.org/ark:/61903/1:2:MHZJ-4K3"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3482,8 +3448,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3496,16 +3461,14 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification",
         "args": "--autonomous a_001 through a_018 from src_001 (1860 census, household of William Bosley, 8th District Baltimore). Key assertions: Mary Crowther child_1 (name, birth ~1854, birthplace MD, residence, inferred child relationship); John Crowther husband (name, birth ~1832, birthplace MD, residence); Fanny E. Crowther wife (name, birth ~1834, birthplace MD, residence); William Bosley head_of_household (name, birth ~1793); siblings John S., William B., Charles Crowther (names). All for q_001."
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3617,16 +3580,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link assertions from src_001 (1860 census). a_001-a_005 are for Mary Crowther (218N-WSD, child_1). a_006-a_009 are for John Crowther (husband, b.~1832 MD) \u2014 likely father, not yet in tree. a_010-a_013 are for Fanny E. Crowther (wife, b.~1834 MD) \u2014 likely mother, not yet in tree. a_014-a_015 for William Bosley (head, b.~1793 MD) \u2014 FAN lead. a_016-a_018 are sibling name assertions. All for q_001."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3718,8 +3679,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N1\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I3\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3947,16 +3907,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_crowther_parents_marriage\",\n4\t    \"objective\": \"Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland, and whom did she marry?\",\n5\t    \"subject_person_ids\": [\n6\t      \"218N-WSD\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-01T00:00:00Z\",\n10\t    \"updated\": \"2026-07-01T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "Read",
@@ -3964,8 +3922,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "limit": 100,
         "offset": 100
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"vital_record\",\n104\t          \"jurisdiction\": \"Maryland or New York\",\n105\t          \"date_range\": \"1875-1890\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"Mary's own marriage record will name her father (and often her mother) and confirm her surname at marriage. This also directly advances q_002 (whom she married). FamilySearch holds Maryland and New York marriage..."
+      }
     },
     {
       "tool": "Read",
@@ -3973,31 +3930,27 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "limit": 200,
         "offset": 200
-      },
-      "response_summary": "200\t      \"log_entry_id\": \"log_001\",\n201\t      \"extracted_for_question_ids\": [\n202\t        \"q_001\"\n203\t      ]\n204\t    },\n205\t    {\n206\t      \"id\": \"a_002\",\n207\t      \"source_id\": \"src_001\",\n208\t      \"record_id\": \"https://www.familysearch.org/ark:/61903/1:2:MHZJ-4K3\",\n209\t      \"record_persona_id\": null,\n210\t      \"record_role\": \"child_1\",\n211\t      \"fact_type\": \"birth\",\n212\t      \"value\": \"circa 1854\",\n213\t      \"structured_value\": {\n214\t        \"year\": 1854\n215\t      },\n216\t      \"date\": \"..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"218N-WSD\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Mary\",\n10\t          \"surname\": \"Crowther\",\n11\t          \"id\": \"218N-WSD-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"94461359-56f6-4ce3-b35c-86e778d441eb\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1854\",\n19\t          \"standard_date\": \"10 Jul 1854\",\n20\t          \"place\": \"Balt..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json"
-      },
-      "response_summary": "tree.gedcomx.json"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "grep -n \"M3MH\\|M91B\\|sources\\|\\\"S\" /tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json | head -60",
         "description": "Find sources section and M3MH/M91B references in tree.gedcomx.json"
-      },
-      "response_summary": "28:          \"place\": \"Southern Pines, Moore, North Carolina, United States\",\n29:          \"standard_place\": \"Southern Pines, Moore, North Carolina, United States\"\n52:          \"place\": \"South Orange, , New Jersey\",\n114:          \"place\": \"South Orange, , New Jersey\",\n130:          \"place\": \"St. Louis, Missouri, United States\",\n131:          \"standard_place\": \"St. Louis, Missouri, United States\"\n146:          \"place\": \"Same House\",\n147:          \"standard_place\": \"Same, Manufahi, Timor-Leste\"..."
+      }
     },
     {
       "tool": "Read",
@@ -4005,21 +3958,18 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "limit": 60,
         "offset": 705
-      },
-      "response_summary": "705\t    }\n706\t  ],\n707\t  \"sources\": [\n708\t    {\n709\t      \"id\": \"M91B-YFN\",\n710\t      \"title\": \"Legacy NFS Source: Manie Crowther - Government record: Census record: birth-name: Manie Crowther\",\n711\t      \"citation\": \"1870 Census\"\n712\t    },\n713\t    {\n714\t      \"id\": \"M3MH-QYM\",\n715\t      \"title\": \"North Carolina, Deaths, 1931-1994 for Edward Lewis Prizer\",\n716\t      \"citation\": \"Reference ID:\\tfn 2055 cn 263\\nGS Film number:\\t1943157\",\n717\t      \"url\": \"http://www.myheritage.com/research/col..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__auth_status,mcp__genealogy__record_search,mcp__genealogy__record_read,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__auth_status\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__auth_status",
-      "args": {},
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"loggedIn\\\": true,\\n  \\\"expiresAt\\\": \\\"2026-07-08T13:40:23.769Z\\\",\\n  \\\"expiresInMinutes\\\": 41,\\n  \\\"hasRefreshToken\\\": true\\n}\"}]"
+      "args": {}
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4032,23 +3982,20 @@
         "deathYearTo": 1921,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Prizer\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"deathPlace\\\": \\\"North Carolina\\\",\\n    \\\"deathYearFrom\\\": 1919,\\n    \\\"deathYearTo\\\": 1921,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 71,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F34X-5XB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11013970048\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F34X-5XB\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"b8d7cee3-0a2a-4f98-a0f6-bf751d66164b\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Prizer\\\",\\n          \\\"given\\\": \\\"Mary\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__rank_search_matches",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4070,8 +4017,7 @@
         "resultsAvailable": 71,
         "stagedResultsRef": "results/.staging/e196d43a-06bc-4bc9-887e-57156622495a.json",
         "notes": "Found Mary Prizer in NC Deaths 1906-1930 (collectionId 1609799), death 22 Feb 1920 Southern Pines, Moore County. Father named as John Crowther Jr (Baltimore Co., Md); mother surname Bosley (Baltimore Co., Md). Husband Edward Prizer. Birth listed 10 Jul 1855 (conflicts with tree's 1854). Record: ark:/61903/1:1:F34X-5XB; 5-star tree match to 218N-WSD."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:03:08.603Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4100,8 +4046,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I7\\\",\\n        \\\"names\\\": [\\n          \\\"N7\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_name\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"name\\\": \\\"N8\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4410,8 +4355,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_019\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_020\\\"\\n    },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4562,8 +4506,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_021\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_022\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_023\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4576,15 +4519,13 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "M91B-YFN"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_48570763\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M91B-YF6\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9c2326c5-ecf9-4095-aabc-550d534b8899\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Williams\\\",\\n          \\\"given\\\": \\\"William\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4599,8 +4540,7 @@
         "outcome": "error",
         "resultsExamined": 0,
         "notes": "Tree source M91B-YFN resolved to 1900 US census for Francis E. Williams household in Summerfield/Winterfield, Clare, Michigan \u2014 completely unrelated to Manie Crowther. Legacy NFS source ID is a data artifact; the source title does not correspond to the record at this ARK. Proceeding with direct record_search for Mary/Manie Crowther in 1870 Baltimore census."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:07:08.700Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4615,8 +4555,7 @@
         "birthYearTo": 1859,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Baltimore, Maryland\\\",\\n    \\\"residenceYearFrom\\\": 1870,\\n    \\\"residenceYearTo\\\": 1870,\\n    \\\"birthYearFrom\\\": 1849,\\n    \\\"birthYearTo\\\": 1859,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offse..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -4625,15 +4564,13 @@
         "stagedResultsRef": "results/.staging/e2161fcb-f491-42bc-915b-6a83fe0a821d.json",
         "subjectId": "218N-WSD",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"218N-WSD\\\",\\n  \\\"scoredCount\\\": 2,\\n  \\\"returnedCount\\\": 2,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MNSR-BWP\\\",\\n      \\\"matchScore\\\": 0.6502947,\\n      \\\"primaryId\\\": \\\"p_391120403\\\",\\n      \\\"personName\\\": \\\"Mamie Crowther\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1854\\\",\\n      \\\"birthPlace\\\": \\\"Maryland..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MNSR-BWP"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_391120403\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MNSR-BWP\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"3b460267-0c70-41e9-83f1-a6333f2eca95\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Crowther\\\",\\n          \\\"given\\\": \\\"Mamie\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"32812f91-0c0d-44e5-9ba4-9202455c81cd\\\",\\n          \\\"type\\\": \\\"B..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4657,8 +4594,7 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/e2161fcb-f491-42bc-915b-6a83fe0a821d.json",
         "notes": "Found 'Mamie Crowther' (b.1854, MD) in Baltimore 1870 census (ark:/61903/1:1:MNSR-BWP, matchScore 0.65). Record title 'Household of Mamie Crowther' but GedcomX contains only her entry \u2014 no household members indexed. Corroborates Mary's 1870 Baltimore residence and ~1854 birth year but does not supply parental household context. Image ARK: ark:/61903/3:1:S3HY-6QXQ-8VN not examined."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:08:37.362Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4669,8 +4605,7 @@
           "title": "United States, Census, 1870",
           "url": "https://www.familysearch.org/ark:/61903/1:2:MCWP-SWP"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S2\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4828,8 +4763,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_030\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_031\\\"\\n    },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4843,8 +4777,7 @@
         "marriageYearTo": 1890,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"spouseSurname\\\": \\\"Prizer\\\",\\n    \\\"spouseGivenName\\\": \\\"Edward\\\",\\n    \\\"marriageYearFrom\\\": 1874,\\n    \\\"marriageYearTo\\\": 1890,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 84,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4857,8 +4790,7 @@
         "marriageYearTo": 1892,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Prizer\\\",\\n    \\\"givenName\\\": \\\"Edward\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"spouseSurname\\\": \\\"Crowther\\\",\\n    \\\"marriageYearFrom\\\": 1874,\\n    \\\"marriageYearTo\\\": 1892,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 162,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"rec..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4879,8 +4811,7 @@
         "outcome": "negative",
         "resultsExamined": 0,
         "notes": "Top 50 results all from England/Wales Marriage Registration Index or Irish civil records \u2014 no US result for Mary Crowther marrying Edward Prizer. Maryland state vital registration began 1898 (too late); county marriage records for 1875-1890 not well indexed on FamilySearch. Will attempt via Ancestry (search-external-sites) after q_001 conclusion."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:10:35.425Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4894,8 +4825,7 @@
         "residencePlace": "Maryland",
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"spouseSurname\\\": \\\"Bosley\\\",\\n    \\\"marriageYearFrom\\\": 1848,\\n    \\\"marriageYearTo\\\": 1858,\\n    \\\"residencePlace\\\": \\\"Maryland\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4908,8 +4838,7 @@
         "marriageYearTo": 1860,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"spouseSurname\\\": \\\"Bosley\\\",\\n    \\\"marriageYearFrom\\\": 1845,\\n    \\\"marriageYearTo\\\": 1860,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 1110,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"reco..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4929,8 +4858,7 @@
         "outcome": "negative",
         "resultsExamined": 0,
         "notes": "1,110 total results but all from England/Wales Marriage Registration Index and similar non-US collections. No Maryland or US result for John Crowther + Bosley marriage. Maryland county marriage records pre-1898 are not indexed on FamilySearch. This record type requires Ancestry (Maryland Compiled Marriages 1667-1899, collection 4729) or direct county courthouse search. Deferring to search-external-sites for Ancestry search."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:11:29.822Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4946,8 +4874,7 @@
         "birthYearTo": 1837,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Baltimore, Maryland\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"spouseGivenName\\\": \\\"Fanny\\\",\\n    \\\"birthYearFrom\\\": 1827,\\n    \\\"birthYearTo\\\": 1837,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4962,23 +4889,20 @@
         "birthYearTo": 1837,
         "projectPath": "/tmp/e2e-crowther-parents-marriage-pikgy7dz",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Crowther\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Baltimore, Maryland\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"birthYearFrom\\\": 1827,\\n    \\\"birthYearTo\\\": 1837,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 6,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 6,\\n  \\\"offse..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MN31-HCJ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_392020487\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MN31-HCJ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"cc999b1f-991c-4f18-85c4-291fbb13c2b0\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"John\\\",\\n          \\\"surname\\\": \\\"Crowther\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__tree_edit",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -4986,8 +4910,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "offset": 0,
         "limit": 80
-      },
-      "response_summary": "0\t{\n1\t  \"project\": {\n2\t    \"id\": \"rp_crowther_parents_marriage\",\n3\t    \"objective\": \"Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland, and whom did she marry?\",\n4\t    \"subject_person_ids\": [\n5\t      \"218N-WSD\"\n6\t    ],\n7\t    \"status\": \"active\",\n8\t    \"created\": \"2026-07-01T00:00:00Z\",\n9\t    \"updated\": \"2026-07-01T00:00:00Z\"\n10\t  },\n11\t  \"researcher_profile\": {\n12\t    \"experience_level\": \"intermediate\",\n13\t    \"subscriptions\": [],\n14\t    \"narration_guidance\": \"co..."
+      }
     },
     {
       "tool": "Read",
@@ -4995,8 +4918,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "offset": 80,
         "limit": 200
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"vital_record\",\n82\t          \"jurisdiction\": \"Maryland\",\n83\t          \"date_range\": \"1854\",\n84\t          \"repository\": \"Ancestry\",\n85\t          \"rationale\": \"The Maryland Births and Christenings Index, 1662\u20131911 (Ancestry collection 2565) covers Baltimore church baptisms. A baptism entry for Mary Crowther born 10 July 1854 would name her father and possibly her mother, constituting primary information for parentage. This is the closest e..."
+      }
     },
     {
       "tool": "Read",
@@ -5004,8 +4926,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "offset": 260,
         "limit": 200
-      },
-      "response_summary": "260\t  ],\n261\t  \"sources\": [\n262\t    {\n263\t      \"id\": \"src_001\",\n264\t      \"gedcomx_source_description_id\": \"S1\",\n265\t      \"citation\": \"\\\"United States, Census, 1860,\\\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MHZJ-4K3 : 8 July 2026), household of William Bosley and John Crowther, 8th District, Baltimore, Maryland; including Mary Crowther.\",\n266\t      \"citation_detail\": {\n267\t        \"who\": \"Mary Crowther, John Crowther, Fanny E. Crowther, William Bosley, and siblings\",\n268\t..."
+      }
     },
     {
       "tool": "Read",
@@ -5013,8 +4934,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "offset": 1400,
         "limit": 200
-      },
-      "response_summary": "<system-reminder>Warning: the file exists but is shorter than the provided offset (1400). The file has 1358 lines.</system-reminder>"
+      }
     },
     {
       "tool": "Read",
@@ -5022,8 +4942,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "offset": 1200,
         "limit": 160
-      },
-      "response_summary": "1200\t      \"id\": \"pe_020\",\n1201\t      \"assertion_id\": \"a_018\",\n1202\t      \"person_id\": \"I6\",\n1203\t      \"confidence\": \"probable\",\n1204\t      \"match_score\": null,\n1205\t      \"rationale\": \"Name 'Charles Crowther' (child_4) linked to newly created stub I6. Same household as Mary, born ~1859 Maryland, consistent with younger sibling. Single-record stub.\",\n1206\t      \"created\": \"2026-07-08\"\n1207\t    },\n1208\t    {\n1209\t      \"id\": \"pe_021\",\n1210\t      \"assertion_id\": \"a_019\",\n1211\t      \"person_id\"..."
+      }
     },
     {
       "tool": "Read",
@@ -5031,8 +4950,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "offset": 0,
         "limit": 80
-      },
-      "response_summary": "0\t{\n1\t  \"persons\": [\n2\t    {\n3\t      \"id\": \"218N-WSD\",\n4\t      \"gender\": \"Female\",\n5\t      \"living\": false,\n6\t      \"names\": [\n7\t        {\n8\t          \"given\": \"Mary\",\n9\t          \"surname\": \"Crowther\",\n10\t          \"id\": \"218N-WSD-name-1\"\n11\t        }\n12\t      ],\n13\t      \"facts\": [\n14\t        {\n15\t          \"id\": \"94461359-56f6-4ce3-b35c-86e778d441eb\",\n16\t          \"type\": \"Birth\",\n17\t          \"date\": \"10 July 1854\",\n18\t          \"standard_date\": \"10 Jul 1854\",\n19\t          \"place\": \"Balti..."
+      }
     },
     {
       "tool": "Read",
@@ -5040,8 +4958,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "offset": 450,
         "limit": 200
-      },
-      "response_summary": "450\t        },\n451\t        {\n452\t          \"id\": \"91b7a057-3ca5-4b7f-af71-d2df4d470291\",\n453\t          \"type\": \"Residence\",\n454\t          \"date\": \"1935\",\n455\t          \"standard_date\": \"1935\",\n456\t          \"place\": \"Same House\",\n457\t          \"standard_place\": \"Same, Manufahi, Timor-Leste\"\n458\t        },\n459\t        {\n460\t          \"id\": \"3dddd948-00c3-41c6-ae7b-e6870409676c\",\n461\t          \"type\": \"Residence\",\n462\t          \"date\": \"1940\",\n463\t          \"standard_date\": \"1940\",\n464\t        ..."
+      }
     },
     {
       "tool": "Read",
@@ -5049,8 +4966,7 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "offset": 640,
         "limit": 200
-      },
-      "response_summary": "640\t    },\n641\t    {\n642\t      \"gender\": \"Male\",\n643\t      \"names\": [\n644\t        {\n645\t          \"given\": \"John S\",\n646\t          \"surname\": \"Crowther\",\n647\t          \"preferred\": true,\n648\t          \"type\": \"BirthName\",\n649\t          \"id\": \"N4\"\n650\t        }\n651\t      ],\n652\t      \"id\": \"I4\"\n653\t    },\n654\t    {\n655\t      \"gender\": \"Male\",\n656\t      \"names\": [\n657\t        {\n658\t          \"given\": \"William B\",\n659\t          \"surname\": \"Crowther\",\n660\t          \"preferred\": true,\n661\t        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5074,8 +4990,7 @@
         "resultsAvailable": 6,
         "resultsExamined": 1,
         "notes": "Found John Crowther (b.1832 MD, Farmer) household in Baltimore City 1880 (ark:/61903/1:1:MN31-HCJ). Mary Crowther (b.1855 MD, Single, At Home) explicitly listed as child via ParentChild relationship \u2014 direct evidence for q_001. Second wife Werthena (b.1853 MD) confirms Fanny (Bosley) Crowther died between 1860 and 1880. Siblings: John S. (b.1857), William B. (b.1858), Elizabeth (b.1863), Joseph M. (b.1866), Walter G. (b.1869), Robert Lee (b.1871), Frank Bosley (b.1874), Mabel I. (b.1877), Grace (b.1879). Frank's middle name 'Bosley' independently corroborates mother's maiden name. 6 total results; top match examined."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:23:53.638Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 6,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5202,8 +5117,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I8\\\",\\n        \\\"names\\\": [\\n          \\\"N9\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I9\\\",\\n        \\\"names\\\": [\\n          \\\"N10\\\"\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5711,8 +5625,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_033\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_034\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_035\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5940,8 +5853,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_037\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_038\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_039\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5954,30 +5866,26 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_007\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills"
-      },
-      "response_summary": ".claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research-exhaustiveness/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research-exhaustiveness\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Evaluates whether research on a question is reasonably\n5\t  exhaustive \u2014 applies the five threshold questions and the 7-point\n6\t  stop criteria, then either writes the exhaustive_declaration on the\n7\t  question or explains what's missing. GPS Step 1 \u2014 Reasonably\n8\t  Exhaustive Research. Use when the user says \"is this research\n9\t  exhaustive?\", \"are we done?\", \"have we searched enough?\", \"can we\n10\t  declare exhaus..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
@@ -5985,15 +5893,13 @@
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research-exhaustiveness/SKILL.md",
         "offset": 38,
         "limit": 50
-      },
-      "response_summary": "38\t\n39\tOnly evaluate a question whose plan items are all `completed` or\n40\t`skipped`. If any is `in_progress`, refuse to declare and recommend\n41\tfinishing the in-flight work first.\n42\t\n43\t## 1. Gather evidence\n44\t\n45\tRead:\n46\t- The question and its `exhaustive_declaration`\n47\t- Log entries for its plan items (via `plan_item_id`)\n48\t- Assertions from those searches (via each assertion's `log_entry_id`)\n49\t- Skipped plan items and their reasons\n50\t\n51\t## 2. Apply the five threshold questions\n5..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/research/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research\n3\tmodel: claude-sonnet-4-6\n4\tdescription: >-\n5\t  Drives the full GPS research workflow on a research objective, invoking the\n6\t  right sub-skills in the right order based on current research.json state.\n7\t  Iterates from question selection through proof conclusion until all\n8\t  questions are resolved. Use when the user says \"research [objective]\",\n9\t  \"/research [question]\", \"find [relative]\", \"investigate [person]\", \"answer\n10\t  this research question\", or wants to han..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6037,8 +5943,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_008\\\"\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6072,15 +5977,13 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/proof-conclusion/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the\n5\t  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses\n6\t  the proof conclusion form (Statement/Summary/Argument), and produces a\n7\t  self-contained narrative markdown that can be uploaded to FamilySearch.\n8\t  Updates tree.gedcomx.json when the tier reaches probable or higher.\n9\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6122,8 +6025,7 @@
           "exhaustive_search_summary": "Searched four record sets on FamilySearch: 1860 U.S. Census (household of William Bosley and John Crowther, 8th District Baltimore), 1870 U.S. Census (index entry only for Mary/Mamie Crowther, no household context recovered), 1880 U.S. Census (full household of John Crowther, Baltimore, with explicit ParentChild relationship naming Mary as daughter), and North Carolina Deaths 1906\u20131930 (death certificate for Mary Prizer, 1920, naming father John Crowther Jr and mother\u2019s maiden surname Bosley). FamilySearch marriage searches for John Crowther + Bosley and Mary Crowther + Prizer both returned no Maryland results, confirming Maryland pre-1898 county marriage records are not indexed on FamilySearch. Three Ancestry repositories were not searched due to absence of subscription: Maryland Compiled Marriages 1667\u20131899 (collection 4729), Maryland Births and Christenings Index 1662\u20131911 (collection 2565), and Baltimore Sun marriage index (collections 48587\u201348588). These unsearched records represent the primary gap and the most direct path to advancing this conclusion from Probable to Proved.",
           "narrative_markdown": "## Parents of Mary Crowther (218N-WSD)\n\n**Tier: Probable**\n\n### Conclusion\n\nMary Crowther (born 10 July 1854/55, Baltimore, Maryland; died 22 February 1920, Southern Pines, North Carolina) was the daughter of **John Crowther** (born ca. 1832, Maryland) and his first wife **Fanny E. (Bosley) Crowther** (born ca. 1834, Maryland). Three independent records corroborate the father; two independent records establish the mother\u2019s maiden surname by correlation, with a third indirect corroboration.\n\n### Evidence for the Father\n\nThe **1880 U.S. Federal Census** (derivative, FamilySearch, accessed 8 July 2026) enumerates Mary Crowther in John Crowther\u2019s Baltimore City household with an explicit ParentChild relationship \u2014 direct evidence, as 1880 was the first U.S. census year to include a formal relationship column. John Crowther (head, born ca. 1832 Maryland, Farmer) and Mary Crowther (daughter, born ca. 1855 Maryland, Single, At Home) are linked by this structural relationship. Informant quality is indeterminate \u2014 the respondent is unknown \u2014 but the most plausible respondent, the household head John Crowther himself, would have first-hand knowledge of his own children. (Src_004; assertions a_038\u2013a_042; person evidence pe_042\u2013pe_047.)\n\nIndependently, the **North Carolina Death Certificate** for Mary Prizer (n\u00e9e Crowther), filed 22 February 1920 (derivative, FamilySearch), explicitly names \u201cJohn Crowther Jr\u201d as the decedent\u2019s father, with birthplace \u201cBaltimore Co., Md.\u201d \u2014 direct evidence for paternity. The personal informant was almost certainly Edward Prizer (husband), whose proximity to Mary\u2019s birth is secondary (he was not present). The \u201cJr\u201d suffix suggests a naming convention distinguishing John from his own father or a son; it does not contradict the identification. (Src_002; assertion a_025; person evidence pe_027\u2013pe_028.)\n\nA third independent record, the **1860 U.S. Federal Census** (derivative, FamilySearch), places Mary Crowther (born ca. 1854, Maryland) in sequential enumeration after John Crowther (born ca. 1832, Maryland) and Fanny E. Crowther (born ca. 1834, Maryland) in Baltimore\u2019s 8th District. The 1860 census lacks a relationship column, so this is indirect evidence \u2014 the household position is consistent with a parent-child relationship but not conclusive in isolation. (Src_001; assertion a_005; person evidence pe_005.)\n\n### Evidence for the Mother\n\nThe mother\u2019s identity emerges from the correlation of two independent records and a third indirect element:\n\nFirst, the **NC death certificate** names the decedent\u2019s mother\u2019s maiden surname as \u201cBosley,\u201d birthplace \u201cBaltimore Co., Md.\u201d \u2014 direct evidence for the maiden surname, from secondary informant Edward Prizer. (Src_002; assertion a_027; person evidence pe_030\u2013pe_031.)\n\nSecond, the **1860 census** shows Fanny E. Crowther (John\u2019s wife, born ca. 1834 Maryland) enumerated within a household headed by **William Bosley** (born ca. 1793, Maryland). William Bosley\u2019s age and surname are consistent with his being Fanny\u2019s father, placing her maiden name in the Bosley family \u2014 indirect evidence connecting the 1860 wife\u2019s name to the surname stated on the 1920 death certificate. (Src_001; assertions a_010, a_012; person evidence pe_010\u2013pe_012.)\n\nThird, the **1880 census** records a son named **Frank Bosley Crowther** (born ca. 1874). The middle name \u201cBosley\u201d follows the 19th-century custom of honoring the maternal grandmother\u2019s family in a child\u2019s given name \u2014 indirect corroboration, independent of the death certificate, that Bosley was the maternal family surname. (Src_004; assertion a_043; person evidence pe_048.)\n\nFanny E. Crowther\u2019s given name and married surname come from the 1860 census; her maiden surname comes from the NC death certificate via correlation through the Bosley household. No single record names \u201cFanny Bosley\u201d as marrying John Crowther \u2014 this is the principal limitation of the mother\u2019s identification.\n\n### Conflict Noted\n\nMary\u2019s birth year is 1854 in the family tree but 1855 in both the NC death certificate and the 1880 census. A 1-year discrepancy is common in secondary sources reporting births that occurred decades earlier (the death cert informant reporting ca. 65 years after the event) and in census age recording. This conflict is immaterial to the parentage question.\n\n### Limitations\n\nMaryland county marriage records pre-1898 are not indexed on FamilySearch (confirmed by searches log_005 and log_006). The parents\u2019 marriage record \u2014 which would directly name \u201cFanny Bosley\u201d marrying John Crowther and provide the strongest corroboration for the mother\u2019s identification \u2014 resides in Ancestry\u2019s Maryland Compiled Marriages 1667\u20131899 (collection 4729), which was not searched due to the absence of an Ancestry subscription. Mary\u2019s baptism record (Ancestry Maryland Births and Christenings, collection 2565) was also not searched. These records are the most direct path to advancing this conclusion from Probable to Proved.\n\n### Tier Declaration\n\n**Probable.** Three independent sources consistently identify John Crowther as Mary\u2019s father; two records with direct evidence and a third with indirect evidence, with no contradicting evidence found. The mother\u2019s maiden surname Bosley is established by direct statement (death cert) corroborated by 1860 household context and naming-convention evidence. The conclusion is limited from Proved by: (1) the absence of primary-information sources \u2014 all informant quality is secondary or indeterminate; (2) the unsearched parents\u2019 marriage record on Ancestry, which is the named decisive record for a parentage conclusion."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -6201,8 +6103,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n     ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6211,16 +6112,14 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "evaluations/**",
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Agent",
@@ -6229,15 +6128,13 @@
         "subagent_type": "gps-mentor",
         "run_in_background": true,
         "prompt": "Please perform a proof-critique (focus: \"proof-critique\", target_id: \"ps_001\") on the proof summary ps_001 in the project at /tmp/e2e-crowther-parents-marriage-pikgy7dz.\n\nContext: This is a proof summary for q_001 \"Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland?\" The conclusion is tier \"probable\" (vehicle: summary). The proof names John Crowther as father (direct evidence from 1880 census explicit ParentChild relationship + NC death cert) and Fanny E. (Bosley) Crowther as mother (maiden surname from NC death cert, corroborated by 1860 census household of William Bosley + Frank Bosley Crowther middle name). Maryland marriage records on Ancestry (collection 4729) were not searched due to lack of subscription \u2014 this is the key documented gap."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Async agent launched successfully.\\nagentId: a73760aae373b73f1 (internal ID - do not mention to user. Use SendMessage with to: 'a73760aae373b73f1' to continue this agent.)\\nThe agent is working in the background. You will be notified automatically when it completes.\\nDo not duplicate this agent's work \\u2014 avoid working with the same files or topics it is using. Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.\\noutpu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/.claude/skills/question-selection/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: question-selection\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Selects the next research question (writing it to research.json) based on current project\n5\t  state \u2014 timeline gaps, unresolved conflicts, hypothesis tests, or\n6\t  exhausted direct evidence requiring FAN pivot. Also derives the first\n7\t  research question on a brand-new project. GPS Step 1 \u2014 Reasonably\n8\t  Exhaustive Research. Use when the user says \"what should I research\n9\t  next?\", \"what should we work on next?\", \"n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6282,16 +6179,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6389,8 +6284,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_019\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_029\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    },\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6404,16 +6298,14 @@
         "residenceYearTo": 1900,
         "spouseGivenName": "Mary",
         "count": 50
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/tmp/e2e-crowther-parents-marriage-pikgy7dz\\\",\\n    \\\"surname\\\": \\\"Prizer\\\",\\n    \\\"givenName\\\": \\\"Edward\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Monroe, New York\\\",\\n    \\\"residenceYearFrom\\\": 1900,\\n    \\\"residenceYearTo\\\": 1900,\\n    \\\"spouseGivenName\\\": \\\"Mary\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": f..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -6422,8 +6314,7 @@
         "stagedResultsRef": "results/.staging/8c0f7a9d-9d0c-4926-a322-029f58b41275.json",
         "subjectId": "I7",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I7\\\",\\n  \\\"scoredCount\\\": 2,\\n  \\\"returnedCount\\\": 2,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MSJW-8MY\\\",\\n      \\\"matchScore\\\": 0.024752624,\\n      \\\"primaryId\\\": \\\"p_62541927\\\",\\n      \\\"personName\\\": \\\"Edward Prizer\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"March 1856\\\",\\n      \\\"birthPlace\\\": \\\"Pennsylvan..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6445,30 +6336,26 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/8c0f7a9d-9d0c-4926-a322-029f58b41275.json",
         "notes": "Found Edward Prizer household (head, born Mar 1856 PA) in Rochester Ward 12 ED 83 \u2014 matches Mary's known 1900 residence. Household ARK ark:/61903/1:2:1BVJ-PGQ. Second result is son Edward L. Prizer (born Oct 1885 NY), same household. 1900 census records years-married column \u2014 key evidence for q_002."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:43:32.099Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:2:1BVJ-PGQ"
-      },
-      "response_summary": "{\"error\":\"Record 1BVJ-PGQ was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MSJW-8MY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_62541927\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MSJW-8MY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"2104255a-632f-4f5d-908b-ba5426fca10e\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Prizer\\\",\\n          \\\"given\\\": \\\"Edward\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\n  ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -6508,8 +6395,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R7\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F3\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7042,8 +6928,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_052\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_053\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_054\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Grep",
@@ -7052,8 +6937,7 @@
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/tree.gedcomx.json",
         "output_mode": "content",
         "context": 8
-      },
-      "response_summary": "66-          \"date\": \"1920\",\n67-          \"standard_date\": \"1920\",\n68-          \"place\": \"East Orange Ward 2, Essex, New Jersey, United States\",\n69-          \"standard_place\": \"East Orange, Essex, New Jersey, United States\"\n70-        }\n71-      ]\n72-    },\n73-    {\n74:      \"id\": \"LJRY-9PY\",\n75-      \"gender\": \"Male\",\n76-      \"living\": false,\n77-      \"names\": [\n78-        {\n79-          \"given\": \"William Douglas\",\n80-          \"surname\": \"Prizer\",\n81:          \"id\": \"LJRY-9PY-name-1\"\n82-  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7097,8 +6981,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"tree.gedcomx.json/persons[21]/facts[0]: missing required field 'id'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7144,8 +7027,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I16\\\",\\n        \\\"names\\\": [\\n          \\\"N17\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R8\\\"\\n      }\\n    },\\n    {\\n      \\\"operati..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7395,15 +7277,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_057\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_058\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_059\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "M3MH-QYM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_73120407\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M3MH-QTY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"7e669c6b-3ced-4476-9fa0-25ba49c5342a\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Ralph\\\",\\n          \\\"surname\\\": \\\"Algao\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7420,8 +7300,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -7437,16 +7316,14 @@
         "outcome": "negative",
         "resultsExamined": 1,
         "notes": "ARK M3MH-QYM resolves to an unrelated 1900 census record: Carl Johnson (Single, born Dec 1881 OH) in household of Ralph Algao, McKees Rocks, Allegheny PA. Not Edward Prizer's death record. The ARK in the research plan was incorrect. Marking pli_012 skipped."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:56:32.772Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "mkdir -p /tmp/e2e-crowther-parents-marriage-pikgy7dz/evaluations && cat > /tmp/e2e-crowther-parents-marriage-pikgy7dz/evaluations/proof-critique-ps_001-2026-07-08T14-02-00Z.json << 'EOF'\n{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"must_address\": [\n    \"Citations in narrative_markdown are internal JSON pointers only (e.g., '(Src_004; assertions a_038\u2013a_042; person evidence pe_042\u2013pe_047)') \u2014 not resolvable by a reader without the JSON. Paste the full citation strings from src_001\u2013src_004 inline or append as a source list at the end of the narrative.\",\n    \"Werthena Crowther appears in the 1880 census household that anchors the direct-evidence conclusion, but the proof narrative does not explain why she cannot be Mary\u2019s biological mother. Add 1\u20132 sentences: Werthena was born ca. 1853, making her approximately contemporaneous with (not a generation above) Mary and her younger siblings \u2014 she cannot be their biological mother. The analysis already exists in a_037\u2019s informant_bias_notes and need only be moved into the narrative prose.\"\n  ],\n  \"non_blocking_notes\": [\n    \"The vehicle label 'summary' may be less conventional than 'proof argument' for the mother-identification sub-conclusion, which rests entirely on correlated indirect evidence with no single record stating the marriage. Genre note only \u2014 not a substance problem.\",\n    \"log_007 returned 6 candidates for John Crowther/Baltimore 1880; only the top match was examined. A sentence noting that Mary herself is enumerated in the selected household (not merely a ranking match) would preempt a reviewer\u2019s question about the other five.\",\n    \"The 'Jr' suffix on 'John Crowther Jr' in the death certificate hints at an unexamined 'John Crowther Sr' \u2014 a clean lead for a future question about the grandfather generation, not affecting this conclusion.\"\n  ],\n  \"narrative_for_user\": \"# Mentor review: proof-critique on ps_001\\n\\n**Tier call: Probable stands.** The evidence-to-tier mapping is honest and well-calibrated.\\n\\n## What you've done well\\n\\nThe Tier Declaration is a model of the genre: instead of a vague 'more research needed,' it names exactly what is blocking Proved \u2014 secondary/indeterminate informant quality throughout, plus the unsearched Ancestry marriage collection (4729). Hedging language in the prose ('consistent with,' 'corroborates') matches a Probable tier all the way through. The exhaustive_search_summary names collection numbers 4729, 2565, and 48587\u201388 rather than 'check Ancestry' \u2014 exactly the precision that turns a gap into an actionable next step.\\n\\n## Must address\\n\\n**Citations aren't resolvable from the narrative alone.** Every source reference is an internal pointer \u2014 '(Src_004; assertions a_038\u2013a_042)' \u2014 rather than an actual citation. The full citation strings are already in src_001\u2013src_004; this is a paste-in fix.\\n\\n**Werthena is in your key record but absent from your argument.** The 1880 census household you cite as the direct-evidence anchor also contains Werthena Crowther, John\u2019s second wife. A careful reader asks 'could Werthena be Mary\u2019s mother?' You\u2019ve already answered this in a_037\u2019s informant_bias_notes (born ca. 1853, only ~2 years older than Mary \u2014 she cannot be the biological mother). That reasoning just needs to move from the JSON into the narrative.\\n\\n## Worth considering\\n\\n- 'John Crowther Jr' in the death certificate hints at an unexamined John Crowther Sr \u2014 a future research lead.\\n- log_007 returned 6 candidates; noting that Mary herself appears in the selected household preempts reviewer questions about the other five.\"\n}\nEOF\necho \"Evaluation file written.\"",
         "description": "Create evaluations directory and write mentor verdict JSON for ps_001"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7497,16 +7374,14 @@
             }
           }
         ]
-      },
-      "response_summary": "<tool_use_error>Cancelled: parallel tool call Bash(mkdir -p /tmp/e2e-crowther-parents-marri\u2026) errored</tool_use_error>"
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/evaluations/proof-critique-ps_001-2026-07-08T14-02-00Z.json",
         "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"must_address\": [\n    \"Citations in narrative_markdown are internal JSON pointers only (e.g., '(Src_004; assertions a_038\u2013a_042; person evidence pe_042\u2013pe_047)') \u2014 not resolvable by a reader without the JSON. Paste the full citation strings from src_001\u2013src_004 inline or append as a source list at the end of the narrative.\",\n    \"Werthena Crowther appears in the 1880 census household that anchors the direct-evidence conclusion, but the proof narrative does not explain why she cannot be Mary's biological mother. Add 1\u20132 sentences: Werthena was born ca. 1853, making her approximately contemporaneous with (not a generation above) Mary and her younger siblings \u2014 she cannot be their biological mother. The analysis already exists in a_037's informant_bias_notes and need only be moved into the narrative prose.\"\n  ],\n  \"non_blocking_notes\": [\n    \"The vehicle label 'summary' may be less conventional than 'proof argument' for the mother-identification sub-conclusion, which rests entirely on correlated indirect evidence with no single record stating the marriage. Genre note only \u2014 not a substance problem.\",\n    \"log_007 returned 6 candidates for John Crowther/Baltimore 1880; only the top match was examined. A sentence noting that Mary herself is enumerated in the selected household (not merely a ranking match) would preempt a reviewer's question about the other five.\",\n    \"The 'Jr' suffix on 'John Crowther Jr' in the death certificate hints at an unexamined 'John Crowther Sr' \u2014 a clean lead for a future question about the grandfather generation, not affecting this conclusion.\"\n  ],\n  \"narrative_for_user\": \"# Mentor review: proof-critique on ps_001\\n\\n**Tier call: Probable stands.** The evidence-to-tier mapping is honest and well-calibrated.\\n\\n## What you've done well\\n\\nThe Tier Declaration is a model of the genre: instead of a vague 'more research needed,' it names exactly what is blocking Proved \u2014 secondary/indeterminate informant quality throughout, plus the unsearched Ancestry marriage collection (4729). Hedging language in the prose ('consistent with,' 'corroborates') matches a Probable tier all the way through. The exhaustive_search_summary names collection numbers 4729, 2565, and 48587\u201388 rather than 'check Ancestry' \u2014 exactly the precision that turns a gap into an actionable next step.\\n\\n## Must address\\n\\n**Citations aren't resolvable from the narrative alone.** Every source reference is an internal pointer \u2014 '(Src_004; assertions a_038\u2013a_042)' \u2014 rather than an actual citation. The full citation strings are already in src_001\u2013src_004; this is a paste-in fix.\\n\\n**Werthena is in your key record but absent from your argument.** The 1880 census household you cite as the direct-evidence anchor also contains Werthena Crowther, John's second wife. A careful reader asks 'could Werthena be Mary's mother?' You've already answered this in a_037's informant_bias_notes (born ca. 1853, only ~2 years older than Mary \u2014 she cannot be the biological mother). That reasoning just needs to move from the JSON into the narrative.\\n\\n## Worth considering\\n\\n- 'John Crowther Jr' in the death certificate hints at an unexamined John Crowther Sr \u2014 a future research lead.\\n- log_007 returned 6 candidates; noting that Mary herself appears in the selected household preempts reviewer questions about the other five.\"\n}\n"
-      },
-      "response_summary": "File created successfully at: /tmp/e2e-crowther-parents-marriage-pikgy7dz/evaluations/proof-critique-ps_001-2026-07-08T14-02-00Z.json (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7557,8 +7432,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_012\\\"\\n..."
+      }
     },
     {
       "tool": "Grep",
@@ -7567,8 +7441,7 @@
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "output_mode": "content",
         "context": 12
-      },
-      "response_summary": "903-        \"surname\": \"Crowther\"\n904-      },\n905-      \"information_quality\": \"indeterminate\",\n906-      \"informant\": \"unknown household member (likely a parent)\",\n907-      \"informant_proximity\": \"household_member\",\n908-      \"evidence_type\": \"indirect\",\n909-      \"log_entry_id\": \"log_001\",\n910-      \"extracted_for_question_ids\": [\n911-        \"q_001\"\n912-      ]\n913-    },\n914-    {\n915:      \"id\": \"a_019\",\n916-      \"source_id\": \"src_002\",\n917-      \"record_id\": \"https://www.familysearch..."
+      }
     },
     {
       "tool": "Grep",
@@ -7577,8 +7450,7 @@
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "output_mode": "content",
         "context": 5
-      },
-      "response_summary": "2340-      \"match_score\": null,\n2341-      \"created\": \"2026-07-08\"\n2342-    },\n2343-    {\n2344-      \"id\": \"pe_033\",\n2345:      \"assertion_id\": \"a_029\",\n2346-      \"person_id\": \"I7\",\n2347-      \"confidence\": \"probable\",\n2348-      \"rationale\": \"Husband named 'Edward Prizer' on Mary's death cert; the Couple relationship in the record identifies him as spouse. Name matches stub I7 (Edward Prizer) created from this same record. No other Edward Prizer in the project. Probable pending corroboratio..."
+      }
     },
     {
       "tool": "Grep",
@@ -7587,8 +7459,7 @@
         "path": "/tmp/e2e-crowther-parents-marriage-pikgy7dz/research.json",
         "output_mode": "content",
         "context": 5
-      },
-      "response_summary": "2232-      \"rationale\": \"Name 'Charles Crowther' (child_4) linked to newly created stub I6. Same household as Mary, born ~1859 Maryland, consistent with younger sibling. Single-record stub.\",\n2233-      \"created\": \"2026-07-08\"\n2234-    },\n2235-    {\n2236-      \"id\": \"pe_021\",\n2237:      \"assertion_id\": \"a_019\",\n2238-      \"person_id\": \"218N-WSD\",\n2239-      \"confidence\": \"confident\",\n2240-      \"rationale\": \"Deceased named 'Mary Prizer' with 5-star tree match to 218N-WSD. Death date 22 Feb 19..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7620,8 +7491,7 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7664,8 +7534,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/proof_summaries[1]: missing required field 'supporting_assertion_ids'\\\",\\n    \\\"research.json/proof_summaries[1]: missing required field 'resolved_conflict_ids'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7728,8 +7597,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ps_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -7738,8 +7606,7 @@
         "subagent_type": "gps-mentor",
         "prompt": "Please perform a proof-critique review of proof summary ps_002 in the project at /tmp/e2e-crowther-parents-marriage-pikgy7dz. The proof summary was just written by proof-conclusion for question q_002: \"Whom did Mary Crowther marry?\" Focus: proof-critique. Target: ps_002. Write your verdict to evaluations/ as proof-critique-ps_002-<timestamp>.json and append an entry to research.json evaluations[].",
         "run_in_background": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Async agent launched successfully.\\nagentId: a88fbe0fc21489ad6 (internal ID - do not mention to user. Use SendMessage with to: 'a88fbe0fc21489ad6' to continue this agent.)\\nThe agent is working in the background. You will be notified automatically when it completes.\\nDo not duplicate this agent's work \\u2014 avoid working with the same files or topics it is using. Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.\\noutpu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7750,8 +7617,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -7760,5 +7626,6 @@
     "era": "1850s",
     "geography": "US-MD"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

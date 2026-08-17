@@ -27,6 +27,7 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import type { KinPrefix, KinTerm } from "../../src/types/relative-terms.js";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -184,6 +185,52 @@ describe("recordSearchTool input validation", () => {
       recordSearchTool({ givenName: "John", birthPlace: "Kentucky" })
     ).rejects.toThrow(/at least one anchor/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // `batchNumber` anchors alone (see the anchor-rule note in the spec). This is
+  // the assertion that would have caught the original rule: a batch-only call
+  // is accepted upstream and is the canonical parish enumeration, but
+  // validateInput rejected it, so the one strategy collection-quirks.md
+  // recommends for IGI registers could not be executed.
+  it("5a. accepts batchNumber as the only anchor", () => {
+    expect(() => validateInput({ batchNumber: "B01883-5" })).not.toThrow();
+  });
+
+  // The error message names every anchor. It named two while accepting three,
+  // which tells the model to add a field it must not add: an unmatched
+  // recordCountry on a batch search silently returns 0.
+  it("5b. the anchor error names batchNumber", () => {
+    expect(() => validateInput({ givenName: "John" })).toThrow(/batchNumber/);
+  });
+
+  // The structural half of the batch rule. Prose survives about three
+  // compactions (docs/architecture.md §3.1), and the pairing this rejects is
+  // precisely what a half-remembered "every query needs surname or
+  // recordCountry" produces. Rejecting is free: a MATCHING country returns an
+  // identical count, so the field never buys anything on a batch search.
+  it("5c. rejects batchNumber combined with recordCountry", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordCountry: "England" })
+    ).toThrow(/do not combine batchNumber with recordCountry/);
+  });
+
+  // ...and the permitted narrowing still works, so 5c cannot be satisfied by
+  // rejecting every companion field.
+  it("5d. allows batchNumber combined with surname", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", surname: "Smith" })
+    ).not.toThrow();
+  });
+
+  // `recordSubdivision` is the same class of record-jurisdiction filter and
+  // carries the same silent-zero risk. Without it named here the invariant
+  // still held — batch + subdivision with no country trips "recordSubdivision
+  // requires recordCountry" — but that error points the model at the one field
+  // the batch rule forbids, costing a round-trip to arrive at the same place.
+  it("5e. rejects batchNumber combined with recordSubdivision", () => {
+    expect(() =>
+      validateInput({ batchNumber: "B01883-5", recordSubdivision: "Alabama" })
+    ).toThrow(/do not combine batchNumber with recordCountry or recordSubdivision/);
   });
 
   it("6. throws when count > 100 or count < 1", async () => {
@@ -370,11 +417,23 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.batchNumber=M01048-5");
   });
 
-  // The dashed form is the one the live check used; the older letter + 6 digits
-  // form has to survive too, since the spec documents both.
-  it("21e. batchNumber accepts the letter + 6 digit form", () => {
-    const url = buildSearchUrl({ batchNumber: "C050761", recordCountry: "England" });
-    expect(url).toContain("q.batchNumber=C050761");
+  // Batch shape is open, not a rule: the documented form has been narrowed and
+  // then corrected twice (`exactly 6 digits after a letter prefix`, then `a
+  // letter prefix followed by digits`), and both were too narrow. So the
+  // contract asserted here is passthrough — whatever shape the caller was given
+  // reaches `q.batchNumber` byte-for-byte. A wrong batch returns 0 rather than
+  // erroring, so any reformatting this tool did would be indistinguishable from
+  // an empty parish. Leading zeros are the case that has to survive.
+  it.each([
+    ["letter + 6 digits", "C050761"],
+    ["dashed", "M01048-5"],
+    ["all-numeric", "7501234"],
+    ["leading zero", "0501234"],
+  ])("21e. batchNumber passes the %s form through unaltered", (_shape, batch) => {
+    // Batch only, deliberately: the batch anchors by itself, and adding
+    // `recordCountry` is the one thing the docs tell callers never to do here.
+    const url = buildSearchUrl({ batchNumber: batch });
+    expect(url).toContain(`q.batchNumber=${batch}`);
   });
 });
 
@@ -624,8 +683,13 @@ describe("recordSearchTool response shape", () => {
         },
       },
     };
-    const person = findRepresentedPerson(entry);
-    expect(person?.display?.name).toBe("Second Person");
+    const represented = findRepresentedPerson(entry);
+    expect(represented?.person.display?.name).toBe("Second Person");
+    // Matched by ark, not by the `principal` fallback — both persons here are
+    // flagged principal, so only the ark match can pick the right one. #1324
+    // refuses to resolve relatives on a `principal` anchor, which makes this
+    // distinction load-bearing rather than cosmetic.
+    expect(represented?.anchor).toBe("ark");
   });
 
   it("30. sets hasMore=true when links.next exists", async () => {
@@ -1300,5 +1364,499 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     expect(serialized.indexOf('"rankingSkipped"')).toBeLessThan(
       serialized.indexOf('"results"'),
     );
+  });
+});
+
+// ─── #1324: relativeTerms ────────────────────────────────────────────────────
+//
+// A relative-anchored search keeps records that name no such relative, because
+// FamilySearch reads the term as "must not contradict". These pin the per-result
+// field that tells the two apart. The `absent` / `unknown` boundary is asserted
+// from BOTH sides on purpose: two review rounds broke it in opposite directions
+// — one reporting `absent` where the sex was merely unrecorded, the other making
+// `absent` unreachable whenever the record named the other parent.
+
+const GIVEN_URI = "http://gedcomx.org/Given";
+const SURNAME_URI = "http://gedcomx.org/Surname";
+
+function rawName(given: string, surname?: string) {
+  const parts: { type: string; value: string }[] = [
+    { type: GIVEN_URI, value: given },
+  ];
+  if (surname !== undefined) parts.push({ type: SURNAME_URI, value: surname });
+  return { nameForms: [{ parts }] };
+}
+
+type ParentOpt = false | "male" | "female" | "no-gender" | "unknown-gender";
+
+/**
+ * A multi-person entry shaped like a real staged result: persona + ParentChild
+ * parents + a Couple row. Every other fixture in this file is a lone person with
+ * no relationships, on which every assertion would trivially resolve `unknown` —
+ * so without this the suite cannot fail for any reason that matters.
+ */
+function householdEntry(opts?: {
+  father?: ParentOpt;
+  mother?: ParentOpt;
+  spouses?: 0 | 1 | 2;
+  spouseIsSelf?: boolean;
+  personaHasId?: boolean;
+  relationships?: "omit" | "empty";
+}): FSSearchEntry {
+  const father = opts?.father ?? "male";
+  const mother = opts?.mother ?? "female";
+  const spouses = opts?.spouses ?? 1;
+  const personaHasId = opts?.personaHasId ?? true;
+
+  const genderFor = (o: ParentOpt) =>
+    o === "male"
+      ? { type: "http://gedcomx.org/Male" }
+      : o === "female"
+        ? { type: "http://gedcomx.org/Female" }
+        : o === "unknown-gender"
+          ? { type: "http://gedcomx.org/Intersex" }
+          : undefined; // "no-gender" → no gender key at all
+
+  const persons: Record<string, unknown>[] = [
+    {
+      principal: true,
+      ...(personaHasId ? { id: "p_kid" } : {}),
+      names: [rawName("Elisabetha", "Sugecz")],
+      identifiers: {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/1:1:HHHH-1111",
+        ],
+      },
+    },
+  ];
+  const relationships: Record<string, unknown>[] = [];
+
+  if (father !== false) {
+    const g = genderFor(father);
+    persons.push({
+      id: "p_dad",
+      names: [rawName("Wm.", "Neal")],
+      ...(g ? { gender: g } : {}),
+    });
+    relationships.push({
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p_dad" },
+      person2: { resource: "#p_kid" },
+    });
+  }
+  if (mother !== false) {
+    const g = genderFor(mother);
+    persons.push({
+      id: "p_mom",
+      names: [rawName("Anna", "Kovacs")],
+      ...(g ? { gender: g } : {}),
+    });
+    relationships.push({
+      type: "http://gedcomx.org/ParentChild",
+      person1: { resource: "#p_mom" },
+      person2: { resource: "#p_kid" },
+    });
+  }
+  for (let i = 0; i < spouses; i++) {
+    const id = `p_spouse${i}`;
+    persons.push({ id, names: [rawName(`Spouse${i}`, "Toth")] });
+    relationships.push({
+      type: "http://gedcomx.org/Couple",
+      // Persona deliberately on person2: a Couple row is symmetric, and reading
+      // a fixed side would report the searched person as their own spouse.
+      person1: opts?.spouseIsSelf
+        ? { resource: "#p_kid" }
+        : { resource: `#${id}` },
+      person2: { resource: "#p_kid" },
+    });
+  }
+
+  return {
+    id: "HHHH-1111",
+    content: {
+      gedcomx: {
+        persons,
+        ...(opts?.relationships === "omit"
+          ? {}
+          : opts?.relationships === "empty"
+            ? { relationships: [] }
+            : { relationships }),
+      },
+    },
+  } as unknown as FSSearchEntry;
+}
+
+/** Run an entry through mapEntry and hand back just the resolved terms.
+ *
+ * Accepts bare prefixes for the four role-based terms (which ignore the queried
+ * names) and full `{prefix, given, surname}` objects for `other`, which has no
+ * relationship role and can only be answered by comparing names.
+ */
+function termsFor(
+  entry: FSSearchEntry,
+  terms: (KinPrefix | KinTerm)[],
+) {
+  const normalized: KinTerm[] = terms.map((t) =>
+    typeof t === "string" ? { prefix: t } : t,
+  );
+  return mapEntry(entry, normalized)?.relativeTerms;
+}
+
+describe("#1324 relativeTerms", () => {
+  it("35. reports father absent when the record names only the mother", () => {
+    // The issue's exact case. The record DOES name a parent and it is provably
+    // not the father, so this is real evidence no father was indexed — not an
+    // inability to tell. Degrading it to `unknown` would destroy the signal on
+    // the 20 surveyed results that sit in this cell.
+    expect(termsFor(householdEntry({ father: false }), ["father"])).toEqual({
+      father: { status: "absent" },
+    });
+  });
+
+  it("36. reports father absent when the record names no parents at all", () => {
+    expect(
+      termsFor(householdEntry({ father: false, mother: false }), ["father"]),
+    ).toEqual({ father: { status: "absent" } });
+  });
+
+  it("37. reports father present with the parent's name", () => {
+    expect(termsFor(householdEntry(), ["father"])).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+    });
+  });
+
+  it("38. reports unknown, not absent, when the parent carries no gender key", () => {
+    expect(
+      termsFor(householdEntry({ father: "no-gender" }), ["father"]),
+    ).toEqual({ father: { status: "unknown" } });
+  });
+
+  it("39. reports unknown, not absent, when the parent's gender is the literal Unknown", () => {
+    // `simplifyGender` emits the string "Unknown" for any non-Male/Female URI.
+    // Such a parent HAS a gender, so a rule phrased as "carries no gender"
+    // misses it entirely and lands on `absent`.
+    expect(
+      termsFor(householdEntry({ father: "unknown-gender" }), ["father"]),
+    ).toEqual({ father: { status: "unknown" } });
+  });
+
+  it("40. does not let the sex gate leak into the sex-agnostic parent prefix", () => {
+    // Mother removed deliberately: with her present, `parent` would resolve on
+    // her whether or not the gate leaked, and this would prove nothing.
+    for (const father of ["no-gender", "unknown-gender"] as const) {
+      expect(
+        termsFor(householdEntry({ father, mother: false }), ["parent"]),
+      ).toEqual({ parent: { status: "present", name: "Wm. Neal" } });
+    }
+  });
+
+  it("41. reports unknown for every prefix when the persona has no id", () => {
+    // Relationships intact — otherwise the no-graph rule alone would satisfy
+    // this, and an implementation missing the primaryId short-circuit passes.
+    expect(
+      termsFor(householdEntry({ personaHasId: false }), ["father", "spouse"]),
+    ).toEqual({ father: { status: "unknown" }, spouse: { status: "unknown" } });
+  });
+
+  it("42. reports unknown for every prefix when the anchor is the principal fallback", () => {
+    const entry = householdEntry();
+    // Break the ark match so only the `principal === true` fallback can fire.
+    (entry as unknown as { id: string }).id = "ZZZZ-9999";
+    expect(termsFor(entry, ["father", "mother"])).toEqual({
+      father: { status: "unknown" },
+      mother: { status: "unknown" },
+    });
+  });
+
+  it("43. reports unknown when relationships are missing or empty", () => {
+    // An empty array is not "resolves cleanly and yields nobody" — it cannot be
+    // told apart from relationships never being returned. Both shapes occur.
+    for (const relationships of ["omit", "empty"] as const) {
+      expect(termsFor(householdEntry({ relationships }), ["father"])).toEqual({
+        father: { status: "unknown" },
+      });
+    }
+  });
+
+  it("44. does not satisfy mother with a male parent", () => {
+    expect(termsFor(householdEntry({ mother: false }), ["mother"])).toEqual({
+      mother: { status: "absent" },
+    });
+  });
+
+  it("45. reports the other Couple endpoint as the spouse, not the persona", () => {
+    expect(termsFor(householdEntry(), ["spouse"])).toEqual({
+      spouse: { status: "present", name: "Spouse0 Toth" },
+    });
+  });
+
+  it("46. reports spouse unknown when both Couple endpoints are the persona", () => {
+    expect(termsFor(householdEntry({ spouseIsSelf: true }), ["spouse"])).toEqual(
+      { spouse: { status: "unknown" } },
+    );
+  });
+
+  it("47. reports spouse absent when there is no Couple row", () => {
+    expect(termsFor(householdEntry({ spouses: 0 }), ["spouse"])).toEqual({
+      spouse: { status: "absent" },
+    });
+  });
+
+  it("48. joins name from given + surname and tolerates a missing surname", () => {
+    const entry = householdEntry();
+    const gx = entry.content!.gedcomx as unknown as {
+      persons: Record<string, unknown>[];
+    };
+    const dad = gx.persons.find((p) => p.id === "p_dad")!;
+    dad.names = [rawName("Wm.")];
+    expect(termsFor(entry, ["father"])).toEqual({
+      father: { status: "present", name: "Wm." },
+    });
+  });
+
+  it("49. emits relativeTerms only when a relative NAME was supplied", async () => {
+    mockFetch.mockResolvedValue(
+      makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+    );
+
+    const withTerm = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenName: "Wm.",
+    });
+    expect(withTerm.results[0].relativeTerms).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+    });
+
+    const withoutTerm = await recordSearchTool({ surname: "Sugecz" });
+    expect(withoutTerm.results[0].relativeTerms).toBeUndefined();
+
+    // An `*Exact` boolean alone sends no q.fatherGivenName, so no father
+    // constraint was applied and there is nothing to report on.
+    const exactOnly = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenNameExact: true,
+    });
+    expect(exactOnly.results[0].relativeTerms).toBeUndefined();
+  });
+
+  it("50. resolves `other` by name match against co-people on the record", async () => {
+    mockFetch.mockResolvedValue(
+      makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+    );
+    const result = await recordSearchTool({
+      surname: "Sugecz",
+      fatherGivenName: "Wm.",
+      otherGivenName: "Anna",
+      otherSurname: "Kovacs",
+    });
+    expect(result.results[0].relativeTerms).toEqual({
+      father: { status: "present", name: "Wm. Neal" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
+  });
+
+  it("51. reports `other` unknown, not absent, when no co-person's name matches", () => {
+    // We compare names exactly while FamilySearch matched fuzzily, so a miss
+    // means "could not confirm", never "not on this record". Reporting `absent`
+    // here would be the false disconfirmation this whole field exists to stop.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "Jozsef" }]),
+    ).toEqual({ other: { status: "unknown" } });
+  });
+
+  it("52. matches `other` across case and punctuation", () => {
+    // `Wm.` vs `wm` is the same indexed person spelled differently; an exact
+    // string compare would call that a miss and downgrade a real positive.
+    expect(
+      termsFor(householdEntry(), [{ prefix: "other", given: "  wm ", surname: "NEAL" }]),
+    ).toEqual({ other: { status: "present", name: "Wm. Neal" } });
+  });
+
+  it("53. reports `other` absent only when the record carries no co-person", () => {
+    expect(
+      termsFor(householdEntry({ father: false, mother: false, spouses: 0 }), [
+        { prefix: "other", given: "Anna" },
+      ]),
+    ).toEqual({ other: { status: "absent" } });
+  });
+
+  it("54. answers `other` even when the relationship graph is missing", () => {
+    // `other` reads persons[], not the relationship graph, so the no-graph
+    // trigger that blinds the four role-based prefixes does not blind it.
+    expect(
+      termsFor(householdEntry({ relationships: "omit" }), [
+        "father",
+        { prefix: "other", given: "Anna", surname: "Kovacs" },
+      ]),
+    ).toEqual({
+      father: { status: "unknown" },
+      other: { status: "present", name: "Anna Kovacs" },
+    });
+  });
+
+  it("55. survives the staged slim block, inline and in the sidecar on disk", async () => {
+    // The integration the whole design turns on: `gedcomx` is deleted from the
+    // staged rows and relativeTerms must outlive it in BOTH copies. Asserting a
+    // surviving `unknown` here would prove nothing, so this asserts `present`.
+    const dir = await mkdtemp(join(tmpdir(), "rt-"));
+    try {
+      mockFetch.mockResolvedValue(
+        makeOkResponse({ results: 1, index: 0, entries: [householdEntry()] }),
+      );
+      const result = await recordSearchTool({
+        surname: "Sugecz",
+        fatherGivenName: "Wm.",
+        projectPath: dir,
+      });
+
+      expect(result.results[0].gedcomx).toBeUndefined();
+      expect(result.results[0].relativeTerms).toEqual({
+        father: { status: "present", name: "Wm. Neal" },
+      });
+
+      const staged = JSON.parse(
+        await readFile(join(dir, result.staged!.resultsRef), "utf-8"),
+      );
+      expect(staged.payload.results[0].relativeTerms).toEqual({
+        father: { status: "present", name: "Wm. Neal" },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// #1592 — record_search drops UdeBatchNbr, so batch enumeration has no way to
+// obtain a batch number. Payload shapes below are the ones measured live on
+// 2026-08-13 (dev/probe-batch-field.ts), including the two type spellings.
+describe("#1592 batchNumber on results", () => {
+  /** An entry whose gedcomx root carries the batch, in either type spelling. */
+  const entryWithBatch = (
+    typeSuffix: "UdeBatchNbr" | "UdeBatchNumber",
+    text = "M01048-5",
+  ): FSSearchEntry => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      {
+        type: "http://familysearch.org/types/fields/BatchLocality",
+        values: [{ labelId: "FS_BATCH_LOCALITY", text: "Kirkdale, Lancashire, England" }],
+      },
+      {
+        type: `http://familysearch.org/types/fields/${typeSuffix}`,
+        values: [{ labelId: "FS_UDE_BATCH_NBR", text }],
+      },
+    ];
+    return entry;
+  };
+
+  it("reads the batch when the type is spelled UdeBatchNbr", () => {
+    const r = mapEntry(entryWithBatch("UdeBatchNbr", "B01883-5"));
+    expect(r!.batchNumber).toBe("B01883-5");
+  });
+
+  // The spelling that issue #1592's own quoted payload would have missed:
+  // collection 1494474 and q.batchNumber=8317102 both return this one.
+  it("reads the batch when the type is spelled UdeBatchNumber", () => {
+    const r = mapEntry(entryWithBatch("UdeBatchNumber", "B05338-0"));
+    expect(r!.batchNumber).toBe("B05338-0");
+  });
+
+  it("keys on labelId, so an unknown type spelling still yields the batch", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      {
+        type: "http://familysearch.org/types/fields/SomeFutureSpelling",
+        values: [{ labelId: "FS_UDE_BATCH_NBR", text: "V01311-7" }],
+      },
+    ];
+    // Guards the failure mode this field exists to avoid: a batch that is
+    // present upstream but unreadable here looks exactly like a record with
+    // none, so the miss is silent.
+    expect(mapEntry(entry)!.batchNumber).toBe("V01311-7");
+  });
+
+  it("ignores person-level fields, which carry PR_AGE and Role but never a batch", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.persons![0].fields = [
+      { type: "http://familysearch.org/types/fields/Age", values: [{ labelId: "PR_AGE", text: "3" }] },
+      { type: "http://familysearch.org/types/fields/Role", values: [{ text: "Principal" }] },
+    ];
+    expect(mapEntry(entry)!.batchNumber).toBeUndefined();
+  });
+
+  it("omits the field entirely on a record that traces to no batch", () => {
+    // The common case: 0/10 census hits and 10/17 hits inside one marriage
+    // collection carried none. Absence must not be reported as a value.
+    expect(mapEntry(lincolnEntry())!.batchNumber).toBeUndefined();
+    expect("batchNumber" in mapEntry(lincolnEntry())!).toBe(false);
+  });
+
+  it("takes the batch even when other root fields precede it", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.fields = [
+      { type: "http://familysearch.org/types/fields/FilmNumber", values: [{ labelId: "FS_FILM_NBR", text: "329781" }] },
+      { type: "http://familysearch.org/types/fields/RecordGroup", values: [{ labelId: "FS_RECORD_GROUP", text: "Germany-EASy" }] },
+      { type: "http://familysearch.org/types/fields/UdeBatchNumber", values: [{ labelId: "FS_UDE_BATCH_NBR", text: "B93070-3" }] },
+      { type: "http://familysearch.org/types/fields/UniqueId", values: [{ labelId: "FS_UNIQUE_ID", text: "251586213" }] },
+    ];
+    expect(mapEntry(entry)!.batchNumber).toBe("B93070-3");
+  });
+
+  it("survives the staged slim block, which is the only case that matters", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-batch-"));
+    try {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entryWithBatch("UdeBatchNbr")] }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      // gedcomx is stripped inline — if the batch lived only in there, the
+      // enumeration loop would work solely in unlogged exploratory searches.
+      expect(out.staged).toBeTruthy();
+      expect(out.results[0].gedcomx).toBeUndefined();
+      expect(out.results[0].batchNumber).toBe("M01048-5");
+
+      // …and it reaches the sidecar the viewer and rank_search_matches read.
+      const ref = out.staged!.resultsRef;
+      const staged = JSON.parse(
+        await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
+      );
+      expect(staged.payload.results[0].batchNumber).toBe("M01048-5");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reaches the ranked stubs, the projection a subjectId search actually reads", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
+    try {
+      await writeFile(
+        join(dir, "tree.gedcomx.json"),
+        JSON.stringify({
+          persons: [
+            {
+              id: "I1",
+              names: [{ preferred: true, given: "Abraham", surname: "Lincoln" }],
+              facts: [{ type: "Birth", date: "1809", place: "Hardin, Kentucky, United States" }],
+            },
+          ],
+        }),
+        "utf-8",
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entryWithBatch("UdeBatchNbr")] }),
+      );
+
+      const out = await recordSearchTool({
+        surname: "Lincoln",
+        projectPath: dir,
+        subjectId: "I1",
+      });
+
+      expect(out.ranked).toBeTruthy();
+      expect(out.ranked!.matches[0].batchNumber).toBe("M01048-5");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

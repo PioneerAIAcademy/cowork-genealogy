@@ -1,0 +1,41 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranked view of the two batch-carrying Ashton hits, for the batch-enumeration test. STOCKED FOR REGISTRATION, not just for realism: rank_search_matches is not in the harness's LIVE_TOOLS, so with no fixture the tool is never registered on the mock server and a call to it is a Type 1 uncovered call — the run ABORTS with unmatched_tool_call at exit 2 and never reaches the judge. search-records/SKILL.md calls it 'the primary triage tool', so the skill is likely to call it, and a judge_context note excusing a fixture_not_found cannot help: that path is never taken. Permissive `{subjectId: ~}` predicate, matching the existing rank-search-matches-* fixtures. Scores are illustrative; the record ids, names, collection titles and batch numbers are carried verbatim from the paired name-search fixture, whose rows were captured live.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 6,
+    "returnedCount": 2,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:NFCY-7VM",
+        "personName": "John Richardson",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "matchScore": 0.71,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "batchNumber": "I03213-6",
+        "primaryId": "p_12036524040"
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:JMF4-CL9",
+        "personName": "John Richardson",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "matchScore": 0.68,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "batchNumber": "C00558-7",
+        "primaryId": "p_12405347731"
+      }
+    ]
+  }
+}

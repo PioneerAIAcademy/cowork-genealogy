@@ -1,0 +1,599 @@
+{
+  "tool": "record_search",
+  "description": "Batch C00558-7 narrowed by surname — all 30 Richardsons in the St. Michael and All Angels extraction. CAPTURED LIVE 2026-08-13, gedcomx dropped. Narrowing a batch with a name is CORRECT and documented, and the live tool narrows: I03213-6 goes 4,045 -> 5 -> 1, C00558-7 goes 19,206 -> 30 -> 9. COMPLETE by construction: `returned` == `totalMatches` and `hasMore` is false, so the narrowed set is fully enumerable in ONE call — which is honest, since `count` accepts up to 100. This matters because a fixture returns a static response and the matcher ignores `offset`: an under-filled narrowed page cannot be paged in the mock. In run v1_2026-08-14_00-46-38 the earlier 6-row version of this fixture reported 30 total, the skill correctly paged with `offset: 6` exactly as SKILL.md instructs, got the same 6 rows back, and reported 24 entries unreachable — costing it two dimensions for doing the right thing against a mock that cannot represent paging.",
+  "args": {
+    "batchNumber": "C00558-7",
+    "surname": "~Richardson"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "C00558-7",
+      "surname": "Richardson",
+      "count": 40
+    },
+    "totalMatches": 30,
+    "paginationCappedAt": 4999,
+    "returned": 30,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:JMF4-HH3",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "6 Aug 1837",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elizabeth Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Elizabeth Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-BSJ",
+        "primaryId": "p_12405346443",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYG-YKM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "8 Mar 1835",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Mary Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-TYK",
+        "primaryId": "p_12221088870",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-59L",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anne Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "13 April 1827",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-S55",
+        "primaryId": "p_12221112651",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JWCB-B4D",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "10 March 1807",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for James Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-9MQ",
+        "primaryId": "p_12546871422",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JMF4-CL9",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "25 Sep 1832",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-BYQ",
+        "primaryId": "p_12405347731",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYG-T6G",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "15 Jul 1838",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Edward Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Edward Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-T31",
+        "primaryId": "p_12221087812",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-M8N",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "1 May 1836",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "George Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for George Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-Y6D",
+        "primaryId": "p_12221091346",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JQTH-PFC",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "23 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William Henry Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for William Henry Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MMB",
+        "primaryId": "p_12511497159",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-YZT",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "11 Jun 1837",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phoebe Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Phoebe Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-3P5",
+        "primaryId": "p_12221115626",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-RT5",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "3 Jun 1836",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Rachel Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Rachel Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-SLC",
+        "primaryId": "p_12221114304",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JWCB-YYM",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "22 March 1812",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for William Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MMY",
+        "primaryId": "p_12546871110",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-KX8",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Dorcas Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Female",
+        "birthDate": "23 July 1809",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Dorcas Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-9TY",
+        "primaryId": "p_12221108531",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-5Y3",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "29 June 1819",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Joseph Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-34N",
+        "primaryId": "p_12221113413",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-6M9",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "16 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Peter Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "12 March 1824",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Peter Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MXR",
+        "primaryId": "p_12221102701",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-MBD",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "23 Nov 1834",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Richardson",
+        "score": 2.8218,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "21 December 1823",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Henry Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-Y86",
+        "primaryId": "p_12221091852",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-KXD",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Dorcas Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-9TY",
+        "primaryId": "p_12221108532",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JWCB-B46",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for James Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-9MQ",
+        "primaryId": "p_12546871423",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-59G",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-S55",
+        "primaryId": "p_12221112652",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-YZY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Phoebe Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-3P5",
+        "primaryId": "p_12221115627",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYG-T6P",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Charles Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Edward Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-T31",
+        "primaryId": "p_12221087813",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JQTH-PFZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Charlotte Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for William Henry Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MMB",
+        "primaryId": "p_12511497160",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-5YQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Joseph Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-34N",
+        "primaryId": "p_12221113414",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-MB6",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Henry Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-Y86",
+        "primaryId": "p_12221091853",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JMF4-HHQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "James Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Elizabeth Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-BSJ",
+        "primaryId": "p_12405346444",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYG-YK9",
+        "events": [],
+        "treeMatches": [],
+        "personName": "James Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Mary Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-TYK",
+        "primaryId": "p_12221088871",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JWCB-YY9",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for William Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MMY",
+        "primaryId": "p_12546871111",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JMF4-CLS",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Thomas Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-BYQ",
+        "primaryId": "p_12405347732",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-6MS",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Peter Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-MXR",
+        "primaryId": "p_12221102702",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-RTR",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Thomas Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Rachel Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-SLC",
+        "primaryId": "p_12221114305",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-M8J",
+        "events": [],
+        "treeMatches": [],
+        "personName": "George Richardson",
+        "score": 2.8118,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for George Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-Y6D",
+        "primaryId": "p_12221091347",
+        "batchNumber": "C00558-7"
+      }
+    ]
+  }
+}
