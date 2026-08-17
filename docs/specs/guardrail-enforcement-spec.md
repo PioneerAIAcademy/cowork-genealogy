@@ -509,7 +509,7 @@ No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
 direct file write never validates.
 
 Three shipping copies, plus the unit harness — which *imports* the plugin
-predicate rather than re-implementing it (issue #1493):
+predicate rather than re-implementing it:
 
 | Where | File | Reaches |
 |---|---|---|
@@ -539,10 +539,10 @@ exemption**, so wherever `init-project` seeds via raw `Write` and the guard
 binds, the create is denied — confirmed live in Cowork on 2026-08-09. (In
 Cowork *with a connected folder* the seed instead goes through
 `device_commit_files` and the `Write` guard never fires — see §6.1 — so that
-path is unaffected; the deny bites the direct-`Write` paths.) That is **issue
-#1080** (the missing bootstrap seed tool), not something the unit tier should
-reproduce; when #1080 ships a seed writer, `init-project` stops raw-writing and
-the exemption becomes moot.
+path is unaffected; the deny bites the direct-`Write` paths.) That gap — a
+missing bootstrap seed tool the shipping copies need and the unit tier must not
+reproduce — is tracked separately; when a seed writer ships, `init-project`
+stops raw-writing and the exemption becomes moot.
 
 **Why the plugin copy exists.** A per-agent `tools:` allow-list is subtractive —
 it can only narrow what a subagent inherits — so nothing but a hook can restrain
@@ -714,9 +714,9 @@ session_id, tool_input, tool_name, tool_use_id, transcript_path
 ### 6.3 `settings.json` is **not** in the protected set — and why (measured 2026-08-15)
 
 `settings.json` is deliberately not protected here. The question "can an agent
-widen its own permissions by writing `.claude/settings.json`?" was raised by
-issue #1493 step 0 and answered empirically by the lead (recorded so it is not
-flattened back to "it was denied"):
+widen its own permissions by writing `.claude/settings.json`?" was raised while
+adding the unit-harness lockdown and answered empirically by the lead (recorded
+so it is not flattened back to "it was denied"):
 
 - Under `permission_mode="bypassPermissions"` (what the unit harness and the
   hosted control plane both run) a raw write to a project-local **or** global
@@ -735,9 +735,9 @@ flattened back to "it was denied"):
 
 Net: protecting `settings.json` is worth doing on the **hosted web** path only,
 for **persistence** rather than escalation, and it cannot ride the unit-harness
-change (issue #1493): the parity test forces all three shipping copies to
-protect the *same* set, so a hosted-only entry needs a per-path protected-set
-design first. Tracked as separate follow-up work; the unit-harness rule stands
+change: the parity test forces all three shipping copies to protect the *same*
+set, so a hosted-only entry needs a per-path protected-set design first. Tracked
+as separate follow-up work; the unit-harness rule stands
 on its own.
 
 ## 7. Caller-attributed recency check (shadow mode)
