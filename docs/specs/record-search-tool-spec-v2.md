@@ -921,104 +921,17 @@ Carried onto `rank_search_matches`' ranked stubs as well — a search that suppl
 
 ## Tool Schema
 
-```typescript
-{
-  name: "record_search",
-  description:
-    "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
-    "narrow ranking. Returns ranked person matches with key facts, " +
-    "persistent URLs, source-record details, and Family-Tree-person match " +
-    "suggestions. Requires authentication — call the login tool first if " +
-    "not logged in. For ambiguous place names, call the places tool first. " +
-    "To scope to a specific record collection, call the collections tool " +
-    "first to find the right collectionId.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      // Person fields
-      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
-      givenName:             { type: "string", description: "Given (first) name of the searched person." },
-      surnameAlt:            { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
-      givenNameAlt:          { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
-      sex:                   { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact:          { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count and reorders the records it keeps; measured over complete sets it only ever removes records, never surfaces one the fuzzy search buried. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
-      givenNameExact:        { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count and reorders the records it keeps; it is not a way to surface a record the fuzzy search buried. Expected to exclude diminutives a period record may use (`Betty` for `Elizabeth`) — the default's reach to them is measured, the exclusion is not. Applies to `givenNameAlt` too." },
+The advertised schema for `record_search` is **not duplicated here.** Read it at
+[`packages/engine/mcp-server/src/tools/record-search.ts`](../../packages/engine/mcp-server/src/tools/record-search.ts) —
+it is the only copy the model ever sees, and a paste of it in this file has no
+reader that the source does not serve.
 
-      // Birth event
-      birthYearFrom:         { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
-      birthYearTo:           { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact:        { type: "boolean", description: "When `true`, the birth-year range is matched exactly (no fuzz around the bounds)." },
-      birthPlace:            { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Death event
-      deathYearFrom:         { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
-      deathYearTo:           { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact:        { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
-      deathPlace:            { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      deathPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Marriage event
-      marriageYearFrom:      { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
-      marriageYearTo:        { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact:     { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
-      marriagePlace:         { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      marriagePlaceExact:    { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Residence event
-      residenceYearFrom:     { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
-      residenceYearTo:       { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact:    { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
-      residencePlace:        { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      residencePlaceExact:   { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Any-event
-      anyYearFrom:           { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
-      anyYearTo:             { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact:          { type: "boolean", description: "When `true`, the any-event year range is matched exactly." },
-      anyPlace:              { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      anyPlaceExact:         { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Family members
-      spouseGivenName:       { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
-      spouseSurname:         { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
-      fatherGivenName:       { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
-      fatherSurname:         { type: "string", description: "Father's family name." },
-      fatherGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
-      motherGivenName:       { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
-      motherSurname:         { type: "string", description: "Mother's family name." },
-      motherGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
-      parentGivenName:       { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent." },
-      parentSurname:         { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
-      otherGivenName:        { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate)." },
-      otherSurname:          { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship." },
-      otherGivenNameExact:   { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
-      otherSurnameExact:     { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
-
-      // Record-source
-      collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
-      imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
-      batchNumber:           { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. OBTAIN ONE from the `batchNumber` field on a previous result (search the collection by name, then scan the hits for one that carries it — most records carry none, and a hit without one says nothing about the collection); `ranked[]` stubs carry it too. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
-      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
-      recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
-      recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
-      maritalStatus:         { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
-      isPrincipal:           { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Omit the parameter to return both — the broadest set, recommended for most natural-language searches." },
-
-      // Pagination
-      count:                 { type: "number", description: "Number of results per page. Default 20, max 100." },
-      offset:                { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." }
-    }
-  }
-}
-```
+A verbatim copy used to live here and drifted: it was not updated alongside the
+tool, no check compared the two, and prose written against the stale block
+contradicted the shipped descriptions. Do not reintroduce one. If a rendered
+schema is ever wanted in the docs, generate it from `allToolSchemas` at build
+time the way `packages/schema/src/enums.generated.ts` is generated — never by
+hand.
 
 The anchor rule is enforced inside `validateInput`, not via JSON
 Schema's `required` (which can only require single fields, not
