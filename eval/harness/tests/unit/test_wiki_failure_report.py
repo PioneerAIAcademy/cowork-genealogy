@@ -140,11 +140,24 @@ def test_report_prints_examples_for_other_and_unclassified():
 
 def test_empty_is_a_real_result_and_flags_unreadable_runs():
     clean = format_report([], n_runs=5)
-    assert "No wiki or pop-stats calls" in clean
+    assert "No classifiable wiki or pop-stats calls" in clean
     assert "real result" in clean
     # Unreadable run logs must not masquerade as a clean corpus.
     flagged = format_report([], n_runs=5, unreadable=3)
     assert "3 run log(s)" in flagged and "not proof of a clean corpus" in flagged
+
+
+def test_stripped_calls_are_reported_not_silently_dropped_or_called_unknown():
+    """A corpus that is entirely stripped must say so, not read as a clean run
+    and not inflate `unclassified` — the strip removed the cause text on purpose."""
+    out = format_report([], n_runs=6, stripped_calls=508, stripped_runs=103)
+    assert "508 wiki/pop-stats call(s) in 103 run(s)" in out
+    assert "stripped" in out
+    assert "real result" not in out  # it is NOT a clean corpus
+    # And the note also rides along on a non-empty report.
+    mixed = format_report([_call("success")], n_runs=6, stripped_calls=10, stripped_runs=2)
+    assert "10 wiki/pop-stats call(s) in 2 run(s)" in mixed
+    assert "NOT counted as unclassified" in mixed
 
 
 def _write_run(tmp_path, tool_calls, *, stem="run-2026-08-01_00-00-00"):
@@ -167,9 +180,35 @@ def test_scan_collects_only_the_four_tools_and_counts_unreadable(tmp_path):
     corrupt = tmp_path / "some-fixture" / "run-2026-08-02_00-00-00.json"
     corrupt.write_text("{not json", encoding="utf-8")
 
-    calls, unreadable = scan([good, corrupt], author_of=lambda p: "tester")
-    assert unreadable == 1
+    res = scan([good, corrupt], author_of=lambda p: "tester")
+    assert res.unreadable == 1
     # record_search is excluded; the two wiki/pop calls are kept and classified.
-    buckets = sorted(c.bucket for c in calls)
+    buckets = sorted(c.bucket for c in res.calls)
     assert buckets == ["no_population_series", "success"]
-    assert all(c.author == "tester" and c.day == "2026-08-01" for c in calls)
+    assert all(c.author == "tester" and c.day == "2026-08-01" for c in res.calls)
+
+
+def test_scan_counts_a_stripped_run_as_stripped_not_unclassified(tmp_path):
+    """A stripped run's wiki calls carry no response_summary, so they must be
+    tallied as stripped and kept out of the classifier — not run through it,
+    where a missing summary would land in `unclassified`."""
+    slug = tmp_path / "old-fixture"
+    slug.mkdir(parents=True, exist_ok=True)
+    p = slug / "run-2026-06-01_00-00-00.json"
+    p.write_text(
+        json.dumps(
+            {
+                "captures_stripped": True,
+                "tool_calls": [
+                    {"tool": "mcp__genealogy__wiki_place_page", "args": {"place": "X"}},
+                    {"tool": "mcp__genealogy__place_population", "args": {"place": "Y"}},
+                    {"tool": "mcp__genealogy__record_search", "args": {}},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    res = scan([p], author_of=lambda p: "tester")
+    assert res.calls == []  # nothing classified
+    assert res.stripped_calls == 2  # both wiki/pop calls, not the record_search
+    assert res.stripped_runs == 1

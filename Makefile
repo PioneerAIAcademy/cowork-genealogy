@@ -604,8 +604,10 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	# wiki_read/wiki_place_page/place_population call into a fixed taxonomy and
 	# reports it by cause, by day, and by the run log's committing author, so the
 	# blended "28%/35% fail" headline separates into service reach, corpus data
-	# gaps, a dead code path, and client-side. Run SINCE=all: the default 14-day
-	# window drops all 22 legacy_markdown_dir calls (2026-07-02..07-14).
+	# gaps, and client-side. The 14-day default IS the useful horizon: it reads
+	# response_summary, which the e2e capture strip drops past 14 days, so older
+	# runs report only as a stripped-and-unclassifiable count. SINCE=all shows
+	# that count; it does not recover more causes.
 	cd eval/harness && uv run python -m e2e.wiki_failure_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)

@@ -38,9 +38,19 @@ and is printed with one example, never silently absorbed.
    was not hypothetical: matching quoted keys dropped 42 of ~35 `Place not found`
    responses into `unclassified` in the first cut of this file.
 
-2. **The 14-day window hides two buckets.** Every `legacy_markdown_dir` call is
-   dated 2026-07-02 to 07-14, so the default window drops all of them. Run with
-   `SINCE=all` for the full picture; the window is stated in the output.
+2. **Past 14 days the captures are STRIPPED, not just windowed out.** The e2e
+   capture strip (`prune_runlogs.py --strip-e2e-captures`, eval/CLAUDE.md § "E2e
+   capture strip") drops `response_summary` from every run log older than the
+   14-day window, keeping only `tool`/`args`, and marks the file
+   `captures_stripped: true`. A wiki call in a stripped run therefore carries no
+   cause text at all, so it CANNOT be classified — this report counts it under a
+   `stripped` tally and excludes it from the taxonomy rather than misfiling it as
+   `unclassified` (which is reserved for a live shape the matchers do not know).
+   The upshot is that the report's real horizon is the 14-day capture window: it
+   classifies fresh runs fully, and `SINCE=all` mainly shows how much older data
+   has been stripped. The `legacy_markdown_dir` bucket, all pre-14-day, is now
+   stripped and unrecoverable — acceptable, since it was a dead code path the
+   issue itself said needs no investigation.
 
 ## Attribution is by commit author, not by machine
 
@@ -248,18 +258,34 @@ def resolve_authors(paths: list[Path]) -> dict[Path, str]:
     return authors
 
 
+class ScanResult(NamedTuple):
+    """What one scan of the run logs found."""
+
+    calls: list[Call]     # classifiable wiki/pop calls (captures intact)
+    unreadable: int       # run logs that failed to parse at all
+    stripped_calls: int   # wiki/pop calls whose response_summary was stripped
+    stripped_runs: int    # distinct stripped runs that held wiki/pop calls
+
+
 def scan(
     paths: list[Path], author_of: Callable[[Path], str] = commit_author
-) -> tuple[list[Call], int]:
-    """Every wiki/pop-stats call across the given run JSONs, plus the count of
-    run logs that could not be parsed.
+) -> ScanResult:
+    """Classify every wiki/pop-stats call whose captures survive, and tally the
+    two kinds of call that cannot be classified.
 
-    The unreadable count is returned rather than swallowed: a corpus that is
-    entirely unreadable must not print "no calls found" and read as a clean run.
+    A run older than the 14-day capture window has been through the e2e capture
+    strip (`captures_stripped: true`), which drops `response_summary` — so its
+    wiki calls carry no cause text and are counted as `stripped`, NOT run through
+    the classifier (where a missing summary would masquerade as `unclassified`
+    and inflate the unknown bucket the whole report is built to keep honest).
+    Unreadable run logs are tallied too: a corpus that is entirely stripped or
+    unreadable must not print "no calls found" and read as a clean run.
     `author_of` is injectable so tests need not shell out to git.
     """
     calls: list[Call] = []
     unreadable = 0
+    stripped_calls = 0
+    stripped_runs = 0
     for p in paths:
         run = f"{p.parent.name}/{p.stem}"
         try:
@@ -267,19 +293,27 @@ def scan(
         except (OSError, json.JSONDecodeError):
             unreadable += 1
             continue
+        stripped = bool(doc.get("captures_stripped"))
         d = run_date(p)
         day = d.isoformat() if d else "undated"
         author = author_of(p)
+        run_stripped_hits = 0
         for tc in doc.get("tool_calls") or []:
             tool = _bare_tool(str((tc or {}).get("tool") or ""))
             if tool not in WIKI_POP_TOOLS:
+                continue
+            if stripped:
+                stripped_calls += 1
+                run_stripped_hits += 1
                 continue
             rs = (tc or {}).get("response_summary")
             rs = rs if isinstance(rs, str) else json.dumps(rs)
             calls.append(
                 Call(run, tool, classify(tool, rs), day, author, rs[:200].replace("\n", " "))
             )
-    return calls, unreadable
+        if run_stripped_hits:
+            stripped_runs += 1
+    return ScanResult(calls, unreadable, stripped_calls, stripped_runs)
 
 
 def _pct(n: int, total: int) -> str:
@@ -292,16 +326,36 @@ def _bucket_tail(counts: Counter, exclude: frozenset[str] = frozenset({"success"
     return " ".join(parts)
 
 
-def format_report(calls: list[Call], n_runs: int, unreadable: int = 0) -> str:
+def _stripped_note(stripped_calls: int, stripped_runs: int) -> str:
+    return (
+        f"{stripped_calls} wiki/pop-stats call(s) in {stripped_runs} run(s) had "
+        "their response_summary stripped past the 14-day capture window and "
+        "cannot be classified by cause (only tool + args survive the strip). They "
+        "are excluded from the taxonomy below, NOT counted as unclassified."
+    )
+
+
+def format_report(
+    calls: list[Call],
+    n_runs: int,
+    unreadable: int = 0,
+    stripped_calls: int = 0,
+    stripped_runs: int = 0,
+) -> str:
     if not calls:
         base = (
-            "No wiki or pop-stats calls in the selected runs.\n"
-            "That is a real result: no run in the window called wiki_search, "
-            "wiki_read, wiki_place_page or place_population."
+            "No classifiable wiki or pop-stats calls in the selected runs."
         )
+        if stripped_calls:
+            base += "\n" + _stripped_note(stripped_calls, stripped_runs)
+        else:
+            base += (
+                "\nThat is a real result: no run in the window called wiki_search, "
+                "wiki_read, wiki_place_page or place_population."
+            )
         if unreadable:
             base += (
-                f"\nBUT {unreadable} run log(s) in the window could not be parsed, "
+                f"\nAlso, {unreadable} run log(s) in the window could not be parsed, "
                 "so this is not proof of a clean corpus — fix those and re-run."
             )
         return base
@@ -312,11 +366,13 @@ def format_report(calls: list[Call], n_runs: int, unreadable: int = 0) -> str:
     runs_hit = {c.run for c in calls}
 
     lines = [
-        f"{total} wiki/pop-stats call(s) across {len(runs_hit)} of {n_runs} run(s)"
+        f"{total} classifiable wiki/pop-stats call(s) across {len(runs_hit)} of {n_runs} run(s)"
         f"   tools: " + ", ".join(f"{t}={by_tool[t]}" for t in sorted(by_tool)),
         "Attribution below is by the git author who first committed each run "
         "log — a proxy for the machine that ran it, not a host record.",
     ]
+    if stripped_calls:
+        lines.append("NOTE: " + _stripped_note(stripped_calls, stripped_runs))
     if unreadable:
         lines.append(
             f"NOTE: {unreadable} run log(s) in the window could not be parsed and "
@@ -410,9 +466,17 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     authors = resolve_authors(paths)
-    calls, unreadable = scan(paths, author_of=lambda p: authors.get(p, "(unknown)"))
+    result = scan(paths, author_of=lambda p: authors.get(p, "(unknown)"))
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
-    print(format_report(calls, n_runs=len(paths), unreadable=unreadable))
+    print(
+        format_report(
+            result.calls,
+            n_runs=len(paths),
+            unreadable=result.unreadable,
+            stripped_calls=result.stripped_calls,
+            stripped_runs=result.stripped_runs,
+        )
+    )
     return 0
 
 
