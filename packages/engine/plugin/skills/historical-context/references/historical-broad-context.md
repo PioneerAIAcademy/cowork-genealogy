@@ -109,7 +109,8 @@ customs, governance, laws, and regulations.
 
 - Civil registration start dates vary widely (France 1792, England
   1837, various US states 1860-1920). Before civil registration,
-  church records are the original source for vital events.
+  church records are usually the earliest surviving record of a
+  vital event, and are original sources.
 - Census questions changed over time. Each census year collected
   different information, which determines what you can and cannot
   learn from it.
@@ -120,6 +121,14 @@ customs, governance, laws, and regulations.
   records exist and what they reveal about family structure.
 - Laws governing legitimacy, adoption, and guardianship changed
   over time and affected how children were recorded.
+- Guardianship of a minor was often granted to that minor's own
+  living parent, not only to outsiders. Inheritance law, not
+  orphanhood, usually drove this: a minor with a claim on an estate
+  needed a legal guardian to manage it, so a widowed father might
+  petition for guardianship of his own children to administer their
+  inheritance. Do not read a guardianship appointment as evidence
+  the child was orphaned or unrelated to the petitioner without
+  checking whether an estate or inheritance was involved.
 
 ### 6. Religious factors
 
@@ -131,9 +140,15 @@ customs, governance, laws, and regulations.
   often predating civil registration by centuries.
 - Religious conversion could change a person's name, community
   affiliation, and entire record trail.
-- Dissenting religious groups (Quakers, Mennonites, Huguenots)
-  maintained separate record systems and often migrated as
-  communities.
+- Dissenting religious groups (Quakers, Mennonites, Huguenots,
+  Latter-day Saints) maintained separate record systems and often
+  migrated as communities.
+- Latter-day Saints migrated as organized companies (e.g. the
+  Mormon Trail migrations from Nauvoo to Utah) and kept separate
+  record systems — church membership, ward, and emigration
+  records — distinct from civil records before Utah became a
+  territory in 1850. Search LDS church records as a distinct
+  record set, not just civil records, for this population.
 
 ### 7. Military factors
 
@@ -144,6 +159,14 @@ customs, governance, laws, and regulations.
   enlist or understated age to avoid conscription.
 - Post-war pension records often contain extensive biographical
   information from depositions and affidavits.
+- Pension files are a FAN research source, not only a biographical
+  one about the pensioner: neighbors, family, and friends were
+  called to give depositions and affidavits attesting to service,
+  age, marriage, or disability. Your research subject may appear in
+  a *neighbor's* or *fellow soldier's* pension file as a witness,
+  swearing to having known the applicant for decades or farmed
+  next to him. Search pension files for the subject as a witness,
+  not only as the applicant.
 - Military conflicts destroyed courthouses and archives, creating
   gaps in the civil record (many Southern US counties during the
   Civil War, European archives during WWII).
@@ -154,15 +177,30 @@ customs, governance, laws, and regulations.
   numbers (30, 40, 50) is well-documented in census records.
 - Informal adoption and fosterage were common before modern
   adoption law. Children were "given" to relatives or neighbors
-  without legal proceedings.
+  without legal proceedings. This affected how the child was
+  recorded, and inconsistently: sometimes under the head of
+  household's surname, sometimes under a different one. The
+  relationship term used in a record — boarder, ward, step-child,
+  adopted child, plain "child," or a biological relationship term
+  (niece, nephew, grandchild) — does not reliably indicate the
+  actual legal or biological relationship. Do not assume the
+  household relationship column tells the whole story.
 - Illegitimacy affected how children were recorded. Terms like
   "base son," "base born," or "natural child" indicate parents
-  were not married. The child might carry the mother's surname,
-  the father's surname, or neither.
+  were not married at the time of birth. The child might carry the
+  mother's surname, the father's surname, or neither. If the
+  parents married after the birth, the child was often
+  retroactively legitimized by that marriage — the birth entry may
+  or may not carry a notation of this. Do not treat "base born" as
+  a permanent status; check for a later marriage of the parents.
 - Social standing affected record detail. Wealthy families left
   more records (wills, deeds, tax records) than poor families.
 - Literacy levels affected record accuracy and the existence of
-  personal documents (letters, diaries).
+  personal documents (letters, diaries). A mark (an "X" or other
+  symbol) in place of a signature does not always mean the person
+  could not write — marks were sometimes used out of custom,
+  infirmity, or haste even by literate individuals. Do not infer
+  illiteracy from a mark alone.
 
 ## How to apply this framework
 
