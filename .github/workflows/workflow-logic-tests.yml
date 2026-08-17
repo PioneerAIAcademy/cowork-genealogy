@@ -34,6 +34,7 @@ on:
       - '.github/workflows/senior-queue.yml'
       - '.github/workflows/workflow-logic-tests.yml'
       - '.github/tests/**'
+      - 'scripts/claude-hooks/**'
   push:
     branches: [main]
     paths: *paths
@@ -72,3 +73,15 @@ jobs:
         with:
           node-version: '22'
       - run: node .github/tests/senior-queue-readiness.test.mjs
+
+  # Same class as the three above: the issue-filing gate decides something where
+  # a wrong answer is a valid-looking one. It fails open by design, so a broken
+  # regex stops the prompt without stopping anything else — the filing goes
+  # through ungated and the run is green. Its test proved this from a clean
+  # checkout and nothing ever ran it.
+  issue-gate:
+    name: gate-issue-create hook fires
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 scripts/claude-hooks/test-gate-issue-create.py

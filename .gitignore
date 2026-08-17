@@ -108,3 +108,5 @@ apps/server/sandbox/.last-image-build
 
 # FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
 warnings.java
+# Working scratch document, never a checked-in artifact
+PROBES.md
