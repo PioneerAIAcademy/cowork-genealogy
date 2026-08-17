@@ -33,9 +33,8 @@ from validators_lib import (
 )
 
 
-# Ownership enforcement is centralised in test_universal.py's
-# OWNERSHIP_TABLE driven by a single dict mirroring
-# research-schema-spec.md §4. Per-skill copies were removed to prevent
+# Ownership enforcement is centralised in test_universal.py, driven by
+# docs/specs/schemas/ownership.json. Per-skill copies were removed to prevent
 # drift between two sources of truth.
 #
 # Diff / append-only / foreign-key patterns delegate to

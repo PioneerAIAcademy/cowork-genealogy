@@ -240,6 +240,20 @@ skill was invoked but it skipped the citation step.")
 
 {tool_calls}
 
+## Deterministic validators that FAILED
+
+{validator_failures}
+
+These are checks the harness ran and that came back red — facts, not opinions.
+**Only failures appear here.** A check that passed is deliberately not listed:
+you are grading the response, and a list of things that went right would tell
+you what to conclude rather than what to look at.
+
+A failure here does not by itself decide any dimension. Read it as evidence:
+if a validator says the skill deleted an entry it may not delete, that is a
+Correctness problem whatever the prose looks like. If a failure is unrelated to
+the dimension you are scoring, ignore it.
+
 ────────────────────────────────────────
 # Critical: Negative tests (decline / routing / non-activation)
 

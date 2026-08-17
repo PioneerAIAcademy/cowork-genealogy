@@ -85,6 +85,63 @@ describe('skills — happy parse', () => {
     expect(init.allowedTools).toEqual([]);
     expect(init.stateless).toBe(true);
     expect(init.rubricDimensions).toEqual([]);
+    // No rubric.md at all is the supported opt-out, not a failure.
+    expect(init.rubricError).toBeNull();
+  });
+
+  it('reports no error for a rubric that parses', async () => {
+    const skills = await listSkills();
+    expect(skills.find((s) => s.name === 'locality-guide')!.rubricError).toBeNull();
+  });
+});
+
+describe('skills — one unparseable rubric does not take down the list', () => {
+  let handle: FixtureTreeHandle;
+
+  // A blank rubric.md is the shape this guards against: the harness
+  // blocks it, but nothing stops someone emptying the file locally
+  // between edits. Before rubricError existed, readRubricFor rethrew and
+  // the throw escaped listSkills, so GET /api/skills 500'd and the picker
+  // died for EVERY skill rather than the one bad file's.
+  beforeEach(async () => {
+    handle = await makeFixtureTree({
+      skills: [
+        { name: 'locality-guide', skillMd: SKILL_MD_LOCALITY, rubricMd: RUBRIC_LOCALITY },
+        { name: 'init-project', skillMd: SKILL_MD_INIT, rubricMd: '' },
+      ],
+    });
+    process.env.EVAL_DIR = handle.root;
+  });
+
+  afterEach(async () => {
+    delete process.env.EVAL_DIR;
+    await handle.cleanup();
+  });
+
+  it('still lists every skill', async () => {
+    const skills = await listSkills();
+    expect(skills.map((s) => s.name)).toEqual(['init-project', 'locality-guide']);
+  });
+
+  it('leaves the healthy skill dimensions intact', async () => {
+    const skills = await listSkills();
+    const locality = skills.find((s) => s.name === 'locality-guide')!;
+    expect(locality.rubricDimensions.map((d) => d.name)).toEqual([
+      'Jurisdiction accuracy',
+      'Record availability',
+    ]);
+    expect(locality.rubricError).toBeNull();
+  });
+
+  it('names the bad file and the fix on the skill that owns it', async () => {
+    const skills = await listSkills();
+    const init = skills.find((s) => s.name === 'init-project')!;
+    expect(init.rubricDimensions).toEqual([]);
+    // Not null — this is what separates "blank file" from "no file", which
+    // empty dimensions alone cannot express.
+    expect(init.rubricError).toContain('is blank');
+    expect(init.rubricError).toContain('delete the file');
+    expect(init.rubricError).toContain('init-project');
   });
 });
 
@@ -126,6 +183,15 @@ describe('skills — malformed rubric throws with path pointer', () => {
 Description only, no bullets.
 `;
     expect(() => parseRubric(bad, '/path/to/eval/tests/unit/foo/rubric.md')).toThrow(/rubric.md/);
+  });
+
+  it('names the file and the fix when the rubric is blank', () => {
+    expect(() => parseRubric('', '/path/to/eval/tests/unit/foo/rubric.md')).toThrow(
+      /is blank.*delete the file/s,
+    );
+    expect(() => parseRubric('   \n\n  ', '/path/to/eval/tests/unit/foo/rubric.md')).toThrow(
+      /is blank/,
+    );
   });
 
   it('throws when there are no dimensions at all', () => {

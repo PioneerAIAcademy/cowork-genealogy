@@ -1239,6 +1239,51 @@ def test_summarize_response_nested_array_in_dict():
     assert "truncated by harness" in out["hits"]["_first_n"][0]["title"]
 
 
+def test_summarize_response_array_sample_none_keeps_every_element():
+    """`array_sample=None` is what the file-content path passes.
+
+    The default cap is right for a tool response — the first few hits show
+    argument quality — and wrong for an artifact the judge is told to grade.
+    """
+    arr = list(range(20))
+    assert judge._summarize_response(arr, array_sample=None) == arr
+
+
+def test_summarize_response_array_sample_none_reaches_nested_lists():
+    """The regression this fixes: the cap applied at EVERY depth, so a plan's
+    `items[]` nested inside a single added entry was cut to 3 while the entry
+    list itself looked complete. Assert the nested list, not the outer one."""
+    entry = {"plan_id": "pl_001", "items": [{"id": f"pli_{i:03d}"} for i in range(9)]}
+
+    capped = judge._summarize_response(entry)
+    assert capped["items"]["_summary_truncated"] is True
+    assert capped["items"]["_full_length"] == 9
+    assert len(capped["items"]["_first_n"]) == 3
+
+    full = judge._summarize_response(entry, array_sample=None)
+    assert len(full["items"]) == 9
+    assert [i["id"] for i in full["items"]][-1] == "pli_008"
+
+
+def test_summarize_response_array_sample_none_still_truncates_strings():
+    """Lifting the array cap must not lift the string cap — the prompt bound
+    is what keeps a 9-item plan from becoming the whole judge call."""
+    out = judge._summarize_response(
+        [{"rationale": "X" * 5000}] * 9, array_sample=None, string_max=100
+    )
+    assert len(out) == 9
+    assert "truncated by harness" in out[0]["rationale"]
+
+
+def test_summarize_response_default_still_caps():
+    """The default is unchanged, so the tool-response and before-state paths
+    do not move. Without this the fix could be applied globally and no test
+    would notice."""
+    out = judge._summarize_response(list(range(20)))
+    assert out["_summary_truncated"] is True
+    assert out["_first_n"] == [0, 1, 2]
+
+
 def test_render_prompt_uses_summarized_responses(sample_rubric):
     prompt = judge.render_prompt(
         rubric=sample_rubric,
@@ -1637,3 +1682,47 @@ def test_compute_cost_is_positive_on_the_shape_that_crashed_the_suite():
 
     assert cost > 0, "a warm-cache draw with a small output must not price negative"
     assert cost == pytest.approx((1885 * 1.0 + 5004 * 0.10 + 10 * 5.0) / 1_000_000)
+
+
+# --- validator failures in the prompt (issue #1670) ---------------------
+
+
+def _minimal_prompt(**kw):
+    from harness.judge import render_prompt
+    from harness.rubric import empty_rubric
+
+    base = dict(
+        rubric=empty_rubric("s"),
+        judge_context=[],
+        scenario_readme="",
+        user_message="m",
+        skills_invoked=[],
+        text_response="r",
+        file_changes_summary="",
+        tool_calls=[],
+    )
+    base.update(kw)
+    return render_prompt(**base)
+
+
+def test_validator_failures_appear_in_the_prompt():
+    out = _minimal_prompt(validator_failures=["test_log_append_only"])
+    assert "test_log_append_only" in out
+
+
+def test_no_failures_renders_a_neutral_marker():
+    out = _minimal_prompt(validator_failures=[])
+    assert "(none failed)" in out
+
+
+def test_only_the_named_failures_reach_the_prompt():
+    """FAILURES only. A passing list is a conclusion, and handing the judge a
+    conclusion is the defect behind issues #1007, #1330 and #1603 — it grades
+    what it was told to find.
+
+    Asserts the render carries the failure it was given and NOT one it was not.
+    An earlier version asserted on the section's prose, which tested my wording
+    rather than the behaviour."""
+    out = _minimal_prompt(validator_failures=["test_that_failed"])
+    assert "test_that_failed" in out
+    assert "test_that_passed" not in out
