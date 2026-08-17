@@ -1897,59 +1897,51 @@
       "args": {
         "query": "select:mcp__genealogy__project_context",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KD96-TV2\\\",\\n      \\\"name\\\": \\\"Christian Peter Hole\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"KZY4-FD6\\\",\\n      \\\"name\\\": \\\"Edna Marie Wadekamper\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"M43J-B3P\\\",\\n      \\\"name\\\": \\\"Owen Kenneth Hole\\\",\\n      \\\"g..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_hole_parents_negative\",\n4\t    \"objective\": \"Who were the parents of Christian Peter Hole?\",\n5\t    \"subject_person_ids\": [\"KD96-TV2\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-09\",\n8\t    \"updated\": \"2026-07-09\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\": [],\n17\t  \"log\": [],\n18\t  \"sources\": [],\n19\t  \"ass..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Objective: \"Who were the parents of Christian Peter Hole?\" Subject person: KD96-TV2 (Christian Peter Hole, Male). No questions exist yet \u2014 derive and write the first research question(s)."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KD96-TV2\",\n5\t      \"living\": false,\n6\t      \"gender\": \"Male\",\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"KD96-TV2-name-1\",\n10\t          \"given\": \"Christian Peter\",\n11\t          \"surname\": \"Hole\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"2 October 1876\",\n19\t          \"standard_date\": \"2 Oct 1876\",\n20\t          \"place\":..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1974,61 +1966,53 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Active question: q_001 \u2014 \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\" Target jurisdiction: Ringebu, Oppland, Norway. Time period: 1876 (birth/christening). Subject immigrated ~1882\u20131883 to the United States. Need a locality guide entry so research-plan can stage searches."
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/locality-guide/references/output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/locality-guide/references/locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/locality-guide/references/locality-broad-context.md"
-      },
-      "response_summary": "1\t# Broad Context Factors for Locality Research\n2\t\n3\tEffective locality research requires understanding the historical,\n4\tsocial, economic, and legal context of the place and time period.\n5\tThese contextual factors determine what records were created, what\n6\tinformation they contain, and where they are likely to be held.\n7\t\n8\tThis reference corresponds to the GPS principle that research planning\n9\tmust consider boundaries, migration, and the full range of factors\n10\tthat shape record creation..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Ringebu",
         "contextName": "Norway"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\n      \\\"latitude\\\": 61.5452,\\n      \\\"longitude\\\": 10.3355,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Ringebu&focusedId=551396\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Ringebu\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wikipedia_search",
         "max_results": 7
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}, {\"type\": \"tool_reference\", \"tool_nam..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2036,8 +2020,7 @@
         "standardPlace": "Ringebu, Oppland, Norway",
         "startYear": 1865,
         "endYear": 1900
-      },
-      "response_summary": "{\"error\":\"Population data service is unavailable. Is the Pop Stats API running?\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2045,8 +2028,7 @@
         "standardPlace": "Ringebu, Oppland, Norway",
         "startYear": 1800,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"startYear\\\": 1800,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"scope\\\": \\\"Norway\\\",\\n  \\\"totalForPlace\\\": 15,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1467014\\\",\\n      \\\"title\\\": \\\"Norway, Baptisms, 1634-1927\\\",\\n      \\\"dateRange\\\": \\\"1634-1927\\\",\\n      \\\"recordCount\\\": 5277294,\\n      \\\"personCount\\\": 15082744,\\n      \\\"imageCount\\\": 0,\\n      \\\"url\\\": \\\"https://www.familysearch.org/search/col..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2054,8 +2036,7 @@
         "standardPlace": "Ringebu, Oppland, Norway",
         "startYear": 1850,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"totalResults\\\": 8,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"008422147_005_M9MC-2GY\\\",\\n      \\\"imageGroupPrefix\\\": \\\"008422147\\\",\\n      \\\"imageCount\\\": 157,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"no\\\"\\n      ],\\n      \\\"coverages\\\": [\\n        {\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2063,62 +2044,54 @@
         "standardPlace": "Ringebu, Oppland, Norway",
         "startYear": 1850,
         "endYear": 1900
-      },
-      "response_summary": "Error: result (85,595 characters across 1,963 lines) exceeds maximum allowed tokens. Output has been saved to /home/promise/.claude/projects/-tmp-e2e-hole-parents-negative-00o4xh1p/f3fbaa1b-2d0f-4002-8af8-593627bb1529/tool-results/mcp-genealogy-external_links_search-1784717286204.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires reading the full content: read /home/promise/.claude/projec..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Norway parish church records genealogy research Oppland"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at http://127.0.0.1:8000. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Norway",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at http://127.0.0.1:8000. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Norway",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at http://127.0.0.1:8000. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Norway",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at http://127.0.0.1:8000. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Norway",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at http://127.0.0.1:8000. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wikipedia_search",
       "args": {
         "query": "Ringebu municipality Oppland Norway history"
-      },
-      "response_summary": "{\"error\":\"No Wikipedia article found for 'Ringebu municipality Oppland Norway history'\"}"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/promise/.claude/projects/-tmp-e2e-hole-parents-negative-00o4xh1p/f3fbaa1b-2d0f-4002-8af8-593627bb1529/tool-results/mcp-genealogy-external_links_search-1784717286204.txt",
         "limit": 300
-      },
-      "response_summary": "1\t{\n2\t  \"query\": {\n3\t    \"standardPlace\": \"Ringebu, Oppland, Norway\",\n4\t    \"startYear\": 1850,\n5\t    \"endYear\": 1900\n6\t  },\n7\t  \"totalForPlace\": 634,\n8\t  \"returned\": 488,\n9\t  \"results\": [\n10\t    {\n11\t      \"url\": \"https://innlandetfylke.no/tjenester/fylkesarkivet/\",\n12\t      \"linkText\": \"Fylkesarkivet - Innlandet fylkeskommune\"\n13\t    },\n14\t    {\n15\t      \"url\": \"https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=norway\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2219,30 +2192,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Active question: q_001 \u2014 \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\" Locality guide loc_001 is in place for Ringebu, Oppland, Norway. Key collections: Norway Baptisms index 1634-1927 (FS coll. 1467014), Norway Church Books 1797-1958 (FS coll. 4237104), Norway Census 1875 (FS coll. 1529106), Norway Census 1865 (FS coll. 3756102). Farm name variant: Hol/Holen. Patronymic note: father's name may form child's patronymic. Create a research plan for q_001."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2379,24 +2348,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Execute plan item pli_001: Search FamilySearch collection 1467014 (Norway, Baptisms, 1634-1927) for Christian Peter Hole, born 2 October 1876, christened 5 November 1876, Ringebu, Oppland, Norway. Also search collection 4237104 (Norway, Church Books, 1797-1958). Surname variants: Hole, Hol, Holen. Question: q_001. Log all results including nil."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2409,8 +2375,7 @@
         "collectionId": "1467014",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Hole\\\",\\n    \\\"givenName\\\": \\\"Christian\\\",\\n    \\\"birthYearFrom\\\": 1874,\\n    \\\"birthYearTo\\\": 1878,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"collectionId\\\": \\\"1467014\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2430,8 +2395,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results. Trying given name variant 'Christen' (Norwegian form) and broader surname variants next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:52:03.924Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2444,8 +2408,7 @@
         "collectionId": "1467014",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Hole\\\",\\n    \\\"givenName\\\": \\\"Christen\\\",\\n    \\\"birthYearFrom\\\": 1874,\\n    \\\"birthYearTo\\\": 1878,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"collectionId\\\": \\\"1467014\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2465,8 +2428,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results with Norwegian given-name variant 'Christen'. Trying surname variant 'Hol' next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:52:17.252Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2479,8 +2441,7 @@
         "collectionId": "1467014",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Hol\\\",\\n    \\\"givenName\\\": \\\"Christian\\\",\\n    \\\"birthYearFrom\\\": 1874,\\n    \\\"birthYearTo\\\": 1878,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"collectionId\\\": \\\"1467014\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2500,8 +2461,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results with surname variant 'Hol'. Trying broader search without place filter next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:52:29.476Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2514,8 +2474,7 @@
         "collectionId": "1467014",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Hole\\\",\\n    \\\"givenName\\\": \\\"Christian\\\",\\n    \\\"birthYearFrom\\\": 1874,\\n    \\\"birthYearTo\\\": 1878,\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"1467014\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 6,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 6,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"a..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2524,8 +2483,7 @@
         "stagedResultsRef": "results/.staging/32587913-ef84-426f-a269-6673c15c76c9.json",
         "subjectId": "KD96-TV2",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"KD96-TV2\\\",\\n  \\\"scoredCount\\\": 6,\\n  \\\"returnedCount\\\": 6,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 3,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NWKK-L5W\\\",\\n      \\\"matchScore\\\": 0.001753554,\\n      \\\"primaryId\\\": \\\"p_11825722626\\\",\\n      \\\"personName\\\": \\\"Hans Kristian Holen\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Norway, Baptisms, 1634-1927\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2547,8 +2505,7 @@
         "resultsAvailable": 6,
         "stagedResultsRef": "results/.staging/32587913-ef84-426f-a269-6673c15c76c9.json",
         "notes": "6 results returned but all are wrong sex or wrong name (Grete, Kristine, Hans Kristian) \u2014 none match Christian Peter Hole b.1876 Ringebu. Match scores all near zero; subjectResolvable=false. The child may be indexed under a patronymic not yet known, not under farm name 'Hole'. Trying no-surname search next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:53:26.903Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 6,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2561,8 +2518,7 @@
         "collectionId": "1467014",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Christian\\\",\\n    \\\"birthYearFrom\\\": 1875,\\n    \\\"birthYearTo\\\": 1877,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"1467014\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 234,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2584,8 +2540,7 @@
         "resultsAvailable": 234,
         "stagedResultsRef": "results/.staging/bd8baf32-eea1-431d-849f-23a78a99df55.json",
         "notes": "234 total results for 'Christian' born 1875-1877 in Norway. Only one Ringebu result in first 50: 'Christine' (female, b.Nov 1874) \u2014 not our subject. No Christian Peter Hole born Oct 1876 in Ringebu found. Collection 1467014 appears to have limited Ringebu 1876 coverage or the record is indexed under an unknown patronymic. Moving to Norway, Church Books 1797-1958 (coll. 4237104) which has 1.29M images and fuller coverage."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:53:56.719Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2598,8 +2553,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2612,8 +2566,7 @@
         "collectionId": "4237104",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Christian\\\",\\n    \\\"birthYearFrom\\\": 1875,\\n    \\\"birthYearTo\\\": 1877,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"4237104\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 1047,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2622,8 +2575,7 @@
         "stagedResultsRef": "results/.staging/0ecbc4e2-d058-41d9-8719-2a2e330cf640.json",
         "subjectId": "KD96-TV2",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"KD96-TV2\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 4,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:683F-NTZ9\\\",\\n      \\\"matchScore\\\": 0.88573307,\\n      \\\"primaryId\\\": \\\"p_292414505701\\\",\\n      \\\"personName\\\": \\\"Christian Peder\\\",\\n      \\\"birthDate\\\": \\\"2 October 1876\\\",\\n      \\\"collectionTitle\\\": \\\"Norway, Churc..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2631,8 +2583,7 @@
         "recordId": "ark:/61903/1:1:683F-NTZ9",
         "resultsRef": "results/.staging/0ecbc4e2-d058-41d9-8719-2a2e330cf640.json",
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_292414505701\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:683F-NTZ9\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Christian Peder\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"2 Oct 1876\\\",\\n          \\\"standard_date\\\": \\\"2 Oct 1876\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Baptism\\\",\\n          \\\"primary\\\": true,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2654,8 +2605,7 @@
         "resultsAvailable": 1047,
         "stagedResultsRef": "results/.staging/0ecbc4e2-d058-41d9-8719-2a2e330cf640.json",
         "notes": "MATCH: ark:/61903/1:1:683F-NTZ9 \u2014 'Christian Peder', born 2 Oct 1876, baptized 5 Nov 1876, Ringebu, Oppland, Norway. matchScore 0.886, confidence 5, attachedToSubject=true. Father: Benjamin Christophersen (b.1853); Mother: Matea Pedersdtr (b.1857). Indexed as 'Christian Peder' (not 'Christian Peter Hole') explaining nil results in collection 1467014. Image ARK: ark:/61903/1:2:4BXD-XNCV."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-22T10:54:57.041Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2668,16 +2618,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Extract record ark:/61903/1:1:683F-NTZ9 (Norway, Church Books, 1797-1958 \u2014 baptism entry for \"Christian Peder\", born 2 Oct 1876, baptized 5 Nov 1876, Ringebu, Oppland, Norway). Log entry: log_006. Results ref: results/log_006.json. Plan item: pli_002. Subject: KD96-TV2 (Christian Peter Hole). Record content already retrieved: Father = Benjamin Christophersen (b.1853, ark:/61903/1:1:683F-NTZ3); Mother = Matea Pedersdtr (b.1857, ark:/61903/1:1:683F-NTZ4). Extract all assertions with full GPS three-layer classification."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2685,15 +2633,13 @@
         "description": "Extract baptism record for Christian Peter Hole",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch church-book record into research.json and tree.gedcomx.json.\n\n**Project path:** /tmp/e2e-hole-parents-negative-00o4xh1p  \n**Record ID:** ark:/61903/1:1:683F-NTZ9  \n**Log ID:** log_006  \n**Results ref:** results/log_006.json  \n**Plan item:** pli_002  \n**Open question:** q_001 \u2014 \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\"\n\n**Record content (already retrieved via record_read from sidecar):**\n\nCollection: Norway, Church Books, 1797-1958 (collectionId 4237104)  \nRecord title: \"Entry for Christian Peder, 'Norway, Church Books, 1797-1958'\"  \nImage ARK: ark:/61903/1:2:4BXD-XNCV  \nSource citation: \"Norway, Church Books, 1797-1958\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:683F-NTZ9 : Sun Jul 21 04:11:09 UTC 2024), Entry for Christian Peder and Benjamin Christophersen, 5 Nov 1876.\n\n**Persons on the record:**\n\n1. Principal child \u2014 persona id p_292414505701, ark:/61903/1:1:683F-NTZ9  \n   - Name: Christian Peder (BirthName)  \n   - Birth: 2 Oct 1876  \n   - Baptism: 5 Nov 1876, Ringebu, Oppland, Norway  \n\n2. Father \u2014 persona id p_292414505703, ark:/61903/1:1:683F-NTZ3  \n   - Name: Benjamin Christophersen (Male)  \n   - Birth: 1853  \n\n3. Mother \u2014 persona id p_292414505707, ark:/61903/1:1:683F-NTZ4  \n   - Name: Matea Pedersdtr (Female) \u2014 surname \"Pedersdtr\" is a patronymic (Pedersdatter = daughter of Peder)  \n   - Birth: 1857  \n\n**Relationships on record:**\n- ParentChild: p_292414505703 (Benjamin) \u2192 p_292414505701 (Christian Peder)  \n- ParentChild: p_292414505707 (Matea) \u2192 p_292414505701 (Christian Peder)  \n- Couple: p_292414505703 (Benjamin) + p_292414505707 (Matea)\n\n**Research subject in tree:** KD96-TV2 = Christian Peter Hole (Male, born 2 Oct 1876, christened 5 Nov 1876, Ringebu, Oppland, Norway). The child on this record (\"Christian Peder\") matches the subject exactly \u2014 same dates and place.\n\n**Extraction notes:**\n- This is a Norwegian Lutheran parish baptism register (kirkeb\u00f8ker), an original record. The record was created at the time of baptism by the officiating minister \u2014 a contemporary official. The father (Benjamin Christophersen) was likely present at the christening; his birth facts were supplied by a person with direct knowledge (himself or as household member). The mother (Matea Pedersdtr) was similarly a direct participant.\n- \"Peder\" in the child's name \"Christian Peder\" likely honors the maternal grandfather (mother's patronymic = Pedersdatter = daughter of Peder), consistent with Norwegian naming conventions.\n- \"Hole\" farm name does NOT appear in this record; the family is indexed under the father's patronymic surname \"Christophersen.\"\n- Extract assertions for: (a) child's birth date/place, (b) child's baptism date/place, (c) father's identity and parentage relationship to child, (d) mother's identity and parentage relationship to child, (e) parents' couple relationship.\n- Do NOT create person_evidence links or assign identity confidence \u2014 that is handled separately by person-evidence skill.\n- Do NOT frame this as correcting the existing tree; simply extract what the record says.\n"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 14 ops written successfully (1 source + 13 assertions). No warnings.\\n\\n---\\n\\n**Source:** src_001 / S1 \\u2014 action: created\\n\\n**Assertions by role (13 total):**\\n- child_1 (Christian Peder, p_292414505701): name, sex, birth (date), christening (date+place), relationship-to-father, relationship-to-mother \\u2014 6 assertions (a_001\\u2013a_004, a_008, a_013)\\n- father (Benjamin Christophersen, p_292414505703): name, sex, birth year, couple relationship \\u2014 4..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 N\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KD96-TV2\\\",\\n      \\\"name\\\": \\\"Christian Peter Hole\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2997,24 +2943,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Link all role personas from record src_001 (baptism of Christian Peder, Ringebu 5 Nov 1876) to tree persons. Personas: (1) child p_292414505701 \"Christian Peder\" b.2 Oct 1876 Ringebu \u2014 likely KD96-TV2 (Christian Peter Hole, same dates/place); (2) father p_292414505703 \"Benjamin Christophersen\" b.1853 \u2014 no existing tree person, likely needs a stub; (3) mother p_292414505707 \"Matea Pedersdtr\" b.1857 \u2014 no existing tree person, likely needs a stub. Assertions a_001\u2013a_013. Question: q_001."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__same_person,mcp__genealogy__materialize_facts,mcp__genealogy__merge_warnings",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -3022,8 +2965,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 0,
         "limit": 80
-      },
-      "response_summary": "0\t{\n1\t  \"project\": {\n2\t    \"id\": \"rp_hole_parents_negative\",\n3\t    \"objective\": \"Who were the parents of Christian Peter Hole?\",\n4\t    \"subject_person_ids\": [\n5\t      \"KD96-TV2\"\n6\t    ],\n7\t    \"status\": \"active\",\n8\t    \"created\": \"2026-07-09\",\n9\t    \"updated\": \"2026-07-09\"\n10\t  },\n11\t  \"researcher_profile\": {\n12\t    \"experience_level\": \"intermediate\",\n13\t    \"subscriptions\": [],\n14\t    \"narration_guidance\": \"concise\"\n15\t  },\n16\t  \"questions\": [\n17\t    {\n18\t      \"id\": \"q_001\",\n19\t      \"quest..."
+      }
     },
     {
       "tool": "Read",
@@ -3031,15 +2973,13 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 80,
         "limit": 200
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"census\",\n82\t          \"jurisdiction\": \"Ringebu, Oppland, Norway\",\n83\t          \"date_range\": \"1875\",\n84\t          \"repository\": \"other\",\n85\t          \"rationale\": \"The 1875 Norwegian census was taken approximately one year before Christian Peter Hole's birth (October 1876). It captures his parents' household in Ringebu without him, corroborating their names, residence, and household composition. Digitalarkivet has a freely searchable 18..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KD96-TV2\",\n5\t      \"living\": false,\n6\t      \"gender\": \"Male\",\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"KD96-TV2-name-1\",\n10\t          \"given\": \"Christian Peter\",\n11\t          \"surname\": \"Hole\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"2 October 1876\",\n19\t          \"standard_date\": \"2 Oct 1876\",\n20\t          \"place\":..."
+      }
     },
     {
       "tool": "Read",
@@ -3047,8 +2987,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 280,
         "limit": 300
-      },
-      "response_summary": "280\t    }\n281\t  ],\n282\t  \"assertions\": [\n283\t    {\n284\t      \"id\": \"a_001\",\n285\t      \"record_id\": \"ark:/61903/1:1:683F-NTZ9\",\n286\t      \"record_persona_id\": \"p_292414505701\",\n287\t      \"record_role\": \"child_1\",\n288\t      \"fact_type\": \"name\",\n289\t      \"value\": \"Christian Peder\",\n290\t      \"structured_value\": {\n291\t        \"given\": \"Christian Peder\"\n292\t      },\n293\t      \"information_quality\": \"primary\",\n294\t      \"informant\": \"presenting parent(s) at baptism\",\n295\t      \"informant_proximity..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -3141,16 +3080,14 @@
             "p_292414505701"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"candidateGedcomx/persons[0]/names[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[0]/names[0]: missing required field 'surname'\\\",\\n    \\\"candidateGedcomx/persons[0]/facts[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[0]/facts[1]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[1]/names[0]: missing required field 'id'\\\",\\n    \\\"candidateGedcomx/persons[1]/facts[0]: mis..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__merge_warnings,mcp__genealogy__materialize_facts,mcp__genealogy__research_append,mcp__genealogy__tree_edit",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -3158,8 +3095,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1,
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_hole_parents_negative\",\n4\t    \"objective\": \"Who were the parents of Christian Peter Hole?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KD96-TV2\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09\",\n10\t    \"updated\": \"2026-07-09\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"ques..."
+      }
     },
     {
       "tool": "Read",
@@ -3167,8 +3103,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 80,
         "limit": 200
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"census\",\n82\t          \"jurisdiction\": \"Ringebu, Oppland, Norway\",\n83\t          \"date_range\": \"1875\",\n84\t          \"repository\": \"other\",\n85\t          \"rationale\": \"The 1875 Norwegian census was taken approximately one year before Christian Peter Hole's birth (October 1876). It captures his parents' household in Ringebu without him, corroborating their names, residence, and household composition. Digitalarkivet has a freely searchable 18..."
+      }
     },
     {
       "tool": "Read",
@@ -3176,16 +3111,14 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 280,
         "limit": 300
-      },
-      "response_summary": "280\t    }\n281\t  ],\n282\t  \"assertions\": [\n283\t    {\n284\t      \"id\": \"a_001\",\n285\t      \"record_id\": \"ark:/61903/1:1:683F-NTZ9\",\n286\t      \"record_persona_id\": \"p_292414505701\",\n287\t      \"record_role\": \"child_1\",\n288\t      \"fact_type\": \"name\",\n289\t      \"value\": \"Christian Peder\",\n290\t      \"structured_value\": {\n291\t        \"given\": \"Christian Peder\"\n292\t      },\n293\t      \"information_quality\": \"primary\",\n294\t      \"informant\": \"presenting parent(s) at baptism\",\n295\t      \"informant_proximity..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3193,8 +3126,7 @@
         "recordId": "ark:/61903/1:1:683F-NTZ9",
         "resultsRef": "results/log_006.json",
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_292414505701\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:683F-NTZ9\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Christian Peder\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"2 Oct 1876\\\",\\n          \\\"standard_date\\\": \\\"2 Oct 1876\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Baptism\\\",\\n          \\\"primary\\\": true,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3203,8 +3135,7 @@
         "personId": "KD96-TV2",
         "recordId": "ark:/61903/1:1:683F-NTZ9",
         "recordRole": "child_1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"KD96-TV2\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 2,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3212,8 +3143,7 @@
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p",
         "recordId": "ark:/61903/1:1:683F-NTZ9",
         "recordRole": "father"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3221,8 +3151,7 @@
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p",
         "recordId": "ark:/61903/1:1:683F-NTZ9",
         "recordRole": "mother"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3406,8 +3335,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3439,8 +3367,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_relationship: the added relationship edge must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3487,8 +3414,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.j..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3523,16 +3449,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3546,8 +3470,7 @@
         "collectionId": "1468080",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"spouseGivenName\\\": \\\"Matea\\\",\\n    \\\"marriageYearFrom\\\": 1860,\\n    \\\"marriageYearTo\\\": 1876,\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"1468080\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": fals..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3560,16 +3483,14 @@
         "collectionId": "3756102",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"birthYearFrom\\\": 1848,\\n    \\\"birthYearTo\\\": 1858,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"collectionId\\\": \\\"3756102\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__rank_search_matches",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3591,8 +3512,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/e69bf78d-d32c-425f-a8c8-dd31e5a6ceed.json",
         "notes": "One result returned (Kristofersen, score -1.58) \u2014 not a match. Spouse filter 'Matea' may be causing too narrow a result. Retrying without spouse filter and with broader year range."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:04:24.040Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3612,8 +3532,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results. Birth place filter may be too restrictive for a census record; in 1865 Benjamin (~age 12) would be listed as a child in his father Christopher's household. Retrying without birth place, country-only."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:04:27.429Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3627,8 +3546,7 @@
         "collectionId": "1468080",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"marriageYearFrom\\\": 1870,\\n    \\\"marriageYearTo\\\": 1878,\\n    \\\"anyPlace\\\": \\\"Ringebu\\\",\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"1468080\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3641,8 +3559,7 @@
         "collectionId": "3756102",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"birthYearFrom\\\": 1848,\\n    \\\"birthYearTo\\\": 1858,\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"3756102\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 19,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 19,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"reco..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3663,8 +3580,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results with anyPlace=Ringebu. Collection may not have Ringebu marriage records for this period indexed. Retrying without place filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:05:10.205Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3685,8 +3601,7 @@
         "resultsAvailable": 19,
         "stagedResultsRef": "results/.staging/241395d3-4e8f-4f19-9518-d1b930c562bf.json",
         "notes": "19 results but none from Ringebu or Oppland \u2014 all from Troms, Nordland, Buskerud etc. Benjamin in 1865 would be ~12 in his father Christopher's household. Retrying without surname, with given name only and Ringebu birthPlace."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:05:14.397Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 19,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3699,8 +3614,7 @@
         "collectionId": "1468080",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"marriageYearFrom\\\": 1870,\\n    \\\"marriageYearTo\\\": 1878,\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"1468080\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3713,8 +3627,7 @@
         "collectionId": "3756102",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"birthYearFrom\\\": 1851,\\n    \\\"birthYearTo\\\": 1855,\\n    \\\"birthPlace\\\": \\\"Ringebu, Oppland, Norway\\\",\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"3756102\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 5,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 5,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3736,8 +3649,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/bae0a2e0-fef8-4e01-bcb3-2ff2640e0519.json",
         "notes": "Same irrelevant result (Kristofersen, score -1.56). Norway Marriages collection 1468080 does not appear to have Benjamin Christophersen's Ringebu marriage indexed. Trying Norway Church Books (4237104) which has broader marriage record coverage."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:06:03.430Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_011.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_011.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3759,8 +3671,7 @@
         "resultsAvailable": 5,
         "stagedResultsRef": "results/.staging/80cfd7e5-cae1-4fea-a1bd-4b688fa808ea.json",
         "notes": "5 results, none from Ringebu or Oppland. 1865 census (collection 3756102) has no indexed entry for a Benjamin b.~1853 in Ringebu. Records may be browse-only for this area. FamilySearch indexed coverage for Ringebu 1865 appears to be absent. Marking pli_008 exhausted on FamilySearch."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:06:07.999Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3773,15 +3684,13 @@
         "collectionId": "4237104",
         "count": 50,
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Benjamin\\\",\\n    \\\"surname\\\": \\\"Christophersen\\\",\\n    \\\"marriageYearFrom\\\": 1870,\\n    \\\"marriageYearTo\\\": 1878,\\n    \\\"recordCountry\\\": \\\"Norway\\\",\\n    \\\"collectionId\\\": \\\"4237104\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-hole-parents-negative-00o4xh1p\\\"\\n  },\\n  \\\"totalMatches\\\": 380,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:683J-7GGR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_292415825485\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:683J-7GGR\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9a4be94d-b8fd-4686-b408-47e3b535b59c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Christophersen Hole\\\",\\n          \\\"given\\\": \\\"Benjamin\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"37e7c9be-be24-4af4-a5c3-1d2773c29019\\\",\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3803,8 +3712,7 @@
         "resultsAvailable": 380,
         "stagedResultsRef": "results/.staging/79383db1-a383-44bc-81e8-d95044f52838.json",
         "notes": "TOP MATCH: ark:/61903/1:1:683J-7GGR \u2014 Benjamin Christophersen Hole married Mathea Pedersdatter Spangerudlien, 17 Aug 1876, V\u00e5g\u00e5mo, V\u00e5g\u00e5, Oppland. Bride born Ringebo Pr\u00e6stegjeld (Ringebu). Marriage 6.5 weeks before Christian Peter born 2 Oct 1876. Groom's father: Christopher Jespersen Hole. Bride's father: Peder Pedersen Spangerudlien (confirms mother's patronymic Pedersdatter and child's middle name Peder). Score 5.22, confidence 4."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-22T11:07:25.845Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_013.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_013.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3812,15 +3720,13 @@
         "description": "Extract marriage record ark:/61903/1:1:683J-7GGR",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this marriage record into the research project.\n\n**projectPath**: /tmp/e2e-hole-parents-negative-00o4xh1p\n**recordId**: ark:/61903/1:1:683J-7GGR\n**logId**: log_013\n**planItemId**: pli_006\n**Open research question ids bearing on this record**: q_001\n\n**Record content** (from record_read, pass verbatim \u2014 do not re-fetch):\n```json\n{\n  \"persons\": [\n    {\n      \"id\": \"p_292415825485\",\n      \"ark\": \"ark:/61903/1:1:683J-7GGR\",\n      \"gender\": \"Male\",\n      \"names\": [{\"id\": \"9a4be94d-b8fd-4686-b408-47e3b535b59c\", \"type\": \"BirthName\", \"surname\": \"Christophersen Hole\", \"given\": \"Benjamin\"}],\n      \"facts\": [\n        {\"id\": \"37e7c9be-be24-4af4-a5c3-1d2773c29019\", \"type\": \"Residence\", \"place\": \"Vaage\"},\n        {\"id\": \"b8d2fb4c-fa60-405b-8306-6b343b17b8e7\", \"type\": \"Birth\", \"date\": \"1852\", \"standard_date\": \"1852\", \"place\": \"Gogtteus Pr\u00e6stegjeld\"}\n      ],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_292415825487\",\n      \"ark\": \"ark:/61903/1:1:683J-7GGY\",\n      \"gender\": \"Male\",\n      \"names\": [{\"id\": \"88b06b2f-5218-4001-a3dc-087b60dfa691\", \"type\": \"BirthName\", \"surname\": \"Jespersen Hole\", \"given\": \"Christopher\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_292415825490\",\n      \"ark\": \"ark:/61903/1:1:683J-7GPM\",\n      \"gender\": \"Female\",\n      \"names\": [{\"id\": \"dac17b1f-8eaf-4ea7-ba46-d8ef99207541\", \"type\": \"BirthName\", \"surname\": \"Pedersdatter Spangerudlien\", \"given\": \"Mathea\"}],\n      \"facts\": [{\"id\": \"1c685879-d50f-4a64-b5fb-c439aedb2550\", \"type\": \"Birth\", \"date\": \"1857\", \"standard_date\": \"1857\", \"place\": \"Ringebo Pr\u00e6stegjeld\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_292415825493\",\n      \"ark\": \"ark:/61903/1:1:683J-7GP3\",\n      \"gender\": \"Male\",\n      \"names\": [{\"id\": \"bba7de3d-cb21-4f4e-a588-78ed4a640654\", \"type\": \"BirthName\", \"surname\": \"Pedersen Spangerudlien\", \"given\": \"Peder\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"id\": \"71ae2ef5-141e-4c00-9f86-43f0d157f17f\",\n      \"type\": \"Couple\",\n      \"person1\": \"p_292415825485\",\n      \"person2\": \"p_292415825490\",\n      \"facts\": [{\"id\": \"c6730be3-0d9b-4285-81a6-8a7913df678d\", \"type\": \"Marriage\", \"primary\": true, \"date\": \"17 Aug 1876\", \"standard_date\": \"17 Aug 1876\", \"place\": \"V\u00e5g\u00e5mo, V\u00e5g\u00e5, Oppland, Norge\"}]\n    },\n    {\n      \"id\": \"df1d8c4e-b44c-410d-85e9-7a05d1c78de0\",\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_292415825487\",\n      \"child\": \"p_292415825485\"\n    },\n    {\n      \"id\": \"1eda5288-4cf5-4d46-ad73-064e7a2bbb21\",\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_292415825493\",\n      \"child\": \"p_292415825490\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_173853111269\",\n      \"title\": \"Entry for Benjamin Christophersen Hole, \\\"Norway, Church Books, 1797-1958\\\"\",\n      \"citation\": \"\\\"Norway, Church Books, 1797-1958\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:683J-7GGR : Wed Jan 22 03:42:03 UTC 2025), Entry for Benjamin Christophersen Hole and Christopher Jespersen Hole, 17 Aug 1876.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:4BX6-X3V1\"\n    },\n    {\"id\": \"sd_c_4237104\", \"title\": \"Norway, Church Books, 1797-1958\", \"url\": \"https://www.familysearch.org/service/cds/recapi/collections/4237104\"},\n    {\"id\": \"sd_da1\", \"url\": \"https://www.familysearch.org/ark:/61903/3:1:3QHK-Q3PP-MK6R\"}\n  ],\n  \"places\": [{\"id\": \"place_2051650\"}]\n}\n```\n\n**Context for extraction**:\n- This is the parents' marriage record for question q_001 (\"Who are named as the parents of Christian Peter Hole?\")\n- **Groom persona** (p_292415825485): Benjamin Christophersen Hole \u2014 this is tree person I1 (already exists in tree as a stub from baptism extraction). Farm name \"Hole\" confirms the connection to the Hole farm. Birth ~1852 (baptism record said 1853 \u2014 one-year discrepancy, note it).\n- **Bride persona** (p_292415825490): Mathea Pedersdatter Spangerudlien \u2014 this is tree person I2 (already exists as stub). Full maiden name revealed: \"Mathea Pedersdatter Spangerudlien\" vs. \"Matea Pedersdtr\" in the baptism. Farm \"Spangerudlien\" is now known. Born 1857 in Ringebo Pr\u00e6stegjeld (Ringebu) \u2014 corroborates I2's birth year from the baptism.\n- **Groom's father** (p_292415825487): Christopher Jespersen Hole \u2014 new person, not yet in the tree. Benjamin's patronymic \"Christophersen\" derives from this father's given name Christopher. Create a new stub.\n- **Bride's father** (p_292415825493): Peder Pedersen Spangerudlien \u2014 new person, not yet in the tree. This Peder is confirmed as Mathea's father (her patronymic \"Pedersdatter\" = daughter of Peder). Christian Peter's middle name \"Peder\" honors this maternal grandfather. Create a new stub.\n- The marriage date 17 Aug 1876 is 6.5 weeks before Christian Peter's birth (2 Oct 1876).\n- \"Gogtteus Pr\u00e6stegjeld\" for the groom's birth place looks like a transcription error \u2014 do not attempt to resolve it; record it as written with a note.\n- Source classification: original church book (kirchenbuch), contemporaneous record of the marriage act. Primary information for the marriage. Direct evidence of the couple as a unit.\n- Do NOT create person_evidence links \u2014 that is handled separately.\n- Extract ALL assertions including relationship-type assertions.\n- Apply full GPS three-layer classification to every assertion."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All corrections written. Here is the extraction summary.\\n\\n---\\n\\n**Source:** src_002 / S2 \\u2014 created (new source, new S entry)\\n**Source classification:** original (Norwegian church book marriage entry, V\\u00e5g\\u00e5 parish, 17 Aug 1876)\\n\\n**Assertions by role (18 total, a_014\\u2013a_031):**\\n- groom (p_292415825485, Benjamin Christophersen Hole): name, sex, birth-year, birth-place, residence, marriage event, relationship-to-father \\u2014 7 assertions\\n- bri..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 N\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KD96-TV2\\\",\\n      \\\"name\\\": \\\"Christian Peter Hole\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": [\\n        \\\"S1\\\"\\n      ]\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4254,8 +4160,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_014\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_015\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_016\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4281,8 +4186,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_019\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_024\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4291,8 +4195,7 @@
         "personId": "I1",
         "recordId": "ark:/61903/1:1:683J-7GGR",
         "recordRole": "groom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 3,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 5,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"1853, Gogtteus Pr\\u00e6stegjeld\\\",\\n        \\\"1852\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4301,8 +4204,7 @@
         "personId": "I2",
         "recordId": "ark:/61903/1:1:683J-7GGR",
         "recordRole": "bride"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4310,8 +4212,7 @@
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p",
         "recordId": "ark:/61903/1:1:683J-7GGR",
         "recordRole": "father_of_groom"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I3\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4319,8 +4220,7 @@
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p",
         "recordId": "ark:/61903/1:1:683J-7GGR",
         "recordRole": "father_of_bride"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I4\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -4328,8 +4228,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 529,
         "limit": 200
-      },
-      "response_summary": "529\t      \"structured_value\": {\n530\t        \"given\": \"Benjamin\",\n531\t        \"surname\": \"Christophersen\"\n532\t      },\n533\t      \"information_quality\": \"primary\",\n534\t      \"informant\": \"Benjamin Christophersen\",\n535\t      \"informant_proximity\": \"self\",\n536\t      \"evidence_type\": \"direct\",\n537\t      \"extracted_for_question_ids\": [\n538\t        \"q_001\"\n539\t      ],\n540\t      \"log_entry_id\": \"log_006\",\n541\t      \"source_id\": \"src_001\"\n542\t    },\n543\t    {\n544\t      \"id\": \"a_006\",\n545\t      \"recor..."
+      }
     },
     {
       "tool": "Read",
@@ -4337,8 +4236,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 728,
         "limit": 300
-      },
-      "response_summary": "728\t      \"log_entry_id\": \"log_013\",\n729\t      \"source_id\": \"src_002\"\n730\t    },\n731\t    {\n732\t      \"id\": \"a_016\",\n733\t      \"record_id\": \"ark:/61903/1:1:683J-7GGR\",\n734\t      \"record_persona_id\": \"p_292415825485\",\n735\t      \"record_role\": \"groom\",\n736\t      \"fact_type\": \"birth\",\n737\t      \"value\": \"born 1852\",\n738\t      \"date\": \"1852\",\n739\t      \"structured_value\": {\n740\t        \"year\": \"1852\"\n741\t      },\n742\t      \"information_quality\": \"primary\",\n743\t      \"informant\": \"Benjamin Christop..."
+      }
     },
     {
       "tool": "Read",
@@ -4346,8 +4244,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1027,
         "limit": 80
-      },
-      "response_summary": "1027\t    {\n1028\t      \"id\": \"a_030\",\n1029\t      \"record_id\": \"ark:/61903/1:1:683J-7GGR\",\n1030\t      \"record_persona_id\": \"p_292415825493\",\n1031\t      \"record_role\": \"father_of_bride\",\n1032\t      \"fact_type\": \"sex\",\n1033\t      \"value\": \"Male\",\n1034\t      \"information_quality\": \"primary\",\n1035\t      \"informant\": \"Mathea Pedersdatter Spangerudlien\",\n1036\t      \"informant_proximity\": \"self\",\n1037\t      \"evidence_type\": \"direct\",\n1038\t      \"extracted_for_question_ids\": [\n1039\t        \"q_001\"\n1040..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4637,8 +4534,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[24]: research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\n    \\\"ops[24]: research.json/conflicts[0]: missing required field 'description'\\\",\\n    \\\"ops[24]: research.json/conflicts[0]: missing required field 'competing_assertion_ids'\\\",\\n    \\\"ops[24]: research.json/conflicts[0]: unexpected property 'person_id' (conflicts allow only id, conflict_type, description, disputed_attribute, identity_question..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4672,8 +4568,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R5\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4943,8 +4838,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_017\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_018\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_019\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4968,8 +4862,7 @@
           "status": "unresolved",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"c_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5013,23 +4906,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_008\\\"\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Question: q_001 \u2014 \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\" All plan items for pl_001 are now completed/skipped. Evidence: src_001 (Norway Church Books baptism, 5 Nov 1876, names father Benjamin Christophersen and mother Matea Pedersdtr/Mathea Pedersdatter Spangerudlien); src_002 (Norway Church Books marriage, 17 Aug 1876, Benjamin Christophersen Hole married Mathea Pedersdatter Spangerudlien). FamilySearch census searches (pli_004/005/008) returned nil for Ringebu; external site searches (pli_004, pli_007 Digitalarkivet) were skipped as not accessible. Evaluate whether the GPS exhaustiveness standard is met and whether the question can be answered, or whether additional research is needed."
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5069,23 +4959,20 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Project path: /tmp/e2e-hole-parents-negative-00o4xh1p. Question q_001 has been declared exhaustive. Write the proof summary for q_001: \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\" Evidence: src_001 (baptism register, 5 Nov 1876, names father Benjamin Christophersen and mother Matea Pedersdtr); src_002 (marriage register, 17 Aug 1876, Benjamin Christophersen Hole married Mathea Pedersdatter Spangerudlien, 6.5 weeks before Christian's birth). Two independent original records. One minor unresolved conflict: I1 birth year 1852 vs 1853 (does not affect parentage conclusion). Tree persons I1 (Benjamin Christophersen) and I2 (Matea/Mathea Pedersdtr/Pedersdatter Spangerudlien) are linked as parents of KD96-TV2 (Christian Peter Hole) in tree.gedcomx.json."
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
@@ -5093,8 +4980,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 260,
         "limit": 60
-      },
-      "response_summary": "260\t    },\n261\t    {\n262\t      \"id\": \"log_006\",\n263\t      \"plan_item_id\": \"pli_002\",\n264\t      \"performed\": \"2026-07-22T10:54:57.041Z\",\n265\t      \"tool\": \"record_search\",\n266\t      \"query\": {\n267\t        \"collection\": \"4237104 - Norway Church Books 1797-1958\",\n268\t        \"givenName\": \"Christian\",\n269\t        \"birthYearFrom\": 1875,\n270\t        \"birthYearTo\": 1877,\n271\t        \"birthPlace\": \"Ringebu, Oppland, Norway\",\n272\t        \"recordCountry\": \"Norway\",\n273\t        \"note\": \"patronymic-aware..."
+      }
     },
     {
       "tool": "Read",
@@ -5102,8 +4988,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1,
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_hole_parents_negative\",\n4\t    \"objective\": \"Who were the parents of Christian Peter Hole?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KD96-TV2\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09\",\n10\t    \"updated\": \"2026-07-09\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"ques..."
+      }
     },
     {
       "tool": "Read",
@@ -5111,8 +4996,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 300,
         "limit": 100
-      },
-      "response_summary": "300\t      \"results_available\": 1,\n301\t      \"notes\": \"One result returned (Kristofersen, score -1.58) \u2014 not a match. Spouse filter 'Matea' may be causing too narrow a result. Retrying without spouse filter and with broader year range.\"\n302\t    },\n303\t    {\n304\t      \"id\": \"log_008\",\n305\t      \"plan_item_id\": \"pli_008\",\n306\t      \"performed\": \"2026-07-22T11:04:27.429Z\",\n307\t      \"tool\": \"record_search\",\n308\t      \"query\": {\n309\t        \"collection\": \"3756102 - Norway Census 1865\",\n310\t       ..."
+      }
     },
     {
       "tool": "Read",
@@ -5120,8 +5004,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 400,
         "limit": 150
-      },
-      "response_summary": "400\t      \"results_examined\": 5,\n401\t      \"external_site\": null,\n402\t      \"results_ref\": \"results/log_012.json\",\n403\t      \"results_available\": 5,\n404\t      \"notes\": \"5 results, none from Ringebu or Oppland. 1865 census (collection 3756102) has no indexed entry for a Benjamin b.~1853 in Ringebu. Records may be browse-only for this area. FamilySearch indexed coverage for Ringebu 1865 appears to be absent. Marking pli_008 exhausted on FamilySearch.\"\n405\t    },\n406\t    {\n407\t      \"id\": \"log_0..."
+      }
     },
     {
       "tool": "Read",
@@ -5129,8 +5012,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 550,
         "limit": 200
-      },
-      "response_summary": "550\t      \"value\": \"Benjamin Christophersen\",\n551\t      \"structured_value\": {\n552\t        \"given\": \"Benjamin\",\n553\t        \"surname\": \"Christophersen\"\n554\t      },\n555\t      \"information_quality\": \"primary\",\n556\t      \"informant\": \"Benjamin Christophersen\",\n557\t      \"informant_proximity\": \"self\",\n558\t      \"evidence_type\": \"direct\",\n559\t      \"extracted_for_question_ids\": [\n560\t        \"q_001\"\n561\t      ],\n562\t      \"log_entry_id\": \"log_006\",\n563\t      \"source_id\": \"src_001\"\n564\t    },\n565\t ..."
+      }
     },
     {
       "tool": "Read",
@@ -5138,8 +5020,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 750,
         "limit": 200
-      },
-      "response_summary": "750\t      \"log_entry_id\": \"log_013\",\n751\t      \"source_id\": \"src_002\"\n752\t    },\n753\t    {\n754\t      \"id\": \"a_016\",\n755\t      \"record_id\": \"ark:/61903/1:1:683J-7GGR\",\n756\t      \"record_persona_id\": \"p_292415825485\",\n757\t      \"record_role\": \"groom\",\n758\t      \"fact_type\": \"birth\",\n759\t      \"value\": \"born 1852\",\n760\t      \"date\": \"1852\",\n761\t      \"structured_value\": {\n762\t        \"year\": \"1852\"\n763\t      },\n764\t      \"information_quality\": \"primary\",\n765\t      \"informant\": \"Benjamin Christop..."
+      }
     },
     {
       "tool": "Read",
@@ -5147,8 +5028,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 950,
         "limit": 200
-      },
-      "response_summary": "950\t      \"record_persona_id\": \"p_292415825485\",\n951\t      \"record_role\": \"groom\",\n952\t      \"fact_type\": \"marriage\",\n953\t      \"value\": \"married Mathea Pedersdatter Spangerudlien, 17 Aug 1876, V\u00e5g\u00e5mo, V\u00e5g\u00e5, Oppland, Norge\",\n954\t      \"date\": \"17 Aug 1876\",\n955\t      \"place\": \"V\u00e5g\u00e5mo, V\u00e5g\u00e5, Oppland, Norge\",\n956\t      \"information_quality\": \"primary\",\n957\t      \"informant\": \"parish officiant\",\n958\t      \"informant_proximity\": \"official_duty\",\n959\t      \"evidence_type\": \"direct\",\n960\t      \"ext..."
+      }
     },
     {
       "tool": "Read",
@@ -5156,16 +5036,14 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1400,
         "limit": 200
-      },
-      "response_summary": "1400\t      \"match_score\": null,\n1401\t      \"rationale\": \"Same relationship bears on I1 (Benjamin) as son of Christopher Jespersen Hole. Consistent with I1's farm name 'Hole' and patronymic 'Christophersen'. Probable.\",\n1402\t      \"created\": \"2026-07-22\"\n1403\t    },\n1404\t    {\n1405\t      \"id\": \"pe_036\",\n1406\t      \"assertion_id\": \"a_029\",\n1407\t      \"person_id\": \"I4\",\n1408\t      \"confidence\": \"probable\",\n1409\t      \"match_score\": null,\n1410\t      \"rationale\": \"Father-of-bride name 'Peder Peder..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__tree_correct,mcp__genealogy__tree_edit",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5191,8 +5069,7 @@
           "exhaustive_search_summary": "FamilySearch Norway Baptisms index (coll. 1467014), Norway Church Books (coll. 4237104), Norway Marriages (coll. 1468080), and Norway 1865 Census (coll. 3756102) were all searched. The 5 November 1876 Ringebu baptism register (src_001) and the 17 August 1876 V\u00e5g\u00e5 marriage register (src_002) were found and extracted, directly answering the parentage question. The 1865 census returned no Ringebu results (collection has no indexed coverage for this area). The FamilySearch 1875 Ringebu census volume is browse-only (0% indexed) and Digitalarkivet census records and conscription rolls were not accessible in this session. These inaccessible sources are likely corroborating rather than contradicting; no known record type is expected to name different parents.",
           "narrative_markdown": "## Parents of Christian Peter Hole \u2014 GPS Proof Summary\n\n**Tier: Probable**\n\nTwo independent original Norwegian Lutheran church records establish with strong probability that **Benjamin Christophersen Hole** and **Mathea (Matea) Pedersdatter Spangerudlien** are the parents of Christian Peter Hole (KD96-TV2), born 2 October 1876 and christened 5 November 1876 in Ringebu, Oppland, Norway.\n\n### Source 1: Ringebu Baptism Register, 5 November 1876\n\nThe 5 November 1876 Ringebu Lutheran baptism register (kirkeb\u00f8k) records the christening of \"Christian Peder\" \u2014 birth date 2 October 1876 \u2014 and names his father as **Benjamin Christophersen** and his mother as **Matea Pedersdtr**.[^1] The source is *original* (the contemporaneous register itself); the information is *primary* (provided by the presenting parents, household members with personal knowledge); the evidence is *direct* for parentage. The recorded name, birth date, and christening date match KD96-TV2 exactly. The child's middle name \"Peder\" is consistent with the Norwegian naming custom of honoring the maternal grandfather \u2014 the mother's patronymic \"Pedersdtr\" (abbreviation of Pedersdatter, \"daughter of Peder\") identifies her father's given name as Peder.\n\n### Source 2: V\u00e5g\u00e5 Marriage Register, 17 August 1876\n\nA marriage register entry from V\u00e5g\u00e5 (Vaage) parish records the marriage of **Benjamin Christophersen Hole** to **Mathea Pedersdatter Spangerudlien** on 17 August 1876 at V\u00e5g\u00e5mo, V\u00e5g\u00e5, Oppland, Norway.[^2] The source is *original*; the information is *primary* (provided by the parties and the officiating minister); the evidence is *direct* as to the couple's union. The marriage date \u2014 6.5 weeks before Christian Peter's birth on 2 October 1876 \u2014 strongly corroborates that this couple is the same Benjamin Christophersen and Mathea/Matea named as parents in the christening record. The marriage register further confirms:\n- The bride's birthplace as \"Ringebo Pr\u00e6stegjeld\" (Ringebu parish) \u2014 the same municipality where the child was christened.\n- The groom's father as Christopher Jespersen Hole, explaining the patronymic \"Christophersen\" and farm name \"Hole.\"\n- The bride's father as Peder Pedersen Spangerudlien, corroborating the mother's patronymic \"Pedersdatter\" and the child's middle name \"Peder.\"\n\n### Evidence Independence\n\nThe two sources are genuinely independent: different record types (baptism register vs. marriage register), different record occasions (17 August vs. 5 November 1876), different officiants, different parishes (V\u00e5g\u00e5 vs. Ringebu). Neither derives from the other. Both are original contemporaneous church books. Each independently identifies the same couple as the parents (or bride and groom), providing two independent original confirmations.\n\n### Discrepancy and Tier Limitation\n\nA minor discrepancy exists in Benjamin Christophersen Hole's birth year: the baptism index (src_001) gives **1853**, while the marriage register (src_002) gives **1852** (conflict c_001). Both values are primary self-reported from independent original records. This one-year variance is immaterial to the parentage conclusion \u2014 both records agree on who the parents are \u2014 but it remains unresolved pending original image confirmation (image ARK ark:/61903/1:2:4BX6-X3V1). Under the GPS, this unresolved collateral conflict blocks advancement to *proved* but does not defeat *probable*.\n\nAdditionally, the 1865 FamilySearch census returned no Ringebu results; the 1875 Ringebu census is browse-only; Digitalarkivet records and conscription rolls were not accessible in this session. These gaps prevent *proved* but do not undermine the strong preponderance established by two independent original primary records.\n\n### Conclusion\n\n**Probable.** Benjamin Christophersen Hole and Mathea (Matea) Pedersdatter Spangerudlien are the parents of Christian Peter Hole (KD96-TV2). The conclusion rests on two independent original primary records from contemporaneous Lutheran church books, corroborated by the marriage timing (6.5 weeks before the child's birth) and consistent patronymic and naming-convention evidence. To advance to *proved*, conflict c_001 (Benjamin's birth year) must be resolved via original image examination, and additional corroborating records (census, conscription rolls) should be sought.\n\n[^1]: \"Norway, Church Books, 1797-1958,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:683F-NTZ9 : accessed 22 July 2026), entry for Christian Peder and Benjamin Christophersen, 5 Nov 1876; Ringebu parish baptism register.\n[^2]: \"Norway, Church Books, 1797-1958\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:683J-7GGR : accessed 2026-07-22), Entry for Benjamin Christophersen Hole and Christopher Jespersen Hole, 17 Aug 1876."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -5204,24 +5081,21 @@
         "fact": {
           "primary": true
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__validate_research_schema",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__validate_research_schema\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-hole-parents-negative-00o4xh1p",
         "personId": "KD96-TV2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"hasBlankName\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"KD96-TV2\\\",\\n      \\\"personName\\\": \\\"Christian Peter Hole\\\",\\n      \\\"message\\\": \\\"This person has a blank given name or surname, which suggests an incomplete record.\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -5229,22 +5103,19 @@
         "description": "GPS mentor proof-critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please review the proof summary ps_001 for project at /tmp/e2e-hole-parents-negative-00o4xh1p. The question is q_001: \"Who are named as the parents of Christian Peter Hole in the Ringebu, Oppland, Norway parish records, born 2 October 1876 and christened 5 November 1876?\"\n\nThe concluded tier is **probable**. The proof rests on:\n1. src_001: 1876 Ringebu baptism register (ark:/61903/1:1:683F-NTZ9) \u2014 original, primary, direct \u2014 names father Benjamin Christophersen and mother Matea Pedersdtr at christening of Christian Peder, 5 Nov 1876.\n2. src_002: 1876 V\u00e5g\u00e5 marriage register (ark:/61903/1:1:683J-7GGR) \u2014 original, primary, direct \u2014 Benjamin Christophersen Hole married Mathea Pedersdatter Spangerudlien, 17 Aug 1876, 6.5 weeks before the child's birth. Bride born \"Ringebo Pr\u00e6stegjeld\" (Ringebu). Groom's father: Christopher Jespersen Hole; bride's father: Peder Pedersen Spangerudlien.\n\nOne unresolved conflict (c_001): I1 birth year 1852 (marriage record) vs 1853 (baptism index) \u2014 collateral, does not affect the parentage conclusion. Research exhaustiveness declared true. The relationships I1\u2192KD96-TV2 (ParentChild) and I2\u2192KD96-TV2 (ParentChild) are in tree.gedcomx.json as R1 and R2 with source references.\n\nPlease read research.json and tree.gedcomx.json at the project path and provide your GPS Component critique. Append your evaluation to research.json evaluations[] via research_append."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\n\\nYou showed real discipline in tiering this **Probable** rather than **Proved** \\u2014 with two original, primary, direct church records (src_001, src_002) agreeing on the parents, it would have been tempting to write Proved, but your hedged language throughout (\\\"strongly corroborates,\\\" \\\"strong probability\\\") matches the tier you actually chose (Standard 43). And the narrative itself is a mod..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json"
-      },
-      "response_summary": "File content (25469 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KD96-TV2\",\n5\t      \"living\": false,\n6\t      \"gender\": \"Male\",\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"KD96-TV2-name-1\",\n10\t          \"given\": \"Christian Peter\",\n11\t          \"surname\": \"Hole\"\n12\t        },\n13\t        {\n14\t          \"id\": \"N1\",\n15\t          \"type\": \"BirthName\",\n16\t          \"given\": \"Christian Peder\",\n17\t          \"surname\": \"\",\n18\t          \"sources\": [\n19\t            {\n20\t              \"ref\": \"S1\",\n21\t              \"quali..."
+      }
     },
     {
       "tool": "Read",
@@ -5252,8 +5123,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1,
         "limit": 400
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_hole_parents_negative\",\n4\t    \"objective\": \"Who were the parents of Christian Peter Hole?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KD96-TV2\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09\",\n10\t    \"updated\": \"2026-07-09\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"ques..."
+      }
     },
     {
       "tool": "Read",
@@ -5261,8 +5131,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 400,
         "limit": 400
-      },
-      "response_summary": "400\t      \"results_examined\": 5,\n401\t      \"external_site\": null,\n402\t      \"results_ref\": \"results/log_012.json\",\n403\t      \"results_available\": 5,\n404\t      \"notes\": \"5 results, none from Ringebu or Oppland. 1865 census (collection 3756102) has no indexed entry for a Benjamin b.~1853 in Ringebu. Records may be browse-only for this area. FamilySearch indexed coverage for Ringebu 1865 appears to be absent. Marking pli_008 exhausted on FamilySearch.\"\n405\t    },\n406\t    {\n407\t      \"id\": \"log_0..."
+      }
     },
     {
       "tool": "Read",
@@ -5270,8 +5139,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 800,
         "limit": 400
-      },
-      "response_summary": "800\t      \"record_persona_id\": \"p_292415825485\",\n801\t      \"record_role\": \"groom\",\n802\t      \"fact_type\": \"residence\",\n803\t      \"value\": \"Vaage\",\n804\t      \"place\": \"Vaage\",\n805\t      \"structured_value\": {\n806\t        \"place\": \"Vaage\"\n807\t      },\n808\t      \"information_quality\": \"primary\",\n809\t      \"informant\": \"Benjamin Christophersen Hole\",\n810\t      \"informant_proximity\": \"self\",\n811\t      \"evidence_type\": \"direct\",\n812\t      \"extracted_for_question_ids\": [\n813\t        \"q_001\"\n814\t     ..."
+      }
     },
     {
       "tool": "Read",
@@ -5279,8 +5147,7 @@
         "file_path": "/tmp/e2e-hole-parents-negative-00o4xh1p/research.json",
         "offset": 1200,
         "limit": 400
-      },
-      "response_summary": "1200\t      \"person_id\": \"KD96-TV2\",\n1201\t      \"confidence\": \"confident\",\n1202\t      \"match_score\": 0.886,\n1203\t      \"rationale\": \"The relationship assertion 'child of Matea Pedersdtr' directly names KD96-TV2 (child_1) as the child. Same baptism record and same identity reasoning as a_008 \u2014 child identity confirmed by matching name, birth date, and christening date/place.\",\n1204\t      \"created\": \"2026-07-22\"\n1205\t    },\n1206\t    {\n1207\t      \"id\": \"pe_014\",\n1208\t      \"assertion_id\": \"a_012\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5331,8 +5198,7 @@
           "timestamp": "2026-07-22T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-22T00-00-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5365,8 +5231,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"ops[0]: research.json/questions[0]: 'resolved' must be an ISO date (YYYY-MM-DD), got 'true'\\\",\\n    \\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5399,8 +5264,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5626,5 +5490,6 @@
       ],
       "transcript": "agent-aed4e0792b8088b03.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

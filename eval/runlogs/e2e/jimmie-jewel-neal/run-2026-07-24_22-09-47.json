@@ -2590,65 +2590,56 @@
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/**/*"
-      },
-      "response_summary": ".claude/skills/check-warnings/SKILL.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/resolution-writing.m..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/*.json"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json\n.claude/settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jimmie_jewel_neal\",\n4\t    \"objective\": \"Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KNXW-M3T\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narr..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KNXW-M3T\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Jimmie Jewel\",\n11\t          \"surname\": \"Neal\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"248eaba5-34ae-4182-9874-bfcc07166241\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1884\",\n19\t          \"standard_date\": \"10 Jul 1884\",\n20\t          \"place\": \"Hillsboro, Hi..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2673,52 +2664,45 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "Blount County, Alabama, 1850\u20131870"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/locality-guide/references/output-format.md"
-      },
-      "response_summary": "1\t# Locality Guide Output Format\n2\t\n3\tUse this structure when compiling the final guide. Fill in every\n4\tsection with specific data from MCP tool results. Omit sections only\n5\twhen the record type is clearly inapplicable (e.g., immigration\n6\trecords for an inland area with no immigration activity).\n7\t\n8\t```markdown\n9\t# Locality Guide: [Place] ([Time Period])\n10\t\n11\t## Jurisdiction overview\n12\t- **Formed:** [date] from [parent jurisdictions]\n13\t- **County seat / administrative center:** [name]..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-natal-ay04a5c2/.claude/skills/locality-guide/references/locality-survey-methodology.md"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-jimmie-jewel-neal-ay04a5c2."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/locality-guide/references/locality-survey-methodology.md"
-      },
-      "response_summary": "1\t# Locality Survey Methodology\n2\t\n3\tA locality survey identifies what genealogical records exist for a\n4\tspecific place and time period, where those records are held, and how\n5\tto access them. It is the foundational step before creating a research\n6\tplan for any new jurisdiction.\n7\t\n8\t## Why a locality survey matters\n9\t\n10\tResearchers who skip this step tend to search only the most familiar\n11\tonline databases and miss entire categories of records. The GPS\n12\trequires reasonably exhaustive r..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_read,mcp__genealogy__wikipedia_search",
         "max_results": 10
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_n..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Blount County, Alabama"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Blount, Alabama, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1818/\\\",\\n      \\\"latitude\\\": 34.06188,\\n      \\\"longitude\\\": -86.56197,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Blount&focusedId=395072\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Blount_County,_Alabama\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2726,8 +2710,7 @@
         "standardPlace": "Blount, Alabama, United States",
         "startYear": 1850,
         "endYear": 1870
-      },
-      "response_summary": "{\"error\":\"Population data service is unavailable. Is the Pop Stats API running?\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2735,8 +2718,7 @@
         "standardPlace": "Blount, Alabama, United States",
         "startYear": 1850,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Blount, Alabama, United States\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"Alabama\\\",\\n  \\\"totalForPlace\\\": 29,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1743384\\\",\\n      \\\"title\\\": \\\"Alabama County Marriages, 1711-1992\\\",\\n      \\\"dateRange\\\": \\\"1711-1992\\\",\\n      \\\"recordCount\\\": 6049744,\\n      \\\"personCount\\\": 22361796,\\n      \\\"imageCount\\\": 1231203,\\n      \\\"url\\\": \\\"https://www.family..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2744,8 +2726,7 @@
         "standardPlace": "Blount, Alabama, United States",
         "startYear": 1850,
         "endYear": 1870
-      },
-      "response_summary": "<persisted-output>\nOutput too large (62.4KB). Full output saved to: /home/christopher/.claude/projects/-tmp-e2e-jimmie-jewel-neal-ay04a5c2/3c77268a-0cee-44bc-8cb1-b657d1dbd22e/tool-results/toolu_01GdRQFrmteeHBkZNHShpSBK.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Blount, Alabama, United States\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalResults\\\": 71,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2753,61 +2734,53 @@
         "standardPlace": "Blount, Alabama, United States",
         "startYear": 1850,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Blount, Alabama, United States\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalForPlace\\\": 352,\\n  \\\"returned\\\": 282,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/catalog/?keyword=Bible%20Records&location=2\\\",\\n      \\\"linkText\\\": \\\"Card Catalog\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.findmypast.com/search/results?datasetname=united+states+deaths+%26+buri..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Blount County Alabama genealogy records research"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Alabama, United States",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Alabama, United States",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Alabama, United States",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Alabama, United States",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wikipedia_search",
       "args": {
         "query": "Blount County Alabama history formation"
-      },
-      "response_summary": "{\"error\":\"fetch failed\"}"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/christopher/.claude/projects/-tmp-e2e-jimmie-jewel-neal-ay04a5c2/3c77268a-0cee-44bc-8cb1-b657d1dbd22e/tool-results/toolu_01GdRQFrmteeHBkZNHShpSBK.json"
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Blount, Alabama, United States\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalResults\\\": 71,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"007651588_004_M995-H5T\\\",\\n      \\\"imageGroupPrefix\\\": \\\"007651588\\\",\\n      \\\"imageCount\\\": 43,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": true,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"cove..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2907,37 +2880,32 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__collections_search,mcp__genealogy__place_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2945,15 +2913,13 @@
         "standardPlace": "Georgia, United States",
         "startYear": 1840,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Georgia, United States\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"Georgia\\\",\\n  \\\"totalForPlace\\\": 36,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"2019835\\\",\\n      \\\"title\\\": \\\"Georgia, Andersonville Prison Records, 1862-1865\\\",\\n      \\\"dateRange\\\": \\\"1862-1865\\\",\\n      \\\"recordCount\\\": 0,\\n      \\\"personCount\\\": 0,\\n      \\\"imageCount\\\": 4184,\\n      \\\"url\\\": \\\"https://www.familysearch.org/..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Hill County, Texas"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Hill, Texas, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1853/\\\",\\n      \\\"latitude\\\": 32.01667,\\n      \\\"longitude\\\": -97.13333,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Hill&focusedId=396252\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Hill_County,_Texas\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Daffan, Travis, Texas, Unite..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3090,31 +3056,27 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "Execute plan pl_001 for question q_001 \u2014 start with pli_001 (1860 federal census, Blount County, Alabama, FamilySearch) searching for the M M Wood household that includes Martha Wood. Source Q3ZW-YBN in tree.gedcomx.json points to this record (ARK: https://familysearch.org/ark:/61903/1:1:MHDC-LKY). Then continue through pli_002 (1869 Hill County Texas marriage M J Wood / W F Lanham, WWLY-J9X), pli_003 (1850 census Georgia for Wood family), pli_004 (Blount County Alabama marriage records for M M Wood), and as many remaining items as evidence warrants."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/search-records/references/collection-quirks.md"
-      },
-      "response_summary": "1\t# Collection-Specific Indexing Quirks \u2014 FamilySearch Records API\n2\t\n3\tRead this reference when searching a specific collection family.\n4\tQuirks affect how queries should be constructed for that collection.\n5\t\n6\t## US Federal Censuses (1790\u20131940)\n7\t\n8\t- Indexed by community volunteers; mostly accurate but cursive\n9\t  handwriting causes common transcription errors: S/L, F/T, n/u,\n10\t  U/V confusions; double-S misread as F or \"long s\"\n11\t- **Compensation:** Use surname wildcards (`q.surname=Sm..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3130,8 +3092,7 @@
         "birthYearTo": 1859,
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"Martha\\\",\\n    \\\"residencePlace\\\": \\\"Blount, Alabama, United States\\\",\\n    \\\"residenceYearFrom\\\": 1860,\\n    \\\"residenceYearTo\\\": 1860,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"birthYearFrom\\\": 1851,\\n    \\\"birthYearTo\\\": 1859,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3140,8 +3101,7 @@
         "stagedResultsRef": "results/.staging/372d99f6-d354-4f36-bbca-64bd6a7335fb.json",
         "subjectId": "LKYG-VKB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LKYG-VKB\\\",\\n  \\\"scoredCount\\\": 4,\\n  \\\"returnedCount\\\": 4,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MHDC-LKY\\\",\\n      \\\"matchScore\\\": 0.2207225,\\n      \\\"primaryId\\\": \\\"p_204382497\\\",\\n      \\\"personName\\\": \\\"Martha Wood\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1852\\\",\\n      \\\"birthPlace\\\": \\\"Georgia, Un..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3149,8 +3109,7 @@
         "recordId": "ark:/61903/1:1:MHDC-LKY",
         "resultsRef": "results/.staging/372d99f6-d354-4f36-bbca-64bd6a7335fb.json",
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_204382497\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MHDC-LKY\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Martha\\\",\\n          \\\"surname\\\": \\\"Wood\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1852\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3177,8 +3136,7 @@
         "stagedResultsRef": "results/.staging/372d99f6-d354-4f36-bbca-64bd6a7335fb.json",
         "notes": "Found M M Wood household (MHDC-LKK/MHDC-LKY), Blount Co., Alabama, 1860. Head: M M Wood, born 1812 South Carolina. Wife: Martha Wood, born 1814 South Carolina. Subject Martha Wood (MHDC-LKY) listed born 1852 Georgia, matching LKYG-VKB. Household shows family migration SC\u2192GA\u2192AL; children born SC 1839-1846, then GA 1847-1854. Provisionally identifies maternal grandparents of Jimmie Jewel Neal as M M Wood and Martha Wood (maiden name unknown), both born South Carolina.",
         "externalSite": null
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-24T20:59:49.987Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3191,8 +3149,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3207,8 +3164,7 @@
         "spouseSurname": "Lanham",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"Martha\\\",\\n    \\\"residencePlace\\\": \\\"Hill, Texas, United States\\\",\\n    \\\"marriageYearFrom\\\": 1868,\\n    \\\"marriageYearTo\\\": 1870,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"spouseGivenName\\\": \\\"William\\\",\\n    \\\"spouseSurname\\\": \\\"Lanham\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3222,15 +3178,13 @@
         "recordType": "marriage",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"spouseSurname\\\": \\\"Lanham\\\",\\n    \\\"anyPlace\\\": \\\"Hill, Texas, United States\\\",\\n    \\\"anyYearFrom\\\": 1866,\\n    \\\"anyYearTo\\\": 1872,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QV1C-Y4FR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101314725774\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QV1C-Y4F5\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"e1b3f4fb-a59a-4a79-8b4f-5d713141acb7\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Lanham\\\",\\n          \\\"given\\\": \\\"W F\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3253,16 +3207,14 @@
         "resultsAvailable": 0,
         "notes": "Nil. Marriage was in Smith County, TX not Hill County \u2014 explains failure. Tree source WWLY-J9X incorrectly places this in Hill County.",
         "externalSite": null
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:01:07.169Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__record_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3284,8 +3236,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/62e8efc0-ee56-4721-b276-8ba4bcbc2283.json",
         "notes": "Broader search (dropped Hill County place filter) returned 1 result \u2014 a New York City marriage record, not relevant. Collection mismatch confirms no indexed FamilySearch marriage for M J Wood + W F Lanham in Texas circa 1869."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:03:34.204Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3301,8 +3252,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Record is in Smith County, Texas (not Hill County as stated in tree). Marriage date 1869. Index entry only \u2014 no parental consent data, no parents of bride named. The tree's place annotation (Hill County) is incorrect. No direct evidence of M J Wood's parentage from this record."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:03:37.796Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3315,8 +3265,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3333,16 +3282,14 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"birthYearFrom\\\": 1808,\\n    \\\"birthYearTo\\\": 1816,\\n    \\\"birthPlace\\\": \\\"South Carolina\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"residencePlace\\\": \\\"Georgia\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__rank_search_matches",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3351,23 +3298,20 @@
         "stagedResultsRef": "results/.staging/dfb5b936-8f0b-4ff8-80c1-e942f644617d.json",
         "subjectId": "LKYG-VKB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LKYG-VKB\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MZYV-S6L\\\",\\n      \\\"matchScore\\\": 0.000001173424,\\n      \\\"primaryId\\\": \\\"p_265358211\\\",\\n      \\\"personName\\\": \\\"M M Wood\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"1816\\\",\\n      \\\"birthPlace\\\": \\\"South Carol..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MZYV-S6L"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_265358211\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MZYV-S6L\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"8cafe374-2912-40e5-a0ba-401ad8da08b2\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wood\\\",\\n          \\\"given\\\": \\\"M M\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"c2940649-58c7-43e4-af83-ce1d23f3d70f\\\",\\n          \\\"type\\\": \\\"Census\\\",..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3393,8 +3337,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/dfb5b936-8f0b-4ff8-80c1-e942f644617d.json",
         "notes": "Found 1850 household of M M Wood in Cherokee County, Georgia (ARK MZYV-S6L). Head M M Wood, Male, born 1816 SC. Wife Martha Wood, born 1823 SC. Seven children: Nancy A (b.1837 SC), Henry (b.1838 SC), Margaret (b.1841 GA), Manly A (b.1843 GA), David (b.1844 GA), Rosannah (b.1846 GA), Jonah (b.1849 GA). Subject Martha J Wood (b.~1852) not yet born. Migration pattern confirmed: SC origin, moved to GA by 1841, moved to Blount Co. AL before 1860. Note: birth year discrepancies vs. 1860 census \u2014 M M Wood: 1816 (1850) vs ~1812 (1860); Martha: 1823 (1850) vs ~1814 (1860). Typical census enumeration variance. Record is attachedToOther in FamilySearch Family Tree."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:05:21.029Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3407,8 +3350,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3420,8 +3362,7 @@
         "recordType": "marriage",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"residencePlace\\\": \\\"Blount County, Alabama\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 56,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:29NR-NT5\\\",\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3430,8 +3371,7 @@
         "stagedResultsRef": "results/.staging/e411a19a-807d-4c18-8126-dc984de202e6.json",
         "subjectId": "LKYG-VKB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LKYG-VKB\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FQD4-4MN\\\",\\n      \\\"matchScore\\\": 0.00007492792,\\n      \\\"primaryId\\\": \\\"p_11042115316\\\",\\n      \\\"personName\\\": \\\"William M. Wood\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Alabama County Marriages, 17..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3446,8 +3386,7 @@
         "marriageYearTo": 1845,
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Georgia\\\",\\n    \\\"marriageYearFrom\\\": 1830,\\n    \\\"marriageYearTo\\\": 1845,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"ha..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3456,15 +3395,13 @@
         "stagedResultsRef": "results/.staging/9325068d-1b1f-4842-bd5b-babf2bfdec41.json",
         "subjectId": "LKYG-VKB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LKYG-VKB\\\",\\n  \\\"scoredCount\\\": 4,\\n  \\\"returnedCount\\\": 4,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QKHZ-BGK7\\\",\\n      \\\"matchScore\\\": 0.000011452383,\\n      \\\"primaryId\\\": \\\"p_101534276375\\\",\\n      \\\"personName\\\": \\\"Chas M Wood\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Georgia, County Marriages, 1785..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:FWHK-Z4Q"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11087802214\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:FWHK-Z4Q\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9b7c90a4-0740-4467-9a3a-d0b4f6d088cd\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wood\\\",\\n          \\\"given\\\": \\\"Mathew M.\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3485,8 +3422,7 @@
         "resultsAvailable": 56,
         "stagedResultsRef": "results/.staging/e411a19a-807d-4c18-8126-dc984de202e6.json",
         "notes": "56 results, all M-initial Wood marriages in Alabama; none match M M Wood born ~1812-1816 SC. Top-scored are William M. Wood entries (wrong given initial pattern) and other Blount County records too late in date. Expected negative: M M Wood's oldest children born 1837-1838 in South Carolina, so his marriage would have occurred in SC circa 1835-1836, not in Alabama. Proceeding to Georgia and South Carolina marriage searches."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:06:38.912Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3501,8 +3437,7 @@
         "marriageYearTo": 1840,
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"South Carolina\\\",\\n    \\\"marriageYearFrom\\\": 1830,\\n    \\\"marriageYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3526,8 +3461,7 @@
         "resultsAvailable": 4,
         "stagedResultsRef": "results/.staging/9325068d-1b1f-4842-bd5b-babf2bfdec41.json",
         "notes": "4 results. Top hit: Mathew M. Wood + Sabra Berry, Jefferson County GA, 15 Nov 1832. Ruled out \u2014 our M M Wood had children born in South Carolina 1837-1838, not in Jefferson Co. GA; and his wife in 1850 and 1860 is named Martha, not Sabra. The Mathew M. Wood/Sabra Berry entry is a different individual (attachedToOther in FS Family Tree). Remaining 3 results are clearly different persons. No M M Wood marriage to a Martha found in Georgia 1830-1845. His marriage almost certainly occurred in South Carolina before 1837 but SC marriage records for this period appear unindexed on FamilySearch (separate SC search returned zero results)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:07:37.312Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3553,8 +3487,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3568,8 +3501,7 @@
         "birthPlace": "South Carolina",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neat-ay04a5c2"
-      },
-      "response_summary": "Error: result (257,416 characters) exceeds maximum allowed tokens. Output has been saved to /home/christopher/.claude/projects/-tmp-e2e-jimmie-jewel-neal-ay04a5c2/3c77268a-0cee-44bc-8cb1-b657d1dbd22e/tool-results/mcp-genealogy-record_search-1784927265958.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZATIO..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3583,8 +3515,7 @@
         "birthPlace": "South Carolina",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"residenceYearFrom\\\": 1855,\\n    \\\"residenceYearTo\\\": 1855,\\n    \\\"residencePlace\\\": \\\"Alabama\\\",\\n    \\\"birthPlace\\\": \\\"South Carolina\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 1464,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3607,8 +3538,7 @@
         "resultsAvailable": 1464,
         "stagedResultsRef": "results/.staging/72255a2d-ad72-4f62-894e-b1a34fa1ba50.json",
         "notes": "1464 results \u2014 too broad. No specific 1855 Alabama State Census collection was targeted. Results are mix of death records, obituaries, birth registers, marriage records from many states, none identifying M M Wood in an 1855 Alabama state enumeration. The 1855 Alabama State Census may not be indexed on FamilySearch as a distinct searchable collection. No useful records found for identifying M M Wood's Alabama arrival or his wife's maiden name."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:08:42.854Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3621,8 +3551,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3639,8 +3568,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"birthYearFrom\\\": 1808,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"birthPlace\\\": \\\"South Carolina\\\",\\n    \\\"residenceYearFrom\\\": 1870,\\n    \\\"residenceYearTo\\\": 1870,\\n    \\\"residencePlace\\\": \\\"Blount County, Alabama\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"pagin..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3656,8 +3584,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"birthYearFrom\\\": 1808,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"residencePlace\\\": \\\"South Carolina\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3682,8 +3609,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results. M M Wood may have died between 1860 and 1870. Widening search: drop county restriction and birth constraints; also search for wife Martha Wood as potential widow."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:09:27.901Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3707,8 +3633,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for 1840 SC census with M Wood born 1808-1820. The 1840 federal census indexed only household heads by name; searching by initial 'M' with a birth year range may fail for that era. Will try Georgia 1840 census (family may have already relocated) and broaden constraints."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:09:31.377Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3722,8 +3647,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "{\"error\":\"fetch failed\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3740,8 +3664,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"Martha\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"birthYearFrom\\\": 1810,\\n    \\\"birthYearTo\\\": 1830,\\n    \\\"birthPlace\\\": \\\"South Carolina\\\",\\n    \\\"residenceYearFrom\\\": 1870,\\n    \\\"residenceYearTo\\\": 1870,\\n    \\\"residencePlace\\\": \\\"Alabama\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 3,\\n  \\\"paginationCap..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3755,22 +3678,19 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"residencePlace\\\": \\\"Georgia\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"stage..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MHV5-SNR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_209630304\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MHV5-SN5\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"68f5f4c9-c5d0-4126-b84e-a8de8f92db5f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"J T\\\",\\n          \\\"surname\\\": \\\"Wood\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"15a60b97-ed7c-45d0-b9f1-0630768c8018\\\",\\n          \\\"type\\\": \\\"Birth\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MH23-ZBY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_210690866\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MH23-ZBT\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"b2ac0fe3-2877-484d-a32a-1060d69bff26\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Woods\\\",\\n          \\\"given\\\": \\\"Henry L\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"587615df-b3f8-4f7f-8aab-130ec62741c3\\\",\\n          \\\"type\\\": \\\"Cens..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3786,8 +3706,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"sex\\\": \\\"Male\\\",\\n    \\\"birthYearFrom\\\": 1808,\\n    \\\"birthYearTo\\\": 1820,\\n    \\\"residenceYearFrom\\\": 1870,\\n    \\\"residenceYearTo\\\": 1870,\\n    \\\"residencePlace\\\": \\\"Alabama\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 3,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 3,\\n  \\\"offset\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3796,8 +3715,7 @@
         "stagedResultsRef": "results/.staging/5bc03857-ce2c-488d-90a2-fb7f223c9679.json",
         "subjectId": "LKYG-VKB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"LKYG-VKB\\\",\\n  \\\"scoredCount\\\": 3,\\n  \\\"returnedCount\\\": 3,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MHV5-SNR\\\",\\n      \\\"matchScore\\\": 0.000804279,\\n      \\\"primaryId\\\": \\\"p_209630305\\\",\\n      \\\"personName\\\": \\\"M Wood\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1815\\\",\\n      \\\"birthPlace\\\": \\\"South Carolina..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3823,8 +3741,7 @@
         "resultsAvailable": 3,
         "stagedResultsRef": "results/.staging/5bc03857-ce2c-488d-90a2-fb7f223c9679.json",
         "notes": "Key hit: ARK MHV5-SNR \u2014 'M Wood', female, born 1815 SC, Blount AL 1870, in household of 'J T Wood' (head, born 1812 SC, Blount AL). J T Wood born 1812 SC in same county as M M Wood from 1860 \u2014 almost certainly the same person (different initials captured by different enumerators). Household also includes Jasper Wood (b.1848 GA) and Elizabeth Wood (b.1852 GA) \u2014 consistent post-1850 children. Martha A Woods in Tuscaloosa in Henry L Woods household ruled out: Henry L Woods born 1822 Georgia, wrong to be our Henry Wood son (b.1838 SC)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:13:14.177Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_011.json\\\",\\n  \\\"returnedCount\\\": 3,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_011.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3849,8 +3766,7 @@
         "resultsAvailable": 3,
         "stagedResultsRef": "results/.staging/2fbdc5b3-8fe1-4070-8ebd-7df16686cd00.json",
         "notes": "3 results \u2014 none match M M Wood in Blount County. Jackson County (TN birth), Wilcox County (NY birth), Lawrence County (VA birth). M M Wood is not found under 'M' initial in 1870 Alabama because the 1870 enumerator recorded him as 'J T Wood' (different initials)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:13:18.677Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 3,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3876,8 +3792,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3888,16 +3803,14 @@
         "residencePlace": "Blount County, Alabama",
         "count": 50,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Wood\\\",\\n    \\\"givenName\\\": \\\"M\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"residencePlace\\\": \\\"Blount County, Alabama\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3910,8 +3823,7 @@
         "yearTo": 1900,
         "count": 20,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Wood\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"recordPlace1\\\": \\\"Alabama\\\",\\n    \\\"recordPlace2\\\": \\\"Blount\\\",\\n    \\\"yearFrom\\\": 1860,\\n    \\\"yearTo\\\": 1900,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3924,8 +3836,7 @@
         "count": 20,
         "includeFacets": true,
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Wood\\\",\\n    \\\"recordPlace1\\\": \\\"Alabama\\\",\\n    \\\"recordPlace2\\\": \\\"Blount\\\",\\n    \\\"yearFrom\\\": 1860,\\n    \\\"yearTo\\\": 1900,\\n    \\\"count\\\": 20,\\n    \\\"includeFacets\\\": true,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-jimmie-jewel-neal-ay04a5c2\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"facets\\\": [\\n    {\\n      \\\"name\\\": \\\"Year\\\",\\n      \\\"count\\\": 0,\\n      \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3944,8 +3855,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "FamilySearch full-text corpus returns zero results for any record in Blount County, Alabama 1860-1900. Blount County Alabama probate records are not digitized/transcribed in the FamilySearch FTS corpus for this period. This is a digitization gap, not a confirmed absence of records. M M Wood's full name and wife's maiden name remain unestablished from this source."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-24T21:15:33.701Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3958,16 +3868,14 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_008\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract all assertions from the following positive log entries for project /tmp/e2e-jimmie-jewel-neal-ay04a5c2. For each record, the record-extractor agent should extract the principal AND all household members as record personas with their facts, then write sources and assertions.\n\nRecords to extract:\n\n1. log_001 \u2014 1860 US Federal Census, Blount County, Alabama\n   recordId: ark:/61903/1:1:MHDC-LKK (head of household M M Wood; full household ARK MHDC-LKY)\n   resultsRef: results/log_001.json\n   Key household: M M Wood (head, male, b.~1812 SC), Martha Wood (wife, female, b.~1814 SC), plus children including Martha J Wood (female, b.~1852-1855 GA \u2014 this is tree person LKYG-VKB)\n   The subject Martha J Wood (LKYG-VKB) is in this household \u2014 extract ALL household members.\n\n2. log_005 \u2014 1850 US Federal Census, Cherokee County, Georgia  \n   recordId: ark:/61903/1:1:MZYV-S6L (head M M Wood)\n   resultsRef: results/log_005.json\n   Key household: M M Wood (head, male, b.1816 SC), Martha Wood (wife, female, b.1823 SC), children Nancy A (1837 SC), Henry (1838 SC), Margaret (1841 GA), Manly A (1843 GA), David (1844 GA), Rosannah (1846 GA), Jonah (1849 GA), plus boarder John Adams (1833 GA)\n   Extract M M Wood and Martha Wood specifically \u2014 they are the maternal grandparents being identified.\n\n3. log_011 \u2014 1870 US Federal Census, Blount County, Alabama\n   recordId: ark:/61903/1:1:MHV5-SNR (M Wood, female \u2014 in household of J T Wood ARK MHV5-SN5)\n   resultsRef: results/log_011.json\n   Key household: J T Wood (head, male, b.1812 SC \u2014 likely same person as M M Wood from 1860), M Wood (female, b.1815 SC \u2014 Martha Wood), Jasper Wood (male, b.1848 GA), Elizabeth Wood (female, b.1852 GA)\n   Note: J T Wood born 1812 SC in Blount County is identified as the probable same person as M M Wood from the 1860 census \u2014 different enumerator captured different initials.\n\nThe research question being answered is q_001: \"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal?\"\nThe maternal grandparents are M M Wood (father) and Martha Wood (mother).\nprojectPath: /tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -3975,8 +3883,7 @@
         "description": "Extract 1860 census household assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the 1860 US Federal Census household record for project /tmp/e2e-jimmie-jewel-neal-ay04a5c2.\n\nprojectPath: /tmp/e2e-jimmie-jewel-neal-ay04a5c2\nrecordId: ark:/61903/1:1:MHDC-LKK\nresultsRef: results/log_001.json\nlogId: log_001\n\nOpen research question: q_001 \u2014 \"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal of Hill County, Texas?\"\n\nContext: The 1860 census household (Blount County, Alabama) contains M M Wood (head, male, born ~1812 South Carolina), his wife Martha Wood (female, born ~1814 South Carolina), and their children including Martha J Wood (female, born ~1852\u20131855 Georgia). Martha J Wood is tree person LKYG-VKB. M M Wood and Martha Wood are the maternal grandparents being identified.\n\nExtract ALL household members as record personas with their facts. M M Wood and Martha Wood are the primary targets \u2014 extract their names, sex, birth year, birth place, census residence, and relationship to each other and to Martha J Wood. Also extract Martha J Wood's census entry (her age, birth state). The goal is to establish a documented record of M M Wood and his wife Martha as the parents of Martha J Wood.\n\nDo NOT create person_evidence links or assign identity confidence \u2014 that is handled separately by person-evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. All place resolutions are correct \\u2014 \\\"S Carolina\\\" \\u2192 South Carolina, United States; \\\"Georgia\\\" \\u2192 Georgia, United States; \\\"Alabama\\\" \\u2192 Alabama, United States; \\\"Eastern Subdivision, Blount, Alabama\\\" \\u2192 Blount, Alabama, United States. All appropriate for a US census context.\\n\\nSource: src_003 / S3, action: created. 71 assertions (a_084 through a_154).\\n\\nAssertion count by record_role:\\n- head_of_household (M M Wood)..."
+      }
     },
     {
       "tool": "Agent",
@@ -3984,8 +3891,7 @@
         "description": "Extract 1850 census household assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the 1850 US Federal Census household record for project /tmp/e2e-jimmie-jewel-neal-ay04a5c2.\n\nprojectPath: /tmp/e2e-jimmie-jewel-neal-ay04a5c2\nrecordId: ark:/61903/1:1:MZYV-S6L\nresultsRef: results/log_005.json\nlogId: log_005\n\nOpen research question: q_001 \u2014 \"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal of Hill County, Texas?\"\n\nContext: The 1850 census household (Cherokee County, Georgia) contains M M Wood (head, male, born 1816 South Carolina), his wife Martha Wood (female, born 1823 South Carolina), and their children: Nancy A (b.1837 SC), Henry (b.1838 SC), Margaret (b.1841 GA), Manly A (b.1843 GA), David (b.1844 GA), Rosannah (b.1846 GA), Jonah (b.1849 GA), plus a boarder John Adams (b.1833 GA). The subject Martha J Wood (LKYG-VKB) was not yet born in 1850. This record corroborates the 1860 census identification of M M Wood and Martha Wood as the parents of Martha J Wood \u2014 same couple, same migration pattern (SC-born oldest children, GA-born younger children), consistent birth years.\n\nExtract M M Wood and Martha Wood (primary targets) with their names, sex, birth year, birth place, census residence. Capture children's birth states as evidence of the SC\u2192GA migration pattern. Do NOT create person_evidence links or assign identity confidence \u2014 that is handled separately by person-evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 58 assertions persisted successfully.\\n\\nSource: src_002 / S2 \\u2014 created (new source, no reuse).\\n\\nAssertions by record_role (58 total):\\n- head_of_household (M M Wood): 5 \\u2014 name, sex, birth-year, birth-place, residence (a_026\\u2013a_031)\\n- wife (Martha Wood): 6 \\u2014 name, sex, birth-year, birth-place, residence, spousal relationship (a_032\\u2013a_037)\\n- child_1 Nancy A Wood: 6 \\u2014 name, sex, birth-year, birth-place (SC), child-of-MM, child-of-M..."
+      }
     },
     {
       "tool": "Agent",
@@ -3993,15 +3899,13 @@
         "description": "Extract 1870 census household assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the 1870 US Federal Census household record for project /tmp/e2e-jimmie-jewel-neal-ay04a5c2.\n\nprojectPath: /tmp/e2e-jimmie-jewel-neal-ay04a5c2\nrecordId: ark:/61903/1:1:MHV5-SNR\nresultsRef: results/log_011.json\nlogId: log_011\n\nOpen research question: q_001 \u2014 \"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal of Hill County, Texas?\"\n\nContext: The 1870 census household (Blount County, Alabama) contains J T Wood (head, male, born 1812 South Carolina), \"M Wood\" (female, born 1815 South Carolina), Jasper Wood (male, b.1848 GA), and Elizabeth Wood (female, b.1852 GA). J T Wood born 1812 SC in Blount County Alabama is almost certainly the same person as M M Wood from the 1860 census \u2014 the same birth year, birth state, and county; only the initials differ (different enumerators captured different abbreviations). \"M Wood\" is his wife Martha. This corroborates the continued presence of the couple in Blount County through 1870, consistent with their being Martha J Wood's parents.\n\nExtract J T Wood and M Wood (primary targets) with their names, sex, birth year, birth place, census residence. Note the probable identity with M M Wood / Martha Wood from 1860 as a research note, but do NOT create person_evidence links or assign identity confidence \u2014 that is handled separately by person-evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete.\\n\\nSource: src_001 / S1 (created). Source classification: derivative (FamilySearch index \\u2014 original schedule image not confirmed examined; noted in source notes).\\n\\nAssertions persisted: 25 total across 4 personas.\\n- head_of_household (J T Wood): a_001\\u2013a_005 \\u2014 name, sex, birth place, birth year (~1812), residence\\n- wife (M Wood): a_006\\u2013a_012 \\u2014 name, sex, birth place, birth year (~1815), residence, spousal relationship..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel N\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KNXW-M3T\\\",\\n      \\\"name\\\": \\\"Jimmie Jewel Neal\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"i..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -4009,15 +3913,13 @@
         "recordId": "ark:/61903/1:1:MHDC-LKK",
         "resultsRef": "results/log_001.json",
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "{\"error\":\"record 'ark:/61903/1:1:MHDC-LKK' was not found in staged results 'results/log_001.json'. Do a live read (omit `resultsRef`) instead, or verify the ref/id.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel N\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KNXW-M3T\\\",\\n      \\\"name\\\": \\\"Jimmie Jewel Neal\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"i..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -4025,15 +3927,13 @@
         "recordId": "ark:/61903/1:1:MHV5-SNR",
         "resultsRef": "results/log_011.json",
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_209630305\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MHV5-SNR\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"M\\\",\\n          \\\"surname\\\": \\\"Wood\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1815\\\",\\n          \\\"standard_date\\\": \\\"1815\\\",\\n          \\\"place\\\": \\\"South Carolina\\\",\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel N\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"KNXW-M3T\\\",\\n      \\\"name\\\": \\\"Jimmie Jewel Neal\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"i..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -4041,15 +3941,13 @@
         "recordId": "ark:/61903/1:1:MZYV-S6L",
         "resultsRef": "results/log_005.json",
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_265358211\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MZYV-S6L\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Wood\\\",\\n          \\\"given\\\": \\\"M M\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1850\\\",\\n          \\\"standard_date\\\": \\\"1850\\\",\\n          \\\"place\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MHDC-LKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_204382489\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MHDC-LKK\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"01da7d4d-5413-4a10-8fed-f3e6a503153e\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"M M\\\",\\n          \\\"surname\\\": \\\"Wood\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4624,8 +4522,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5985,8 +5882,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_026\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_027\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_028\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -7485,47 +7381,41 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_084\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_085\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_086\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Link record personas to tree persons for project /tmp/e2e-jimmie-jewel-neal-ay04a5c2, question q_001.\n\nThe three census extractions have created record personas that need to be identity-linked:\n\nFROM THE 1860 CENSUS (S3/src_003, log_001, ARK MHDC-LKK household):\n- M M Wood persona (head, male, b.~1812 SC, Blount Co. AL) \u2014 needs new tree person\n- Martha Wood persona (wife, female, b.~1814 SC) \u2014 needs new tree person\n- Martha J Wood persona (child, female, b.~1852 GA, ARK MHDC-LKY) \u2014 candidate for existing tree person LKYG-VKB (Martha J Wood, mother of Jimmie Jewel Neal KNXW-M3T)\n- Other children (Heny/Henry, Margaret, Manly, David, Rosanna, Sarah, Mary, Isum) \u2014 may need tree persons or FAN stubs\n\nFROM THE 1850 CENSUS (S2/src_002, log_005, ARK MZYV-S6L household):\n- M M Wood persona (head, male, b.1816 SC, Cherokee Co. GA) \u2014 candidate for same M M Wood tree person as above (consistent birth year/state)\n- Martha Wood persona (wife, female, b.1823 SC) \u2014 candidate for same Martha Wood tree person\n- Children Nancy A, Henry, Margaret, Manly A, David, Rosannah, Jonah \u2014 corroborate the family\n\nFROM THE 1870 CENSUS (S1/src_001, log_011, ARK MHV5-SN5 household):\n- J T Wood persona (head, male, b.1812 SC, Blount Co. AL) \u2014 candidate for same M M Wood (same birth year, birth state, same county across 1860-1870; different enumerator captured different initials)\n- M Wood persona (female, b.1815 SC) \u2014 candidate for same Martha Wood tree person\n\nKEY IDENTITY LINKS NEEDED:\n1. Martha J Wood (child, 1860 census, ARK MHDC-LKY) \u2192 LKYG-VKB \u2014 this is the most important link (establishes she was a child in M M Wood's household)\n2. M M Wood (1860 census head) \u2192 new tree person (he and his wife are the maternal grandparents)\n3. Martha Wood (1860 census wife) \u2192 new tree person (maternal grandmother)\n4. M M Wood (1850 census) \u2192 same M M Wood tree person\n5. Martha Wood (1850 census) \u2192 same Martha Wood tree person\n6. J T Wood (1870 census) \u2192 same M M Wood tree person\n7. M Wood (1870 census) \u2192 same Martha Wood tree person\n\nOnce M M Wood and Martha Wood tree persons are created and linked, add:\n- ParentChild relationship: M M Wood \u2192 LKYG-VKB (Martha J Wood)\n- ParentChild relationship: Martha Wood \u2192 LKYG-VKB\n- These complete the answer to q_001\n\nprojectPath: /tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__same_person,mcp__genealogy__merge_warnings,mcp__genealogy__tree_edit",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jimmie_jewel_neal\",\n4\t    \"objective\": \"Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KNXW-M3T\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narr..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KNXW-M3T\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Jimmie Jewel\",\n11\t          \"surname\": \"Neal\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"248eaba5-34ae-4182-9874-bfcc07166241\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1884\",\n19\t          \"standard_date\": \"10 Jul 1884\",\n20\t          \"place\": \"Hillsboro, Hi..."
+      }
     },
     {
       "tool": "Read",
@@ -7533,8 +7423,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 100,
         "limit": 300
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"census\",\n104\t          \"jurisdiction\": \"Alabama, United States\",\n105\t          \"date_range\": \"1855\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"The 1855 Alabama State Census (collection 1915984, 34,978 records, indexed on FamilySearch) provides a mid-decade check between 1850 and 1860. If the Wood family had already migrated from Georgia to Alabama by 1855, this..."
+      }
     },
     {
       "tool": "Read",
@@ -7542,8 +7431,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 398,
         "limit": 300
-      },
-      "response_summary": "398\t        \"residencePlace\": \"Alabama\",\n399\t        \"recordType\": \"census\",\n400\t        \"count\": 50\n401\t      },\n402\t      \"outcome\": \"negative\",\n403\t      \"results_examined\": 3,\n404\t      \"external_site\": null,\n405\t      \"results_ref\": \"results/log_012.json\",\n406\t      \"results_available\": 3,\n407\t      \"notes\": \"3 results \u2014 none match M M Wood in Blount County. Jackson County (TN birth), Wilcox County (NY birth), Lawrence County (VA birth). M M Wood is not found under 'M' initial in 1870 Al..."
+      }
     },
     {
       "tool": "Read",
@@ -7551,8 +7439,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 698,
         "limit": 400
-      },
-      "response_summary": "698\t      \"information_quality\": \"indeterminate\",\n699\t      \"informant\": \"the researcher\",\n700\t      \"informant_proximity\": \"researcher\",\n701\t      \"evidence_type\": \"indirect\",\n702\t      \"extracted_for_question_ids\": [\n703\t        \"q_001\"\n704\t      ],\n705\t      \"log_entry_id\": \"log_011\",\n706\t      \"informant_bias_notes\": \"Pre-1880 census; no relationship column. Spousal relationship inferred from household position (female listed immediately after head, consistent with wife role in enumeratio..."
+      }
     },
     {
       "tool": "Read",
@@ -7560,8 +7447,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1098,
         "limit": 500
-      },
-      "response_summary": "1098\t      },\n1099\t      \"information_quality\": \"indeterminate\",\n1100\t      \"informant\": \"unknown household member\",\n1101\t      \"informant_proximity\": \"household_member\",\n1102\t      \"evidence_type\": \"direct\",\n1103\t      \"extracted_for_question_ids\": [\n1104\t        \"q_001\"\n1105\t      ],\n1106\t      \"log_entry_id\": \"log_005\",\n1107\t      \"source_id\": \"src_002\"\n1108\t    },\n1109\t    {\n1110\t      \"id\": \"a_032\",\n1111\t      \"record_id\": \"ark:/61903/1:1:MZYV-S6L\",\n1112\t      \"record_persona_id\": \"p_265..."
+      }
     },
     {
       "tool": "Read",
@@ -7569,8 +7455,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1595,
         "limit": 600
-      },
-      "response_summary": "1595\t      \"record_persona_id\": \"p_265358216\",\n1596\t      \"record_role\": \"child_4\",\n1597\t      \"fact_type\": \"name\",\n1598\t      \"value\": \"Manly A Wood\",\n1599\t      \"structured_value\": {\n1600\t        \"given\": \"Manly A\",\n1601\t        \"surname\": \"Wood\"\n1602\t      },\n1603\t      \"information_quality\": \"indeterminate\",\n1604\t      \"informant\": \"unknown household member\",\n1605\t      \"informant_proximity\": \"household_member\",\n1606\t      \"evidence_type\": \"direct\",\n1607\t      \"extracted_for_question_ids\"..."
+      }
     },
     {
       "tool": "Read",
@@ -7578,8 +7463,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 2194,
         "limit": 600
-      },
-      "response_summary": "2194\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n2195\t      \"record_role\": \"head_of_household\",\n2196\t      \"fact_type\": \"name\",\n2197\t      \"value\": \"M M Wood\",\n2198\t      \"structured_value\": {\n2199\t        \"given\": \"M M\",\n2200\t        \"surname\": \"Wood\"\n2201\t      },\n2202\t      \"information_quality\": \"indeterminate\",\n2203\t      \"informant\": \"unknown household member\",\n2204\t      \"informant_proximity\": \"household_member\",\n2205\t      \"evidence_type\": \"direct\",\n2206\t      \"extracted_for_questio..."
+      }
     },
     {
       "tool": "Read",
@@ -7587,8 +7471,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 2793,
         "limit": 600
-      },
-      "response_summary": "2793\t      \"information_quality\": \"indeterminate\",\n2794\t      \"informant\": \"unknown household member\",\n2795\t      \"informant_proximity\": \"household_member\",\n2796\t      \"evidence_type\": \"direct\",\n2797\t      \"extracted_for_question_ids\": [],\n2798\t      \"log_entry_id\": \"log_001\",\n2799\t      \"source_id\": \"src_003\"\n2800\t    },\n2801\t    {\n2802\t      \"id\": \"a_116\",\n2803\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n2804\t      \"record_role\": \"child_4\",\n2805\t      \"fact_type\": \"birth\",\n2806\t      \"val..."
+      }
     },
     {
       "tool": "Read",
@@ -7596,16 +7479,14 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3394,
         "limit": 400
-      },
-      "response_summary": "3394\t      \"informant\": \"unknown household member\",\n3395\t      \"informant_proximity\": \"household_member\",\n3396\t      \"evidence_type\": \"indirect\",\n3397\t      \"informant_bias_notes\": \"Birth year computed from age; 1860 census did not record who answered.\",\n3398\t      \"extracted_for_question_ids\": [],\n3399\t      \"log_entry_id\": \"log_001\",\n3400\t      \"source_id\": \"src_003\"\n3401\t    },\n3402\t    {\n3403\t      \"id\": \"a_148\",\n3404\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n3405\t      \"record_role\":..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts,mcp__genealogy__same_person,mcp__genealogy__tree_edit,mcp__genealogy__research_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7613,8 +7494,7 @@
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2",
         "recordId": "ark:/61903/1:1:MHDC-LKK",
         "recordRole": "head_of_household"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7622,8 +7502,7 @@
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2",
         "recordId": "ark:/61903/1:1:MHDC-LKK",
         "recordRole": "wife"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7632,8 +7511,7 @@
         "recordId": "ark:/61903/1:1:MHDC-LKK",
         "recordRole": "child_7",
         "personId": "LKYG-VKB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"LKYG-VKB\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 2,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 4,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"LKYG-VKB\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"1855, Georgia, United States\\\",\\n        \\\"~1852\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": tru..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7665,8 +7543,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_relationship: the added relationship edge must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7713,8 +7590,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R6\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.j..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7723,8 +7599,7 @@
         "recordId": "ark:/61903/1:1:MHV5-SNR",
         "recordRole": "head_of_household",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7733,8 +7608,7 @@
         "recordId": "ark:/61903/1:1:MHV5-SNR",
         "recordRole": "wife",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 4,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"~1814, South Carolina, United States\\\",\\n        \\\"~1815\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7743,8 +7617,7 @@
         "recordId": "ark:/61903/1:1:MZYV-S6L",
         "recordRole": "head_of_household",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 4,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"~1812, South Carolina, United States\\\",\\n        \\\"~1816\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -7753,24 +7626,21 @@
         "recordId": "ark:/61903/1:1:MZYV-S6L",
         "recordRole": "wife",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 2,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 4,\\n  \\\"conflicts_surfaced\\\": [\\n    {\\n      \\\"personId\\\": \\\"I2\\\",\\n      \\\"factType\\\": \\\"Birth\\\",\\n      \\\"values\\\": [\\n        \\\"~1814, South Carolina, United States\\\",\\n        \\\"~1815\\\",\\n        \\\"~1823\\\"\\n      ]\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n  ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_011.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_011\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-24T21:10:10.448Z\",\n5\t  \"returned_count\": 3,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Wood\",\n9\t      \"givenName\": \"Martha\",\n10\t      \"sex\": \"Female\",\n11\t      \"birthYearFrom\": 1810,\n12\t      \"birthYearTo\": 1830,\n13\t      \"birthPlace\": \"South Carolina\",\n14\t      \"residenceYearFrom\": 1870,\n15\t      \"residenceYearTo\": 1870,\n16\t      \"residencePlace\": \"Alabama\",\n17\t      \"recordType\": \"census\",\n18\t    ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_005.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_005\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-24T21:03:49.296Z\",\n5\t  \"returned_count\": 1,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Wood\",\n9\t      \"givenName\": \"M\",\n10\t      \"sex\": \"Male\",\n11\t      \"birthYearFrom\": 1808,\n12\t      \"birthYearTo\": 1816,\n13\t      \"birthPlace\": \"South Carolina\",\n14\t      \"residenceYearFrom\": 1850,\n15\t      \"residenceYearTo\": 1850,\n16\t      \"residencePlace\": \"Georgia\",\n17\t      \"recordType\": \"census\",\n18\t      \"coun..."
+      }
     },
     {
       "tool": "Read",
@@ -7778,8 +7648,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_011.json",
         "offset": 100,
         "limit": 250
-      },
-      "response_summary": "100\t                  \"given\": \"Henry L\"\n101\t                }\n102\t              ],\n103\t              \"facts\": [\n104\t                {\n105\t                  \"type\": \"Census\",\n106\t                  \"primary\": true,\n107\t                  \"date\": \"1870\",\n108\t                  \"standard_date\": \"1870\",\n109\t                  \"place\": \"Election Precinct 22 Fosters, Tuscaloosa, Alabama, United States\",\n110\t                  \"standard_place\": \"Election Precinct 22 Fosters, Tuscaloosa, Alabama, United ..."
+      }
     },
     {
       "tool": "Read",
@@ -7787,8 +7656,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_005.json",
         "offset": 100,
         "limit": 250
-      },
-      "response_summary": "100\t                  \"given\": \"Martha\"\n101\t                }\n102\t              ],\n103\t              \"facts\": [\n104\t                {\n105\t                  \"type\": \"Birth\",\n106\t                  \"date\": \"1823\",\n107\t                  \"standard_date\": \"1823\",\n108\t                  \"place\": \"South Carolina\",\n109\t                  \"standard_place\": \"South Carolina, United States\"\n110\t                },\n111\t                {\n112\t                  \"type\": \"Census\",\n113\t                  \"primary\": ..."
+      }
     },
     {
       "tool": "Read",
@@ -7796,8 +7664,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_011.json",
         "offset": 350,
         "limit": 300
-      },
-      "response_summary": "350\t            },\n351\t            {\n352\t              \"id\": \"src_p_p_210690867\",\n353\t              \"url\": \"#p_210690867\"\n354\t            }\n355\t          ],\n356\t          \"places\": [\n357\t            {\n358\t              \"id\": \"340\",\n359\t              \"name\": \"South Carolina, United States\",\n360\t              \"latitude\": 34,\n361\t              \"longitude\": -81\n362\t            },\n363\t            {\n364\t              \"id\": \"351\",\n365\t              \"name\": \"Alabama, United States\",\n366\t             ..."
+      }
     },
     {
       "tool": "Read",
@@ -7805,16 +7672,14 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_005.json",
         "offset": 350,
         "limit": 150
-      },
-      "response_summary": "350\t                {\n351\t                  \"type\": \"Birth\",\n352\t                  \"date\": \"1849\",\n353\t                  \"standard_date\": \"1849\",\n354\t                  \"place\": \"Georgia\",\n355\t                  \"standard_place\": \"Georgia, United States\"\n356\t                }\n357\t              ],\n358\t              \"sources\": [\n359\t                {\n360\t                  \"ref\": \"sd_da1\"\n361\t                }\n362\t              ]\n363\t            },\n364\t            {\n365\t              \"id\": \"p_2653..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "limit": 200
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KNXW-M3T\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Jimmie Jewel\",\n11\t          \"surname\": \"Neal\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"248eaba5-34ae-4182-9874-bfcc07166241\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1884\",\n19\t          \"standard_date\": \"10 Jul 1884\",\n20\t          \"place\": \"Hillsboro, Hi..."
+      }
     },
     {
       "tool": "Read",
@@ -7822,8 +7687,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 200,
         "limit": 350
-      },
-      "response_summary": "200\t        {\n201\t          \"id\": \"83bd7041-900a-402f-b870-4be8b458b706\",\n202\t          \"type\": \"Residence\",\n203\t          \"date\": \"1860\",\n204\t          \"standard_date\": \"1860\",\n205\t          \"place\": \"Hill, Texas, United States\",\n206\t          \"standard_place\": \"Hill, Texas, United States\"\n207\t        },\n208\t        {\n209\t          \"id\": \"9381f219-2889-4bfc-9b03-5527232282c1\",\n210\t          \"type\": \"Death\"\n211\t        }\n212\t      ]\n213\t    },\n214\t    {\n215\t      \"id\": \"I1\",\n216\t      \"gender..."
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -8048,8 +7912,7 @@
           ]
         },
         "primaryId2": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.6926768,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MHV5-SNR\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:DG2P-CG1\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MHV5-SNR\\\",\\n  \\\"updated\\\": \\\"2026-07-24T21:32:01.012Z\\\",\\n  \\\"confidence\\\": 3\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -8263,8 +8126,7 @@
           ]
         },
         "primaryId2": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.76232505,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MHV5-SN5\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:DXXF-6H5\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MHV5-SN5\\\",\\n  \\\"updated\\\": \\\"2026-07-24T21:32:09.897Z\\\",\\n  \\\"confidence\\\": 4\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -8606,8 +8468,7 @@
           ]
         },
         "primaryId2": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.21462454,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MZYV-S6L\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:GCQF-2QK\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MZYV-S6L\\\",\\n  \\\"updated\\\": \\\"2026-07-24T21:32:23.703Z\\\",\\n  \\\"confidence\\\": 1\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -8839,8 +8700,7 @@
           ]
         },
         "primaryId2": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.3158995,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MZYV-S6G\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:5SFK-1W5\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MZYV-S6G\\\",\\n  \\\"updated\\\": \\\"2026-07-24T21:32:32.642Z\\\",\\n  \\\"confidence\\\": 2\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9318,8 +9178,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Read",
@@ -9327,8 +9186,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1,
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jimmie_jewel_neal\",\n4\t    \"objective\": \"Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KNXW-M3T\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narr..."
+      }
     },
     {
       "tool": "Read",
@@ -9336,8 +9194,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 80,
         "limit": 120
-      },
-      "response_summary": "80\t          \"sequence\": 4,\n81\t          \"record_type\": \"vital_record\",\n82\t          \"jurisdiction\": \"Blount County, Alabama\",\n83\t          \"date_range\": \"1820-1870\",\n84\t          \"repository\": \"FamilySearch\",\n85\t          \"rationale\": \"Dedicated search for the marriage of M M Wood in Blount County, Alabama. Per the record-type guide, a parentage plan must include a separate item for the parents' marriage: (a) it confirms M M Wood and his wife as a couple; (b) it supplies Martha's mother's ma..."
+      }
     },
     {
       "tool": "Read",
@@ -9345,8 +9202,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 200,
         "limit": 200
-      },
-      "response_summary": "200\t      \"external_site\": null,\n201\t      \"results_ref\": \"results/log_003.json\",\n202\t      \"results_available\": 1,\n203\t      \"notes\": \"Broader search (dropped Hill County place filter) returned 1 result \u2014 a New York City marriage record, not relevant. Collection mismatch confirms no indexed FamilySearch marriage for M J Wood + W F Lanham in Texas circa 1869.\"\n204\t    },\n205\t    {\n206\t      \"id\": \"log_004\",\n207\t      \"plan_item_id\": \"pli_002\",\n208\t      \"performed\": \"2026-07-24T21:03:37.796Z\"..."
+      }
     },
     {
       "tool": "Read",
@@ -9354,8 +9210,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 400,
         "limit": 200
-      },
-      "response_summary": "400\t        \"count\": 50\n401\t      },\n402\t      \"outcome\": \"negative\",\n403\t      \"results_examined\": 3,\n404\t      \"external_site\": null,\n405\t      \"results_ref\": \"results/log_012.json\",\n406\t      \"results_available\": 3,\n407\t      \"notes\": \"3 results \u2014 none match M M Wood in Blount County. Jackson County (TN birth), Wilcox County (NY birth), Lawrence County (VA birth). M M Wood is not found under 'M' initial in 1870 Alabama because the 1870 enumerator recorded him as 'J T Wood' (different initi..."
+      }
     },
     {
       "tool": "Grep",
@@ -9364,8 +9219,7 @@
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "3910:  \"conflicts\": [],"
+      }
     },
     {
       "tool": "Grep",
@@ -9374,8 +9228,7 @@
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "3532:  \"person_evidence\": ["
+      }
     },
     {
       "tool": "Read",
@@ -9383,31 +9236,27 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3532,
         "limit": 400
-      },
-      "response_summary": "3532\t  \"person_evidence\": [\n3533\t    {\n3534\t      \"id\": \"pe_001\",\n3535\t      \"assertion_id\": \"a_084\",\n3536\t      \"person_id\": \"I1\",\n3537\t      \"confidence\": \"confident\",\n3538\t      \"rationale\": \"1860 US Census, Blount County AL. Name 'M M Wood' directly matches I1 (M M Wood). I1 was created from this head_of_household persona. No conflicting attributes. Founding record.\",\n3539\t      \"created\": \"2026-07-24\"\n3540\t    },\n3541\t    {\n3542\t      \"id\": \"pe_002\",\n3543\t      \"assertion_id\": \"a_085\",\n3..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills"
-      },
-      "response_summary": ".claude/skills/check-warnings/SKILL.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/resolution-writing.m..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/conflict-resolution/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: conflict-resolution\n3\tmodel: claude-sonnet-4-6\n4\tallowed-tools:\n5\t  - place_search\n6\t  - place_search_all\n7\t  - place_distance\n8\t  - research_append\n9\t  - convert_calendar\n10\tdescription: >-\n11\t  Identifies and resolves conflicting genealogical evidence \u2014 both fact-level\n12\t  conflicts (three different birthplaces) and identity-level conflicts where\n13\t  multiple candidate persons or records genuinely compete (e.g. two same-named\n14\t  people in one county). Performs source indep..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.json",
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\n.claude/settings.json\nresults/log_001.json\nresults/log_003.json\nresults/log_005.json\nresults/log_006.json\nresults/log_007.json\nresults/log_008.json\nresults/log_011.json\nresults/log_012.json\ntree.gedcomx.json\nresearch.json"
+      }
     },
     {
       "tool": "Grep",
@@ -9416,8 +9265,7 @@
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "92:      \"id\": \"LKYG-VKB\",\n445:      \"person2\": \"LKYG-VKB\",\n466:      \"parent\": \"LKYG-VKB\",\n483:      \"child\": \"LKYG-VKB\",\n494:      \"child\": \"LKYG-VKB\","
+      }
     },
     {
       "tool": "Read",
@@ -9425,8 +9273,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 92,
         "limit": 120
-      },
-      "response_summary": "92\t      \"id\": \"LKYG-VKB\",\n93\t      \"gender\": \"Female\",\n94\t      \"living\": false,\n95\t      \"names\": [\n96\t        {\n97\t          \"id\": \"N2\",\n98\t          \"given\": \"Martha J\",\n99\t          \"surname\": \"Wood\"\n100\t        },\n101\t        {\n102\t          \"id\": \"N6\",\n103\t          \"type\": \"BirthName\",\n104\t          \"given\": \"Martha\",\n105\t          \"surname\": \"Wood\",\n106\t          \"sources\": [\n107\t            {\n108\t              \"ref\": \"S3\",\n109\t              \"quality\": 3\n110\t            }\n111\t       ..."
+      }
     },
     {
       "tool": "Grep",
@@ -9435,8 +9282,7 @@
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "output_mode": "content",
         "head_limit": 30
-      },
-      "response_summary": "106:          \"sources\": [\n122:          \"sources\": [\n136:          \"sources\": [\n171:          \"sources\": [\n223:          \"sources\": [\n239:          \"sources\": [\n252:          \"sources\": [\n275:          \"sources\": [\n288:          \"sources\": [\n299:          \"sources\": [\n312:          \"sources\": [\n330:          \"sources\": [\n346:          \"sources\": [\n359:          \"sources\": [\n382:          \"sources\": [\n393:          \"sources\": [\n406:          \"sources\": [\n417:          \"sources\": [\n430:       ..."
+      }
     },
     {
       "tool": "Read",
@@ -9444,8 +9290,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 503,
         "limit": 100
-      },
-      "response_summary": "503\t  \"sources\": [\n504\t    {\n505\t      \"id\": \"Q8YZ-F2T\",\n506\t      \"title\": \"Jimmie J Yarbro, \\\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\\\"\",\n507\t      \"citation\": \"\\\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\\\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4N-5DRZ : Sun Jul 05 14:25:55 UTC 2026), Entry for Willie McGinnis and Elmer B Yarbro.\",\n508\t      \"url\": \"https://familysearch.org/ar..."
+      }
     },
     {
       "tool": "Read",
@@ -9453,23 +9298,20 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 600,
         "limit": 60
-      },
-      "response_summary": "600\t    {\n601\t      \"id\": \"Q3ZW-YBN\",\n602\t      \"title\": \"Martha Wood, \\\"United States, Census, 1860\\\"\",\n603\t      \"citation\": \"\\\"United States, Census, 1860\\\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK : Mon Jul 08 02:33:10 UTC 2024), Entry for M M Wood and Martha Wood, 1860.\",\n604\t      \"url\": \"https://familysearch.org/ark:/61903/1:1:MHDC-LKY\"\n605\t    },\n606\t    {\n607\t      \"id\": \"9PKG-FC2\",\n608\t      \"title\": \"Martha J. Wood Hamby, \\\"Find a Grave Index\\\"\",\n6..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/conflict-resolution/references/historical-contradictions.md"
-      },
-      "response_summary": "1\t# Historical Reasons for Contradictions\n2\t\n3\tReference guidance for explaining WHY conflicting evidence exists.\n4\tLoad this file when writing resolution rationales (step 5) or when\n5\tanalyzing identity conflicts (step 6).\n6\t\n7\t## Spelling Variations\n8\t\n9\tBefore the 20th century, spelling was not standardized. Names were\n10\trecorded phonetically by clerks, enumerators, and scribes who may\n11\thave spoken a different language or dialect than the person being\n12\trecorded. The same person's name..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9519,15 +9361,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"conflicts\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"c_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"conflicts\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"c_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/research-exhaustiveness/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research-exhaustiveness\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Evaluates whether research on a question is reasonably\n5\t  exhaustive \u2014 applies the five threshold questions and the 7-point\n6\t  stop criteria, then either writes the exhaustive_declaration on the\n7\t  question or explains what's missing. GPS Step 1 \u2014 Reasonably\n8\t  Exhaustive Research. Use when the user says \"is this research\n9\t  exhaustive?\", \"are we done?\", \"have we searched enough?\", \"can we\n10\t  declare exhaus..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9567,15 +9407,13 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/proof-conclusion/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the tier\n5\t  (Proved/Probable/Possible/Not Proved/Disproved), chooses the form\n6\t  (Statement/Summary/Argument), and writes a self-contained narrative\n7\t  markdown uploadable to FamilySearch.\n8\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use when\n9\t  the user says \"write the conclusion\", \"what's the proof?\", \"summarize\n10\t  the evidence\", \"write a proo..."
+      }
     },
     {
       "tool": "Grep",
@@ -9583,8 +9421,7 @@
         "pattern": "\\\"id\\\": \\\"I[12]\\\"",
         "path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "output_mode": "content"
-      },
-      "response_summary": "215:      \"id\": \"I1\",\n322:      \"id\": \"I2\","
+      }
     },
     {
       "tool": "Read",
@@ -9592,8 +9429,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 215,
         "limit": 240
-      },
-      "response_summary": "215\t      \"id\": \"I1\",\n216\t      \"gender\": \"Male\",\n217\t      \"names\": [\n218\t        {\n219\t          \"id\": \"N4\",\n220\t          \"type\": \"BirthName\",\n221\t          \"given\": \"M M\",\n222\t          \"surname\": \"Wood\",\n223\t          \"sources\": [\n224\t            {\n225\t              \"ref\": \"S3\",\n226\t              \"quality\": 3\n227\t            },\n228\t            {\n229\t              \"ref\": \"S2\",\n230\t              \"quality\": 3\n231\t            }\n232\t          ]\n233\t        },\n234\t        {\n235\t          \"id\":..."
+      }
     },
     {
       "tool": "Read",
@@ -9601,30 +9437,26 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "offset": 454,
         "limit": 60
-      },
-      "response_summary": "454\t        }\n455\t      ]\n456\t    },\n457\t    {\n458\t      \"id\": \"R2\",\n459\t      \"type\": \"ParentChild\",\n460\t      \"parent\": \"LH8W-LBC\",\n461\t      \"child\": \"KNXW-M3T\"\n462\t    },\n463\t    {\n464\t      \"id\": \"R3\",\n465\t      \"type\": \"ParentChild\",\n466\t      \"parent\": \"LKYG-VKB\",\n467\t      \"child\": \"KNXW-M3T\"\n468\t    },\n469\t    {\n470\t      \"type\": \"Couple\",\n471\t      \"person1\": \"I1\",\n472\t      \"person2\": \"I2\",\n473\t      \"sources\": [\n474\t        {\n475\t          \"ref\": \"S3\"\n476\t        }\n477\t      ],\n47..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct,mcp__genealogy__tree_edit",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/research/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research\n3\tmodel: claude-sonnet-4-6\n4\tdescription: >-\n5\t  Drives the full GPS research workflow on a research objective, invoking the\n6\t  right sub-skills in the right order based on current research.json state.\n7\t  Iterates from question selection through proof conclusion until all\n8\t  questions are resolved. Use when the user says \"research [objective]\",\n9\t  \"/research [question]\", \"find [relative]\", \"investigate [person]\", \"answer\n10\t  this research question\", or wants to han..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9662,8 +9494,7 @@
           "exhaustive_search_summary": "Searched FamilySearch for US Federal Censuses 1850, 1860, and 1870 covering Georgia (Cherokee County) and Alabama (Blount County); the 1855 Alabama State Census; marriage records in Blount County AL and Georgia 1830\u20131870; and Blount County AL probate records 1860\u20131900 via full-text search. All eight plan items were completed. The 1860 Blount County census provided the primary household-position evidence for parentage. The 1850 Cherokee County census and the 1870 Blount County census independently corroborated the same couple. No marriage record for M M Wood was found (his marriage likely occurred in South Carolina approximately 1835\u20131837, which predates indexed FamilySearch records for that state). The Blount County probate full-text search returned zero results, indicating a digitization gap rather than a confirmed absence of records. South Carolina census records for 1840 were also searched with no results. The original NARA census images were not independently examined; only the FamilySearch derivative indexes were used.",
           "narrative_markdown": "# Parents of Martha J. Wood (LKYG-VKB)\n\n## Conclusion (Probable)\n\nThe preponderance of evidence strongly suggests that **M M Wood** (tree person I1, born approximately 1812 in South Carolina) and **Martha Wood** (tree person I2, born approximately 1814 in South Carolina) are the parents of Martha J. Wood (tree person LKYG-VKB; born approximately 1852\u20131855 in Georgia; died 30 May 1906, Hill County, Texas), the mother of Jimmie Jewel Neal. Three independent US Federal Census enumerations spanning 1850\u20131870 document the same family unit in a consistent pattern that supports this conclusion, though the parentage rests on indirect evidence (household co-residence) rather than a direct statement.\n\n## Primary Evidence\n\nThe 1860 United States Census for Blount County, Alabama, places a child named \"Martha Wood\" \u2014 female, born approximately 1852 in Georgia \u2014 in the household of head \"M M Wood\" and wife \"Martha Wood,\" both born in South Carolina.\\textsuperscript{1} M M Wood is enumerated as approximately 48 years old (born approximately 1812) and his wife as approximately 46 years old (born approximately 1814). The child Martha Wood (approximately age 8, born approximately 1852 in Georgia) matches tree person LKYG-VKB in sex, approximate birth year, birthplace (Georgia), and 1860 residence (Blount County, Alabama). Because the 1860 Federal Census did not include a relationship column, the parent-child relationship is inferred from household position and shared surname \u2014 a method that constitutes indirect evidence. The record was accessed as a derivative FamilySearch index entry for the underlying NARA microfilm schedule (M653); the original image was not independently examined.\n\n## Corroborating Evidence\n\n**1850 Cherokee County, Georgia census.** A search of the 1850 US Federal Census found a household of \"M M Wood\" in Cherokee County, Georgia: head M M Wood, male, approximately 34 years old (born approximately 1816), birthplace South Carolina; wife \"Martha Wood,\" female, approximately 27 years old (born approximately 1823), birthplace South Carolina; and seven children born between approximately 1837 and 1849, in South Carolina and Georgia.\\textsuperscript{2} Three of these children \u2014 Margaret (born approximately 1841, Georgia), Manly A (born approximately 1843, Georgia), and David (born approximately 1844, Georgia) \u2014 appear age-consistently in both the 1850 Cherokee County household and a 1860 Blount County household containing identically-named adults, confirming these as the same family unit. Martha J. Wood had not yet been born at the time of the 1850 census, consistent with her absence from that household.\n\n**1870 Blount County, Alabama census.** A household headed by \"J T Wood\" \u2014 male, approximately 58 years old (born approximately 1812), birthplace South Carolina \u2014 was found in Blount County, Alabama, in 1870.\\textsuperscript{3} His wife is recorded as \"M Wood,\" female, approximately 55 years old (born approximately 1815), birthplace South Carolina. Two Georgia-born adult children remain in the household: Jasper Wood (male, born approximately 1848, Georgia) and Elizabeth Wood (female, born approximately 1852, Georgia). The head's given-name initials differ from the 1860 census (\"J T\" versus \"M M\"), but all other identifying attributes agree: identical birth year (~1812), identical birth state (South Carolina), same county (Blount, Alabama), same wife (Martha/M Wood, born South Carolina approximately 1814\u20131815), and Georgia-born children consistent with the 1850 family. This discrepancy is attributed to different enumerators recording different initials for the same individual. This 1870 record is linked to I1 and I2 at probable confidence.\n\n## Evidence Analysis\n\n**Source classification.** All three census records were accessed as derivative FamilySearch index entries pointing to original NARA population schedules. The underlying federal census schedules are original government records. The original census images were not independently examined in this research project, which is a noted limitation. For the parentage question, household composition \u2014 which the FamilySearch census indexes capture reliably \u2014 is the critical evidence type.\n\n**Informant analysis.** The informants in all three censuses were unidentified household members who responded to the enumerator's questions. Ages and birthplaces are secondary information (reported from memory, not from contemporaneous documentation). Household co-residence is primary information (the enumerator observed it directly at enumeration time). The parentage inference is indirect: in the 1860 census, without a relationship column, parentage is inferred from the surname, sex, approximate age, birthplace, and household position of child_7 Martha Wood relative to head M M Wood and wife Martha Wood.\n\n**Independence.** The three census enumerations are mutually independent: conducted by different enumerators in different years (1850, 1860, 1870), one in Georgia (1850) and two in Alabama (1860, 1870). They constitute three separate evidentiary units.\n\n## Conflicts Resolved\n\n**c_001 \u2014 M M Wood birth year (~1812 vs. ~1816).** The 1860 and 1870 censuses agree on a birth year of approximately 1812 (assertions a_086, a_004); the 1850 census gives approximately 1816 (assertion a_028). The two-to-one preponderance favors ~1812. A 4-year discrepancy across pre-1880 censuses is within the documented range of census age-estimation error. Preferred assertion: a_086.\n\n**c_002 \u2014 Martha Wood birth year (~1814 vs. ~1815 vs. ~1823).** The 1860 census gives approximately 1814 (a_092) and the 1870 census gives approximately 1815 (a_009), agreeing within 1 year; the 1850 census gives approximately 1823 (a_033), a 9-year outlier. The two-to-one preponderance favors ~1814. The 1850 outlier is consistent with the documented historical pattern of women in the antebellum South understating their ages to census enumerators. Preferred assertion: a_092.\n\nA discrepancy in Martha J. Wood's birth year \u2014 approximately 1855 in the pre-existing tree versus approximately 1852 in the 1860 census index \u2014 is noted but does not constitute a separate source conflict (both values ultimately reference the same 1860 census source S3). This does not affect the parentage conclusion.\n\n## Limitations and Path to Proof\n\nThis conclusion is rated **probable** rather than proved because: (1) all three sources are derivative indexes, and the original NARA census images were not independently examined; (2) the parentage rests on indirect evidence from household co-residence in a census without a relationship column; and (3) no source with direct, primary parentage information was found.\n\nThe tier could potentially be advanced if the following records \u2014 currently unsearched or inaccessible \u2014 were found: a probate estate file naming Martha J. Wood as a daughter of M M Wood (Blount County, Alabama estate records for 1870\u20131900 are not yet accessible via FamilySearch full-text search); a marriage record for M M Wood that would name his wife's maiden surname (likely in South Carolina approximately 1835\u20131837, in records not yet indexed on FamilySearch); or a later census with an explicit relationship column (e.g., the 1880 US Census) showing Martha's parents, if any of the family remained together.\n\n---\n\n\\textsuperscript{1} \"United States, Census, 1860,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK : accessed 24 July 2026), entry for M M Wood household, Eastern Subdivision, Blount County, Alabama; citing NARA microfilm publication M653.\n\n\\textsuperscript{2} \"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:MZYV-S6L : accessed 2026-07-24), entry for M M Wood household, Cherokee County, Georgia, dwelling and family number not stated; citing NARA microfilm publication M432.\n\n\\textsuperscript{3} \"United States Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHV5-SNR : accessed 2026-07-24), entry for M Wood in household of J T Wood, Blount County, Alabama."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -9687,8 +9518,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -9696,15 +9526,13 @@
         "description": "GPS mentor proof-critique of ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Perform a `proof-critique` on proof summary `ps_001` for project at `/tmp/e2e-jimmie-jewel-neal-ay04a5c2`.\n\n**Context:**\n- Research question q_001: \"Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal of Hill County, Texas?\"\n- Proof summary ps_001 was just written at tier `probable`, vehicle `summary`\n- The proof concludes that M M Wood (I1) and Martha Wood (I2) are the parents of Martha J. Wood (LKYG-VKB)\n- Supporting assertion IDs: a_001, a_004, a_006, a_009, a_026, a_028, a_030, a_031, a_033, a_035, a_084, a_086, a_090, a_092, a_132, a_137, a_138\n- Resolved conflicts: c_001 (I1 birth year ~1812 vs ~1816, resolved preferred a_086), c_002 (I2 birth year ~1814 vs ~1815 vs ~1823, resolved preferred a_092)\n- Three independent census records used: 1860 Blount County AL (S3), 1850 Cherokee County GA (S2), 1870 Blount County AL (S1)\n- Parentage is inferred from household co-residence (1860 census had no relationship column)\n- All three sources are derivative FamilySearch index entries; original images not independently examined\n- Concluded relationships R4 (Couple I1+I2), R5 (ParentChild I1\u2192LKYG-VKB), R6 (ParentChild I2\u2192LKYG-VKB) are in tree.gedcomx.json\n\nPlease read ps_001's full `narrative_markdown` from research.json and evaluate it as a proof-critique. Record your structured verdict in evaluations/ and return your findings."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"The verdict has been persisted to `research.json` (`ev_001`) and `evaluations/proof-critique-ps_001-2026-07-24T22-10-00.json`. Here is the review:\\n\\n# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\nThe conflict resolution work here is the real thing, not a rubber stamp. c_001 and c_002 both correctly identify that the 1850, 1860, and 1870 censuses are mutually independent evidentiary units (Standard 46 \\u2014 different enumerators, different y..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json"
-      },
-      "response_summary": "File content (55752 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -9712,8 +9540,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1,
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jimmie_jewel_neal\",\n4\t    \"objective\": \"Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"KNXW-M3T\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-10\",\n10\t    \"updated\": \"2026-07-10\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narr..."
+      }
     },
     {
       "tool": "Read",
@@ -9721,8 +9548,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 100,
         "limit": 400
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_004\",\n102\t          \"sequence\": 4,\n103\t          \"record_type\": \"vital_record\",\n104\t          \"jurisdiction\": \"Blount County, Alabama\",\n105\t          \"date_range\": \"1820-1870\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"Dedicated search for the marriage of M M Wood in Blount County, Alabama. Per the record-type guide, a parentage plan must include a separate item for the parents' marriage: (a) it confirms M M Wood and his wif..."
+      }
     },
     {
       "tool": "Read",
@@ -9730,8 +9556,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 500,
         "limit": 400
-      },
-      "response_summary": "500\t      },\n501\t      \"source_classification\": \"derivative\",\n502\t      \"repository\": \"FamilySearch\",\n503\t      \"access_date\": \"2026-07-24\",\n504\t      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK\",\n505\t      \"notes\": \"FamilySearch index and linked image of the 1860 NARA census schedule (M653). Original census schedule not independently examined \u2014 this is a derivative index/abstract entry pointing to the original image. Classification: derivative.\",\n506\t      \"log_entry_id\": \"l..."
+      }
     },
     {
       "tool": "Read",
@@ -9739,8 +9564,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 900,
         "limit": 450
-      },
-      "response_summary": "900\t      \"log_entry_id\": \"log_011\",\n901\t      \"source_id\": \"src_001\"\n902\t    },\n903\t    {\n904\t      \"id\": \"a_021\",\n905\t      \"record_id\": \"ark:/61903/1:1:MHV5-SNR\",\n906\t      \"record_persona_id\": \"p_209630307\",\n907\t      \"record_role\": \"child_2\",\n908\t      \"fact_type\": \"birth\",\n909\t      \"value\": \"born Georgia\",\n910\t      \"place\": \"Georgia\",\n911\t      \"standard_place\": \"Georgia, United States\",\n912\t      \"information_quality\": \"indeterminate\",\n913\t      \"informant\": \"unknown household member..."
+      }
     },
     {
       "tool": "Read",
@@ -9748,8 +9572,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1950,
         "limit": 400
-      },
-      "response_summary": "1950\t      \"fact_type\": \"relationship\",\n1951\t      \"value\": \"child of M M Wood (inferred)\",\n1952\t      \"structured_value\": {\n1953\t        \"relationship_type\": \"child_inferred\",\n1954\t        \"related_person_role\": \"head_of_household\"\n1955\t      },\n1956\t      \"information_quality\": \"indeterminate\",\n1957\t      \"informant\": \"the researcher\",\n1958\t      \"informant_proximity\": \"researcher\",\n1959\t      \"evidence_type\": \"indirect\",\n1960\t      \"informant_bias_notes\": \"1850 census has no relationship c..."
+      }
     },
     {
       "tool": "Read",
@@ -9757,8 +9580,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 2350,
         "limit": 450
-      },
-      "response_summary": "2350\t      \"informant\": \"unknown household member\",\n2351\t      \"informant_proximity\": \"household_member\",\n2352\t      \"evidence_type\": \"direct\",\n2353\t      \"extracted_for_question_ids\": [\n2354\t        \"q_001\"\n2355\t      ],\n2356\t      \"log_entry_id\": \"log_001\",\n2357\t      \"source_id\": \"src_003\"\n2358\t    },\n2359\t    {\n2360\t      \"id\": \"a_091\",\n2361\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n2362\t      \"record_role\": \"wife\",\n2363\t      \"fact_type\": \"sex\",\n2364\t      \"value\": \"Female\",\n2365\t   ..."
+      }
     },
     {
       "tool": "Read",
@@ -9766,8 +9588,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 2790,
         "limit": 400
-      },
-      "response_summary": "2790\t    },\n2791\t    {\n2792\t      \"id\": \"a_114\",\n2793\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n2794\t      \"record_role\": \"child_4\",\n2795\t      \"fact_type\": \"name\",\n2796\t      \"value\": \"David Wood\",\n2797\t      \"structured_value\": {\n2798\t        \"given\": \"David\",\n2799\t        \"surname\": \"Wood\"\n2800\t      },\n2801\t      \"information_quality\": \"indeterminate\",\n2802\t      \"informant\": \"unknown household member\",\n2803\t      \"informant_proximity\": \"household_member\",\n2804\t      \"evidence_type\": ..."
+      }
     },
     {
       "tool": "Read",
@@ -9775,8 +9596,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3189,
         "limit": 80
-      },
-      "response_summary": "3189\t      \"informant_proximity\": \"household_member\",\n3190\t      \"evidence_type\": \"direct\",\n3191\t      \"extracted_for_question_ids\": [\n3192\t        \"q_001\"\n3193\t      ],\n3194\t      \"log_entry_id\": \"log_001\",\n3195\t      \"source_id\": \"src_003\",\n3196\t      \"standard_place\": \"Georgia, United States\"\n3197\t    },\n3198\t    {\n3199\t      \"id\": \"a_136\",\n3200\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n3201\t      \"record_role\": \"child_7\",\n3202\t      \"fact_type\": \"residence\",\n3203\t      \"value\": \"Easte..."
+      }
     },
     {
       "tool": "Read",
@@ -9784,8 +9604,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3264,
         "limit": 400
-      },
-      "response_summary": "3264\t      \"id\": \"a_139\",\n3265\t      \"record_id\": \"ark:/61903/1:1:MHDC-LKK\",\n3266\t      \"record_role\": \"child_8\",\n3267\t      \"fact_type\": \"name\",\n3268\t      \"value\": \"Mary Wood\",\n3269\t      \"structured_value\": {\n3270\t        \"given\": \"Mary\",\n3271\t        \"surname\": \"Wood\"\n3272\t      },\n3273\t      \"information_quality\": \"indeterminate\",\n3274\t      \"informant\": \"unknown household member\",\n3275\t      \"informant_proximity\": \"household_member\",\n3276\t      \"evidence_type\": \"direct\",\n3277\t      \"ext..."
+      }
     },
     {
       "tool": "Read",
@@ -9793,8 +9612,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3664,
         "limit": 250
-      },
-      "response_summary": "3664\t      \"rationale\": \"1860 census: Martha Wood's spousal relationship assertion also bears on I1 as the spouse named 'M M Wood'. Consistent with Couple R4. Founding record.\",\n3665\t      \"created\": \"2026-07-24\"\n3666\t    },\n3667\t    {\n3668\t      \"id\": \"pe_015\",\n3669\t      \"assertion_id\": \"a_132\",\n3670\t      \"person_id\": \"LKYG-VKB\",\n3671\t      \"confidence\": \"confident\",\n3672\t      \"rationale\": \"1860 US Census, Blount County AL: child_7 'Martha Wood', female, born ~1852 GA, in M M Wood's house..."
+      }
     },
     {
       "tool": "Read",
@@ -9802,37 +9620,32 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 3913,
         "limit": 250
-      },
-      "response_summary": "3913\t      \"created\": \"2026-07-24\"\n3914\t    },\n3915\t    {\n3916\t      \"id\": \"pe_046\",\n3917\t      \"assertion_id\": \"a_036\",\n3918\t      \"person_id\": \"I2\",\n3919\t      \"confidence\": \"probable\",\n3920\t      \"rationale\": \"1850 census: Martha Wood (I2) recorded as spouse of M M Wood (I1). Relationship assertion bears on I2. Score for I2 identification 0.316; qualitative override to probable. Probable.\",\n3921\t      \"created\": \"2026-07-24\"\n3922\t    },\n3923\t    {\n3924\t      \"id\": \"pe_047\",\n3925\t      \"ass..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_001.json"
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_001\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-24T20:58:49.215Z\",\n5\t  \"returned_count\": 4,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Wood\",\n9\t      \"givenName\": \"Martha\",\n10\t      \"residencePlace\": \"Blount, Alabama, United States\",\n11\t      \"residenceYearFrom\": 1860,\n12\t      \"residenceYearTo\": 1860,\n13\t      \"recordType\": \"census\",\n14\t      \"sex\": \"Female\",\n15\t      \"birthYearFrom\": 1851,\n16\t      \"birthYearTo\": 1859,\n17\t      \"count\": 50,\n18\t..."
+      }
     },
     {
       "tool": "mcp__genealogy__validate_research_schema",
       "args": {
         "projectPath": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"valid\\\": true,\\n  \\\"errors\\\": [],\\n  \\\"warnings\\\": [],\\n  \\\"message\\\": \\\"Both project files pass all validation checks.\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json",
         "limit": 5
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KNXW-M3T\",\n5\t      \"gender\": \"Female\","
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"KNXW-M3T\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Jimmie Jewel\",\n11\t          \"surname\": \"Neal\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"248eaba5-34ae-4182-9874-bfcc07166241\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"10 July 1884\",\n19\t          \"standard_date\": \"10 Jul 1884\",\n20\t          \"place\": \"Hillsboro, Hi..."
+      }
     },
     {
       "tool": "Read",
@@ -9840,8 +9653,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/research.json",
         "offset": 1343,
         "limit": 220
-      },
-      "response_summary": "1343\t      \"id\": \"a_042\",\n1344\t      \"record_id\": \"ark:/61903/1:1:MZYV-S6L\",\n1345\t      \"record_persona_id\": \"p_265358213\",\n1346\t      \"record_role\": \"child_1\",\n1347\t      \"fact_type\": \"relationship\",\n1348\t      \"value\": \"child of Martha Wood (inferred)\",\n1349\t      \"structured_value\": {\n1350\t        \"relationship_type\": \"child_inferred\",\n1351\t        \"related_person_role\": \"wife\"\n1352\t      },\n1353\t      \"information_quality\": \"indeterminate\",\n1354\t      \"informant\": \"the researcher\",\n1355\t ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9887,24 +9699,21 @@
           "timestamp": "2026-07-24T22:10:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-24T22-10-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/results/log_001.json",
         "limit": 60
-      },
-      "response_summary": "1\t{\n2\t  \"log_id\": \"log_001\",\n3\t  \"tool\": \"record_search\",\n4\t  \"retrieved\": \"2026-07-24T20:58:49.215Z\",\n5\t  \"returned_count\": 4,\n6\t  \"payload\": {\n7\t    \"query\": {\n8\t      \"surname\": \"Wood\",\n9\t      \"givenName\": \"Martha\",\n10\t      \"residencePlace\": \"Blount, Alabama, United States\",\n11\t      \"residenceYearFrom\": 1860,\n12\t      \"residenceYearTo\": 1860,\n13\t      \"recordType\": \"census\",\n14\t      \"sex\": \"Female\",\n15\t      \"birthYearFrom\": 1851,\n16\t      \"birthYearTo\": 1859,\n17\t      \"count\": 50,\n18\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/hypothesis-tracking/SKILL.md",
         "limit": 80
-      },
-      "response_summary": "1\t---\n2\tname: hypothesis-tracking\n3\tmodel: claude-sonnet-4-6\n4\tdescription: >-\n5\t  Creates, updates, and reviews hypotheses about person identity, parentage,\n6\t  and relationships. Links supporting and contradicting assertions, manages\n7\t  status transitions (active \u2192 supported \u2192 ruled_out), tracks competing\n8\t  candidates, and summarizes hypothesis status. GPS Step 3-4 \u2014 Analysis,\n9\t  Correlation, and Resolution. Use when the user says \"I think [claim]\",\n10\t  \"track this hypothesis\", \"could ..."
+      }
     },
     {
       "tool": "Read",
@@ -9912,8 +9721,7 @@
         "file_path": "/tmp/e2e-jimmie-jewel-neal-ay04a5c2/.claude/skills/hypothesis-tracking/SKILL.md",
         "offset": 80,
         "limit": 80
-      },
-      "response_summary": "80\toriginated. If from a compiled source (family tree, online genealogy,\n81\tpublished narrative), mark it as needing verification \u2014 compiled\n82\tsources are leads, not evidence.\n83\t\n84\t**New hypotheses always start as `active`.** Even if existing\n85\tevidence strongly favors the hypothesis, set `status: \"active\"` at\n86\tcreation. Promotion to `supported` happens in a separate evaluation\n87\tstep after evidence is explicitly reviewed against the criteria below.\n88\t\n89\tCreate with `research_append(..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9947,16 +9755,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"hypotheses\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"h_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -9985,8 +9791,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/questions[0]: unexpected property 'resolution_summary' (questions allow only id, question, rationale, selection_basis, priority, status, depends_on, unblocks, created, resolved, resolution_assertion_ids, exhaustive_declaration)\\\",\\n    \\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -10014,8 +9819,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -10469,5 +10273,6 @@
       ],
       "transcript": "agent-aa8ffc66bc50e6a12.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }
