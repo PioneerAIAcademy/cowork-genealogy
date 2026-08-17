@@ -53,6 +53,20 @@ RESEARCH_WRITERS = frozenset(
     {"research_append", "research_log_append", "extraction_append"}
 )
 
+# Project-file writers this module does NOT apply. Named explicitly so a run
+# containing them reports a coverage gap instead of looking fully replayed.
+# Read tools are not listed: they change no state, so counting them would bury
+# the real gap in noise.
+UNMODELLED_WRITERS = frozenset(
+    {
+        "tree_edit",
+        "tree_correct",
+        "tree_forget",
+        "materialize_facts",
+        "merge_tree_persons",
+    }
+)
+
 # Sections that live as top-level arrays on research.json. `plan_items` is NOT
 # one of them — it is a pseudo-section that nests into `plans[].items` — and
 # that asymmetry is exactly what makes the ownership table and the tool
@@ -138,6 +152,29 @@ def parse_tool_result(response_summary: Any) -> dict | None:
     }
 
 
+def _section_entries(state: dict, section: str) -> list:
+    """The entries an id is allocated against.
+
+    `plan_items` is the exception and the reason this helper exists: there is no
+    top-level `plan_items` array, so reading `state["plan_items"]` always found
+    nothing and every synthesised item id came out as `pli_001`. The real tool
+    allocates from the pool flattened across every plan, so that is what this
+    returns.
+    """
+    if section == "plan_items":
+        plans = state.get("plans")
+        if not isinstance(plans, list):
+            return []
+        return [
+            item
+            for plan in plans
+            if isinstance(plan, dict)
+            for item in (plan.get("items") or [])
+        ]
+    arr = state.get(section)
+    return arr if isinstance(arr, list) else []
+
+
 def _next_id(state: dict, section: str) -> str | None:
     """The id the tool would assign next, by its own sequential convention.
 
@@ -145,7 +182,7 @@ def _next_id(state: dict, section: str) -> str | None:
     falls back to the schema-declared prefix when the section is empty.
     """
     prefix = SECTION_ID_PREFIX.get(section)
-    arr = state.get(section)
+    arr = _section_entries(state, section)
     highest = 0
     if isinstance(arr, list):
         for e in arr:
@@ -161,6 +198,51 @@ def _next_id(state: dict, section: str) -> str | None:
     return f"{prefix}{highest + 1:03d}"
 
 
+# `research_log_append`'s input field -> the key the tool persists. The tool
+# takes a FLAT op (`{tool, query, outcome, planItemId, …}`), not `research_append`'s
+# `{section, op, entry}`, and it renames camelCase to snake_case on the way in.
+#
+# This is the one place the module maps the tool's semantics rather than reading
+# its output back, and it is deliberately narrow: renames only, no validation, no
+# defaulting beyond `plan_item_id`. Without it the whole `log` section replayed as
+# `[{"id": "log_001"}, …]` — id-shaped shells with no body — while the fidelity
+# check compared id sets only and reported a 94-100% match over nothing.
+_LOG_FIELD_RENAMES = {
+    "planItemId": "plan_item_id",
+    "resultsExamined": "results_examined",
+    "resultsAvailable": "results_available",
+    "externalSite": "external_site",
+}
+_LOG_EXTERNAL_SITE_RENAMES = {
+    "urlGenerated": "url_generated",
+    "captureReceived": "capture_received",
+    "captureFilename": "capture_filename",
+}
+# Control keys and tool-derived values that are not part of the entry body.
+# `performed` is stamped from the wall clock and `results_ref` from a real
+# sidecar write, so neither is reconstructible from arguments — they are left
+# ABSENT rather than invented.
+_LOG_NON_BODY_KEYS = frozenset(
+    {"section", "op", "ops", "projectPath", "entryId", "planId", "stagedResultsRef"}
+)
+
+
+def _log_entry_body(op: dict) -> dict:
+    """A `research_log_append` op's flat arguments as the tool's persisted entry."""
+    body: dict = {}
+    for key, value in op.items():
+        if key in _LOG_NON_BODY_KEYS:
+            continue
+        name = _LOG_FIELD_RENAMES.get(key, key)
+        if name == "external_site" and isinstance(value, dict):
+            value = {
+                _LOG_EXTERNAL_SITE_RENAMES.get(k, k): v for k, v in value.items()
+            }
+        body[name] = value
+    body.setdefault("plan_item_id", None)
+    return body
+
+
 def _ops_from_args(args: dict, tool: str = "") -> list[dict]:
     """Normalise the single-op and batch forms into one list.
 
@@ -169,14 +251,25 @@ def _ops_from_args(args: dict, tool: str = "") -> list[dict]:
     implies `log` — so its ops must have one supplied, in the batch case too.
     Missing that was 582 dropped ops, and it read as "unmodelled" rather than
     as a bug, which is exactly why the coverage counter exists.
+
+    A log op is additionally reshaped: its arguments are flat, so they are lifted
+    into an `entry` the generic applier can use. Without that lift every log
+    entry replayed as a bare id.
     """
-    implied = "log" if tool == "research_log_append" else None
+    if tool == "research_log_append":
+        raw = (
+            [o for o in args["ops"] if isinstance(o, dict)]
+            if isinstance(args.get("ops"), list)
+            else [args]
+        )
+        return [
+            {"section": "log", "op": "append", "entry": _log_entry_body(o)} for o in raw
+        ]
     if isinstance(args.get("ops"), list):
-        ops = [o for o in args["ops"] if isinstance(o, dict)]
-        return [o if o.get("section") else dict(o, section=implied) for o in ops] if implied else ops
+        return [o for o in args["ops"] if isinstance(o, dict)]
     if args.get("section"):
         return [args]
-    return [dict(args, section=implied or "log")]
+    return [dict(args, section="log")]
 
 
 def _plan_items_target(state: dict, op: dict) -> dict | None:
@@ -285,6 +378,14 @@ def replay(
             continue
         name = bare_tool_name(str(entry.get("tool") or ""))
         if name not in RESEARCH_WRITERS:
+            # Report it. The module docstring promises `unmodelled` names every
+            # tool this replay could not apply, and `check_replay_fidelity`
+            # prints it as "the coverage gap, reported rather than hidden" — but
+            # a bare `continue` hid exactly the tree writers the constant above
+            # says are reported. A silent skip is the failure mode the counter
+            # exists to prevent, so it must not be the counter's own behaviour.
+            if name in UNMODELLED_WRITERS:
+                out.note_unmodelled(f"tool:{name}")
             continue
         if entry.get("is_error"):
             out.rejected += 1

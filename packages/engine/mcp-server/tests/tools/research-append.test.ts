@@ -1207,7 +1207,7 @@ describe("research_append (project singleton section)", () => {
 
   it("refuses status resolved when no proof summary references the question", async () => {
     const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     const r = await researchAppend({
       projectPath: dir,
@@ -1225,9 +1225,31 @@ describe("research_append (project singleton section)", () => {
     expect(research.questions[0].status).toBe("open"); // nothing written
   });
 
+  it("refuses the `resolved` DATE with no summary, not just the status", async () => {
+    // The two fields are one transition. Gating only `status` left the date as
+    // an ungated synonym, so an agent refused above could reach the same state
+    // by writing the date instead — and `project_context` would then report the
+    // question resolved while this gate had never seen it.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { resolved: "2026-01-02" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/q_001/);
+    const research = await readResearch();
+    expect(research.questions[0].resolved).toBe(null); // nothing written
+  });
+
   it("allows status resolved once a summary references it", async () => {
     const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     r0.proof_summaries.push(summary());
     await writeProject(r0);
     const r = await researchAppend({
@@ -1246,7 +1268,7 @@ describe("research_append (project singleton section)", () => {
     // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
     // the summary ordered first — a pre-call snapshot would refuse all 7.
     const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     // tier `possible` — a proved/probable summary additionally requires a prior
     // exhaustive declaration, which is a different invariant than the one under
@@ -1359,13 +1381,12 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("active");
   });
 
-  it("a resolved question with no proof summary passes vacuously, deliberately", async () => {
-    // Issue #1395's hazard, decided rather than left undefined. Nothing in the
-    // schema marks which question answers the objective, so no mechanically
-    // checkable discriminator separates "closed a side question with no
-    // candidates" — legitimate — from the hazard. Refusing would hard-block
-    // correct work, and a false deny is the asymmetric risk. Phase 2's
-    // tree-encoding gate is where an unencoded conclusion gets caught.
+  it("a resolved question with no proof summary passes vacuously, on seeded state", async () => {
+    // Still deliberate, but the state is now reachable only by seeding it:
+    // questionResolvedInvariants refuses the transition through the tool. What
+    // this pins is that an already-seeded document still LOADS and completes —
+    // a gate on a transition must not retroactively invalidate documents that
+    // predate it.
     const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
     await writeProject(r0);
@@ -1373,9 +1394,24 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("counts a question resolved by DATE alone toward the critique requirement", async () => {
+    // `resolved` is an ISO date or null, so the old `=== true` never matched and
+    // a date-resolved question's summary escaped the mentor gate entirely.
+    // `question-state.ts` has always read this field as truthy-or-not, so the
+    // two disagreed about the same question.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
   it("ignores a summary whose question is not resolved", async () => {
     const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open" });
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     r0.proof_summaries.push(summary());
     await writeProject(r0);
     const r = await complete();

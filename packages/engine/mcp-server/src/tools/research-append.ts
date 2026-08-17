@@ -247,9 +247,19 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * satisfied by someone else; read live when it is the same author's own prior
  * step.**
  *
- * **Cost, measured before it was written: zero.** All 150 questions that reached
- * `resolved` in the corpus have a proof summary. This gate would have refused
- * nothing that ever happened.
+ * **Both spellings of resolved are gated, deliberately.** A question carries a
+ * `status` enum AND a `resolved` date, and gating only `status` left the date as
+ * an ungated synonym: an agent refused here could write `resolved: "2026-01-02"`
+ * with `status` untouched, and `project_context` would then report the question
+ * resolved (`question-state.ts` reads `Boolean(question.resolved)`) while this
+ * gate had never seen it. That is the shape ADR-0011 warns about — a blocked
+ * agent improvises toward another route — and it is not hypothetical: the same
+ * inconsistency is why the completion gate's `q.resolved === true` was dead.
+ *
+ * **Cost, measured before it was written: zero, on both arms.** Replayed over
+ * the committed corpus: 142 writes set `status: "resolved"` and 4 set the date
+ * alone; **none of the 146** would have been refused. All 150 questions that
+ * reached `resolved` have a proof summary.
  *
  * Deliberately NOT gated here, because both would refuse real runs and a false
  * deny is the asymmetric risk: a prior exhaustive declaration (14 of 150 lack
@@ -257,14 +267,17 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * surfaced advisorily by `project_context`'s `questionStatuses` instead.
  */
 function questionResolvedInvariants(entry: any, research: any): string[] {
-  if (entry?.status !== "resolved") return [];
+  const resolving = entry?.status === "resolved" || Boolean(entry?.resolved);
+  if (!resolving) return [];
   const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
   if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
   return [
-    `question ${entry?.id ?? "(no id)"} cannot be set to status "resolved": no proof summary ` +
-      "references it. A question is resolved by concluding it — invoke proof-conclusion, which " +
-      "writes the proof_summaries entry carrying question_id. If you are writing both in one " +
-      "batch, order the proof_summaries append BEFORE this update.",
+    `question ${entry?.id ?? "(no id)"} cannot be marked resolved (via \`status\` or the ` +
+      "`resolved` date): no proof summary references it. A question is resolved by concluding " +
+      "it — invoke proof-conclusion, which writes the proof_summaries entry carrying " +
+      "question_id. A question closed with nothing found is still concluded: write a " +
+      "`not_proved` summary saying so. If you are writing both in one batch, order the " +
+      "proof_summaries append BEFORE this update.",
   ];
 }
 
@@ -745,7 +758,9 @@ function applyOne(
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
             "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project.",
+            "(with a rationale for why it no longer matters) — then retry completing the project. " +
+            "A conflict settled in the same batch as this update does not count; complete it in " +
+            "a later call.",
         );
       }
 
@@ -771,9 +786,17 @@ function applyOne(
       // A superseded verdict does not count: if a newer verdict replaced it, the
       // newer one is itself in evaluations[] and satisfies the gate; if nothing
       // replaced it, the critique genuinely no longer stands.
+      // `resolved` is an ISO date string or null, never a boolean, so the old
+      // `=== true` was unsatisfiable dead code — the same shape as the
+      // `identity_question === true` bug 60 lines above. `Boolean(q.resolved)`
+      // is what `question-state.ts` already uses to answer the same question,
+      // and the two disagreeing is how a question could read as resolved to
+      // `project_context` while this gate never counted it. Widening the set can
+      // only require MORE critiques; measured over the corpus it newly refuses
+      // nothing (4 date-only resolved questions, all already critiqued).
       const resolvedQuestionIds = new Set(
         (Array.isArray(research.questions) ? research.questions : [])
-          .filter((q: any) => q && (q.status === "resolved" || q.resolved === true))
+          .filter((q: any) => q && (q.status === "resolved" || Boolean(q.resolved)))
           .map((q: any) => q.id),
       );
       const uncritiqued = (
@@ -786,13 +809,20 @@ function applyOne(
             !preCallCritiquedSummaryIds?.has(ps.id),
         )
         .map((ps: any) => ps.id);
-      // A resolved question with NO proof summary passes vacuously, knowingly.
-      // Nothing in the schema marks which question answers the objective, so no
-      // mechanically checkable discriminator separates "closed a side question
-      // with no candidates" — a legitimate terminal state — from the hazard
-      // issue #1395 describes. Refusing here would hard-block correct work, and
-      // a false deny is the asymmetric risk. Phase 2's tree-encoding gate is
-      // where an unencoded conclusion gets caught.
+      // A resolved question with NO proof summary passes vacuously — but that
+      // state is no longer REACHABLE through this tool, so the vacuous pass now
+      // only covers documents seeded that way (fixtures, hand-authored state).
+      // `questionResolvedInvariants` refuses the transition, on either spelling
+      // of resolved, unless a summary references the question.
+      //
+      // That is the deliberate resolution of a contradiction these two gates
+      // used to carry: this comment claimed "closed a side question with no
+      // candidates" as a legitimate terminal state while its sibling made it
+      // unwritable. Concluding is the only way to close a question — a question
+      // closed with nothing found gets a `not_proved` summary saying so, which
+      // is a GPS-valid finding rather than a non-answer. Neither state occurs in
+      // the committed corpus: 0 of 154 runs ever reach `resolved` without a
+      // summary, seeded or produced.
       if (uncritiqued.length > 0) {
         throw new ResearchAppendError(
           `cannot set project.status = "completed": proof summary/summaries ` +
@@ -939,9 +969,15 @@ function applyOne(
   // below — an unrelated update to an already-resolved question must not
   // re-trigger it.
   if (section === "questions") {
-    const statusTouchedThisOp =
-      op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "status");
-    if (statusTouchedThisOp) {
+    // `resolved` is checked alongside `status` because it is the other spelling
+    // of the same transition — see questionResolvedInvariants. Omitting it here
+    // would leave the gate reachable only through one of the two fields.
+    const fields = op.fields ?? {};
+    const resolutionTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(fields, "status") ||
+      Object.prototype.hasOwnProperty.call(fields, "resolved");
+    if (resolutionTouchedThisOp) {
       invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
     }
   }
