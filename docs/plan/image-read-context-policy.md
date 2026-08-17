@@ -39,6 +39,27 @@ three times in prose (`SKILL.md:67-73`, `SKILL.md:204`, `image-reader.md`), and
 (`SKILL.md:21-24`, which declares only `record_read`, `volume_search`,
 `research_log_append`).
 
+> **Measured in Cowork 2026-08-16 — §7 step 5 is answered, and the answer is
+> yes.** This plan's last unmet DoD item was whether Cowork's session set gives
+> the *router* `image_read`, making the accumulated-base64 transport crash
+> reachable for real users. It does: a direct main-thread call resolved and
+> executed, refusing only on the tool's own 700 KB size cap, not on permission.
+> So the crash is reachable on any scan under the cap, and the production port of
+> `context_policy.SUBAGENT_ONLY_TOOLS` into the shipped plugin hook is warranted.
+>
+> Two facts from the same session bear on that port, both new:
+>
+> - **The plugin hook binds in Cowork and its deny is honoured** — verified with
+>   a canary, first confirmation since the 2026-07-30 hand probe, and it also
+>   holds for device-bridge tools.
+> - **`agent_type` for a plugin agent is NAMESPACED**
+>   (`genealogy-research:image-reader`), while a built-in reports bare. **A
+>   caller predicate written as `agent_type == "image-reader"` never fires in
+>   production**, and with a `deny unless ==` polarity it denies every caller
+>   including the owner. Match both spellings.
+>
+> Full detail: `docs/specs/guardrail-enforcement-spec.md` §6.1–§6.2.
+
 **Nothing enforces any of it.** The router still calls `image_read` directly —
 `eval/runlogs/unit/record-extraction/v1_2026-07-16_20-23-34.json`, post-merge:
 "it invoked image_read directly in the main context (first MCP tool call) rather
