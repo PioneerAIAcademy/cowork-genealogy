@@ -167,7 +167,13 @@ measured rather than argued.
    project and refusing every writer tool on a pre-existing drifted section —
    even a call that never touched it — was a false deny reaching the researcher,
    so the gate now blocks only on errors the call introduces
-   (`validation/introduced-errors.ts`).
+   (`validation/introduced-errors.ts`). What it knowingly leaves undone: the
+   tolerated fields still hold real evidence (`sources[].author`/`title` is
+   citation content, `assertions[].person_id` the assertion-to-person link,
+   `conflicts[].resolution_notes` the researcher's reasoning), so a legacy-shaped
+   document stays invalid for downstream readers (the viewer, `packages/schema`)
+   until an Option 2 healer rewrites it — a separate, lead-gated call, since the
+   per-key mapping is a genealogical judgment (validate-project-refactor-spec §11).
 2. **Satisfiability is a precondition, not a follow-up.** State which call shape
    satisfies the gate and how often agents actually produce it, *before*
    shipping the deny. ADR-0009's sixth `same_person` constraint disqualified a

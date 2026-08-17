@@ -121,7 +121,7 @@ export async function mergeWarnings(
       // What sanitation did (candidate strips, legacy-tree heals) — surfaced
       // at the dry-run so the LLM learns about dropped data BEFORE deciding
       // to write, not after.
-      sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings],
+      sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings, ...formatIssues(validation.warnings)],
     };
   } catch (e) {
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };

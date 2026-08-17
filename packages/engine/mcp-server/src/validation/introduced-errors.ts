@@ -92,15 +92,17 @@ function errorKey(e: ValidationError, research: unknown, tree: unknown): string 
  * present in `before`, so the returned result blocks only on errors this call
  * introduced.
  *
- * `after` is validated with the caller's `options` (so its sidecar pass runs
- * exactly as today); `before` is validated structurally only (no `projectPath`,
- * no disk access), which both keeps the snapshot faithful — the tree tools heal
- * in memory and `research_log_append` stages its sidecar to disk before
- * validating, so on-disk state is not the before-state — and scopes the
- * tolerance to structural drift: a sidecar error appears only in `after` and so
- * always blocks, unchanged from before this fix. A project with no pre-existing
- * drift produces an empty `before` error set, so the result is byte-identical
- * to calling `validateParsed(after, options)` directly.
+ * Both passes run with the caller's `options`, so the sidecar and cross-file
+ * checks run on the before-snapshot too: a pre-existing sidecar / dangling
+ * results-ref / D5 error is then present in `before` and demoted, not read as
+ * new and blocked. Omitting `projectPath` on the before-pass would re-freeze
+ * exactly that class of pre-existing drift — the bug #1572 exists to kill
+ * (validate-project-refactor-spec §5 rules on it: omitting `projectPath` is
+ * right only for a caller with no project directory, and this one always has
+ * one; the same section shows the sidecar pass is invariant under a merge, so
+ * before and after agree on pre-existing sidecar state). A project with no
+ * pre-existing drift produces an empty `before` error set, so the result is
+ * byte-identical to calling `validateParsed(after, options)` directly.
  */
 export async function validateIntroduced(
   before: ProjectState,
@@ -108,7 +110,7 @@ export async function validateIntroduced(
   options?: { projectPath?: string },
 ): Promise<ValidationResult> {
   const [beforeRes, afterRes] = await Promise.all([
-    validateParsed(before.research, before.tree),
+    validateParsed(before.research, before.tree, options),
     validateParsed(after.research, after.tree, options),
   ]);
 
@@ -117,17 +119,31 @@ export async function validateIntroduced(
   );
 
   const introduced: ValidationError[] = [];
-  const preExisting: ValidationWarning[] = [];
+  let preExistingCount = 0;
   for (const e of afterRes.errors) {
     if (preExistingKeys.has(errorKey(e, after.research, after.tree))) {
-      preExisting.push({
-        path: e.path,
-        message: `pre-existing schema error, not caused by this call: ${e.message}`,
-      });
+      preExistingCount++;
     } else {
       introduced.push(e);
     }
   }
+
+  // One summary line, not one warning per demoted error. A drifted project can
+  // carry dozens (the #1476 census was 45 over one call), and a wall of them on
+  // the SUCCESS path buries the warnings the agent must act on — retention gaps,
+  // place-resolution misses, sanitize notes. This is also #1572's asked-for
+  // "N pre-existing schema errors" wording, without the wall.
+  const preExisting: ValidationWarning[] =
+    preExistingCount > 0
+      ? [
+          {
+            path: "",
+            message:
+              `this project has ${preExistingCount} pre-existing schema error(s) ` +
+              `not caused by this call; run validate_research_schema for the list`,
+          },
+        ]
+      : [];
 
   return {
     valid: introduced.length === 0,

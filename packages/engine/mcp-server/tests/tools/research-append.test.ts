@@ -131,8 +131,10 @@ describe("research_append (Phase 1)", () => {
 
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/pre-existing/);
-    expect(r.validation.warnings.join(" ")).toMatch(/legacy_field/);
+    // Surfaced as a single summary line (a count + a pointer), not one warning
+    // per drifted field — see the #1476-wall note in validateIntroduced.
+    expect(r.validation.warnings.join(" ")).toMatch(/1 pre-existing schema error/);
+    expect(r.validation.warnings.join(" ")).toMatch(/validate_research_schema/);
     // the update landed
     expect((await readResearch()).assertions.find((a: any) => a.id === "a_001").date).toBe("1850");
   });

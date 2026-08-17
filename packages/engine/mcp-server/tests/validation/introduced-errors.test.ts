@@ -74,10 +74,9 @@ describe("validateIntroduced", () => {
 
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
+    // Demoted to a single summary warning (count + pointer), not one per error.
     expect(
-      result.warnings.some(
-        (w) => /pre-existing/.test(w.message) && /legacy_field/.test(w.message),
-      ),
+      result.warnings.some((w) => /pre-existing schema error/.test(w.message)),
     ).toBe(true);
   });
 

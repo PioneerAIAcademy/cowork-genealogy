@@ -439,9 +439,10 @@ describe("research_log_append", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    // The pre-existing drift is surfaced, not swallowed...
-    expect(result.validation.warnings.join(" ")).toMatch(/pre-existing/);
-    expect(result.validation.warnings.join(" ")).toMatch(/GHOST/);
+    // The pre-existing drift is surfaced as a summary line (count + pointer),
+    // not swallowed and not a per-error wall.
+    expect(result.validation.warnings.join(" ")).toMatch(/1 pre-existing schema error/);
+    expect(result.validation.warnings.join(" ")).toMatch(/validate_research_schema/);
     // ...and the entry was written with its sidecar finalized, not rolled back.
     expect((await readJson("research.json")).log).toHaveLength(1);
     expect(await exists("results/log_001.json")).toBe(true);
