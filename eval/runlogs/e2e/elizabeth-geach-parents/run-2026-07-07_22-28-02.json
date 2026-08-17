@@ -2721,51 +2721,44 @@
       "args": {
         "pattern": "**/*.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_elizabeth_geach_parents\",\n4\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n5\t    \"subject_person_ids\": [\"273D-F9Z\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-02T00:00:00Z\",\n8\t    \"updated\": \"2026-07-02T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t   ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2790,45 +2783,39 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Washington",
         "contextName": "Ohio"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Washington, Ohio, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1803/\\\",\\n      \\\"latitude\\\": 39.50139,\\n      \\\"longitude\\\": -81.41667,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Washington&focusedId=394824\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Washington_County,_Ohio\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Washington, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2836,8 +2823,7 @@
         "standardPlace": "Ohio, United States",
         "startYear": 1820,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Ohio, United States\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"scope\\\": \\\"Ohio\\\",\\n  \\\"totalForPlace\\\": 60,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3315268\\\",\\n      \\\"title\\\": \\\"Ohio, Athens County, Deceased Veteran Grave Registration Card File Index, 1819-1936\\\",\\n      \\\"dateRange\\\": \\\"1819-1936\\\",\\n      \\\"recordCount\\\": 5588,\\n      \\\"personCount\\\": 5591,\\n      \\\"imageCount\\\": 5546,\\n      \\\"url..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2845,16 +2831,14 @@
         "standardPlace": "Licking, Ohio, United States",
         "startYear": 1820,
         "endYear": 1895
-      },
-      "response_summary": "<persisted-output>\nOutput too large (59.5KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/toolu_01BfQVBoRMyCEWhbWfHo6peE.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Licking, Ohio, United States\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1895\\n  },\\n  \\\"totalForPlace\\\": 464,..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2862,16 +2846,14 @@
         "standardPlace": "Licking, Ohio, United States",
         "startYear": 1820,
         "endYear": 1895
-      },
-      "response_summary": "<persisted-output>\nOutput too large (57.6KB). Full output saved to: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/toolu_014aoSbDm6kKY3HoCEeLDQdR.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Licking, Ohio, United States\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1895\\n  },\\n  \\\"totalResults\\\": 318,\\..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/toolu_014aoSbDm6kKY3HoCEeLDQdR.json",
         "limit": 200
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Licking, Ohio, United States\\\",\\n    \\\"startYear\\\": 1820,\\n    \\\"endYear\\\": 1895\\n  },\\n  \\\"totalResults\\\": 318,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"007815128_016_M954-LM6\\\",\\n      \\\"imageGroupPrefix\\\": \\\"007815128\\\",\\n      \\\"imageCount\\\": 15,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"cove..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3008,30 +2990,26 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read,mcp__genealogy__record_search,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6FJ-ZMR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11263518025\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6FJ-ZMR\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1b06a26a-259a-41a8-ab3c-d9e87f1f2780\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Slack\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"W\\\"\\n        },\\n        {\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3044,16 +3022,14 @@
         "residenceYearTo": 1840,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 1130,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3066,8 +3042,7 @@
         "residenceYearTo": 1840,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 152,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3079,8 +3054,7 @@
         "residenceYearTo": 1830,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1830,\\n    \\\"residenceYearTo\\\": 1830,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 60575,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"res..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3089,8 +3063,7 @@
         "stagedResultsRef": "results/.staging/270894e2-95b7-438b-9ba2-3c6c8472e365.json",
         "subjectId": "273D-F9Z",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"273D-F9Z\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 27,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:Z8S5-WP2M\\\",\\n      \\\"matchScore\\\": 0.014665425,\\n      \\\"primaryId\\\": \\\"p_226787223300\\\",\\n      \\\"personName\\\": \\\"Nora B. Geach\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"collectionTitle\\\": \\\"Ohio, County Marriages, 178..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3099,22 +3072,19 @@
         "stagedResultsRef": "results/.staging/ca364671-a1e7-4654-9815-9ff9133869de.json",
         "subjectId": "273D-F9Z",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"273D-F9Z\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:DTR9-BHMM\\\",\\n      \\\"matchScore\\\": 0.0021359548,\\n      \\\"primaryId\\\": \\\"p_282003073200\\\",\\n      \\\"personName\\\": \\\"Elsie Geach\\\",\\n      \\\"collectionTitle\\\": \\\"United States City and Business Directories, ca. 1749 - c..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XH5G-85D"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10420444632\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XH5G-85D\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"5b3fe46d-d140-4b8d-aaee-862af4842f81\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Nehemiah\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"80dccd4d-c31f-4d6f-8b49-be281fef873b\\\",\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6FJ-9T1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11263510709\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6FJ-9T1\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1e6a3ba4-bda6-45fc-ab6d-4b3e455ccb87\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Jacob\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"c2d15bbf-0cda-479a-807c-9c75bea76d53\\\",\\n          \\\"type\\\": \\\"Birt..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3133,8 +3103,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Elizabeth Slack (n\u00e9e Geach) death register entry, 1895. Key finding: birthplace recorded as 'Washington Co., O.' = Washington County, Ohio (southeastern Ohio, not Washington Township, Licking County as previously assumed). No parents' names in this register-style entry. Marital status: Widowed. Occupation: Farm. Residence: Union Tp. (Licking County). Birth year: 1822. Record is an index entry only; image at ark:/61903/3:1:3QSQ-G9ZB-LS4X."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-07T20:52:39.367Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3157,8 +3126,7 @@
         "resultsAvailable": 1130,
         "stagedResultsRef": "results/.staging/9a69dc21-9de6-4f04-a2cd-95153a081f7e.json",
         "notes": "Fuzzy search for Geach in 1840 Ohio census returned 1,130 results but all are phonetic variants (Jaques, Jacks, Jack, Jakes, Gentch, Jaquays, etc.) \u2014 no actual Geach-surname entries in the 1840 US census for Ohio. The Geach name appears absent from the indexed 1840 Ohio census under any standard fuzzy match. Retrying with exact spelling."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-07T20:53:57.660Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3180,8 +3148,7 @@
         "resultsAvailable": 152,
         "stagedResultsRef": "results/.staging/270894e2-95b7-438b-9ba2-3c6c8472e365.json",
         "notes": "Exact 'Geach' search in Ohio with 1840 residence year returned 152 results but all from non-1840-census collections (Ohio death indexes 1908-1953, Ohio County Death Records 1840-2001, Find A Grave, Ohio County Marriages 1789-2016, voter records). No 1840 US census records for Geach in Ohio found \u2014 the Geach surname is absent from the indexed 1840 Ohio census. Notable contextual finds: Jacob Geach (born 1820 Licking County, died 1885 Union Twp. Licking \u2014 possibly Elizabeth's sibling); Find a Grave Granville Licking County cluster: Rebecca Benjamin Geach (b.Apr 1801, d.1870), Thomas Geach (b.17 Mar 1827, d.1897), Emily Allen Geach (b.11 Jun 1829, d.1859), Mary Eleanor Geach (b.29 Mar 1825, d.1905) \u2014 all potentially Elizabeth's siblings with Rebecca as possible mother. Collection mismatch: no 1840 census entries returned."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-07T20:54:04.590Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3202,24 +3169,21 @@
         "resultsAvailable": 60575,
         "stagedResultsRef": "results/.staging/ca364671-a1e7-4654-9815-9ff9133869de.json",
         "notes": "Top result (highest score 4.44): Nehemiah Geach, 1830 census, Falls Township, Muskingum County, Ohio. Falls Township is in eastern Muskingum County, directly adjacent to Washington County where Elizabeth was born in 1822. Geographically highly consistent \u2014 if Nehemiah is Elizabeth's father, the family was in Washington County in 1822 then had moved to adjacent Muskingum County by 1830. Must examine actual census image (ark:/61903/3:1:33SQ-GYYJ-S99H) to see household composition and ages. subjectResolvable: false \u2014 ranking against Elizabeth is unreliable; using geographic and chronological context instead. All other 1830 census results are phonetic variants (Jackson, Jack, Jakes)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-07T20:54:09.930Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_read,mcp__genealogy__image_read",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__research_log_append,mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__record_read,mcp__genealogy__image_read,mcp__genealogy__person_read",
         "max_results": 7
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mc..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3254,38 +3218,33 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_read",
       "args": {
         "ark": "ark:/61903/3:1:33SQ-GYYJ-S99H"
-      },
-      "response_summary": "{\"error\":\"FamilySearch image ark:/61903/3:1:33SQ-GYYJ-S99H is 1.1 MB \u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__person_read",
       "args": {
         "personId": "KGYQ-D3V",
         "relatives": true
-      },
-      "response_summary": "person_read is disabled in e2e benchmark runs. Reading the tree would hand you the stripped answer for free. Recover it through records instead (record_search, record_read, fulltext_search, image_search, \u2026)."
+      }
     },
     {
       "tool": "mcp__genealogy__person_read",
       "args": {
         "personId": "L18N-3DX",
         "relatives": true
-      },
-      "response_summary": "person_read is disabled in e2e benchmark runs. Reading the tree would hand you the stripped answer for free. Recover it through records instead (record_search, record_read, fulltext_search, image_search, \u2026)."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/results/log_003.json"
-      },
-      "response_summary": "File content (58092 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3299,8 +3258,7 @@
         "recordType": "census",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"return..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3323,8 +3281,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/b89e33fa-c1e2-47b1-a8cf-34e01db89ace.json",
         "notes": "Exact Geach + Ohio + census + 1850 returned 1 result \u2014 a city/business directory entry (not 1850 census). Collection mismatch. Retrying without recordType filter and without residenceYear to search all 1850-era census records."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-07T20:56:56.523Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3335,8 +3292,7 @@
         "recordCountry": "United States",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"givenName\\\": \\\"Nehemiah\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 186,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3356,15 +3312,13 @@
         "resultsAvailable": 186,
         "stagedResultsRef": "results/.staging/6c2431b5-b018-4086-8ea4-9f98459dd0d2.json",
         "notes": "Search for Nehemiah Geach USA-wide returned 186 results; only relevant hit is the 1830 Muskingum County census (already in log_004). Also noted: John N Geach (b. Apr 1864 Ohio) in 1900 census at Granville Township, Licking County \u2014 consistent with Geach family cluster there. No 1840 or 1850 census results for Nehemiah Geach in Ohio. Collection mismatch: no pli_004 (1850 census) records found for Geach Ohio. Need to search 1850 census collection directly."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:02:53.057Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XH5G-85D"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10420444632\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XH5G-85D\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"5b3fe46d-d140-4b8d-aaee-862af4842f81\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Nehemiah\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"80dccd4d-c31f-4d6f-8b49-be281fef873b\\\",\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3378,8 +3332,7 @@
         "anyYearTo": 1860,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"anyYearFrom\\\": 1810,\\n    \\\"anyYearTo\\\": 1860,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 46,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 46,..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3393,8 +3346,7 @@
         "collectionId": "1473259",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"anyYearFrom\\\": 1820,\\n    \\\"anyYearTo\\\": 1850,\\n    \\\"collectionId\\\": \\\"1473259\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 33,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 33..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3417,8 +3369,7 @@
         "resultsAvailable": 46,
         "stagedResultsRef": "results/.staging/090c0b04-87a4-47e8-aeca-6c27c031bc85.json",
         "notes": "Ohio Geach marriages 1810-1860: key results are Jacob Geach\u2013Mary Grubb (L18N-3DX); Thomas Geach in Charles C. Geach marriage record (96JS-JVT); Elizabeth P. Geach married Andrew Kerr (K8QC-4RD). No direct marriage record for Elizabeth Geach\u2013Jonathan Slack found. No Nehemiah or Peter Geach marriages found in these results. Need to read individual records for Jacob Geach and Elizabeth P. Geach to confirm relationships."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:03:35.581Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 46,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3441,29 +3392,25 @@
         "resultsAvailable": 33,
         "stagedResultsRef": "results/.staging/2f30256a-8506-405c-b894-851a54681916.json",
         "notes": "CRITICAL FINDING: Ohio Tax Records 1800-1887 for Geach in Ohio 1820-1850 returned 33 results, ALL for 'Peter Geach' \u2014 Nehemiah not present. Peter Geach appears in Roxbury Township, Washington County, Ohio continuously 1819-1839 (including 1822, the year Elizabeth was born in Washington Co.!). Also appears in Union Township, Licking County 1827, 1830, 1834 (treePersonId KGYQ-8BZ). Washington County birthplace on Elizabeth's 1895 death record now aligns with Peter Geach's presence in Roxbury Twp., Washington Co. in 1822. This makes Peter Geach the new prime suspect as Elizabeth's father, displacing Nehemiah Geach (who was only in 1830 Muskingum census, no tax or other records found)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:03:41.379Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 33,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:JSRX-56F"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12462250005\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JSRX-56F\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"086143d3-775e-4cc6-978b-3f5208bcf763\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Peter\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e5ee9fc3-6e1b-4524-902a-91f262c4a6a6\\\",\\n          \\\"type\\\": \\\"TaxAssessment\\\",\\n          \\\"pri..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XDX5-T3L"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10509611512\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XDX5-T3G\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Andrew\\\",\\n          \\\"surname\\\": \\\"Kerr\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_10509611511\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XDX5-T3L\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"Bi..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZGX-3VD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10467201252\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZGX-3VD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"073ed32f-7180-49aa-8678-d633c263deb9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Jacob\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_1..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3477,8 +3424,7 @@
         "residenceYearTo": 1830,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1830,\\n    \\\"residenceYearTo\\\": 1830,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 21,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returne..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3492,8 +3438,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 10,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returne..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3507,15 +3452,13 @@
         "anyYearTo": 1840,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"anyYearFrom\\\": 1800,\\n    \\\"anyYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 14,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 14,\\n  \\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:7F8R-NCN2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_120572990600\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:7F8R-NCN2\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1e6a5699-d2b6-4eb7-a7d7-f1f9d9d856de\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Peter\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"8d18e075-a33e-4be0-962f-aa8e0abf9097\\\",\\n          \\\"type\\\": \\\"TaxAssessment\\\",\\n          \\\"p..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3538,8 +3481,7 @@
         "resultsAvailable": 21,
         "stagedResultsRef": "results/.staging/e86358ae-8e17-4cbc-8c33-db16161aa439.json",
         "notes": "No 1830 federal census record for Peter Geach in Ohio found. All 21 results are tax records (Ohio Tax Records 1800-1887) \u2014 no census collection match. Peter Geach absent from indexed 1830 Ohio census despite paying taxes in both Roxbury Twp., Washington Co. and Union Twp., Licking Co. in that year. His name may be unindexed or indexed differently. Will search 1840 census for Washington County Geach entries directly."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:05:11.250Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_009.json\\\",\\n  \\\"returnedCount\\\": 21,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_009.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3562,8 +3504,7 @@
         "resultsAvailable": 10,
         "stagedResultsRef": "results/.staging/c31064b5-df8c-45b3-a26d-f95830400bed.json",
         "notes": "No 1850 census record for Peter Geach in Ohio. Only naturalization record (Peter Geach b.1842 \u2014 too young, likely a son/grandson) and marriage records. Peter Geach appears to have died or left Ohio between 1839 (last tax record) and 1850 census. Need to search Washington County probate records for Peter Geach death."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:05:15.447Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 10,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3586,8 +3527,7 @@
         "resultsAvailable": 14,
         "stagedResultsRef": "results/.staging/2b22ce57-d06a-4c91-bf69-9a33dd5d1012.json",
         "notes": "No marriage record for Peter Geach in Ohio or US found ca. 1800-1840. All high-scoring results are for a different Peter Geach (KKQS-HKF) in Montana/California/Michigan/Wisconsin. No parents' marriage record found. This is a significant gap \u2014 the parents' marriage to each other is unlocated."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:05:19.847Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_011.json\\\",\\n  \\\"returnedCount\\\": 14,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_011.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3599,8 +3539,7 @@
         "residenceYearTo": 1840,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"residencePlace\\\": \\\"Washington County, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 76,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"resu..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3616,8 +3555,7 @@
         "anyYearTo": 1850,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Slack\\\",\\n    \\\"givenName\\\": \\\"Elizabeth\\\",\\n    \\\"spouseSurname\\\": \\\"Slack\\\",\\n    \\\"spouseGivenName\\\": \\\"Jonathan\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"anyYearFrom\\\": 1840,\\n    \\\"anyYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3638,8 +3576,7 @@
         "resultsAvailable": 76,
         "stagedResultsRef": "results/.staging/430477e2-8c2d-451e-b292-738e162d3d75.json",
         "notes": "No 1840 census records for Geach in Washington County, Ohio. Results are death records, marriage records, and other post-1840 sources. Notable finds: Mary Eleanor Geach (b.29 Mar 1825, Ohio; d.1905; buried Granville) \u2014 death record may name parents; Elizabeth Geach (b.3 Mar 1832, Ohio; d.1912 Granville) \u2014 possibly a sibling. Both buried at Granville, consistent with Geach family cluster. Peter Geach absent from indexed 1840 Ohio census despite tax records through 1839."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:06:06.985Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3664,22 +3601,19 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/3379d40e-5e99-4bc3-857d-41b312bcc852.json",
         "notes": "No marriage record found for Elizabeth (Geach) Slack and Jonathan Slack in Ohio 1840-1850. Both results are unrelated. Elizabeth's own marriage record not located in indexed Ohio County Marriages collection."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:06:10.839Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_013.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_013.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6VT-P45"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11266202934\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6VT-P45\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"ed0454bf-413f-4248-8752-c97d31f2f918\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Mary Eleanor\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Widowed\\\"\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:X8DR-48N"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10483701646\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X8DR-48N\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"37ce3859-60be-4c3b-9178-7feb772f8a5f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"a0cdff90-322a-48ad-800a-79a59930a3da\\\",\\n          \\\"type\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3693,8 +3627,7 @@
         "anyYearTo": 1880,
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"probate\\\",\\n    \\\"anyYearFrom\\\": 1835,\\n    \\\"anyYearTo\\\": 1880,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3716,8 +3649,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero probate records for Geach in Ohio 1835-1880. No Peter Geach will or administration found. Licking County early probate records are known to have gaps due to courthouse fire. Washington County probate may not be indexed in this collection. This is a significant gap \u2014 no probate corroboration available for Peter Geach's identity or family composition."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_014\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:07:28.434Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3732,8 +3664,7 @@
         "anyYearTo": 1890,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Jacob\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"anyYearFrom\\\": 1880,\\n    \\\"anyYearTo\\\": 1890,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 13,\\n  \\\"paginationCappedAt\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3748,8 +3679,7 @@
         "anyYearTo": 1910,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Thomas\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"anyYearFrom\\\": 1890,\\n    \\\"anyYearTo\\\": 1910,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 22,\\n  \\\"paginationCappedAt\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3773,15 +3703,13 @@
         "resultsAvailable": 13,
         "stagedResultsRef": "results/.staging/058cb21a-3240-4c3e-858d-eb7008a927d0.json",
         "notes": "Jacob Geach death record found: ark:/61903/1:1:F6FJ-9T1, died 6 Apr 1885, Union Twp., Licking Co., born 1820 Licking Co., farmer, married. Also Find a Grave: Jacob D. Geach, b. 21 Mar 1818 (vs. 1820 in death record), buried Granville. Jacob and Thomas Geach (b.1827) both buried at Granville \u2014 same cemetery as the Geach cluster. Need to read Jacob's primary death record to see parents."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_015\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:07:57.815Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_015.json\\\",\\n  \\\"returnedCount\\\": 13,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_015.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6FJ-9T1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11263510709\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6FJ-9T1\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1e6a3ba4-bda6-45fc-ab6d-4b3e455ccb87\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Jacob\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"c2d15bbf-0cda-479a-807c-9c75bea76d53\\\",\\n          \\\"type\\\": \\\"Birt..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3796,8 +3724,7 @@
         "collectionId": "2128172",
         "count": 10,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Thomas\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"anyYearFrom\\\": 1895,\\n    \\\"anyYearTo\\\": 1900,\\n    \\\"collectionId\\\": \\\"2128172\\\",\\n    \\\"count\\\": 10,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 5,\\n  \\\"paginationCapped..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3821,15 +3748,13 @@
         "resultsAvailable": 5,
         "stagedResultsRef": "results/.staging/f7bfc6de-77d0-47ff-920f-aad1ff80debd.json",
         "notes": "Thomas Geach (b.1827, d. 27 Dec 1897) own death record not found in Ohio County Death Records 1840-2001 for 1895-1900. Top result is Howard T. Geach 1926 death record where Thomas Geach is listed as father. No Thomas Geach primary death record found. Jacob Geach's 1885 death record (F6FJ-9T1) read \u2014 no parents listed (older register-style entry). Reading Howard T. Geach death record to extract Thomas Geach's birthplace."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_016\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:08:40.183Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_016.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_016.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6NP-KPG"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11264498812\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6NP-KPG\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1e7a6b9b-0df0-4ca7-9b8d-65e93d4627f4\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Howard T\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"68be2419-66f1-44ee-ab16-e297d46bfaf9\\\",\\n          \\\"type\\\": \\\"D..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3843,8 +3768,7 @@
         "anyYearTo": 1898,
         "count": 10,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Thomas\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"anyYearFrom\\\": 1897,\\n    \\\"anyYearTo\\\": 1898,\\n    \\\"count\\\": 10,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 66,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 10,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3867,31 +3791,27 @@
         "resultsAvailable": 66,
         "stagedResultsRef": "results/.staging/73d007cb-4b1f-46f4-94dc-cf83372403e2.json",
         "notes": "Thomas Geach (96JS-JVT, b.1827, d.27 Dec 1897 Granville) own death record not found in indexed Ohio collections for 1897-1898. Only Find a Grave entry (ark:/61903/1:1:QVVL-VN2B) and records where Thomas appears as parent. 1897 Ohio death records may not be indexed in FamilySearch. Reading Frank H. Geach death record to get Thomas Geach birthplace details."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_017\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:09:16.638Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_017.json\\\",\\n  \\\"returnedCount\\\": 10,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_017.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZ85-SC3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10458560072\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZ85-SCS\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1bd497a4-3a26-456f-8453-42c3d69d04f5\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Frank H\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"W\\\"\\n        },\\n        {\\n   ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search,mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__record_read",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3902,8 +3822,7 @@
         "yearTo": 1855,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Peter +Geach\\\",\\n    \\\"recordPlace1\\\": \\\"Ohio\\\",\\n    \\\"yearFrom\\\": 1815,\\n    \\\"yearTo\\\": 1855,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3914,8 +3833,7 @@
         "yearTo": 1900,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Thomas +Geach\\\",\\n    \\\"recordPlace1\\\": \\\"Ohio\\\",\\n    \\\"yearFrom\\\": 1895,\\n    \\\"yearTo\\\": 1900,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3923,8 +3841,7 @@
         "keywords": "+Peter +Geach",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "Error: result (250,898 characters across 3,257 lines) exceeds maximum allowed tokens. Output has been saved to /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/mcp-genealogy-fulltext_search-1783458732125.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires reading th..."
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -3936,16 +3853,14 @@
         "yearTo": 1860,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Geach\\\",\\n    \\\"recordPlace2\\\": \\\"Washington\\\",\\n    \\\"recordPlace1\\\": \\\"Ohio\\\",\\n    \\\"yearFrom\\\": 1815,\\n    \\\"yearTo\\\": 1860,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
       "args": {
         "description": "Grep large fulltext_search result file for Ohio Geach hits",
         "prompt": "Read this file and find any results that mention Ohio, Washington County, Licking County, Roxbury, or other Ohio-related place names. Also look for any results where the record year is between 1810 and 1860. The file is at: /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/mcp-genealogy-fulltext_search-1783458732125.txt\n\nPlease read the file in chunks and look for any entries that:\n1. Mention Ohio, Washington County Ohio, Licking County, Roxbury Township\n2. Have a record year between 1810 and 1860\n3. Mention \"Peter Geach\" in any capacity\n\nQuote relevant passages verbatim, especially any record IDs (ARKs like \"ark:/61903/1:1:XXXX-XXXX\"), collection names, places, and dates. Report in under 300 words."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Here are the relevant results from the file, all mentioning \\\"Peter Geach\\\" with Ohio-related places and record years between 1810\\u20131860:\\n\\n---\\n\\n**1. Cemetery record, 1836**\\n- ID: `ark:/61903/3:1:3Q9M-C9BQ-R9B3-T`\\n- Collection: \\\"United States, Ohio, Deaths, from 0368 to 2026\\\"\\n- Title: \\\"Licking, Ohio, United States Cemetery 1836\\\"\\n- Place: Licking, Ohio\\n- Names include: \\\"Rebecca Geach\\\", \\\"Peter Geach\\\", \\\"Jacob Elizabeth Geach\\\", \\\"Mary Geach Geach\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3957,15 +3872,13 @@
         "recordType": "marriage",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 816,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"resul..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-elizabeth-geach-parents-jrmepqzr/1d368f98-4952-4aaf-9199-adcb3d59045a/tool-results/mcp-genealogy-fulltext_search-1783458732125.txt"
-      },
-      "response_summary": "File content (81745 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Grep",
@@ -3975,37 +3888,32 @@
         "output_mode": "content",
         "context": 5,
         "head_limit": 0
-      },
-      "response_summary": "11-  \"results\": [\n12-    {\n13-      \"id\": \"ark:/61903/3:1:3Q9M-C9BQ-R9B3-T\",\n14-      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BQ-R9B3-T\",\n15-      \"collectionId\": \"M9J1-9HK\",\n16:      \"collectionTitle\": \"United States, Ohio, Deaths, from 0368 to 2026\",\n17:      \"title\": \"Licking, Ohio, United States Cemetery 1836\",\n18-      \"recordDate\": \"1836\",\n19-      \"recordType\": \"Cemetery\",\n20:      \"recordPlace\": \"Licking, Ohio, United States\",\n21:[Omitted long matching line]\n2..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/3:1:3Q9M-C9BQ-R9B3-T"
-      },
-      "response_summary": "{\"error\":\"Record 3Q9M-C9BQ-R9B3-T was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/3:1:3QSQ-G92H-K991-L"
-      },
-      "response_summary": "{\"error\":\"Record 3QSQ-G92H-K991-L was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/3:1:3Q9M-C954-39NB-1"
-      },
-      "response_summary": "{\"error\":\"Record 3Q9M-C954-39NB-1 was not found in FamilySearch historical records.\"}"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__image_read,mcp__genealogy__rank_search_matches",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__image_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4017,8 +3925,7 @@
         "recordSubdivision": "Ohio",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 56,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4030,36 +3937,31 @@
         "recordSubdivision": "Ohio",
         "count": 50,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Rebecca\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 14,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 14,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VN2Y"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911027\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VN2Y\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"fba7de87-0ce8-4a71-8cf0-2c6d196c1230\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Benjamin Geach\\\",\\n          \\\"given\\\": \\\"Rebecca\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"155b79b2-e8d3-43ab-96c6-026ae256f638\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n         ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M6VT-WXV"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_331187835\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M6VT-WXF\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"39a5f877-db59-4c99-9203-d7b32eee1dd4\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"George\\\",\\n          \\\"surname\\\": \\\"Shull\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"2f6ebe90-e00f-4e52-b262-dbedfd1ba2f2\\\",\\n          \\\"type\\\": \\\"Birth..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XHLQ-Q52"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10417522340\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XHLQ-Q52\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c56d647e-abfe-4926-9a48-552873576712\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Peter\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"2128159b-98fd-4bb3-bac3-f9d034ce39e5\\\",\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6K2K-LHRT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_298662964976\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6K2K-LHRT\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"784c3041-1e3e-4eae-b2a4-b0162fee349f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Peter\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"b6152e18-3222-405c-9f12-d0e1a9944938\\\",\\n          \\\"type\\\": \\\"LandAssessment\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4077,8 +3979,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Fulltext search for Peter Geach in Ohio 1815-1855 returned zero results; the place filter appears to suppress fulltext matches."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_018\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:15:41.828Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4092,8 +3993,7 @@
         "residenceYearTo": 1850,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Rebecca\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 7,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"return..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4106,15 +4006,13 @@
         "recordCountry": "United States",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 61,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMor..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:X8M9-JPB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10473343018\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X8M9-JPB\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f2b40010-3849-452e-980f-d6ab50ce76f3\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Elmer P\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"07b39509-13f4-4468-93b3-beb4d1dd3714\\\",\\n          \\\"type\\\": \\\"Bi..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4132,8 +4030,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Fulltext search for Thomas Geach Ohio death 1895-1900 returned zero results; Ohio death records in this period not fully covered by fulltext index."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_019\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:17:11.999Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4154,15 +4051,13 @@
         "resultsAvailable": 816,
         "stagedResultsRef": "results/.staging/402e7b96-f364-4552-a210-665c994fef26.json",
         "notes": "816 results returned for Peter Geach Ohio marriage but all top 50 are Peter Jackson, Jakubisin, etc. \u2014 no actual Peter Geach marriage found in Ohio indexed marriage collections. Peter Geach's marriage to Rebecca Benjamin may predate indexed civil records or be unindexed."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_020\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:17:16.170Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_020.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_020.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__image_read",
       "args": {
         "ark": "ark:/61903/3:1:3Q9M-C9BQ-R9B3-T"
-      },
-      "response_summary": "{\"error\":\"FamilySearch image ark:/61903/3:1:3Q9M-C9BQ-R9B3-T is 0.9 MB \u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4174,22 +4069,19 @@
         "residencePlace": "Licking, Ohio",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Slack\\\",\\n    \\\"givenName\\\": \\\"Elizabeth\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"residencePlace\\\": \\\"Licking, Ohio\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 468,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MX33-KVT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_342728665\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MX33-KVR\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1f50424f-1fad-40ec-b1fb-744dfe563136\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Johnitta\\\",\\n          \\\"surname\\\": \\\"Slack\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"1a7d030a-265d-419e-a97b-04a3561e7a36\\\",\\n          \\\"type\\\": \\\"Cen..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VJ9F"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911345\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VJ9F\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"96f87315-aa14-4b76-82e8-477b4a4c5236\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach Slack\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"49365feb-492a-4989-a375-54c9bd85d117\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n          ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4211,8 +4103,7 @@
         "resultsAvailable": 7,
         "stagedResultsRef": "results/.staging/0abb87e8-033e-4bd6-b683-ccf3ea23e62f.json",
         "notes": "7 results returned; top match is Find a Grave for Rebecca Benjamin Geach (born April 1801, died 29 Aug 1870, buried Granville, Licking, Ohio). No 1850 census record for Rebecca Geach found \u2014 she may have been in a household indexed under another name or Peter may have been still alive. CRITICAL: Find a Grave names her \"Rebecca Benjamin Geach,\" confirming her maiden name was Benjamin."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_021\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:18:23.058Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_021.json\\\",\\n  \\\"returnedCount\\\": 7,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_021.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4233,8 +4124,7 @@
         "resultsAvailable": 61,
         "stagedResultsRef": "results/.staging/0c7907b5-ad4c-488b-9b03-c7d37f6d67fa.json",
         "notes": "61 results for Peter Geach around 1840 but none in Ohio; top results are Wisconsin/Iowa/England immigrants. Peter Geach remains absent from the 1840 US census despite appearing in Washington County tax records through 1839 \u2014 likely indexing gap or alternate township location for the 1840 enumeration."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_022\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:18:26.920Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_022.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_022.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4254,8 +4144,7 @@
         "resultsAvailable": 56,
         "stagedResultsRef": "results/.staging/67436ed0-cd77-45c9-a512-13abf063db04.json",
         "notes": "56 results. Confirmed: Peter Geach in Roxbury Township, Washington County Ohio tax records annually 1818-1839 (22 years); also Union Township, Licking County 1827, 1830, 1834; 1820 census Union Township, Licking County; BLM tract book Ohio 1815. Also found Elmer P Geach death record (Ohio Deaths 1908-1953) naming his father Jacob Geach (born Utica, Licking Co., Ohio) and mother Mary Grubb/Gruff \u2014 Jacob was a probable son of Peter Geach. Key ARKs: tax 1822 ark:/61903/1:1:JSRX-56F; 1820 census ark:/61903/1:1:XHLQ-Q52; BLM ark:/61903/1:1:6K2K-LHRT."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_023\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:18:32.970Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_023.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_023.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4275,8 +4164,7 @@
         "resultsAvailable": 468,
         "stagedResultsRef": "results/.staging/fc4940b3-96b6-4231-bd5a-015c87222266.json",
         "notes": "Top result: Elizabeth Slack (born 1822, Ohio) in Household of Johnitta [Jonathan] Slack, Union Township, Licking, Ohio in 1850 census. Tree match 273D-F9Z (5 stars). ARK: ark:/61903/1:1:MX33-KVT. Household: Jonathan Slack (born 1825 Virginia), Elizabeth Slack (born 1822 Ohio), Molissa Slack (born 1845), Irene Slack (born 1848), Henry Slack (born 1779 NJ), Albert Simpson. No Peter/Rebecca Geach in the household. Also found Elizabeth Geach Slack Find a Grave (born 16 Jul 1822, died 6 Sep 1895, buried Granville, Licking Co.) confirming maiden name Geach."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_024\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:18:38.198Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_024.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_024.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4289,8 +4177,7 @@
         "recordCountry": "United States",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Peter\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 77,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMor..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4304,8 +4191,7 @@
         "residenceYearTo": 1850,
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"givenName\\\": \\\"Jacob\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 14,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returne..."
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -4314,22 +4200,19 @@
         "recordPlace1": "Ohio",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Benjamin +Geach\\\",\\n    \\\"recordPlace1\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZGX-3VD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10467201252\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZGX-3VD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"073ed32f-7180-49aa-8678-d633c263deb9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Jacob\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_1..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VN2K"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911019\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VN2K\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"0db36fb9-9f3b-4543-aa1a-0c5dc71cf343\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Jacob D.\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"43a8ba9b-a096-4a24-9b0b-cc375b82ac64\\\",\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4350,8 +4233,7 @@
         "resultsAvailable": 77,
         "stagedResultsRef": "results/.staging/ffd41dc3-3e7c-40e0-a36e-b2954d710fbc.json",
         "notes": "No Peter Geach found in 1850 census in Ohio or anywhere in the US; results are Wisconsin/Iowa England-born immigrants. Peter Geach likely died between 1839 (last Washington Co. tax record) and 1850, consistent with Rebecca appearing as apparent widow in 1870 census."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_025\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:20:03.896Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_025.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_025.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4373,8 +4255,7 @@
         "resultsAvailable": 14,
         "stagedResultsRef": "results/.staging/0c3b51e6-0f61-4ce6-8e26-b333aff6a2dc.json",
         "notes": "Jacob D. Geach (born 21 March 1818, died 6 April 1885) buried Granville, Licking, Ohio \u2014 same cemetery as Elizabeth Geach Slack and Rebecca Benjamin Geach. Jacob married Mary Grubb (Ohio County Marriages). His death record shows born 1820 Licking, Ohio, died Union Township, Licking, Ohio \u2014 consistent with being a son of Peter Geach who was in Licking County 1820. Key ARKs: death ark:/61903/1:1:F6FJ-9T1; Find a Grave ark:/61903/1:1:QVVL-VN2K; marriage ark:/61903/1:1:XZGX-3VD."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_026\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:20:08.495Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_026.json\\\",\\n  \\\"returnedCount\\\": 14,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_026.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4390,53 +4271,46 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Fulltext search for documents containing both Benjamin and Geach in Ohio returned zero results. No direct documentary link between the Benjamin and Geach families found via fulltext; the maiden name Benjamin for Rebecca Geach comes from the Find a Grave memorial naming convention only."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_027\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:21:31.310Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_elizabeth_geach_parents\",\n4\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n5\t    \"subject_person_ids\": [\n6\t      \"273D-F9Z\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscrip..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__research_log_append,mcp__genealogy__tree_edit,mcp__genealogy__record_read,mcp__genealogy__record_search",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "limit": 50
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_elizabeth_geach_parents\",\n4\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n5\t    \"subject_person_ids\": [\n6\t      \"273D-F9Z\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscrip..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "Read",
@@ -4444,8 +4318,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 50,
         "limit": 300
-      },
-      "response_summary": "50\t          \"date_range\": \"1895\",\n51\t          \"repository\": \"FamilySearch\",\n52\t          \"rationale\": \"The Ohio County Death Records source (9PM3-Z98) for Elizabeth Slack's death on 6 Sep 1895 is already attached to the project but no assertions have been extracted. Ohio death registers from this period sometimes include parents' names or birthplace details that could directly answer the parentage question. This is the fastest path \u2014 extract and analyze the existing record before searching ..."
+      }
     },
     {
       "tool": "Read",
@@ -4453,71 +4326,61 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 350,
         "limit": 400
-      },
-      "response_summary": "350\t      \"plan_item_id\": \"pli_006\",\n351\t      \"performed\": \"2026-07-07T21:05:19.847Z\",\n352\t      \"tool\": \"record_search\",\n353\t      \"query\": {\n354\t        \"surname\": \"Geach\",\n355\t        \"givenName\": \"Peter\",\n356\t        \"surnameExact\": true,\n357\t        \"recordCountry\": \"United States\",\n358\t        \"recordType\": \"marriage\",\n359\t        \"anyYearFrom\": 1800,\n360\t        \"anyYearTo\": 1840,\n361\t        \"count\": 50\n362\t      },\n363\t      \"outcome\": \"negative\",\n364\t      \"results_examined\": 14,\n3..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VN2Y"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911027\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VN2Y\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"fba7de87-0ce8-4a71-8cf0-2c6d196c1230\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Benjamin Geach\\\",\\n          \\\"given\\\": \\\"Rebecca\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"155b79b2-e8d3-43ab-96c6-026ae256f638\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n         ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VJ9F"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911345\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VJ9F\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"96f87315-aa14-4b76-82e8-477b4a4c5236\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach Slack\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"49365feb-492a-4989-a375-54c9bd85d117\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n          ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVVL-VN2K"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101056911019\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVVL-VN2K\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"0db36fb9-9f3b-4543-aa1a-0c5dc71cf343\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Jacob D.\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"43a8ba9b-a096-4a24-9b0b-cc375b82ac64\\\",\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:JSRX-56F"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12462250005\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JSRX-56F\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"086143d3-775e-4cc6-978b-3f5208bcf763\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Peter\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e5ee9fc3-6e1b-4524-902a-91f262c4a6a6\\\",\\n          \\\"type\\\": \\\"TaxAssessment\\\",\\n          \\\"pri..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XHLQ-Q52"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10417522340\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XHLQ-Q52\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c56d647e-abfe-4926-9a48-552873576712\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Peter\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"2128159b-98fd-4bb3-bac3-f9d034ce39e5\\\",\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:X8M9-JPB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10473343018\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X8M9-JPB\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f2b40010-3849-452e-980f-d6ab50ce76f3\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Elmer P\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"07b39509-13f4-4468-93b3-beb4d1dd3714\\\",\\n          \\\"type\\\": \\\"Bi..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZGX-3VD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10467201252\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZGX-3VD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"073ed32f-7180-49aa-8678-d633c263deb9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Jacob\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_1..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M6VT-WXV"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_331187835\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M6VT-WXF\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"39a5f877-db59-4c99-9203-d7b32eee1dd4\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"George\\\",\\n          \\\"surname\\\": \\\"Shull\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"2f6ebe90-e00f-4e52-b262-dbedfd1ba2f2\\\",\\n          \\\"type\\\": \\\"Birth..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6FJ-ZMR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11263518025\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6FJ-ZMR\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1b06a26a-259a-41a8-ab3c-d9e87f1f2780\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Slack\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"W\\\"\\n        },\\n        {\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4536,8 +4399,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Rebecca Geach (born 1801, Ohio) found in household of George Shull, Union Township, Licking County, Ohio in 1870 census. Same township where Elizabeth Geach Slack lived as an adult. Rebecca appears as a lodger/boarder, consistent with being a widowed mother living with a son-in-law or neighbor. Birth year 1801 matches Find a Grave entry for Rebecca Benjamin Geach (born April 1801, died 29 Aug 1870)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_028\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:32:34.335Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4557,8 +4419,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Elmer P. Geach (born 6 Feb 1857, Licking Co., Ohio; died 25 Oct 1944, buried Granville, Ohio) \u2014 death record names father Jacob Geach (born Utica, Licking Co., Ohio) and mother Mary Grubb or Gruff (born Utica, Licking Co., Ohio). Jacob Geach is a probable sibling of Elizabeth Geach Slack (both born in early 1810s-1820s in Washington/Licking County Ohio area, both buried Granville). Jacob's birth in Utica, Licking County is consistent with Peter Geach's 1820 census in Union Township, Licking County. Critical FAN evidence linking Jacob Geach to Peter Geach lineage."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_029\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:32:40.191Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4674,8 +4535,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"tree.gedcomx.json/persons[9]/facts[0]: missing required field 'id'\\\",\\n    \\\"tree.gedcomx.json/persons[9]/facts[1]: missing required field 'id'\\\",\\n    \\\"tree.gedcomx.json/persons[10]/facts[0]: missing required field 'id'\\\",\\n    \\\"tree.gedcomx.json/persons[10]/facts[1]: missing required field 'id'\\\",\\n    \\\"tree.gedcomx.json/persons[10]/facts[2]: missing required field 'id'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4796,8 +4656,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"sou..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5501,8 +5360,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_004\\\"\\n    },\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5573,8 +5431,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5586,8 +5443,7 @@
         "collectionId": "1680845",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"collectionId\\\": \\\"1680845\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches\\\": 23,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5608,8 +5464,7 @@
         "resultsAvailable": 23,
         "stagedResultsRef": "results/.staging/ed916c23-8686-4a5f-88ff-2f0ee27f250c.json",
         "notes": "Ohio Births and Christenings 1821-1962 (collection 1680845) returned 23 results for Geach in Ohio. All results are from 1891-1962 and from Cuyahoga, Allen, and other counties \u2014 none from Licking or Washington County in the 1820s-1840s relevant to Elizabeth Geach's baptism or her parents. The collection does not appear to cover the relevant time period and location for this research question. No Elizabeth Geach (b. 1822), no Peter Geach, no Rebecca Geach in church records for the relevant period."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_030\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:37:24.447Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_030.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_030.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5622,15 +5477,13 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_008\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5786,37 +5639,32 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_004\\\"\\n    },\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_elizabeth_geach_parents\",\n4\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n5\t    \"subject_person_ids\": [\n6\t      \"273D-F9Z\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-02T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscrip..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5880,8 +5728,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I3\\\",\\n        \\\"names\\\": [\\n          \\\"N4\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I4\\\",\\n        \\\"names\\\": [\\n          \\\"N5\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6120,30 +5967,26 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "q_001 \u2014 supplement: search for death records of probable Geach siblings (Mary Eleanor Geach d.1905, Elizabeth Geach d.1912) who died in Ohio's registration era and whose certificates could directly name parents; also read the BLM land entry for Peter Geach (ark:/61903/1:1:6K2K-LHRT)"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6213,24 +6056,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_010\\\"\\n    },\\n    ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "Execute pli_009, pli_010, and pli_011 from plan pl_002 for q_001: (1) search Ohio County Death Records 1840-2001 (collection 2128172) for Mary Eleanor Geach death record circa 1905; (2) search Ohio Deaths 1908-1953 (collection 1307272) for Elizabeth Geach death record circa 1912; (3) record_read ark:/61903/1:1:6K2K-LHRT for Peter Geach BLM land entry 1815"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6246,8 +6086,7 @@
         "collectionId": "2128172",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"deathYearFrom\\\": 1903,\\n    \\\"deathYearTo\\\": 1907,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"collectionId\\\": \\\"2128172\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMatches..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6263,29 +6102,25 @@
         "collectionId": "1307272",
         "count": 20,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Geach\\\",\\n    \\\"surnameExact\\\": true,\\n    \\\"givenName\\\": \\\"Elizabeth\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"deathYearFrom\\\": 1910,\\n    \\\"deathYearTo\\\": 1914,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"collectionId\\\": \\\"1307272\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr\\\"\\n  },\\n  \\\"totalMa..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:6K2K-LHRT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_298662964976\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6K2K-LHRT\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"784c3041-1e3e-4eae-b2a4-b0162fee349f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Peter\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"b6152e18-3222-405c-9f12-d0e1a9944938\\\",\\n          \\\"type\\\": \\\"LandAssessment\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:F6VT-P45"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11266202934\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F6VT-P45\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"ed0454bf-413f-4248-8752-c97d31f2f918\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Mary Eleanor\\\",\\n          \\\"surname\\\": \\\"Geach\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Widowed\\\"\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:X8DR-48N"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10483701646\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:X8DR-48N\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"37ce3859-60be-4c3b-9178-7feb772f8a5f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Geach\\\",\\n          \\\"given\\\": \\\"Elizabeth\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"a0cdff90-322a-48ad-800a-79a59930a3da\\\",\\n          \\\"type\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6310,8 +6145,7 @@
         "resultsAvailable": 5,
         "stagedResultsRef": "results/.staging/accec9f4-04cf-4824-b2b9-6ebade57b703.json",
         "notes": "SIGNIFICANT NEGATIVE FINDING for sibling hypothesis. Top result (score 7.25) is Mary Eleanor Geach (ark:/61903/1:1:F6VT-P45): born 29 Mar 1825 Ohio, died 6 Dec 1905 Columbus OH, buried 9 Dec 1905 Granville OH \u2014 exact match to FAG entry. BUT: parents on death certificate are Samuel Grubbs (father, b. Virginia) and Margaret Windsor (mother, b. Virginia). She was born Mary Eleanor Grubbs and married into the Geach family. She is NOT a biological daughter of Peter Geach and Rebecca Benjamin \u2014 she was likely the wife of Thomas Geach (b.1827). This CLARIFIES the Maple Grove Cemetery cluster: Mary Eleanor was a wife-in, not a birth daughter. The biological Peter/Rebecca Geach children at Maple Grove remain Elizabeth (our subject), Jacob D., and Emily Allen."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_031\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:53:42.672Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_031.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_031.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6336,8 +6170,7 @@
         "resultsAvailable": 4,
         "stagedResultsRef": "results/.staging/5aa07ba9-dac5-4294-8087-694cd3439454.json",
         "notes": "SIGNIFICANT NEGATIVE FINDING for sibling hypothesis. Top result (score 7.25) is Elizabeth Geach (ark:/61903/1:1:X8DR-48N): born 3 Mar 1832 Ohio, died 23 Jan 1912 Granville Township, Licking County, Ohio, buried 25 Jan 1912 Granville \u2014 exact match to FAG entry. BUT: parents on death certificate are John Moorehead (father) and Elizabeth Morgan (mother). She was NOT born a Geach \u2014 she married into the Geach family (born Elizabeth Moorehead). She is NOT a biological daughter of Peter Geach and Rebecca Benjamin. Consistent with the Mary Eleanor Grubbs finding: both women at Maple Grove Cemetery named 'Geach' were wives of Peter's sons, not Peter's daughters. The biological Geach daughters at Maple Grove Cemetery are Elizabeth Geach Slack (our subject) and Emily Allen Geach (d.1859)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_032\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:53:47.747Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_032.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_032.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6354,8 +6187,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Peter Geach, LandAssessment dated 2 October 1815, Ohio. Confirms Peter Geach was acquiring land in Ohio as early as 2 October 1815 \u2014 three years before his first documented Washington County tax record in 1818. Record gives jurisdiction only as 'Ohio, United States' with no county/township specifics. Corroborates the broader picture of Peter Geach as an Ohio landowner in the 1815-1839 period that encompasses Elizabeth's 1822 birth in Washington County."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_033\\\",\\n  \\\"performed\\\": \\\"2026-07-07T21:53:52.358Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6390,16 +6222,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_011\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract assertions from three records:\n\n1. Mary Eleanor Geach death record (ark:/61903/1:1:F6VT-P45, log_031, plan pli_009): Ohio County Death Records 1840-2001. Deceased Mary Eleanor Geach, born 29 Mar 1825 Ohio, died 6 Dec 1905 Columbus Franklin Ohio, buried 9 Dec 1905 Granville Ohio, widowed. PARENTS named: father Samuel Grubbs (born Virginia), mother Margaret Windsor (born Virginia). This is a significant negative finding \u2014 her parents are Grubbs and Windsor, not Geach, showing she married into the Geach family. Her parent assertions bear on q_001.\n\n2. Elizabeth Geach death record (ark:/61903/1:1:X8DR-48N, log_032, plan pli_010): Ohio Deaths 1908-1953. Deceased Elizabeth Geach, born 3 Mar 1832 Ohio, died 23 Jan 1912 Granville Township Licking Ohio, buried 25 Jan 1912 Granville Ohio, widowed. PARENTS named: father John Moorehead, mother Elizabeth Morgan. Again a negative finding for q_001 \u2014 she also married into the Geach family, born a Moorehead.\n\n3. Peter Geach BLM land record (ark:/61903/1:1:6K2K-LHRT, log_033, plan pli_011): United States Bureau of Land Management Tract Books 1800-1955. Peter Geach, LandAssessment dated 2 Oct 1815, Ohio (no county/township given). Single fact confirming Peter's Ohio land acquisition from 1815."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6845,30 +6675,26 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[9]: gedcomx_source_description_id 'S7' not found in tree.gedcomx.json sources\\\",\\n    \\\"research.json/sources[10]: gedcomx_source_description_id 'S8' not found in tree.gedcomx.json sources\\\",\\n    \\\"research.json/sources[11]: gedcomx_source_description_id 'S9' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json"
-      },
-      "response_summary": "File content (27251 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -6876,8 +6702,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 0,
         "limit": 100
-      },
-      "response_summary": "0\t{\n1\t  \"project\": {\n2\t    \"id\": \"rp_elizabeth_geach_parents\",\n3\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n4\t    \"subject_person_ids\": [\n5\t      \"273D-F9Z\"\n6\t    ],\n7\t    \"status\": \"active\",\n8\t    \"created\": \"2026-07-02T00:00:00Z\",\n9\t    \"updated\": \"2026-07-02T00:00:00Z\"\n10\t  },\n11\t  \"researcher_profile\": {\n12\t    \"experience_level\": \"intermediate\",\n13\t    \"subscript..."
+      }
     },
     {
       "tool": "Read",
@@ -6885,8 +6710,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 100,
         "limit": 200
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"vital_record\",\n104\t          \"jurisdiction\": \"Ohio, United States\",\n105\t          \"date_range\": \"1810-1850\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"Ohio County Marriages 1789-2016 (FamilySearch collection 1614804) covers all Ohio counties. Search for: (a) Elizabeth Geach's own marriage to Jonathan Slack ca. 1844 \u2014 Ohio marriage records from this era sometime..."
+      }
     },
     {
       "tool": "Read",
@@ -6894,8 +6718,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 700,
         "limit": 400
-      },
-      "response_summary": "700\t    {\n701\t      \"id\": \"log_026\",\n702\t      \"plan_item_id\": \"pli_001\",\n703\t      \"performed\": \"2026-07-07T21:20:08.495Z\",\n704\t      \"tool\": \"record_search\",\n705\t      \"query\": {\n706\t        \"surname\": \"Geach\",\n707\t        \"givenName\": \"Jacob\",\n708\t        \"surnameExact\": true,\n709\t        \"recordCountry\": \"United States\",\n710\t        \"recordSubdivision\": \"Ohio\",\n711\t        \"residenceYearFrom\": 1850,\n712\t        \"residenceYearTo\": 1850\n713\t      },\n714\t      \"outcome\": \"positive\",\n715\t    ..."
+      }
     },
     {
       "tool": "Read",
@@ -6903,8 +6726,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 1400,
         "limit": 400
-      },
-      "response_summary": "1400\t      \"information_quality\": \"primary\",\n1401\t      \"informant\": \"Jacob Geach (groom) and county clerk\",\n1402\t      \"informant_proximity\": \"self\",\n1403\t      \"evidence_type\": \"indirect\",\n1404\t      \"record_persona_id\": null,\n1405\t      \"log_entry_id\": \"log_026\",\n1406\t      \"extracted_for_question_ids\": [\n1407\t        \"q_001\"\n1408\t      ]\n1409\t    },\n1410\t    {\n1411\t      \"id\": \"a_018\",\n1412\t      \"source_id\": \"src_009\",\n1413\t      \"record_id\": \"https://www.familysearch.org/ark:/61903/1:1:..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7003,8 +6825,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S7\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S8\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S9\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"per..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7482,8 +7303,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_010\\\"\\n   ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7590,8 +7410,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_022\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_023\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_024\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7663,8 +7482,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pl_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -7688,8 +7506,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7737,39 +7554,34 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/proof_summaries[0]: missing required field 'tier'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'vehicle'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'supporting_assertion_ids'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'resolved_conflict_ids'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'exhaustive_search_summary'\\\",\\n ..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/proof-conclusion"
-      },
-      "response_summary": ".claude/skills/proof-conclusion/references/gps-proof-writing.md\n.claude/skills/proof-conclusion/references/validation-protocol.md\n.claude/skills/proof-conclusion/SKILL.md"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/research-schema-spec*",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "docs/specs/*.json",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills/proof-conclusion/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the\n5\t  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses\n6\t  the proof conclusion form (Statement/Summary/Argument), and produces a\n7\t  self-contained narrative markdown that can be uploaded to FamilySearch.\n8\t  Updates tree.gedcomx.json when the tier reaches probable or higher.\n9\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7809,8 +7621,7 @@
             "fields": {}
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7849,8 +7660,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -7858,15 +7668,13 @@
         "description": "GPS-mentor review of Elizabeth Geach parentage proof",
         "subagent_type": "gps-mentor",
         "prompt": "Please review the GPS research project at /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr for proof-critique. The project is complete: proof summary ps_001 has been written for q_001 (parents of Elizabeth Geach, born 17 August 1822, Washington County, Ohio). The conclusion is tier \"probable\" \u2014 Peter Geach and Rebecca Benjamin Geach as probable parents, based on convergent indirect evidence. Please read research.json and tree.gedcomx.json to perform the review, evaluate all five GPS components, and provide your full mentor assessment."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n*Note on tooling: this session gave me only a file-read tool \\u2014 no write capability. I could not create `evaluations/` or append the pointer record to `research.json`'s `evaluations[]` array as the output protocol requires. I'm reporting that failure explicitly rather than silently skipping it. The full structured verdict is included below so it can be persisted by whoever has write access; I did not fabricate a compl..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json"
-      },
-      "response_summary": "File content (37520 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -7874,8 +7682,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 1,
         "limit": 300
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_elizabeth_geach_parents\",\n4\t    \"objective\": \"Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?\",\n5\t    \"subject_person_ids\": [\n6\t      \"273D-F9Z\"\n7\t    ],\n8\t    \"status\": \"completed\",\n9\t    \"created\": \"2026-07-02T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\":..."
+      }
     },
     {
       "tool": "Read",
@@ -7883,8 +7690,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 300,
         "limit": 400
-      },
-      "response_summary": "300\t      \"tool\": \"record_search\",\n301\t      \"query\": {\n302\t        \"surname\": \"Geach\",\n303\t        \"recordCountry\": \"United States\",\n304\t        \"recordSubdivision\": \"Ohio\",\n305\t        \"residenceYearFrom\": 1830,\n306\t        \"residenceYearTo\": 1830,\n307\t        \"count\": 50\n308\t      },\n309\t      \"outcome\": \"positive\",\n310\t      \"results_examined\": 50,\n311\t      \"external_site\": null,\n312\t      \"results_ref\": \"results/log_004.json\",\n313\t      \"results_available\": 60575,\n314\t      \"notes\": \"To..."
+      }
     },
     {
       "tool": "Read",
@@ -7892,8 +7698,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 700,
         "limit": 400
-      },
-      "response_summary": "700\t      \"plan_item_id\": \"pli_005\",\n701\t      \"performed\": \"2026-07-07T21:18:32.970Z\",\n702\t      \"tool\": \"record_search\",\n703\t      \"query\": {\n704\t        \"surname\": \"Geach\",\n705\t        \"givenName\": \"Peter\",\n706\t        \"surnameExact\": true,\n707\t        \"recordCountry\": \"United States\",\n708\t        \"recordSubdivision\": \"Ohio\"\n709\t      },\n710\t      \"outcome\": \"positive\",\n711\t      \"results_examined\": 50,\n712\t      \"external_site\": null,\n713\t      \"results_ref\": \"results/log_023.json\",\n714\t ..."
+      }
     },
     {
       "tool": "Read",
@@ -7901,8 +7706,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 1100,
         "limit": 400
-      },
-      "response_summary": "1100\t        \"where_within\": \"Entry for Mary Eleanor Geach, died 6 Dec 1905, Franklin County, Ohio; buried Granville, Licking County\"\n1101\t      },\n1102\t      \"source_classification\": \"derivative\",\n1103\t      \"repository\": \"FamilySearch\",\n1104\t      \"access_date\": \"2026-07-07\",\n1105\t      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:F6VT-P45\",\n1106\t      \"log_entry_id\": \"log_031\",\n1107\t      \"notes\": \"Ohio county death record for Mary Eleanor Geach, d. 6 Dec 1905. Critical finding: nam..."
+      }
     },
     {
       "tool": "Read",
@@ -7910,8 +7714,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 1500,
         "limit": 400
-      },
-      "response_summary": "1500\t        \"q_001\"\n1501\t      ]\n1502\t    },\n1503\t    {\n1504\t      \"id\": \"a_017\",\n1505\t      \"source_id\": \"src_008\",\n1506\t      \"record_id\": \"https://www.familysearch.org/ark:/61903/1:1:XZGX-3VD\",\n1507\t      \"record_role\": \"groom\",\n1508\t      \"fact_type\": \"marriage\",\n1509\t      \"value\": \"Jacob Geach married Mary Grubb, 1847, Perry, Ohio\",\n1510\t      \"date\": \"1847\",\n1511\t      \"date_certainty\": \"exact\",\n1512\t      \"place\": \"Perry, Ohio, United States\",\n1513\t      \"information_quality\": \"prima..."
+      }
     },
     {
       "tool": "Read",
@@ -7919,8 +7722,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 1899,
         "limit": 300
-      },
-      "response_summary": "1899\t      \"id\": \"a_035\",\n1900\t      \"source_id\": \"src_012\",\n1901\t      \"record_id\": \"https://www.familysearch.org/ark:/61903/1:1:6K2K-LHRT\",\n1902\t      \"record_role\": \"grantee\",\n1903\t      \"fact_type\": \"land_assessment\",\n1904\t      \"value\": \"Land claim, 2 October 1815, Ohio\",\n1905\t      \"date\": \"2 October 1815\",\n1906\t      \"date_certainty\": \"exact\",\n1907\t      \"place\": \"Ohio\",\n1908\t      \"standard_place\": \"Ohio, United States\",\n1909\t      \"information_quality\": \"primary\",\n1910\t      \"informa..."
+      }
     },
     {
       "tool": "Read",
@@ -7928,31 +7730,27 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/research.json",
         "offset": 2196,
         "limit": 300
-      },
-      "response_summary": "2196\t  \"proof_summaries\": [\n2197\t    {\n2198\t      \"id\": \"ps_001\",\n2199\t      \"question_id\": \"q_001\",\n2200\t      \"tier\": \"probable\",\n2201\t      \"vehicle\": \"argument\",\n2202\t      \"supporting_assertion_ids\": [\n2203\t        \"a_001\",\n2204\t        \"a_002\",\n2205\t        \"a_003\",\n2206\t        \"a_004\",\n2207\t        \"a_005\",\n2208\t        \"a_006\",\n2209\t        \"a_009\",\n2210\t        \"a_010\",\n2211\t        \"a_011\",\n2212\t        \"a_025\",\n2213\t        \"a_032\",\n2214\t        \"a_034\",\n2215\t        \"a_035\"\n2216\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"273D-F9Z\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"273D-F9Z-name-1\",\n10\t          \"given\": \"Elizabeth\",\n11\t          \"surname\": \"Geach\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-eliz-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"17 August 1822\",\n19\t          \"standard_date\": \"17 Aug 1822\",\n20\t          \"place\": \"Washington, Ohio, United..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_distance,mcp__genealogy__place_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_distance\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_distance",
       "args": {
         "standardPlace1": "Washington, Ohio, United States",
         "standardPlace2": "Union Township, Licking, Ohio, United States"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"standardPlace1\\\": \\\"Washington, Ohio, United States\\\",\\n  \\\"standardPlace2\\\": \\\"Union Township, Licking, Ohio, United States\\\",\\n  \\\"miles\\\": 67,\\n  \\\"kilometers\\\": 108\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7997,24 +7795,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/skills"
-      },
-      "response_summary": ".claude/skills/assertion-classification/SKILL.md\n.claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/SKILL.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/SKILL.md\n.claude/skills/citation/referenc..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/gps-mentor*",
         "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude"
-      },
-      "response_summary": ".claude/agents/gps-mentor.md"
+      }
     },
     {
       "tool": "Read",
@@ -8022,8 +7817,7 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/agents/gps-mentor.md",
         "offset": 1,
         "limit": 120
-      },
-      "response_summary": "1\t---\n2\tname: gps-mentor\n3\tdescription: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof \u2014 an advisory `proof-critique` after `proof-conclusion` writes a summary \u2014 and on-demand when the user says \"review my work\", \"is this defensible?\", \"what would a senior genealogist say?\", \"mentor\", \"second opinion\", \"critique my proof\", \"am I ready to conclu..."
+      }
     },
     {
       "tool": "Read",
@@ -8031,24 +7825,21 @@
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/.claude/agents/gps-mentor.md",
         "offset": 120,
         "limit": 100
-      },
-      "response_summary": "120\t   the breadth gap closes.\"\n121\t\n122\t4. **Tier feedback honestly.**\n123\t   - `must_address`: blocks GPS conformance at the current target\n124\t   - `consider_addressing`: would strengthen the work; not blocking\n125\t   - `non_blocking_notes`: nit-level polish, optional\n126\t\n127\t5. **Honor Standard 43 (evidence integrity).** You must be willing\n128\t   to recommend tier *down* with the same comfort as tier up. If\n129\t   the evidence does not support `Proved`, say so. The researcher\n130\t   may..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "mkdir -p /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/evaluations",
         "description": "Create evaluations directory"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/evaluations/proof-critique-ps_001-2026-07-07T00-00-00.json",
         "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"strengths\": [\n    \"Negative-evidence handling on a_025 (Mary Eleanor Grubbs) and a_032 (Elizabeth Moorehead) correctly overturned an initial sibling hypothesis using death certificate data \u2014 Standard 13 well executed.\",\n    \"Tier discipline: 'Probable' matches the non-overclaiming language throughout narrative_markdown; no hedging-vs-tier mismatch (Standards 65-67 respected).\"\n  ],\n  \"must_address\": [\n    {\n      \"standard\": \"Standard 46 \u2014 independence/identity analysis (also touches Standard 43, evidence integrity)\",\n      \"issue\": \"Peter Geach (I1) merges tax/census entries from Washington County (1818-1839 continuous) and Licking County (1820 census head of household; 1827/1830/1834 tax) as one person with no identity test. Washington County and Licking County are approximately 67 miles apart \u2014 NOT adjacent, separated by Morgan and Muskingum counties. The narrative's 'adjacent' claim is inaccurate. No record documents Peter and Rebecca as a married couple either.\",\n      \"what_would_change_my_mind\": \"A bridging record (deed, non-resident tax notation, probate) tying the two counties to one man; or an explicit narrative acknowledgment of the untested identity risk and its tier implications.\",\n      \"suggested_skill\": \"conflict-resolution\",\n      \"specific_action\": \"Formally test the two Peter Geach data clusters as a conflict; search Washington County deed/land records for a Licking County cross-reference; revise narrative to state the Peter-Rebecca marriage is undocumented and the two-county Peter is an untested identity merge.\"\n    }\n  ],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 48 \u2014 resolution depth / narrative accuracy\",\n      \"issue\": \"pe_013 characterizes the Find a Grave birth date (16 July 1822) vs. tree date (17 August 1822) discrepancy as 'the day differs slightly' when month and day both differ (approximately five weeks). Should be corrected.\",\n      \"specific_action\": \"Update pe_013 rationale to accurately describe the five-week discrepancy.\"\n    }\n  ],\n  \"non_blocking_notes\": [],\n  \"narrative_for_user\": \"Two things stand out immediately. First, the negative-evidence work on Mary Eleanor Geach (a_025) and Elizabeth Moorehead-Geach (a_032) is excellent, textbook Standard 13 practice \u2014 you didn't stop at 'same surname, same cemetery,' you pulled the death certificates and let them speak, and they overturned your working assumption that these were Peter's daughters. Second, your tier discipline is honest: you wrote 'Probable,' not 'Proved,' and the narrative's language matches that tier.\\n\\nThe single highest-value issue: the identity merge underneath Peter Geach (I1) was never tested. Your tax-record evidence shows 'Peter Geach' in Roxbury Township, Washington County continuously 1818\u20131839, AND in Union Township, Licking County in the 1820 census (and possibly 1827/1830/1834 Licking County tax rolls). The narrative treats this as one man moving between 'adjacent' counties. They are not adjacent \u2014 Washington and Licking counties are approximately 67 miles apart, separated by Morgan and Muskingum counties. That's not a short commute; the same name appearing in two tax jurisdictions in overlapping years is exactly the pattern that should trigger an independence/identity check (Standard 46). No record documents Peter and Rebecca as a married couple, either \u2014 that relationship is inferred from cemetery co-location, and if the two-county Peter identity collapses, so does much of the corroboration chain.\\n\\nConsider noting this explicitly in the proof narrative and, ideally, searching Washington County deed records for a Licking County cross-reference before treating the merge as settled. A bridging document would close this gap cleanly.\",\n  \"timestamp\": \"2026-07-07T00:00:00Z\"\n}\n"
-      },
-      "response_summary": "File created successfully at: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-elizabeth-geach-parents-jrmepqzr/evaluations/proof-critique-ps_001-2026-07-07T00-00-00.json (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8085,8 +7876,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pe_013\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": t..."
+      }
     }
   ],
   "error": null,
@@ -8110,5 +7900,6 @@
         "relatives": true
       }
     }
-  ]
+  ],
+  "captures_stripped": true
 }
