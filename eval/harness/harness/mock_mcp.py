@@ -97,6 +97,14 @@ LIVE_TOOLS: set[str] = {
     # whole-file Reads; without it a skill following that instruction hits an
     # uncovered tool call and grades badly for doing the right thing.
     "research_query",
+    # The only route by which a project comes into existence. init-project's
+    # tests start from an EMPTY workspace, so a fixture cannot serve this: what
+    # is graded is whether both files end up on disk and valid, and only the
+    # real tool decides that. A canned success would grade the arguments while
+    # the workspace stayed empty and every file-existence check failed — and an
+    # uncovered call here aborts the test outright (Type 1), wasting the whole
+    # paid run.
+    "project_create",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -128,6 +136,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "materialize_facts",
     "project_context",
     "research_query",
+    "project_create",
 }
 
 
@@ -521,6 +530,10 @@ def _make_live_handler(
         return _make_compiled_tool_handler(
             "research_query", "research-query.js", "researchQuery", workspace, call_log
         )
+    if tool_name == "project_create":
+        return _make_compiled_tool_handler(
+            "project_create", "project-create.js", "projectCreate", workspace, call_log
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -810,3 +823,4 @@ def _make_compiled_tool_handler(
 def expected_tool_names(call_log: list[dict[str, Any]]) -> list[str]:
     """Return tool names recorded in the call log, in invocation order."""
     return [c["tool"] for c in call_log]
+
