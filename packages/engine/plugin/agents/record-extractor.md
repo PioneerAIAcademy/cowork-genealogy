@@ -575,17 +575,15 @@ the record establishes about who spoke.
   observed it" argument — the certificate does not establish
   observation, and occupation/marital status are reported biography,
   not witnessed events.
-  **Evidence type for these facts, not just proximity:** `name`,
-  `occupation`, and `marital status` are `direct` — a spouse/family
-  informant lived alongside the decedent and knows these firsthand, no
-  inference required. `age`, birth date/place, and parents' names are
-  `indirect` — the informant was not present at the decedent's birth (or
-  at the parents'), so knowledge of them is necessarily secondhand,
-  however precisely the certificate states it. **"Age: 63 years, 2
-  months, 10 days" is still indirect evidence of the birth date —
-  precision is not the same as firsthand knowledge; do not label the raw
-  age fact `direct` just because a specific figure is printed on the
-  certificate.** This is the same reasoning as the census
+  **Evidence type for these facts:** every one the certificate prints in a
+  field — `name`, `occupation`, `marital status`, `age`, `birthplace`, and
+  the parents' names and birthplaces — is `direct`. The informant's
+  secondhand knowledge of the birth is recorded as `family_not_present`
+  proximity and `secondary` quality, and changes nothing here. **"Age: 63
+  years, 2 months, 10 days" is `direct` evidence of AGE** — it is printed
+  in the Age field. What is `indirect` is the birth *date or year you
+  compute from it*, because the certificate states no birth date: that
+  derived value is its own assertion. This is the same reasoning as the census
   birth-year-computed-from-age rule above, extended one step further:
   there it's the *derived* birth-year fact that's indirect; here the
   *age fact itself* is indirect too, for the identical reason — the
@@ -734,22 +732,21 @@ grounds to classify or re-classify it `indirect`.
 **Scope — `name` assertions only, and only the record subject's.** Two
 misreadings to avoid, in both directions:
 
-- **Do not extend it to a third party named _by_ an informant.** A
-  decedent's parents on a death certificate are named by the personal
-  informant relaying secondhand knowledge, so their `name` assertions are
-  `indirect` — same as their birthplaces, and for the same reason (the
-  informant-knowledge test above). Marking a `father_of_deceased` or
-  `mother_of_deceased` name `direct` because "a name assertion is always
-  direct" is one error this paragraph exists to prevent. It holds on a
-  burial or cemetery index too, where the informant is `unknown`: an
-  unknown informant is not grounds to promote the parentage to `direct`.
-- **Do not extend it to the subject's _other_ facts.** Being the record
-  subject makes the subject's `name` direct; it does nothing for their
-  age, birth date, birthplace, or parents. On a death certificate those
-  are still `indirect` whenever a third-party informant is relaying them
-  — the informant-knowledge test governs, not record-subject status.
-  Marking a decedent's stated `age` `direct` "because the certificate is
-  about them" is the other error.
+- **A third party named _by_ an informant is still `direct`.** A decedent's
+  parents sit in the `Father's name` / `Mother's maiden name` fields, so the
+  certificate states them: `direct`, at proximity `family_not_present` with
+  `secondary` quality, because the informant relayed them secondhand. Same on
+  a burial or cemetery index, where the informant is `unknown` and the quality
+  `indeterminate` — an unknown informant is a fact about the *information*
+  layer, not grounds to demote the evidence layer. What the third-party
+  relationship does NOT license is inventing a fact the record never printed;
+  it never changes the classification of one it did.
+- **Record-subject status is not what makes a fact `direct` — the field
+  is.** The subject's `name`, `age`, `birthplace` and parents are `direct`
+  because the certificate prints each of them, not because the record is
+  about the subject. The distinction matters for the fact it does NOT
+  cover: a birth date or year you computed from the stated age is
+  `indirect` however central the subject is.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
