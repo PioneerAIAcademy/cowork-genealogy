@@ -23,7 +23,8 @@
     "Extract the mother's name exactly as stated ('Mary Kramer'); do NOT reconcile it with the 'Anna Kramer' on Frank's marriage or the 'Anna' on John's burial - that conflict is resolved downstream, not at extraction",
     "Source classification is DERIVATIVE - an index of the cemetery's burial records",
     "Informant is unknown on this index entry; information quality is indeterminate for every fact on the entry, including the parentage facts - an unknown informant cannot be graded primary or secondary",
-    "Burial place is Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio"
+    "Burial place is Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio",
+    "The parent-child RELATIONSHIP is direct too, on the same grounds as the names: the entry has labelled `Father:` and `Mother:` fields, so it states the relation, not merely two names. This is the corollary of the names being direct — one field cannot state the name directly and the relation indirectly. Contrast a pre-1880 census, which has no relationship column and therefore yields no relationship assertion at all."
   ],
   "execution": {
     "max_turns": 40,
@@ -73,7 +74,7 @@
       "record_role": "deceased",
       "fact_type": "relationship",
       "optional": true,
-      "evidence_type": "indirect"
+      "evidence_type": "direct"
     }
   ]
 }
