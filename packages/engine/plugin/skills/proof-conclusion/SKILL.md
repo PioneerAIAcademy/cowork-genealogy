@@ -185,7 +185,9 @@ After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct
 
 ### 7. Resolve the question
 
-**Concluding a question includes resolving it — this skill owns that transition.** Once the `proof_summaries` entry from §5 exists, call `research_append({ projectPath, section: "questions", op: "update", entryId: "<the q_ this conclusion answers>", fields: { status: "resolved", resolved: "<today, YYYY-MM-DD>", resolution_assertion_ids: [ /* the a_ ids the conclusion rests on */ ] } })`.
+**Concluding a question includes resolving it — this skill owns that transition.** After writing the §5 summary **in this invocation**, call `research_append({ projectPath, section: "questions", op: "update", entryId: "<the q_ this conclusion answers>", fields: { status: "resolved", resolved: "<today, YYYY-MM-DD>", resolution_assertion_ids: [ /* the a_ ids the conclusion rests on */ ] } })`.
+
+**Resolve only a question you just concluded.** Leave the `questions` section untouched when this invocation concluded nothing: review / assessment mode (§9), a precondition gate that blocked (above), or a decline — an unresolved conflict disputing the concluded fact caps the tier at `possible` (§2), so the question stays open and you route to `conflict-resolution`. A pre-existing `ps_` from an earlier invocation is not a conclusion you reached now; resolving on the strength of one turns a decline into a silent finalization.
 
 `research_append` refuses that update — on `status` and on the `resolved` date alike — unless a proof summary already references the question. If both go in one call, order the `proof_summaries` append **before** this update.
 
