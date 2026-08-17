@@ -114,10 +114,37 @@ two reader families handle it differently (`harness/since_window.py`):
   row, mark stale ones, sort them last, and name them in a summary line.
   `SINCE=N` filters on demand.
 
-This is a *query* window and deletes nothing — retention is keyed on rank, not
-age, for the reason in the next paragraph.
+This is a *query* window and deletes nothing. **Unit** retention is keyed on
+rank, not age, for the reason in the next paragraph; **e2e** retention is keyed
+on age and strips rather than deletes (see "E2e capture strip" below).
 
 **Retention: the harness keeps the newest 5 candidates per skill.** `write_run_log` prunes older ones — with their `.ann.json` siblings — on every write (`harness/runlog.py::prune_old_candidates`, K in `versioning.DEFAULT_KEEP_CANDIDATES`). So a harness run produces deletions alongside the new candidate; commit them. Released `v{N}.json` are kept forever, a skill's newest candidate is never pruned (so this cannot move what rule 2 gates on), and scratch/partial logs are untouched. There is no CI rule for this — pruning at the writer is what keeps the cap holding without one; the versioning plan's manual candidate tier was never once performed and the corpus reached 312 candidates / 205 MB. `make prune-runlogs PRUNE=1` is the catch-up sweep, not part of the normal loop.
+
+**E2e capture strip: `response_summary` is dropped past 14 days.**
+`make prune-runlogs STRIP=1` (`scripts/prune_runlogs.py --strip-e2e-captures`)
+rewrites every `eval/runlogs/e2e/<slug>/run-<ts>.json` older than the window,
+dropping `response_summary` from each `tool_calls` entry and keeping
+`tool` / `args` / `is_error`. It marks each file `captures_stripped: true`, so a
+re-sweep is a no-op and a summary-less run is distinguishable from a reclaimed
+one. Idempotent; a run inside the window is left byte-identical.
+
+Age is the right key here and rank is not, which is the opposite of the unit
+rule above: `RUNLOG_PATH_RE` in `scripts/check_runlogs.py` matches
+`eval/runlogs/unit/` only, so no e2e rule keys off "the latest run log per
+fixture" and there is no per-fixture invariant an age cut could break — 27 of
+105 e2e fixtures already carry zero committed run logs with nothing failing.
+Matching the retention key to the reader window is the point.
+
+Two things it never touches. The **calibration triple** —
+`run-<ts>.ann.json`, `run-<ts>.final-tree.gedcomx.json`,
+`run-<ts>.final-research.json` — is kept forever at any age, because
+`e2e/calibrate_judge.py` hard-errors without the tree sibling and reads
+`run-<ts>.json` never. And the four `william-ferber-origins` runs in
+`E2E_STRIP_EXEMPT`, which are the sole calibration evidence for the ToolSearch
+abort backstop: `tests/unit/test_e2e_mcp_health.py` replays them through the
+real detector, which matches a marker *inside* `response_summary`. Stripping
+those would fail three tests loudly and silently vacate the healthy-run
+control, so that test asserts the exemption set still covers what it pins.
 
 The harness picks the next filename per `eval/harness/harness/versioning.py::next_filename_for`:
 1. Scan the skill dir for the highest released `v{N}.json` (call it R) and the highest candidate `v{M}_<ts>.json` (call it U).
