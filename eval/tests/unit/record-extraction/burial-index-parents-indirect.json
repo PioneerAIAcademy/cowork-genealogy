@@ -19,7 +19,7 @@
   },
   "judge_context": [
     "Death date (2 Feb 1941) and burial date (4 Feb 1941) are DIRECT evidence - recorded at/near the burial event",
-    "Louise's parents (John Becker and Mary Kramer) are INDIRECT evidence: they are named on Louise's own burial record by an informant relaying secondhand knowledge, not witnessed - the same death-record doctrine used for a decedent's parents (see ut_record_extraction_009). Do NOT mark the parent names/relationships direct",
+    "Louise's parents (John Becker and Mary Kramer) are DIRECT evidence — the entry has Father: and Mother: fields and each holds a name, so the record states them. No informant is named on a cemetery index, so informant_proximity is unknown and information_quality indeterminate; that uncertainty lives in those layers and does not make the evidence indirect. Grading these indirect is the error this test now guards against (doctrine settled 2026-08-16; this bullet previously required indirect, citing ut_009, whose own doctrine has moved with it).",
     "Extract the mother's name exactly as stated ('Mary Kramer'); do NOT reconcile it with the 'Anna Kramer' on Frank's marriage or the 'Anna' on John's burial - that conflict is resolved downstream, not at extraction",
     "Source classification is DERIVATIVE - an index of the cemetery's burial records",
     "Informant is unknown on this index entry; information quality is indeterminate for every fact on the entry, including the parentage facts - an unknown informant cannot be graded primary or secondary",
@@ -58,14 +58,14 @@
     {
       "record_role": "father_of_deceased",
       "fact_type": "name",
-      "evidence_type": "indirect",
+      "evidence_type": "direct",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
     {
       "record_role": "mother_of_deceased",
       "fact_type": "name",
-      "evidence_type": "indirect",
+      "evidence_type": "direct",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
     },
