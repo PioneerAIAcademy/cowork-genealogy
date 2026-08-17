@@ -91,8 +91,7 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     version — it supersedes every candidate of that version. Release renames
     `v{N}_<ts>.json` in place and leaves the earlier candidates behind (pruning
     keeps 5), so treating None as `""` would let a superseded candidate outrank
-    the blessed release and hand the next run a stale cursor and a stale
-    `previous_tests` baseline.
+    the blessed release and hand the next run a stale cursor.
     """
     if not skill_runlog_dir.is_dir():
         return None
@@ -132,7 +131,6 @@ def _review_sample_for(
     return select_review_sample(
         tests=entries,
         prior_sample=(previous or {}).get("review_sample"),
-        previous_tests=(previous or {}).get("tests"),
         seed=sum(ord(c) for c in (skill + timestamp)),
     )
 
@@ -479,6 +477,7 @@ _JUDGE_WARNING_KINDS = frozenset({
     "dropped_unknown_base_dimension",
     "dropped_duplicate_dimension",
     "coerced_tool_arguments_to_na",
+    "routing_negative_judge_fail",
 })
 
 

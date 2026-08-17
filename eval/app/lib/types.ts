@@ -109,8 +109,8 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
-  // in `apply_routing_deference`. The Python side keeps its equivalent only
-  // because it emits a different warning message.
+  // in `flag_routing_negative_judge_fail`. The Python side keeps its equivalent
+  // only because it emits a different warning message.
   const gradeable = new Set(
     log.tests
       .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)

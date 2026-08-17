@@ -41,9 +41,6 @@ N_TARGETED = 1
 N_RANDOM = 1
 DEFAULT_N = N_ROTATION + N_TARGETED + N_RANDOM
 
-_HEDGES = ("unclear", "appears to", "cannot determine", "difficult to tell",
-           "hard to say", "ambiguous")
-
 
 def _dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
     return entry.get("outcome_summary", {}).get("aggregated_dimensions") or []
@@ -56,9 +53,9 @@ def is_gradeable(entry: dict[str, Any]) -> bool:
     `aggregated_dimensions` empty — and `rule3_completeness` iterates exactly
     that array, so such a test demands zero corrections. Sampling one wastes a
     slot: on `project-status` 3 of 11 tests are empty, and **all** the empty
-    tests in the corpus have `outcome != expected_outcome`, which is targeted
-    rule 4 — so without this the targeted slot is biased *toward* tests with
-    nothing to annotate.
+    tests in the corpus have `outcome != expected_outcome`, which is exactly
+    what `_outcome_disagrees` matches — so without this the targeted slot is
+    biased *toward* tests with nothing to annotate.
 
     Excluded is not unnoticed: `rule3_completeness` warns about these
     separately, because an ungraded test is a signal, not an absence.
@@ -79,72 +76,15 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
     )
 
 
-def _validator_judge_conflict(entry: dict[str, Any]) -> bool:
-    """A validator failed while the judge saw nothing wrong, or the inverse.
-
-    Reads the run's `validators.passed` **aggregate**, never the individual
-    `results[].passed`. `compute_validators_passed` exempts the file-validity
-    validators on a test declaring `intentionally_invalid` — those tests fail
-    `test_project_files_pass_full_validation` by design on every run, and the
-    judge still grades clean. Scanning raw results reports a permanent conflict
-    for them: 5 of 10 `validate-schema` tests plus `ut_project_status_005`
-    match, which pins the targeted slot to one test forever.
-    """
-    scores = [d.get("score") for d in _dimensions(entry)]
-    numeric = [s for s in scores if isinstance(s, int)]
-    if not numeric:
-        return False
-    runs = entry.get("runs") or []
-    verdicts = [
-        run.get("validators", {}).get("passed")
-        for run in runs
-        if isinstance(run.get("validators"), dict)
-        and run["validators"].get("passed") is not None
-    ]
-    if not verdicts:
-        return False
-    any_validator_failed = any(v is False for v in verdicts)
-    judge_clean = all(s == 3 for s in numeric)
-    judge_failed = any(s == 1 for s in numeric)
-    return (any_validator_failed and judge_clean) or (judge_failed and not any_validator_failed)
-
-
-def _score_moved(entry: dict[str, Any], previous: dict[str, dict[str, Any]]) -> bool:
-    """A dimension's score differs from the previous releasable run of this test.
-
-    Cross-run, deliberately: that detects a regression. The within-invocation
-    reading (`runs[].judge.dimensions`) would only detect flakiness, and
-    `runs_per_test` is pinned to 1 repo-wide.
-    """
-    prev = previous.get(entry.get("test_id"))
-    if not prev:
-        return False
-    before = {(d.get("source"), d.get("name")): d.get("score") for d in _dimensions(prev)}
-    for d in _dimensions(entry):
-        key = (d.get("source"), d.get("name"))
-        if key in before and before[key] != d.get("score"):
-            return True
-    return False
-
-
 def _outcome_disagrees(entry: dict[str, Any]) -> bool:
     expected = entry.get("expected_outcome")
     return bool(expected) and entry.get("outcome") != expected
-
-
-def _rationale_hedges(entry: dict[str, Any]) -> bool:
-    for d in _dimensions(entry):
-        text = (d.get("rationale") or "").lower()
-        if any(h in text for h in _HEDGES):
-            return True
-    return False
 
 
 def select_review_sample(
     *,
     tests: list[dict[str, Any]],
     prior_sample: dict[str, Any] | None = None,
-    previous_tests: list[dict[str, Any]] | None = None,
     seed: int = 0,
     n_rotation: int = N_ROTATION,
     n_targeted: int = N_TARGETED,
@@ -172,7 +112,6 @@ def select_review_sample(
         return {"tests": [], "cursor": [], "seed": seed}
 
     cursor = [tid for tid in (prior_sample or {}).get("cursor", []) if tid in by_id]
-    previous = {t["test_id"]: t for t in (previous_tests or [])}
 
     picked: list[str] = []
 
@@ -192,25 +131,38 @@ def select_review_sample(
 
     # --- Targeted: ranked rules, first UNSWEPT match wins ------------------
     #
-    # Every rule carries the same exhaustion guard, not just rule 1. These
-    # signals are structural, not transient: a test that matches one match it
-    # on every run forever — a permanently-`intentionally_invalid` validator
-    # result, a rubric dimension the fixture never exercises, an `xfail`. An
-    # earlier version guarded only rule 1 and simulation over the committed
-    # corpus showed **10 of 25 suites pinning one test on 20 of 20 chained
-    # runs**, making the effective sample 4 distinct tests rather than 5.
+    # TWO rules, not six. Scored against the only ground truth available — a
+    # human changed the judge's score, n=37 across the committed corpus — the
+    # six-rule stack caught 17 and `_outcome_disagrees` ALONE caught 18. The
+    # four that were cut earned nothing: `_score_moved` caught zero uniquely
+    # while owning the heaviest plumbing (a previous-run baseline threaded
+    # through the whole call), a `not previous` rule matched every test on a
+    # first run, and neither `_validator_judge_conflict` nor `_rationale_hedges`
+    # added a catch the survivors missed. Do not re-add a rule without scoring
+    # it against that n=37; a rule that fires often is not the same as a rule
+    # that finds anything.
     #
-    # So a rule only wins with a candidate this sweep has not covered. When its
-    # matches are all swept, the slot falls through to the next rule; when
-    # every rule is exhausted, the highest-ranked match wins anyway — a
-    # repeated targeted pick beats an empty slot.
+    # `_has_rubric_null_on_positive` stays FIRST despite ranking below
+    # `_outcome_disagrees` on that metric. It is the only rule that selects the
+    # corpus's one documented rubber-stamped test, and blind grading was closed
+    # `not planned` naming this slot as the mitigation. A rubric null on a
+    # positive test is also the one shape `_compute_outcome` cannot see: it
+    # gates on 1 and 2, and null is neither, so a null standing in for a 1
+    # records the run as a pass.
+    #
+    # BOTH rules carry the same exhaustion guard. These signals are structural,
+    # not transient: a test that matches one matches it on every run forever — a
+    # rubric dimension the fixture never exercises, an `xfail`. An earlier
+    # version guarded only the first rule and simulation over the committed
+    # corpus showed **10 of 25 suites pinning one test on 20 of 20 chained
+    # runs**, making the effective sample 4 distinct tests rather than 5. So a
+    # rule only wins with a candidate this sweep has not covered; when its
+    # matches are all swept the slot falls through to the next rule, and when
+    # every rule is exhausted the highest-ranked match wins anyway — a repeated
+    # targeted pick beats an empty slot.
     rules = [
         _has_rubric_null_on_positive,
-        _validator_judge_conflict,
-        lambda e: _score_moved(e, previous),
         _outcome_disagrees,
-        lambda e: not previous,
-        _rationale_hedges,
     ]
     available = [tid for tid in ids if tid not in picked]
     fallback: list[str] = []
