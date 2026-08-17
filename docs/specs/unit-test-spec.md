@@ -555,6 +555,15 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
+  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. `record-extraction` states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
+
+  **The leak is not confined to `judge_context`** — three other channels reach the same dimension, and no rule about notes touches any of them. If the note says "score 3 if it reasons about X", nothing else may state X. Apply the neutrality test to:
+  - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt.
+  - **the scenario's `research.json`** — plan-item rationales are read by the skill and are the natural place to restate the answer.
+  - **the scenario's `README.md`** — this one reaches the **judge**, not the skill: `_load_scenario_readme` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A "What it exercises" bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write those bullets as the *capability* under test, never the correct outcome.
+
+  **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them.
+
   Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`

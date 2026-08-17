@@ -141,7 +141,11 @@ _RESPONSE_MAX_DEPTH = 8  # guard against pathological nested responses
 
 
 def _summarize_response(
-    response: Any, _depth: int = 0, *, string_max: int = _RESPONSE_STRING_MAX
+    response: Any,
+    _depth: int = 0,
+    *,
+    string_max: int = _RESPONSE_STRING_MAX,
+    array_sample: int | None = _RESPONSE_ARRAY_SAMPLE,
 ) -> Any:
     """Produce a tight summary of a tool response for the judge prompt.
 
@@ -165,6 +169,15 @@ def _summarize_response(
     a graded deliverable written to a file (see orchestrator._summarize_changes)
     pass a larger value so e.g. a full proof narrative, including its
     citations, survives.
+
+    `array_sample` overrides the list cap; **None means keep every element.**
+    The default suits a tool response, where the first few hits show argument
+    quality and the rest is noise. It is wrong for a graded artifact: the block
+    the judge is told to grade as "the persisted artifact" was silently showing
+    the first 3 of a plan's items, so a note saying "read the persisted plan
+    items" pointed at a third of them. Sampling applies at every depth, so a
+    nested `items[]` inside one added entry was cut even though the entry list
+    itself was short.
     """
     if _depth >= _RESPONSE_MAX_DEPTH:
         return {"_truncated_for_depth": True, "_max_depth": _RESPONSE_MAX_DEPTH}
@@ -172,18 +185,24 @@ def _summarize_response(
         return None
     if isinstance(response, dict):
         return {
-            k: _summarize_response(v, _depth + 1, string_max=string_max)
+            k: _summarize_response(
+                v, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
             for k, v in response.items()
         }
     if isinstance(response, list):
-        if len(response) <= _RESPONSE_ARRAY_SAMPLE:
+        if array_sample is None or len(response) <= array_sample:
             return [
-                _summarize_response(x, _depth + 1, string_max=string_max)
+                _summarize_response(
+                    x, _depth + 1, string_max=string_max, array_sample=array_sample
+                )
                 for x in response
             ]
         sample = [
-            _summarize_response(x, _depth + 1, string_max=string_max)
-            for x in response[:_RESPONSE_ARRAY_SAMPLE]
+            _summarize_response(
+                x, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
+            for x in response[:array_sample]
         ]
         return {
             "_summary_truncated": True,

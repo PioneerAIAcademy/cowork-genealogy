@@ -1284,6 +1284,15 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     # judge can grade a deliverable persisted to a file rather than echoed in
     # the chat reply (e.g. proof-conclusion's narrative_markdown). Per-field and
     # overall truncation bound the judge prompt.
+    #
+    # `array_sample=None` on this path only. The block's own header calls this
+    # "the persisted artifact — grade this", and the default cap of 3 was
+    # applying at every depth, so a nested `items[]` inside one added entry was
+    # cut to its first three while the entry list itself looked complete — a
+    # plan with 9 items showed 3, under a heading telling the judge it was
+    # looking at the artifact. The tool-response and before-state paths keep the
+    # cap: there the first few hits show argument quality and the rest is noise.
+    # `_CHANGES_STRING_MAX` and the overall prompt bound still apply.
     content_lines = [
         "",
         "Content written to files (the persisted artifact — grade this, not just the chat reply):",
@@ -1291,7 +1300,9 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     for fname, fdiff in file_changes.items():
         for section, sdiff in fdiff.get("diff", {}).items():
             for entry in sdiff.get("added", []):
-                summarized = _summarize_response(entry, string_max=_CHANGES_STRING_MAX)
+                summarized = _summarize_response(
+                    entry, string_max=_CHANGES_STRING_MAX, array_sample=None
+                )
                 content_lines.append(
                     f"  {fname} / {section} (added): "
                     f"{json.dumps(summarized, ensure_ascii=False)}"
@@ -1303,7 +1314,7 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
                     for field, change in entry.get("changed_fields", {}).items()
                 }
                 summarized = _summarize_response(
-                    after_values, string_max=_CHANGES_STRING_MAX
+                    after_values, string_max=_CHANGES_STRING_MAX, array_sample=None
                 )
                 content_lines.append(
                     f"  {fname} / {section} (modified {eid}, new values): "
