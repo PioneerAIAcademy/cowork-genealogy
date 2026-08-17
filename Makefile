@@ -350,6 +350,14 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
 	cd eval/harness && uv run ruff check .
 
+.PHONY: replay-check
+replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
+	# Offline and free — no API key, no live calls. Reports reconstruction
+	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
+	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
+	# match on all 12 sections. Run after any change to harness/replay.py.
+	cd eval/harness && uv run python scripts/check_replay_fidelity.py
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its

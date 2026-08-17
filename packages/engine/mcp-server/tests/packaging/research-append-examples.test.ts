@@ -138,9 +138,12 @@ describe("research_append worked examples conform to the schema", () => {
     // Checked against the tool's own section list, not a magic number: the
     // one-way EXAMPLES → DEF_FOR check above cannot see a section that has no
     // example at all, which is how `localities` — writable, and written by
-    // locality-guide — went without one. `project` is the singleton and has
-    // its own PROJECT_EXAMPLE, so it is not in EXAMPLES.
-    const expected = RESEARCH_APPEND_SECTIONS.filter((s) => s !== "project").sort();
+    // locality-guide — went without one. The two SINGLETONS are excluded:
+    // `project` has its own PROJECT_EXAMPLE, and `researcher_profile` is
+    // likewise an update-only object with no id and no appendable entry, so
+    // neither has an EXAMPLES entry or a DEF_FOR mapping.
+    const SINGLETONS = new Set(["project", "researcher_profile"]);
+    const expected = RESEARCH_APPEND_SECTIONS.filter((s) => !SINGLETONS.has(s)).sort();
     expect(Object.keys(EXAMPLES).sort()).toEqual([...expected]);
   });
 
