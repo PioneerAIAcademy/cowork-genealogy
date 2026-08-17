@@ -1025,8 +1025,135 @@ describe("research_append (project singleton section)", () => {
     expect(r.errors.join(" ")).toMatch(/only op 'update'/);
   });
 
-  it("rejects a field that isn't allowed on project (e.g. objective)", async () => {
+  it("creates researcher_profile on first write when the section is absent", async () => {
+    // The seed never fabricates a profile — an observed run invented
+    // "intermediate experience, no paid subscriptions" the user was never asked
+    // for — so the object has to appear on the first REAL write. Without
+    // createWhenAbsent the singleton branch throws "missing or not an object"
+    // and the section stays writable by nothing.
+    const r0 = baseResearch();
+    expect((r0 as Record<string, unknown>).researcher_profile).toBeUndefined();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: {
+        experience_level: "professional",
+        subscriptions: ["Ancestry"],
+        narration_guidance: "Terse; assume GPS fluency.",
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+    expect(research.researcher_profile.narration_guidance).toBe("Terse; assume GPS fluency.");
+  });
+
+  it("lets a researcher correct their profile afterwards — it is not set-once", async () => {
     await writeProject();
+    const first = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "novice" },
+    } as never);
+    expect(first.ok).toBe(true);
+    const second = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "professional" },
+    } as never);
+    expect(second.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+  });
+
+  it("stamps no timestamp on researcher_profile", async () => {
+    // Its schema is additionalProperties:false with no timestamp field, so a
+    // stamp would fail validation on every write.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { intended_audience: "family" },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(Object.keys(research.researcher_profile)).toEqual(["intended_audience"]);
+  });
+
+  it("rejects a field that is on no allow-list at all (e.g. created)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { created: "2020-01-01" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+  });
+
+  it("sets objective, title and subject_person_ids once on a fresh project", async () => {
+    // The whole point of the widening: init-project holds no writer tool today
+    // and creates the project with a bare `Write`, which the lockdown denies.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "", subject_person_ids: [] };
+    delete (r0.project as Record<string, unknown>).title;
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: {
+        objective: "Identify the parents of John Smith",
+        title: "Smith parentage",
+        subject_person_ids: ["I1"],
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Identify the parents of John Smith");
+    expect(research.project.title).toBe("Smith parentage");
+    expect(research.project.subject_person_ids).toEqual(["I1"]);
+  });
+
+  it("treats an empty string and an empty array as unset, not as set", async () => {
+    // `subject_person_ids` is seeded as `[]` rather than omitted, so a
+    // truthiness test would have refused the very first legitimate write.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "   ", subject_person_ids: [] };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { objective: "Real objective", subject_person_ids: ["I1"] },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still allows status through, which is not set-once", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { status: "paused" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses to rewrite an objective that is already set", async () => {
+    // `objective` moved onto allowedFields so init-project can write it once.
+    // The refusal it now hits is the set-once one, not the not-allowed one —
+    // the ownership declaration's stated harm is a skill REWRITING the goal
+    // every later step plans against.
+    await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
@@ -1035,7 +1162,9 @@ describe("research_append (project singleton section)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Test"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {

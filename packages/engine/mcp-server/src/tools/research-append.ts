@@ -59,6 +59,19 @@ interface SectionConfig {
   singleton?: {
     allowedFields: string[];
     stampTimestamp?: { field: string; kind: "date" | "datetime" };
+    /** Fields that may be SET once and never rewritten — legal while the
+     *  current value is absent or empty, refused after. `init-project` fills
+     *  these at creation; nothing else may change them afterwards.
+     *
+     *  **What this constrains is the system, not the researcher.** A human who
+     *  mistyped their objective edits `research.json` directly; the raw-write
+     *  lockdown binds the agent, never a text editor, and preventing a person
+     *  from editing their own files is explicitly not a goal of this layer. So
+     *  this needs no override path — the override is the file itself. */
+    initOnlyFields?: string[];
+    /** Create the object when the document has no such section yet, rather than
+     *  refusing. Only for sections a project may legitimately lack. */
+    createWhenAbsent?: boolean;
   };
 }
 
@@ -93,7 +106,41 @@ const SECTIONS: Record<string, SectionConfig> = {
   // GPS cycle; the tool stamps `project.updated` (iso_date).
   project: {
     prefix: "",
-    singleton: { allowedFields: ["status"], stampTimestamp: { field: "updated", kind: "date" } },
+    singleton: {
+      // `status` is freely updatable — proof-conclusion flips it to "completed".
+      // The other three are set ONCE, by whoever creates the project, and never
+      // rewritten: the ownership declaration's own statement of the harm is "a
+      // skill rewrites the objective, and every later skill plans against a
+      // changed goal it never agreed to."
+      allowedFields: ["status", "objective", "title", "subject_person_ids"],
+      initOnlyFields: ["objective", "title", "subject_person_ids"],
+      stampTimestamp: { field: "updated", kind: "date" },
+    },
+  },
+  // The researcher profile: written at project creation by init-project, and
+  // correctable afterwards — NOT init-only. Every skill reads
+  // `narration_guidance` from here, and a researcher who picked the wrong
+  // experience level needs a route that is not "start over".
+  //
+  // `createWhenAbsent` because a project may legitimately have no profile: the
+  // section is optional in the schema, and an agent must never fabricate one
+  // (a project was observed created with "intermediate experience, no paid
+  // subscriptions" that the user was never asked for). So the object appears on
+  // the first real write rather than being seeded with invented values.
+  //
+  // No `stampTimestamp`: the schema is `additionalProperties: false` with no
+  // timestamp field, so stamping one fails validation on every write.
+  researcher_profile: {
+    prefix: "",
+    singleton: {
+      allowedFields: [
+        "experience_level",
+        "subscriptions",
+        "narration_guidance",
+        "intended_audience",
+      ],
+      createWhenAbsent: true,
+    },
   },
 };
 
@@ -697,9 +744,17 @@ function applyOne(
     if (!op.fields || typeof op.fields !== "object") {
       throw new ResearchAppendError("update requires a `fields` object");
     }
-    const target = research[section];
+    let target = research[section];
     if (!target || typeof target !== "object" || Array.isArray(target)) {
-      throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
+      // An optional section a project may legitimately lack (researcher_profile)
+      // is created by its first write. A required one that is missing is a
+      // malformed document, and saying so beats silently manufacturing it.
+      if (config.singleton.createWhenAbsent && target === undefined) {
+        target = {};
+        research[section] = target;
+      } else {
+        throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
+      }
     }
     const allowed = new Set(config.singleton.allowedFields);
     const rejected = Object.keys(op.fields).filter((k) => !allowed.has(k));
@@ -707,6 +762,25 @@ function applyOne(
       throw new ResearchAppendError(
         `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
           `(allowed: ${config.singleton.allowedFields.join(", ")})`,
+      );
+    }
+    // Set-once: legal while the current value is absent or empty, refused after.
+    // Emptiness is per-type — "" for a string, [] for a list — because
+    // `subject_person_ids` is seeded as an empty array rather than omitted.
+    const initOnly = new Set(config.singleton.initOnlyFields ?? []);
+    const alreadySet = Object.keys(op.fields).filter((k) => {
+      if (!initOnly.has(k)) return false;
+      const current = (target as Record<string, unknown>)[k];
+      if (current === undefined || current === null) return false;
+      if (typeof current === "string") return current.trim() !== "";
+      if (Array.isArray(current)) return current.length > 0;
+      return true;
+    });
+    if (alreadySet.length > 0) {
+      throw new ResearchAppendError(
+        `field(s) already set on '${section}' and not rewritable: ${alreadySet.join(", ")}. ` +
+          "These are written once, when the project is created, because every later step " +
+          "plans against them. To change one, edit research.json directly.",
       );
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
@@ -1912,6 +1986,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "known_holdings",
   "localities",
   "project",
+  "researcher_profile",
 ] as const;
 
 export const researchAppendSchema = {

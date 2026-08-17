@@ -149,6 +149,7 @@ depends on another shipping first.
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
+| §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
@@ -449,7 +450,31 @@ Two things about a deny-mode run's output:
   `person_evidence` entry for that person and its arm passes **vacuously**. The
   mode is recorded in the runlog's `usage` block so a reader can tell.
 
-## 5. Write-boundary invariant
+## 5. Write-boundary invariants
+
+### Set-once project fields
+
+`objective`, `title` and `subject_person_ids` on the `project` singleton may be
+written while unset and never rewritten. Empty counts as unset, per type — `""`
+for a string, `[]` for a list — because `subject_person_ids` is seeded as an
+empty array rather than omitted, so a truthiness test would refuse the first
+legitimate write.
+
+Implemented as `initOnlyFields` on the section config in
+`packages/engine/mcp-server/src/tools/research-append.ts`. It exists because the
+ownership declaration's own statement of the harm is "a skill rewrites the
+objective, and every later skill plans against a changed goal it never agreed
+to" — and that row's remedy, routing the change through `init-project`, was not
+enforceable by anything.
+
+**It constrains the system, not the researcher, and that is why it needs no
+override.** ADR-0011's override tier says a doctrine gate must be overridable by
+the human; here the override is the file itself. The raw-write lockdown binds
+the agent, never a text editor, and preventing a person from editing their own
+project is explicitly out of scope for this layer. The refusal message says so
+outright rather than leaving the researcher to guess.
+
+### Exhaustiveness before a proved tier
 
 A `proof_summaries` entry may not carry `tier: "proved"` or `"disproved"`
 unless the referenced question already carried
