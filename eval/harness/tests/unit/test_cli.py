@@ -1455,17 +1455,43 @@ def test_summary_ignores_non_judge_warning_kinds():
     assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
     assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
     assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
-    # And every kind judge.py actually emits IS in the set, or it prints
+
+    # And every judge-warning kind either file emits IS in the set, or it prints
     # nowhere — which is the state this whole section exists to end.
+    #
+    # BOTH files, not just judge.py. Scanning judge.py alone is how the routing
+    # warning stayed dark for its entire life: it was emitted from
+    # orchestrator.py, so this guard never read the line that declared it and
+    # passed green the whole time. A guard that cannot see the file where the
+    # bug lives is not a guard.
     from pathlib import Path as _P
-    src = (_P(__file__).resolve().parents[2] / "harness/judge.py").read_text(
-        encoding="utf-8"
-    )
     import re as _re
-    emitted = set(_re.findall(r'"kind": "([a-z_]+)"', src))
-    assert emitted <= run_tests._JUDGE_WARNING_KINDS, (
-        f"judge.py emits warning kind(s) the summary will never print: "
-        f"{sorted(emitted - run_tests._JUDGE_WARNING_KINDS)}"
+
+    harness_dir = _P(__file__).resolve().parents[2] / "harness"
+    emitted: set[str] = set()
+    for name in ("judge.py", "orchestrator.py"):
+        emitted |= set(
+            _re.findall(
+                r'"kind": "([a-z_]+)"',
+                (harness_dir / name).read_text(encoding="utf-8"),
+            )
+        )
+
+    # orchestrator.py emits both classes. These three are harness-side
+    # advisories about the skill or the fixtures, asserted above to be OUT of
+    # the set; everything else either file emits is a judge warning and must be
+    # IN it. Listing them here rather than filtering by call site is deliberate:
+    # a NEW orchestrator kind fails this test until someone classifies it, which
+    # is the decision that was skipped last time.
+    harness_side = {
+        "unread_skill_call",
+        "missing_tool_usage_dimension",
+        "uncovered_tool_call",
+    }
+    judge_side = emitted - harness_side
+    assert judge_side <= run_tests._JUDGE_WARNING_KINDS, (
+        f"judge/orchestrator emit warning kind(s) the summary will never print: "
+        f"{sorted(judge_side - run_tests._JUDGE_WARNING_KINDS)}"
     )
 
 
