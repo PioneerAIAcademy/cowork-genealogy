@@ -166,8 +166,12 @@ document that as the narrower mode.
 ## 9. Consumers
 
 - `merge_record_into_tree` / `merge_tree_persons` — `merge-gedcomx-spec.md` §5b.2
-  step 4 (import `validateParsed` from `../validation/validator.js`).
-- Future `research_append` — same validate-before-persist need.
+  step 4. They now import `validateIntroduced` from
+  `../validation/introduced-errors.js` (which wraps `validateParsed`), so they
+  block only on errors the merge introduces — see §11.
+- `research_append`, `research_log_append`, `tree_edit` / `tree_correct`,
+  `materialize_facts`, `tree_forget` — same validate-before-persist need, all
+  routed through `validateIntroduced` (§11).
 - `validate_research_schema` — continues through `validateProject` unchanged.
 
 ---
@@ -201,3 +205,36 @@ Additionally, **export `validateGedcomx`** (today a private function at
 `validateParsed` validates a research+tree *pair*, so it does not cover the
 standalone-candidate case. Exporting it is in scope here because it is the same
 validation-module surface this refactor already touches.
+
+---
+
+## 11. The call-introduced refinement (tolerate pre-existing drift)
+
+A `research.json` in a legacy shape (`person_id`/`notes` on assertions,
+`author`/`record_id`/`title` on sources, `resolution_notes` on conflicts) fails
+`validateParsed`, and because every writer validates the whole project, one
+drifted section froze all nine writing tools — even a call that never touched it.
+
+**Decision (Dallan, 2026-08-14): Option 1.** A shared `validateIntroduced`
+(`validation/introduced-errors.ts`) validates the pre-call snapshot too and
+blocks only on errors the call introduces; pre-existing drift rides along as a
+single summary warning. **Both passes run with the caller's `projectPath`** — §5
+rules this directly (omitting it on the before-pass re-freezes exactly the
+pre-existing sidecar / dangling-results-ref / D5 class it is meant to tolerate,
+and §5 shows the sidecar pass is invariant under a merge so before and after
+agree). Error identity is keyed on a reindex-stable `key[id=…]` path so the
+tree/merge/forget tools' array reindexing does not read a shifted pre-existing
+error as new.
+
+Options it beat:
+
+- **Option 2 — a `research.json` healer** (a mirror of `tree-sanitize.ts` that
+  rewrites the drifted fields to the current shape). Rejected as the primary fix:
+  it is irreversible, needs a per-key genealogical ruling for all six drifted keys
+  (a lead decision, not mechanical), and does not unblock the tools by itself.
+  Filed as a follow-up — Option 1 knowingly leaves the document invalid for
+  downstream readers (the viewer, `packages/schema` consumers) until the healer
+  lands, and the tolerated fields hold real evidence (citation content, the
+  assertion-to-person linkage, resolution reasoning).
+- **Option 3 — narrow only `tree_forget`'s validation.** Rejected: leaves the
+  other eight tools frozen. Do not ship alone.
