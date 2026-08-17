@@ -53,6 +53,8 @@ condition today and is enforceable there too — issue #1273. e2e imports
 (e2e imports from `harness.*`, never the reverse.)
 """
 
+import importlib.util
+from pathlib import Path
 from typing import Any
 
 # Tools that are unsafe on the main thread *when the skill did not claim them*.
@@ -196,3 +198,126 @@ def subagent_only_denial(bare: str) -> dict[str, Any]:
             "permissionDecisionReason": reason,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Protected-file lockdown, imported (NOT copied) from the shipped plugin hook.
+#
+# The raw-write lockdown — deny Write/Edit/NotebookEdit on research.json and
+# tree.gedcomx.json — ships in three copies (plugin hook, hosted SDK hook, e2e
+# harness). The unit harness was the one tier missing it (issue #1493). Rather
+# than add a fourth textual copy that could drift, we bind the *live* predicate
+# object from the plugin hook. It is the only one of the three that is
+# stdlib-only (`json`/`sys`), so importing it here pulls in no `claude_agent_sdk`
+# — unlike `real_agent`/`orchestrator`, whose predicates the parity test must
+# `ast`-extract because importing them would run a foreign venv's imports.
+#
+# An imported predicate cannot diverge from what the plugin ships, which is
+# strictly stronger than a vector-checked copy; that is why #1493 mandates
+# "import, do not copy" and why IMPLEMENTATIONS in test_write_lockdown_parity.py
+# stays at three. Do NOT rebind `_guard.PROTECTED_PROJECT_FILES` to a
+# module-level name here: `test_no_unregistered_copy_of_the_lockdown_exists`
+# greps for `PROTECTED_PROJECT_FILES[[:space:]]*[:=]` and would flag this module
+# as a fourth copy. Reach it as `_guard.PROTECTED_PROJECT_FILES` only.
+# ---------------------------------------------------------------------------
+
+_GUARD_HOOK_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "packages"
+    / "engine"
+    / "plugin"
+    / "hooks"
+    / "guard_project_files.py"
+)
+
+
+def _load_guard():
+    """Import the shipped plugin hook module by file path.
+
+    Fail-closed on purpose: if the plugin hook cannot be loaded, raise here
+    rather than degrade to allowing every write — a silent None would recreate
+    exactly the "nothing checks" gap #1493 closes. The plugin file is always
+    present in a checkout, so this only fires on a genuinely broken tree.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_genealogy_guard_project_files", _GUARD_HOOK_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load guard hook at {_GUARD_HOOK_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_guard = _load_guard()
+
+
+def protected_file_denial(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
+    """A PreToolUse deny payload for a raw write to a protected project file.
+
+    Returns None when the call is not a protected-file write (the hook should
+    then fall through to the normal permission flow). Reuses the plugin hook's
+    own `protected_target` predicate and `REASON` text, so the unit harness
+    denies exactly what ships in Cowork, with identical feedback. No
+    `stopReason` — a denied write is recoverable, matching `subagent_only_denial`
+    and the e2e tree-read block.
+    """
+    name = _guard.protected_target(
+        tool_name, tool_input if isinstance(tool_input, dict) else {}
+    )
+    if name is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": _guard.REASON.format(
+                tool=tool_name or "This tool", name=name
+            ),
+        },
+    }
+
+
+def protected_write_denial(
+    tool_name: str, tool_input: Any, workspace: Path
+) -> dict[str, Any] | None:
+    """Deny payload for a raw write to an **already-existing** protected file.
+
+    This is the unit harness's existence-gated wrapper around
+    `protected_file_denial`. It returns a deny **only** when the write should
+    actually be blocked — the target basename is protected **and** the file
+    already exists on disk. Two cases return None (the hook then falls through
+    and allows the call):
+
+    - the write is not to a protected basename at all; or
+    - the protected file **does not exist yet** — a bootstrap creation.
+
+    The bootstrap-create exemption exists because `init-project` seeds
+    `research.json`/`tree.gedcomx.json` by raw `Write` (no writer tool can
+    create an absent file — `research_append`/`tree_edit` throw "not found" —
+    and it is granted none). A create has nothing to validate against and no
+    `.bak` to lose. This mirrors the coarse validator
+    `test_project_file_changes_route_through_writer_tools`, which skips when
+    there is no `before_state` to diff. The lockdown targets raw EDITS to files
+    that already exist; the missing bootstrap seed tool is issue #1080.
+
+    Fail-open on a path that cannot be stat'd: `Path.exists()` raises (rather
+    than returning False) on e.g. ENAMETOOLONG for a model-composed overlong
+    path, and a PreToolUse hook must never raise (CLAUDE.md, "Plugin hooks") —
+    an exception here fails a tool call the skill was entitled to make. An
+    unstattable path cannot hold a real file to hand-edit and the write itself
+    would fail anyway, so it is treated as a create and allowed.
+
+    `workspace` resolves a relative `file_path` the model may pass; an absolute
+    path is used as-is.
+    """
+    denial = protected_file_denial(tool_name, tool_input)
+    if denial is None:
+        return None
+    file_path = str((tool_input or {}).get("file_path") or "")
+    target = Path(file_path) if Path(file_path).is_absolute() else workspace / file_path
+    try:
+        already_exists = target.exists()
+    except (OSError, ValueError):
+        already_exists = False
+    return denial if already_exists else None

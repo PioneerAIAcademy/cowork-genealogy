@@ -313,13 +313,38 @@ No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
 (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
 direct file write never validates.
 
-Three implementations, deliberately:
+Three shipping copies, plus the unit harness — which *imports* the plugin
+predicate rather than re-implementing it (issue #1493):
 
 | Where | File | Reaches |
 |---|---|---|
 | Plugin `PreToolUse` command hook | `packages/engine/plugin/hooks/{hooks.json,guard_project_files.py}` | Cowork, hosted, anywhere the plugin loads |
 | SDK `PreToolUse` hook | `apps/server/app/agent/real_agent.py` (`_pretool_hook`) | hosted only |
-| Harness hook | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (e2e) | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 25 skills) |
+
+The unit-tier row is deliberately not a fourth *copy*: it binds the live
+`protected_target` object out of the plugin hook (the only stdlib-only copy, so
+importing it drags in no `claude_agent_sdk`), so it cannot drift from what ships.
+That is why `IMPLEMENTATIONS` in `test_write_lockdown_parity.py` stays at three —
+there is no fourth textual predicate to vector-check — and why the unit deny is
+pinned instead by `test_context_policy.py`, which asserts the harness bound the
+shipped file (`__file__`) and denies the right targets.
+
+**The unit tier exempts bootstrap creation; the shipping copies do not, and
+that gap is a known defect.** The unit deny fires only when the target file
+**already exists** on disk — a raw write that *creates* a not-yet-existing
+`research.json`/`tree.gedcomx.json` is allowed. This mirrors the coarse
+validator `test_project_file_changes_route_through_writer_tools`, which skips
+when there is no `before_state` to diff, and it is required because
+`init-project` seeds both files by raw `Write` (no writer tool can create an
+absent file — `research_append`/`tree_edit` throw "not found" — and it is
+granted none). The three shipping copies match on basename **with no such
+exemption**, so `init-project` cannot create a project anywhere they bind —
+confirmed live in Cowork 2026-08-09. That is **issue #1080** (the missing
+bootstrap seed tool), not something the unit tier should reproduce; when #1080
+ships a seed writer, `init-project` stops raw-writing and the exemption becomes
+moot.
 
 **Why the plugin copy exists.** A per-agent `tools:` allow-list is subtractive —
 it can only narrow what a subagent inherits — so nothing but a hook can restrain
@@ -414,6 +439,34 @@ the real script; `apps/server/tests/test_write_lockdown.py`;
 **agree** — extracting each copy's constant and predicate with `ast` and running
 them against one vector set, so the next `PROTECTED_PROJECT_FILES` change cannot
 land in one copy only.
+
+### 6.1 `settings.json` is **not** in the protected set — and why (measured 2026-08-15)
+
+`settings.json` is deliberately not protected here. The question "can an agent
+widen its own permissions by writing `.claude/settings.json`?" was raised by
+issue #1493 step 0 and answered empirically by the lead (recorded so it is not
+flattened back to "it was denied"):
+
+- Under `permission_mode="bypassPermissions"` (what the unit harness and the
+  hosted control plane both run) a raw write to a project-local **or** global
+  `.claude/settings.json` **lands** — nothing refuses it.
+- But it is **inert in the same session**: after writing a `Read` deny, `Read`
+  still worked. So it is **not** same-session privilege escalation.
+- The real exposure is **cross-session persistence**: the project folder is the
+  only thing that survives between sessions, so a settings file left behind
+  would bind the *next* session opened there.
+- In **Cowork with a connected folder it is inert entirely** — those files
+  arrive as staged data, not as a project whose settings configure the session.
+- The global `~/.claude/settings.json` half is already closed: hosted and unit
+  both run `setting_sources=["project"]`, and the E2B image creates only
+  `~/.familysearch-mcp`.
+
+Net: protecting `settings.json` is worth doing on the **hosted web** path only,
+for **persistence** rather than escalation, and it cannot ride this change —
+the parity test forces all three shipping copies to protect the *same* set, so
+a hosted-only entry needs a per-path protected-set design first. Tracked as
+separate follow-up work; the unit-harness rule above (the larger half of #1493)
+stands on its own.
 
 ## 7. Caller-attributed recency check (shadow mode)
 

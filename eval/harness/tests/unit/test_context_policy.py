@@ -9,11 +9,16 @@ CLI + SDK 0.1.81 (plan §3.1): main-thread firings omit `agent_id` entirely
 rather than setting it to None.
 """
 
+from pathlib import Path
+
+from harness import context_policy
 from harness.context_policy import (
     _DENIAL_REASONS,
     SUBAGENT_ONLY_TOOLS,
     bare_tool_name,
     is_subagent_call,
+    protected_file_denial,
+    protected_write_denial,
     subagent_only_denial,
     subagent_only_violation,
 )
@@ -394,3 +399,110 @@ def test_record_extractor_agent_declares_extraction_append():
             "is held only by this agent, and CLAUDE.md requires both server "
             "spellings; a prose mention of the bare name does not grant it."
         )
+
+
+# ---------------------------------------------------------------------------
+# The protected-file lockdown is IMPORTED from the shipped plugin hook, not
+# copied (issue #1493). These pin that binding: the harness denies exactly what
+# Cowork ships, and it is the shipped file it bound — not a stale local copy.
+# An `is`-identity assertion against a separately-imported guard module cannot
+# work (importlib produces a distinct module object), so we assert the bound
+# module's __file__ and its observable behaviour instead.
+# ---------------------------------------------------------------------------
+
+
+def test_guard_is_bound_to_the_shipped_plugin_hook():
+    # parents[4] is the repo root from eval/harness/tests/unit/.
+    expected = (
+        Path(__file__).resolve().parents[4]
+        / "packages/engine/plugin/hooks/guard_project_files.py"
+    )
+    assert Path(context_policy._guard.__file__).resolve() == expected.resolve(), (
+        "context_policy bound a guard module other than the shipped plugin hook "
+        f"— expected {expected}, got {context_policy._guard.__file__}"
+    )
+
+
+def test_protected_file_denial_denies_a_raw_write_to_a_protected_file():
+    denial = protected_file_denial("Write", {"file_path": "/ws/research.json"})
+    assert denial is not None
+    out = denial["hookSpecificOutput"]
+    assert out["permissionDecision"] == "deny"
+    assert "research.json" in out["permissionDecisionReason"]
+    # No stopReason: a denied write is recoverable, like subagent_only_denial.
+    assert "stopReason" not in denial
+
+
+def test_protected_file_denial_ignores_an_unprotected_write():
+    assert protected_file_denial("Write", {"file_path": "/ws/notes.md"}) is None
+
+
+def test_protected_file_denial_ignores_non_write_tools():
+    assert protected_file_denial("Read", {"file_path": "/ws/research.json"}) is None
+
+
+def test_protected_file_denial_survives_degenerate_input():
+    # Never raise in front of a tool call — a raising hook fails a call the user
+    # was entitled to make.
+    assert protected_file_denial("Write", None) is None
+    assert protected_file_denial("", {"file_path": "/ws/research.json"}) is None
+
+
+# --- protected_write_denial: the existence-gated wrapper the unit harness wires
+#     into skill_runner's pretool_hook. Denies a raw write to an ALREADY-EXISTING
+#     protected file; exempts bootstrap creation; never raises (issue #1493). ---
+
+
+def test_protected_write_denies_an_edit_to_an_existing_protected_file(tmp_path):
+    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
+    denial = protected_write_denial(
+        "Write", {"file_path": str(tmp_path / "research.json")}, tmp_path
+    )
+    assert denial is not None
+    out = denial["hookSpecificOutput"]
+    assert out["permissionDecision"] == "deny"
+    assert "research.json" in out["permissionDecisionReason"]
+    assert "stopReason" not in denial
+
+
+def test_protected_write_allows_bootstrap_creation_of_an_absent_file(tmp_path):
+    # tree.gedcomx.json does not exist yet → init-project's seed write is allowed.
+    assert (
+        protected_write_denial(
+            "Write", {"file_path": str(tmp_path / "tree.gedcomx.json")}, tmp_path
+        )
+        is None
+    )
+
+
+def test_protected_write_resolves_a_relative_path_against_workspace(tmp_path):
+    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
+    # A bare/relative file_path is resolved under the workspace, so an existing
+    # file is still caught.
+    assert (
+        protected_write_denial("Write", {"file_path": "research.json"}, tmp_path)
+        is not None
+    )
+    assert (
+        protected_write_denial("Edit", {"file_path": "./research.json"}, tmp_path)
+        is not None
+    )
+
+
+def test_protected_write_ignores_an_unprotected_or_non_write_call(tmp_path):
+    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
+    assert protected_write_denial("Write", {"file_path": str(tmp_path / "notes.md")}, tmp_path) is None
+    assert protected_write_denial("Read", {"file_path": str(tmp_path / "research.json")}, tmp_path) is None
+
+
+def test_protected_write_never_raises_on_an_unstattable_path(tmp_path):
+    # `.exists()` raises ENAMETOOLONG on a model-composed overlong path; the hook
+    # must never raise, so this fails open (treated as create → allowed).
+    overlong = "/" + "a" * 5000 + "/research.json"
+    assert protected_write_denial("Write", {"file_path": overlong}, tmp_path) is None
+
+
+def test_protected_write_survives_degenerate_input(tmp_path):
+    assert protected_write_denial("Write", None, tmp_path) is None
+    assert protected_write_denial("Write", {"file_path": ""}, tmp_path) is None
+    assert protected_write_denial("Write", {"file_path": None}, tmp_path) is None
