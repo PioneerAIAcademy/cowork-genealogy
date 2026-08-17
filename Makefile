@@ -300,6 +300,13 @@ test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (
 server-test: ## Control-plane tests — apps/server (FastAPI, pytest; uv auto-syncs the venv)
 	cd apps/server && uv run pytest -q
 
+.PHONY: hooks-test
+hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no venv, no install)
+	# The issue-filing gate fails open by design, so a broken regex stops the
+	# prompt without stopping anything else: the filing goes through ungated and
+	# nothing looks wrong. This is the only thing that notices.
+	python3 scripts/claude-hooks/test-gate-issue-create.py
+
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
 	# The one thing no offline test can see: what the RUNTIME resolves the
