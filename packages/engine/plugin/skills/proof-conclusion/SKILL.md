@@ -189,7 +189,7 @@ After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct
 
 `research_append` refuses that update — on `status` and on the `resolved` date alike — unless a proof summary already references the question. If both go in one call, order the `proof_summaries` append **before** this update.
 
-**A question closed with nothing found is still resolved here.** Write a `not_proved` summary stating what was searched and not found (§2's documented-negative doctrine), then resolve the question against it — concluding it that way is the only way to close it.
+**A question closed with nothing found is still resolved here.** Write the `not_proved` summary per §5 — a documented negative is a conclusion, not a non-answer (§2) — then resolve the question against it. Concluding it that way is the only way to close it. Name a searched-and-nothing-found record type only where a `log` entry or plan item records that search; never enumerate record types you did not search.
 
 **Never set `exhaustive_declaration`** — that belongs to `research-exhaustiveness`. On the question, this skill writes only `status`, `resolved`, and `resolution_assertion_ids`.
 
