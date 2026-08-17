@@ -1,0 +1,22 @@
+{
+  "tool": "external_links_search",
+  "description": "FS-curated external links for Rowan County, North Carolina",
+  "args": {
+    "standardPlace": "~Rowan"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Rowan, North Carolina, United States",
+      "startYear": 1839,
+      "endYear": 1899
+    },
+    "totalForPlace": 1,
+    "results": [
+      {
+        "linkText": "Rowan County, North Carolina - Ancestry.com",
+        "url": "https://www.ancestry.com/search/locations/rowan-county-north-carolina",
+        "host": "ancestry.com"
+      }
+    ]
+  }
+}
