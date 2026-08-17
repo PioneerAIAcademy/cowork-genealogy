@@ -570,6 +570,18 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-wiki-failures
+e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
+	# wiki_read/wiki_place_page/place_population call into a fixed taxonomy and
+	# reports it by cause, by day, and by the run log's committing author, so the
+	# blended "28%/35% fail" headline separates into service reach, corpus data
+	# gaps, a dead code path, and client-side. Run SINCE=all: the default 14-day
+	# window drops all 22 legacy_markdown_dir calls (2026-07-02..07-14).
+	cd eval/harness && uv run python -m e2e.wiki_failure_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers

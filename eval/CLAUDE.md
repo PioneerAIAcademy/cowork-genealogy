@@ -104,9 +104,10 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
-  excluded. `SINCE=all` opts back in.
+  excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures` in particular
+  needs `SINCE=all`: the `legacy_markdown_dir` bucket is entirely pre-14-day.)
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
