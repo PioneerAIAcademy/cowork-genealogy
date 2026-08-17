@@ -55,6 +55,7 @@ import { projectContextSchema } from "./tools/project-context.js";
 import { materializeFactsSchema } from "./tools/materialize-facts.js";
 import { extractionAppendSchema } from "./tools/extraction-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
+import { projectCreateSchema } from "./tools/project-create.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -104,4 +105,5 @@ export const allToolSchemas = [
   materializeFactsSchema,
   extractionAppendSchema,
   researchQuerySchema,
+  projectCreateSchema,
 ];

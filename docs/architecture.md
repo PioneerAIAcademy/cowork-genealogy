@@ -516,7 +516,10 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
-> every test. Annotations are written **only** through the CRUD UI (`make
+> each **sampled** test — the tests named in the run log's `review_sample` (5
+> per run). A run log without that field, which is every one written before
+> sampling shipped, still owes every dimension of every test.
+> Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
 > take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
 > rule only** — the annotation rule still runs against the prior run log — and
@@ -1327,7 +1330,9 @@ Plus, from `.github/workflows/check-runlogs.yml`:
 angle brackets on the folded value, plus `name` — kebab-case, ≤64 chars, matching
 the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
-§3), and three **warn-only** lints
+§3 — plus a **warn-only** arm that maps a changed shared fixture
+(`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
+and warns when their run logs go stale), and three **warn-only** lints
 worth knowing because they fire right after the three most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named

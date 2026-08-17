@@ -479,7 +479,7 @@ async def submit_feedback(
             res = await client.post(url, json=envelope)
             res.raise_for_status()
             body = res.json()
-    except httpx.HTTPError as exc:
+    except (httpx.HTTPError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=f"Feedback upload failed: {exc}") from exc
 
     if body.get("ok") is not True:

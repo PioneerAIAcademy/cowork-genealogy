@@ -71,7 +71,8 @@
     { "name": "project_context" },
     { "name": "materialize_facts" },
     { "name": "extraction_append" },
-    { "name": "research_query" }
+    { "name": "research_query" },
+    { "name": "project_create" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],
