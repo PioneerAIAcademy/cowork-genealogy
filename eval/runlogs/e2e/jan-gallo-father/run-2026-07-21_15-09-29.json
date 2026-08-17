@@ -1475,45 +1475,39 @@
       "args": {
         "query": "select:mcp__genealogy__project_context",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"PID-TODO\\\",\\n      \\\"name\\\": \\\"Jan Gallo\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    }\\n  ],\\n  \\\"sources\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Objective: Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jan_gallo_father\",\n4\t    \"objective\": \"Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?\",\n5\t    \"subject_person_ids\": [\"PID-TODO\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-03\",\n8\t    \"updated\": \"2026-07-03\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1538,39 +1532,34 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Question q_001: \"What does the Tur\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00f3cz County, say about his father?\" Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__volume_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Turany",
         "contextName": "Slovakia"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\n      \\\"dateRange\\\": \\\"+1993/\\\",\\n      \\\"latitude\\\": 49.11592,\\n      \\\"longitude\\\": 19.03731,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Turany&focusedId=7113015\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Turany, Martin, Czechoslovakia\\\",\\n      \\\"type\\\": \\\"Municipality\\\",\\n      \\\"dateRange\\\": \\\"+1922/+1..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1578,8 +1567,7 @@
         "standardPlace": "Turany, Martin, Slovakia",
         "startYear": 1850,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"scope\\\": \\\"Slovakia\\\",\\n  \\\"totalForPlace\\\": 2,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1986782\\\",\\n      \\\"title\\\": \\\"Slovakia, Census, 1869\\\",\\n      \\\"dateRange\\\": \\\"1869-1869\\\",\\n      \\\"recordCount\\\": 0,\\n      \\\"personCount\\\": 0,\\n      \\\"imageCount\\\": 278392,\\n      \\\"url\\\": \\\"https://www.familysearch.org/search/collection/1986..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -1587,8 +1575,7 @@
         "standardPlace": "Turany, Martin, Slovakia",
         "startYear": 1850,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n    \\\"startYear\\\": 1850,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"results\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -1596,16 +1583,14 @@
         "standardPlace": "Martin, Slovakia",
         "startYear": 1850,
         "endYear": 1900
-      },
-      "response_summary": "Error: result (171,620 characters across 6,346 lines) exceeds maximum allowed tokens. Output has been saved to /Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires reading the full co..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__external_links_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1613,16 +1598,14 @@
         "standardPlace": "Turany, Martin, Slovakia",
         "startYear": 1880,
         "endYear": 1910
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n    \\\"startYear\\\": 1880,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"totalForPlace\\\": 65,\\n  \\\"returned\\\": 45,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.findmypast.com/search/results?sourcecategory=travel%20%26%20migration&sid=999\\\",\\n      \\\"linkText\\\": \\\"Passenger Lists Leaving UK, 1890-1960\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.myheritage.com/research/collection-30139/slovakia-ch..."
+      }
     },
     {
       "tool": "Agent",
       "args": {
         "description": "Search volume results for Turany parish records",
         "prompt": "Read the file /Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt in chunks of 1000 lines using offset/limit until you have read ALL 6,346 lines. \n\nI need you to find all volumes (image groups) related to Turany or Tur\u00e1ny parish in Slovakia/Hungary. Each volume entry will have fields like imageGroupNumber, title, places, recordTypes, dateRange, recordSearchablePercent, fulltextSearchable.\n\nReturn verbatim: the imageGroupNumber, title, places covered, dateRange, and recordSearchablePercent for every volume that mentions \"Turany\", \"Tur\u00e1ny\", \"Tur\u00e1n\", \"\u0160\u00fatovo\", \"Sutt\u00f3\", \"Turiec\", or \"Tur\u00f3cz\" in any field. If none found, say so explicitly. Also note the total number of volumes in the file."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"I have now read all 6,346 lines of the file. Here is the complete analysis:\\n\\n---\\n\\n**Total volumes in the file: 52** (as stated in `\\\"totalResults\\\": 52`).\\n\\n**Results for search terms: Turany, Tur\\u00e1ny, Tur\\u00e1n, \\u0160\\u00fatovo, Sutt\\u00f3, Turiec, Tur\\u00f3cz**\\n\\nNone of these terms appear in the file: Turany, Tur\\u00e1ny, Tur\\u00e1n, \\u0160\\u00fatovo, Sutt\\u00f3, Turiec. The only matching term is **Tur\\u00f3cz**, and it appears in every single one of ..."
+      }
     },
     {
       "tool": "Read",
@@ -1630,8 +1613,7 @@
         "file_path": "/Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt",
         "limit": 1000,
         "offset": 0
-      },
-      "response_summary": "0\t{\n1\t  \"query\": {\n2\t    \"standardPlace\": \"Martin, Slovakia\",\n3\t    \"startYear\": 1850,\n4\t    \"endYear\": 1900\n5\t  },\n6\t  \"totalResults\": 52,\n7\t  \"results\": [\n8\t    {\n9\t      \"imageGroupNumber\": \"007992906_024_M9FJ-T31\",\n10\t      \"imageGroupPrefix\": \"007992906\",\n11\t      \"imageCount\": 16,\n12\t      \"recordSearchablePercent\": 0,\n13\t      \"fulltextSearchable\": false,\n14\t      \"languages\": [\n15\t        \"cs\",\n16\t        \"de\"\n17\t      ],\n18\t      \"coverages\": [\n19\t        {\n20\t          \"place\": \"Uni..."
+      }
     },
     {
       "tool": "Read",
@@ -1639,8 +1621,7 @@
         "file_path": "/Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt",
         "limit": 1000,
         "offset": 1000
-      },
-      "response_summary": "1000\t          \"recordType\": \"Genealogy Records\"\n1001\t        },\n1002\t        {\n1003\t          \"place\": \"United States\",\n1004\t          \"dateRange\": \"1550\u20131964\",\n1005\t          \"recordType\": \"Genealogy Records\"\n1006\t        },\n1007\t        {\n1008\t          \"place\": \"United States\",\n1009\t          \"dateRange\": \"1732\u20131957\",\n1010\t          \"recordType\": \"Genealogy Records\"\n1011\t        }\n1012\t      ],\n1013\t      \"volumes\": [\n1014\t        \"P. Ihle\"\n1015\t      ]\n1016\t    },\n1017\t    {\n1018\t      \"..."
+      }
     },
     {
       "tool": "Grep",
@@ -1651,8 +1632,7 @@
         "-n": true,
         "-i": true,
         "head_limit": 0
-      },
-      "response_summary": "76:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n202:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n328:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n454:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n580:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n706:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n832:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n958:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hungary\",\n1084:          \"place\": \"Als\u00f3-Turcsek, Tur\u00f3cz, Hun..."
+      }
     },
     {
       "tool": "Grep",
@@ -1663,8 +1643,7 @@
         "-n": true,
         "-i": true,
         "head_limit": 0
-      },
-      "response_summary": "10:      \"imageGroupNumber\": \"007992906_024_M9FJ-T31\",\n136:      \"imageGroupNumber\": \"007992906_044_M9FJ-T32\",\n262:      \"imageGroupNumber\": \"007992906_040_M9FJ-T35\",\n388:      \"imageGroupNumber\": \"007992906_043_M9FJ-T3B\",\n514:      \"imageGroupNumber\": \"007992906_005_M9FJ-T3F\",\n640:      \"imageGroupNumber\": \"007992906_016_M9FJ-T3G\",\n766:      \"imageGroupNumber\": \"007992906_042_M9FJ-T3J\",\n892:      \"imageGroupNumber\": \"007992906_046_M9FJ-T3K\",\n1018:      \"imageGroupNumber\": \"007992906_050_M9FJ..."
+      }
     },
     {
       "tool": "Read",
@@ -1672,8 +1651,7 @@
         "file_path": "/Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt",
         "limit": 1000,
         "offset": 5300
-      },
-      "response_summary": "5300\t    },\n5301\t    {\n5302\t      \"imageGroupNumber\": \"007992906_041_M9FJ-TQR\",\n5303\t      \"imageGroupPrefix\": \"007992906\",\n5304\t      \"imageCount\": 149,\n5305\t      \"recordSearchablePercent\": 0,\n5306\t      \"fulltextSearchable\": false,\n5307\t      \"languages\": [\n5308\t        \"cs\",\n5309\t        \"de\"\n5310\t      ],\n5311\t      \"coverages\": [\n5312\t        {\n5313\t          \"place\": \"United States\",\n5314\t          \"dateRange\": \"1601\u20131960\",\n5315\t          \"recordType\": \"Genealogy Records\"\n5316\t        ..."
+      }
     },
     {
       "tool": "Read",
@@ -1681,8 +1659,7 @@
         "file_path": "/Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-jan-gallo-father-m1n53x20/95d32ff1-2fba-4732-b595-dd65940a1fb0/tool-results/mcp-genealogy-volume_search-1784644833947.txt",
         "limit": 1000,
         "offset": 6299
-      },
-      "response_summary": "6299\t        {\n6300\t          \"place\": \"United States\",\n6301\t          \"dateRange\": \"1732\u20131957\",\n6302\t          \"recordType\": \"Genealogy Records\"\n6303\t        }\n6304\t      ],\n6305\t      \"volumes\": [\n6306\t        \"P. Ihle\"\n6307\t      ]\n6308\t    },\n6309\t    {\n6310\t      \"imageGroupNumber\": \"004946461_003_M9SX-Z9B\",\n6311\t      \"imageGroupPrefix\": \"004946461\",\n6312\t      \"imageCount\": 85,\n6313\t      \"recordSearchablePercent\": 100,\n6314\t      \"fulltextSearchable\": false,\n6315\t      \"languages\": [\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1774,24 +1751,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Execute pli_001: search FamilySearch collection 1554443 \"Slovakia, Church and Synagogue Books, 1592-1935\" for the baptism of Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00e1ny parish, Tur\u00f3cz County. Also execute pli_002: search same collection for Gallo marriages in Tur\u00e1ny parish 1875-1895. Also execute pli_003: search same collection for sibling Gallo baptisms in Tur\u00e1ny parish 1885-1900."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1804,8 +1778,7 @@
         "recordType": "birth",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Gallo\\\",\\n    \\\"givenName\\\": \\\"Jan\\\",\\n    \\\"birthYearFrom\\\": 1888,\\n    \\\"birthYearTo\\\": 1898,\\n    \\\"collectionId\\\": \\\"1554443\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\\\"\\n  },\\n  \\\"totalMatches\\\": 227,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"resu..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1814,8 +1787,7 @@
         "stagedResultsRef": "results/.staging/b5fc2891-2462-4730-a408-8924c70620bc.json",
         "subjectId": "PID-TODO",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"PID-TODO\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:KHWD-N5R\\\",\\n      \\\"matchScore\\\": 0.4638479,\\n      \\\"primaryId\\\": \\\"p_14050599145\\\",\\n      \\\"personName\\\": \\\"Jan Gallo\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Slovakia, Church and Synagogue Books, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1837,8 +1809,7 @@
         "resultsAvailable": 227,
         "stagedResultsRef": "results/.staging/b5fc2891-2462-4730-a408-8924c70620bc.json",
         "notes": "Top match: Jan Gallo, Baptism 1893, Turany, Martin, Slovakia (ark:/61903/1:1:KHWD-N5R). Match score 0.464 \u2014 large gap over rank 2 (0.084). Place and year match exactly. attachedToOther:true. Proceeding to read full record."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-21T14:44:13.912Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1851,16 +1822,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1868,8 +1837,7 @@
         "recordId": "ark:/61903/1:1:KHWD-N5R",
         "resultsRef": "results/log_001.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14050599145\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KHWD-N5R\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Jan\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Baptism\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1893\\\",\\n          \\\"standard_date\\\": \\\"1893\\\",\\n          \\\"pla..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1881,8 +1849,7 @@
         "recordType": "marriage",
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Gallo\\\",\\n    \\\"givenName\\\": \\\"Andrej\\\",\\n    \\\"spouseSurname\\\": \\\"Kri\\u017eko\\\",\\n    \\\"collectionId\\\": \\\"1554443\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\\\"\\n  },\\n  \\\"totalMatches\\\": 40,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 40,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -1891,8 +1858,7 @@
         "stagedResultsRef": "results/.staging/b381e6a5-7cc6-4006-ab76-cd96e4c8a103.json",
         "subjectId": "PID-TODO",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"PID-TODO\\\",\\n  \\\"scoredCount\\\": 40,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:6N9N-CLD2\\\",\\n      \\\"matchScore\\\": 0.00014334568,\\n      \\\"primaryId\\\": \\\"p_296011522280\\\",\\n      \\\"personName\\\": \\\"Andreae Gallo\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Slovakia, Church and Synagog..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1913,8 +1879,7 @@
         "resultsAvailable": 40,
         "stagedResultsRef": "results/.staging/b381e6a5-7cc6-4006-ab76-cd96e4c8a103.json",
         "notes": "40 results returned but subjectResolvable:false (subject too sparse) and all match scores ~0.00014 \u2014 no clear Tur\u00e1ny hit. Most results are Andreae Gallo appearing as witness not as groom. Retrying with isPrincipal:true and marriagePlace Turany."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-21T14:46:02.526Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 40,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1927,8 +1892,7 @@
         "isPrincipal": true,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Gallo\\\",\\n    \\\"givenName\\\": \\\"Andrej\\\",\\n    \\\"marriagePlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n    \\\"collectionId\\\": \\\"1554443\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"isPrincipal\\\": true,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\\\"\\n  },\\n  \\\"totalMatches\\\": 12,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 12,\\n  \\\"offset\\\": 0,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1936,8 +1900,7 @@
         "recordId": "ark:/61903/1:1:6N9D-JDCX",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008490084\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-JDCX\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Andrej\\\",\\n          \\\"surname\\\": \\\"Gallo\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1843\\\",\\n          \\\"standard_date\\\": \\\"1843\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1945,8 +1908,7 @@
         "recordId": "ark:/61903/1:1:6N9D-B13X",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008802204\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-B13X\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Andrej\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1830\\\",\\n          \\\"standard_date\\\": \\\"1830\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1954,8 +1916,7 @@
         "recordId": "ark:/61903/1:1:6N9D-BB1Y",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008802097\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-BB1Y\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Andrej\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1835\\\",\\n          \\\"standard_date\\\": \\\"1835\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1963,8 +1924,7 @@
         "recordId": "ark:/61903/1:1:6N9D-1G8T",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008823156\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-1G8T\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Andrej\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1879\\\",\\n          \\\"standard_date\\\": \\\"1879\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1972,8 +1932,7 @@
         "recordId": "ark:/61903/1:1:6N9D-1KHN",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008820356\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-1KHN\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Andr\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1843\\\",\\n          \\\"standard_date\\\": \\\"1843\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1981,8 +1940,7 @@
         "recordId": "ark:/61903/1:1:6N9D-1Z95",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008812054\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-1Z95\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Ondrej\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1839\\\",\\n          \\\"standard_date\\\": \\\"1839\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -1990,8 +1948,7 @@
         "recordId": "ark:/61903/1:1:6N9D-FJGV",
         "resultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_296008440978\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6N9D-FJGV\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Ondrej\\\",\\n          \\\"surname\\\": \\\"Gallo Tomo\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1860\\\",\\n          \\\"standard_date\\\": \\\"1860\\\"\\n        }\\n      ],\\n      \\\"sources\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2013,8 +1970,7 @@
         "resultsAvailable": 12,
         "stagedResultsRef": "results/.staging/1699dc7c-25bb-4cdd-b0f3-b0ede01e2447.json",
         "notes": "12 results for Andrej/Ondrej Gallo marriages at Tur\u00e1ny. Read top 6 candidates; spouses were: M\u00e1ria Milan (1887), Susanna Augustin (1866), Anna Ulicky (1874), Anna Janik (1905), Susana Prinde\u0161 (1868), Judyta B\u00e1lint (1883). None married Katarina Kri\u017eko. The Gallo\u2013Kri\u017eko marriage is likely in the unindexed portion of the register. Primary evidence (baptismal record log_001) already directly names father as Andrej Gallo. No additional marriage-record corroboration found in indexed records."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-21T14:48:31.697Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 12,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2027,8 +1983,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2042,8 +1997,7 @@
         "birthYearTo": 1902,
         "count": 50,
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Gallo\\\",\\n    \\\"fatherGivenName\\\": \\\"Andrej\\\",\\n    \\\"birthPlace\\\": \\\"Turany, Martin, Slovakia\\\",\\n    \\\"collectionId\\\": \\\"1554443\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"birthYearFrom\\\": 1882,\\n    \\\"birthYearTo\\\": 1902,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\\\"\\n  },\\n  \\\"totalMatches\\\": 271,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"retur..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2051,8 +2005,7 @@
         "recordId": "ark:/61903/1:1:KHWD-XGS",
         "resultsRef": "results/.staging/1130ab04-ce1a-425f-96ad-d97a0185818b.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14050597262\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KHWD-XGS\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Ondrej\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Baptism\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1895\\\",\\n          \\\"standard_date\\\": \\\"1895\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2060,8 +2013,7 @@
         "recordId": "ark:/61903/1:1:KHWD-B6G",
         "resultsRef": "results/.staging/1130ab04-ce1a-425f-96ad-d97a0185818b.json",
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14050609612\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KHWD-B6G\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Gallo\\\",\\n          \\\"given\\\": \\\"Katarina\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Baptism\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1897\\\",\\n          \\\"standard_date\\\": \\\"1897\\\",\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2084,8 +2036,7 @@
         "resultsAvailable": 271,
         "stagedResultsRef": "results/.staging/1130ab04-ce1a-425f-96ad-d97a0185818b.json",
         "notes": "Sibling corroboration found. Ondrej Gallo (1895, Turany) \u2014 father: Ondrej/Andrej Gallo, mother: Katarina Kricko (variant of Kri\u017eko) \u2014 same couple as Jan Gallo 1893 baptism. Source: Hungary, Tur\u00f3cz, Religious, 1653\u20131951. Katarina Gallo 1897 (Turany) has mother Katarina Car\u00e1cz \u2014 different Gallo family, not a sibling of Jan. Key sibling record: ark:/61903/1:1:KHWD-XGS (Ondrej Gallo 1895)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-21T14:50:04.287Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2120,16 +2071,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Extract two records: (1) log_001 / pli_001: Jan Gallo baptism 1893, ark:/61903/1:1:KHWD-N5R, from \"Slovakia, Church and Synagogue Books, 1592-1935\" (Hungary, Tur\u00f3cz, Religious registers). Record shows: subject Jan Gallo, baptized 1893, Turany, Martin, Slovakia; father Andrej Gallo (p_14050599143); mother Katarina Kri\u017eko (p_14050599144). (2) log_004 / pli_003: Ondrej Gallo sibling baptism 1895, ark:/61903/1:1:KHWD-XGS, same collection. Record shows: Ondrej Gallo, baptized 1895, Turany; father Ondrej/Andrej Gallo (p_14050597260); mother Katarina Kricko/Kri\u017eko (p_14050597261). Both from Hungary, Tur\u00f3cz, Religious, 1653\u20131951 image group."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2137,15 +2086,13 @@
         "description": "Extract Jan Gallo baptism record",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the following baptismal record into research.json and tree.gedcomx.json.\n\nprojectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\nrecordId: ark:/61903/1:1:KHWD-N5R\nlogId: log_001\nresultsRef: results/log_001.json\nopenQuestions: [q_001]\n\nRecord content (full simplified GEDCOMX from record_read via log sidecar):\n{\n  \"persons\": [\n    {\n      \"id\": \"p_14050599145\",\n      \"ark\": \"ark:/61903/1:1:KHWD-N5R\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Gallo\", \"given\": \"Jan\"}],\n      \"facts\": [{\"type\": \"Baptism\", \"primary\": true, \"date\": \"1893\", \"standard_date\": \"1893\", \"place\": \"Turany, Martin, Slovakia\", \"standard_place\": \"Turany, Martin, Slovakia\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_14050599143\",\n      \"ark\": \"ark:/61903/1:1:KHWD-N5P\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Gallo\", \"given\": \"Andrej\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_14050599144\",\n      \"ark\": \"ark:/61903/1:1:KHWD-N55\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Kri\u017eko\", \"given\": \"Katarina\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\"type\": \"ParentChild\", \"parent\": \"p_14050599143\", \"child\": \"p_14050599145\"},\n    {\"type\": \"Couple\", \"person1\": \"p_14050599143\", \"person2\": \"p_14050599144\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_14050599144\", \"child\": \"p_14050599145\"}\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_22241521884\",\n      \"title\": \"Entry for Jan Gallo, \\\"Slovakia, Church and Synagogue Books, 1592-1935\\\"\",\n      \"citation\": \"\\\"Slovakia, Church and Synagogue Books, 1592-1935\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : Fri Mar 08 12:14:38 UTC 2024), Entry for Jan Gallo and Andrej Gallo, 1893.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:9MFH-2SS5\"\n    },\n    {\"id\": \"sd_auto_M9J1-C2Z\", \"title\": \"Hungary, Tur\u00f3cz, Religious, from 1653 to 1951\"}\n  ]\n}\n\nContext: The research project asks \"What does the Tur\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00f3cz County, say about his father?\" The source is the Hungary, Tur\u00f3cz, Religious registers (1653\u20131951), accessed via FamilySearch collection \"Slovakia, Church and Synagogue Books, 1592-1935\". This is an original church register (baptismal record), containing primary information recorded by the officiating priest at the time of baptism. The record names the child (Jan Gallo), the baptism date (1893) and place (Turany/Tur\u00f3cz), the father (Andrej Gallo), and the mother (Katarina Kri\u017eko). Extract all facts as atomic assertions with full GPS three-layer classification."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\n**Source:** src_001 / S1 \\u2014 created (new). Source classification: original (digital image of Tur\\u00e1ny parish baptismal register, 1893).\\n\\n**Assertions: 7 total**\\n\\n- `baptized` (Jan Gallo, p_14050599145): a_001 name, a_002 baptism event (date + place), a_005 relationship child-of-father, a_006 relationship child-of-mother\\n- `father` (Andrej Gallo, p_14050599143): a_003 name, a_007 spouse-inferred\\n- `mother` (Ka..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What does the Tur\\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \\u0160\\u00fatovo (Sutt\\u00f3), Tur\\u00f3cz County, say about his father?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"PID-TODO\\\",\\n      \\\"name\\\": \\\"Jan Gallo\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    }\\n  ],\\n  \\\"sou..."
+      }
     },
     {
       "tool": "Agent",
@@ -2153,15 +2100,13 @@
         "description": "Extract Ondrej Gallo sibling baptism record",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the following baptismal record into research.json and tree.gedcomx.json.\n\nprojectPath: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20\nrecordId: ark:/61903/1:1:KHWD-XGS\nlogId: log_004\nresultsRef: results/log_004.json\nopenQuestions: [q_001]\n\nRecord content (full simplified GEDCOMX from record_read via log sidecar):\n{\n  \"persons\": [\n    {\n      \"id\": \"p_14050597262\",\n      \"ark\": \"ark:/61903/1:1:KHWD-XGS\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Gallo\", \"given\": \"Ondrej\"}],\n      \"facts\": [{\"type\": \"Baptism\", \"primary\": true, \"date\": \"1895\", \"standard_date\": \"1895\", \"place\": \"Turany, Martin, Slovakia\", \"standard_place\": \"Turany, Martin, Slovakia\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_14050597260\",\n      \"ark\": \"ark:/61903/1:1:KHWD-XGM\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Gallo\", \"given\": \"Ondrej\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_14050597261\",\n      \"ark\": \"ark:/61903/1:1:KHWD-XG9\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Kricko\", \"given\": \"Katarina\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\"type\": \"Couple\", \"person1\": \"p_14050597260\", \"person2\": \"p_14050597261\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_14050597260\", \"child\": \"p_14050597262\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_14050597261\", \"child\": \"p_14050597262\"}\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_22241522521\",\n      \"title\": \"Entry for Ondrej Gallo, \\\"Slovakia, Church and Synagogue Books, 1592-1935\\\"\",\n      \"citation\": \"\\\"Slovakia, Church and Synagogue Books, 1592-1935\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : Sat Mar 09 22:35:38 UTC 2024), Entry for Ondrej Gallo and Ondrej Gallo, 1895.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:9MFH-2S59\"\n    },\n    {\"id\": \"sd_auto_M9J1-C2Z\", \"title\": \"Hungary, Tur\u00f3cz, Religious, from 1653 to 1951\"}\n  ]\n}\n\nContext: The research project asks about the father of Jan Gallo (born 1893, Tur\u00e1ny parish). This record is a sibling baptism \u2014 Ondrej Gallo, baptized 1895 in Turany \u2014 from the same Hungary, Tur\u00f3cz, Religious registers (1653\u20131951), accessed via FamilySearch collection \"Slovakia, Church and Synagogue Books, 1592-1935\". The sibling's father is listed as \"Ondrej Gallo\" (a variant of Andrej) and the mother as \"Katarina Kricko\" (a variant spelling of Kri\u017eko \u2014 the same mother named in Jan's 1893 baptism). This is an original church register, primary information. Extract all facts as atomic assertions with full GPS three-layer classification. Note: \"Ondrej\" in the father's name is a spelling variant of \"Andrej\" (both Slovak forms of Andrew); \"Kricko\" is a spelling variant of \"Kri\u017eko\"."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\nSource: src_002 / S2 \\u2014 action: created. Original church baptismal register (Hungary, Tur\\u00f3cz Religious, 1653\\u20131951), accessed via FamilySearch collection \\\"Slovakia, Church and Synagogue Books, 1592-1935\\\".\\n\\nAssertions written \\u2014 6 total:\\n- `baptized` (Ondrej Gallo, child): a_008 name, a_009 baptism (date 1895, place Turany), a_010 relationship\\u2192father (indirect), a_011 relationship\\u2192mother (in..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What does the Tur\\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \\u0160\\u00fatovo (Sutt\\u00f3), Tur\\u00f3cz County, say about his father?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"PID-TODO\\\",\\n      \\\"name\\\": \\\"Jan Gallo\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    }\\n  ],\\n  \\\"sou..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2355,8 +2300,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -2530,8 +2474,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_010\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2557,53 +2500,46 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Link all record personas from the two extracted records to tree persons. Record 1 (src_001, log_001): Jan Gallo baptism 1893 Turany \u2014 personas: p_14050599145 (Jan Gallo, child), p_14050599143 (Andrej Gallo, father), p_14050599144 (Katarina Kri\u017eko, mother). Record 2 (src_002, log_004): Ondrej Gallo baptism 1895 Turany \u2014 personas: p_14050597262 (Ondrej Gallo, child), p_14050597260 (Ondrej/Andrej Gallo, father), p_14050597261 (Katarina Kricko, mother). The tree currently has one person: PID-TODO (Jan Gallo, Male). The father Andrej Gallo is not yet in the tree. Question q_001 asks about the father of Jan Gallo born 1893 \u0160\u00fatovo/Tur\u00e1ny."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts,mcp__genealogy__merge_warnings",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jan_gallo_father\",\n4\t    \"objective\": \"Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03\",\n10\t    \"updated\": \"2026-07-03\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"PID-TODO\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Jan\",\n10\t          \"surname\": \"Gallo\",\n11\t          \"id\": \"PID-TODO-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"PID-TODO-fact-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1893\",\n19\t          \"standard_date\": \"1893\",\n20\t          \"place\": \"\u0160\u00fatovo, Turany parish, Slovakia (Sutt\u00f3, Tu..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jan_gallo_father\",\n4\t    \"objective\": \"Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03\",\n10\t    \"updated\": \"2026-07-03\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2612,8 +2548,7 @@
         "recordId": "ark:/61903/1:1:KHWD-N5R",
         "recordRole": "baptized",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"PID-TODO\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2621,8 +2556,7 @@
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "recordId": "ark:/61903/1:1:KHWD-N5R",
         "recordRole": "father"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2630,8 +2564,7 @@
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "recordId": "ark:/61903/1:1:KHWD-N5R",
         "recordRole": "mother"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2639,8 +2572,7 @@
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "recordId": "ark:/61903/1:1:KHWD-XGS",
         "recordRole": "baptized"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I3\\\",\\n  \\\"created\\\": true,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 2,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2649,8 +2581,7 @@
         "recordId": "ark:/61903/1:1:KHWD-XGS",
         "recordRole": "father_of_baptized",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I1\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -2659,24 +2590,21 @@
         "recordId": "ark:/61903/1:1:KHWD-XGS",
         "recordRole": "mother_of_baptized",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"I2\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 0,\\n  \\\"factsEnriched\\\": 0,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 1,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2724,8 +2652,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_relationship: the added relationship edge must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2801,8 +2728,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3017,71 +2943,62 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__merge_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "personId": "I3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Question q_001, project path /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. All plan items for pl_001 are now complete: pli_001 (completed \u2014 Jan Gallo 1893 baptism found, ark:/61903/1:1:KHWD-N5R, father named as Andrej Gallo), pli_002 (completed \u2014 marriage search negative, Gallo-Kri\u017eko marriage not in indexed records), pli_003 (completed \u2014 sibling Ondrej Gallo 1895 found, ark:/61903/1:1:KHWD-XGS, same parents), pli_004 (skipped \u2014 fallback for pli_001, not needed), pli_005 (skipped \u2014 census fallback, not needed). Two independent original baptismal register entries name Andrej Gallo as father of Jan Gallo. Evaluate whether research on q_001 is reasonably exhaustive and whether the GPS stop criteria are met."
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3112,38 +3029,33 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Question q_001, project path /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Research is exhaustive_declared. Two independent original baptismal register entries from Tur\u00e1ny Catholic parish name Andrej Gallo as father of Jan Gallo: (1) Jan Gallo 1893 baptism src_001/S1 (a_003, a_005), (2) sibling Ondrej Gallo 1895 baptism src_002/S2 (a_012). Mother Katarina Kri\u017eko confirmed in both. No conflicts. Write a proof summary for q_001 resolving the question at the appropriate GPS tier."
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"PID-TODO\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Jan\",\n10\t          \"surname\": \"Gallo\",\n11\t          \"id\": \"PID-TODO-name-1\",\n12\t          \"sources\": [\n13\t            {\n14\t              \"ref\": \"S1\",\n15\t              \"quality\": 3\n16\t            }\n17\t          ]\n18\t        }\n19\t      ],\n20\t      \"facts\": [\n21\t        {\n22\t          \"id\": \"PID-TODO-fact-birth\",\n23\t          \"type\": \"Birt..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3174,8 +3086,7 @@
           "exhaustive_search_summary": "FamilySearch collection 1554443 ('Slovakia, Church and Synagogue Books, 1592\u20131935') was searched for Jan Gallo's own baptism (positive: ark:/61903/1:1:KHWD-N5R, 1893, Turany), for the parents' marriage (negative: twelve Andrej/Ondrej Gallo marriages at Tur\u00e1ny examined, none matched Katarina Kri\u017eko as spouse; marriage likely in unindexed portion of register), and for sibling baptisms as FAN corroboration (positive: Ondrej Gallo, 1895, ark:/61903/1:1:KHWD-XGS). MyHeritage fallback (pli_004) and a browse-only 1869 census (pli_005) were identified as contingency items and were not needed given the direct evidence found. Research declared reasonably exhaustive; overturn risk is low.",
           "narrative_markdown": "## Proof Summary: Father of Jan Gallo (1893, \u0160\u00fatovo, Tur\u00e1ny Parish, Slovakia)\n\n**Research Question:** What does the Tur\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00f3cz County, say about his father?\n\n**Conclusion:** The evidence proves that Andrej Gallo, of \u0160\u00fatovo (Sutt\u00f3), Tur\u00e1ny parish, Tur\u00f3cz County, Hungary (now Turany, Martin district, Slovakia), is the father of Jan Gallo, baptized 1893 in the same parish.\n\n### Research Scope\n\nHungary did not introduce civil registration until October 1895; Jan Gallo's 1893 birth is therefore recorded only in the parish register. FamilySearch collection 1554443 (\"Slovakia, Church and Synagogue Books, 1592\u20131935\"), the primary indexed repository for this region and period, was searched for: the subject's own baptism (positive); the parents' marriage (negative \u2014 not found in indexed records); and sibling baptisms as FAN corroboration (positive). No unexamined record type is likely to name a different father; overturn risk is low.\n\n### Primary Source: Jan Gallo's 1893 Baptism\n\nThe 1893 Tur\u00e1ny Catholic parish baptismal entry for Jan Gallo (accessed via FamilySearch, ark:/61903/1:1:KHWD-N5R, \"Slovakia, Church and Synagogue Books, 1592\u20131935\") directly names \"Andrej Gallo\" as father and \"Katarina Kri\u017eko\" as mother.\u00b9 This is an **original source** \u2014 a digital image of the contemporaneously recorded parish register \u2014 carrying **primary information** supplied by the presenting parents (firsthand witnesses) and recorded by the officiating priest. The naming of the father is **direct evidence**: no inference is required.\n\n### Corroborating Source: Ondrej Gallo's 1895 Sibling Baptism\n\nThe 1895 Tur\u00e1ny Catholic parish baptismal entry for Ondrej Gallo (accessed via FamilySearch, ark:/61903/1:1:KHWD-XGS, same collection) records the same family unit: father \"Ondrej Gallo,\" mother \"Katarina Kricko.\"\u00b2 This constitutes a **second independent original source** with primary information from a structurally separate informant occasion \u2014 a different baptismal event, two years later, for a different child.\n\nTwo documented name variants appear across the entries. \"Ondrej\" (1895) and \"Andrej\" (1893) are both standard Slovak vernacular forms of Andrew, used interchangeably by scribes in this parish and region. \"Kricko\" (1895) and \"Kri\u017eko\" (1893) are phonetic/scribal variants of the same surname, a common occurrence in Slovak/Hungarian registers of the period. The same village (\u0160\u00fatovo/Sutt\u00f3), the same family surname Gallo (uncommon in this parish), and the same mother's given name Katarina confirm this as the same family. No record examined names any other person as father of Jan Gallo.\n\n### Marriage Record\n\nA targeted search for the Gallo\u2013Kri\u017eko marriage in the indexed portion of collection 1554443 examined twelve Andrej/Ondrej Gallo marriages at Tur\u00e1ny; none matched Katarina Kri\u017eko as spouse. The marriage likely resides in the unindexed portion of the register. This absence does not affect the parentage conclusion, which rests on two independent, direct, primary, original baptismal entries that agree on both parents.\n\n### Conclusion\n\nThe totality of evidence proves that **Andrej Gallo is the father of Jan Gallo, baptized 1893 in \u0160\u00fatovo, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary.** Two independent original baptismal register entries \u2014 the subject's own 1893 baptism and the 1895 baptism of his brother Ondrej \u2014 both name Andrej/Ondrej Gallo as father and Katarina Kri\u017eko/Kricko as mother. Both are original sources with primary information recorded contemporaneously by the officiating priest. The name variants are documented and explained. No conflicting evidence was found. All five GPS components are satisfied; research is declared reasonably exhaustive.\n\n---\n\u00b9 \"Slovakia, Church and Synagogue Books, 1592\u20131935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : accessed 2026-07-21), Entry for Jan Gallo and Andrej Gallo, 1893; digital image of Tur\u00e1ny Catholic parish baptismal register, Hungary, Tur\u00f3cz, Religious registers, 1653\u20131951.\n\n\u00b2 \"Slovakia, Church and Synagogue Books, 1592\u20131935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : accessed 2026-07-21), Entry for Ondrej Gallo and Ondrej Gallo, 1895; digital image of Tur\u00e1ny Catholic parish baptismal register, Hungary, Tur\u00f3cz, Religious registers, 1653\u20131951."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -3217,16 +3128,14 @@
             "gender": "Female"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_name\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_name\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_person\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_person\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20",
         "personId": "PID-TODO"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3234,15 +3143,13 @@
         "description": "GPS mentor proof critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Please perform a GPS proof critique (advisory only) on proof summary ps_001 in the project at /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20.\n\nContext: This is an autonomous /research session. The proof was just written by proof-conclusion. The question is q_001: \"What does the Tur\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00f3cz County, say about his father?\" The conclusion is that Andrej Gallo is proved to be the father, based on two independent original baptismal register entries (src_001/S1 and src_002/S2). Research was declared exhaustive. Please read the proof summary and research.json, evaluate all five GPS components, and return your structured verdict and narrative. Write your evaluation to research.json via research_append (evaluations section). This is purely advisory \u2014 do not modify the proof summary or any other section."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\nThe backbone of this proof is exactly right: a_003 is an original, primary-information, direct-evidence baptismal entry naming the father, and your narrative language (\\\"proves,\\\" no hedging) matches the Proved tier you've claimed. You also handled the marriage-record gap well \\u2014 log_003's negative search is documented as a real nil-search, not swept under the rug, and your name-variant reaso..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_jan_gallo_father\",\n4\t    \"objective\": \"Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"PID-TODO\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03\",\n10\t    \"updated\": \"2026-07-03\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3288,8 +3195,7 @@
           "timestamp": "2026-07-21T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"evaluations/proof-critique-ps_001-2026-07-21T00-00-00.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3301,16 +3207,14 @@
         "fields": {
           "narrative_markdown": "## Proof Summary: Father of Jan Gallo (1893, \u0160\u00fatovo, Tur\u00e1ny Parish, Slovakia)\n\n**Research Question:** What does the Tur\u00e1ny parish baptismal register record for Jan Gallo, born 1893 in \u0160\u00fatovo (Sutt\u00f3), Tur\u00f3cz County, say about his father?\n\n**Conclusion:** The evidence proves that Andrej Gallo, of \u0160\u00fatovo (Sutt\u00f3), Tur\u00e1ny parish, Tur\u00f3cz County, Hungary (now Turany, Martin district, Slovakia), is the father of Jan Gallo, baptized 1893 in the same parish.\n\n### Research Scope\n\nHungary did not introduce civil registration until October 1895; Jan Gallo's 1893 birth is therefore recorded only in the parish register. FamilySearch collection 1554443 (\"Slovakia, Church and Synagogue Books, 1592\u20131935\"), the primary indexed repository for this region and period, was searched for: the subject's own baptism (positive); the parents' marriage (negative \u2014 not found in indexed records); and sibling baptisms as FAN corroboration (positive). No unexamined record type is likely to name a different father; overturn risk is low.\n\n### Primary Source: Jan Gallo's 1893 Baptism\n\nThe 1893 Tur\u00e1ny Catholic parish baptismal entry for Jan Gallo (accessed via FamilySearch, ark:/61903/1:1:KHWD-N5R, \"Slovakia, Church and Synagogue Books, 1592\u20131935\") directly names \"Andrej Gallo\" as father and \"Katarina Kri\u017eko\" as mother.\u00b9 This is an **original source** \u2014 a digital image of the contemporaneously recorded parish register \u2014 carrying **primary information** supplied by the presenting parents (firsthand witnesses) and recorded by the officiating priest. The naming of the father is **direct evidence**: no inference is required.\n\n### Corroborating Source: Ondrej Gallo's 1895 Sibling Baptism\n\nThe 1895 Tur\u00e1ny Catholic parish baptismal entry for Ondrej Gallo (accessed via FamilySearch, ark:/61903/1:1:KHWD-XGS, same collection) records the same family unit: father \"Ondrej Gallo,\" mother \"Katarina Kricko.\"\u00b2 This is a second original source with primary information from a structurally separate record-creation event \u2014 a different baptism, two years later, for a different child.\n\nTwo name variants appear across the entries. \"Ondrej\" (1895) and \"Andrej\" (1893) are both standard Slovak vernacular forms of Andrew, used interchangeably by scribes in this region. \"Kricko\" (1895) and \"Kri\u017eko\" (1893) are phonetic/scribal variants of the same surname, common in Slovak/Hungarian registers of the period.\n\nA potential concern is whether the 1893 \"Andrej Gallo\" and the 1895 \"Ondrej Gallo\" are the same individual, since the marriage search (log_003) revealed twelve different Andrej/Ondrej Gallo entries at Tur\u00e1ny \u2014 indicating that Gallo men of this name were not rare in the parish. That ambiguity is resolved by the mother's identity: among those twelve marriages, not one records Katarina Kri\u017eko as the bride. The specific pairing of father Andrej/Ondrej Gallo with mother Katarina Kri\u017eko/Kricko appears in only these two baptismal entries, affirmatively eliminating namesake collision as an explanation for the corroborating 1895 entry.\n\nBoth records' father-name information ultimately derives from the same presenting parents at two separate baptisms. While the two entries are structurally distinct documentary acts, they do not constitute fully independent informant chains in the strict GPS sense. This is an inherent limitation of baptismal-only evidence, which could not be resolved further because the Gallo\u2013Kri\u017eko marriage record remains in the unindexed portion of the register. The two entries nonetheless constitute strong, separate-event corroboration of paternity.\n\n### Marriage Record\n\nA targeted search for the Gallo\u2013Kri\u017eko marriage in the indexed portion of collection 1554443 examined twelve Andrej/Ondrej Gallo marriages at Tur\u00e1ny; none matched Katarina Kri\u017eko as spouse. The marriage likely resides in the unindexed portion of the register. This absence does not affect the parentage conclusion, which rests on two direct, primary, original baptismal entries that agree on both parents.\n\n### Conclusion\n\nThe totality of evidence proves that **Andrej Gallo is the father of Jan Gallo, baptized 1893 in \u0160\u00fatovo, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary.** The subject's 1893 baptism directly names Andrej Gallo as father (original source, primary information, direct evidence). The 1895 baptism of sibling Ondrej Gallo independently names the same couple, and the fact that none of the twelve other indexed Gallo marriages at Tur\u00e1ny records a Katarina Kri\u017eko as bride eliminates the risk of namesake collision. Both records were made contemporaneously by the officiating priest. The name variants Andrej/Ondrej and Kri\u017eko/Kricko are documented and explained. No conflicting evidence was found. All five GPS components are satisfied; research is declared reasonably exhaustive.\n\n---\n\u00b9 \"Slovakia, Church and Synagogue Books, 1592\u20131935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : accessed 2026-07-21), Entry for Jan Gallo and Andrej Gallo, 1893; digital image of Tur\u00e1ny Catholic parish baptismal register, Hungary, Tur\u00f3cz, Religious registers, 1653\u20131951.\n\n\u00b2 \"Slovakia, Church and Synagogue Books, 1592\u20131935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : accessed 2026-07-21), Entry for Ondrej Gallo and Ondrej Gallo, 1895; digital image of Tur\u00e1ny Catholic parish baptismal register, Hungary, Tur\u00f3cz, Religious registers, 1653\u20131951."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project path /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-jan-gallo-father-m1n53x20. Proof summary ps_001 for q_001 is now written at tier 'proved' (revised per gps-mentor review). Evaluate whether q_001 is resolved and the objective is answered; mark the question resolved and complete the project if all questions are answered."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3339,8 +3243,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"worked example for 'questions':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"questions\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3369,8 +3272,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -3614,5 +3516,6 @@
       ],
       "transcript": "agent-a6fcf5c095825d50d.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

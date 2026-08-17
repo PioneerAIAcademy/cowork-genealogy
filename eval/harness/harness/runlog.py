@@ -430,11 +430,18 @@ def build_run_log(
     judge_prompt_hash: str,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
+    review_sample: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
     `tests` is a list of dicts produced by `assemble_test_entry()`. The
     envelope's `totals` is the per-key sum across the tests' totals.
+
+    `review_sample` names the tests whose every dimension the annotation must
+    cover (see `harness/review_sample.py`). Omitted entirely when None — the
+    envelope is `additionalProperties: false`, and its absence is what makes
+    every pre-sampling run log, and every partial write, fall back to the
+    every-dimension rule in `check_runlogs.rule3_completeness`.
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -448,7 +455,7 @@ def build_run_log(
     all_runs = [run for entry in tests for run in entry.get("runs", [])]
     totals["wall_clock_ms"] = _wall_clock_ms_from_runs(all_runs)
 
-    return {
+    envelope = {
         "schema_version": schema_version,
         "skill": skill,
         "version": version,
@@ -463,6 +470,9 @@ def build_run_log(
         "tests": tests,
         "totals": totals,
     }
+    if review_sample is not None:
+        envelope["review_sample"] = review_sample
+    return envelope
 
 
 # ---- Schema validation ----------------------------------------------------

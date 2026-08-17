@@ -4,12 +4,11 @@ locality-guide consults the place_search, collections_search,
 external_links_search, wiki, and wikipedia MCP tools and outputs the
 locality research guide to the user. When invoked inside a research
 project it ALSO persists one `localities` entry via research_append —
-it owns the `localities` section in OWNERSHIP_TABLE. Standalone Q&A
-(no research.json to write to) persists nothing. It never writes
+it owns the `localities` section in the ownership manifest. Standalone
+Q&A (no research.json to write to) persists nothing. It never writes
 tree.gedcomx.json — enforced by
-`test_universal.py::test_tree_ownership_table` (locality-guide is
-absent from TREE_OWNERSHIP_TABLE, so any tree write triggers a
-violation).
+`test_universal.py::test_tree_ownership_table` (locality-guide is on no
+tree row, so any tree write triggers a violation).
 
 All rubric dimensions for locality-guide (Jurisdiction accuracy,
 Record availability, Research strategy) require reading the narrative

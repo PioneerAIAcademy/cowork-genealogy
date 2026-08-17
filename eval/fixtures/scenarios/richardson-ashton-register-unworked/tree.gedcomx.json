@@ -1,0 +1,27 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "John",
+          "surname": "Richardson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Christening",
+          "date": "1833",
+          "place": "Ashton-under-Lyne, Lancashire, England"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

@@ -1,0 +1,152 @@
+{
+  "tool": "record_search",
+  "description": "The OTHER batch on the name search's hits: C00558-7, the Church of St. Michael and All Angels register for the same parish (19,206 records). CAPTURED LIVE 2026-08-13, trimmed only by dropping each row's `gedcomx`. Stocked because the paired name-search fixture surfaces TWO Ashton batches and C00558-7 is the more specifically named of the pair — a skill that reasons well can defensibly pick either. Without this fixture the test would grade on guessing which batch happened to be stocked: the judge context calls that choice acceptable, and it would have dead-ended on fixture_not_found. hasMore true against 19,206 makes the same paging point as its sibling.",
+  "args": {
+    "batchNumber": "C00558-7"
+  },
+  "response": {
+    "query": {
+      "batchNumber": "C00558-7",
+      "count": 6
+    },
+    "totalMatches": 19206,
+    "paginationCappedAt": 4999,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:J3W9-3YW",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "29 Nov 1835",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "George Reece",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Male",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for George Reece, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-YC1",
+        "primaryId": "p_12470790516",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NGYP-LQ8",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "26 Jul 1835",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anne Rennick",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Anne Rennick, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-S4Q",
+        "primaryId": "p_12221110031",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:J3W9-WSS",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "14 Oct 1838",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Rosanna Reece",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Rosanna Reece, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H12-M38",
+        "primaryId": "p_12470792462",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:J3W9-78R",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "23 Jul 1837",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jemima Reece",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Jemima Reece, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-Y7V",
+        "primaryId": "p_12470791855",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JWCB-T73",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "26 Mar 1837",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Renwick",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Mary Renwick, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-TNT",
+        "primaryId": "p_12546869553",
+        "batchNumber": "C00558-7"
+      },
+      {
+        "recordId": "ark:/61903/1:1:JMF4-WBJ",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "5 Jul 1835",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Maria Reece",
+        "score": 1.01,
+        "confidence": 5,
+        "sex": "Female",
+        "collectionId": "1473014",
+        "collectionTitle": "England, Births and Christenings, 1538-1975",
+        "collectionUrl": "https://familysearch.org/collections/1473014",
+        "recordTitle": "Entry for Maria Reece, \"England, Births and Christenings, 1538-1975\"",
+        "recordArk": "ark:/61903/1:2:9H1K-TYX",
+        "primaryId": "p_12405345257",
+        "batchNumber": "C00558-7"
+      }
+    ]
+  }
+}

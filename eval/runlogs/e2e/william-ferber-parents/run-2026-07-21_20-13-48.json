@@ -977,51 +977,44 @@
       "args": {
         "pattern": "**/*.json",
         "path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34"
-      },
-      "response_summary": ".claude\\skills\\init-project\\templates\\research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_william_ferber_parents\",\n4\t    \"objective\": \"Who were William H. Ferber's parents?\",\n5\t    \"subject_person_ids\": [\"G7JB-YH6\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-21\",\n8\t    \"updated\": \"2026-07-21\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\": [],\n17\t  \"log\": [],\n18\t  \"sources\": [],\n19\t  \"assertions..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"G7JB-YH6\",\n5\t      \"gender\": \"Male\",\n6\t      \"names\": [\n7\t        { \"id\": \"N1\", \"preferred\": true, \"given\": \"William H\", \"surname\": \"Ferber\", \"type\": \"BirthName\" }\n8\t      ],\n9\t      \"facts\": [\n10\t        { \"id\": \"F1\", \"type\": \"Birth\", \"date\": \"December 1869\", \"standard_date\": \"Dec 1869\", \"place\": \"Ohio, United States\", \"standard_place\": \"Ohio, United States\", \"sources\": [{ \"ref\": \"S1\", \"quality\": 1 }] },\n11\t        { \"id\": \"F2\", \"type\": \"Residence\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1046,30 +1039,26 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Hamilton County, Ohio"
-      },
-      "response_summary": "{\"error\":\"fetch failed\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1077,22 +1066,19 @@
         "standardPlace": "Hamilton, Ohio, United States",
         "startYear": 1860,
         "endYear": 1910
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Hamilton, Ohio, United States\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"Ohio\\\",\\n  \\\"totalForPlace\\\": 60,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3315268\\\",\\n      \\\"title\\\": \\\"Ohio, Athens County, Deceased Veteran Grave Registration Card File Index, 1819-1936\\\",\\n      \\\"dateRange\\\": \\\"1819-1936\\\",\\n      \\\"recordCount\\\": 5588,\\n      \\\"personCount\\\": 5591,\\n      \\\"imageCount\\\": 5546,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Ohio census 1870 genealogy records Hamilton County Cincinnati parents"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Ohio census 1870 genealogy records Hamilton County Cincinnati parents\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.792969,\\n      \\\"chunk_text\\\": \\\"## Online Resources  \\\\n* **1843-Onward** [Ohio, Hamilton, Cincinnati, Walnut Hills Cemetery Burials](https://www.myheritage.com/research/collection-20707/ohio-hamilton-cincinnati-burials) at MyHeritage \\u2014 index ($)\\\\n\\\\n### Cen..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), vital records (death/birth cert), probate (will), church (baptism..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1100,8 +1086,7 @@
         "standardPlace": "United States",
         "startYear": 1870,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"United States\\\",\\n    \\\"startYear\\\": 1870,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"United States\\\",\\n  \\\"totalForPlace\\\": 175,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"2613134\\\",\\n      \\\"title\\\": \\\"Maine, United States Naturalization Records, 1790-1991\\\",\\n      \\\"dateRange\\\": \\\"1790-1991\\\",\\n      \\\"recordCount\\\": 85306,\\n      \\\"personCount\\\": 100818,\\n      \\\"imageCount\\\": 29001,\\n      \\\"url\\\": \\\"https://www.fam..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1208,23 +1193,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__same_person,mcp__genealogy__source_attachments,mcp__genealogy__record_read",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__source_attachments\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -1238,15 +1220,13 @@
         "residenceYearTo": 1870,
         "collectionId": "1438024",
         "projectPath": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1870,\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1870,\\n    \\\"residenceYearTo\\\": 1870,\\n    \\\"collectionId\\\": \\\"1438024\\\",\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"ret..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M62Z-87H"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_332380052\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M62Z-87S\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"8c3985f2-a1b9-4e51-9e1f-f3109b560d2e\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Gerhardt\\\",\\n          \\\"surname\\\": \\\"Faerber\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e93678fb-2a88-4994-92d2-d57837c76f89\\\",\\n          \\\"type\\\": \\\"C..."
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -1387,8 +1367,7 @@
           ]
         },
         "primaryId2": "G7JB-YH6"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": false,\\n  \\\"score\\\": 0.00018685684,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:M62Z-87S\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:WMNF-YWP\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:M62Z-87S\\\",\\n  \\\"updated\\\": \\\"2026-07-21T19:18:45.816Z\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__source_attachments",
@@ -1398,8 +1377,7 @@
           "ark:/61903/1:1:M62Z-87S",
           "ark:/61903/1:1:M62Z-873"
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"attachments\\\": {\\n    \\\"ark:/61903/1:1:M62Z-87H\\\": [\\n      {\\n        \\\"personId\\\": \\\"G7JB-YH6\\\",\\n        \\\"tags\\\": [\\n          \\\"Birth\\\",\\n          \\\"Name\\\"\\n        ]\\n      }\\n    ],\\n    \\\"ark:/61903/1:1:M62Z-87S\\\": [\\n      {\\n        \\\"personId\\\": \\\"GCD9-9X1\\\",\\n        \\\"tags\\\": [\\n          \\\"Birth\\\",\\n          \\\"Name\\\"\\n        ]\\n      }\\n    ],\\n    \\\"ark:/61903/1:1:M62Z-873\\\": [\\n      {\\n        \\\"personId\\\": \\\"G7J1-QF2\\\",\\n        \\\"tags\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -1423,8 +1401,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/c14cde9c-d539-43e7-90cc-689928574882.json",
         "notes": "Found 1 match: William Faerber (ark:/61903/1:1:M62Z-87H) in Household of Gerhardt Faerber, Cincinnati, Hamilton, Ohio. 'Faerber' is the German \u00e4-umlaut variant of 'Ferber'. Household includes father Gerhardt Faerber (b. 1822, Prussia; ark M62Z-87S; FS person GCD9-9X1) and mother Eva Faerber (b. 1832, Bavaria; ark M62Z-873; FS person G7J1-QF2). Source attachment confirms M62Z-87H is already linked to G7JB-YH6 (our subject). Siblings: Gustave (b.1857 Ohio), Jacob (b.1860 Ohio), Charles (b.1865 Ohio), Margarette (b.1867 Ohio). All born in Ohio, consistent with long-established Cincinnati family. Record passed to record-extraction."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-21T19:19:31.345Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1437,38 +1414,33 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Record: \"United States, Census, 1870\" \u2014 Household of Gerhardt Faerber. Record ARK for William: ark:/61903/1:1:M62Z-87H. Full GEDCOMX already in context from record_read. Plan item: pli_001, log: log_001. Persons in household: (1) Gerhardt Faerber [p_332380052, ark M62Z-87S, FS GCD9-9X1] \u2014 Male, b. 1822 Prussia, census Cincinnati, Hamilton, Ohio 1870 \u2014 role: father/head; (2) Eva Faerber [p_332380053, ark M62Z-873, FS G7J1-QF2] \u2014 Female, b. 1832 Bavaria, census Cincinnati, Hamilton, Ohio 1870 \u2014 role: mother/wife; (3) Gustave Faerber [p_332380054, ark M62Z-87Q] \u2014 Male, b. 1857 Ohio; (4) Jacob Faerber [p_332380055, ark M62Z-877] \u2014 Male, b. 1860 Ohio; (5) Charles Faerber [p_332380056, ark M62Z-87W] \u2014 Male, b. 1865 Ohio; (6) Margarette Faerber [p_332380057, ark M62Z-874] \u2014 Female, b. 1867 Ohio; (7) William Faerber [p_332380058, ark M62Z-87H, FS G7JB-YH6 = our subject] \u2014 Male, b. 1870 Ohio. Source citation: \"United States, Census, 1870\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M62Z-87S : Mon Oct 13 21:07:52 UTC 2025), Entry for Gerhardt Faerber and Eva Faerber, 1870. Image URL: https://www.familysearch.org/ark:/61903/3:1:S3HY-6PC7-16X"
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Prussia"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Prussia, Germany\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1871/+1947\\\",\\n      \\\"latitude\\\": 53,\\n      \\\"longitude\\\": 14,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Prussia&focusedId=260503\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Kingdom_of_Prussia\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Prussia\\\",\\n      \\\"type\\\": \\\"Country\\\",\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Bavaria",
         "contextName": "Germany"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Bavaria, Germany\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1871/\\\",\\n      \\\"latitude\\\": 49,\\n      \\\"longitude\\\": 11.5,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Bavaria&focusedId=2031\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://de.wikipedia.org/wiki/Bayern\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"G7JB-YH6\",\n5\t      \"gender\": \"Male\",\n6\t      \"names\": [\n7\t        { \"id\": \"N1\", \"preferred\": true, \"given\": \"William H\", \"surname\": \"Ferber\", \"type\": \"BirthName\" }\n8\t      ],\n9\t      \"facts\": [\n10\t        { \"id\": \"F1\", \"type\": \"Birth\", \"date\": \"December 1869\", \"standard_date\": \"Dec 1869\", \"place\": \"Ohio, United States\", \"standard_place\": \"Ohio, United States\", \"sources\": [{ \"ref\": \"S1\", \"quality\": 1 }] },\n11\t        { \"id\": \"F2\", \"type\": \"Residence\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2155,8 +2127,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: gedcomx_source_description_id 'S6' not found in tree.gedcomx.json \\u2014 pass `sourceDescription` to create the S entry, or reference an existing S id (existing: S1, S2, S3, S4, S5)\\\"\\n  ],\\n  \\\"opsReceived\\\": 28\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2819,8 +2790,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2833,30 +2803,26 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification"
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2990,8 +2956,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_person: each inline fact must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3155,8 +3120,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"facts\\\": [\\n          \\\"F15\\\"\\n        ],\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N4\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"facts\\\": [\\n          \\\"F16\\\"\\n        ],\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N5\\\"\\n        ]\\n      }..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3307,15 +3271,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R6\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\"..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_william_ferber_parents\",\n4\t    \"objective\": \"Who were William H. Ferber's parents?\",\n5\t    \"subject_person_ids\": [\n6\t      \"G7JB-YH6\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-21\",\n10\t    \"updated\": \"2026-07-21\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"question\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3642,24 +3604,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -3703,8 +3662,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3717,8 +3675,7 @@
         "fields": {
           "status": "skipped"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3734,8 +3691,7 @@
         "residenceYearTo": 1880,
         "collectionId": "1417683",
         "recordType": "census"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Faerber\\\",\\n    \\\"surnameAlt\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1870,\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"recordType\\\": \\\"census\\\"\\n  }..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3748,8 +3704,7 @@
         "birthYearTo": 1870,
         "collectionId": "1932106",
         "recordType": "birth"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"surnameAlt\\\": \\\"Faerber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"birthYearFrom\\\": 1868,\\n    \\\"birthYearTo\\\": 1870,\\n    \\\"collectionId\\\": \\\"1932106\\\",\\n    \\\"recordType\\\": \\\"birth\\\"\\n  },\\n  \\\"totalMatches\\\": 64,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3762,8 +3717,7 @@
         "deathPlace": "Hamilton, Ohio",
         "collectionId": "2128172",
         "recordType": "death"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"deathYearFrom\\\": 1902,\\n    \\\"deathYearTo\\\": 1904,\\n    \\\"deathPlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"collectionId\\\": \\\"2128172\\\",\\n    \\\"recordType\\\": \\\"death\\\"\\n  },\\n  \\\"totalMatches\\\": 9,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 9,\\n  \\\"offset\\\": 0,\\n  \\\"has..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3787,8 +3741,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "No results for William Faerber/Ferber (b. 1869-1870) in 1880 U.S. Census, Hamilton County, Ohio. At age ~10, William would appear in his father's household; the collection is indexed under the head's name. Will retry searching for Gerhardt Faerber as head of household."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-21T19:57:36.266Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3810,8 +3763,7 @@
         "resultsAvailable": 64,
         "stagedResultsRef": "results/.staging/9478e46c-b211-4eae-b039-d74d073e6a52.json",
         "notes": "64 results returned but all 20 examined are records for OTHER children where a man named 'William Faber/Farber/Ferber' is listed as FATHER \u2014 not William H. Ferber's own birth record. Collection indexes both child and parents; search matched on the father field. Will retry with Gerhardt Faerber as fatherGivenName/fatherSurname to find William's own birth entry."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-21T19:57:36.348Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 20,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3833,8 +3785,7 @@
         "resultsAvailable": 9,
         "stagedResultsRef": "results/.staging/bda714de-44ba-4cd2-9706-4ef3faba27d1.json",
         "notes": "Top result: 'Wm. Ferber' (ark:/61903/1:1:F66M-8JZ) \u2014 Male, birth 1870 Cincinnati Hamilton Ohio, death 11 March 1903 Cincinnati Hamilton Ohio, Married, White. Exact match for G7JB-YH6. Record ARK: ark:/61903/1:2:MXGX-5SW. Will read full record for parent names on the death certificate."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-21T19:57:36.423Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 9,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3849,8 +3800,7 @@
         "residenceYearTo": 1880,
         "collectionId": "1417683",
         "recordType": "census"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Faerber\\\",\\n    \\\"surnameAlt\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"Gerhardt\\\",\\n    \\\"givenNameAlt\\\": \\\"Gerhard\\\",\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"recordType\\\": \\\"census\\\"\\n  },\\n  \\\"totalMatches\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3864,16 +3814,14 @@
         "recordSubdivision": "Ohio",
         "collectionId": "1932106",
         "recordType": "birth"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"fatherGivenName\\\": \\\"Gerhardt\\\",\\n    \\\"fatherSurname\\\": \\\"Faerber\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1870,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\",\\n    \\\"collectionId\\\": \\\"1932106\\\",\\n    \\\"recordType\\\": \\\"birth\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3881,8 +3829,7 @@
         "recordId": "ark:/61903/1:1:F66M-8JZ",
         "projectPath": "C:\\Users\\DELL\\AppData\\Local\\Temp\\e2e-william-ferber-parents-lqinqi34",
         "resultsRef": "results/log_004.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11261440420\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F66M-8JZ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Ferber\\\",\\n          \\\"given\\\": \\\"Wm.\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1870\\\",\\n          \\\"standard_date\\\": \\\"1870\\\",\\n          \\\"place\\\": \\\"Cinti., Ham., O.\\\",\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3895,8 +3842,7 @@
         "recordType": "census",
         "recordCountry": "United States",
         "recordSubdivision": "Ohio"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"givenName\\\": \\\"Gerhard\\\",\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"recordSubdivision\\\": \\\"Ohio\\\"\\n  },\\n  \\\"totalMatches\\\": 25902,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3908,8 +3854,7 @@
         "birthPlace": "Hamilton, Ohio",
         "collectionId": "1932106",
         "recordType": "birth"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Faerber\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1870,\\n    \\\"birthPlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"collectionId\\\": \\\"1932106\\\",\\n    \\\"recordType\\\": \\\"birth\\\"\\n  },\\n  \\\"totalMatches\\\": 74,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4118,8 +4063,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[4]: record_id 'ark:/61903/1:1:F66M-8J8' does not match any result in sidecar 'results/log_004.json' \\u2014 expected one of: ark:/61903/1:1:F66M-8JZ, ark:/61903/1:1:F6Z4-X5S, ark:/61903/1:1:F6ZW-T2J, ark:/61903/1:1:F6VY-2VC, ark:/61903/1:1:F62R-QNB\\\",\\n    \\\"ops[5]: record_id 'ark:/61903/1:1:F66M-8J8' does not match any result in sidecar 'results/log_004.json' \\u2014 expected one of: ark:/61903/1:1:F66M-8JZ, ark:/61903/..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4133,8 +4077,7 @@
         "residenceYearTo": 1880,
         "collectionId": "1417683",
         "recordType": "census"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"Gerhard\\\",\\n    \\\"givenNameAlt\\\": \\\"Gerhardt\\\",\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"recordType\\\": \\\"census\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 49..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4343,16 +4286,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_028\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_029\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_030\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4459,16 +4400,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_030\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_031\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_032\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_read",
       "args": {
         "personId": "GCD9-9X1",
         "sourceDescriptions": true
-      },
-      "response_summary": "person_read is disabled in e2e benchmark runs. Reading the tree would hand you the stripped answer for free. Recover it through records instead (record_search, record_read, fulltext_search, image_search, \u2026)."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4494,16 +4433,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__fulltext_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4526,8 +4463,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Second attempt: searched for Gerhardt/Gerhard Faerber/Ferber as head in 1880 U.S. Census, Hamilton County, Ohio. Still 0 results. Surname transcription in the 1880 census may differ significantly from the 1870 ae-umlaut form."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-21T20:06:48.022Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4549,8 +4485,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Third attempt: standard-spelling Ferber + Gerhard/Gerhardt, 1880 census, Hamilton Ohio. Still 0 results. The family surname may be indexed under Farber, Forber, or another variant in 1880."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-21T20:06:53.124Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4572,8 +4507,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Retry with Gerhardt Faerber as father, birth year 1869-1870, Ohio births collection. 0 results. William's birth record is not findable in the FamilySearch collection via father's name search. May not have been indexed, or registration may not have occurred."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-21T20:06:56.938Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4593,8 +4527,7 @@
         "resultsExamined": 20,
         "resultsAvailable": 74,
         "notes": "Broader search: surname Faerber, births 1869-1870, Hamilton County Ohio. 74 results but all 20 examined are births of OTHER Faerber/Faber/Farber family children where a man named William or Jacob Faber is the father. None match William H. Ferber's birth record specifically. William's birth registration not found in this collection."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-21T20:07:00.476Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -4607,8 +4540,7 @@
         "yearFrom": 1880,
         "yearTo": 1880,
         "count": 10
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\DELL\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-william-ferber-parents-lqinqi34\\\",\\n    \\\"keywords\\\": \\\"+Faerber\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"recordPlace1\\\": \\\"Ohio\\\",\\n    \\\"recordPlace2\\\": \\\"Hamilton\\\",\\n    \\\"yearFrom\\\": 1880,\\n    \\\"yearTo\\\": 1880,\\n    \\\"count\\\": 10\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4628,8 +4560,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Full-text search for '+Faerber' in 1880 census, Hamilton County, Ohio. Zero results. The surname 'Faerber' (ae-umlaut form) does not appear anywhere in the AI-transcribed 1880 census text for Hamilton County. The family may be indexed under a completely unrecognizable variant (e.g., Forber, Ferebar), or Gerhardt may have died between 1870 and 1880, or the family may have temporarily relocated. The 1880 census for this family is not recoverable through current FamilySearch search infrastructure. Marking pli_003 exhausted."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-21T20:13:21.048Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4642,8 +4573,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": "wall-clock timeout after 3600s",
@@ -4660,5 +4590,6 @@
         "sourceDescriptions": true
       }
     }
-  ]
+  ],
+  "captures_stripped": true
 }

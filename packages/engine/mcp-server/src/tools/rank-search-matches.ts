@@ -437,6 +437,10 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   // the ranker has no business re-deriving it. Without this the top-ranked stub
   // is exactly where a "father absent" hit looks most confirmed (#1324).
   if (r.relativeTerms) stub.relativeTerms = r.relativeTerms;
+  // Same carry-through, same reason: the staged row holds it and the ranker has
+  // nothing to add. Unlike `relativeTerms` this gets no advisory note — a batch
+  // number is a lookup key for the next search, not a caveat on this score.
+  if (r.batchNumber) stub.batchNumber = r.batchNumber;
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different

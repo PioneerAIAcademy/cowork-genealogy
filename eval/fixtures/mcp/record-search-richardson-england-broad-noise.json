@@ -1,0 +1,148 @@
+{
+  "tool": "record_search",
+  "description": "The country-scoped opening move: surname+givenName+recordCountry=England, no birthPlace. CAPTURED LIVE 2026-08-13, gedcomx dropped. 60,423 hits, none in Ashton-under-Lyne and NONE carrying a batch — which is the genealogical point: broadening to the country buys noise, and the parish-scoped search is what surfaces the register. Stocked because a broad-then-narrow opening is reasonable practice and the skill does it: unstocked, that call returned fixture_not_found and cost Tool Arguments a 1 in run v1_2026-08-13_22-11-11 for a defensible first query. ORDER: after the Ashton-scoped name fixture, whose predicate requires birthPlace~Ashton and so cannot match this call.",
+  "args": {
+    "surname": "~Richardson",
+    "givenName": "~John",
+    "recordCountry": "~England"
+  },
+  "response": {
+    "query": {
+      "surname": "Richardson",
+      "givenName": "John",
+      "recordCountry": "England",
+      "birthYearFrom": 1828,
+      "birthYearTo": 1838,
+      "recordType": "birth",
+      "count": 6
+    },
+    "totalMatches": 60423,
+    "paginationCappedAt": 4999,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QPH4-GGY8",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "22 December 1833",
+            "place": "Christ Church, Tynemouth, Northumberland, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Campbell Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "collectionId": "2353070",
+        "collectionTitle": "England, Northumberland, Parish Registers, 1538-1950",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2353070",
+        "recordTitle": "Entry for John Campbell Richardson, \"England, Northumberland, Parish Registers, 1538-1950\"",
+        "recordArk": "ark:/61903/1:2:QRGL-7RCT",
+        "primaryId": "p_104447684621"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP78-H56K",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "3 Oct 1833",
+            "place": "Rothbury, Northumberland, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "2353070",
+        "collectionTitle": "England, Northumberland, Parish Registers, 1538-1950",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2353070",
+        "recordTitle": "Entry for John Richardson, \"England, Northumberland, Parish Registers, 1538-1950\"",
+        "recordArk": "ark:/61903/1:2:QR2K-Y2P2",
+        "primaryId": "p_104377648009"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QL95-95GN",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "+1833-05-17",
+            "place": "Hitchin, Hertfordshire, England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Philipson Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "collectionId": "2388825",
+        "collectionTitle": "England, Hertfordshire, Parish Registers, 1538-1912",
+        "collectionUrl": "https://familysearch.org/collections/2388825",
+        "recordTitle": "Entry for John Philipson Richardson, \"England, Hertfordshire, Parish Registers, 1538-1912\"",
+        "recordArk": "ark:/61903/1:2:QG15-FM7W",
+        "primaryId": "p_102832789276"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLS8-9HG7",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "22 Dec 1833",
+            "place": "Bishop's Hatfield, Hertfordshire, England"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "collectionId": "2388825",
+        "collectionTitle": "England, Hertfordshire, Parish Registers, 1538-1912",
+        "collectionUrl": "https://familysearch.org/collections/2388825",
+        "recordTitle": "Entry for John Richardson, \"England, Hertfordshire, Parish Registers, 1538-1912\"",
+        "recordArk": "ark:/61903/1:2:QPMK-PL7G",
+        "primaryId": "p_102846544865"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWG7-9HX",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "23 Mar 1833",
+            "place": "Paternoster Row, London"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "collectionId": "1666142",
+        "collectionTitle": "England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1666142",
+        "recordTitle": "Entry for John Richardson, \"England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977\"",
+        "recordArk": "ark:/61903/1:2:MNDX-RJP",
+        "primaryId": "p_11098756154"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F7QG-PHZ",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "10 Nov 1833",
+            "place": "Cambridge, Cambridgeshire"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jabez John Richardson",
+        "score": 5.2335997,
+        "confidence": 3,
+        "collectionId": "1666142",
+        "collectionTitle": "England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1666142",
+        "recordTitle": "Entry for Jabez John Richardson, \"England and Wales, Non-Conformist Record Indexes (RG4-8), 1588-1977\"",
+        "recordArk": "ark:/61903/1:2:MNZV-MZF",
+        "primaryId": "p_11060354950"
+      }
+    ]
+  }
+}
