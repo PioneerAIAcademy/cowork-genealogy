@@ -13,9 +13,10 @@ people as missing, which is worse than not checking at all.
 `developer`-labeled issue must not be assigned to a genealogist, and vice versa.
 
 **Senior is a separate axis from role, and from standup attendance.** The
-`Senior` column marks GitHub team membership, which is what `.github/CODEOWNERS`
-routes review authority by: `senior-genealogists` owns skills, agents, eval
-fixtures/tests/runlogs and `docs/`; `senior-developers` owns the code and
+`Senior` column marks GitHub team membership. `.github/CODEOWNERS` names both
+teams on every rule, so either can approve any senior-owned path; the team it
+names first is who the review is queued to — `senior-genealogists` for skills,
+agents and eval fixtures/tests/runlogs, `senior-developers` for the code and
 infrastructure paths.
 
 **The `Senior` column is review authority.** A senior developer still takes work
