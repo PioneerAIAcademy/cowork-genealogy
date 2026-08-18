@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasEventAfterDeath1",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "factIds": [

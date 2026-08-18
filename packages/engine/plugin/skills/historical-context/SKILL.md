@@ -95,12 +95,14 @@ What does the user need to understand?
 
 ### 3. Research the context
 
-Call MCP tools for relevant information:
+Call MCP tools for relevant information. `wiki_search` and
+`wiki_read` are the FamilySearch wiki tools; `wikipedia_search` is
+the separate, general Wikipedia tool:
 
 ```
-wiki_search({ query: "German immigration Pennsylvania 1840s" })
-wiki_read({ url: "<specific FamilySearch wiki page URL>" })
-wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })
+wiki_search({ query: "German immigration Pennsylvania 1840s" })  // FamilySearch wiki
+wiki_read({ url: "<specific FamilySearch wiki page URL>" })       // FamilySearch wiki
+wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })  // Wikipedia
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 ```
