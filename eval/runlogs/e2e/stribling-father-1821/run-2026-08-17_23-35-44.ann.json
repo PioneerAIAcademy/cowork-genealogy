@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "ParentChild R34 I1->KLYT-G3Q present, sourced to S7 (1823 guardian bond). I1 carries four Taliaferro name variants and a Death of 1823-06-24 in Amite County. His 1781 Wilkes County, Georgia birth is absent from the tree.",
+    "f2": "ParentChild R35 I2->KLYT-G3Q present, sourced to S7. I2 carries the McDowell maiden name via S1 (Peggy McDowell, 1815 marriage index) and S6. Her 1793 birth and 1864 death are absent.",
+    "f3": "Couple R33 (I1+I2) carries fact F11: Marriage, 1 March 1815, standard_date 1815-03-01, Amite County, Mississippi, sourced to S1 (marriage index, quality 2). The dated marriage fact is materialized on the relationship, not merely asserted in prose.",
+    "f4": "Re-graded against the amended fixture. Satisfied via option (b): S7 = ark:/61903/3:1:3QS7-L9QX-2H77, the 1823 Amite Orphans' Court guardian bond, attached as the source behind both parentage edges R34 and R35. The 1825 Sleeper bond ARK (3QS7-89QX-2C5P), which the pre-amendment fixture required specifically, appears nowhere in the tree; the agent found it in fulltext results but read adjacent pages instead. Original grade was false on that basis and is superseded, since the amended finding accepts either bond from the same orphans'-court series."
+  }
+}

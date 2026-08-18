@@ -1,0 +1,19 @@
+{
+  "id": "stribling-father-1821",
+  "name": "Simpson Ridley Stribling — parents, behind a stepfather's guardianship (1820s Mississippi)",
+  "genre": "strip",
+  "source_pid": "KLYT-G3Q",
+  "captured": "2026-08-14",
+  "researcher_question": "Who were the parents of Simpson Ridley Stribling, born 15 July 1821 in Amite County, Mississippi?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1820s",
+    "geography": "US-MS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "#1413. BOTH parents stripped so the answer is not reachable from a marriage index keyed on the mother's surname: the route in is the 24 May 1825 Amite County Orphans' Court bond naming Gideon Sleeper guardian to James, John, Seaborn and Ridley Stribling, six months after he married their widowed mother. f4 scores that bond as an attached source and is the discriminator — an agent that dismisses the Stribling/Sleeper/McDowell surname spread as a conflict never attaches it. Reaching the bond needs fulltext_search UNFILTERED (+Sleeper +guardian +Stribling); place/year filters return 0 because they match collection metadata. The 1815 marriage is indexed as 'Taliafero Stribbling'/'Peggy McDowell'."
+}

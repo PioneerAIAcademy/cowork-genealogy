@@ -1,0 +1,88 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Simpson Ridley Stribling's father was Taliaferro Stribling, born 1781 in Wilkes County, Georgia and died in 1823 in Amite County, Mississippi. The subject was a minor when Taliaferro died, and appears as 'Ridley Stribling' among the four Stribling orphans of the 1825 Amite County guardianship, where the guardian appointed over them was Gideon Sleeper — the man who had married their widowed mother six months earlier, i.e. their stepfather rather than their father.",
+      "details": {
+        "subject_person": {
+          "name": "Simpson Ridley Stribling",
+          "pid": "KLYT-G3Q"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Taliaferro Stribling",
+          "birth": "1781, Wilkes County, Georgia",
+          "death": "1823, Amite County, Mississippi"
+        }
+      },
+      "supporting_sources": [
+        "Mississippi, Marriages, 1800-1911 — entry for Taliafero Stribbling and Peggy McDowell, 1 March 1815, Amite County, Mississippi",
+        "Amite County, Mississippi, Orphans' Court / probate records, 24 May 1825 — guardianship bond of Gideon Sleeper as guardian to James, John, Seaborn and Ridley Stribling, minors, with the inventory of their inherited property",
+        "Amite County, Mississippi probate records — the 1823 administration of Taliaferro Stribling's estate"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Simpson Ridley Stribling's mother was Margaret 'Peggy' McDowell, born 2 January 1793 in Milledgeville, Baldwin County, Georgia and died 21 January 1864 in Liberty, Amite County, Mississippi. She was widowed by Taliaferro Stribling's death in 1823 and remarried Gideon B. Sleeper on 23 November 1824; she is indexed as 'Peggy McDowell' on her 1815 marriage record.",
+      "details": {
+        "subject_person": {
+          "name": "Simpson Ridley Stribling",
+          "pid": "KLYT-G3Q"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Margaret McDowell",
+          "birth": "2 January 1793, Milledgeville, Baldwin County, Georgia",
+          "death": "21 January 1864, Liberty, Amite County, Mississippi"
+        }
+      },
+      "supporting_sources": [
+        "Mississippi, Marriages, 1800-1911 — entry for Taliafero Stribbling and Peggy McDowell, 1 March 1815, Amite County, Mississippi",
+        "Mississippi, Marriages, 1800-1911 — entry for Gideon Sleeper, 1824, Amite County, Mississippi (his marriage to the widowed Margaret, six months before the guardianship)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "The subject's parents married each other on 1 March 1815 in Amite County, Mississippi — Taliaferro Stribling to Margaret 'Peggy' McDowell. This is the prior marriage that the 1825 guardianship implies: Taliaferro died in 1823, Margaret remarried Gideon Sleeper in November 1824, and Sleeper was appointed guardian of her four Stribling sons in May 1825. The surname difference between the guardian, the mother's maiden name and the minors is the expected pattern of a stepfather guardianship, not a conflict to be resolved away.",
+      "details": {
+        "subject_person": {
+          "name": "Taliaferro Stribling"
+        },
+        "relation": "spouse",
+        "target_person": {
+          "name": "Margaret McDowell"
+        },
+        "marriage_date": "1 March 1815",
+        "marriage_place": "Amite County, Mississippi"
+      },
+      "supporting_sources": [
+        "Mississippi, Marriages, 1800-1911 — entry for Taliafero Stribbling and Peggy McDowell, 1 March 1815, Amite County, Mississippi"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "source",
+      "description": "An Amite County, Mississippi Orphans' Court guardianship record establishing the Stribling minors' parentage must be attached as a source in the tree. EITHER of these satisfies this finding: (a) the 24 May 1825 bond in which Gideon Sleeper — the minors' stepfather, having married their widowed mother six months earlier — is bound in $1,600 as guardian to James, John, Seaborn and Ridley Stribling, with the inventory of the four minors' property (ark:/61903/3:1:3QS7-89QX-2C5P, Amite probate records 1809-1833 image 725); OR (b) the 1823 bond in which the widowed mother Margaret herself is appointed guardian of the same minors following Taliaferro's death (ark:/61903/3:1:3QS7-L9QX-2H77). Both are guardianship records from the same Amite orphans'-court series, and either one shows the agent engaged the guardianship evidence rather than dismissing the Stribling / Sleeper / McDowell surname spread as a conflict — which is what this finding exists to discriminate. A run that recovers the parentage without attaching either has not read the guardianship at all.",
+      "details": {
+        "target_person": {
+          "name": "Simpson Ridley Stribling",
+          "pid": "KLYT-G3Q"
+        },
+        "source_title": "Amite County, Mississippi, Orphans' Court guardianship bond (1823 or 1825)",
+        "source_url": "https://familysearch.org/ark:/61903/3:1:3QS7-89QX-2C5P",
+        "source_url_alternate": "https://familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H77"
+      },
+      "supporting_sources": [
+        "\"Mississippi, Probate Records, 1781-1930,\" images, FamilySearch (https://familysearch.org/ark:/61903/3:1:3QS7-89QX-2C5P : accessed 14 August 2026), Amite > Probate records 1809-1833 vol 1-3 > image 725 of 891, guardianship bond of Gideon Sleeper as guardian to James, John, Seaborn and Ridley Stribling, minors, 24 May 1825; county courthouses and public libraries, Mississippi.",
+        "\"Mississippi, Probate Records, 1781-1930,\" images, FamilySearch (https://familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H77 : accessed 17 August 2026), Amite County Orphans' Court guardianship bond, 1823, naming the widowed Margaret Stribling as guardian of the minor heirs of Taliaferro Stribling."
+      ],
+      "required": true
+    }
+  ]
+}
