@@ -258,7 +258,8 @@ function personEvidenceScoreWarnings(entry: any): string[] {
   if (typeof score === "number" && score >= 0 && score <= 1) return [];
   return [
     `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
-      `claims confidence 'confident' but records no match_score. A confident identity should ` +
+      `claims confidence 'confident' but records no usable match_score (got ` +
+      `${JSON.stringify(entry.match_score)} — expected a number 0–1). A confident identity should ` +
       `carry the same_person score behind it (a number 0–1). Call same_person on this pairing ` +
       `and record its score. If no comparable FamilySearch persona exists to score against, ` +
       `leave match_score null and keep the confidence your correlation analysis supports — do ` +

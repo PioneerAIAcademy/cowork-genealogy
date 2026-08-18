@@ -3579,7 +3579,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     const r = await researchAppend(link({ match_score: null }));
     expect(r.ok).toBe(true); // warn-only: the write is NOT blocked
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no match_score/);
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
     const saved = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     expect(saved.person_evidence).toHaveLength(1);
   });
@@ -3600,7 +3600,7 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     const r = await researchAppend(link({ match_score: 5 }));
     expect(r.ok).toBe(true); // not rejected — the range is unenforced at runtime
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/records no match_score/);
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
   });
 
   it("does not warn on a probable link with no match_score — the gate is confidence, not a downgrade route", async () => {
