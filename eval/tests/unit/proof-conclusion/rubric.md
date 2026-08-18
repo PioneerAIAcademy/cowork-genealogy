@@ -20,6 +20,8 @@ Does the narrative read as a self-contained GPS conclusion without reference to 
 - **partial:** In write-mode, narrative relies on reader knowing what `a_004` or `c_001` refers to without describing them. In review-mode, the assessment misses one self-containment issue in the existing narrative.
 - **fail:** In write-mode, narrative is a JSON summary rather than a prose conclusion, or omits citations / conflict resolution / tier declaration. In review-mode, the assessment doesn't actually evaluate the narrative's standalone readability.
 
+**Anchoring warning (review mode):** score this dimension on whether the ASSESSMENT correctly evaluates self-containment, never on whether the underlying `ps_NNN` narrative happens to be self-contained. A review that correctly identifies a NON-self-contained narrative as non-self-contained is a PASS, exactly like a review that correctly identifies a self-contained one as self-contained — the reviewed narrative being flawed is not itself a defect of the review. Reproduced 2026-08-18: `ut_proof_conclusion_r7k`'s ground truth is a deliberately non-self-contained narrative, and its assessment correctly caught every issue (bare `a_NNN`/`c_NNN` references, no inline citations) — matching this dimension's own pass bullet verbatim — yet scored fail twice, evidently graded on the narrative's quality rather than the review's.
+
 ## Evidence completeness
 
 Does the proof cite all relevant assertions and address all resolved conflicts? Omitting inconvenient evidence is a GPS violation.
