@@ -64,24 +64,44 @@ function WelcomeScreen(): React.JSX.Element {
   )
 }
 
-function WaitingScreen({ folderPath }: { folderPath: string | null }): React.JSX.Element {
+export function WaitingScreen({
+  folderPath,
+  canSelectFolder
+}: {
+  folderPath: string | null
+  canSelectFolder: boolean
+}): React.JSX.Element {
+  // The folder-specific copy only makes sense where the viewer watches a real
+  // folder the user can open — i.e. Electron, where `selectFolder` exists and
+  // `folderPath` is a filesystem path. On the web client there is no folder
+  // picker and `folderPath` is the session title, not a path, so naming it as a
+  // watched folder and telling the user to "open that folder" both misinform
+  // (issue #1317 review). Gate on the capability, not on folderPath being set.
   return (
     <div className={styles.welcome}>
       <div className={styles.welcomeContent}>
-        <p className={styles.waitingText}>No research data in this folder yet</p>
-        {/* Name the folder being watched. If the agent wrote to a different
-            folder (a real failure mode — issue #1317), showing the path here is
-            what lets a mismatch be noticed instead of reading as "nothing has
-            happened yet." */}
-        {folderPath && (
-          <p className={styles.welcomeHint}>
-            Watching <code>{folderPath}</code>
-          </p>
+        {canSelectFolder ? (
+          <>
+            <p className={styles.waitingText}>No research data in this folder yet</p>
+            {folderPath && (
+              <p className={styles.welcomeHint}>
+                Watching <code>{folderPath}</code>
+              </p>
+            )}
+            <p className={styles.welcomeHint}>
+              The viewer updates automatically when <code>research.json</code> appears here. If your
+              research is somewhere else, open that folder instead.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className={styles.waitingText}>No research data yet</p>
+            <p className={styles.welcomeHint}>
+              The viewer updates automatically when the agent saves{' '}
+              <code>research.json</code> for this session.
+            </p>
+          </>
         )}
-        <p className={styles.welcomeHint}>
-          The viewer updates automatically when <code>research.json</code> appears here. If your
-          research is somewhere else, open that folder instead.
-        </p>
       </div>
     </div>
   )
@@ -94,7 +114,7 @@ function AppContent({
   showThemeToggle: boolean
   onProjectTitle?: (title: string | null) => void
 }): React.JSX.Element {
-  const { research, folderPath, activeSection } = useResearchData()
+  const { research, folderPath, canSelectFolder, activeSection } = useResearchData()
 
   // Relay the agent-written project.title up to the host shell, which patches it
   // to the control plane (live session naming). Hook runs before the early
@@ -114,7 +134,7 @@ function AppContent({
         <Sidebar showThemeToggle={showThemeToggle} />
         <div className={styles.main}>
           <Header />
-          <WaitingScreen folderPath={folderPath} />
+          <WaitingScreen folderPath={folderPath} canSelectFolder={canSelectFolder} />
         </div>
       </div>
     )

@@ -33,6 +33,11 @@ export interface ResearchDataState {
   setDevMode: (v: boolean) => void
   getById: (id: string) => IndexEntry | null
   selectFolder: () => Promise<void>
+  /** Whether the transport can actually open a folder picker (Electron). False
+   *  on the web client, where `folderPath` is a session title, not a filesystem
+   *  path, and there is nothing to "open" — so folder-specific copy must not be
+   *  shown there (issue #1317 review). */
+  canSelectFolder: boolean
   activeSection: string
   setActiveSection: (section: string) => void
   sidecar: SidecarState
