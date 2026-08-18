@@ -10,7 +10,7 @@
 import { join } from "path";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { atomicWriteBoth } from "../utils/project-io.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -62,11 +62,15 @@ export async function mergeTreePersons(
     // 4. Repoint research.json person-id references collapsed→survivor.
     const collapseMap = new Map<string, string>();
     for (const [s, c] of merges) collapseMap.set(c, s);
+    // Snapshot research before the in-place person-id remap: block only on
+    // errors this merge introduces, not pre-existing drift (#1572). The
+    // pre-merge `tree` is the before-tree; `merged` is the after-tree.
+    const beforeResearch = structuredClone(research);
     const researchRefsUpdated = remapResearchPersonIds(research, collapseMap);
 
     // 5. Validate the would-be project (remapped research + merged tree) before
     //    any write.
-    const validation = await validateParsed(research, merged, { projectPath });
+    const validation = await validateIntroduced({ research: beforeResearch, tree }, { research, tree: merged }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }

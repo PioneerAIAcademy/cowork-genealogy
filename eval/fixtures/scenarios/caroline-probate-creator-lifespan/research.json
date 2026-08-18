@@ -1,0 +1,161 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Caroline Voss, born 1839 in Rowan County, North Carolina",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-01",
+    "updated": "2026-08-01"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Which probate or estate record names Caroline Voss's father?",
+      "rationale": "Caroline Voss was born in 1839 in Rowan County, North Carolina, and married circa 1858 (the only other dated fact about her). No record found so far names her father. A father's probate or estate file could be created anytime from Caroline's infancy to roughly 60 years after her birth — as late as approximately 1899 — regardless of when Caroline herself married or where she later lived. The search window must not be capped at or near her own 1858 marriage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-08-01T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Voss",
+        "given": "Caroline",
+        "collection": "North Carolina Marriages",
+        "place": "Rowan County, North Carolina"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Found Caroline Voss's circa-1858 marriage record. No parents named on the record.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "North Carolina, Rowan County. Marriage record, [groom] and Caroline Voss, circa 1858; digital image, FamilySearch.org, accessed 1 Aug 2026.",
+      "citation_detail": {
+        "who": "Rowan County Clerk",
+        "what": "Marriage record",
+        "when_created": "1858",
+        "when_accessed": "2026-08-01",
+        "where": "FamilySearch.org",
+        "where_within": "Rowan County, North Carolina"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:ROWN-0001",
+      "url_archived": null,
+      "notes": "No parents named on the marriage record.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ROWN-0001",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1839",
+      "structured_value": {
+        "year": "1839",
+        "place": "Rowan County, North Carolina"
+      },
+      "date": "1839",
+      "date_certainty": "estimated",
+      "place": "Rowan County, North Carolina",
+      "standard_place": "Rowan, North Carolina, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ROWN-0001",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married circa 1858 in Rowan County, North Carolina",
+      "date": "~1858",
+      "date_certainty": "estimated",
+      "place": "Rowan County, North Carolina",
+      "standard_place": "Rowan, North Carolina, United States",
+      "information_quality": "primary",
+      "informant": "county clerk / officiant",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "No parents' names given on this marriage record — a common gap for this era/jurisdiction.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "North Carolina, United States",
+      "for_place": "Rowan County, North Carolina",
+      "time_period": "1839-1899",
+      "jurisdictions": [
+        {
+          "name": "Rowan County, North Carolina, United States",
+          "date_range": "1753-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4000201",
+          "title": "North Carolina, Rowan County Probate Records, 1753-1970",
+          "date_range": "1753-1970"
+        }
+      ],
+      "quirks": [
+        "Rowan County probate/estate files (1753-1970) are the primary source for a father's death when no death certificate exists (North Carolina did not require statewide civil death registration until 1913). A father's estate could be probated any time from a child's infancy to roughly 60 years after the child's birth — size the search window to the FATHER's plausible lifespan, not the child's own research window.",
+        "Rowan County probate index (1753-1900) is full-text searchable but only partially name-indexed (~40%) — keyword search for the surname across the whole 1839-1899 window is more reliable than browsing by year."
+      ],
+      "guide_markdown": "# Locality Guide: Rowan County, North Carolina (1839-1899)\n\nNo statewide civil death registration until 1913 — probate/estate files (1753-1970) are the primary substitute. A father's estate could be probated any time from his child's infancy to roughly 60 years after the child's birth; size the search window to the father's plausible lifespan, not the child's own.",
+      "pages_read": [
+        { "section": "home", "url": null, "found": false },
+        { "section": "getting_started", "url": null, "found": false },
+        { "section": "online_records", "url": null, "found": false },
+        { "section": "research_tips", "url": null, "found": false }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-01"
+    }
+  ]
+}
