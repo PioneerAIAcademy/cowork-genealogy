@@ -186,7 +186,13 @@ the file holds the very answer it is about to go looking for. A request like
 reading dates and hand-picking fact ids; `facts-before`, `facts-after`, and
 `facts-between` resolve that internally instead. The year (or year range) the
 caller passes is their own input, never a value read off the tree, so it is
-not subject to the redaction contract the way a fact's own date is.
+not subject to the redaction contract the way a fact's own date is. The
+result, however, carries a residual: a dry run is free and reports
+`factsByType`, so repeating one with different years narrows a fact's date to
+the exact year. §3.1 therefore holds per call, not across a series of them.
+`forget-and-rederive/SKILL.md` closes this by instruction — call each date
+selector once, with the researcher's own year — because the tool cannot close
+it without giving up the dry run's full-rehearsal property.
 
 Each fact's comparable range comes from `getStandardDate` (prefers
 `standard_date`, falls back to parsing `date`) and then `earliestYear`/

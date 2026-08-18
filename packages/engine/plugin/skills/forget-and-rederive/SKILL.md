@@ -76,7 +76,10 @@ selectors below take ids, and `tree_forget` walks the relationships itself to
 resolve parents, children and spouses.
 
 **Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
-about to remove, and you are better off not having them in context.
+about to remove, and you are better off not having them in context. For the same
+reason, call each date selector once, with the year the researcher gave you. Do
+not vary the year across dry runs to see what the counts do — that reads a date
+off the tree as surely as opening the file.
 
 **The canonical setup is build-full-then-forget.** When a project is seeded
 specifically to test re-derivation, `init-project` builds the *complete* tree
