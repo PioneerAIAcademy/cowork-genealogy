@@ -506,7 +506,12 @@ interface Targets {
  * *difference* in threshold for the same kind is the probe shape.
  */
 function rejectVaryingDateThresholds(forget: ForgetSelector[]): void {
-  const seenThreshold = new Map<string, string>();
+  // A `Map<string, string>` typed value would make `JSON.stringify(undefined)`
+  // (itself the JS `undefined`, not a string — a malformed entry with no
+  // `year` at all) collide with "never seen this kind before" if compared
+  // against `undefined` directly. `.has()` distinguishes them; the main
+  // loop's own `requireYear` rejects the missing-year entry regardless.
+  const seenThreshold = new Map<string, string | undefined>();
   for (const entry of forget) {
     if (typeof entry !== "object" || entry === null) continue; // reported by the main loop below
     const kind = entry.selector;
@@ -515,8 +520,7 @@ function rejectVaryingDateThresholds(forget: ForgetSelector[]): void {
       kind === "facts-between"
         ? JSON.stringify([entry.fromYear, entry.toYear])
         : JSON.stringify(entry.year);
-    const prior = seenThreshold.get(kind);
-    if (prior !== undefined && prior !== threshold) {
+    if (seenThreshold.has(kind) && seenThreshold.get(kind) !== threshold) {
       throw new TreeForgetError(
         `forget: multiple '${kind}' selectors with different year thresholds in one call ` +
           `are not allowed — the response would reveal which threshold a fact's date falls ` +
