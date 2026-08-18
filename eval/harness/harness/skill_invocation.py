@@ -28,6 +28,7 @@ Three consumers, all described in the plan:
 from __future__ import annotations
 
 import re
+from collections import Counter
 from typing import Any
 
 from harness.context_policy import bare_tool_name
@@ -282,33 +283,45 @@ def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
 
     Ignores `id` for the same reason `_relationship_key` does, and ignores fact ORDER —
     a harmless re-serialization must not register as a new conclusion, the exact disease
-    issue #1340 cures. A `frozenset`, not a sorted tuple: two facts of the same type can
-    have one populated and one None `standard_place` (real corpus shape, e.g.
+    issue #1340 cures. A `frozenset` of `Counter` items, not a sorted tuple and not a bare
+    `frozenset` of the facts themselves: two facts of the same type can have one
+    populated and one None `standard_place` (real corpus shape, e.g.
     `chresten-nielsen-daughter`'s R1 — two Marriage facts, one with a place, one
     without), and sorting a tuple containing both raises `TypeError` comparing `None` to
-    `str`. A `frozenset` needs only `__hash__`/`__eq__` for the set-membership check this
-    is actually used for, so the comparison never happens — same pattern
+    `str`. Neither `Counter` construction nor `frozenset` construction ever orders its
+    elements relative to each other, so the comparison that crashes a sort never happens
+    — but a bare `frozenset` of the facts would also collapse two facts that carry the
+    IDENTICAL normalized signature into one, silently hiding a genuinely-added duplicate
+    (found by review). Routing through `Counter` first preserves that multiplicity while
+    keeping the same hash-only, comparison-free construction. Same pattern
     `_primary_fact_signatures` uses below.
     """
     facts = r.get("facts") if isinstance(r.get("facts"), list) else []
-    fact_sig = frozenset(
+    fact_counts = Counter(
         (f.get("type"), f.get("standard_date"), f.get("standard_place"))
         for f in facts
         if isinstance(f, dict)
     )
+    fact_sig = frozenset(fact_counts.items())
     return _relationship_key(r) + (r.get("subtype"), fact_sig)
 
 
-def _primary_fact_signatures(p: dict[str, Any]) -> set[tuple[Any, ...]]:
+def _primary_fact_signatures(p: dict[str, Any]) -> Counter[tuple[Any, ...]]:
     """Normalized `(type, standard_date, standard_place)` for every `primary: true`
     fact on a person, ignoring `id` and ordering — the identity-based counterpart to a
     raw count, so a primary fact REPLACED in place (count unchanged, content changed)
-    is visible the same way a primary fact ADDED is (issue #1569)."""
-    return {
+    is visible the same way a primary fact ADDED is (issue #1569). A `Counter`, not a
+    `set`: two primary facts that happen to carry the identical normalized signature
+    are a real duplicate, and a `set` would collapse them — silently hiding a
+    genuinely-added second fact the same way the raw-count check this replaces was
+    supposed to catch (found by review). `Counter(current) - Counter(baseline)` is
+    truthy exactly when some signature's count went up, which is what "has a new
+    primary fact" means; a bare set difference would miss that for a duplicate."""
+    return Counter(
         (f.get("type"), f.get("standard_date"), f.get("standard_place"))
         for f in (p.get("facts") or [])
         if isinstance(f, dict) and f.get("primary") is True
-    }
+    )
 
 
 def find_effects_without_invocation(
@@ -395,7 +408,7 @@ def find_effects_without_invocation(
         current = _primary_fact_signatures(p)
         if starting_tree is None:
             return bool(current)
-        baseline = starting_primary_signatures.get(p.get("id"), set())
+        baseline = starting_primary_signatures.get(p.get("id"), Counter())
         return bool(current - baseline)
 
     # Detects a conclusion encoded as a NEW ParentChild/Couple relationship, a

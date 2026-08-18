@@ -336,6 +336,21 @@ def test_flags_a_primary_fact_replaced_in_place():
     assert any("proof-conclusion" in v for v in violations)
 
 
+def test_flags_a_second_primary_fact_with_content_identical_to_an_existing_one():
+    """Found by review: a bare set of normalized signatures would collapse two
+    primary facts that happen to carry the identical (type, date, place) into one,
+    silently hiding a genuinely-added duplicate -- exactly the gap the raw-count
+    check this replaces was supposed to catch. Counter-based comparison preserves
+    multiplicity: 2 of the same signature vs. 1 in the baseline must still fire."""
+    dup_fact = {"type": "Death", "primary": True, "standard_date": "1900", "standard_place": None}
+    starting_person = {"id": "I1", "facts": [dict(dup_fact)]}
+    final_person = {"id": "I1", "facts": [dict(dup_fact), {**dup_fact, "sources": [{"ref": "src-2"}]}]}
+    tree = {"persons": [final_person], "relationships": []}
+    starting = {"persons": [starting_person]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
 def test_flags_a_placeholder_relationship_re_pointed_this_run():
     """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
@@ -739,6 +754,17 @@ def test_extraction_append_by_main_thread_not_flagged():
 
 def test_extraction_append_by_unnamed_delegate_flagged():
     calls = [_extraction_call(agent_id="a1", agent_type="general-purpose")]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "record-extractor" in violations[0]
+
+
+def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
+    """The is_error skip that used to sit before this branch split (issue #1569)
+    covered the extraction_append path too -- pin it separately from the
+    owning_skills-path regression test above, since a future fix scoped to only
+    one branch would otherwise pass every existing test."""
+    calls = [_extraction_call(agent_id="a1", agent_type="general-purpose", is_error=True)]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
     assert "record-extractor" in violations[0]
