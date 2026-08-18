@@ -1,0 +1,112 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Jimmie Jewel",
+          "surname": "Neal",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1884-07-10",
+          "place": "Hillsboro, Hill County, Texas",
+          "sources": []
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1938-03-07",
+          "place": "Carlsbad, Eddy County, New Mexico",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Martha J",
+          "surname": "Neal",
+          "type": "MarriedName"
+        },
+        {
+          "id": "N3",
+          "given": "Mattie",
+          "surname": "Landham",
+          "type": "MarriedName"
+        },
+        {
+          "id": "N4",
+          "given": "M J",
+          "surname": "Wood",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1859",
+          "place": "Georgia",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N5",
+          "preferred": true,
+          "given": "James M",
+          "surname": "Neal",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": []
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": []
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "I3",
+      "person2": "I2",
+      "sources": [
+        { "ref": "S1", "page": "Hill County, TX marriage record, 31 Jul 1879", "quality": 2 }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "Hill County, Texas Marriage Records", "author": "Hill County Clerk" },
+    { "id": "S2", "title": "Smith County, Texas Marriage Records", "author": "Smith County Clerk" }
+  ]
+}

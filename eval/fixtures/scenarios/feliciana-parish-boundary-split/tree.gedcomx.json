@@ -1,0 +1,38 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Silas",
+          "surname": "Bankston",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1800",
+          "place": "Feliciana Parish, Louisiana",
+          "sources": []
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1820",
+          "place": "Feliciana Parish, Louisiana",
+          "sources": [{ "ref": "S1", "page": "1820 Census, Feliciana Parish" }]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "1820 U.S. Federal Census", "author": "U.S. Census Bureau" }
+  ]
+}
