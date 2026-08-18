@@ -257,7 +257,7 @@ clerical work.
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validator.ts:1022,1029`) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
-| Merge of appended entry fails project validation | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }` |
+| Appended entry introduces a project-validation error | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 
 ### 8.1 Non-blocking warnings (never fail the op)
