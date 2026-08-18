@@ -45,8 +45,9 @@ function doPost(e) {
       throw new Error('Missing zipBase64 or filename');
     }
 
-    // ~20 MB decoded — base64 is 4/3 of raw. Well above any real bundle.
-    if (payload.zipBase64.length > 27 * 1024 * 1024) {
+    // 47 MB base64 ≈ 35 MB decoded (the client-side bundle cap). Under Apps
+    // Script's 50 MB per-execution ceiling but not by much.
+    if (payload.zipBase64.length > 47 * 1024 * 1024) {
       return ContentService
         .createTextOutput(JSON.stringify({ ok: false, error: 'payload too large' }))
         .setMimeType(ContentService.MimeType.JSON);

@@ -48,7 +48,6 @@ creates no issues.
 |---|---|
 | `GITHUB_TOKEN` | A fine-grained PAT scoped to the one repo, `Issues: Read and write` and nothing else. Org-owned repos additionally need fine-grained PAT access enabled on the org and an owner to approve the token — an unapproved token creates nothing and reports no error. |
 | `GITHUB_REPO` | `PioneerAIAcademy/cowork-genealogy` |
-| `FEEDBACK_TOKEN` | A shared secret the web control plane sends in the POST body. When set and non-empty, requests whose `token` field doesn't match are rejected with `{ ok: false, error: "unauthorized" }`. When absent or empty, all requests are accepted (backward compatibility during rollout — the Electron client has no mechanism to deliver a secret to installed users). Generate with `openssl rand -base64 32`. Must match the `FEEDBACK_SECRET` env var on the control plane (Fly secret). |
 
 ### 4. Deploy as a web app
 
@@ -102,20 +101,17 @@ console edit**.
 1. `curl -sL <exec-url>` and check `version` matches the committed `Code.gs`.
    This rules out the stale-console and unpublished-deployment cases before you
    spend a submission on them.
-2. Submit a bundle with a throwaway email **and include `"token": "<your
-   FEEDBACK_TOKEN value>"` in the POST body**. Confirm an issue exists, labelled
+2. Submit a bundle with a throwaway email. Confirm an issue exists, labelled
    `genealogist` + `feedback`, titled `[feedback] …`, sitting in **Ready** on
    project 1.
    **If there is no issue and no error, and step 1 was clean, suspect an
    ungranted `script.external_request` scope before you suspect the PAT** — the
    `try/catch` makes both look identical from the client. Executions in the Apps
    Script console tell them apart.
-3. **Submit with a wrong token** (or no `token` field). Confirm the response is
-   `{ ok: false, error: "unauthorized" }` and no zip appears in the Drive folder.
-4. Confirm the body contains no `@`, no `/Users/`, no `C:\`, and none of
+3. Confirm the body contains no `@`, no `/Users/`, no `C:\`, and none of
    `email`, `project_folder_path`, `user_prompt`, `agent_did`,
    `agent_should_have`, `correct_answer`, `notes`.
-5. **Delete the `GITHUB_TOKEN` Script Property** and submit again. The user must
+4. **Delete the `GITHUB_TOKEN` Script Property** and submit again. The user must
    still get a success response, with no issue created. Restore the value
    afterwards. This is the step that proves the `try/catch`, and the one most
    likely to be skipped. Do not prove it by revoking the PAT instead — that is

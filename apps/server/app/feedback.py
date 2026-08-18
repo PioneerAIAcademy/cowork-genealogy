@@ -476,14 +476,14 @@ async def submit_feedback(
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             res = await client.post(url, json=envelope)
             res.raise_for_status()
-            body = res.json()
+            resp_body = res.json()
     except (httpx.HTTPError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=f"Feedback upload failed: {exc}") from exc
 
-    if body.get("ok") is not True:
+    if resp_body.get("ok") is not True:
         raise HTTPException(
             status_code=502,
-            detail=f"Feedback endpoint rejected the upload: {body.get('error', 'unknown error')}",
+            detail=f"Feedback endpoint rejected the upload: {resp_body.get('error', 'unknown error')}",
         )
 
     return {"ok": True, "filename": filename}
