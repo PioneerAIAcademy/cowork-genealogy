@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_research_plan_qxr",
+    "skill": "research-plan",
+    "name": "An indirect record's date window is sized to the record creator's lifespan, not the subject's own window",
+    "type": "positive",
+    "description": "caroline-probate-creator-lifespan: q_001 asks which probate/estate record names Caroline Voss's father, for a subject born 1839 with no other dated fact besides a circa-1858 marriage. A sound plan sizes the probate item's date_range to the FATHER's plausible lifespan (roughly Caroline's birth year through birth+60, i.e. up to circa 1899) rather than to Caroline's own early-life research window. Guards the SKILL.md 'size an indirect record's date window to its likely CREATOR' Key selection principle (issue #1472, Rule 2), reproduced against this fixture per the issue's own instruction to verify the craft point before treating it as settled.",
+    "tags": [
+      "planning",
+      "parentage",
+      "probate",
+      "date-window",
+      "record-type-selection",
+      "new-plan-items-planned-status"
+    ]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 — which probate or estate record names Caroline Voss's father?",
+    "scenario": "caroline-probate-creator-lifespan"
+  },
+  "mcp_fixtures": [
+    "place-search-rowan-county",
+    "collections-search-rowan-county",
+    "volume-search-rowan-county",
+    "external-links-search-rowan-county",
+    "place-search-all-any"
+  ],
+  "judge_context": [
+    "The plan MUST include at least one probate/estate plan item targeting Caroline's father. Its `date_range` must extend to approximately the father's plausible lifespan — roughly Caroline's birth year (1839) through birth+55 to birth+65 (circa 1894-1904) — not stop at or shortly after Caroline's own circa-1858 marriage or any other subject-centric bound well short of that.",
+    "If the probate item's date_range ends by the 1860s or earlier (i.e., capped near Caroline's own marriage rather than her father's plausible death), score Record type selection as 1 (fail) — the item excludes most of the range where the record could actually sit.",
+    "The item's rationale should say whose lifespan set the window's bounds (the father's, not Caroline's) — ideal but grade generously if the reasoning is present even without using that exact phrase.",
+    "Additional breadth items (marriage records for Caroline's own parents, land records, cemetery records) strengthen the plan but are not individually required."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}
