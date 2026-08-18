@@ -15,13 +15,14 @@ from app.sandbox.base import PROJECT_DIR, DirEntry
 
 
 class _FakeResp:
-    """Simulates a successful Apps Script response (HTTP 200, {ok: true})."""
+    def __init__(self, body=None):
+        self._body = body if body is not None else {"ok": True}
 
     def raise_for_status(self):  # 2xx
         return None
 
     def json(self):
-        return {"ok": True}
+        return self._body
 
 
 def test_feedback_context_and_drive_upload(monkeypatch):
@@ -266,105 +267,54 @@ def test_unparseable_tree_passes_through_rather_than_failing_the_send():
     assert count == 0
 
 
-# --- feedback_secret token in envelope -----------------------------------
-
-def test_envelope_includes_token_when_feedback_secret_is_set(monkeypatch):
-    """When FEEDBACK_SECRET is configured, the POST envelope carries a `token`
-    field so the Apps Script endpoint can authenticate the caller."""
-    captured: dict = {}
-
-    class _FakeClient:
-        def __init__(self, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *exc):
-            return False
-
-        async def post(self, url, json):
-            captured["envelope"] = json
-            return _FakeResp()
-
-    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
-
-    from app.config import get_settings
-
-    monkeypatch.setattr(get_settings(), "feedback_secret", "test-secret-value")
-
-    with TestClient(app) as client:
-        client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
-
-        r = client.post(
-            "/api/feedback",
-            json={
-                "sessionId": sid, "email": "t@example.com",
-                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
-            },
-        )
-        assert r.status_code == 200
-        assert captured["envelope"]["token"] == "test-secret-value"
-
-        client.delete(f"/api/sessions/{sid}")
-
-
-def test_envelope_omits_token_when_feedback_secret_is_none(monkeypatch):
-    """When FEEDBACK_SECRET is not set (None), no `token` key appears in the
-    envelope — the Apps Script backward-compat path accepts without checking."""
-    captured: dict = {}
-
-    class _FakeClient:
-        def __init__(self, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *exc):
-            return False
-
-        async def post(self, url, json):
-            captured["envelope"] = json
-            return _FakeResp()
-
-    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
-
-    from app.config import get_settings
-
-    monkeypatch.setattr(get_settings(), "feedback_secret", None)
-
-    with TestClient(app) as client:
-        client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
-
-        r = client.post(
-            "/api/feedback",
-            json={
-                "sessionId": sid, "email": "t@example.com",
-                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
-            },
-        )
-        assert r.status_code == 200
-        assert "token" not in captured["envelope"]
-
-        client.delete(f"/api/sessions/{sid}")
-
+# --- endpoint rejection / non-JSON response -----------------------------------
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):
-    """When the Apps Script endpoint returns {ok: false} (e.g. token mismatch),
-    the control plane must surface it as a 502 — not silently report success.
-    Apps Script always returns HTTP 200, so raise_for_status() alone won't catch it."""
+    """An {ok:false} 200 from Apps Script must become a 502, not a silent success."""
 
-    class _FakeRejectedResp:
+    class _RejectClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            return _FakeResp(body={"ok": False, "error": "unauthorized"})
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _RejectClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y",
+            },
+        )
+        assert r.status_code == 502
+        assert "rejected" in r.json()["detail"].lower()
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_non_json_response_surfaces_as_502(monkeypatch):
+    """A non-JSON 200 (e.g. an HTML redirect page) must become a 502."""
+
+    class _HtmlResp:
         def raise_for_status(self):
             return None
 
         def json(self):
-            return {"ok": False, "error": "unauthorized"}
+            raise ValueError("No JSON object could be decoded")
 
-    class _FakeClient:
+    class _HtmlClient:
         def __init__(self, **kwargs):
             pass
 
@@ -375,9 +325,9 @@ def test_rejected_upload_surfaces_as_502(monkeypatch):
             return False
 
         async def post(self, url, json):
-            return _FakeRejectedResp()
+            return _HtmlResp()
 
-    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _HtmlClient)
 
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
@@ -387,10 +337,10 @@ def test_rejected_upload_surfaces_as_502(monkeypatch):
             "/api/feedback",
             json={
                 "sessionId": sid, "email": "t@example.com",
-                "userPrompt": "x", "agentDid": "y", "agentShouldHave": "z",
+                "userPrompt": "x", "agentDid": "y",
             },
         )
         assert r.status_code == 502
-        assert "unauthorized" in r.json()["detail"]
+        assert "failed" in r.json()["detail"].lower()
 
         client.delete(f"/api/sessions/{sid}")

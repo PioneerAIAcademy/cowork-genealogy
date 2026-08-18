@@ -470,8 +470,6 @@ async def submit_feedback(
         "filename": filename,
         "zipBase64": base64.b64encode(buf.getvalue()).decode("ascii"),
     }
-    if settings.feedback_secret:
-        envelope["token"] = settings.feedback_secret
 
     url = settings.feedback_url
     try:

@@ -45,23 +45,11 @@ function doPost(e) {
       throw new Error('Missing zipBase64 or filename');
     }
 
-    // ── Token check ──────────────────────────────────────────────
-    // When the FEEDBACK_TOKEN Script Property is set and non-empty,
-    // reject any request whose `token` field doesn't match. When the
-    // property is absent or empty, accept unconditionally — backward
-    // compatibility during rollout (the Electron client has no way to
-    // deliver a secret to installed users).
-    var expectedToken = PropertiesService.getScriptProperties()
-                          .getProperty('FEEDBACK_TOKEN');
-    if (expectedToken) {
-      // Apps Script has no crypto.timingSafeEqual; the multi-hundred-ms
-      // network round-trip through Google's infrastructure makes a
-      // timing side-channel impractical here.
-      if (payload.token !== expectedToken) {
-        return ContentService
-          .createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
+    // ~20 MB decoded — base64 is 4/3 of raw. Well above any real bundle.
+    if (payload.zipBase64.length > 27 * 1024 * 1024) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'payload too large' }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     var folder = DriveApp.getFolderById(FOLDER_ID);

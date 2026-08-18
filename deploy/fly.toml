@@ -4,9 +4,9 @@
 # from the same origin.
 #
 # Secrets (E2B_API_KEY, ANTHROPIC_API_KEY, SESSION_SECRET, WS_SIGNING_KEY,
-# FS_TOKEN_ENC_KEY, DATABASE_URL, ALLOWED_EMAILS, API_KEYS, FEEDBACK_SECRET) are NOT
-# in this file — set them with `fly secrets set`. Only non-secret config lives in
-# [env] below. (Login is unified FamilySearch OAuth — there is no Google client.)
+# FS_TOKEN_ENC_KEY, DATABASE_URL, ALLOWED_EMAILS, API_KEYS) are NOT in this file
+# — set them with `fly secrets set`. Only non-secret config lives in [env] below.
+# (Login is unified FamilySearch OAuth — there is no Google client.)
 #
 # SESSION_SECRET, WS_SIGNING_KEY, FS_TOKEN_ENC_KEY and DATABASE_URL are now
 # ENFORCED, not just documented: because PUBLIC_URL below is https, the app
