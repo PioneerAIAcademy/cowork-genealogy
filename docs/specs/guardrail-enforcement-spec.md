@@ -707,9 +707,14 @@ Design points that were paid for and should not be re-derived:
   `ToolResultBlock.is_error`, joined onto each entry by `apply_tool_result` in
   `e2e/orchestrator.py` and read by the `entry.get("is_error") is True` gates in
   `harness/skill_invocation.py` — `recently_succeeded`,
-  `find_unguarded_protected_writes`, `find_effects_without_invocation`,
-  `find_person_evidence_missing_same_person`, and
-  `find_protected_writes_by_unnamed_delegate`.
+  `find_unguarded_protected_writes`, `find_effects_without_invocation`, and
+  `find_person_evidence_missing_same_person`.
+
+  `find_protected_writes_by_unnamed_delegate` (§11) deliberately does **not**
+  read `is_error` (issue #1569): its gate is caller identity, not skill
+  completion, so there is no completion window for an errored call to open —
+  a write attributed to neither the main thread nor a dedicated agent is
+  already the violation regardless of whether the write itself succeeded.
 
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:
