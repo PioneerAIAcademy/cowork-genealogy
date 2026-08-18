@@ -787,7 +787,7 @@ Grading sequence for a negative test:
    - **`correct_skill: ["x"]`** — pass requires `"x" ∈ skills_invoked`.
    - **`correct_skill: ["x", "y", ...]`** — pass requires at least one of the listed skills is in `skills_invoked`.
 
-   Partial credit is reserved for the LLM judge to grade cases where the skill correctly declined but suggested the wrong alternative in its text response (rare; mostly applies when `skills_invoked` is empty but the text recommends a different skill).
+   There is no partial credit for a negative test. If the skill declines but recommends the wrong alternative in its text response while `skills_invoked` stays empty, that still fails — the same as any other case where `negative.correct_skill` isn't matched.
 3. **`judge_context`** (if present): the judge reads these notes as background when scoring the base dimensions on the decline — it emits no separate dimension for them. Examples: "Should explicitly tell the user this looks like a search request" or "Should NOT call any MCP tools before declining."
 
 ---
