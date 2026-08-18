@@ -290,6 +290,19 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `negative` | omit | required |
 
+### How a negative test is graded
+
+A negative test grades the **routing decision**: did the skill decline and, when
+`negative.correct_skill` names one, hand off to it? A correct decline is a full
+pass — the skill *not* doing its own task is the intended outcome. What the
+routed-to skill then produces is **not** graded here; that skill has its own
+tests. Write `negative.explanation` and `judge_context` about the *boundary* —
+why this skill should step aside — never about the records, translation, or
+other output the routed-to skill ought to return. An expectation phrased as the
+routed-to skill's result gets graded as if it were this skill's job, which it is
+not: a correct decline that hands off is a full pass, and whatever the routed-to
+skill would produce is never this test's concern.
+
 ### JSON Schema
 
 The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`](schemas/unit-test.schema.json). The CRUD app validates test files against it on save; the harness validates on load. The version below is reproduced here for readers but the file is authoritative — if the two disagree, the file wins and this block should be updated.
@@ -774,7 +787,7 @@ Grading sequence for a negative test:
    - **`correct_skill: ["x"]`** — pass requires `"x" ∈ skills_invoked`.
    - **`correct_skill: ["x", "y", ...]`** — pass requires at least one of the listed skills is in `skills_invoked`.
 
-   Partial credit is reserved for the LLM judge to grade cases where the skill correctly declined but suggested the wrong alternative in its text response (rare; mostly applies when `skills_invoked` is empty but the text recommends a different skill).
+   There is no partial credit for a negative test. If the skill declines but recommends the wrong alternative in its text response while `skills_invoked` stays empty, that still fails — the same as any other case where `negative.correct_skill` isn't matched.
 3. **`judge_context`** (if present): the judge reads these notes as background when scoring the base dimensions on the decline — it emits no separate dimension for them. Examples: "Should explicitly tell the user this looks like a search request" or "Should NOT call any MCP tools before declining."
 
 ---
