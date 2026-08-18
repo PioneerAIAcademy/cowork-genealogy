@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { watch, type FSWatcher } from 'chokidar'
-import { readFile, stat as fsStat } from 'node:fs/promises'
-import { join, resolve, basename } from 'node:path'
+import { readFile, readdir, stat as fsStat } from 'node:fs/promises'
+import { join, resolve, basename, relative } from 'node:path'
 
 let watcher: FSWatcher | null = null
 let currentFolderPath: string | null = null
@@ -44,9 +44,79 @@ export function getCurrentState(): {
   return { folderPath: currentFolderPath, research: lastResearch, gedcomx: lastGedcomx }
 }
 
+// Dirs a nested research.json legitimately lives in — not a wrong-folder signal.
+// `results/` holds sidecars; `_feedback/` is an unpacked feedback bundle; the
+// rest are noise we should never descend into.
+const NESTED_SCAN_SKIP_DIRS = new Set([
+  'results',
+  '_feedback',
+  'node_modules',
+  '.git'
+])
+const NESTED_SCAN_MAX_DEPTH = 6
+
+/**
+ * Find `research.json` files sitting in SUBFOLDERS of the watched folder.
+ *
+ * The viewer watches only the top-level `research.json`, but the agent is handed
+ * a folder path per call and can write into a subfolder — so the top can look
+ * empty while the real project is one level down, which reads as "lost files"
+ * (issue #1317, bug 2). This surfaces that mismatch: a hit means "you may be
+ * watching the wrong folder level." Returns paths relative to `folderPath`;
+ * the top-level file itself is never included. Bounded in depth, and skips
+ * hidden dirs and the known-legit nests so it stays cheap and quiet.
+ */
+export async function findNestedResearchJson(folderPath: string): Promise<string[]> {
+  const found: string[] = []
+  const root = resolve(folderPath)
+
+  async function walk(dir: string, depth: number): Promise<void> {
+    if (depth > NESTED_SCAN_MAX_DEPTH) return
+    let entries: import('node:fs').Dirent[]
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch {
+      return // unreadable dir is not our problem to report here
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith('.') || NESTED_SCAN_SKIP_DIRS.has(entry.name)) continue
+        await walk(join(dir, entry.name), depth + 1)
+      } else if (entry.isFile() && entry.name === 'research.json') {
+        const full = join(dir, entry.name)
+        if (resolve(full) !== join(root, 'research.json')) {
+          found.push(relative(root, full))
+        }
+      }
+    }
+  }
+
+  await walk(root, 0)
+  return found
+}
+
 export function startWatching(folderPath: string, mainWindow: BrowserWindow): void {
   stopWatching()
   currentFolderPath = resolve(folderPath)
+
+  // Warn if research.json also exists in a subfolder: the viewer watches only
+  // the top level, so a project one level down looks like an empty/"lost"
+  // project (issue #1317, bug 2). Fire-and-forget — never block or fail the
+  // watch on this heads-up.
+  void findNestedResearchJson(folderPath)
+    .then((nested) => {
+      if (nested.length === 0) return
+      const list = nested.map((p) => `"${p}"`).join(', ')
+      mainWindow.webContents.send(
+        'project:watch-error',
+        `Heads up: this folder also has research.json in a subfolder (${list}). ` +
+          `The viewer only shows the top-level project — if your research is in the ` +
+          `subfolder, open that folder instead.`
+      )
+    })
+    .catch(() => {
+      // A scan failure must never break the watch.
+    })
 
   const fixedPaths = WATCHED_FILES.map((f) => join(folderPath, f))
   const sidecarDir = join(folderPath, 'results')

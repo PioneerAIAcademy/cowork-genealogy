@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { classifyBasename, channelMap, WATCHED_FILES, SIDECAR_BASENAME } from '../watcher'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import {
+  classifyBasename,
+  channelMap,
+  WATCHED_FILES,
+  SIDECAR_BASENAME,
+  findNestedResearchJson
+} from '../watcher'
 
 // Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
 // emit dispatch into BrowserWindow) is exercised by the existing app at
@@ -116,5 +125,48 @@ describe('SIDECAR_BASENAME regex', () => {
     // Anchoring prevents partial matches like "prefix-log_001.json-suffix"
     expect('prefix-log_001.json'.match(SIDECAR_BASENAME)).toBeNull()
     expect('log_001.json-suffix'.match(SIDECAR_BASENAME)).toBeNull()
+  })
+})
+
+describe('findNestedResearchJson (issue #1317, bug 2 — wrong folder level)', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'watcher-nested-'))
+  })
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  async function writeResearch(rel: string): Promise<void> {
+    const full = join(dir, rel)
+    await mkdir(join(full, '..'), { recursive: true })
+    await writeFile(full, '{}', 'utf8')
+  }
+
+  it('finds a research.json in a subfolder (the reported case)', async () => {
+    await writeResearch('research.json') // top-level (what the viewer watches)
+    await writeResearch('subproject/research.json') // where the agent actually wrote
+    const found = await findNestedResearchJson(dir)
+    // relative() yields the platform separator, so build the expected the same way.
+    expect(found).toEqual([join('subproject', 'research.json')])
+  })
+
+  it('never includes the top-level research.json itself', async () => {
+    await writeResearch('research.json')
+    expect(await findNestedResearchJson(dir)).toEqual([])
+  })
+
+  it('ignores research.json under results/, _feedback/, and hidden/node_modules dirs', async () => {
+    await writeResearch('research.json')
+    await writeResearch('results/research.json')
+    await writeResearch('_feedback/research.json')
+    await writeResearch('.trash/research.json')
+    await writeResearch('node_modules/pkg/research.json')
+    expect(await findNestedResearchJson(dir)).toEqual([])
+  })
+
+  it('returns empty (does not throw) on a folder with no research.json at all', async () => {
+    await expect(findNestedResearchJson(dir)).resolves.toEqual([])
   })
 })
