@@ -1,6 +1,6 @@
 ---
 name: audit-merged-prs
-description: Use when the lead wants a weekly sample of recently-merged developer PRs that did not require senior review — "audit merged PRs", "spot-check last week's merges", "sample the peer-reviewed PRs", "weekly PR audit", or a bare "/audit-merged-prs". Pulls every developer-labeled PR merged in the last 7 days whose diff touched no `senior-developers`-owned path in `.github/CODEOWNERS`, samples a subset, and runs `/review` against each merge commit to surface what peer review may have missed: design drift, a missed multi-site edit, a check that cannot fail, cost regressions. Reports findings and any pattern worth turning into a new CODEOWNERS path or a `/review` checklist addition. Do NOT use to review a PR before merge (that is `/review`), to decide what the team works on next (`fill-ready`), or to audit the issue board (`audit-board`).
+description: Use when the lead wants a weekly sample of recently-merged developer PRs that did not require senior review — "audit merged PRs", "spot-check last week's merges", "sample the peer-reviewed PRs", "weekly PR audit", or a bare "/audit-merged-prs". Pulls every developer-labeled PR merged in the last 7 days whose diff matched no rule in `.github/CODEOWNERS`, so no senior approval was required, samples a subset, and runs `/review` against each merge commit to surface what peer review may have missed: design drift, a missed multi-site edit, a check that cannot fail, cost regressions. Reports findings and any pattern worth turning into a new CODEOWNERS path or a `/review` checklist addition. Do NOT use to review a PR before merge (that is `/review`), to decide what the team works on next (`fill-ready`), or to audit the issue board (`audit-board`).
 allowed-tools:
   - Read
   - Bash
@@ -10,18 +10,18 @@ allowed-tools:
 
 # Audit merged PRs
 
-`docs/task-lifecycle.md` step 9 requires a `senior-developers` approval only
-on code/infrastructure file types — `.github/CODEOWNERS` routes
-`.ts`/`.js`/`.py`/`.json`/`.yml` and similar to `senior-developers`
-repo-wide, carving genealogist-authored content (plugin skills, plugin
-agents, eval fixtures/tests, run logs, docs) back out even where it's one
-of those extensions. Everything without a `senior-developers` match merges
-on a peer approval alone — which is the point, since one senior cannot
-review every PR for 10+ developers and also do strategic work. But a peer
-approval is not a senior's judgment, and CODEOWNERS only routes by file
-type *in advance*. It cannot catch a wrong abstraction, an architectural
-drift, or a "peer approved it without reading it closely" pattern in code
-a senior never saw.
+`docs/task-lifecycle.md` step 9 requires a senior approval only on the paths
+`.github/CODEOWNERS` claims — code/infrastructure file types
+(`.ts`/`.js`/`.py`/`.json`/`.yml` and similar, repo-wide) plus the
+genealogist-authored trees (plugin skills, plugin agents, eval
+fixtures/tests, run logs). Every rule names both senior teams, so either
+one's approval satisfies it; the team named first only decides which review
+queue the PR is labelled for. **A file matching no rule at all** merges on a
+peer approval alone — which is the point, since one senior cannot review
+every PR for 10+ developers and also do strategic work. But a peer approval
+is not a senior's judgment, and CODEOWNERS only claims paths *in advance*.
+It cannot catch a wrong abstraction, an architectural drift, or a "peer
+approved it without reading it closely" pattern in code a senior never saw.
 
 This skill is that compensating control: the senior's one weekly touchpoint
 on the PRs they did not personally gate. Sampling **after** merge, not
@@ -55,14 +55,15 @@ skill runs in may differ from the lead's shell.)
 
 Read `.github/CODEOWNERS` fresh every run — **do not hardcode its path list
 in this skill file.** CODEOWNERS is the single source of truth for which
-paths are `senior-developers`-owned (`docs/task-lifecycle.md` step 9 says
-the same); a copy here would drift the moment someone edits the real file.
+paths need a senior (`docs/task-lifecycle.md` step 9 says the same); a copy
+here would drift the moment someone edits the real file.
 
 For each PR in the pool from §0, check whether any file in `.files[].path`
-falls under a `senior-developers`-owned path. If yes, drop it — that PR
-already got a senior's eyes at merge time via branch protection, and
-auditing it again duplicates work rather than covering a gap. Keep only
-PRs where **no** file matched a `senior-developers` path.
+matches **any** rule in CODEOWNERS — which team the rule names does not
+matter, since every rule names both and any senior's approval satisfies it.
+If one does, drop the PR: it already got a senior's eyes at merge time via
+branch protection, and auditing it again duplicates work rather than
+covering a gap. Keep only PRs where **no** file matched **any** rule.
 
 **Also check `.reviews` for evidence of an actual senior approval**, not
 just CODEOWNERS ownership — the bypass-actor pattern documented in this
