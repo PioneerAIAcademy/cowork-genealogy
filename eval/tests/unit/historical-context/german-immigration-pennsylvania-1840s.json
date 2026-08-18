@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_historical_context_013",
+    "skill": "historical-context",
+    "name": "German immigration to Pennsylvania in the 1840s",
+    "type": "positive",
+    "description": "Regression test for issue #1315: wiki-derived historical context must cite the source page URL, not just the article title. Uses the skill's own worked SKILL.md example topic (German immigration, Pennsylvania, 1840s).",
+    "tags": ["citation", "wiki-sourcing", "german", "pennsylvania", "1840s"]
+  },
+  "input": {
+    "user_message": "My ancestor immigrated from Germany to Pennsylvania around 1845. What historical context should I know about German immigration during that period, and how does it affect my research?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-german-ancestors",
+    "wiki-search-german-church-records",
+    "wiki-read-any",
+    "wikipedia-search-any",
+    "wiki-search-any"
+  ],
+  "judge_context": [
+    "Wiki-derived claims must carry the page URL the tool returned (`source_url` on `wiki_search` results, `url` from `wiki_read`/`wikipedia_search`) alongside the article title or claim, not just the article name on its own. A bare title/name with no URL is a partial miss on this dimension.",
+    "Should connect the historical context to research-useful facts — for example, that German civil registration was not national and church records (Kirchenbücher) are the primary pre-civil-registration source, or that identifying the specific German town/parish of origin is essential before searching German archives.",
+    "Should not just summarize 'many Germans immigrated in the 1840s' — the value of this skill is in surfacing context the genealogist can act on, not general encyclopedia content."
+  ]
+}

@@ -12,11 +12,11 @@ Did the skill provide historical context directly relevant to the genealogical r
 
 ## Source quality
 
-Did the skill draw from reliable historical sources and provide references? Context should be factual, not speculative.
+Did the skill draw from reliable historical sources and cite them, with the actual page URL, not just the article's name? Context should be factual, not speculative.
 
-- **pass:** Claims are factual and consistent with mainstream historical scholarship; references (Wikipedia, FamilySearch Wiki, named scholarly works) are provided where appropriate.
-- **partial:** Mostly factual but at least one claim is speculative or unattributed in a way that affects research utility.
-- **fail:** Claims are speculative, fabricated, or contradicted by mainstream scholarship.
+- **pass:** Claims are factual and consistent with mainstream historical scholarship; every wiki/Wikipedia-derived claim carries the actual page URL the tool call returned (`source_url` on `wiki_search` results, `url` from `wiki_read`/`wikipedia_search`) alongside the source name — naming an article by title with no URL does not count as cited.
+- **partial:** Mostly factual and sourced, but at least one wiki/Wikipedia-derived claim names its source by title only with no URL attached, or is otherwise speculative/unattributed in a way that affects research utility.
+- **fail:** Claims are speculative, fabricated, contradicted by mainstream scholarship, or wiki/Wikipedia-derived claims are presented with no URL anywhere in the response.
 
 ## Genealogical implications
 

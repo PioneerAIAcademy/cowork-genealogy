@@ -183,9 +183,14 @@ secondary informant) for birthplace."
 - **Use occupational and geographic networks.** When families are
   connected through shared occupations or locations, note these
   connections explicitly. They suggest new sources to search.
-- **Cite sources, and distinguish what came from tools.** When
-  information comes from a wiki article or Wikipedia page, name
-  the source in-line. When a tool call returns no results or an
+- **Cite the page, not just its title.** Every wiki tool result carries its
+  page URL — `source_url` on each `wiki_search` result, `url` from
+  `wiki_read` and `wikipedia_search`. When information comes from a wiki
+  article or Wikipedia page, give that URL alongside the source name, not
+  just the article title in prose — "As the FamilySearch wiki confirms" with
+  no link is not a citation. A claim you cannot attach a returned URL to is
+  not a finding: say the wiki/Wikipedia does not cover it rather than
+  asserting it from memory. When a tool call returns no results or an
   error, do not continue elaborating that topic as if the search
   succeeded — either narrow the response to what the successful
   calls returned, or flag the gap explicitly ("I could not confirm
