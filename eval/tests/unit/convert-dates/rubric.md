@@ -16,8 +16,8 @@ Did the skill correctly handle dates that are genuinely ambiguous (e.g., dates n
 
 This dimension applies ONLY when the input contains real ambiguity in the source date — meaning multiple valid interpretations actually exist. If the input is deterministic and a single conversion is correct, mark this dimension N/A. Do NOT credit Claude's explanatory commentary about hypothetical ambiguity in other dates, or educational context about historical transitions, as "ambiguity handling" when no ambiguity exists in the input.
 
-- **pass:** Input is genuinely ambiguous, AND the skill explicitly flags both possible interpretations and records both so the genealogist can pick.
-- **partial:** Input is genuinely ambiguous, AND the ambiguity is noted but the skill picks an interpretation without spelling out the alternative.
+- **pass:** Input is genuinely ambiguous, AND the skill explicitly flags both possible interpretations and records both so the genealogist can pick. "Records both" means both readings survive as usable options; naming an alternative and then telling the researcher not to use it does not qualify.
+- **partial:** Input is genuinely ambiguous, AND the ambiguity is noted but the skill picks an interpretation without spelling out the alternative, OR mentions the alternative and then forecloses it — a resolved single answer is partial even when the reasoning behind it is explained at length.
 - **fail:** Input is genuinely ambiguous, AND the skill silently converts to one interpretation with no mention of the alternative.
 - **N/A:** Input contains no genuine ambiguity.
 

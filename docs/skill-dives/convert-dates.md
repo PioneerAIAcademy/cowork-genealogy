@@ -1,0 +1,658 @@
+# Deep dive: convert-dates
+
+**Date:** 2026-08-18 · **Issue:** #1654 · **Branch:** `1654-deep-dive-convert-dates`
+**Procedure:** [`docs/skill-deep-dive-guide.md`](../skill-deep-dive-guide.md)
+
+**What was read:** `packages/engine/plugin/skills/convert-dates/SKILL.md` and its
+`references/calendar-conflicts.md`; all 14 tests + `rubric.md` under
+`eval/tests/unit/convert-dates/`; all four committed run logs
+(`v1_2026-06-13`, `v1_2026-06-23`, `v1_2026-07-22`, `v1_2026-07-27`) and their
+`.ann.json` siblings — 56 test runs, every `text_response` read before any score;
+`eval/harness/validators/test_convert_dates.py`;
+`docs/specs/convert-calendar-tool-spec.md`;
+`packages/engine/mcp-server/src/tools/convert-calendar.ts`; and — for F5 —
+`eval/harness/judge/prompt.md` plus the context assembly in
+`eval/harness/harness/judge.py`.
+
+The issue's opening grep (`judge_context` naming a score branch) returns 0 files,
+as it said it would. Everything below came from elsewhere.
+
+---
+
+## Step 1 — The prohibition list
+
+Every rule in the skill body that is checkable against a transcript. **This is
+the artifact the next auditor starts from.** Cited by quoted wording rather than
+line number: 147 commits over three weeks moved one of this write-up's four
+harness citations, and a dive doc that decays is a dive doc nobody trusts.
+
+| # | Rule | Body wording | Verdict this dive |
+|---|---|---|---|
+| 1 | Every conversion goes through `convert_calendar`; never hand arithmetic | "Do not fall back to hand arithmetic." (§ Calling) | **Violated, 100%** — F1 |
+| 2 | On `{ ok: false }`, surface the error and the missing input; fix and call again | § Calling | Unreachable — tool never called (F1) |
+| 3 | Apply only the correction(s) the user asked for | "Answer only the calendar question asked… Do not bundle corrections the user didn't request — that is over-conversion." (§ Rules) | **Violated, 2 of 4 runs** on `_007` — F4 |
+| 4 | Show the original next to the converted form; keep both | "Show original next to converted." (§ Rules) | Clean — every response did |
+| 5 | When the jurisdiction or convention is unclear, flag the ambiguity; don't guess | "When in doubt, don't convert." (§ Rules) | **Violated** on the 25 March boundary (now `_016`) — F3 |
+| 6 | Never convert without knowing where the record was created | "Jurisdiction matters." (§ Rules) | Technically violated on `_001` — see "Checked, not a finding" |
+| 7 | Present step-by-step: original, `applied[].rule` (+ `offsetDays`), converted | § Calling | Clean in form; the rule/offset are narrated from memory, not from `applied[]` (F1) |
+| 8 | Writes nothing; output-only; idempotent | § Re-invocation behavior | Clean — `files_created` empty in all 56 runs |
+| 9 | Hand off to conflict-resolution when the gap matches no calendar offset | § Routing | Clean — `_011` routed correctly in 3 of 4 runs |
+| 10 | Hand off to historical-context on a why-did-this-exist question | § Routing | Clean — no conversion performed on `_003` in any run |
+| 11 | Offset is jurisdiction-and-year specific, not a single number | § Julian vs. Gregorian | **Body is wrong at three thresholds** — F2 |
+| 12 | Double dates resolve to the later (New Style) year | § Double-dated years | **Body's example is the one date where this is false** — F3 |
+| 13 | Quaker "1st month" shifts meaning at 1752 — always check the era | § Quaker numbered months | Clean — `_001` (1845) took post-1752 correctly |
+| 14 | Read `researcher_profile.narration_guidance` and apply it | frontmatter Narration line | Not checkable — every test runs `scenario: null`, so no `research.json` exists |
+
+Rules 1–13 are checkable. Rule 14 is **structurally uncheckable in this suite**:
+all 16 tests are stateless, so the narration instruction that opens the body can
+never be exercised. Noted for whoever adds a scenario-backed test.
+
+---
+
+## Findings
+
+### F1 — `convert_calendar` has never been called. Not once, in any test, in any run.
+
+**Did:** all 56 runs recorded `tool_calls: []`. In nine of the ten
+conversion-positive tests the model says why, unprompted:
+
+> "The `convert_calendar` arithmetic tool isn't available in this environment, so
+> I'll apply the conversion directly using the regime tables from the skill — the
+> logic is unambiguous here."
+> — `ut_convert_dates_004`, run `v1_2026-07-27_18-21-44`
+
+**Should:** [SKILL.md](../../packages/engine/plugin/skills/convert-dates/SKILL.md) § "Calling `convert_calendar`"
+— "Do not fall back to hand arithmetic." The body devotes a whole section to calling the
+tool and `allowed-tools` lists exactly one tool. The tool has shipped since
+2026-06-19 (`d84c6b9a9`) and the instruction was in force for three of the four
+runs.
+
+**Gap: lane 1.** The tool is not registered in the unit harness. `mcp_fixtures`
+is `[]` on every test, `convert_calendar` is absent from `LIVE_TOOLS`
+(`mock_mcp.py`, grep `LIVE_TOOLS: set[str]`), and the mock server only registers
+tools a fixture manifest names (`mock_mcp.py`, grep `for tool_name, bucket in manifest.items()`). No `convert_calendar`
+fixture exists anywhere under `eval/`. The model was told to call a tool that
+was not in its tool list.
+
+Three things ratified it rather than catching it:
+
+- **`Tool Arguments` is N/A in all 56 gradings.** `orchestrator.py` (grep `if rubric is not None and tool_calls`) only
+  grades it when `tool_calls` is non-empty, so the one dimension that covers
+  tool work is switched off *by* the defect.
+- **The judge blessed it:** "No MCP tool calls were made. The skill acknowledged
+  that convert_calendar was not available and instead provided the explanation
+  directly from documentation. This is appropriate." (`_007`, `v1_2026-07-27`)
+- **A human annotator blessed it:** "No MCP tool calls were made… manual
+  regime-table calculation is **valid**… Junior: (N/A — No MCP tool calls;
+  manual regime-table calculation is valid.)" (`_004`, `v1_2026-06-23.ann.json`)
+
+**One thing *did* notice, and is worth stating precisely.**
+`eval/harness/scripts/check_tool_coverage.py` has been emitting this on every
+eval-touching PR:
+
+> `::warning::skill convert-dates declares allowed-tools ['convert_calendar'] but
+> its test corpus has no fixture for: ['convert_calendar']. No eval test can
+> exercise this tool — add a test with an mcp_fixture for each, or drop the tool
+> from allowed-tools.`
+
+So this is not an unseen gap; it is a **warn-only lint whose proposed remedy is
+the wrong one for this tool.** "Add an mcp_fixture" cannot honestly be done for
+`convert_calendar`: it is pure arithmetic, and a canned fixture would assert the
+answer the test is trying to measure. That is very likely why nobody did it for
+two months. The right remedy — `LIVE_TOOLS` — is not among the options the
+warning offers. `conflict-resolution` carries the identical warning for the same
+tool, so one registration clears both suites.
+
+### F2 — The Julian→Gregorian offset thresholds regressed from leap-day to calendar-year, and no test reaches the window where that is wrong.
+
+**Did:** [SKILL.md](../../packages/engine/plugin/skills/convert-dates/SKILL.md) § "Julian vs. Gregorian"
+(pre-dive) read:
+
+> "Offset grows by 1 day at each Julian leap year the Gregorian calendar skipped:
+> before 1700 → 10 days; 1700–1799 → 11; 1800–1899 → 12; 1900+ → 13."
+
+Every response in the corpus quotes it back as a year band — "the offset for
+1700–1799 is **+11 days**" (`_006`), "For dates in the range 1700–1799"
+(`_002`), "The Julian→Gregorian day offset for dates **between 1700 and 1799**"
+(`_014`).
+
+**Should:** the offset increments the day *after* each Julian 29 February the
+Gregorian calendar skipped, so the threshold is **1 March (Julian)** of 1700,
+1800 and 1900 — not 1 January. Verified by JDN round-trip against the shipped
+tool's own arithmetic:
+
+| Julian date | True offset | Year-band rule says |
+|---|---|---|
+| 1700-01-15 … 1700-02-29 | 10 | 11 ✗ |
+| 1700-03-01 | 11 | 11 ✓ |
+| 1800-01-15 … 1800-02-29 | 11 | 12 ✗ |
+| 1900-01-15 … 1900-02-29 | 12 | 13 ✗ |
+| 1900-03-01 | 13 | 13 ✓ |
+
+Two independent sources in the repo already have it right.
+`docs/specs/convert-calendar-tool-spec.md` §4.4 carries the correct table and
+spells out the reason — "(The boundary sits at the day after each skipped Julian
+Feb 29 — i.e. March 1 Julian of 1700/1800/1900.)" And the body **used to**: before
+`ee25f5c19` ("Shorten convert-dates SKILL.md from 299 to 153 lines", 2026-06-23)
+it read "a date BEFORE Feb 29 (Julian) 1700 uses a 10-day offset; AFTER, 11 days.
+The same threshold logic applies in 1800 (→12) and 1900 (→13)", and three
+jurisdiction rows carried "10 days before Feb 29 Julian 1700; 11 days after".
+The shortening collapsed all of it into year bands.
+
+**Gap: lane 4** — a real cross-jurisdiction behaviour change, and the only
+lane-4 edit this dive makes. Nothing caught it because **no test in the suite has
+a Julian date in the two-month window**: the corpus's Julian dates are 1582-09-14,
+1699-01-15, 1712-02-29, 1730-02-14, 1730-05-14, 1750-02-15, 1918-02-01. The two
+months after New Year in 1700, 1800 and 1900 are exactly the gap, and they are
+not obscure — English and Scottish registers for Jan–Feb 1700, and Russian
+metrical books for Jan–Feb 1800 and Jan–Feb 1900, are ordinary research material.
+
+### F3 — `ut_convert_dates_007` is built on the year-start boundary day and grades the one answer the convention rules out.
+
+**Did:** the test's input is "25 March 1750/1", and its `judge_context` (pre-dive)
+required "Should explain that the later year (1751) is the New Style year and is
+the year typically used in modern genealogical records". The skill complied and
+went further, foreclosing the alternative:
+
+> "**Use 1751** as your working date… Do **not** silently record it as 1750 —
+> that would place the event in the wrong year by modern reckoning."
+> — `_007`, `v1_2026-07-27`
+
+and mis-stated the boundary while doing it: "March 25 is the **exact boundary** —
+the **last day of OS year 1750** shading into the first day of OS year 1751."
+
+**Should:** [SKILL.md](../../packages/engine/plugin/skills/convert-dates/SKILL.md) § "Old Style / New Style year"
+states the window four lines above the double-date section: "Before 1752,
+England's legal year began March 25. Dates January 1 – **March 24** are in the
+'previous' year by modern reckoning." 25 March is therefore the **first** day of
+the Old-Style year — 24 March is the last day of 1750 — and on that single date
+the Old-Style and New-Style years are **the same**. A slash on 25 March is
+anomalous, not routine, and rule 5 ("When in doubt, don't convert… flag the
+ambiguity rather than guessing") governs. Telling the researcher 1750 would be
+"the wrong year" is the reverse of the convention.
+
+`docs/specs/convert-calendar-tool-spec.md` contains the same collision in
+parentheses: §4.2 leaves `25 Mar 1720` **unchanged** under `osNsYear`, while §5b
+offers `{ doubleDatedYear: true }` **or** `{ osNsYear: true }` for "25 March
+1750/1" as though they agreed. They differ by a year. `convertCalendar` bumps
+`doubleDatedYear` unconditionally
+(`convert-calendar.ts`, grep `if (c.doubleDatedYear) {`)
+with no window test, while `osNsYear` correctly tests `day <= 24` — so the tool
+will not catch it either.
+
+**Gap: lane 2 primarily, with a one-line lane-4 correction.** The test bakes in a
+one-year error and grades the skill for asserting it confidently, so the test can
+never catch it — the test *is* the error. And the body taught it: the double-date
+section used "25 March 1750/1" as the worked example for a rule whose own window
+excludes it. The rubric dimension that would have caught this scored `pass`:
+`Ambiguity handling` requires the skill to "record both so the genealogist can
+pick"; the response named 1750 and then told the researcher not to use it, which
+is `partial` on the rubric's own ladder. The judge scored 3 and wrote "The
+ambiguity is surfaced and resolved with full transparency."
+
+**Repaired at the input, not the grading.** `_007`'s stated purpose — dual-dating
+year extraction plus restraint — is worth testing and is unaffected; only its
+*date* was wrong for it. So `_007` keeps its id, purpose and judge_context, with
+the input moved inside the window to "15 February 1750/1", and the boundary day
+becomes a new test (`ut_convert_dates_016`).
+
+To be exact about what that preserves: the *question type* survives, which is what
+run-over-run trend is meant to track, but the input still changed, so `_007`'s four
+historical grades are not strictly comparable to the next run's. **No repair
+avoids that**, because the test was wrong — the choice is only whether the
+incomparability is visible. What this ordering does avoid is the worse outcome
+this dive first walked into: rewriting `_007`'s judge_context in place, silently
+repurposing an id to answer a different question while looking like a fix.
+
+### F4 — Restraint was asserted by the judge on a run that did not restrain.
+
+**Did:** `_007`'s response ends with an unrequested day conversion:
+
+> "**Correlating with a Gregorian event in another country** → add 11 days:
+> **5 April 1751** Gregorian."
+
+In 2 of 4 runs (`v1_2026-06-23`, `v1_2026-07-27`). The judge, both times, scored
+Correctness 3 with:
+
+> "The skill appropriately notes the Julian-Gregorian day shift exists but
+> **correctly restrains itself from applying it** since the user did not ask for
+> calendar conversion."
+
+**Should:** the test's own `judge_context` said "Should NOT apply the
+Julian-to-Gregorian day shift the user did not ask for", and
+[SKILL.md](../../packages/engine/plugin/skills/convert-dates/SKILL.md) § "Rules" calls
+it by name: "Do not bundle corrections the user didn't request — that is
+over-conversion."
+
+**Gap: lane 2.** This is the worked example from the issue in a second shape. The
+old bullet 5 — "Should restrain itself to the question asked — restraint is part
+of the skill" — named a *virtue* rather than an *observable*, so the judge
+reported the virtue it was shown. The proposed fix names what would be on the
+page: a converted day, in any form, hedged or not, including the "if correlating
+with another country" framing this run actually used.
+
+### F5 — Five tests carry a binding expectation the judge has never once enforced.
+
+**Did:** `_002`, `_004`, `_005`, `_006` and `_009` each carried a bullet of the
+form "Should briefly note that offsets vary by country and time period (e.g. 11
+days for England 1752, 13 days for Russia 1918)". Measured across every committed
+run, per test, against the specific jurisdictions each bullet names: the bullet
+was unmet in **20 of 20** gradings — all five tests, all four runs, no
+exceptions — and Completeness scored **3 in every one of the 20**.
+
+(An earlier draft of this write-up said "eight of eight". That figure came from
+spot-checking `_004` and `_009` and generalising to the other three, which is the
+same error this document criticises elsewhere. The measured number is 20; the
+finding is larger than first reported, not smaller.)
+
+**Should:** a `judge_context` bullet is not a hint. `eval/harness/judge/prompt.md`
+ranks it as the third and narrowest instruction source — "**This is the narrowest
+instruction you receive and it wins outright**" — and states that "an override is
+**binding, not advisory**". It therefore outranks `rubric.md`, and Completeness's
+own ladder gives the judge the exact tool: "A score of 2 requires naming a
+concrete omission — a specific item the input state required that the skill did
+not address." The omission here is concrete and nameable. The judge should have
+scored 2 and did not, twenty times out of twenty.
+
+**Gap: lane 2.** Two things are wrong and they point opposite ways, which is why
+this was easy to misread — *this dive misread it first, and the correction makes
+the finding larger, not smaller.* The bullet **is** enforceable, so "no dimension
+can credit it" (this write-up's first reading) was wrong; what actually happened
+is that a binding per-test override was silently ignored in every graded run.
+Separately, the content it asks for is the kind `rubric.md` twice tells the judge
+to discount — `Ambiguity handling`: "Do NOT credit … educational context about
+historical transitions"; `Genealogical presentation`: "Do NOT credit explanatory
+commentary … or contextual teaching content" — so the corpus contains a per-test
+override pulling against the skill rubric, with the override winning on paper and
+losing in practice.
+
+**Delivery checked — it is non-compliance, not a plumbing bug.** The two
+explanations are very different findings with different owners, so this was
+verified rather than assumed. `judge.py` renders `judge_context` into a bulleted
+block and the template consumes it at `{judge_context}` (grep in
+`eval/harness/judge/prompt.md`), so the bullets do reach the judge.
+
+But *where* they reach it is suggestive. The slot sits **after** the transcript,
+and the paragraph immediately above it is entirely about negative tests — placed
+there deliberately, for a documented reason about negative-test scoring. The
+"wins outright / binding, not advisory" precedence rule is roughly 140 lines
+earlier, under "Which rule wins", and is not restated at the point of insertion.
+So the per-test override arrives with no local statement of its authority,
+trailing a paragraph about a different concern.
+
+That is a **global judge-prompt** matter, and this guide is explicit that the
+base rubric and global judge prompt are not mine to edit — the instruction is to
+post the problem and proposed wording and let the lead call it. So, for the lead:
+*consider a one-line header on the `{judge_context}` slot restating that these
+bullets are binding per-test overrides that outrank `rubric.md`, since the
+evidence is 20 committed gradings out of 20 where an override went unenforced,
+plus a 21st on a fresh run after this dive.* No edit made.
+
+Struck from four of the five, because the substance is already graded by each
+test's bullet 2 (the offset actually used) and complying only pads a response that
+is billed on every real invocation.
+
+**One is deliberately retained, on `ut_convert_dates_005`, as a canary.** Striking
+all five would have removed the only place in the corpus where an unenforced
+override is observable — destroying the evidence for the finding while reporting
+it. With one left in place, the next run answers the question directly: if `_005`
+still scores Completeness 3 while omitting the other jurisdictions' offsets, the
+override is still not binding, and the judge-prompt change proposed below is the
+fix rather than the wording of any individual bullet. But **striking it does not close the
+finding.** The judge ignoring a binding override is a grading-machinery problem
+that outlives these five bullets, and it is the reason F3's and F4's fixes below
+are labelled *proposed* rather than *made*.
+
+### F6 — `ut_convert_dates_004` requires a conversion the tool is specified to refuse.
+
+Found only by registering the tool (VR-0) and calling it. It cannot be found by
+reading run logs, because the tool was never called.
+
+**Did:** `_004` asks "Convert this Spanish parish-record date to the modern
+Gregorian calendar: '14 September 1582, Madrid'", and its `judge_context` required
+"the correct 10-day offset … '14 September 1582 (Julian) +10 days = 24 September
+1582 (Gregorian)'". Every run complied and asserted 24 September 1582 as the
+Gregorian date, flatly.
+
+**Should:** Spain's switch was Julian 4 October 1582 → Gregorian **15** October
+1582. A 14 September 1582 date therefore precedes the Gregorian calendar's
+existence — there is no contemporaneous Gregorian equivalent, only a *proleptic*
+one, and asserting it unqualified produces a date no register will ever match.
+`docs/specs/convert-calendar-tool-spec.md` §7 makes this an explicit contract:
+
+> `julianToGregorianDay` on a Julian date before 1582-10-15 | **input error** —
+> the Gregorian calendar did not exist before its introduction, so there is no
+> meaningful day offset to apply
+
+Confirmed live against the newly-registered handler: that call returns
+`ok: false`, "julianToGregorianDay is not defined before the 1582-10-15 Gregorian
+introduction (the Julian and Gregorian calendars had not diverged)". The spec's
+offset table starts at `1582-10-15` for the same reason — which independently
+corroborates F2's threshold framing.
+
+**Gap: lane 2.** The tool and the spec are right; the test is wrong, and it had
+been grading the skill for two months on an answer the shipped tool refuses to
+produce. Two months is exactly how long the tool has been unregistered, which is
+the point: F1 hid F6.
+
+Repaired at the input's *expectation*, not the input. `_004` keeps its date,
+filename and Catholic-Europe framing — the question a genealogist actually asks —
+and now grades the judgment the tool encodes: name the pre-adoption status, say no
+contemporaneous Gregorian equivalent exists, record the date as written, and label
+24 September 1582 as proleptic **if** it is offered at all. The
+`requires-tool-conversion` tag is removed, since the conversion is a specified
+input error; and surfacing that error is explicitly marked correct behaviour,
+which is what the body's `{ ok: false }` rule already requires.
+
+**Coverage checked, not assumed:** the 10-day band is still exercised —
+`ut_convert_dates_009` (Württemberg, 15 January 1699 → +10 → 25 January 1699) sits
+inside `1582-10-15 … 1700-03-01`, verified against the live handler. No new test
+was needed to hold that band.
+
+---
+
+## Checked, not a finding
+
+Recorded so the next auditor doesn't re-derive them.
+
+- **`_001` (Quaker 1845) names no jurisdiction, and the skill converted anyway** —
+  a literal breach of rule 6 ("Never convert without knowing where the record was
+  created"), and the response silently assumed Britain ("Britain adopted Gregorian
+  in Sep 1752"). Not raised: for a post-1752 date the Quaker month mapping is the
+  same in every Anglophone jurisdiction, so the answer is jurisdiction-independent
+  and no genealogist is misled. Rule 6 is over-broad, not violated in substance.
+  Adding prose would cost tokens and change no answer.
+- **`_013` (Sweden 1712) says Sweden "added two leap days in February 1712 — both
+  February 29 and February 30"** — defensible. 1712 was a Julian leap year, so the
+  month did carry two leap days even though only one was *added*. The conversion
+  chain it gives (Swedish 30 Feb = Julian 29 Feb = Gregorian 11 Mar 1712) is
+  correct; verified by JDN.
+- **`_003`'s pre-1752 Quaker table renders "11th Month → January" without the
+  year roll-over**, which the body flags as "January (next year)". It is a
+  negative test whose graded invariant is "no conversion performed", the roll-over
+  is not what it measures, and the response is otherwise sound. Dropped as a nit.
+- **`references/calendar-conflicts.md` is named by no SKILL.md and cannot be
+  loaded** — already issue #1633, which lists it by name. Not re-filed. But see
+  the note below: it should not be re-wired as-is.
+- **The suite's arithmetic is otherwise correct.** Every stated conversion in the
+  corpus was re-derived by JDN: 1582-09-14 +10 → 09-24; 1699-01-15 +10 → 01-25;
+  1730-02-14 +11 → 02-25; 1730-05-14 +11 → 05-25; 1750-02-15 +11 → 02-26;
+  1918-02-01 +13 → 02-14; Swedish 1712-02-30 → Gregorian 1712-03-11. All correct.
+  The defect is not in the answers the corpus happens to contain — it is that
+  nothing makes the *next* answer correct.
+
+## For issue #1633, not a new issue
+
+#1633's verdict on `convert-dates/references/calendar-conflicts.md` is
+"add the pointer, or delete". **Do not add the pointer as-is.** Its pattern table
+says "Exactly 13 days (1800-1923 records)", which is wrong for the whole 19th
+century (12 days) and contradicts its own § "Russian Empire records vs Western
+European records", which correctly says "a 12-day offset (19th century) or 13-day
+offset (20th century)". Re-wiring the file would ship the same class of error
+F2 fixes in the body. Fix the row first or delete the file.
+
+---
+
+## Step 6 — Validator requests
+
+The measure of the session. Each is a rule a program can decide from the run log;
+a developer writes the Python. **VR-1 is a prerequisite for VR-2 and VR-4** — none
+of the three can fail while the tool is unregistered.
+
+### VR-0 (prerequisite, lane 1) — register `convert_calendar` as a live tool
+
+Not a validator; the thing that makes three validators possible.
+
+**Why a fixture is the wrong answer, stated precisely.** The `LIVE_TOOLS`
+docstring's own criterion is narrower than this tool — it covers tools that are
+"deterministic functions of **local workspace state**", and `convert_calendar`
+touches no workspace at all. The argument is adjacent but distinct: a canned
+fixture would supply *the computed answer the test exists to measure*. That is
+the same dishonesty the docstring is guarding against, arrived at from the other
+direction, and it is why the `check_tool_coverage` remedy ("add a test with an
+mcp_fixture") should not be taken here.
+
+**Measured edit sites — four, in two files.** An earlier draft of this write-up
+said "a one-line change to `LIVE_TOOLS`". That was asserted, not measured, and it
+is wrong; a developer following it hits a red lint:
+
+1. `LIVE_TOOLS` in `eval/harness/harness/mock_mcp.py` — add `"convert_calendar"`.
+2. `_make_live_handler` in the same file — add a branch. The generic
+   `_make_compiled_tool_handler("convert_calendar", "convert-calendar.js",
+   "convertCalendar", workspace, call_log)` serves it; no new machinery. Omitting
+   this fails loudly rather than silently — the server builder loops over
+   `LIVE_TOOLS` and the factory raises `ValueError` for an unmapped name.
+3. `OK_FALSE_IS_FAILURE_LIVE` in the same file — **required, not optional.**
+   `convert_calendar` is in `OK_FALSE_IS_FAILURE` in
+   `packages/engine/mcp-server/src/tool-result.ts`, and the drift lint in
+   `eval/harness/tests/unit/test_mock_mcp.py` (grep `ts_names & LIVE_TOOLS`)
+   asserts that set identity. Adding to `LIVE_TOOLS` alone turns that lint red.
+4. The comment above `OK_FALSE_IS_FAILURE_LIVE` naming "the three that are not
+   live here (`merge_tree_persons`, `tree_forget`, `convert_calendar`)" becomes
+   two.
+
+**Two risks checked and cleared.** The generic handler bails with `ok: false` when
+`workspace is None` — not reachable here, since `skill_runner.py` types
+`workspace: Path` non-optionally, so every test has one even at `scenario: null`.
+And it injects `projectPath` into the args unconditionally; `convertCalendar`
+reads only `input.date` and `input.corrections`, so the extra key is inert.
+
+Once registered, the parametrized `ok: false` test (grep
+`sorted(OK_FALSE_IS_FAILURE_LIVE)`) exercises the new entry automatically.
+
+**Blast radius, stated because it crosses the PR's scope.** `LIVE_TOOLS` is
+global. `conflict-resolution` also declares `convert_calendar` and carries the
+identical `check_tool_coverage` warning, so this clears both suites — and changes
+what that skill's future runs can do. No committed run log is invalidated
+(`eval/harness/**` is not in the snapshot). While there: `check_tool_coverage.py`'s
+message should offer `LIVE_TOOLS` as a third remedy, since for a deterministic
+tool the two it currently offers are both wrong.
+
+### VR-1 — a test that requires calendar arithmetic must call `convert_calendar`
+
+> **Rule:** every positive convert-dates test tagged `requires-tool-conversion`
+> must show at least one `convert_calendar` call. Hand arithmetic is prohibited
+> by the skill body, and the tool is the only thing whose offset is derived from
+> the date rather than from a table the body might state wrongly.
+> **Where to look:** `tests[].runs[].output.tool_calls[].tool`, gated on
+> `"requires-tool-conversion" in test["tags"]`.
+> **Why it is not judgment:** presence of a tool name in a list. The tag is
+> already on the nine tests (added by this dive at zero snapshot cost — tags are
+> cosmetic under `snapshot.normalize`), so the validator is a four-line function
+> in the shape of the existing `test_no_spurious_conversion`.
+> **What a violation looks like:** all nine, every committed run.
+> `ut_convert_dates_004`, `v1_2026-07-27_18-21-44`, `tool_calls: []`, response
+> opening "The `convert_calendar` arithmetic tool isn't available in this
+> environment".
+
+This one validator also closes F2 for every future run: the tool derives the
+offset by JDN round-trip, so a call gets 12 days for Julian 14 Feb 1900 whatever
+the body's table says. Prose can regress again; the tool cannot.
+
+### VR-2 — `doubleDatedYear` must not be requested outside 1 Jan – 24 Mar
+
+> **Rule:** a `convert_calendar` call carrying `corrections.doubleDatedYear: true`
+> is a violation when `date.month`/`date.day` fall outside 1 January – 24 March.
+> A double date belongs to that window only; on 25 March the Old-Style and
+> New-Style years are identical, so resolving to the later year is a one-year
+> error in the researcher's notes.
+> **Where to look:** `tool_calls[].args.date.month`, `.day`, and
+> `.corrections.doubleDatedYear`.
+> **Why it is not judgment:** two integers and a boolean, all present in the call.
+> The same window is already encoded, correctly, in the tool's `osNsYear` branch
+> (`day <= 24`) and in `convert-calendar-tool-spec.md` §4.2.
+> **What a violation looks like:** none recorded — the tool has never been called.
+> The prose form is the historical `ut_convert_dates_007`, `v1_2026-07-27` (the
+> boundary case now covered by `ut_convert_dates_016`): "Do **not** silently
+> record it as 1750 — that would place the event in the wrong year."
+
+**Companion tool fix (lane 1):** `convertCalendar` should refuse, or at minimum
+`notes`, a `doubleDatedYear` request on an out-of-window date —
+`convert-calendar.ts` bumps unconditionally today (grep `if (c.doubleDatedYear) {`). And
+`convert-calendar-tool-spec.md` §5b should stop offering `doubleDatedYear` and
+`osNsYear` as interchangeable for "25 March 1750/1"; they differ by a year, which
+is the whole of F3.
+
+### VR-3 — a `grade_on_invariant` validator must be capable of failing
+
+> **Rule:** when a test sets `negative.grade_on_invariant: true`, the tag-gated
+> validator carrying its verdict must assert against something the run could
+> actually produce. If the assertion is "tool X was not called" and tool X is
+> registered nowhere for that test, the pass is vacuous — the same failure the
+> existing gate was built to stop, one step earlier in the chain.
+> **Where to look:** the test's `tags`, the tag-gated validator in
+> `validators/test_<skill>.py`, and the tool set the run would register
+> (`spec.mcp_fixtures` ∪ `LIVE_TOOLS`). A set intersection.
+> **Why it is not judgment:** it compares two lists of tool names. No genealogy
+> and no narrative involved.
+> **What a violation looks like:** `ut_convert_dates_003` and
+> `ut_convert_dates_010`, all four runs. `test_no_spurious_conversion` records
+> `"error": null` — it ran, and passed — but `convert_calendar` is registered
+> nowhere, so `assert not converted` cannot fail. `ut_convert_dates_010`'s own
+> `explanation` asserts the opposite: "grade_on_invariant is safe **only because
+> that validator actually runs and gates the outcome**; without it the invariant
+> would pass vacuously."
+> **Where it goes:** `check_runnable` in `eval/harness/harness/runnability.py`,
+> beside the existing gate whose comment already names this failure mode (grep `passes VACUOUSLY`)
+> — "A tag that reaches no validator therefore doesn't fail loudly — it passes
+> VACUOUSLY, green forever, asserting nothing." That gate checks the tag reaches
+> a validator. It does not check the validator can fail.
+
+This is the CLAUDE.md rule "a new lint must be proven to fail", enforced
+mechanically instead of by reviewer discipline. It is not convert-dates-specific;
+it applies to every `grade_on_invariant` test in the corpus.
+
+### VR-4 — zero `convert_calendar` calls on a refusal-to-convert test
+
+> **Rule:** a positive test tagged `refusal-to-convert` must show **no**
+> `convert_calendar` call. The graded behaviour is recognising that no conversion
+> is needed; performing one is the failure.
+> **Where to look:** `tool_calls[].tool`, gated on `"refusal-to-convert"` (already
+> a tag on `ut_convert_dates_008`).
+> **Why it is not judgment:** a count that must be zero.
+> **What a violation looks like:** not yet possible. Today the two boundary
+> *negatives* have this guard (`test_no_spurious_conversion`) and the
+> *positive* no-op test does not — `test_only_convert_calendar_called` bans other
+> tools, not a spurious conversion by the right tool. Once VR-0 lands,
+> `ut_convert_dates_008` ("15 March 1850, London") could silently apply an
+> 11-day shift and pass.
+
+### Considered and not requested
+
+**"The converted date in the narration must match the tool's `converted`."** The
+right shape (chat asserting something the tool never returned), and it would
+catch a skill that calls the tool and then narrates its own arithmetic. Not
+requested yet because matching a date across the renderings a response might use
+("26 February 1750", "26 Feb 1750", "1750-02-26") is a regex in prose, and the
+guide is right that mechanising that ends in a dimension nobody trusts. Revisit
+after VR-1 has produced a corpus of real `applied[]` blocks to calibrate against.
+
+**Anything about whether the explanation was good** — left with the judge.
+
+---
+
+## Changes in this PR
+
+Lane 2 is mine; the single lane-4 edit is F2, whose blast radius is one paragraph.
+Every row was exercised by a scratch run before this was written — see "Verified by
+scratch run" below for what each one actually produced.
+
+| File | Change | Finding | Status |
+|---|---|---|---|
+| `skills/convert-dates/SKILL.md` | Offset threshold restated as 1 March (Julian) of 1700/1800/1900, with the Julian 14 Feb 1900 → +12 case named. Table column renamed `Offset` → `Offset at adoption` so the per-jurisdiction numbers stop reading as universal. | F2 | **made** — the body is now correct as prose |
+| `skills/convert-dates/SKILL.md` | Double-date example moved off the boundary day to "15 February 1749/50" (`{ year: 1749, doubleYear: 50 }`), plus one sentence: double dates belong to Jan 1 – Mar 24, and a slash on 25 March is flagged, not resolved. | F3 | **made** |
+| `tests/…/slash-notation-only.json` (`_007`) | Input moved inside the window — "25 March 1750/1" → **"15 February 1750/1"** — so the test's own expectation ("use the later year") is true of its date. Purpose, id and title unchanged. Restraint bullet now names the observable, including the "if correlating with another country" framing the failing runs used. | F3, F4 | **made & verified** — `_007` now fails on the real violation |
+| `tests/…/year-start-boundary-day.json` **(new, `ut_convert_dates_016`)** | The boundary day, as its own test: 25 March is where the Old-Style year *increments*, so both 1750 and 1751 are defensible and the skill must give both plus how to settle it. | F3 | **made & verified** — Ambiguity handling 3 on the right grounds |
+| `tests/…/rubric.md` | `Ambiguity handling` pass/partial split sharpened: "records both" means both readings survive as usable options; mentioning an alternative and then foreclosing it is `partial`. | F3 | **made & verified** — `_016` scored 3 on the two-readings grounds |
+| `tests/…/{scotland-hybrid, protestant-german-1700, julian-gregorian-1750}.json` + `catholic-europe-1582.json` | Struck the "note that offsets vary by country" bullet — already graded by each test's bullet 2, and complying only pads a billed response. | F5 | **made** — but see F5: striking it does not close the finding |
+| `tests/…/russia-1918.json` (`_005`) | Same bullet **deliberately retained** as a canary, so the next run can still distinguish "overrides now bind" from "the symptom was deleted". | F5 | **made** |
+| `tests/…/catholic-europe-1582.json` (`_004`) | Expectation rewritten: grades naming the pre-adoption status, saying no contemporaneous Gregorian equivalent exists, recording as written, and labelling 24 Sep 1582 proleptic if offered. `requires-tool-conversion` removed — the conversion is a specified input error. | F6 | **made & verified** — input error surfaced and explained |
+| `eval/harness/harness/mock_mcp.py` | **VR-0**: `convert_calendar` registered as a live tool — `LIVE_TOOLS`, a `_make_live_handler` branch on the generic compiled-tool builder, `OK_FALSE_IS_FAILURE_LIVE` (required by the drift lint), and the stale "three that are not live" comment. | F1 | **made** — handler verified live |
+| `tests/…/russia-1900-threshold.json` **(new, `ut_convert_dates_015`)** | Julian 14 Feb 1900, Moscow → Gregorian 26 Feb 1900. Names 27 February as the specific failure a year-band reading produces. Gives F2 something that verifies it. | F2 | **made & verified** — +12, not +13 |
+| 8 test files | Added the `requires-tool-conversion` tag (`_004` excluded — see F6). Snapshot-cosmetic, so free; makes VR-1 implementable without a hardcoded id list. | VR-1 | **made** |
+
+**Verification run:** all 16 tests pass `check_runnable` (including both new ones,
+and the rubric still parses); `eval/harness` unit suite 2249 passed / 3 skipped;
+no duplicate `test.id` across the corpus (CI rule 4); every `§` anchor in this
+document resolves to a real heading.
+
+## Verified by scratch run
+
+Six `--test` scratch runs, **$0.55 total** — gitignored, unreleasable, and no
+annotation owed. They cost about 6% of the full-suite run this PR's edits imply,
+and they changed three conclusions, so the sequence is worth repeating on the next
+dive: **register the tool, then run the affected tests, then write the findings.**
+
+| Finding | Status after the run | Evidence |
+|---|---|---|
+| **F1** | **Closed** | `_004`, `_005`, `_015` each made exactly one live `convert_calendar` call (`matched.kind: "live"`). After 56 runs of zero. |
+| **F1's side effect** | **Closed** | `Tool Arguments` scored **3** on all three, instead of the N/A it returned in all 56 prior gradings. The dimension is back on. |
+| **F2** | **Verified** | `_015` reasoned "before 1 March 1900 (Julian) — so the offset is **+12 days**, not +13" and produced 26 February 1900. `_005` independently picked up the corrected wording: "+13 days (the offset in force **from 1 March 1900 onward**)". |
+| **F6** | **Verified** | `_004` called `julianToGregorianDay` on 1582-09-14, received the specified input error, and explained that no conversion applies. Judge Correctness 3: "correctly identified that 14 September 1582 in Madrid predates the Gregorian calendar's introduction". Note the skill's *first* instinct was "+10 days" — the tool corrected it. That is the body's `{ ok: false }` rule working, and it was unreachable before VR-0. |
+| **F4** | **Reproduced, and now caught** | `_007` **fails**. The skill still volunteers the unrequested shift — "the Gregorian equivalent would be **26 February 1751**" — and the judge now scores Correctness **1**, quoting the bullet, where it previously scored 3 with "correctly restrains itself from applying it". |
+| **F5** | **Reproduced — now 21 of 21** | The retained canary on `_005` went entirely unmet: the response contains **zero** occurrences of 1582, 1752, England, Catholic Europe, "10 days" or "11 days". Completeness scored **3** anyway. Keeping one bullet is what made this observable; striking all five would have deleted the only evidence. |
+
+### `_007` ships failing, deliberately
+
+It is not a broken test — it is a correct test catching a real violation of a rule
+the body already states ("Do not bundle corrections the user didn't request — that
+is over-conversion"). Per this guide's own rule, a rule that exists and was ignored
+does not get restated: **no skill-body edit was made for F4.** What changed is that
+the violation is now measurable, on every run, instead of being praised as
+restraint.
+
+### One defect of my own, caught by the run
+
+The first `_007` attempt failed for the **wrong reason** — a false negative I
+authored. My bullet said "Should NOT state or compute a Gregorian equivalent of the
+**day**", and the judge read the *year* resolution ("15 February 1750/1 = 15
+February 1751") as the prohibited conversion, marking down the very answer bullet 2
+requires. Two bullets of the same test contradicted each other.
+
+Rewritten to name the day-of-month change explicitly and to state that resolving
+the year, with day and month unchanged, is **not** that failure. The re-run then
+split them exactly right: Conversion accuracy **3** ("resolving 1750/1 to 1751 …
+the year conversion itself is accurate") alongside Correctness **1** for the day
+shift.
+
+The lesson is specific and reusable: **a prohibition bullet must name the
+observable change, not the category of operation.** "A Gregorian equivalent" is a
+category; "the day-of-month moving from 15 February to 26 February" is an
+observable. This is the same failure mode as F4's original bullet naming a virtue,
+one level down.
+
+### Still not verified
+
+- **Whether these hold at n=1.** Each result above is a single run, and the harness
+  does not pin skill-side temperature. The deterministic facts (a tool call
+  happened; the tool returned +12; the input error fired) are not sampling-
+  sensitive. The judge's *scores* are. Do not read a single run as calibration.
+- **Whether the judge-prompt change fixes F5.** Not attempted — the global judge
+  prompt is not mine to edit. The canary is in place to answer it.
+- **The full suite.** Ten tests were not re-run; `_002`, `_006`, `_009`, `_014` in
+  particular now reach a live tool for the first time and could surface their own
+  F6-shaped collisions.
+
+### A correction to VR-5's premise
+
+The run logs do **not** persist a tool call's response — an entry carries `tool`,
+`args`, `expected_args`, `matched` and `response_fixture`, and nothing else. The
+"narration must match the tool's `converted`" idea in "Considered and not
+requested" is therefore not merely brittle, it is **unimplementable as written**.
+Either the writer must start persisting responses, or that validator must be
+specified against `args` alone. `args` is present and complete, so VR-1 and VR-2
+are unaffected.
+
+## A note on the paid run
+
+The issue budgets one `make eval-skill SKILL=convert-dates` for these edits.
+**That run was already owed before this dive.** `v1_2026-07-27_18-21-44`'s only
+snapshot drift was `SKILL.md`, from `c1fc2a4c2` ("skills: delete the 26 dead
+`model:` pins", #1497) — a mechanical frontmatter deletion on 2026-08-09 that
+flipped the run log inactive. Everything above rides a run the corpus needed
+anyway.
+
+**VR-0 should land before that run, not after.** Every finding here is downstream
+of an unregistered tool, and a run without it re-measures the same hand
+arithmetic and produces a fifth log that says nothing new about F1. Registration
+is a one-line change to `LIVE_TOOLS`.
