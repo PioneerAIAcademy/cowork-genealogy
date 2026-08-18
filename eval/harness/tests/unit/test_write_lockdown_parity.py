@@ -67,8 +67,17 @@ WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 def _load(path: Path, func_name: str):
     """`(predicate, PROTECTED_PROJECT_FILES)` lifted out of `path`.
 
-    Pulls the module-level assignments the predicate closes over plus the
-    function itself, and execs only those in an empty namespace.
+    Pulls the module-level assignments the predicate closes over, the function
+    itself, and any module-private (`_`-prefixed) helpers it calls, then execs
+    only those in an empty namespace.
+
+    The helpers are lifted because the predicate stopped being one self-contained
+    function when the device-bridge arm landed: it delegates to a payload walk
+    and a basename split. Requiring it to be a single body would mean writing the
+    production code badly to suit this loader, which is backwards — the loader's
+    job is to isolate the predicate, not to constrain how it is factored.
+    Anything not `_`-prefixed is still excluded, so a copy cannot smuggle in a
+    dependency on the rest of its module.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
 
@@ -85,7 +94,9 @@ def _load(path: Path, func_name: str):
     for node in tree.body:
         if isinstance(node, ast.Assign) and is_literal(node.value):
             wanted.append(node)
-        elif isinstance(node, ast.FunctionDef) and node.name == func_name:
+        elif isinstance(node, ast.FunctionDef) and (
+            node.name == func_name or node.name.startswith("_")
+        ):
             wanted.append(node)
 
     ns: dict = {}
@@ -120,6 +131,95 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
     ("Write", {"file_path": r"C:\Users\gen\proj\research.json"}, "research.json"),
     ("Edit", {"file_path": r"C:\Users\gen\proj\tree.gedcomx.json"}, "tree.gedcomx.json"),
     ("Write", {"file_path": "research.json"}, "research.json"),  # bare, no dir
+    # --- the device bridge: the route the ordinary onboarding path took ---
+    # Measured live 2026-08-15: with a connected folder `init-project` created
+    # both protected files through `device_commit_files`, across a run in which
+    # Write/Edit/NotebookEdit appear nowhere. Matched on the BARE TAIL because
+    # Cowork namespaces it and the plugin cannot control the prefix.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": ["/Users/g/proj/research.json"]},
+        "research.json",
+    ),
+    (
+        "device_commit_files",
+        {"files": [{"path": "/Users/g/proj/tree.gedcomx.json", "content": "{}"}]},
+        "tree.gedcomx.json",
+    ),
+    # Windows separators reach this arm too.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [r"C:\Users\gen\proj\research.json"]},
+        "research.json",
+    ),
+    # --- the device bridge: what it must NOT touch ---
+    # A user asking Cowork to write their OWN files into a connected folder is
+    # not this guard's business. Only the two project files are.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": ["/Users/g/proj/notes.md", "/Users/g/proj/export.ged"]},
+        None,
+    ),
+    # Content that MENTIONS a protected file is not a write to one — whole
+    # basenames are compared, so "see research.json" matches nothing.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "notes.md", "content": "see research.json for the log"}]},
+        None,
+    ),
+    # --- the payload walk's two bounds, pinned in BOTH directions ---
+    # Deleting either bound from all three copies used to leave this whole
+    # module green (39/39), so neither was tested at all. Each bound now has a
+    # vector that fails if it is removed AND one that fails if it is too tight.
+    #
+    # Too tight: a real path longer than the bound must still be caught. At
+    # _MAX_PATH_LEN = 400 this returned None — a genuine miss, not merely an
+    # over-deny — which is why the bound is now Linux PATH_MAX.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": ["/" + "d" * 391 + "/research.json"]},  # 405 chars
+        "research.json",
+    ),
+    # Bound present: single-line content longer than any real path, ending in a
+    # protected basename, must NOT be read as a path. Fails if the length bound
+    # is deleted.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "notes.md", "content": "x" * 5000 + "/research.json"}]},
+        None,
+    ),
+    # Newline bound present: multi-line content whose LAST line ends in a
+    # protected path must not be read as a path. It has to end that way to be a
+    # real positive control — `_basename` splits on the last "/", so content
+    # ending "…\nresearch.json\n" already misses on the trailing newline and
+    # would pass with the bound deleted.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "README.md", "content": "# notes\nsee /proj/research.json"}]},
+        None,
+    ),
+    # KNOWN, ACCEPTED over-deny: a file whose ENTIRE content is one line, with no
+    # trailing newline, whose basename is a protected name. Any newline-terminated
+    # or multi-line file is immune (the vector above), so this is the whole of the
+    # surface. Recorded rather than fixed — closing it means guessing which key
+    # carries content, which is exactly the speculation this walk refuses.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": ".gitignore", "content": "research.json"}]},
+        "research.json",
+    ),
+    # Unrecognised payload shape: fails OPEN. Denying what we cannot parse would
+    # block the user's own files, which is the worse failure. The hole is real
+    # and is why the spec requires a live Cowork check.
+    ("mcp__remote-devices__device_commit_files", {}, None),
+    ("mcp__remote-devices__device_commit_files", {"opaque": 42}, None),
+    # `device_bash` is deliberately NOT covered — its input is a command string
+    # where a read and a write are indistinguishable without parsing a shell,
+    # and 37 of 40 shell touches of a protected file in the corpus are reads.
+    ("mcp__remote-devices__device_bash", {"command": "cat > research.json"}, None),
+    ("mcp__remote-devices__device_bash", {"command": "cat research.json"}, None),
+    # A near-name must not match: the tail is compared whole.
+    ("mcp__remote-devices__device_commit_files_v2", {"files": ["research.json"]}, None),
     # --- no opinion: not a write tool ---
     # MultiEdit stands in for a copy quietly WIDENING its tool tuple. The
     # protected-file set has its own equality test below; the tool set has only

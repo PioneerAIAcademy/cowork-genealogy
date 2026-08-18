@@ -15,8 +15,14 @@ from app.sandbox.base import PROJECT_DIR, DirEntry
 
 
 class _FakeResp:
+    def __init__(self, body=None):
+        self._body = body if body is not None else {"ok": True}
+
     def raise_for_status(self):  # 2xx
         return None
+
+    def json(self):
+        return self._body
 
 
 def test_feedback_context_and_drive_upload(monkeypatch):
@@ -259,3 +265,82 @@ def test_unparseable_tree_passes_through_rather_than_failing_the_send():
     out, count = fb._redact_living([("tree.gedcomx.json", b"not json")])
     assert dict(out)["tree.gedcomx.json"] == b"not json"
     assert count == 0
+
+
+# --- endpoint rejection / non-JSON response -----------------------------------
+
+def test_rejected_upload_surfaces_as_502(monkeypatch):
+    """An {ok:false} 200 from Apps Script must become a 502, not a silent success."""
+
+    class _RejectClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            return _FakeResp(body={"ok": False, "error": "unauthorized"})
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _RejectClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y",
+            },
+        )
+        assert r.status_code == 502
+        assert "rejected" in r.json()["detail"].lower()
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_non_json_response_surfaces_as_502(monkeypatch):
+    """A non-JSON 200 (e.g. an HTML redirect page) must become a 502."""
+
+    class _HtmlResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            raise ValueError("No JSON object could be decoded")
+
+    class _HtmlClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            return _HtmlResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _HtmlClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        r = client.post(
+            "/api/feedback",
+            json={
+                "sessionId": sid, "email": "t@example.com",
+                "userPrompt": "x", "agentDid": "y",
+            },
+        )
+        assert r.status_code == 502
+        assert "failed" in r.json()["detail"].lower()
+
+        client.delete(f"/api/sessions/{sid}")

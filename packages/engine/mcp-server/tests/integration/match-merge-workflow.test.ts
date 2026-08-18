@@ -215,7 +215,7 @@ describe("match + merge workflow (integration)", () => {
     const gate = await mergeWarnings({ projectPath: dir, candidateGedcomx: censusCandidate, merges });
     expect(gate.ok).toBe(true);
     if (!gate.ok) return;
-    expect(gate.warnings.filter((w) => w.severity === "error")).toEqual([]);
+    expect(gate.warnings.filter((w) => w.severity === "contradiction")).toEqual([]);
 
     // 2. With the gate clean, person-evidence materializes each linked persona.
     //    record-extraction has persisted the personas' assertions + the census
@@ -274,7 +274,7 @@ describe("match + merge workflow (integration)", () => {
     const gate = await mergeWarnings({ projectPath: dir, candidateGedcomx: badCandidate, merges });
     expect(gate.ok).toBe(true);
     if (!gate.ok) return;
-    const errors = gate.warnings.filter((w) => w.severity === "error");
+    const errors = gate.warnings.filter((w) => w.severity === "contradiction");
     expect(errors.length).toBeGreaterThan(0);
     expect(gate.warnings.map((w) => w.issueType)).toContain("hasEventsOutsideLifespanFar");
   });
@@ -300,6 +300,6 @@ describe("match + merge workflow (integration)", () => {
     expect(gate.ok).toBe(true);
     if (!gate.ok) return;
     const sameCensus = gate.warnings.find((w) => w.issueType === "hasSameCensus");
-    expect(sameCensus?.severity).toBe("error");
+    expect(sameCensus?.severity).toBe("contradiction");
   });
 });
