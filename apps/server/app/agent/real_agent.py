@@ -188,9 +188,11 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
             "permissionDecision": "deny",
             "permissionDecisionReason": (
                 f"{tool_name} on {protected} is disabled — all writes to "
-                "research.json/tree.gedcomx.json must go through the writer tools "
-                "(research_append, research_log_append, tree_edit, tree_correct), "
-                "which validate before persisting. Direct file writes never validate."
+                "research.json/tree.gedcomx.json must go through the writer tools. "
+                "To CREATE a new project use project_create, which writes both files "
+                "together; to add to an existing one use research_append, "
+                "research_log_append, tree_edit or tree_correct. These validate "
+                "before persisting. Direct file writes never validate."
             ),
         },
     }

@@ -10,6 +10,7 @@
 
 import { join } from "path";
 import { readFile } from "fs/promises";
+import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -54,6 +55,8 @@ export type ProjectContextResult =
       ok: true;
       projectStatus: string | null;
       openQuestions: ProjectContextQuestion[];
+      /** Advisory per-question state and next step. Nothing gates on it. */
+      questionStatuses: QuestionStatus[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
@@ -206,7 +209,13 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
       ? research.project.status
       : null;
 
-  return { ok: true, projectStatus, openQuestions, persons, sources, localities };
+  // Advisory only — nothing gates on this. It tells the router what each
+  // question is waiting on, computed from the document rather than from
+  // session history (the only durable state this system has). The gates in
+  // research_append compute their own preconditions independently.
+  const questionStatuses = questionStates(research);
+
+  return { ok: true, projectStatus, openQuestions, questionStatuses, persons, sources, localities };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -223,7 +232,12 @@ export const projectContextSchema = {
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
-    "to stage searches (guide_markdown prose is omitted here). One call gives the context " +
+    "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
+    "[{id, state, nextStep, openConflictIds}] — per question, how far it has got " +
+    "(framed / planned / searching / evidence-gathered / concluded / critiqued) and " +
+    "what it is waiting on. questionStatuses is ADVISORY: it reports what the " +
+    "documents already show, nothing is gated on it, and a null nextStep means the " +
+    "question needs nothing further. One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Writes " +

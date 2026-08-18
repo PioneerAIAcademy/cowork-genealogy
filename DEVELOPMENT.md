@@ -221,10 +221,12 @@ stops the call and puts the four steps in front of him before anything is
 filed. It's a prompt, not a refusal —
 approving it files the issue. Answer it by saying which exemption applies.
 It costs about 15 ms per Bash call and fails open, so a crash in the gate can
-never block a command you were entitled to run. `python3
-scripts/claude-hooks/test-gate-issue-create.py` proves it fires on the real
-shapes (including inside a compound command) and stays quiet on
-`gh issue list`, `gh pr create`, and malformed input.
+never block a command you were entitled to run. `make hooks-test` proves it
+fires on the real shapes (including inside a compound command) and stays quiet
+on `gh issue list`, `gh pr create`, and malformed input. CI runs it too, in
+`workflow-logic-tests.yml` alongside the other repo-governance checks — the
+fail-open design means a broken gate is otherwise indistinguishable from a
+working one.
 
 Do not agonise past that one search. `/audit-board` merges, rewrites and drops
 issues across the whole pool weekly, which is the only vantage point from which
@@ -535,17 +537,19 @@ built web client from a single origin. Full procedure in
 [`docs/plan/neon-postgres-plan.md`](./docs/plan/neon-postgres-plan.md); short version:
 
 ```bash
-# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY
-# and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app refuses to boot
-# if DATABASE_URL is unset or either secret is still at its development default
-# (config.assert_production_config). Not a silent downgrade: the process exits at
-# startup naming the offending setting. (A blank-but-set secret still boots — #1367.)
+# Secrets — NOT in fly.toml (they carry credentials). SESSION_SECRET, WS_SIGNING_KEY,
+# FS_TOKEN_ENC_KEY and DATABASE_URL are REQUIRED: because PUBLIC_URL is https, the app
+# refuses to boot if DATABASE_URL is unset or any of those secrets is still at its
+# development default (config.assert_production_config). Not a silent downgrade: the
+# process exits at startup naming the offending setting. (A blank-but-set secret still
+# boots — #1367.) FS_TOKEN_ENC_KEY encrypts the FamilySearch tokens at rest (#1128);
+# rotating it makes stored tokens undecryptable, so users just reconnect once.
 # DATABASE_URL takes the Neon DIRECT (non-pooler) URL. Keep every comment ABOVE this
 # command: a trailing `\  # …` is an escaped space plus a comment, which silently
 # truncates the command and drops every argument after it.
 fly secrets set \
   DATABASE_URL="postgresql://…neon.tech/DBNAME?sslmode=require" \
-  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… \
+  E2B_API_KEY=… ANTHROPIC_API_KEY=… SESSION_SECRET=… WS_SIGNING_KEY=… FS_TOKEN_ENC_KEY=… \
   ALLOWED_EMAILS="you@familysearch-account-email" API_KEYS="sk_live_…:chatbot@yourco.com"
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).

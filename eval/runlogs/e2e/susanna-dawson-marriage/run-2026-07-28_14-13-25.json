@@ -3292,82 +3292,71 @@
       "args": {
         "query": "select:TodoWrite,WebSearch",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}, {\"type\": \"tool_reference\", \"tool_name\": \"WebSearch\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.json",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": ".claude\\skills\\init-project\\templates\\research.json\nresearch.json\ntree.gedcomx.json\n.claude\\settings.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_susanna_dawson_marriage\",\n4\t    \"objective\": \"When and where did Susanna Dawson marry John Kneale, and who was her father?\",\n5\t    \"subject_person_ids\": [\n6\t      \"9KNQ-8YB\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-24\",\n10\t    \"updated\": \"2026-07-24\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [],\n18\t  \"plans\"..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9KNQ-8YB\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Susanna\",\n11\t          \"surname\": \"Dawson Kneale\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"fb1277e7-d27c-481a-b158-aa13b3c7192d\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1840\",\n19\t          \"standard_date\": \"1840\",\n20\t          \"place\": \"Lezayre, Isle of Man\",\n2..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "references/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection"
-      },
-      "response_summary": ".claude\\skills\\question-selection\\SKILL.md\n.claude\\skills\\question-selection\\references\\pedigree-analysis.md\n.claude\\skills\\question-selection\\references\\question-formulation.md\n.claude\\skills\\question-selection\\references\\validation-protocol.md"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.clone\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3392,15 +3381,13 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3425,8 +3412,7 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3440,38 +3426,33 @@
             "q_002"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page,mcp__genealogy__place_population",
         "max_results": 8
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Lezayre",
         "contextName": "Isle of Man"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Lezayre, Isle of Man\\\",\\n      \\\"type\\\": \\\"Parish\\\",\\n      \\\"latitude\\\": 54.2965,\\n      \\\"longitude\\\": -4.4387,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Lezayre&focusedId=200009\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Lezayre\\\"\\n    }\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Isle of Man"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Isle of Man\\\",\\n      \\\"type\\\": \\\"Dependency or Protectorate\\\",\\n      \\\"dateRange\\\": \\\"+1266/\\\",\\n      \\\"latitude\\\": 54.25,\\n      \\\"longitude\\\": -4.5,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Isle%20of%20Man&focusedId=82\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Isle of Man\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"United Kingdom\\\",\\n      \\\"type..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -3479,8 +3460,7 @@
         "standardPlace": "Isle of Man",
         "startYear": 1840,
         "endYear": 1875
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"place\\\": {\\n    \\\"place_id\\\": \\\"1926993\\\",\\n    \\\"name\\\": \\\"Isle of Man\\\",\\n    \\\"level\\\": \\\"country\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -3488,8 +3468,7 @@
         "standardPlace": "Isle of Man",
         "startYear": 1840,
         "endYear": 1880
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Isle of Man\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1880\\n  },\\n  \\\"scope\\\": \\\"Isle of Man\\\",\\n  \\\"totalForPlace\\\": 4,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1708663\\\",\\n      \\\"title\\\": \\\"Isle of Man, Births and Baptisms, 1607-1910\\\",\\n      \\\"dateRange\\\": \\\"1607-1910\\\",\\n      \\\"recordCount\\\": 221922,\\n      \\\"personCount\\\": 635278,\\n      \\\"imageCount\\\": 221922,\\n      \\\"url\\\": \\\"https://www.familysearch.org/s..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -3497,8 +3476,7 @@
         "standardPlace": "Isle of Man",
         "startYear": 1840,
         "endYear": 1880
-      },
-      "response_summary": "<persisted-output>\nOutput too large (61.7KB). Full output saved to: C:\\Users\\FUJITSU\\.claude\\projects\\C--Users-FUJITSU-AppData-Local-Temp-e2e-susanna-dawson-marriage-7yjl2slr\\85615e7c-a461-42a8-a587-16b9e5bcca79\\tool-results\\toolu_01RgHqWVxgMCi6iA42Y8ZHm3.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Isle of Man\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1880\\n  },\\n  \\\"totalResults\\\": 3848,\\n  \\\"results\\\": [\\n    {\\n      \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -3507,47 +3485,41 @@
         "startYear": 1840,
         "endYear": 1880,
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Isle of Man\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1880\\n  },\\n  \\\"totalForPlace\\\": 123,\\n  \\\"returned\\\": 50,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=isle+of+man\\\",\\n      \\\"linkText\\\": \\\"British Armed Forces and Overseas Births and Baptisms\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.my..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Isle of Man genealogy records marriage baptism"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"Isle of Man genealogy records marriage baptism\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.917969,\\n      \\\"chunk_text\\\": \\\"### Understanding the Records  \\\\nThe three main types of church records in the Church of England are baptism, marriage, and burial registers. These records date to 1598 and are one of the main genealogical resources in the Isle of Man.  \\\\n#### Baptisms ..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Isle of Man",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Isle_of_Man_Genealogy\\\",\\n  \\\"content\\\": \\\"# Isle of Man Genealogy\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **Isle of Man Wiki Topics** |\\\\n| [Flag of Isle of Man](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Isle_of_Man.png&filetimestamp=20210425182208& \\\\\\\"Flag of Isle of Man\\\\\\\") |\\\\n| **Isle of Man Beginning Research** |\\\\n| * [Getting Started](https://www.familysearch.org/en/wiki/Isle_of_Man_Getting..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Isle of Man",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Isle_of_Man_Getting_Started\\\",\\n  \\\"content\\\": \\\"# Isle of Man Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Isle of Man Wiki Topics](https://www.familysearch.org/en/wiki/Isle_of_Man_Genealogy \\\\\\\"Isle of Man Genealogy\\\\\\\")** |\\\\n| [Flag of Isle of Man](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Isle_of_Man.png&filetimestamp=20210425182208& \\\\\\\"Flag of Isle of Man\\\\\\\") |\\\\n| **Isle of Man..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Isle of Man",
         "section": "online_records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Isle_of_Man_Online_Genealogy_Records\\\",\\n  \\\"content\\\": \\\"# Isle of Man Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[Isle of Man](https://www.familysearch.org/en/wiki/Isle_of_Man_Genealogy \\\\\\\"Isle of Man Genealogy\\\\\\\")\\\\n\\\\nOnline Genealogy Records\\\\n\\\\n|  |  |  |  |  |  |\\\\n| --- | --- | --- | --- | --- | --- |\\\\n| These are genealogy links to Isle of Man online databases and indexes that may include birth records, marr..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Isle of Man",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"url\\\": \\\"https://www.familysearch.org/en/wiki/Isle_of_Man_Research_Tips_and_Strategies\\\",\\n  \\\"content\\\": \\\"# Isle of Man Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| **[Isle of Man Wiki Topics](https://www.familysearch.org/en/wiki/Isle_of_Man_Genealogy \\\\\\\"Isle of Man Genealogy\\\\\\\")** |\\\\n| [Flag of Isle of Man](https://www.familysearch.org/en/wiki/index.php?title=File:Flag_of_Isle_of_Man.png&filetimestamp=20210425182208& \\\\\\\"Flag of Isle of Ma..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3622,45 +3594,39 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "references/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\research-plan"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\research-plan"
-      },
-      "response_summary": ".claude\\skills\\research-plan\\references\\locality-survey-guide.md\n.claude\\skills\\research-plan\\references\\planning-standards.md\n.claude\\skills\\research-plan\\references\\record-type-guide.md\n.claude\\skills\\research-plan\\references\\validation-protocol.md\n.claude\\skills\\research-plan\\references\\places-guidance.md\n.claude\\skills\\research-plan\\SKILL.md"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\research-plan\\references\\record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\research-plan\\references\\planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3767,15 +3733,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3882,54 +3846,47 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "references/collection-quirks.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\search-records"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "references/**/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\search-records"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\search-records"
-      },
-      "response_summary": ".claude\\skills\\search-records\\references\\collection-quirks.md\n.claude\\skills\\search-records\\references\\data-collection-standards.md\n.claude\\skills\\search-records\\references\\name-search-mechanics.md\n.claude\\skills\\search-records\\references\\place-date-mechanics.md\n.claude\\skills\\search-records\\references\\research-log-standards.md\n.claude\\skills\\search-records\\references\\validation-protocol.md\n.claude\\skills\\search-records\\references\\search-strategy-levers.md\n.claude\\skills\\search-records\\SKILL...."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\search-records\\references\\collection-quirks.md"
-      },
-      "response_summary": "1\t# Collection-Specific Indexing Quirks \u2014 FamilySearch Records API\n2\t\n3\tRead this reference when searching a specific collection family.\n4\tQuirks affect how queries should be constructed for that collection.\n5\t\n6\t## US Federal Censuses (1790\u20131940)\n7\t\n8\t- Indexed by community volunteers; mostly accurate but cursive\n9\t  handwriting causes common transcription errors: S/L, F/T, n/u,\n10\t  U/V confusions; double-S misread as F or \"long s\"\n11\t- **Compensation:** Use surname wildcards (`q.surname=Sm..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3943,8 +3900,7 @@
         "marriageYearTo": 1865,
         "count": 50,
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Dawson\\\",\\n    \\\"givenName\\\": \\\"Susanna\\\",\\n    \\\"spouseSurname\\\": \\\"Kneale\\\",\\n    \\\"spouseGivenName\\\": \\\"John\\\",\\n    \\\"collectionId\\\": \\\"1711668\\\",\\n    \\\"marriageYearFrom\\\": 1855,\\n    \\\"marriageYearTo\\\": 1865,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\FUJITSU\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-susanna-dawson-marriage-7yjl2slr\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3953,8 +3909,7 @@
         "stagedResultsRef": "results/.staging/b8aba448-e4a1-4073-8c92-406d5873ddbd.json",
         "subjectId": "9KNQ-8YB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"9KNQ-8YB\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NKD4-6PY\\\",\\n      \\\"matchScore\\\": 0.4200015,\\n      \\\"primaryId\\\": \\\"p_12135621417\\\",\\n      \\\"personName\\\": \\\"Susanna Dawson\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"collectionTitle\\\": \\\"Isle of Man, Marriages, 1606\\u201..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -3962,8 +3917,7 @@
         "recordId": "ark:/61903/1:1:NKD4-6PY",
         "resultsRef": "results/.staging/b8aba448-e4a1-4073-8c92-406d5873ddbd.json",
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12135621417\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NKD4-6PY\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Susanna\\\",\\n          \\\"surname\\\": \\\"Dawson\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_12135621418\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NKD4-6PB\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3987,8 +3941,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/b8aba448-e4a1-4073-8c92-406d5873ddbd.json",
         "notes": "Found marriage of Susanna Dawson to John Kneale, 21 Oct 1860, Lezayre, Isle of Man. ARK: ark:/61903/1:1:NKD4-6PY (Susanna persona). Legacy index only \u2014 no father names indexed. Original image in CID 1784428 should be consulted. Record is attachedToOther in FS tree."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-28T13:09:33.156Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4001,16 +3954,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "recordId: ark:/61903/1:1:NKD4-6PY | logId: log_001 | projectPath: C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr | Record content: Marriage of Susanna Dawson to John Kneale, 21 Oct 1860, Lezayre, Isle of Man. Source: \"Isle of Man, Marriages, 1606-1911\" (CID 1711668), legacy index-only collection (derivative). Record ARK: ark:/61903/1:2:9743-KJG. Susanna persona: ark:/61903/1:1:NKD4-6PY; John persona: ark:/61903/1:1:NKD4-6PB. No father names indexed (legacy index limitation)."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -4018,15 +3969,13 @@
         "description": "Extract marriage record assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch marriage record into research.json and tree.gedcomx.json.\n\n**Project path:** C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\n\n**Record ID:** ark:/61903/1:1:NKD4-6PY (Susanna Dawson persona)\n**Results sidecar:** results/log_001.json\n**Log entry:** log_001\n\n**Record content (from record_read):**\n- Collection: \"Isle of Man, Marriages, 1606\u20131911\" (CID 1711668)\n- Record title: \"Entry for John Kneale, Isle of Man, Marriages, 1606\u20131911\"\n- Citation: \"Isle of Man, Marriages, 1606\u20131911,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9743-KJG : 10 March 2020), Entry for John Kneale; citing Lezayre, Isle of Man; index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.\n- Record ARK: ark:/61903/1:2:9743-KJG\n\n**Persons in record:**\n1. Susanna Dawson (p_12135621417), ARK ark:/61903/1:1:NKD4-6PY, Female\n2. John Kneale (p_12135621418), ARK ark:/61903/1:1:NKD4-6PB, Male\n\n**Marriage fact:**\n- Type: Marriage\n- Date: 21 Oct 1860\n- Place: Lezayre, Isle of Man\n\n**Important context:**\n- This is a legacy INDEX-ONLY derivative collection (CID 1711668) \u2014 no image is attached, no original register image is available through this record. The original register image exists in CID 1784428 (Isle of Man, Parish Registers, 1598-2009), which has not yet been searched.\n- The index was assembled circa 2010 and no updates have been made since. It is a derivative source.\n- The index does not include father names (which would have appeared in the mid-1800s IoM church registers). The original image in CID 1784428 may contain that information.\n- The record is currently attached to another FamilySearch Family Tree profile (attachedToOther: true), not to our project subject.\n\n**Open research questions this record bears on:**\n- q_001: \"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\" \u2014 this record directly answers this question\n- q_002: \"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\" \u2014 this record does NOT address the father's identity\n\n**Instructions:**\n- Extract all assertions from this record: the marriage event for both parties, their names, and any other facts present\n- Apply GPS three-layer classification (source/information/evidence) at first-and-final level\n- Note that this is a derivative source (an index, not the original register) in the source classification\n- Do NOT attempt to link personas to tree persons \u2014 that is person-evidence's role\n- Do NOT create person_evidence entries\n- Frame all writes neutrally \u2014 describe what the record says, not what the expected result should be"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete.\\n\\n**Source:** src_001 / S1 \\u2014 action: `created`\\n\\n**Assertions written (7 total):**\\n- bride (Susanna Dawson, p_12135621417): a_001 name, a_002 sex, a_003 marriage\\n- groom (John Kneale, p_12135621418): a_004 name, a_005 sex, a_006 marriage\\n\\n**Key findings:**\\n- Source is `derivative` (index only, CID 1711668). **Original not examined** \\u2014 the original Lezayre parish register image is in CID 1784428 (Isle of Man, Parish Registers, 15..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"q_002\\\",\\n      \\\"question\\\": \\\"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"name\\\": \\\"Susanna Dawson Kneale\\\",\\n      \\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -4034,8 +3983,7 @@
         "recordId": "ark:/61903/1:1:NKD4-6PY",
         "resultsRef": "results/log_001.json",
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12135621417\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NKD4-6PY\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Susanna\\\",\\n          \\\"surname\\\": \\\"Dawson\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_12135621418\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NKD4-6PB\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4198,8 +4146,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4212,23 +4159,20 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence"
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4236,16 +4180,14 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "recordId": "ark:/61903/1:2:9743-KJG"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "person_evidence"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4253,8 +4195,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 6,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_001\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:NKD4-6PY\\\",\\n      \\\"record_persona_id\\\": \\\"p_12135621417\\\",\\n      \\\"record_role\\\": \\\"bride\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"indeter..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4342,24 +4283,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "plans"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plans\\\",\\n  \\\"count\\\": 2,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"pl_001\\\",\\n      \\\"question_id\\\": \\\"q_001\\\",\\n      \\\"status\\\": \\\"active\\\",\\n      \\\"created\\\": \\\"2026-07-28\\\",\\n      \\\"items\\\": [\\n        {\\n          \\\"id\\\": \\\"pli_001\\\",\\n          \\\"sequence\\\": 1,\\n          \\\"record_type\\\": \\\"church\\\",\\n          \\\"jurisdiction\\\": \\\"Isle of Man\\\",\\n          \\\"date_range\\\": \\\"1855-1865\\\",\\n          \\\"repository\\\": \\\"FamilyS..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4373,8 +4311,7 @@
         "collectionId": "1784428",
         "count": 50,
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Dawson\\\",\\n    \\\"givenName\\\": \\\"Susanna\\\",\\n    \\\"spouseGivenName\\\": \\\"John\\\",\\n    \\\"spouseSurname\\\": \\\"Kneale\\\",\\n    \\\"marriageYearFrom\\\": 1858,\\n    \\\"marriageYearTo\\\": 1862,\\n    \\\"collectionId\\\": \\\"1784428\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\FUJITSU\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-susanna-dawson-marriage-7yjl2slr\\\"\\n  },\\n  \\\"totalMatches\\\": 9,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -4383,8 +4320,7 @@
         "stagedResultsRef": "results/.staging/94eb8c16-065a-4e3c-b5db-8eee81fc6d71.json",
         "subjectId": "9KNQ-8YB",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"9KNQ-8YB\\\",\\n  \\\"scoredCount\\\": 9,\\n  \\\"returnedCount\\\": 9,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XZ5W-Z9C\\\",\\n      \\\"matchScore\\\": 0.46831137,\\n      \\\"primaryId\\\": \\\"p_10468611039\\\",\\n      \\\"personName\\\": \\\"Susanna Dawson\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"collectionTitle\\\": \\\"Isle of Man, Parish Registers, 1..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4407,30 +4343,26 @@
         "resultsExamined": 9,
         "stagedResultsRef": "results/.staging/94eb8c16-065a-4e3c-b5db-8eee81fc6d71.json",
         "notes": "Top search result (XZTM-G54) is explicitly titled 'Entry for John Kneale and Susanna Dawson' in CID 1784428 \u2014 the original register. 7 other results are child baptisms naming Susanna Dawson as mother (corroborating). Result 8 (XZ5P-PRJ) is a christening entry 10 Mar 1839 Lezayre for Susanna Dawson herself \u2014 attachedToOther:true \u2014 potentially answering q_002."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-28T13:16:57.139Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 9,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZTM-G54"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10470080525\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZTM-G57\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"ff75a391-5b7c-49ca-9189-45542cc14d73\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"John\\\",\\n          \\\"surname\\\": \\\"Kneale\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Single\\\"\\n        }\\n   ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZ5P-PRJ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10469082467\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZ5P-PRJ\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c446ecea-0fa9-470e-9ffb-1e2f0ef2476b\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Susanna\\\",\\n          \\\"surname\\\": \\\"Dawson\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"404442e5-7b21-4127-916a-da0d6d85c76a\\\",\\n          \\\"type\\\": \\..."
+      }
     },
     {
       "tool": "Agent",
@@ -4438,15 +4370,13 @@
         "description": "Extract marriage record XZTM-G54 assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract assertions from the following FamilySearch record into the project at C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr.\n\nrecordId: ark:/61903/1:1:XZTM-G54\nlogId: log_002\nOpen research question ids this record bears on: q_001 (marriage date and place of Susanna Dawson \u00d7 John Kneale), q_002 (identity of Susanna Dawson's father)\n\nRecord content (from record_read):\n\n{\n  \"persons\": [\n    {\n      \"id\": \"p_10470080525\",\n      \"ark\": \"ark:/61903/1:1:XZTM-G57\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"John\", \"surname\": \"Kneale\"}],\n      \"facts\": [{\"type\": \"MaritalStatus\", \"value\": \"Single\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_10470080526\",\n      \"ark\": \"ark:/61903/1:1:XZTM-G5W\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Thomas\", \"surname\": \"Kneale\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_10470080527\",\n      \"ark\": \"ark:/61903/1:1:XZTM-G54\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Susanna\", \"surname\": \"Dawson\"}],\n      \"facts\": [{\"type\": \"MaritalStatus\", \"value\": \"Single\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_10470080528\",\n      \"ark\": \"ark:/61903/1:1:XZTM-G5H\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"John\", \"surname\": \"Dawson\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_10470080526\",\n      \"child\": \"p_10470080525\"\n    },\n    {\n      \"type\": \"Couple\",\n      \"person1\": \"p_10470080525\",\n      \"person2\": \"p_10470080527\",\n      \"facts\": [\n        {\n          \"type\": \"Marriage\",\n          \"primary\": true,\n          \"date\": \"21 Oct 1860\",\n          \"standard_date\": \"21 Oct 1860\",\n          \"place\": \"Lezayre, Isle of Man\"\n        }\n      ]\n    },\n    {\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_10470080528\",\n      \"child\": \"p_10470080527\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_14281439800\",\n      \"title\": \"Entry for John Kneale and Susanna Dawson, \\\"Isle of Man, Parish Registers, 1598-2009\\\"\",\n      \"citation\": \"\\\"Isle of Man, Parish Registers, 1598-2009\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G57 : Wed Mar 06 19:54:19 UTC 2024), Entry for John Kneale and Thomas Kneale, 21 Oct 1860.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:KJLD-W6Z\"\n    },\n    {\n      \"id\": \"sd_auto_M9VM-DWP\",\n      \"title\": \"Isle of Man, Lezayre, Marriages, from 1696 to 1964\"\n    }\n  ]\n}\n\nContext:\n- This is the original Lezayre parish marriage register entry (CID 1784428 \"Isle of Man, Parish Registers, 1598-2009\"), the primary source. A derivative index entry from CID 1711668 already exists as src_001 (assertions a_001\u2013a_006). This CID 1784428 record is a different, more authoritative source that should be created as a new source entry \u2014 do NOT modify src_001.\n- The record provides: marriage of John Kneale to Susanna Dawson on 21 Oct 1860 at Lezayre, IoM (directly answers q_001); bride's father John Dawson (bears on q_002); groom's father Thomas Kneale.\n- Four personas are present: bride (Susanna Dawson, p_10470080527), groom (John Kneale, p_10470080525), bride's father (John Dawson, p_10470080528), groom's father (Thomas Kneale, p_10470080526).\n- Extract all assertions for all four roles, including the relationship-type assertions (marriage couple, parentage).\n- The image for this record is at the sd_da1 source URL: https://www.familysearch.org/ark:/61903/3:1:S3HY-65T3-MR8 \u2014 original image not yet examined (the record read returns indexed facts from CID 1784428, which is an active, maintained index+images collection; the facts derive from the indexed fields, not from a manual image read here). Flag the original image as available but not yet read in this session.\n- Do NOT create person_evidence links \u2014 identity resolution will be done separately."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. Here is the extraction summary:\\n\\n**Source:** src_002 / S2 \\u2014 created (new source entry distinct from src_001/S1 which covers the derivative index record NKD4-6PY)\\n\\n**Assertions written: 14 across 4 personas (a_007\\u2013a_020)**\\n- bride (Susanna Dawson, p_10470080527): a_007\\u2013a_012 \\u2014 name, sex, marital status, marriage event, relationship to father (6 assertions)\\n- groom (John Kneale, p_10470080525): a_013\\u2013a_017 \\u2014 ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"q_002\\\",\\n      \\\"question\\\": \\\"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"name\\\": \\\"Susanna Dawson Kneale\\\",\\n      \\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4773,8 +4703,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_persona_id omitted \\u2014 multiple personas in this record (p_10470080527, p_10470080525, p_10470080528, p_10470080526) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_10470080527')\\\",\\n    \\\"ops[2]: record_persona_id omitted \\u2014 multiple personas in this record (p_10470080527, p_10470080525, p_104700805..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5115,8 +5044,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Agent",
@@ -5124,15 +5052,13 @@
         "description": "Extract christening record XZ5P-PRJ assertions",
         "subagent_type": "record-extractor",
         "prompt": "Extract assertions from the following FamilySearch record into the project at C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr.\n\nrecordId: ark:/61903/1:1:XZ5P-PRJ\nlogId: log_002\nOpen research question ids this record bears on: q_002 (identity of Susanna Dawson's father)\n\nRecord content (from record_read):\n\n{\n  \"persons\": [\n    {\n      \"id\": \"p_10469082467\",\n      \"ark\": \"ark:/61903/1:1:XZ5P-PRJ\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Susanna\", \"surname\": \"Dawson\"}],\n      \"facts\": [\n        {\n          \"type\": \"Christening\",\n          \"primary\": true,\n          \"date\": \"10 Mar 1839\",\n          \"standard_date\": \"10 Mar 1839\",\n          \"place\": \"Lezayre, Isle of Man\"\n        }\n      ],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_10469082468\",\n      \"ark\": \"ark:/61903/1:1:XZ5P-PRV\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"John\", \"surname\": \"Dawson\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_10469082469\",\n      \"ark\": \"ark:/61903/1:1:XZ5P-PRK\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Jane\", \"surname\": \"Corlett\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_10469082469\",\n      \"child\": \"p_10469082467\"\n    },\n    {\n      \"type\": \"ParentChild\",\n      \"parent\": \"p_10469082468\",\n      \"child\": \"p_10469082467\"\n    },\n    {\n      \"type\": \"Couple\",\n      \"person1\": \"p_10469082468\",\n      \"person2\": \"p_10469082469\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_14280998600\",\n      \"title\": \"Entry for Susanna Dawson, \\\"Isle of Man, Parish Registers, 1598-2009\\\"\",\n      \"citation\": \"\\\"Isle of Man, Parish Registers, 1598-2009\\\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ5P-PRJ : Sat Mar 09 10:04:04 UTC 2024), Entry for Susanna Dawson and John Dawson, 10 Mar 1839.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:KJ2R-TW2\"\n    },\n    {\n      \"id\": \"sd_auto_M9J1-XK3\",\n      \"title\": \"Isle of Man, Lezayre, Religious, from 1600 to 1910\"\n    }\n  ]\n}\n\nContext:\n- This is a Church of England christening entry from the Lezayre parish register (CID 1784428 \"Isle of Man, Parish Registers, 1598-2009\"). The christening date is 10 Mar 1839 at Lezayre \u2014 this updates Susanna Dawson's estimated birth of c.1840 to c.Mar 1839.\n- Three personas: child (Susanna Dawson, p_10469082467), father (John Dawson, p_10469082468), mother (Jane Corlett, p_10469082469).\n- This record is the primary evidence for q_002: it directly names Susanna's father as John Dawson and mother as Jane Corlett (maiden name). Extract all assertions for all three roles including the relationship assertions (two ParentChild and the Couple).\n- The image for this record is at https://www.familysearch.org/ark:/61903/3:1:9396-CBL3-F \u2014 available but not yet examined in this session; note as outstanding confirmation step.\n- This christening's father (John Dawson) agrees with the bride's father named in the marriage register src_002 (just extracted), providing corroboration from two independent acts. Note this in the relevant assertion rationale.\n- The record was discovered opportunistically during the pli_002 marriage search (log_002) in CID 1784428. It satisfies the goals of plan item pli_007 (which planned to search CID 1708663 for Susanna's baptism c.1838-1842).\n- Do NOT create person_evidence links \u2014 identity resolution will be handled separately."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction complete. Here is the summary:\\n\\n**Source:** src_003 / S3 \\u2014 created (new). Source classification: original (image of the Lezayre parish christening register, CID 1784428). Outstanding: the image at `https://www.familysearch.org/ark:/61903/3:1:9396-CBL3-F` was not examined \\u2014 original image confirmation remains an outstanding step.\\n\\n**Assertions written: 12 (a_021 \\u2013 a_032)**\\n- child_1 (Susanna Dawson, p_10469082467): 6 assertions \\u2014 n..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"q_002\\\",\\n      \\\"question\\\": \\\"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"name\\\": \\\"Susanna Dawson Kneale\\\",\\n      \\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5415,8 +5341,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_persona_id omitted \\u2014 multiple personas in this record (p_10469082467, p_10469082468, p_10469082469) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_10469082467')\\\",\\n    \\\"ops[2]: record_persona_id omitted \\u2014 multiple personas in this record (p_10469082467, p_10469082468, p_10469082469) and the bat..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -5711,16 +5636,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_021\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_022\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_023\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9KNQ-8YB\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Susanna\",\n11\t          \"surname\": \"Dawson Kneale\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"fb1277e7-d27c-481a-b158-aa13b3c7192d\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1840\",\n19\t          \"standard_date\": \"1840\",\n20\t          \"place\": \"Lezayre, Isle of Man\",\n2..."
+      }
     },
     {
       "tool": "Read",
@@ -5728,8 +5651,7 @@
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "offset": 80,
         "limit": 200
-      },
-      "response_summary": "80\t          \"type\": \"Residence\",\n81\t          \"date\": \"1871\",\n82\t          \"standard_date\": \"1871\",\n83\t          \"place\": \"Ramsey, Isle of Man\",\n84\t          \"standard_place\": \"Ramsey, Isle of Man\"\n85\t        },\n86\t        {\n87\t          \"id\": \"ab7f11c0-8b82-40d4-8895-45b7721a5f0a\",\n88\t          \"type\": \"Residence\",\n89\t          \"date\": \"1881\",\n90\t          \"standard_date\": \"1881\",\n91\t          \"place\": \"Maughold, Isle of Man\",\n92\t          \"standard_place\": \"Maughold, Isle of Man\"\n93\t      ..."
+      }
     },
     {
       "tool": "Read",
@@ -5737,16 +5659,14 @@
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "offset": 280,
         "limit": 300
-      },
-      "response_summary": "280\t          \"id\": \"e2b59406-1ba6-4f10-a017-b60fb0cb8671\",\n281\t          \"type\": \"Occupation\",\n282\t          \"value\": \"Scholar\"\n283\t        }\n284\t      ]\n285\t    },\n286\t    {\n287\t      \"id\": \"GBSS-HQJ\",\n288\t      \"gender\": \"Female\",\n289\t      \"living\": false,\n290\t      \"names\": [\n291\t        {\n292\t          \"id\": \"N6\",\n293\t          \"given\": \"Jane\",\n294\t          \"surname\": \"Kneale\"\n295\t        }\n296\t      ],\n297\t      \"facts\": [\n298\t        {\n299\t          \"id\": \"5cfe3491-c8dc-4d1e-aa71-4fd..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5754,8 +5674,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 14,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_007\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:XZTM-G54\\\",\\n      \\\"record_persona_id\\\": \\\"p_10470080527\\\",\\n      \\\"record_role\\\": \\\"bride\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"primar..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -5763,8 +5682,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 12,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_021\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:XZ5P-PRJ\\\",\\n      \\\"record_persona_id\\\": \\\"p_10469082467\\\",\\n      \\\"record_role\\\": \\\"child_1\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"prim..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -5790,8 +5708,7 @@
             "recordRole": "father_of_groom"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"personId\\\": \\\"9KNQ-8YB\\\",\\n      \\\"created\\\": false,\\n      \\\"factsAdded\\\": 1,\\n      \\\"factsEnriched\\\": 0,\\n      \\\"namesAdded\\\": 1,\\n      \\\"refsAttached\\\": 2,\\n      \\\"conflicts_surfaced\\\": []\\n    },\\n    {\\n      \\\"personId\\\": \\\"9KNQ-8YD\\\",\\n      \\\"created\\\": false,\\n      \\\"factsAdded\\\": 1,\\n      \\\"factsEnriched\\\": 0,\\n      \\\"namesAdded\\\": 0,\\n      \\\"refsAttached\\\": 2,\\n      \\\"conflicts_surfaced\\\": []\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -5813,16 +5730,14 @@
             "recordRole": "mother_of_child_1"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"personId\\\": \\\"9KNQ-8YB\\\",\\n      \\\"created\\\": false,\\n      \\\"factsAdded\\\": 2,\\n      \\\"factsEnriched\\\": 0,\\n      \\\"namesAdded\\\": 0,\\n      \\\"refsAttached\\\": 3,\\n      \\\"conflicts_surfaced\\\": [\\n        {\\n          \\\"personId\\\": \\\"9KNQ-8YB\\\",\\n          \\\"factType\\\": \\\"Birth\\\",\\n          \\\"values\\\": [\\n            \\\"1840, Lezayre, Isle of Man\\\",\\n            \\\"~1839, Lezayre, Isle of Man\\\"\\n          ]\\n       ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5878,8 +5793,7 @@
             "sourceAssertionId": "a_029"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: add_fact: the added fact must carry a non-null source-ref (e.g. sources: [{ ref: \\\\\\\"S1\\\\\\\" }]) \\u2014 newly-authored tree content records its provenance (tree-materialization-spec \\u00a76). Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), or use materialize_facts to write a record persona's sourced facts.\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5943,8 +5857,7 @@
             "sourceAssertionId": "a_029"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R18\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R19\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"ass..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6312,8 +6225,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6349,8 +6261,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: section 'plan_items' requires a 'planId'\\\",\\n    \\\"worked example for 'plan_items':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"plan_items\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  planId: \\\\\\\"pl_001\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"\\n  ],\\n  \\\"opsReceived\\\": 3\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6388,8 +6299,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\n    \\\"worked example for 'conflicts':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"conflicts\\\\\\\",\\\\n  op: \\\\\\\"append\\\\\\\",\\\\n  entry: {\\\\n    \\\\\\\"conflict_type\\\\\\\": \\\\\\\"fact\\\\\\\",\\\\n    \\\\\\\"description\\\\\\\": \\\\\\\"Patrick Flynn's birth year: 1845 (1850 census, age 5) vs. 1843 (delayed birth certi..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6434,8 +6344,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/conflicts[0]: fact conflict requires at least 2 competing_assertion_ids\\\",\\n    \\\"worked example for 'conflicts':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"conflicts\\\\\\\",\\\\n  op: \\\\\\\"append\\\\\\\",\\\\n  entry: {\\\\n    \\\\\\\"conflict_type\\\\\\\": \\\\\\\"fact\\\\\\\",\\\\n    \\\\\\\"description\\\\\\\": \\\\\\\"Patrick Flynn's birth year: 1845 (1850 census, age 5) vs. 1843 (..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6461,8 +6370,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6477,8 +6385,7 @@
         "collectionId": "1708663",
         "count": 50,
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Kneale\\\",\\n    \\\"givenName\\\": \\\"Thomas\\\",\\n    \\\"fatherGivenName\\\": \\\"John\\\",\\n    \\\"fatherSurname\\\": \\\"Kneale\\\",\\n    \\\"motherGivenName\\\": \\\"Susanna\\\",\\n    \\\"birthYearFrom\\\": 1860,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"collectionId\\\": \\\"1708663\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\FUJITSU\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-susanna-dawson-marriage-7yjl2slr\\\"\\n  },\\n  \\\"totalMatches\\\": 124,\\n  \\\"paginationC..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6492,8 +6399,7 @@
         "collectionId": "1784428",
         "count": 50,
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Dawson\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"spouseGivenName\\\": \\\"Jane\\\",\\n    \\\"spouseSurname\\\": \\\"Corlett\\\",\\n    \\\"marriageYearFrom\\\": 1828,\\n    \\\"marriageYearTo\\\": 1845,\\n    \\\"collectionId\\\": \\\"1784428\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"C:\\\\\\\\Users\\\\\\\\FUJITSU\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\e2e-susanna-dawson-marriage-7yjl2slr\\\"\\n  },\\n  \\\"totalMatches\\\": 60,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 5..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -6503,8 +6409,7 @@
         "subjectId": "GBSL-3WT",
         "checkAttachments": true,
         "top": 5
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"GBSL-3WT\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 5,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:JS5V-YYL\\\",\\n      \\\"matchScore\\\": 0.27225485,\\n      \\\"primaryId\\\": \\\"p_12461551131\\\",\\n      \\\"personName\\\": \\\"Thomas Henry Kneale\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Isle of Man, Births and Bapt..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -6514,8 +6419,7 @@
         "subjectId": "I1",
         "checkAttachments": true,
         "top": 5
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 5,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 30,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XZ5J-XVD\\\",\\n      \\\"matchScore\\\": 0.0049173213,\\n      \\\"primaryId\\\": \\\"p_10468912152\\\",\\n      \\\"personName\\\": \\\"John Dawson\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Isle of Man, Parish Registers, 1598-200..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6562,22 +6466,19 @@
             "notes": "Top result (XZ15-BXY) is explicitly titled 'Entry for John Dawson and Jane Corlett' in CID 1784428 \u2014 the parents' marriage record. Rank matcher gave all low scores (I1 has no vitals; subjectResolvable:false), but qualitative analysis confirms XZ15-BXY as the target. Also result 8 (XZ5P-PRV) is John Dawson as father in the Susanna Dawson christening \u2014 already extracted as src_003."
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"logId\\\": \\\"log_003\\\",\\n      \\\"performed\\\": \\\"2026-07-28T13:38:45.839Z\\\",\\n      \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n      \\\"returnedCount\\\": 50\\n    },\\n    {\\n      \\\"logId\\\": \\\"log_004\\\",\\n      \\\"performed\\\": \\\"2026-07-28T13:38:45.850Z\\\",\\n      \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n      \\\"returnedCount\\\": 50\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:JS5V-YYL"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12461551131\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JS5V-YYL\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Thomas Henry\\\",\\n          \\\"surname\\\": \\\"Kneale\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"9 Dec 1860\\\",\\n          \\\"standard_date\\\": \\\"9 De..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XZ15-BXY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10473163647\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZ15-BXY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"710fda2a-626c-4a11-88ef-a252ce78de0f\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Dawson\\\",\\n          \\\"given\\\": \\\"John\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_1..."
+      }
     },
     {
       "tool": "Agent",
@@ -6586,15 +6487,13 @@
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from ONE genealogical record into research.json and tree.gedcomx.json.\n\n**Project path:** C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\n\n**Record ID:** ark:/61903/1:1:JS5V-YYL\n\n**Log ID:** log_003 (already written \u2014 this was a record_read of a result from pli_004 search against CID 1708663)\n\n**Record content (from record_read):**\n- Record: Christening of Thomas Henry Kneale\n- Date: 9 December 1860\n- Place: Lezayre, Isle of Man\n- Father: John Kneale (record persona ark:/61903/1:1:JS5V-YYG)\n- Mother: Susanna Dawson (record persona ark:/61903/1:1:JS5V-YYP)\n- Source collection: \"Isle of Man, Births and Baptisms, 1607-1910\" (CID 1708663)\n- This is an original parish christening register entry (original record, primary information for date/place/parents)\n\n**Open research question IDs this record bears on:** q_001 (marriage of Susanna Dawson \u00d7 John Kneale), q_002 (identity of Susanna Dawson's father)\n\n**Key tree context:**\n- 9KNQ-8YB = Susanna Dawson Kneale (subject \u2014 married woman)\n- 9KNQ-8YD = John Kneale (husband)\n- GBSL-3WT = Thomas Henry Kneale (first child, already in tree as a person \u2014 born/christened Dec 1860 Lezayre)\n- I1 = John Dawson (Susanna's father \u2014 already in tree)\n- I3 = Jane Corlett (Susanna's mother \u2014 already in tree)\n- Existing sources: src_001 (S1, derivative index CID 1711668), src_002 (S2, CID 1784428 marriage), src_003 (S3, CID 1784428 christening of Susanna)\n- Existing assertions: a_001 through a_032 (32 total already)\n- Existing person_evidence: pe_001 through pe_044 (44 total already)\n\n**Notes:**\n- The child Thomas Henry Kneale is already in the tree as GBSL-3WT. Write assertions against this record for the christening event and for the parent-child relationship facts. The record confirms Susanna Dawson (= 9KNQ-8YB) as mother, John Kneale (= 9KNQ-8YD) as father \u2014 corroborating the Oct 1860 marriage.\n- Do NOT create person_evidence links (identity resolution is a separate step). Write only source + assertions, then return a compact summary.\n- Do NOT re-read the sidecar results file for log_003 \u2014 the record content is provided directly above. Log_003 was a search that found this among 50 results; the full record content is what's listed above from the subsequent record_read.\n- This is an autonomous run \u2014 no user confirmations are available.",
         "run_in_background": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction succeeded. Here is the compact summary:\\n\\n**Source:** src_005 / S5 \\u2014 sourceReuse action: `created`\\n\\n**Assertions written (8 total):**\\n- `child` (Thomas Henry Kneale, p_12461551131): a_040 name, a_041 sex, a_042 christening, a_043 relationship-to-father, a_044 relationship-to-mother\\n- `father` (John Kneale, p_12461551132): a_045 name\\n- `mother` (Susanna Dawson, p_12461551133): a_046 name\\n\\n**Key findings:**\\n- Source classification: original (p..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"q_002\\\",\\n      \\\"question\\\": \\\"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"name\\\": \\\"Susanna Dawson Kneale\\\",\\n      \\\"ge..."
+      }
     },
     {
       "tool": "Agent",
@@ -6603,15 +6502,13 @@
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from ONE genealogical record into research.json and tree.gedcomx.json.\n\n**Project path:** C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\n\n**Record ID:** ark:/61903/1:1:XZ15-BXY\n\n**Log ID:** log_004 (already written \u2014 this was a record_read of a result from pli_012 search against CID 1784428)\n\n**Record content (from record_read):**\n- Record: Marriage of John Dawson and Jane Corlett\n- Date: 16 August 1832\n- Place: Ballaugh, Isle of Man\n- Groom: John Dawson (record persona ark:/61903/1:1:XZ15-BXY or similar)\n- Bride: Jane Corlett\n- Source collection: \"Isle of Man, Parish Registers, 1598-2009\" (CID 1784428)\n- Image: https://www.familysearch.org/ark:/61903/3:1:S3HT-61BS-SBQ\n- This is an original parish marriage register entry (original record, primary information)\n\n**Open research question IDs this record bears on:** q_002 (identity of Susanna Dawson's father \u2014 this is the marriage of Susanna's parents, John Dawson \u00d7 Jane Corlett, corroborating them as a married couple)\n\n**Key tree context:**\n- 9KNQ-8YB = Susanna Dawson Kneale (subject \u2014 daughter of this couple)\n- I1 = John Dawson (Susanna's father \u2014 already in tree, groom in this record)\n- I3 = Jane Corlett (Susanna's mother \u2014 already in tree, bride in this record)\n- R21 = Couple relationship between I1 and I3 (already exists in tree)\n- Existing sources: src_001 (S1), src_002 (S2), src_003 (S3)\n- Existing assertions: a_001 through a_032 (32 total already); a new source src_004 may now exist from the parallel Thomas Henry Kneale extraction \u2014 check project state\n- Existing person_evidence: pe_001 through pe_044 (44 total already); more may exist from the parallel extraction\n\n**Notes:**\n- John Dawson (I1) and Jane Corlett (I3) are already in the tree. This record is the BCG-required parents' marriage record for q_002's parentage conclusion. Write assertions for the marriage event and the couple relationship.\n- The marriage fact should be added to the couple relationship R21 (I1 \u00d7 I3) if possible, or written as an assertion about the couple.\n- Do NOT create person_evidence links (identity resolution is a separate step). Write only source + assertions, then return a compact summary.\n- Do NOT re-read the sidecar results file for log_004 \u2014 the record content is provided directly above.\n- This is an autonomous run \u2014 no user confirmations are available.",
         "run_in_background": false
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Extraction persisted successfully. Here is the compact summary:\\n\\n**Source:** src_004 / S4 \\u2014 action: created. Original parish register entry, Isle of Man, Parish Registers, 1598-2009, Ballaugh marriage, 16 August 1832.\\n\\n**Assertions written: 7 total**\\n- groom (John Dawson / p_10473163647): a_033 (name), a_034 (sex), a_037 (marriage event), a_038 (relationship: spouse of Jane Corlett)\\n- bride (Jane Corlett / p_10473163648): a_035 (name), a_036 (sex), a_039 ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"q_002\\\",\\n      \\\"question\\\": \\\"Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"name\\\": \\\"Susanna Dawson Kneale\\\",\\n      \\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -6792,8 +6689,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_persona_id omitted \\u2014 multiple personas in this record (p_12461551131, p_12461551132, p_12461551133) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_12461551131')\\\",\\n    \\\"ops[2]: record_persona_id omitted \\u2014 multiple personas in this record (p_12461551131, p_12461551132, p_12461551133) and the bat..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -6971,8 +6867,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: record_persona_id omitted \\u2014 multiple personas in this record (p_10473163647, p_10473163648) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_10473163647')\\\",\\n    \\\"ops[2]: record_persona_id omitted \\u2014 multiple personas in this record (p_10473163647, p_10473163648) and the batch spans multiple record_roles..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -6980,8 +6875,7 @@
         "recordId": "ark:/61903/1:1:JS5V-YYL",
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "resultsRef": "results/log_003.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12461551131\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:JS5V-YYL\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Thomas Henry\\\",\\n          \\\"surname\\\": \\\"Kneale\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Christening\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"9 Dec 1860\\\",\\n          \\\"standard_date\\\": \\\"9 De..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -7166,8 +7060,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_033\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_034\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_035\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -7355,16 +7248,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_040\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_041\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_042\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7372,8 +7263,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_004"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 7,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_033\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:XZ15-BXY\\\",\\n      \\\"record_persona_id\\\": \\\"p_10473163647\\\",\\n      \\\"record_role\\\": \\\"groom\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"John Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"John\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"primary\\\",\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7381,8 +7271,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_005"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 7,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_040\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:JS5V-YYL\\\",\\n      \\\"record_persona_id\\\": \\\"p_12461551131\\\",\\n      \\\"record_role\\\": \\\"child\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Thomas Henry Kneale\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Thomas Henry\\\",\\n        \\\"surname\\\": \\\"Kneale\\\"\\n      },\\n      \\\"information_quality\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7580,8 +7469,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_045\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_046\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_047\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7679,8 +7567,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/plans[0]/items[2]: unexpected property 'notes' (plan items allow only id, sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status)\\\",\\n    \\\"research.json/plans[0]/items[3]: unexpected property 'notes' (plan items allow only id, sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status)\\\",\\n    \\\"research.json/plans[0]/items[4]: unexpecte..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7778,30 +7665,26 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**",
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills"
-      },
-      "response_summary": ".claude\\skills\\check-warnings\\references\\assumption-categories.md\n.claude\\skills\\check-warnings\\SKILL.md\n.claude\\skills\\check-warnings\\references\\warning-checks.md\n.claude\\skills\\check-warnings\\references\\warnings-as-identity-signals.md\n.claude\\skills\\citation\\SKILL.md\n.claude\\skills\\citation\\references\\gps-citation-standards.md\n.claude\\skills\\citation\\references\\validation-protocol.md\n.claude\\skills\\conflict-resolution\\SKILL.md\n.claude\\skills\\conflict-resolution\\references\\historical-contrad..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\research-exhaustiveness\\SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: research-exhaustiveness\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Evaluates whether research on a question is reasonably\n5\t  exhaustive \u2014 applies the five threshold questions and the 7-point\n6\t  stop criteria, then either writes the exhaustive_declaration on the\n7\t  question or explains what's missing. GPS Step 1 \u2014 Reasonably\n8\t  Exhaustive Research. Use when the user says \"is this research\n9\t  exhaustive?\", \"are we done?\", \"have we searched enough?\", \"can we\n10\t  declare exhaus..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\proof-conclusion\\SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the tier\n5\t  (Proved/Probable/Possible/Not Proved/Disproved), chooses the form\n6\t  (Statement/Summary/Argument), and writes a self-contained narrative\n7\t  markdown uploadable to FamilySearch.\n8\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use when\n9\t  the user says \"write the conclusion\", \"what's the proof?\", \"summarize\n10\t  the evidence\", \"write a proo..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7809,16 +7692,14 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "sourceId": "src_003"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 12,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_021\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:XZ5P-PRJ\\\",\\n      \\\"record_persona_id\\\": \\\"p_10469082467\\\",\\n      \\\"record_role\\\": \\\"child_1\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"prim..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "questions"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"count\\\": 2,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\",\\n      \\\"rationale\\\": \\\"First part of the research objective. Susanna was born c.1840 in Lezayre, IoM, and their first known child Thomas was born 1861 in Lezayre, placing the marriage c.1858\\u20131861. Pre-1878 IoM marriages appear in church registers ind..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -7878,23 +7759,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "q_001 \u2014 When and where did Susanna Dawson marry John Kneale? Project: C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr. Autonomous run: no user confirmations. Key evidence: src_002 (original CID 1784428 Lezayre marriage register, 21 Oct 1860, direct primary); src_001 (derivative CID 1711668, same date, discovery source only); src_005 (Thomas Henry christening Dec 1860, corroborates). Couple relationship R1 (9KNQ-8YB \u00d7 9KNQ-8YD) and marriage fact F5 (21 Oct 1860 Lezayre) are already in tree. Exhaustive declared."
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\proof-conclusion\\references\\gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7902,8 +7780,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 18,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_001\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:NKD4-6PY\\\",\\n      \\\"record_persona_id\\\": \\\"p_12135621417\\\",\\n      \\\"record_role\\\": \\\"bride\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"indete..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7911,16 +7788,14 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "conflicts",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "sources"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"sources\\\",\\n  \\\"count\\\": 5,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"src_001\\\",\\n      \\\"citation\\\": \\\"\\\\\\\"Isle of Man, Marriages, 1606\\u20131911,\\\\\\\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9743-KJG : 10 March 2020), Entry for John Kneale; citing Lezayre, Isle of Man; index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.\\\",\\n      \\\"citation_detail\\\": {\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7928,8 +7803,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "person_evidence",
         "personId": "9KNQ-8YB"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"count\\\": 19,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"pe_001\\\",\\n      \\\"assertion_id\\\": \\\"a_001\\\",\\n      \\\"person_id\\\": \\\"9KNQ-8YB\\\",\\n      \\\"confidence\\\": \\\"confident\\\",\\n      \\\"rationale\\\": \\\"Name 'Susanna Dawson' is an exact match to tree person 9KNQ-8YB (Susanna Dawson Kneale). Her maiden surname Dawson is corroborated by the 1878 Lezayre baptism of son William (names her 'Susanna Dawson Kneale'). T..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -7937,16 +7811,14 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "person_evidence",
         "personId": "9KNQ-8YD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"count\\\": 13,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"pe_004\\\",\\n      \\\"assertion_id\\\": \\\"a_003\\\",\\n      \\\"person_id\\\": \\\"9KNQ-8YD\\\",\\n      \\\"confidence\\\": \\\"confident\\\",\\n      \\\"rationale\\\": \\\"Marriage event 21 Oct 1860, Lezayre, IoM also bears on groom 9KNQ-8YD (John Kneale). The bride-role assertion names John Kneale as the other party; this corroborates 9KNQ-8YD's known marriage to Susanna Dawson. C..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__tree_correct",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -7954,8 +7826,7 @@
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "offset": 1,
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"9KNQ-8YB\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Susanna\",\n11\t          \"surname\": \"Dawson Kneale\"\n12\t        },\n13\t        {\n14\t          \"id\": \"N11\",\n15\t          \"type\": \"BirthName\",\n16\t          \"given\": \"Susanna\",\n17\t          \"surname\": \"Dawson\",\n18\t          \"sources\": [\n19\t            {\n20\t              \"ref\": \"S2\",\n21\t              \"quality\": 3\n22\t ..."
+      }
     },
     {
       "tool": "Grep",
@@ -7964,8 +7835,7 @@
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "output_mode": "content",
         "context": 5
-      },
-      "response_summary": "701-      \"type\": \"Couple\",\n702-      \"person1\": \"9KNQ-8YD\",\n703-      \"person2\": \"9KNQ-8YB\",\n704-      \"facts\": [\n705-        {\n706:          \"type\": \"Marriage\",\n707-          \"primary\": true,\n708-          \"date\": \"21 Oct 1860\",\n709-          \"standard_date\": \"21 Oct 1860\",\n710-          \"place\": \"Lezayre, Isle of Man\",\n711-          \"standard_place\": \"Lezayre, Isle of Man\","
+      }
     },
     {
       "tool": "Read",
@@ -7973,8 +7843,7 @@
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "offset": 695,
         "limit": 40
-      },
-      "response_summary": "695\t      ]\n696\t    }\n697\t  ],\n698\t  \"relationships\": [\n699\t    {\n700\t      \"id\": \"R1\",\n701\t      \"type\": \"Couple\",\n702\t      \"person1\": \"9KNQ-8YD\",\n703\t      \"person2\": \"9KNQ-8YB\",\n704\t      \"facts\": [\n705\t        {\n706\t          \"type\": \"Marriage\",\n707\t          \"primary\": true,\n708\t          \"date\": \"21 Oct 1860\",\n709\t          \"standard_date\": \"21 Oct 1860\",\n710\t          \"place\": \"Lezayre, Isle of Man\",\n711\t          \"standard_place\": \"Lezayre, Isle of Man\",\n712\t          \"sources\": [\n71..."
+      }
     },
     {
       "tool": "Grep",
@@ -7984,8 +7853,7 @@
         "output_mode": "content",
         "context": 2,
         "head_limit": 5
-      },
-      "response_summary": "16-          \"given\": \"Susanna\",\n17-          \"surname\": \"Dawson\",\n18:          \"sources\": [\n19-            {\n20-              \"ref\": \"S2\",\n\n[Showing results with pagination = limit: 5]"
+      }
     },
     {
       "tool": "Grep",
@@ -7994,8 +7862,7 @@
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "output_mode": "content",
         "context": 4
-      },
-      "response_summary": "899-      \"citation\": \"\\\"Isle of Man, Births and Baptisms, 1607-1910\\\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:J33R-GB5 : 6 February 2020), Susanna Dawson Kneale in entry for William Kneale, 1878.\",\n900-      \"url\": \"https://familysearch.org/ark:/61903/1:1:J33R-GB5\"\n901-    },\n902-    {\n903:      \"id\": \"S1\",\n904-      \"title\": \"Isle of Man, Marriages, 1606\u20131911 \u2014 Entry for John Kneale (index, CID 1711668)\",\n905-      \"url\": \"https://familysearch.org/ark:/61903/..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8020,8 +7887,7 @@
           "exhaustive_search_summary": "FamilySearch CID 1711668 (Isle of Man, Marriages, 1606-1911, legacy derivative index) and CID 1784428 (Isle of Man, Parish Registers, 1598-2009, current maintained collection) were searched for the Kneale-Dawson marriage. CID 1708663 (Isle of Man, Births and Baptisms, 1607-1910) was searched for the first child's christening record. Fallback sources \u2014 IoMFHS external site (pli_003), Ancestry (pli_005), 1861 census (pli_006) \u2014 were deferred as unnecessary once primary records were located on FamilySearch. The original register image for the marriage entry (ark:/61903/3:1:S3HY-65T3-MR8) was not read in this session. Research was declared reasonably exhaustive.",
           "narrative_markdown": "## Proof Summary: Marriage of Susanna Dawson and John Kneale\n\n**Conclusion:** The evidence strongly suggests that Susanna Dawson married John Kneale on **21 October 1860** at **Lezayre, Isle of Man** (*probable* tier). Original register image examination would advance this conclusion to proved.\n\n### Evidence\n\n**CID 1784428 indexed record (primary evidence).** An indexed entry in \"Isle of Man, Parish Registers, 1598-2009\" records the marriage of John Kneale and Susanna Dawson on 21 October 1860 at Lezayre, Isle of Man.^[1] The officiating minister or parish clerk who created the register entry acted in an official capacity with first-hand knowledge of the event (information: primary; evidence: direct). Access was via FamilySearch's indexed transcription; the source is therefore classified as derivative. The underlying physical register is held by the Isle of Man Civil Registry, Douglas; a digital image of the register page is accessible at ark:/61903/3:1:S3HY-65T3-MR8 but was not examined in this research session.\n\n**CID 1711668 legacy index (discovery source).** A legacy derivative index, \"Isle of Man, Marriages, 1606-1911,\" also records the same marriage at Lezayre on 21 October 1860.^[2] Compiled circa 2010 from FHL microfilm of the same Lezayre parish register, this index is not independent of the CID 1784428 entry \u2014 both trace to the same physical document. It served as the discovery source and confirms no discrepancy was introduced in the CID 1784428 transcription, but it adds no independent corroboration of the date or place.\n\n**CID 1708663 christening record (independent corroboration).** An entry in \"Isle of Man, Births and Baptisms, 1607-1910\" records the christening of Thomas Henry Kneale on 9 December 1860 at Lezayre, Isle of Man, naming John Kneale as father and Susanna Dawson as mother.^[3] This is an original source (a distinct parish register for a different life event) with primary information from the presenting parents, independently created forty-nine days after the claimed marriage date. Its contribution is indirect: it establishes that John Kneale and Susanna Dawson were a married couple with a child by 9 December 1860, consistent with a marriage on 21 October 1860, but it does not itself state the marriage date.\n\n### Analysis and Correlation\n\nThe CID 1784428 and CID 1711668 records agree on date (21 October 1860) and place (Lezayre) but derive from a single physical register and count as one evidence unit. The CID 1708663 christening is fully independent \u2014 different record type, different event, different informants \u2014 and corroborates the marriage as having occurred before 9 December 1860. No contradictory evidence was encountered: no second marriage record for either party under variant names, and no record suggesting a different date or parish.\n\n### Tier and Limitation\n\nThe marriage date and place rest on indexed derivative records of the Lezayre parish register. The original register image was not independently read. A second independent original source directly stating the date is not available from the searched collections. The evidence strongly points to 21 October 1860, Lezayre \u2014 no competing date or place exists \u2014 but the absence of original image examination holds the conclusion at *probable*. Examining the register image at ark:/61903/3:1:S3HY-65T3-MR8 and confirming the indexed date against the handwritten entry would advance the conclusion to proved.\n\n---\n^[1] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G54 : accessed 28 July 2026), entry for John Kneale and Susanna Dawson, marriage 21 Oct 1860, Lezayre, Isle of Man; citing Isle of Man Civil Registry, Douglas; FamilySearch CID 1784428.\n\n^[2] \"Isle of Man, Marriages, 1606\u20131911,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9743-KJG : 10 March 2020), Entry for John Kneale; citing Lezayre, Isle of Man; index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.\n\n^[3] \"Isle of Man, Births and Baptisms, 1607-1910,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:JS5V-YYL : accessed 28 July 2026), entry for Thomas Henry Kneale, christened 9 December 1860, Lezayre, Isle of Man; citing Lezayre parish register."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -8047,8 +7913,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -8056,8 +7921,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "assertions",
         "questionId": "q_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"assertions\\\",\\n  \\\"count\\\": 23,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"a_007\\\",\\n      \\\"record_id\\\": \\\"ark:/61903/1:1:XZTM-G54\\\",\\n      \\\"record_persona_id\\\": \\\"p_10470080527\\\",\\n      \\\"record_role\\\": \\\"bride\\\",\\n      \\\"fact_type\\\": \\\"name\\\",\\n      \\\"value\\\": \\\"Susanna Dawson\\\",\\n      \\\"structured_value\\\": {\\n        \\\"given\\\": \\\"Susanna\\\",\\n        \\\"surname\\\": \\\"Dawson\\\"\\n      },\\n      \\\"information_quality\\\": \\\"primar..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -8065,8 +7929,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "conflicts",
         "questionId": "q_002"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"count\\\": 0,\\n  \\\"items\\\": [],\\n  \\\"truncated\\\": false\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -8074,8 +7937,7 @@
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "person_evidence",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"person_evidence\\\",\\n  \\\"count\\\": 13,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"pe_015\\\",\\n      \\\"assertion_id\\\": \\\"a_011\\\",\\n      \\\"person_id\\\": \\\"I1\\\",\\n      \\\"confidence\\\": \\\"confident\\\",\\n      \\\"rationale\\\": \\\"Parentage assertion also bears on the father John Dawson (I1). Cardinality cross-link. Two records (this + christening a_025/a_027) independently identify I1 as Susanna's father \\u2014 confident.\\\",\\n      \\\"created\\\":..."
+      }
     },
     {
       "tool": "Grep",
@@ -8084,8 +7946,7 @@
         "path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\tree.gedcomx.json",
         "output_mode": "content",
         "context": 6
-      },
-      "response_summary": "767-      \"id\": \"R9\",\n768-      \"type\": \"ParentChild\",\n769-      \"parent\": \"9KNQ-8YB\",\n770-      \"child\": \"GBSS-99Q\"\n771-    },\n772-    {\n773:      \"id\": \"R10\",\n774-      \"type\": \"ParentChild\",\n775-      \"parent\": \"9KNQ-8YD\",\n776-      \"child\": \"GBSS-56D\"\n777-    },\n778-    {\n779:      \"id\": \"R11\",\n780-      \"type\": \"ParentChild\",\n781-      \"parent\": \"9KNQ-8YB\",\n782-      \"child\": \"GBSS-56D\"\n783-    },\n784-    {\n785:      \"id\": \"R12\",\n786-      \"type\": \"ParentChild\",\n787-      \"parent\": \"9KNQ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8109,16 +7970,14 @@
           "exhaustive_search_summary": "FamilySearch CID 1784428 (Isle of Man, Parish Registers, 1598-2009) was searched, yielding both the 1860 Lezayre marriage register (src_002, naming John Dawson as bride's father) and the 1839 Lezayre christening register (src_003, naming John Dawson as father). CID 1784428 was also searched for the parents' marriage, yielding the 1832 Ballaugh marriage of John Dawson and Jane Corlett (src_004). CID 1708663 was searched for additional baptism records. Ancestry 1841/1851 censuses, IoMFHS index, and image-browse fallbacks were deferred as unnecessary once primary records were located. Original register images for the 1839 christening (ark:/61903/3:1:9396-CBL3-F) and 1860 marriage (ark:/61903/3:1:S3HY-65T3-MR8) were not independently examined. Research was declared reasonably exhaustive.",
           "narrative_markdown": "## Proof Summary: Father of Susanna Dawson\n\n**Conclusion:** The evidence strongly suggests that **John Dawson** was the father of Susanna Dawson, born circa March 1839 at Lezayre, Isle of Man, who later married John Kneale (*probable* tier). Examination of the original register images would advance this conclusion to proved.\n\n### Evidence\n\n**1839 Lezayre Christening Register (primary evidence \u2014 original source).** The Lezayre christening register records the christening of Susanna Dawson on 10 March 1839, naming \"John Dawson\" as father and \"Jane Corlett\" as mother.^[1] This entry is classified as an original source (CID 1784428, \"Isle of Man, Parish Registers, 1598-2009\"). The informant for the father's name is John Dawson himself, who appeared as one of the presenting parents \u2014 primary information, direct evidence. This is the most authoritative evidence for the father's identity, created at or near the time of Susanna's birth. A digital image of the register page is noted in the citation detail (ark:/61903/3:1:9396-CBL3-F) but was not independently examined in this session.\n\n**1860 Lezayre Marriage Register (independent corroborating evidence \u2014 derivative source).** The Lezayre marriage register entry for Susanna Dawson's marriage to John Kneale on 21 October 1860 names \"John Dawson\" as the bride's father.^[2] The informant is Susanna Dawson herself, providing primary information from her own self-reported parentage at the time of her marriage. Evidence type: direct. This source is classified as derivative in this project (accessed via FamilySearch's indexed transcription; original image not independently examined). It is independent of the 1839 christening \u2014 different event, different year (twenty-one years later), and different informant (the daughter rather than the father). Susanna's naming of the same man as her father at an event requiring her to declare her own identity strengthens the identification.\n\n**1832 Ballaugh Marriage Register (contextual corroboration \u2014 original source).** The Ballaugh marriage register records the marriage of John Dawson and Jane Corlett on 16 August 1832 at Ballaugh, Isle of Man.^[3] This original source provides primary information from the officiating minister. It is not direct evidence of the Susanna-John Dawson parentage but contextually corroborates it: the same couple (John Dawson + Jane Corlett) named as Susanna's parents in the 1839 christening register were a married couple seven years before her birth, consistent with paternity. It also supplies the BCG-required parents' marriage record, confirming the couple's union and providing the mother's maiden name (Corlett).\n\n### Analysis and Correlation\n\nTwo independent acts \u2014 the 1839 christening and the 1860 marriage \u2014 name \"John Dawson\" as Susanna's father. The informants differ: John Dawson himself (1839, presenting parent) and Susanna Dawson (1860, bride). The events are separated by twenty-one years and recorded in different register series for different life events. No competing candidate for Susanna's father appeared in any searched source. The parents' 1832 marriage (a third independent act) establishes the couple existed seven years before Susanna's birth and supplies the mother's maiden name (Corlett), which neither the marriage register nor later records provide.\n\n### Tier and Limitation\n\nOne of the two direct-parentage sources (the 1860 marriage, src_002) is classified as derivative in this project \u2014 its index was accessed via FamilySearch rather than the original register image, and that image was not independently read. A proved tier requires two or more independent original sources with primary information directly agreeing on the specific fact. The 1839 christening register (original, primary, direct) meets that standard for a single source; a second independent original source directly stating the parentage has not been accessed in its original form. Examining the christening register image (ark:/61903/3:1:9396-CBL3-F) and the marriage register image (ark:/61903/3:1:S3HY-65T3-MR8) to confirm both indexed entries against the handwritten originals would advance the conclusion to proved.\n\n---\n^[1] \"Isle of Man, Parish Registers, 1598-2009\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ5P-PRJ : accessed 2026-07-28), Entry for Susanna Dawson and John Dawson, 10 Mar 1839.\n\n^[2] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G54 : accessed 28 July 2026), entry for John Kneale and Susanna Dawson, marriage 21 Oct 1860, Lezayre, Isle of Man; citing Isle of Man Civil Registry, Douglas; FamilySearch CID 1784428.\n\n^[3] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:XZ15-BXY : accessed 28 July 2026), John Dawson and Jane Corlett marriage, 16 August 1832, Ballaugh, Isle of Man; citing Ballaugh Parish Register, image, FamilySearch."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct,mcp__genealogy__research_append",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -8140,8 +7999,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_source\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8150,53 +8008,46 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection\\references\\question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr\\.claude\\skills\\question-selection\\references\\pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_query",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "questions"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"count\\\": 2,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"When and where did Susanna Dawson marry John Kneale on the Isle of Man?\\\",\\n      \\\"rationale\\\": \\\"First part of the research objective. Susanna was born c.1840 in Lezayre, IoM, and their first known child Thomas was born 1861 in Lezayre, placing the marriage c.1858\\u20131861. Pre-1878 IoM marriages appear in church registers ind..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "C:\\Users\\FUJITSU\\AppData\\Local\\Temp\\e2e-susanna-dawson-marriage-7yjl2slr",
         "section": "proof_summaries"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"count\\\": 2,\\n  \\\"items\\\": [\\n    {\\n      \\\"id\\\": \\\"ps_001\\\",\\n      \\\"question_id\\\": \\\"q_001\\\",\\n      \\\"tier\\\": \\\"probable\\\",\\n      \\\"vehicle\\\": \\\"summary\\\",\\n      \\\"supporting_assertion_ids\\\": [\\n        \\\"a_003\\\",\\n        \\\"a_006\\\",\\n        \\\"a_010\\\",\\n        \\\"a_015\\\",\\n        \\\"a_042\\\",\\n        \\\"a_043\\\",\\n        \\\"a_044\\\"\\n      ],\\n      \\\"resolved_conflict_ids\\\": [],\\n      \\\"exhaustive_se..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8239,8 +8090,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"ops[0]: research.json/questions[0]: 'resolved' must be an ISO date (YYYY-MM-DD), got 'true'\\\",\\n    \\\"ops[1]: research.json/questions[1]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\",\\n    \\\"ops[1]: rese..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8283,8 +8133,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -8295,8 +8144,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -8614,5 +8462,6 @@
       ],
       "transcript": "agent-a469eae7965f6637a.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

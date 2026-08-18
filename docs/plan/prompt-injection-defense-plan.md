@@ -8,6 +8,34 @@
 > never an instruction to obey — and back that with a regression test that
 > can't be silently broken later.
 
+> **The capability surface is materially larger than this plan assumes —
+> enumerated live in Cowork, 2026-08-16.** A full tool census returned **158
+> tools**, and the session that ingests record text also holds:
+>
+> - **Gmail — 27 tools including `send_message`, `create_draft`, `forward`**
+> - **Google Drive — 11 including `share_file`, `create_file`**
+> - Google Calendar 9, Claude-in-Chrome 22 (navigate, click, read page, upload)
+> - Nine device-bridge tools reaching the user's own machine, including
+>   `device_bash` and `device_commit_files`
+>
+> So the blast radius of a successful injection is not confined to a wrong
+> assertion in `research.json`. It includes sending mail as the user and sharing
+> their files. Two consequences for this plan:
+>
+> 1. **§1's framing understates the risk**, and the priority argument should be
+>    re-read with the above in hand.
+> 2. **The doctrine paragraph this plan proposes does not address it.** Telling
+>    the extractor that directive text is data does nothing about a *second-order*
+>    path — faithful capture copies directive text verbatim into
+>    `assertions[].value`, and it is re-served later to a context holding all of
+>    the above. The systemic answer is a **trust level on the assertion**, which
+>    is a schema change this plan does not scope.
+>
+> Also worth recording: exfiltration is **out of scope for the enforcement
+> layer** (lead ruling 2026-08-15) — that layer protects the *integrity* of the
+> project documents and says nothing about outbound channels. This plan is where
+> that concern lives, and it is the only place it currently does.
+
 ## 1. Why (verified, not assumed)
 
 We ingest untrusted free text at several points: `image_transcribe` OCR

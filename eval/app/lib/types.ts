@@ -109,8 +109,8 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
-  // in `apply_routing_deference`. The Python side keeps its equivalent only
-  // because it emits a different warning message.
+  // in `flag_routing_negative_judge_fail`. The Python side keeps its equivalent
+  // only because it emits a different warning message.
   const gradeable = new Set(
     log.tests
       .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)
@@ -401,6 +401,14 @@ export interface SkillInfo {
   description: string | null;
   allowedTools: string[];
   rubricDimensions: SkillRubricDimension[];
+  /**
+   * Why `rubricDimensions` is empty, when the rubric failed to parse.
+   * Null when the rubric parsed AND when there is no rubric.md at all —
+   * an absent file is the supported opt-out, not a failure. Empty
+   * dimensions alone can't tell those apart, which is the distinction
+   * the harness enforces (eval/harness/harness/rubric.py).
+   */
+  rubricError: string | null;
   stateless: boolean;
 }
 

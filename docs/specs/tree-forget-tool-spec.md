@@ -199,8 +199,11 @@ Any future field on this result is subject to the same rule.
 
 The tool heals legacy shapes (`sanitizeTree`) and then validates the **whole
 project** (`validateParsed`) before writing — the same validate-before-persist
-contract every writer tool honors. On a validation failure nothing is written and
-`{ ok: false, errors }` is returned.
+contract every writer tool honors. It blocks only on errors the removal itself
+introduces: on a **call-introduced** validation failure nothing is written and
+`{ ok: false, errors }` is returned, while pre-existing drift in a section the
+removal does not touch is demoted to a warning rather than freezing the removal
+(`validation/introduced-errors.ts`).
 
 This is a deliberate tightening over the deleted Python script, which validated
 nothing and could leave the project in a state where every later `tree_edit`
