@@ -58,8 +58,9 @@ textDocument, ~10% error rate). **Always verify against the original image.**
 
 ### 1. Identify the plan item to execute
 
-Read `research.json` `plans[]` and find the next plan item with
-`status: "planned"` that targets full-text search. If the user
+Read `research.json` directly (its `plans[]` and `log[]`) — not via
+`project_context`, which returns neither. Find the next plan item
+with `status: "planned"` that targets full-text search. If the user
 specifies a particular search, match it to a plan item or create
 an ad-hoc search (with `plan_item_id: null` in the log).
 
@@ -224,6 +225,10 @@ research_append({
 ```
 
 Set `completed` (search executed) or `skipped` (unnecessary).
+**Never complete a different plan item because an unrelated ad-hoc
+search touched the same research question** — e.g. a witness-search
+or tree-ID lookup does not complete a probate/will item; only that
+item's own search does.
 
 ### 9. Handle nil results
 
