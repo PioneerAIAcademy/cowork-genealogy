@@ -1,4 +1,4 @@
-"""Repo-wide lint: text-mode file I/O must pass an ``encoding=`` keyword.
+"""Repo-wide lint: text-mode file I/O and subprocess capture must pass ``encoding=``.
 
 CLAUDE.md section "Python file I/O" requires ``encoding="utf-8"`` on every Python
 ``read_text`` / ``write_text`` / ``open`` on a text file, with no exceptions. A bare
@@ -22,6 +22,17 @@ Matching rules:
     ``x.open`` is ambiguous; widening it safely is #1355. Binary mode (a ``"b"`` in the
     2nd positional arg or a ``mode=`` kwarg) is skipped; the rest are flagged when they
     have no ``encoding=`` keyword.
+  - ``subprocess.run(...)`` / ``.check_output(...)`` / ``.Popen(...)`` / ``.call(...)`` /
+    ``.check_call(...)`` -- the same failure class, one call shape over: ``text=True``
+    or ``universal_newlines=True`` puts the pipe in text mode, decoded with the platform
+    default unless ``encoding=`` is also given. Matched only on the ``subprocess.<name>``
+    attribute form (this repo's sole convention -- no ``from subprocess import run``
+    exists), so it needs no ``x.open``-style disambiguation. A call in binary mode
+    (neither flag set) does no decoding and is out of scope, same as ``open()``'s
+    binary-mode carve-out above -- found live 2026-08-18 (issue #1399 follow-on): six
+    ``mock_mcp.py`` sites hit exactly this decoding a live tool's UTF-8 stdout as
+    cp1252, in a background reader thread whose crash the caller only saw as a
+    swallowed ``None`` and a wasted retry.
 
 Generated / vendored trees we neither own nor can fix are skipped.
 """
@@ -55,6 +66,9 @@ SKIP_DIR_NAMES = frozenset(
 # Always called on a Path receiver; both take an encoding= keyword.
 TEXT_METHODS = frozenset({"read_text", "write_text"})
 
+# Matched only as subprocess.<name>(...) -- see module docstring.
+SUBPROCESS_METHODS = frozenset({"run", "check_output", "Popen", "call", "check_call"})
+
 
 def _iter_python_files(root: Path):
     for path in root.rglob("*.py"):
@@ -72,6 +86,33 @@ def _is_binary_open(call: ast.Call) -> bool:
         if kw.arg == "mode" and isinstance(kw.value, ast.Constant):
             mode = kw.value.value
     return isinstance(mode, str) and "b" in mode
+
+
+def _is_subprocess_call(call: ast.Call) -> str | None:
+    """The method name if this is subprocess.<name>(...), else None."""
+    func = call.func
+    if (
+        isinstance(func, ast.Attribute)
+        and func.attr in SUBPROCESS_METHODS
+        and isinstance(func.value, ast.Name)
+        and func.value.id == "subprocess"
+    ):
+        return func.attr
+    return None
+
+
+def _is_text_mode(call: ast.Call) -> bool:
+    """True if text=True or universal_newlines=True is passed as a keyword.
+
+    Only a keyword is checked -- both are keyword-only in the subprocess API,
+    so a positional match would be structurally wrong, not just unnecessary.
+    """
+    return any(
+        kw.arg in ("text", "universal_newlines")
+        and isinstance(kw.value, ast.Constant)
+        and kw.value.value is True
+        for kw in call.keywords
+    )
 
 
 def _has_encoding(call: ast.Call) -> bool:
@@ -100,6 +141,10 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
         elif isinstance(func, ast.Name) and func.id == "open":
             if not _is_binary_open(node) and not _has_encoding(node):
                 offenders.append((node.lineno, "open"))
+        else:
+            subprocess_method = _is_subprocess_call(node)
+            if subprocess_method and _is_text_mode(node) and not _has_encoding(node):
+                offenders.append((node.lineno, f"subprocess.{subprocess_method}"))
     return offenders
 
 
@@ -153,3 +198,27 @@ def test_encoding_none_is_flagged():
     # A real encoding -- and any non-None expression -- still passes.
     assert _offenders_in('p.read_text(encoding="utf-8")') == []
     assert _offenders_in("open(f, encoding=enc)") == []
+
+
+def test_subprocess_text_mode_without_encoding_is_flagged():
+    # text=True (or its older spelling) puts the pipe in text mode, decoded
+    # with the platform default unless encoding= is also given -- the exact
+    # shape that crashed mock_mcp.py on Windows (module docstring).
+    assert _offenders_in("subprocess.run(cmd, text=True)") == [(1, "subprocess.run")]
+    assert _offenders_in("subprocess.run(cmd, universal_newlines=True)") == [
+        (1, "subprocess.run")
+    ]
+    assert _offenders_in("subprocess.check_output(cmd, text=True)") == [
+        (1, "subprocess.check_output")
+    ]
+    assert _offenders_in("subprocess.Popen(cmd, text=True)") == [(1, "subprocess.Popen")]
+    # encoding= present -- passes, same as the file-I/O rule above.
+    assert _offenders_in('subprocess.run(cmd, text=True, encoding="utf-8")') == []
+    assert _offenders_in("subprocess.run(cmd, text=True, encoding=None)") == [
+        (1, "subprocess.run")
+    ]
+    # Binary mode (neither flag set) does no decoding -- out of scope, not an offender.
+    assert _offenders_in("subprocess.run(cmd, capture_output=True)") == []
+    # Only the subprocess.<name> attribute form is matched (this repo's sole
+    # convention) -- an unrelated .run(...) on some other object is not subprocess's.
+    assert _offenders_in("session.run(cmd, text=True)") == []
