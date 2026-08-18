@@ -19,9 +19,8 @@ _SPEC = importlib.util.spec_from_file_location(
 check_runlogs = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_runlogs)
 
-# check_runlogs puts the harness dir on sys.path, so this import must follow it.
-from harness.snapshot import build_snapshot  # noqa: E402
-
+# check_runlogs' import inserts the harness dir on sys.path, so these resolve.
+from harness.snapshot import build_snapshot, normalize  # noqa: E402
 
 
 def _log_with_one_dimension() -> dict:
@@ -108,6 +107,103 @@ def test_rule3_missing_dimension_still_reported(tmp_path, capsys):
     rc = check_runlogs.rule3_completeness("init-project", _log_with_one_dimension(), fn, skill_dir)
     assert rc == 1
     assert "unreviewed" in capsys.readouterr().out
+
+
+# --- Sampled rule 3 -----------------------------------------------------
+
+
+def _multi_test_log(n: int = 20, review_sample: dict | None = None) -> dict:
+    log = {
+        "tests": [
+            {
+                "test_id": f"ut_x_{i:03d}",
+                "outcome_summary": {
+                    "aggregated_dimensions": [
+                        {"source": "base", "name": "Correctness"},
+                        {"source": "base", "name": "Completeness"},
+                    ]
+                },
+            }
+            for i in range(n)
+        ]
+    }
+    if review_sample is not None:
+        log["review_sample"] = review_sample
+    return log
+
+
+def _corrections_for(
+    test_ids: list[str], *, comment: str | None = "read it", score: int = 3
+) -> list[dict]:
+    """`score` defaults to a confirmed pass (3 -> 3), which is comment-exempt.
+    Pass score=2 for a cell the comment rule still applies to."""
+    return [
+        {
+            "test_id": tid,
+            "dimension_source": "base",
+            "dimension_name": name,
+            "llm_score": score,
+            "corrected_score": score,
+            "comment": comment,
+        }
+        for tid in test_ids
+        for name in ("Correctness", "Completeness")
+    ]
+
+
+def test_rule3_accepts_sampled_annotation(tmp_path):
+    """A 20-test run log whose annotation covers only the 5 sampled tests
+    passes. Under the old every-dimension rule this was 40 unreviewed cells."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_blocks_an_unreviewed_sampled_test(tmp_path, capsys):
+    """Sampling narrows WHICH tests are required, not whether they are."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = [f"ut_x_{i:03d}" for i in range(5)]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled[:-1]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "unreviewed" in capsys.readouterr().out
+
+
+def test_rule3_unchanged_without_review_sample(tmp_path):
+    """Back-compat, and the reason this change is retroactively safe: every one
+    of the 109 committed annotations predates `review_sample`, so they must keep
+    the every-dimension rule. Must pass before AND after the change."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(20)]
+    log = _multi_test_log(20)  # no review_sample
+    partial = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every[:5])
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, partial, skill_dir) == 1
+
+    full = _write_ann(skill_dir, "v2_2026-06-24_00-00-00.json", _corrections_for(every))
+    assert check_runlogs.rule3_completeness("init-project", log, full, skill_dir) == 0
+
+
+def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
+    """An ungraded test asks nothing of rule 3 and is dropped from sampling, so
+    without a warning a run with nothing gradeable passes silently."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+    out = capsys.readouterr().out
+    assert "no graded dimensions" in out
+    assert "ut_x_aborted" in out
 
 
 # --- Rule 2 cosmetic-skip escape hatch -----------------------------------
@@ -333,6 +429,201 @@ def test_touched_agent_without_references_gates_nothing(monkeypatch, capsys, tmp
     assert "All runlog rules satisfied" in capsys.readouterr().out
 
 
+# --- Shared-fixture → referencing-skill mapping (#1094) ---------------------
+
+
+def _make_tests_tree(tmp_path):
+    """Two skills' unit-test dirs: one references a scenario + an mcp fixture,
+    one references neither."""
+    tests = tmp_path / "tests"
+    a = tests / "uses-fixture"
+    a.mkdir(parents=True)
+    (a / "t.json").write_text(
+        json.dumps(
+            {
+                "test": {"id": "ut_uf_001"},
+                "input": {"scenario": "shared-scn"},
+                "mcp_fixtures": ["shared-mcp"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    b = tests / "no-fixture"
+    b.mkdir(parents=True)
+    (b / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_nf_001"}, "input": {}, "mcp_fixtures": []}),
+        encoding="utf-8",
+    )
+    return tests
+
+
+def test_skills_referencing_fixtures_maps_by_ref(tmp_path):
+    """A scenario resolves by directory name; an mcp fixture resolves by bare
+    name (no `.json`) — the two traps the resolution must get right."""
+    tests = _make_tests_tree(tmp_path)
+    mapping = check_runlogs.skills_referencing_fixtures(tests)
+    assert mapping == {
+        ("scenarios", "shared-scn"): {"uses-fixture"},
+        ("mcp", "shared-mcp"): {"uses-fixture"},
+    }
+
+
+_SCN_REL = "eval/fixtures/scenarios/shared-scn/research.json"
+_MCP_REL = "eval/fixtures/mcp/shared-mcp.json"
+
+
+def _setup_repo(tmp_path, monkeypatch, *, runlog_matches_disk, with_runlog=True):
+    """Build a tmp repo — the `uses-fixture` skill's tests reference a scenario
+    and an mcp fixture, both present on disk, and (when `with_runlog`) a
+    full-skill run log whose snapshot embeds BOTH — and point check_runlogs'
+    globals at it. `runlog_matches_disk` controls whether the embedded copies
+    equal the on-disk fixtures (active → silent) or differ (stale → warn).
+
+    This drives the real `rule2_fixture_touched` snapshot diff, unlike a setup
+    that leaves RUNLOGS_DIR on the real repo (which would pass via the
+    unrelated 'no run logs' branch without ever exercising the arm)."""
+    repo = tmp_path / "repo"
+    for rel, blob in (
+        ("eval/tests/unit/uses-fixture/t.json",
+         {"test": {"id": "ut_uf_001"},
+          "input": {"scenario": "shared-scn"},
+          "mcp_fixtures": ["shared-mcp"]}),
+        ("eval/tests/unit/no-fixture/t.json",
+         {"test": {"id": "ut_nf_001"}, "input": {}, "mcp_fixtures": []}),
+    ):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(json.dumps(blob), encoding="utf-8")
+
+    for rel in (_SCN_REL, _MCP_REL):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text('{"disk": true}', encoding="utf-8")
+
+    runlogs_unit = repo / "eval/runlogs/unit"
+    runlogs_unit.mkdir(parents=True, exist_ok=True)
+    if with_runlog:
+        def _snap(rel):
+            disk = (repo / rel).read_bytes()
+            return normalize(rel, disk if runlog_matches_disk else b'{"embedded": "old"}')
+
+        rl_dir = runlogs_unit / "uses-fixture"
+        rl_dir.mkdir()
+        (rl_dir / "v1.json").write_text(
+            json.dumps({"snapshot": {_SCN_REL: _snap(_SCN_REL), _MCP_REL: _snap(_MCP_REL)}}),
+            encoding="utf-8",
+        )
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs_unit)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", repo / "eval/tests/unit")
+    return repo
+
+
+def test_touched_scenario_warns_when_runlog_stale(monkeypatch, capsys, tmp_path):
+    """Editing eval/fixtures/scenarios/<name>/ warns for every skill whose tests
+    reference <name> and whose run log embeds a now-stale copy — WARN-ONLY
+    (rc 0), unlike a skill/agent edit which blocks. Named acceptance test: it
+    fails today because the fixture arm does not exist."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0  # warn-only: never blocks
+    assert "::warning::" in out
+    assert "uses-fixture" in out  # referencing skill surfaced
+    assert "v1.json" in out  # exercised rule2_fixture_touched, not the no-runlog branch
+    assert _SCN_REL in out  # the changed fixture is named
+    assert "no-fixture" not in out  # non-referencing skill untouched
+    assert _MCP_REL not in out  # scoping: the un-changed (but also stale) fixture is NOT attributed
+
+
+def test_touched_mcp_fixture_warns_when_runlog_stale(monkeypatch, capsys, tmp_path):
+    """Same via eval/fixtures/mcp/<name>.json — the bare-name (`.json`-stripped)
+    reference must resolve, and only the changed fixture is attributed."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, [_MCP_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out
+    assert "v1.json" in out
+    assert _MCP_REL in out
+    assert _SCN_REL not in out  # scoping: scenario not attributed to an mcp edit
+    assert "no-fixture" not in out
+
+
+def test_touched_fixture_active_runlog_no_warning(monkeypatch, capsys, tmp_path):
+    """When the run log already matches the changed fixture (active), the arm
+    stays silent — guards against inverting `if not fixture_diffs: return`."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=True)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "uses-fixture" not in out
+    assert "All runlog rules satisfied" in out
+
+
+def test_touched_fixture_missing_runlog_warns(monkeypatch, capsys, tmp_path):
+    """A referenced fixture whose skill has no run log still warns (nothing to
+    re-diff), and stays warn-only (rc 0)."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False, with_runlog=False)
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out
+    assert "no run logs" in out
+
+
+def test_touched_fixture_without_references_warns_nobody(monkeypatch, capsys, tmp_path):
+    """A changed fixture no test references surfaces no skill and stays green."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    _patch_diffs(monkeypatch, ["eval/fixtures/mcp/nobody-references-this.json"])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "uses-fixture" not in out
+    assert "All runlog rules satisfied" in out
+
+
+def test_exempt_skill_with_unit_suite_is_not_suppressed(monkeypatch, capsys, tmp_path):
+    """The exemption is keyed on directory existence, not name (#1094 review):
+    a skill in RUNLOG_GATE_EXEMPT_SKILLS that HAS gained an eval/tests/unit/
+    dir is no longer exempt, so a fixture edit still warns for it. Guards
+    against regressing to the name-keyed `-= RUNLOG_GATE_EXEMPT_SKILLS`."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    # `uses-fixture` has a unit-test dir in the tmp repo; naming it exempt must
+    # NOT silence it, because the exemption only applies to suiteless skills.
+    monkeypatch.setattr(
+        check_runlogs, "RUNLOG_GATE_EXEMPT_SKILLS", frozenset({"uses-fixture"})
+    )
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning::" in out
+    assert "uses-fixture" in out  # suited exempt skill is still warned
+
+
+def test_exempt_suiteless_skill_is_dropped(monkeypatch, capsys, tmp_path):
+    """The converse: a truly suiteless exempt skill contributes no unit-test
+    references (skills_referencing_fixtures never sees it) and never warns —
+    the exemption's intended case still holds."""
+    _setup_repo(tmp_path, monkeypatch, runlog_matches_disk=False)
+    monkeypatch.setattr(
+        check_runlogs, "RUNLOG_GATE_EXEMPT_SKILLS", frozenset({"no-such-suiteless"})
+    )
+    _patch_diffs(monkeypatch, [_SCN_REL])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "no-such-suiteless" not in out
+    # `uses-fixture` is not exempt here, so it still warns as usual.
+    assert "uses-fixture" in out
+
+
 # --- git_diff_touched_paths uses a 3-dot (merge-base) diff -----------------
 
 
@@ -510,3 +801,169 @@ def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatc
     body["input"]["user_message"] = "SUBSTANTIVE"
     (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
     assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+
+
+def test_rule3_ignores_an_empty_review_sample(tmp_path, capsys):
+    """`{"tests": []}` must not switch the blocking rule off. This field is
+    committed in the same PR it gates, so anything untrustworthy falls back to
+    the every-dimension rule rather than being believed."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": [], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "is empty" in out
+    assert "unreviewed" in out
+
+
+def test_rule3_ignores_a_review_sample_naming_unknown_tests(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(3, review_sample={"tests": ["ut_nope"], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "not in this run log" in capsys.readouterr().out
+
+
+def test_rule3_ignores_a_sample_of_only_ungraded_tests(tmp_path, capsys):
+    """A sample naming only zero-dimension tests would require nothing."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    log = _multi_test_log(2, review_sample={"tests": ["ut_x_aborted"], "cursor": [], "seed": 0})
+    log["tests"].append(
+        {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    )
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections=[])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "would require nothing" in capsys.readouterr().out
+
+
+def test_rule3_rejects_sampled_correction_without_comment(tmp_path, capsys):
+    """Sampling only pays off if the remaining cells are read. 91.4% of the
+    corpus this replaces was confirmed with no comment written at all."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+
+
+def test_rule3_rejects_a_whitespace_only_comment(tmp_path, capsys):
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment="   ", score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_does_not_require_comments_without_a_review_sample(tmp_path):
+    """Every committed annotation predates both sampling and this rule; a
+    comment mandate applied to them would redden 109 files retroactively."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    every = [f"ut_x_{i:03d}" for i in range(3)]
+    log = _multi_test_log(3)  # no review_sample
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(every, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_ignores_a_missing_comment_on_an_unsampled_test(tmp_path):
+    """Nothing is asked of an unsampled test, so a stray correction there is a
+    bonus, not a debt."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corrections = _corrections_for(sampled) + _corrections_for(["ut_x_009"], comment=None)
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corrections)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_reports_missing_dimensions_and_missing_comments_together(tmp_path, capsys):
+    """Reporting only the first sends the author round a second CI cycle."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(["ut_x_000"], comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    out = capsys.readouterr().out
+    assert "no comment" in out
+    assert "unreviewed" in out
+
+
+def test_rule3_exempts_a_confirmed_pass_from_the_comment_rule(tmp_path):
+    """89.4% of corrections are 3 -> 3. Requiring a sentence there spends ~26 of
+    every ~29 on the cells least likely to carry anything."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(sampled, comment=None)
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_an_overridden_pass(tmp_path, capsys):
+    """3 -> 2 is not a confirmed pass; the annotator has to say what they saw."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    corr[0]["corrected_score"] = 2
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out
+
+
+def test_rule3_exempts_a_confirmed_na_from_the_comment_rule(tmp_path):
+    """null -> null is the same shape as 3 -> 3: the judge said the dimension
+    never applied and the reviewer agrees. 700 such cells exist, 91% silent."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    corr = _corrections_for(sampled, comment=None)
+    for c in corr:
+        c["llm_score"] = None
+        c["corrected_score"] = None
+    fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", corr)
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
+
+
+def test_rule3_still_requires_a_comment_on_a_confirmed_partial(tmp_path, capsys):
+    """Agreeing that something went wrong is exactly when to say what."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    fn = _write_ann(
+        skill_dir,
+        "v1_2026-06-24_00-00-00.json",
+        _corrections_for(sampled, comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 1
+    assert "no comment" in capsys.readouterr().out

@@ -26,8 +26,10 @@ sources:
 - **base** — always: `Correctness`, `Completeness`. Defined in
   `eval/harness/judge/prompt.md`.
 - **rubric** — opt-in, per-skill: dimensions in
-  `eval/tests/unit/<skill>/rubric.md`. A skill with no `rubric.md`,
-  or with an empty one, is graded on base only.
+  `eval/tests/unit/<skill>/rubric.md`. A skill with no `rubric.md` is
+  graded on base only. Opting out means **deleting** the file: a
+  present-but-blank one is a runnability failure, since the CRUD UI's
+  parser rejects it.
 
 There is **no `criteria` source.** Per-test `judge_context[]` (formerly
 `additional_criteria[]`) is still rendered into the judge prompt as

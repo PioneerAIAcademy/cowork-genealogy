@@ -16,6 +16,8 @@ allowed-tools:
   - person_read
   - person_search
   - place_search
+  - project_create
+  - research_append
 ---
 
 # Init Project
@@ -99,6 +101,35 @@ Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsu
 
 **Family knowledge counts as a holding too.** When the user states something from family memory (a maiden name, who married whom), record it as `oral_knowledge` *in addition* to using it in the tree. The two are not mutually exclusive: "Mary Donovan" both creates Mary's stub and is itself oral knowledge worth surveying. Do not let "I used it in the tree" drop it from `known_holdings`. (Only facts from family/personal knowledge, not the bare research target.)
 
+## Setting up a forget-and-rederive test
+
+Sometimes the researcher seeds a project **specifically to test you** — "start a
+project for this person but omit his parents, I want to see whether you can find
+them again," or "leave his death out so I can check you re-derive it." Your job
+here is unchanged: **build the complete tree and stop.** Never hand-omit anything
+at construction time, and never perform the forgetting yourself.
+
+Build the tree exactly as you normally would — every person, relationship, and
+documentary fact the survey turns up, *including the very slice they asked you to
+leave out*. Then finish init-project normally and tell the researcher the tree is
+complete and that forgetting is a **separate next step** they run with the
+**forget-and-rederive** skill. In this skill you do **not**:
+
+- strip, omit, or leave out the fact or relationship under test;
+- write a `.tree-before-forget…` restore file or any partial tree;
+- call `tree_forget` or `project_context`, or otherwise begin forget-and-rederive
+  in this turn — you don't have those tools, and the forgetting is not your step.
+
+Why the strip belongs to `tree_forget`, not a hand-omit: a conclusion is recorded
+in two places at once — as structure (a ParentChild or Couple relationship) *and*
+as a documentary fact on the subject's own record (a `Parents` or `Marriage` fact
+whose value names the relatives). Omit at build time and you drop the structure
+but keep the fact, so the answer survives. `tree_forget` removes both, writes a
+restore file so the researcher can undo it, and reports counts-only so the answer
+never re-enters context. A partial hand-build has none of that — which is why the
+**complete** tree, not a stripped one, is what init-project delivers. Do not treat
+"omit X" as an instruction to skip X during construction.
+
 ## Steps
 
 > These steps run ONLY for a brand-new project. If `research.json` exists, you stopped at the guard clause.
@@ -113,7 +144,7 @@ Objectives are broad (overarching goal, not a research question — those come l
 
 ### Searching by name
 
-Call `person_search` with name + known facts. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
+Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
 
 Present ranked candidates with `personId`, confidence, key facts. In single-turn mode, select the top candidate. Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
 
@@ -127,13 +158,13 @@ Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true 
 - **Flag the discrepancy** with user's statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification."
 - Never frame the user's information as an error.
 
-### 3. Create `tree.gedcomx.json`
+### 3. Build the tree from `person_read`
 
-Write using data from `person_read`. Follow `references/simplified-gedcomx-summary.md`.
+Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
 
 **Simplified GedcomX is NOT the same as full GedcomX.** `person_read` returns full GedcomX — you must convert. Key differences: top-level array is `sources` (NOT `sourceDescriptions`); persons have no `fsid` or `extracted` fields; use snake_case for all field names (`standard_place`, not `standardPlace`). Structure: `{ "persons": [], "relationships": [], "sources": [] }`.
 
-**Include:** subject person (names, facts, source references), all relatives (parents, spouse, children), all relationships, all source descriptions.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`.
 
 **ID conventions (overrides the reference doc):** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`….
 
@@ -165,17 +196,25 @@ Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's ma
 
 When unsure: did the user name them, or is their surname fixed by a stated maiden name? If neither, no stub.
 
-### 4. Create `research.json`
+### 4. Create the project
 
-Write using `templates/research.json`.
+**Call `project_create` once.** It writes both files together, validated against each other. It assigns `id`, `status`, `created` and `updated` — do not supply them.
 
-**Project section:** `id`: `rp_001`; `objective`: from Step 1; `subject_person_ids`: local GedcomX ID of primary subject (e.g. `["I1"]`); `status`: `active`; `created`/`updated`: today (ISO 8601); `title`: concise 3-6 word session name (e.g. "Patrick Flynn's parents").
+```
+project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree: <Step 3> })
+```
 
-**`researcher_profile`:** `experience_level`, `subscriptions`, `narration_guidance` from the interview.
+`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `subjectPersonIds` the primary subject's local tree ID. It refuses a subject ID your tree does not contain, and refuses if a project already exists.
 
-**`known_holdings`:** one entry per reported item — `id` (`kh_001`…), `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in tree.gedcomx.json; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`), `created` (today ISO 8601). If no holdings, write `known_holdings: []`.
+Then relay to the user that the project was created, naming the folder.
 
-All other sections (`questions`, `plans`, `log`, `sources`, `assertions`, `person_evidence`, `conflicts`, `hypotheses`, `timelines`, `proof_summaries`, `evaluations`) remain as empty arrays.
+### 4a. Profile and holdings
+
+Two `research_append` calls, after `project_create` — never before, and never bundled into it.
+
+**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and subscriptions first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default. If the user has answered neither question and you have not asked, write nothing here — an absent profile falls back to sane narration everywhere, a guessed one silently mis-narrates for the life of the project.
+
+**`known_holdings`** — one `research_append({ section: "known_holdings", op: "append", entry: {...} })` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
 ### 5. Pedigree analysis and project summary
 
@@ -224,9 +263,9 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 
 1. Call `person_read({ personId: "KWCJ-RN4", relatives: true, sourceDescriptions: true })`
 2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
-3. Write `tree.gedcomx.json` with all persons, relationships, sources (quality: 1).
-4. Map user answers (or defaults) to `researcher_profile`. Record any volunteered holdings.
-5. Write `research.json` with project section, profile, holdings, empty arrays.
+3. Build the tree in memory — all persons, relationships, sources (quality: 1).
+4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
+5. `research_append` for `researcher_profile` (from their answers, not defaults) and one per volunteered holding.
 6. Pedigree analysis + summary. Mary Kelly and the children are tree context
    only — their gaps are noted, not queued. Offer the first research question
    in plain language.
@@ -242,9 +281,10 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+- **Never persist a default `researcher_profile` when the opening message stated experience or subscriptions.** Normalize per the interview tables before writing `research.json`.
 
 ## Re-invocation behavior
 
-**Writes:** `research.json` (project metadata, `researcher_profile`, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources). Runs once at project creation.
+**Writes:** via `project_create` — `research.json` (project metadata, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources); then via `research_append` — `researcher_profile` and `known_holdings`. Runs once at project creation.
 
 **On repeat invocation:** the guard clause detects existing `research.json` and declines. Never overwrites existing `questions`/`plans`/`log`/`assertions`/`sources` content.

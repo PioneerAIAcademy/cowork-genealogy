@@ -4,20 +4,20 @@
     "skill": "init-project",
     "name": "Asking what to research next on an existing project routes to question-selection, not init-project",
     "type": "negative",
-    "description": "On an existing, in-progress project (research.json present), the user gives the canonical next-question prompt: just resolved a question, what should I work on next? That is question-selection's flagship trigger (GPS Step 1 — selecting the next research question from current project state). init-project only creates a brand-new project from scratch and must not re-fire once research.json exists. This is a sharp routing discrimination: the request uses question-selection's own trigger vocabulary and carries no init-project trigger ('new project', 'start research', 'research <person>', 'find parents of'), so a correct model routes deterministically rather than on a coin-flip.",
+    "description": "On an existing, in-progress project (research.json present), the user asks which research question to pursue next after answering the current one. That is question-selection's flagship trigger (GPS Step 1 — selecting the next research question from current project state). init-project only creates a brand-new project from scratch and must not re-fire once research.json exists. This is a sharp routing discrimination: the request asks explicitly for the next research question (question-selection's own vocabulary), carries no resume/status framing that would legitimately invite project-status, and carries no init-project trigger ('new project', 'start research', 'research <person>', 'find parents of'), so a correct model routes deterministically rather than on a coin-flip.",
     "tags": ["init-vs-question-selection", "boundary", "routing"],
     "expected_outcome": "pass"
   },
   "input": {
-    "user_message": "I just resolved a question in my ongoing Flynn parentage research project. What should I work on next?",
+    "user_message": "I just answered my current question in the Flynn parentage project. Which research question should I pursue next?",
     "scenario": "mid-research-flynn"
   },
   "runs_per_test": 1,
   "negative": {
     "correct_skill": ["question-selection"],
-    "explanation": "The project already exists (mid-research-flynn has a populated research.json — q_001 in_progress, q_002 resolved). 'I just resolved a question … what should I work on next?' is question-selection's flagship trigger: it selects the next research question from current project state (timeline gaps, unresolved conflicts, hypothesis tests, exhausted direct evidence). The message deliberately avoids a specific question to plan, which would belong to research-plan, and avoids every init-project trigger. init-project's sole job is the initial creation of research.json + tree.gedcomx.json from scratch; it has no role once a project exists, so it must not activate here."
+    "explanation": "The project already exists (mid-research-flynn has a populated research.json — q_001 in_progress, q_002 resolved). 'I just answered my current question … which research question should I pursue next?' is question-selection's flagship trigger: it selects the next research question from current project state (timeline gaps, unresolved conflicts, hypothesis tests, exhausted direct evidence). The message asks explicitly for the next research question — not a status/resume summary (which would legitimately invite project-status) and not a specific question to plan (which would belong to research-plan) — and avoids every init-project trigger. init-project's sole job is the initial creation of research.json + tree.gedcomx.json from scratch; it has no role once a project exists, so it must not activate here."
   },
   "judge_context": [
-    "On an existing project, 'I just resolved a question — what should I work on next?' is a next-question request that belongs to question-selection. init-project must not re-run its setup workflow on a populated project."
+    "On an existing project, 'I just answered my current question — which research question should I pursue next?' is a next-question request that belongs to question-selection. init-project must not re-run its setup workflow on a populated project."
   ]
 }

@@ -32,7 +32,7 @@ import type {
   SimplifiedFact,
   SimplifiedRelationship,
 } from "../types/gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-io.js";
 import { formatIssues } from "./merge-shared.js";
@@ -65,6 +65,25 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "fact",
   "relationship",
 ]);
+
+// The subject's own person-level facts a relative selector must sweep alongside
+// the structure it removes. FamilySearch carries a conclusion TWICE — as graph
+// structure AND as a documentary fact on the subject's own record — so removing
+// only the structure leaks the answer as a fact (and the fact can be the SOLE
+// carrier when the relatives were never added as tree persons).
+//
+// These lists are a DELIBERATE, EVIDENCE-BACKED SUBSET, not the full couple/parent
+// fact family. Add a type here only after confirming FS actually echoes it
+// person-level in real data — never on assumption. (#1314's `Parents` matcher
+// was nearly merged targeting an "undefined" type until a `person_read` RESULT
+// in the feedback-2026-08-03 session log confirmed FS emits it — an upstream
+// fact with an FS-native UUID id, not a value the agent wrote; do not repeat
+// that in reverse by adding unverified types.) `materialize-facts.ts`'s
+// `EVENT_TREE_TYPES` lists further
+// couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
+// is NOT yet confirmed — see issue #1549 before extending this set.
+const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 90 person-level Marriage facts across committed snapshot trees (2026-08-14); Divorce/Annulment have no corpus evidence yet — see #1549
+const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
 
 export interface ForgetSelector {
   selector: ForgetSelectorKind;
@@ -187,6 +206,20 @@ function factIdsOfType(
   );
 }
 
+/** factIdsOfType across several types, unioned — the person-level facts a
+ *  relative selector must sweep alongside the structure it removes. */
+function factIdsOfTypes(
+  tree: SimplifiedGedcomX,
+  personId: string,
+  factTypes: string[],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const factType of factTypes) {
+    factIdsOfType(tree, personId, factType).forEach((id) => ids.add(id));
+  }
+  return ids;
+}
+
 // ─── selector resolution ─────────────────────────────────────────────────────
 
 interface Targets {
@@ -219,7 +252,22 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
           { "parents-of": "parents", "children-of": "children", "spouses-of": "spouses" } as const
         )[kind];
         const { people, rels } = relatives(tree, pid, relation);
-        if (people.size === 0 && rels.size === 0) {
+        // FamilySearch carries a conclusion TWICE: as structure AND as a
+        // documentary fact on the subject's own record (person_read returns
+        // both). Forgetting the structure must take the fact too, or the answer
+        // survives on the subject. Each fact can even be the SOLE carrier — when
+        // the related persons were never added as tree persons — so its presence
+        // also keeps the selector from erroring as "matched nothing". The swept
+        // type sets — and why they are a deliberate subset — are defined at
+        // SWEPT_PARENT_FACT_TYPES / SWEPT_SPOUSE_FACT_TYPES. children-of is
+        // unaffected: the `Parents` fact lives on the child, whom it removes whole.
+        const redundantFactIds =
+          kind === "parents-of"
+            ? factIdsOfTypes(tree, pid, [...SWEPT_PARENT_FACT_TYPES])
+            : kind === "spouses-of"
+              ? factIdsOfTypes(tree, pid, [...SWEPT_SPOUSE_FACT_TYPES])
+              : new Set<string>();
+        if (people.size === 0 && rels.size === 0 && redundantFactIds.size === 0) {
           throw new TreeForgetError(
             `'${kind}' matched nothing — ${pid} has no ${relation} in the tree, ` +
               `so there is nothing to forget.`,
@@ -227,6 +275,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         people.forEach((p) => t.persons.add(p));
         rels.forEach((r) => t.relationships.add(r));
+        redundantFactIds.forEach((f) => t.facts.add(f));
         break;
       }
       case "birth-of":
@@ -363,6 +412,9 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const sanitized = sanitizeTree(raw);
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // Post-heal, pre-removal snapshot: block only on errors THIS call
+    // introduces, not pre-existing drift in a section it never touches (#1572).
+    const beforeTree = structuredClone(tree);
 
     const targets = resolveSelectors(tree, forget);
     const removed = applyForget(tree, targets);
@@ -371,7 +423,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     // dangling person reference from research.json (person_evidence,
     // subject_person_ids, timelines, known holdings) — this tool does not
     // repair those, by design, so the error names them and the caller decides.
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
@@ -383,7 +435,10 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       remaining: { persons: persons(tree).length, relationships: relationships(tree).length },
       filesWritten: [],
       restoreFile: null,
-      validation: { valid: true, warnings: sanitized.warnings },
+      validation: {
+        valid: true,
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings)],
+      },
     };
     if (dryRun) return result;
 
@@ -473,7 +528,10 @@ export const treeForgetSchema = {
               ],
               description:
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
-                "them (cascades). birth-of/death-of: that person's Birth/Death facts. " +
+                "them (cascades). parents-of ALSO removes the person's own `Parents` " +
+                "documentary facts, and spouses-of ALSO removes the person's own " +
+                "`Marriage`/`Divorce`/`Annulment` facts, so the forgotten conclusion does not " +
+                "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death facts. " +
                 "facts-of: that person's facts of one type (needs factType). person: one " +
                 "person, cascading every relationship touching them. fact/relationship: one " +
                 "specific entity by id.",

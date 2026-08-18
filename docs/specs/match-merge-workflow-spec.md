@@ -235,7 +235,8 @@ folds a candidate document.
 Run `check-warnings` (final mode) on each affected anchor; verify
 `research.json` reference integrity. (`materialize_facts` and the `tree_edit`
 edge writes validate the would-be project before persisting and write nothing on
-error — `tree-materialization-spec.md` §4.1.)
+a call-introduced error (pre-existing drift rides as a warning) —
+`tree-materialization-spec.md` §4.1.)
 
 ---
 
@@ -522,7 +523,8 @@ under Block — corrected to match.)
 - **Override logging.** An `error` cleared by the user records the override and
   the shown impossibility.
 - **Validation failure.** `materialize_facts` and the `tree_edit` writes validate
-  the would-be project and write nothing on failure
+  the would-be project and write nothing on a **call-introduced** failure; a
+  pre-existing error the call did not introduce rides as a warning
   (`tree-materialization-spec.md` §4.1).
 - **Missing data.** No collection title / no parseable dates → the affected
   check returns no warning silently; the gate never throws on absent data.

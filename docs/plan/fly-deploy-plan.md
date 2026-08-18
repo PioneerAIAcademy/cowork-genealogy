@@ -161,12 +161,13 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 | `ANTHROPIC_API_KEY` | secret | yes | Operator key (injected per sandbox) |
 | `SESSION_SECRET` | secret | yes | Replaces the `dev-insecure-secret-change-me` default; signs the session cookie **and** the FamilySearch OAuth `state`. **Boot-enforced** (below) |
 | `WS_SIGNING_KEY` | secret | yes | Replaces the `dev-ws-signing-key-change-me` default; HMAC master key for per-sandbox WS handshake tokens. **Boot-enforced** (below) |
+| `FS_TOKEN_ENC_KEY` | secret | yes | Replaces the `dev-insecure-fs-token-key-change-me` default; master key the FamilySearch tokens are encrypted under at rest (`crypto.EncryptedStr`, issue #1128). Rotating it makes stored tokens undecryptable — users reconnect once. **Boot-enforced** (below) |
 | `DATABASE_URL` | secret | yes | Neon Postgres, DIRECT (non-pooler) URL. Unset → SQLite on ephemeral rootfs (there is no Fly volume), losing every row on restart. **Boot-enforced** (below) |
 
 **Boot-enforced** (issue #1123): because `PUBLIC_URL` is https, the app calls
 `config.assert_production_config` as the first statement of `main.py`'s lifespan and
-**refuses to start** when `DATABASE_URL` is unset or blank, or either secret is still
-at its development default. The refusal names each offending setting — and only the
+**refuses to start** when `DATABASE_URL` is unset or blank, or any of those secrets is
+still at its development default. The refusal names each offending setting — and only the
 offending ones — with its `fly secrets set` remedy. A secret set to a blank or weak
 value still boots; closing that is issue #1367.
 Before this, forgetting one silently produced forgeable session cookies, forgeable WS
@@ -185,6 +186,7 @@ fly secrets set \
   ANTHROPIC_API_KEY=... \
   SESSION_SECRET="$(openssl rand -hex 32)" \
   WS_SIGNING_KEY="$(openssl rand -hex 32)" \
+  FS_TOKEN_ENC_KEY="$(openssl rand -hex 32)" \
   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
   ALLOWED_EMAILS="dallan@quass.org"
 ```

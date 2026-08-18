@@ -196,7 +196,7 @@ together in a record but doesn't know the formal relationship.
 |-------|------|-------------|
 | `collectionId` | string | A FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `"1743384"`). |
 | `imageGroupNumber` | string | Image group number of a specific digitized volume (e.g., `"004010852"`). Also accepts split DGS format (e.g., `"004010852_001_M9QY-X6Y"`). Use the `volume_search` tool first to find the image group number. |
-| `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It satisfies the anchor rule by itself — combining it with `recordCountry` or `recordSubdivision` is rejected by `validateInput`, because a country that does not match the batch silently returns 0 (shape carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. `C050761` appears in older documentation as a letter + 6 digits example and is not attested here; the tool validates nothing, so this list bounds the evidence, not the input. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
+| `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. **Obtained from the `batchNumber` field on a previous result** (see the response section); before that field existed there was no way to get one, which is why the strategy was documented on five surfaces and executable on none. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It satisfies the anchor rule by itself — combining it with `recordCountry` or `recordSubdivision` is rejected by `validateInput`, because a country that does not match the batch silently returns 0 (shape carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. `C050761` appears in older documentation as a letter + 6 digits example and is not attested here; the tool validates nothing, so this list bounds the evidence, not the input. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
 | `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
@@ -658,6 +658,7 @@ Each `RecordSearchResult`:
 | `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
 | `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
+| `batchNumber` | string \| undefined | The extraction batch this record came out of (e.g. `"M01048-5"`), read off the entry's `content.gedcomx.fields[]`. Feed it straight back as the `batchNumber` **input** to enumerate the rest of the batch. Undefined on any record that does not trace to an extraction batch, which is most of them — **absence carries no information** and is not a statement about the collection. See [`batchNumber`](#batchnumber--the-only-route-to-a-batch-you-can-enumerate) below. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
@@ -862,106 +863,75 @@ Example:
 
 ---
 
+### `batchNumber` — the only route to a batch you can enumerate
+
+The `batchNumber` **input** (see the record-source fields above) is the canonical
+way to enumerate one parish: send it alone and it returns that batch's records.
+It shipped without any way to *obtain* a batch number. The references prescribed
+the strategy on five surfaces, `search-records` has no web access, and no tool
+returned one — so the workflow was executable nowhere. This field closes
+that loop:
+
+1. find one record by name in the collection (an ordinary indexed search);
+2. read `batchNumber` off a hit that has one;
+3. send it alone — enumerate the rest of the batch.
+
+**Read off `content.gedcomx.fields[]` on the entry ROOT.** The same `fields` key
+also hangs off persons, names, facts, places and source-description coverage,
+where it carries `PR_AGE`, `Role` and spatial data — never a batch.
+
+**Matched on `labelId === "FS_UDE_BATCH_NBR"`, never on the field's `type` URI.**
+The type suffix is spelled **both** `UdeBatchNbr` and `UdeBatchNumber` depending
+on the collection — measured live 2026-08-13, `q.batchNumber=B01883-5` and the
+English IGI batch `M01048-5` return the former while collection `1494474`
+(Germany) and the all-numeric batch `8317102` return the latter, with nothing
+caller-visible to predict it from. `labelId` was `FS_UDE_BATCH_NBR` on every
+record measured, in both spellings. A matcher written to whichever spelling the
+first collection you probe happens to use returns nothing on the collections
+using the other, and **a batch present upstream but unread here is
+indistinguishable from a record that has none**, so the miss is silent. Do not add a `type` check
+"for safety" — it would carry that same risk forward to a third spelling while
+excluding nothing, since no other field uses this labelId.
+
+**Presence is per RECORD, not per collection and not per record type.** Over an
+ordinary indexed search anchoring on no batch (surname + country, 10 hits per
+record type): birth 0/10, census 0/10, marriage 4/10. Widening the marriage leg
+to 20 hits, collection `1618491` ("New York, County Marriages") returned **7 with
+a batch and 11 without** — one collection holding both kinds. Two consequences
+the caller has to know:
+
+- **Absence means nothing.** Not "this collection has no batches", not "this
+  record cannot be enumerated from". Never report a missing `batchNumber` as a
+  finding.
+- **Scan the hits.** Step 2 above is "read it off a hit that has one", not "read
+  it off the top result" — the first hit may legitimately carry none inside a
+  collection that is full of them.
+
+Evidence trail: `dev/probe-batch-field.ts`, which computes every verdict above
+from its own run rather than restating these numbers. `BatchLocality` is a
+sibling field on the same array and is **deliberately not surfaced**: it would
+read as an invitation to pass `recordCountry` alongside a batch, which
+`validateInput` rejects and which the anchor-rule design note measured as inert
+at best and silently destructive at worst.
+
+Carried onto `rank_search_matches`' ranked stubs as well — a search that supplies
+`subjectId` returns `ranked`, and that is the projection the caller reads.
+
+---
+
 ## Tool Schema
 
-```typescript
-{
-  name: "record_search",
-  description:
-    "Search FamilySearch's historical record index for a specific person. " +
-    "Requires at least one anchor: surname, recordCountry or batchNumber. Other fields " +
-    "narrow ranking. Returns ranked person matches with key facts, " +
-    "persistent URLs, source-record details, and Family-Tree-person match " +
-    "suggestions. Requires authentication — call the login tool first if " +
-    "not logged in. For ambiguous place names, call the places tool first. " +
-    "To scope to a specific record collection, call the collections tool " +
-    "first to find the right collectionId.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      // Person fields
-      surname:               { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
-      givenName:             { type: "string", description: "Given (first) name of the searched person." },
-      surnameAlt:            { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
-      givenNameAlt:          { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
-      sex:                   { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact:          { type: "boolean", description: "When `true`, restricts the surname to its exact spelling. Narrows the count and reorders the records it keeps; measured over complete sets it only ever removes records, never surfaces one the fuzzy search buried. Fuzzy matching is what bridges an index misspelling, so setting this can drop the target. Use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
-      givenNameExact:        { type: "boolean", description: "When `true`, restricts the given name to its exact spelling. Narrows the count and reorders the records it keeps; it is not a way to surface a record the fuzzy search buried. Expected to exclude diminutives a period record may use (`Betty` for `Elizabeth`) — the default's reach to them is measured, the exclusion is not. Applies to `givenNameAlt` too." },
+The advertised schema for `record_search` is **not duplicated here.** Read it at
+[`packages/engine/mcp-server/src/tools/record-search.ts`](../../packages/engine/mcp-server/src/tools/record-search.ts) —
+it is the only copy the model ever sees, and a paste of it in this file has no
+reader that the source does not serve.
 
-      // Birth event
-      birthYearFrom:         { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
-      birthYearTo:           { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact:        { type: "boolean", description: "When `true`, the birth-year range is matched exactly (no fuzz around the bounds)." },
-      birthPlace:            { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      birthPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Death event
-      deathYearFrom:         { type: "number", description: "Lower bound of the death-year range. 4-digit year (e.g., 1900). Must be paired with `deathYearTo`." },
-      deathYearTo:           { type: "number", description: "Upper bound of the death-year range. 4-digit year (e.g., 1920). Must be paired with `deathYearFrom`." },
-      deathYearExact:        { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
-      deathPlace:            { type: "string", description: "Death place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      deathPlaceExact:       { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Marriage event
-      marriageYearFrom:      { type: "number", description: "Lower bound of the marriage-year range. 4-digit year (e.g., 1830). Must be paired with `marriageYearTo`." },
-      marriageYearTo:        { type: "number", description: "Upper bound of the marriage-year range. 4-digit year (e.g., 1840). Must be paired with `marriageYearFrom`." },
-      marriageYearExact:     { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
-      marriagePlace:         { type: "string", description: "Marriage place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      marriagePlaceExact:    { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Residence event
-      residenceYearFrom:     { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
-      residenceYearTo:       { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact:    { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
-      residencePlace:        { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      residencePlaceExact:   { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Any-event
-      anyYearFrom:           { type: "number", description: "Lower bound of an any-event year range. 4-digit year (e.g., 1850). Use when the event type is unknown or doesn't matter. Must be paired with `anyYearTo`." },
-      anyYearTo:             { type: "number", description: "Upper bound of an any-event year range. 4-digit year (e.g., 1880). Must be paired with `anyYearFrom`." },
-      anyYearExact:          { type: "boolean", description: "When `true`, the any-event year range is matched exactly." },
-      anyPlace:              { type: "string", description: "Place name for an event of any type. For ambiguous place names, call the `place_search` tool first to disambiguate." },
-      anyPlaceExact:         { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
-
-      // Family members
-      spouseGivenName:       { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record)." },
-      spouseSurname:         { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
-      fatherGivenName:       { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father)." },
-      fatherSurname:         { type: "string", description: "Father's family name." },
-      fatherGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
-      motherGivenName:       { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother)." },
-      motherSurname:         { type: "string", description: "Mother's family name." },
-      motherGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
-      parentGivenName:       { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent." },
-      parentSurname:         { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact:  { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact:    { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
-      otherGivenName:        { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate)." },
-      otherSurname:          { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship." },
-      otherGivenNameExact:   { type: "boolean", description: "When `true`, requires an exact match on the other given name." },
-      otherSurnameExact:     { type: "boolean", description: "When `true`, requires an exact match on the other family name." },
-
-      // Record-source
-      collectionId:          { type: "string", description: "A single FamilySearch collection ID — the `id` string returned by the `collections_search` tool (e.g., `\"1743384\"`). Call `collections_search` first to find the right ID for a place or topic. Note: this is a different ID system from the `place_search` tool's IDs — pass a place *name* to `collections_search`, not a place ID." },
-      imageGroupNumber:      { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
-      batchNumber:           { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
-      recordCountry:         { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
-      recordSubdivision:     { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
-      recordType:            { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
-      maritalStatus:         { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
-      isPrincipal:           { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Omit the parameter to return both — the broadest set, recommended for most natural-language searches." },
-
-      // Pagination
-      count:                 { type: "number", description: "Number of results per page. Default 20, max 100." },
-      offset:                { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." }
-    }
-  }
-}
-```
+A verbatim copy used to live here and drifted: it was not updated alongside the
+tool, no check compared the two, and prose written against the stale block
+contradicted the shipped descriptions. Do not reintroduce one. If a rendered
+schema is ever wanted in the docs, generate it from `allToolSchemas` at build
+time the way `packages/schema/src/enums.generated.ts` is generated — never by
+hand.
 
 The anchor rule is enforced inside `validateInput`, not via JSON
 Schema's `required` (which can only require single fields, not
@@ -1345,6 +1315,16 @@ For each `entry` in `response.entries`:
     matches one of `gedcomx.persons[].id`, since `toSimplified` preserves
     person ids. Omitted when that persona carries no `id`.
 
+14. `batchNumber` ← the `text` of the first value in
+    `entry.content.gedcomx.fields[]` whose `labelId` is `"FS_UDE_BATCH_NBR"`.
+    Read off the RAW gedcomx, not `result.gedcomx`: `toSimplified` does not
+    carry the root `fields[]` into the simplified document. Matched on
+    `labelId` alone — **not** on the field's `type` URI, which is spelled both
+    `UdeBatchNbr` and `UdeBatchNumber` across collections. Only the ROOT array
+    is read; the `fields` on persons/names/facts/places carry other content.
+    Omitted when no such field is present, which is the common case. See
+    [`batchNumber`](#batchnumber--the-only-route-to-a-batch-you-can-enumerate).
+
 **Top-level fields:**
 
 - `query` ← echo of input (only fields the caller supplied).
@@ -1397,9 +1377,13 @@ records are added.
 ### `packages/engine/mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
-`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`) and tool I/O
-types (`RecordSearchInput`, `RecordSearchResult`, `RecordSearchEvent`,
-`TreeMatch`, `RecordSearchToolResponse`).
+`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
+`FSFieldValue`) and tool I/O types (`RecordSearchInput`,
+`RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
+`RecordSearchToolResponse`).
+
+`FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
+`FSGedcomx` now carries — the batch number's home.
 
 ### `packages/engine/mcp-server/src/types/relative-terms.ts`
 
@@ -1516,9 +1500,18 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 53 | `other` is `absent` only when the record has no co-person | The one reachable denial |
 | 54 | `other` still answers when the relationship graph is missing | It reads `persons[]`, not the graph |
 | 55 | Survives the staged slim block, inline **and** in the sidecar on disk | The integration the design turns on |
+| 56 | `batchNumber` read when the type is spelled `UdeBatchNbr` | One of the two live spellings |
+| 57 | `batchNumber` read when the type is spelled `UdeBatchNumber` | The other live spelling — a one-spelling matcher misses these collections |
+| 58 | Read on an unknown type spelling, keyed on `labelId` alone | Pins the design: a third spelling must not silently return nothing |
+| 59 | Person-level `fields` (`PR_AGE`, `Role`) never yield a batch | Only the gedcomx ROOT array is the batch's home |
+| 60 | Field omitted entirely on a record that traces to no batch | Absence is not a value; most records have none |
+| 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
+| 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
+| 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
-after this table was last extended. Cases 35–55 cover `relativeTerms`.
+after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
+cover `batchNumber`.
 
 ### Smoke-test script
 
@@ -1531,6 +1524,8 @@ npx tsx dev/try-record-search.ts --given Mary --country "United States"  # surna
 npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary    # maiden+married name
 npx tsx dev/try-record-search-film.ts Smith --film 004010852       # film-number filter
 npx tsx dev/try-record-search-film.ts Smith --film 004010852 --given John --birth-year 1850
+
+npx tsx dev/probe-batch-field.ts   # evidence trail behind `batchNumber`
 ```
 
 ---

@@ -40,7 +40,12 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
-import { dimensionAllowsNa } from '@/lib/types';
+import {
+  dimensionAllowsNa,
+  isConfirmedNonFailing,
+  sampledTestIds,
+  uncommentedSampledCorrections,
+} from '@/lib/types';
 import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
@@ -314,6 +319,7 @@ const DimensionRow = memo(function DimensionRow({
   dim,
   judgeRationale,
   correction,
+  owesComments,
   onUpdate,
   onFocus,
   onBlur,
@@ -323,6 +329,10 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
+  /** This test is in a TRUSTED review sample, so every reviewed dimension of it
+   *  needs a comment unless it is a confirmed pass or N/A. False on a
+   *  pre-sampling run log, where CI asks for no comments at all. */
+  owesComments: boolean;
   onUpdate: (c: AnnotationCorrection | null, key: string) => void;
   onFocus: (dim: DimensionId) => void;
   onBlur: () => void;
@@ -347,7 +357,23 @@ const DimensionRow = memo(function DimensionRow({
   }
 
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
-  const needsComment = disagrees && !draft.trim();
+  // On a sampled test every reviewed dimension needs a comment EXCEPT a
+  // confirmed pass (judge 3, you agree 3) — 89.4% of the corpus is 3 -> 3, so
+  // exempting those takes a run from ~29 sentences to ~3. CI applies the same
+  // rule; signalling anything looser is how an annotator learns it from a red
+  // check instead of from the field.
+  // Both predicates are the shared ones. Re-deriving either is how this pane
+  // and CI came to disagree twice: once on null -> null (exempt in the shared
+  // rule, red here) and once on pre-sampling logs (nothing owed by CI, every
+  // row red here).
+  const confirmedPass =
+    correction != null &&
+    isConfirmedNonFailing(correction.llm_score, correction.corrected_score);
+  const needsComment =
+    correction != null &&
+    !draft.trim() &&
+    !confirmedPass &&
+    (owesComments || disagrees);
   const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
 
   const setScore = (s: ScoreOrNull) => {
@@ -457,13 +483,23 @@ const DimensionRow = memo(function DimensionRow({
       <Textarea
         size="xs"
         mt={4}
-        placeholder="comment (optional, expected on disagreement)"
+        placeholder={
+          owesComments && !confirmedPass
+            ? 'comment (required — what you checked, and why)'
+            : 'comment (optional, expected on disagreement)'
+        }
         value={draft}
         onChange={(e) => onCommentChange(e.target.value)}
         onBlur={onCommentBlur}
         autosize
         minRows={1}
-        error={needsComment ? 'comment required when overriding the LLM score' : undefined}
+        error={
+          needsComment
+            ? disagrees
+              ? 'comment required when overriding the LLM score'
+              : 'comment required on a sampled dimension that is not a confirmed pass'
+            : undefined
+        }
       />
     </Card>
   );
@@ -547,6 +583,7 @@ function GradesPane({
   entry,
   skillUnderTest,
   annotation,
+  sampled,
   onSetCorrection,
   onAgreeAll,
   onDimensionFocus,
@@ -557,6 +594,8 @@ function GradesPane({
   entry: TestEntry;
   skillUnderTest: string;
   annotation: AnnotationFile | null;
+  /** Tests the annotation must cover, or null for all of them. */
+  sampled: Set<string> | null;
   onSetCorrection: (c: AnnotationCorrection | null, key: string) => void;
   onAgreeAll: (test_id: string) => void;
   onDimensionFocus: (dim: DimensionId) => void;
@@ -573,12 +612,27 @@ function GradesPane({
   }, [annotation]);
 
   const dims = entry.outcome_summary.aggregated_dimensions;
-  const unreviewedCount = dims.filter(
-    (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
-  ).length;
+  // A test outside the sample is not unreviewed — nothing is asked of it.
+  // Without this the header paints "6 unreviewed" on the very test the sidebar
+  // labels `not sampled`.
+  // Two different questions, deliberately separate: `inSample` is "must this
+  // test be reviewed" (true for every test on a pre-sampling log), while
+  // `owesComments` is "does it owe comments" (false there — CI asks for none).
+  const inSample = sampled === null || sampled.has(entry.test_id);
+  const owesComments = sampled !== null && sampled.has(entry.test_id);
+  const unreviewedCount = !inSample
+    ? 0
+    : dims.filter(
+        (d) => !correctionsByKey.has(`${entry.test_id}|${d.source}|${d.name}`),
+      ).length;
+  // Blocks "Next test" on anything CI would block the PR on. On a sampled test
+  // that is every reviewed dimension with no comment, not only the overridden
+  // ones — otherwise the button waves the annotator through work CI rejects.
   const hasUncommentedDisagreement = dims.some((d) => {
     const c = correctionsByKey.get(`${entry.test_id}|${d.source}|${d.name}`);
-    return c != null && c.corrected_score !== c.llm_score && !(c.comment ?? '').trim();
+    if (c == null || (c.comment ?? '').trim()) return false;
+    if (isConfirmedNonFailing(c.llm_score, c.corrected_score)) return false;
+    return owesComments || c.corrected_score !== c.llm_score;
   });
   const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
 
@@ -591,21 +645,40 @@ function GradesPane({
             {entry.outcome}
           </Badge>
           {entry.flaky ? <Badge color="orange">flaky</Badge> : null}
-          {unreviewedCount > 0 ? (
+          {!inSample ? (
+            <Badge color="gray" variant="outline">not sampled</Badge>
+          ) : unreviewedCount > 0 ? (
             <Badge color="orange" variant="outline">{unreviewedCount} unreviewed</Badge>
           ) : (
             <Badge color="green" variant="light">complete</Badge>
           )}
         </Group>
-        <Button
-          size="xs"
-          variant="default"
-          px="xs"
-          style={{ flexShrink: 0 }}
-          onClick={() => onAgreeAll(entry.test_id)}
-        >
-          Agree All
-        </Button>
+        {/* Agree All is hidden on a sampled test. Sampling cut the pass ~3x
+            precisely so the remaining cells get read; a one-click agree on the
+            five tests that matter reproduces the 91.4%-silent-confirm corpus at
+            a fifth the size. It stays available on unsampled tests, which are
+            optional and where a bulk agree costs nothing. */}
+        {owesComments ? (
+          <Tooltip
+            label="Sampled tests are reviewed one dimension at a time — each needs a comment."
+            position="left"
+            withArrow
+          >
+            <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+              sampled — comment on each
+            </Text>
+          </Tooltip>
+        ) : (
+          <Button
+            size="xs"
+            variant="default"
+            px="xs"
+            style={{ flexShrink: 0 }}
+            onClick={() => onAgreeAll(entry.test_id)}
+          >
+            Agree All
+          </Button>
+        )}
       </Group>
 
       {explanation ? (
@@ -643,6 +716,7 @@ function GradesPane({
           const key = `${entry.test_id}|${d.source}|${d.name}`;
           return (
             <DimensionRow
+              owesComments={owesComments}
               key={key}
               test_id={entry.test_id}
               dimKey={key}
@@ -957,11 +1031,14 @@ function EvidencePane({
 function TestsPane({
   tests,
   annotation,
+  sampled,
   selectedTestId,
   onSelect,
 }: {
   tests: TestEntry[];
   annotation: AnnotationFile | null;
+  /** Tests the annotation must cover, or null for all of them. */
+  sampled: Set<string> | null;
   selectedTestId: string | null;
   onSelect: (test_id: string) => void;
 }) {
@@ -989,14 +1066,21 @@ function TestsPane({
       ),
     );
     for (const t of tests) {
-      const total = t.outcome_summary.aggregated_dimensions.length;
-      const reviewed = t.outcome_summary.aggregated_dimensions.filter((d) =>
-        have.has(`${t.test_id}|${d.source}|${d.name}`),
-      ).length;
+      // An unsampled test is not "0 reviewed" — nothing is asked of it. Giving
+      // it a denominator is what would render "5/90 reviewed" on a sample of 5
+      // and paint an orange badge on every test the annotator must not open.
+      const total = sampled && !sampled.has(t.test_id)
+        ? 0
+        : t.outcome_summary.aggregated_dimensions.length;
+      const reviewed = total === 0
+        ? 0
+        : t.outcome_summary.aggregated_dimensions.filter((d) =>
+            have.has(`${t.test_id}|${d.source}|${d.name}`),
+          ).length;
       out[t.test_id] = { reviewed, total };
     }
     return out;
-  }, [tests, annotation]);
+  }, [tests, annotation, sampled]);
 
   const totalReviewed = Object.values(reviewedByTest).reduce((a, b) => a + b.reviewed, 0);
   const totalDimensions = Object.values(reviewedByTest).reduce((a, b) => a + b.total, 0);
@@ -1035,11 +1119,11 @@ function TestsPane({
                     {name ?? t.test_id}
                   </Text>
                   <Badge
-                    color={complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
-                    variant={complete ? 'filled' : 'light'}
+                    color={total === 0 ? 'gray' : complete ? 'green' : reviewed > 0 ? 'yellow' : 'gray'}
+                    variant={total === 0 ? 'outline' : complete ? 'filled' : 'light'}
                     size="xs"
                   >
-                    {reviewed}/{total}
+                    {total === 0 ? 'not sampled' : `${reviewed}/${total}`}
                   </Badge>
                 </Group>
               </UnstyledButton>
@@ -1282,9 +1366,15 @@ export default function RunLogDetailPage({
 
   const log = query.data.runLog;
   const ann = localAnn;
-  const allDimensions = log.tests.flatMap((t) =>
-    t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
-  );
+  // Sampled tests only. Counting every dimension here would render "5/90
+  // reviewed" against a sample of 5 and leave Release permanently disabled
+  // while CI is green — the annotator would have no way to finish.
+  const sampled = sampledTestIds(log);
+  const allDimensions = log.tests
+    .filter((t) => !sampled || sampled.has(t.test_id))
+    .flatMap((t) =>
+      t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
+    );
   const reviewedCount = allDimensions.filter(({ t, d }) =>
     ann?.corrections.some(
       (c) =>
@@ -1293,7 +1383,14 @@ export default function RunLogDetailPage({
         c.dimension_name === d.name,
     ),
   ).length;
-  const complete = reviewedCount === allDimensions.length;
+  // Delegate the release gate to the shared rule rather than re-deriving it.
+  // A local `reviewedCount === allDimensions.length` counts only whether an
+  // ENTRY exists, so it green-lights a release with no comments written that
+  // `check_runlogs.rule3_completeness` then rejects — and by then the candidate
+  // has already been renamed to v{N}.json. Re-deriving the rule in the UI is
+  // the same split that let the run-log list badge and this gate disagree.
+  const uncommented = uncommentedSampledCorrections(log, ann);
+  const complete = reviewedCount === allDimensions.length && uncommented.length === 0;
 
   const selectedEntry = log.tests.find((t) => t.test_id === selectedTestId) ?? log.tests[0] ?? null;
   const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
@@ -1312,7 +1409,12 @@ export default function RunLogDetailPage({
 
   const release = async () => {
     if (!complete) {
-      alert('Cannot release: annotation is incomplete. Review every dimension first.');
+      alert(
+        uncommented.length > 0
+          ? `Cannot release: ${uncommented.length} sampled dimension(s) have no comment. `
+            + 'Every dimension of a sampled test needs one, whether or not you changed the score.'
+          : 'Cannot release: annotation is incomplete. Review every sampled dimension first.',
+      );
       return;
     }
     if (!confirm(`Release this candidate as v${log.version}? The file will be renamed.`)) {
@@ -1424,6 +1526,7 @@ export default function RunLogDetailPage({
           <TestsPane
             tests={log.tests}
             annotation={localAnn}
+            sampled={sampled}
             selectedTestId={selectedEntry?.test_id ?? null}
             onSelect={(id) => setSelectedTestId(id)}
           />
@@ -1432,6 +1535,7 @@ export default function RunLogDetailPage({
               entry={selectedEntry}
               skillUnderTest={log.skill}
               annotation={localAnn}
+              sampled={sampled}
               onSetCorrection={setCorrection}
               onAgreeAll={agreeAll}
               onDimensionFocus={setFocusedDim}

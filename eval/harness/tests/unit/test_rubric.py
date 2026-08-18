@@ -14,9 +14,8 @@ from harness.rubric import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-# Use citation/ as the real-rubric fixture. search-familysearch-wiki's rubric is
-# being deleted as part of the criteria-demotion rollout; citation
-# stays because it encodes Evidence Explained craft.
+# Use citation/ as the real-rubric fixture — it encodes Evidence Explained
+# craft, so it is the least likely rubric in the corpus to be retired.
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 
 
@@ -78,6 +77,29 @@ def test_parse_real_citation_rubric():
         assert d.fail_criteria
 
 
+def test_every_committed_rubric_parses():
+    """Every rubric.md in the corpus must parse, blank ones included.
+
+    The runnability gate rejects a blank rubric.md, but it only runs when
+    someone spends a paid harness run. Nothing else reads these files
+    strictly — test_judge's corpus loop swallows InvalidRubricError on
+    purpose — so a blanked rubric could be committed with CI green and
+    then 500 `GET /api/skills` for every skill, because the CRUD UI's
+    parser refuses it (eval/app/lib/skills.ts::parseRubric catches only
+    ENOENT). This is the commit-time half of that gate."""
+    rubrics = sorted((REPO_ROOT / "eval/tests/unit").glob("*/rubric.md"))
+    assert len(rubrics) > 10, (
+        f"sanity check: expected a substantial rubric corpus, found "
+        f"{len(rubrics)} under {REPO_ROOT / 'eval/tests/unit'}"
+    )
+    for path in rubrics:
+        skill = path.parent.name
+        try:
+            parse_rubric_or_empty(skill, path.read_text(encoding="utf-8"))
+        except InvalidRubricError as e:
+            raise AssertionError(f"{path.relative_to(REPO_ROOT)}: {e}") from e
+
+
 def test_empty_rubric_helper():
     r = empty_rubric("my-skill")
     assert r.skill == "my-skill"
@@ -91,9 +113,14 @@ def test_parse_or_empty_handles_missing_file():
     assert r.skill == "my-skill"
 
 
-def test_parse_or_empty_handles_whitespace_only_file():
-    r = parse_rubric_or_empty("my-skill", "   \n\n  ")
-    assert r.dimensions == []
+@pytest.mark.parametrize("blank", ["", "   \n\n  "])
+def test_parse_or_empty_rejects_blank_file(blank):
+    """A blank rubric.md is malformed, not an opt-out. Opting out means
+    deleting the file — the CRUD UI's parser rejects a blank one, so
+    accepting it here would leave the two halves disagreeing."""
+    with pytest.raises(InvalidRubricError) as exc:
+        parse_rubric_or_empty("my-skill", blank)
+    assert "delete the file" in str(exc.value)
 
 
 def test_parse_or_empty_delegates_to_strict_parser_when_populated():

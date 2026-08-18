@@ -23,12 +23,9 @@ twice: first James Price (1872, Dodge County, WI), then Henry Mielke
 
 ## What it exercises
 
-- The skill must construct a search using the **maiden surname** (Mullen)
-  as the primary surname for the 1860 census search (pre-marriage), not
-  the married names.
-- For later searches (1900 census), the skill should use `surnameAlt`
-  to search across married names (Mielke primary, Price or Mullen as alt)
-  since the woman could appear under any surname.
-- Tests whether the skill correctly reads multiple `names[]` entries
-  with different `type` values and selects the appropriate one for each
-  time period.
+- Selecting among three `names[]` entries with different `type` values when
+  the search year falls on one side or the other of the recorded marriage
+  dates. Sarah's 1860 appearance predates both marriages; her 1900
+  appearance follows both.
+- Choosing between a single primary surname and `surnameAlt` coverage when
+  a woman could appear under more than one surname in the target record set.

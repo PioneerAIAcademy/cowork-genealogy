@@ -106,6 +106,27 @@ header and `researcher_profile` are **singleton objects**, so they have no write
 Today `proof-conclusion` hand-edits `project.status`/`project.updated`, and
 `init-project` hand-writes the whole `project` block + `researcher_profile`.
 
+> **Half of this is already false, and the other half is worse than stated —
+> measured 2026-08-16.** `project` **does** have a write path: it is one of the 14
+> entries in `RESEARCH_APPEND_SECTIONS`, and `research_append` handles it as a
+> singleton (`op: "update"` with `fields`). `proof-conclusion` does not need to
+> hand-edit it, and `research_append` now carries three preconditions on that
+> section — an unresolved-blocking-conflict gate, a mentor-verdict gate, and a
+> `questions.status = "resolved"` gate.
+>
+> **`researcher_profile` is the real gap, and it is structural.** It is absent
+> from `RESEARCH_APPEND_SECTIONS`, so **no MCP tool can write it at all**. Its
+> only declared owner, `init-project`, writes it with a raw `Write` — which the
+> shipped plugin hook denies on basename. Where the lockdown binds, the owner
+> cannot write what it owns. Across 154 committed e2e runs there are **zero**
+> `research_append` ops targeting it, and it is non-empty in **154 of 154** final
+> sidecars because every fixture seeds it — so the corpus cannot see this defect.
+> Tracked as its own icebox issue; the disposition (seed-tool ownership, add it to
+> the section list, or leave it seed-only) is undecided.
+>
+> So scope this item as **`researcher_profile` only**. A `research_set` tool for
+> `project` would duplicate a path that already exists and now carries gates.
+
 **Proposed:** a small dedicated tool (e.g. `research_set`) — or a special-cased
 `research_append` mode — with **update/merge-only** semantics on these singletons:
 no append, no ID allocation, shallow-merge supplied fields, stamp `project.updated`,

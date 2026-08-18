@@ -57,5 +57,6 @@
     "era": "1850s",
     "geography": "US-OH"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }
