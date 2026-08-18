@@ -179,12 +179,43 @@ records" would be wrong.
   two places, both inside this fixture: `expected-findings.json:79` and this README. No
   `.py` or `.ts` reads the key, `finding_shape_errors` validates top-level finding keys
   only (`validate_fixture.py:341-343`), and nothing can flag it as inert. It reaches the
-  judge **only as text inside the JSON dump of the finding** (`judge.py:191`) — which is
-  in fact how f4's two-ARK allowance gets to the judge at all, the same way the
-  description's "EITHER … OR" wording does. Treat the key as documentation for the human
-  grader, not as a second match key the judge honours: run 2 attached the 1823 bond and
-  its judge still graded f4 `false`, and the acceptance happened in the `.ann.json` by
-  hand.
+  judge **only as text inside the JSON dump of the finding** (`judge.py:191`), the same way
+  the description's "EITHER … OR" wording does — which is how f4's two-ARK allowance
+  reaches the judge at all. **That route works.** Run 2's judge wrote its own f4 component
+  as "An Amite County Orphans' Court guardianship record **(1823 or 1825)**" (`:114`), so it
+  had read the amended class and accepted both bonds. And the ark question is settled
+  upstream of this fixture in any case: `judge_prompt.md:47-48` already instructs the judge
+  to be tolerant of "Differing source IDs and ARK URLs (FamilySearch may serve the same
+  underlying record under different IDs)". Treat the key as documentation for the human
+  grader — it is inert to every code path — but do **not** read run 2's f4 `false` as
+  evidence that the judge ignores it. That label turned on *where* the source was attached,
+  not on which ark it named; see the next note.
+- **PROPOSED f4 amendment — attachment target. Awaiting co-reviewer approval; not applied.**
+  `expected-findings.json` is **unchanged**. Run 2 is a demonstrated defect in f4 as
+  currently written. Its judge derived f4's only `link` component straight from
+  `details.target_person` — "An Amite County Orphans' Court guardianship record (1823 or
+  1825) must be attached to Simpson Ridley Stribling's **person record**" — marked it
+  `unsupported`, and graded f4 `false`, correctly applying the prompt's no-link-supported
+  rule to that component. Its own note (`:111`), verbatim:
+
+  > "The sources are present on relationships but not directly attached to the subject's
+  > person record. This is a technical miss on the source-attachment requirement, even
+  > though the agent clearly engaged the guardianship evidence and recovered the parentage
+  > correctly."
+
+  That is f4 failing the exact behaviour it exists to reward. The agent attached the 1823
+  bond as S5 on the two parentage edges R35/R36 — the normal place to source a parentage
+  conclusion, and what run 1 did too (S7 on R34/R35). f4's prose says only "attached as a
+  source in the tree"; `details.target_person` is what silently narrows it to the person
+  record, and the narrowing is invisible to `finding_shape_errors`, which validates
+  top-level keys only. Left as-is, f4 mis-grades every run that sources relationships
+  rather than the person, and each one needs a hand annotation.
+
+  **Proposed fix:** f4 should be satisfied by attachment to the subject's person record
+  **OR** to any relationship in which the subject is an endpoint. **Not applied** — editing
+  a finding after two runs have been scored against it is the same move as the 2026-08-17
+  f4 broadening, and that one went through the co-reviewer. Until it is approved, grade f4
+  by hand on this axis and record the reason in the `.ann.json`.
 - **The linter cannot see sources at all.** `index_tree` walks `persons` and
   `relationships` only (`validate_fixture.py:109-138`), so a source that names the
   answer prints `OK`. The subject's own sources were read by hand at authoring time;
@@ -389,10 +420,22 @@ Read these before attributing a failed headless run.
   (I1+I2) ended with **no `facts[]` at all**, sourced only to the 1823 probate. The string
   "1 Mar 1815" appears in the final tree exclusively inside S2's source *title*.
   `materialize_facts` was called three times and never produced the Marriage fact on the
-  couple edge. Relationship findings score on `link` components (spec §3.4.2), so a
-  marriage argued in prose and never encoded grades `false` — correctly. This is the
-  e2e guide's named trap in its narrowest form: not a conclusion missing from the tree,
-  but a conclusion whose *date* never made it out of the narrative.
+  couple edge.
+
+  **The `false` on f3 is the genealogist's, not the judge's — they disagree, and the
+  stored number follows the judge.** The judge graded f3 **`true`** (`:86`), reading its one
+  `link` component ("Taliaferro Stribling and Margaret 'Peggy' McDowell married on 1 March
+  1815") as `supported` off the bare `Couple` edge R33, which carries the two people and no
+  date. `component_derivation` is `null`, so nothing recomputed that label. The blind human
+  grade recorded **`false`** on the tree, and that is what
+  `run-2026-08-18_02-03-06.ann.json` carries. Consequence for anyone reading the corpus:
+  run 2's `recall_required` of **`0.75` comes wholly from f4** — f3 contributed a full
+  point to the stored figure. Relationship findings are *meant* to score on `link`
+  components (spec §3.4.2), so a marriage argued in prose and never encoded should grade
+  `false`; the judge credited a component whose own claim names a date the tree does not
+  hold. This is the e2e guide's named trap in its narrowest form — not a conclusion missing
+  from the tree, but a conclusion whose *date* never made it out of the narrative — and the
+  judge did not catch it either.
 
   Two other observations worth carrying to the next run. The mother ended **split across
   two unmerged persons** — I2 (the widow, carrying Peggy McDowell from the 1815 index) and
@@ -430,25 +473,62 @@ Read these before attributing a failed headless run.
   image, it would have been measuring which page of one volume the agent opened, not
   whether it engaged the guardianship — the discrimination the finding exists for.
 
-  **§14 status: the fixture reads as validated — provisionally.**
+  **§14 status: the fixture is validated.**
   `run-2026-08-17_23-35-44.json` carries `"verdict": "pass"` with `recall_required: 1.0`
   (`:4`, `:139`, `:141`), and `axes_from_runlog` passes that field through verbatim for any
   log carrying `harness_schema_version` (`eval/harness/e2e/result.py:390-392`). So §14's
   standard — at least one committed run log with `verdict: pass` — is met, and
   `make e2e-corpus` reads this slug as genealogically `pass`.
 
-  **What is provisional, and why (filed as #1721).** That `pass` does not follow from the
-  log's own labels. f4 is recorded `"matched": "partial"` (`:104`), and §7.2's rollup
-  (`derive_verdict`, `eval/harness/e2e/judge.py:279-303`) turns one required `partial` into
-  `verdict: partial` with recall `0.875`. Nothing recomputes the stored rollup:
-  `apply_avoid_guard` is the only judge-time recompute path and fires only for `avoid`
-  findings, of which this fixture has none, and §3.4.2's component derivation is scoped to
-  `relationship` findings, so a `source` finding's `matched` is trusted as the judge wrote
-  it. The stored `pass` is therefore the judge model's own rollup, not a derived one.
+  **That `pass` is the arithmetically correct value, not an unaudited one.** Read run 1's
+  f4 components rather than its `matched` field: two `link` components, **both
+  `supported`** — "the 24 May 1825 … bond names Gideon Sleeper as guardian to James, John,
+  Seaborn and Ridley Stribling, minors" and "The guardianship bond is sourced in the tree"
+  (`:107-123`). The only `contradicted` entry is a **`detail`** on the ark, and
+  `judge_prompt.md` states in terms that "A missing `detail` never lowers the label".
+  `derive_matched` (`eval/harness/e2e/judge.py:255-277`) over those components returns
+  **`true`**, which rolls up through `derive_verdict` to `verdict: pass` with
+  `recall_required: 1.0` — exactly the stored figures. The ark objection that produced the
+  `contradicted` detail is moot under the amended f4, which accepts the 1823 bond run 1
+  attached.
 
-  **The genealogical claim holds either way.** The human blind grade independently reached
-  **4 of 4** against the amended f4 (`run-2026-08-17_23-35-44.ann.json`), so "the answer is
-  recoverable from live FamilySearch" rests on a genealogist's reading of the final tree,
-  not on the disputed field. What is provisional is only the *mechanical* pass — whether
-  the corpus number a reader sees is the one §7.2 prescribes. Treat the fixture as solvable;
-  treat its `verdict` as pending #1721.
+  **The one anomaly is f4's intermediate `matched: "partial"` (`:104`)**, which contradicts
+  the judge's own components and which `apply_component_derivation` would have corrected to
+  `true` had it covered `source` findings — it is scoped to `type: "relationship"`
+  (`judge.py:363-368`). That is a harness gap, filed as **#1721**, and it does not touch
+  this fixture's validity: the stored rollup is right, the intermediate label is not, and
+  correcting the intermediate label leaves the rollup where it stands.
+
+  **The human grade agrees independently.** The blind grade reached **4 of 4** against the
+  amended f4 (`run-2026-08-17_23-35-44.ann.json`), so "the answer is recoverable from live
+  FamilySearch" rests on a genealogist's reading of the final tree as well as on the
+  mechanical number. Treat the fixture as **validated and solvable**.
+
+- **2026-08-18 (later) — grading-provenance corrections; no run log or finding changed.**
+  A second review pass found three claims in this README that the committed logs
+  contradict, all of the same shape: a label attributed to the mechanism when the log
+  shows it came from a human, or vice versa.
+  - **§14 revised upward, from "validated — provisionally" to validated.** Run 1's stored
+    `verdict: pass` / `recall_required: 1.0` is what §3.4.2's arithmetic produces over the
+    judge's own f4 components — two `link` entries both `supported`, one `contradicted`
+    `detail` on the ark that `judge_prompt.md:106` says never lowers the label, and
+    `derive_matched` (`judge.py:255-277`) returns `true`. The ark objection is moot under
+    the amended f4. The prior "provisional" framing mistook the *intermediate* label for
+    the rollup.
+  - **#1721 rewritten** to match. Its original framing — that the stored top-level verdict
+    was wrong and should be recomputed at read time — was backwards. The defect is that
+    `apply_component_derivation` is scoped to `type: "relationship"` (`judge.py:363-368`)
+    and so never corrects a `source` finding's mislabelled `matched`; f4's `"partial"` over
+    two supported link components is the instance.
+  - **Run 2's f3 `false` re-attributed** to the genealogist's blind grade. The judge graded
+    f3 `true`, so run 2's `0.75` recall comes wholly from f4.
+  - **The `source_url_alternate` note corrected.** Run 2's f4 `false` turned on attachment
+    location, not on the ark; its judge component reads "(1823 or 1825)", and
+    `judge_prompt.md:47-48` already mandates ark tolerance. The separate true point — that
+    no code reads the key — stands.
+  - **New PROPOSED f4 amendment recorded** (attachment to the subject's person record *or*
+    to a relationship the subject is an endpoint of), documenting run 2 as a demonstrated
+    defect in f4 as written. `expected-findings.json` is **unchanged**, awaiting
+    co-reviewer approval.
+  - `fixture.json`'s `notes` updated to the amended two-bond f4; it still described the
+    1825 Sleeper bond as the only route.
