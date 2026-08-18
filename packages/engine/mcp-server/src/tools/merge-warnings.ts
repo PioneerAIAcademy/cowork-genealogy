@@ -141,12 +141,13 @@ export const mergeWarningsSchema = {
     "cross-document merge core) and returns the warnings that merge would " +
     "introduce.\n" +
     "\n" +
-    "Use this as the coherence gate before merging: a `severity: \"error\"` " +
+    "Use this as the coherence gate before merging: a `severity: \"contradiction\"` " +
     "warning (e.g. `hasSameCensus` — two personas sharing a census collection " +
     "cannot be the same person; or an event outside the other record's " +
     "lifespan) is a biological/temporal impossibility that should block the " +
-    "merge and prompt you to revisit the match. A `severity: \"warning\"` is " +
-    "advisory. Returns `{ warningCount, warnings }` (each warning carries " +
+    "merge and prompt you to revisit the match. A `severity: \"implausible\"` is " +
+    "advisory — possible but unlikely enough to flag for review. Returns " +
+    "`{ warningCount, warnings }` (each warning carries " +
     "`issueType`, `severity`, `personId`, `message`, and an optional `mobRole`). " +
     "On a malformed merge (unknown/duplicate ids, stale survivor) it returns " +
     "`{ ok: false, errors }`. Writes nothing; research.json and " +
