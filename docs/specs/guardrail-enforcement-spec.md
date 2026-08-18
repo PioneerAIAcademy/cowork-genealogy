@@ -621,9 +621,10 @@ bridge**. Consequences, all observed rather than inferred:
 
 - **`init-project` created both protected files through
   `mcp__remote-devices__device_commit_files`.** Across the run's 47 logged calls,
-  `Write`, `Edit` and `NotebookEdit` appear **nowhere**. The guard's matcher is
+  `Write`, `Edit` and `NotebookEdit` appear **nowhere**. The guard's matcher was
   `Write|Edit|NotebookEdit`, so **it never fired** — and this was the ordinary
-  onboarding path, not an agent improvising.
+  onboarding path, not an agent improvising. (The matcher was widened on
+  2026-08-18; see the closure note below.)
 - **`Write` cannot reach the user's files at all.** It operates on the container
   filesystem; the staged copy of the connected folder is read-only. A `Write` to
   the user's `research.json` creates a *container-local* file, reports success,
@@ -647,6 +648,157 @@ name-matcher *does* bind against a registrar the plugin does not control. The
 bridge surface is nine tools: `device_bash`, `device_commit_files`,
 `device_stage_files`, `device_list_dir`, `device_request_folder_access`,
 `get_device_info`, `create_artifact`, `list_artifacts`, `update_artifact`.
+
+#### Closed 2026-08-17/18 — `device_commit_files` only
+
+All three lockdown copies now cover `device_commit_files`, matched on the **bare
+tail** (Cowork namespaces it and the plugin cannot control the prefix). It is
+the route the ordinary onboarding path took, and the only one by which an
+unvalidated write to a protected file has been observed reaching a user's disk.
+
+**The predicate was only half the closure, and the first attempt shipped without
+the other half.** The `hooks.json` matcher decides whether the guard script runs
+at all, so teaching all three predicates to deny `device_commit_files` while the
+matcher still read `Write|Edit|NotebookEdit` left the route exactly as open as
+before — in Cowork, the one environment the closure was built for. Every test
+was green, including the one named "matches every tool the guard script itself
+denies", which restated the three raw-write tool names inline instead of reading
+them from the script. The matcher is now
+`Write|Edit|NotebookEdit|.*device_commit_files` — `.*`-prefixed so it binds
+under an anchored full match as well as a substring search, and against both the
+bare and the `mcp__remote-devices__`-namespaced spelling — and
+`tests/packaging/plugin-hooks.test.ts` derives the expected tool set from
+`guard_project_files.py`'s own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`,
+hard-erroring if either constant is renamed rather than silently checking
+nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
+Widening a predicate without widening what reaches it is a no-op that tests
+cannot see.
+
+Two properties, both deliberate and both pinned by vectors in
+`eval/harness/tests/unit/test_write_lockdown_parity.py`:
+
+- **Only the two project files.** A user asking Cowork to write any of their own
+  files into a connected folder is not this guard's business, and content that
+  merely *mentions* `research.json` is not a write to it — whole basenames are
+  compared. Denying more would be a availability regression in exchange for
+  nothing.
+- **Fails open on an unrecognised payload.** The bridge's argument schema is not
+  ours and is recorded nowhere in this repo — we know the tool's name and that a
+  deny binds, not its shape. So the guard walks whatever arrives for path-like
+  strings and, finding none, allows. **This is a real hole**, and it is the
+  reason the closure is not proven by its tests: a live Cowork session is the
+  only instrument that sees the true payload, exactly as with agent tool
+  binding.
+
+The walk keeps itself off file content with two bounds — no newline, and no
+longer than a path can be. Both were **entirely untested** until 2026-08-18:
+deleting them from all three copies left the parity module 39/39 green. Each now
+has a vector that fails if it is removed and one that fails if it is too tight.
+Fixing that surfaced two things worth stating plainly rather than leaving in the
+code:
+
+- **The length bound was a false negative, not just a false positive.** At 400
+  characters — under every real path limit — a 401-character path to
+  `research.json` was *allowed through*. It is now Linux `PATH_MAX` (4096). Only
+  the newline bound does real content-filtering work; the length bound catches
+  only long single-line content, which has to end in `/research.json` to matter
+  at all.
+- **One over-deny is known and accepted.** A file whose entire content is a
+  single line, with no trailing newline, whose basename is a protected name —
+  a one-line `.gitignore` reading `research.json` — is denied. Any
+  newline-terminated or multi-line file is immune, so that is the whole of the
+  surface. It is recorded rather than closed because closing it means guessing
+  which payload key carries content, which is the same speculation the walk
+  refuses by design and that write-shape matching is held back for.
+
+#### `device_bash` is still open, and a bypass through it LANDED — 2026-08-17
+
+**Reproduced live, on request, in Cowork with a connected folder.** Asked to
+append a note to `research.json` "using the shell or a file write", the agent did
+exactly that — a `python open(path, 'w')` through `device_bash` — and the write
+reached the user's disk.
+
+The damage is worse than an unvalidated entry:
+
+- The resulting document **failed schema validation on nine counts**: the entry
+  carried none of the seven fields a log entry requires (`plan_item_id`,
+  `performed`, `tool`, `query`, `outcome`, `results_examined`, `external_site`),
+  carried three the schema forbids (`date`, `note`, `type`), and used an
+  invented `lg_001` id where the prefix must be `log_`.
+- **It locked the project out of the sanctioned tools.** Every writer validates
+  the whole project before persisting, so a subsequent ordinary `research_append`
+  returned `ok: false` on that same entry. One shell write did not merely skip
+  validation — it made the tools that perform validation unusable until the
+  entry was removed by hand.
+
+**This falsifies the reasoning that kept the route open**, which is recorded here
+rather than deleted, because the error is instructive. The argument was "0 landed
+across the corpus". But every write-shaped shell attempt in the corpus was
+refused by the **harness's** `dontAsk` permission mode — and this section already
+said, in the paragraph above, that neither Cowork nor the hosted path has that
+refusal. The corpus structurally could not record a landed write, so "0 landed"
+measured where the light was. The close-condition stated here — *"close this if a
+bypass appears in a runlog or a feedback case"* — is now met.
+
+**What does NOT change: a command-text matcher is still the wrong instrument.**
+`cat research.json` and `cat > research.json` remain indistinguishable without
+parsing a shell; 37 of the 40 corpus touches are reads the system depends on,
+because `research_query` covers 11 of ~15 sections and there is no tree query
+surface at all; and a denial simply moves the agent to `head`, `python`, or a
+path built from a variable — the harness's own denial text suggests as much.
+
+**Chosen direction: make the FILE the unit, not the command.** Keep both project
+files read-only on disk and have the shared write layer re-apply the mode after
+each write. Measured on macOS: mode 444 blocks `>`, `>>`, `tee` and
+`python open(w)` — including today's bypass — while reads still work and
+`atomicWriteJson`/`atomicWriteBoth` still succeed, because they rename a temp
+over the target and POSIX rename ignores the target's mode. The mode does not
+survive the rename (it becomes 644), so re-applying it is the whole mechanism.
+
+**The platform asymmetry is real, and it changes the design.** Measured
+2026-08-17 with `packages/engine/mcp-server/dev/probe-readonly-project-files.ts`:
+
+| | macOS | Windows |
+|---|---|---|
+| `fs.rename` over a **read-only** target | succeeds | **fails (EPERM)** |
+| open for write / append | blocked | blocked |
+| read | works | works |
+| `chmod` back, then write | works | works |
+
+So a design that leaves the files read-only and simply renames over them would
+**break every sanctioned write on Windows** — the platform the genealogist team
+runs. This is the third time that asymmetry has mattered here; the guard's own
+path splitting was a silent no-op on Windows until someone noticed.
+
+**The write layer must therefore unlock, rename, and re-lock**, not rename and
+re-apply:
+
+```
+chmod(target, 0o644)      # no-op when the file does not exist yet
+writeFile(tmp); rename(tmp, target)
+chmod(target, 0o444)
+```
+
+Both halves are exercised by the probe's two `FIX:` lines — the first that the
+sanctioned write still works, the second that protection survives it — and both
+pass on macOS. **They must be run on Windows before this ships**; a pass on one
+platform proves nothing about the other, which is the whole reason the probe
+exists.
+
+Two costs, both accepted rather than hidden. There is a microsecond window in
+which the file is writable, which no agent is positioned to exploit. And the
+mode is trivially removable by an agent that thinks to (`chmod` then write) — the
+point is not a wall but converting a one-step accident into a two-step deliberate
+act, which is what today's `python open(w)` bypass was.
+
+**Write-shape matching is held back on purpose.** Denying the narrow, unambiguous
+write forms a read-only file misses — `sed -i`, `mv` over the target, and an
+explicit `chmod` — would close the rename-shaped residue. It is **not** being
+built now (lead ruling, 2026-08-17): the file-mode approach covers today's
+observed bypass, and the corpus cannot say how often the rename shapes are
+reached for, so the matcher would be scope bought on speculation. Add it only if
+a rename-shaped bypass is actually observed. Recorded so the residue is known
+rather than forgotten.
 
 **One route no matcher closes, and the spec should say so rather than imply
 otherwise.** With every programmatic path denied, the agent wrote the file into

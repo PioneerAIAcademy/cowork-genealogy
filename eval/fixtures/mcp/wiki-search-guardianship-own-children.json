@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about guardianship law and a natural parent appointed guardian of their own minor children",
+  "args": { "query": "~guardian" },
+  "response": {
+    "query": "guardianship minor children inheritance probate law 19th century",
+    "total_chunks_searched": 9820,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.84,
+        "chunk_text": "Guardianship records in 19th-century probate and orphans' courts do not necessarily indicate the child was an orphan in the modern sense. Under inheritance law, a minor with a legal claim to property or money — from a deceased parent's estate, a legacy, or a land division — required a legal guardian to receive and manage that property on the minor's behalf until the age of majority. It was routine for the minor's own surviving parent to petition the court and be appointed as that guardian, particularly a widowed father managing his deceased wife's share of an estate for their children, or a widowed mother needing standing to act on a child's inherited property. The appointment reflects estate administration requirements, not the absence of a parent-child relationship. Researchers should not read a guardianship appointment as proof the child was orphaned, estranged, or unrelated to the petitioner without corroborating evidence.",
+        "page_title": "United States Guardianship Records",
+        "section_heading": "Guardian of a Minor's Estate",
+        "source_url": "https://www.familysearch.org/en/wiki/United_States_Guardianship_Records"
+      }
+    ],
+    "query_time_ms": 289,
+    "timing": {
+      "embed_ms": 38,
+      "search_ms": 165,
+      "rerank_ms": 86
+    }
+  }
+}
