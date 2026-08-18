@@ -23,16 +23,22 @@ Matching rules:
     2nd positional arg or a ``mode=`` kwarg) is skipped; the rest are flagged when they
     have no ``encoding=`` keyword.
   - ``subprocess.run(...)`` / ``.check_output(...)`` / ``.Popen(...)`` / ``.call(...)`` /
-    ``.check_call(...)`` -- the same failure class, one call shape over: ``text=True``
-    or ``universal_newlines=True`` puts the pipe in text mode, decoded with the platform
-    default unless ``encoding=`` is also given. Matched only on the ``subprocess.<name>``
-    attribute form (this repo's sole convention -- no ``from subprocess import run``
-    exists), so it needs no ``x.open``-style disambiguation. A call in binary mode
-    (neither flag set) does no decoding and is out of scope, same as ``open()``'s
-    binary-mode carve-out above -- found live 2026-08-18 (issue #1399 follow-on): six
-    ``mock_mcp.py`` sites hit exactly this decoding a live tool's UTF-8 stdout as
-    cp1252, in a background reader thread whose crash the caller only saw as a
-    swallowed ``None`` and a wasted retry.
+    ``.check_call(...)`` -- the same failure class, one call shape over: CPython's own
+    gate is ``self.text_mode = encoding or errors or text or universal_newlines``
+    (``subprocess.Popen.__init__``), pure truthiness on any of the three flag keywords,
+    decoded with the platform default unless ``encoding=`` is also truthy. Matched only
+    on the ``subprocess.<name>`` attribute form (this repo's sole convention -- no
+    ``from subprocess import run`` and no ``import subprocess as ...`` alias exists
+    today; widening past a bare ``subprocess`` name, like widening ``open()`` past a
+    bare `Name`, is unaudited if either shows up) so it needs no ``x.open``-style
+    disambiguation for now. A call in binary mode (none of the three flags set) does no
+    decoding and is out of scope, same as ``open()``'s binary-mode carve-out above --
+    found live 2026-08-18 (issue #1399 follow-on): six ``mock_mcp.py`` sites hit exactly
+    this decoding a live tool's UTF-8 stdout as cp1252, in a background reader thread
+    whose crash the caller only saw as a swallowed ``None`` and a wasted retry. Keyword
+    matches only (both `text=`/`universal_newlines=` and `**kwargs`-forwarded flags are
+    real AST-analysis limits, not tracked here) -- same class of gap as `encoding=<expr>`
+    below, which this lint already accepts as unprovable statically.
 
 Generated / vendored trees we neither own nor can fix are skipped.
 """
@@ -101,16 +107,33 @@ def _is_subprocess_call(call: ast.Call) -> str | None:
     return None
 
 
-def _is_text_mode(call: ast.Call) -> bool:
-    """True if text=True or universal_newlines=True is passed as a keyword.
+TEXT_MODE_KEYWORDS = frozenset({"text", "universal_newlines", "errors"})
 
-    Only a keyword is checked -- both are keyword-only in the subprocess API,
-    so a positional match would be structurally wrong, not just unnecessary.
+
+def _is_text_mode(call: ast.Call) -> bool:
+    """True if text=, universal_newlines=, or errors= is passed as a keyword
+    with a truthy constant value.
+
+    Mirrors CPython's actual gate (``subprocess.Popen.__init__``):
+    ``self.text_mode = encoding or errors or text or universal_newlines`` --
+    plain truthiness, not an identity check against the ``True`` singleton, so
+    ``text=1`` genuinely puts the pipe in text mode and this must catch it too.
+    ``encoding`` is deliberately left out of this set: a truthy ``encoding=``
+    already satisfies ``_has_encoding`` below, so it can never itself be an
+    offender; including it here would only ever be a no-op.
+
+    Only keywords are checked. ``text``/``encoding``/``errors`` are
+    keyword-only in the real signature, but ``universal_newlines`` is not --
+    it sits before the ``*`` in ``Popen.__init__`` and could in principle be
+    passed positionally through `run`/`Popen`/`call`/`check_call`. No call
+    site in this repo does that today (verified), and matching positional
+    args generically would require tracking each wrapper's own parameter
+    order, which this lint does not attempt.
     """
     return any(
-        kw.arg in ("text", "universal_newlines")
+        kw.arg in TEXT_MODE_KEYWORDS
         and isinstance(kw.value, ast.Constant)
-        and kw.value.value is True
+        and bool(kw.value.value)
         for kw in call.keywords
     )
 
@@ -141,10 +164,12 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
         elif isinstance(func, ast.Name) and func.id == "open":
             if not _is_binary_open(node) and not _has_encoding(node):
                 offenders.append((node.lineno, "open"))
-        else:
-            subprocess_method = _is_subprocess_call(node)
-            if subprocess_method and _is_text_mode(node) and not _has_encoding(node):
-                offenders.append((node.lineno, f"subprocess.{subprocess_method}"))
+        elif (
+            (subprocess_method := _is_subprocess_call(node))
+            and _is_text_mode(node)
+            and not _has_encoding(node)
+        ):
+            offenders.append((node.lineno, f"subprocess.{subprocess_method}"))
     return offenders
 
 
