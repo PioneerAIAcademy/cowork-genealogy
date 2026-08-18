@@ -648,6 +648,41 @@ build time.
 > `claude-agent-sdk`, Node 22, the engine prod tree, and the plugin, built by
 > `apps/server/sandbox/build-image.sh` (`make sandbox-image`).
 
+### 7.2 What a user is allowed to read when this runtime fails
+
+Every failure at the agent boundary is classified before it reaches the browser
+(`apps/server/app/agent/errors.py`); no handler emits a raw exception, an HTTP
+status, or upstream process text. Two strings exist — one for an operator
+misconfiguration, one for everything else — and neither names a credential or a
+vendor, because naming one is what caused the defect: two alpha testers read an
+operator-key 401 as a FamilySearch problem and debugged the wrong credential.
+The raw text survives on the operator log, which is now its only home.
+
+**There is deliberately no user-fault branch, and it must not be re-added.**
+The only credential the SDK holds at this boundary is the control plane's own
+`ANTHROPIC_API_KEY`, so an SDK auth failure here is operator-side by
+construction. A FamilySearch token expiry never reaches these handlers — it is
+raised inside the MCP server and returns as a *tool result*, which the model
+reads and acts on — so a "was this the user's fault?" branch could never fire.
+Nor may any string claim someone was notified: nothing alerts an operator today.
+(Ruling: lead, 2026-08-14.)
+
+An errored `AssistantMessage` is emitted as `kind: "error"`, not `kind: "text"`.
+That is not cosmetic — it is the difference between the UI styling a failure as
+a failure (`chatEvents.ts` → `last.error` → ChatPane's `msgError`) and rendering
+it as the assistant's own answer, which is how the testers came to read an API
+error as a research finding.
+
+The genealogy MCP server's health is read from the CLI's `system`/`init` payload
+and the user is warned **once** if the tool surface is absent
+(`apps/server/app/agent/mcp_health.py`, the classifier ported from
+`eval/harness/e2e/mcp_health.py`). Without it a session whose MCP server never
+connected still runs — the model simply has no genealogy tools — so the user
+pays for a full session of research that could not have happened, with nothing
+distinguishing it from a genuine dead end. `pending` must never warn: at init a
+healthy server still reads `pending`, so a `!= "connected"` test would fire on
+every healthy session.
+
 ---
 
 ## 8. The web client

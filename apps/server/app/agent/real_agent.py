@@ -41,6 +41,15 @@ import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .errors import UNEXPECTED, classify, log_operator
+from .mcp_health import (
+    GENEALOGY_TOOL_PREFIX,
+    classify_server_status,
+    find_server_entry,
+    should_warn_at_init,
+    unavailable_message,
+)
+
 # real_agent.py -> agent -> app -> server -> apps -> <repo root>
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"))
@@ -353,6 +362,28 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             elif delta.get("type") == "thinking_delta" and delta.get("thinking"):
                 out.append(_event_for(message, "thinking_delta", text=delta["thinking"]))
     elif isinstance(message, AssistantMessage):
+        # #1126 — the path the alpha testers actually read. When the SDK marks
+        # an assistant message as an error (`AssistantMessage.error`, the
+        # 6-value literal at claude_agent_sdk/types.py:1005, populated by
+        # message_parser.py), its text blocks ARE the failure's own words: an
+        # operator-key 401 arrived as "Failed to authenticate. API Error: 401
+        # API key is invalid." tagged `kind: "text"`, i.e. styled as the
+        # assistant's own answer. Emit ONE classified error event and drop the
+        # blocks; the raw text survives on the operator log.
+        #
+        # `kind: "error"` rather than `kind: "text"` is what tells the UI this
+        # is not an answer: chatEvents.ts sets `last.error = true`, which
+        # ChatPane renders with the `msgError` class.
+        err_kind = getattr(message, "error", None)
+        if err_kind:
+            classification = classify(error_kind=err_kind)
+            raw = " ".join(
+                b.text for b in message.content if isinstance(b, TextBlock)
+            ).strip()
+            log_operator("assistant_message", classification,
+                         error_kind=err_kind, detail=raw[:500] or None)
+            out.append(_event_for(message, "error", text=classification))
+            return out
         for block in message.content:
             if isinstance(block, TextBlock):
                 out.append(_event_for(message, "text", text=block.text))
@@ -414,6 +445,13 @@ class RealAgent:
         self._cum_cost = 0.0
         self._cum_in = 0
         self._cum_out = 0
+        # #941/#1126 — genealogy MCP health, read off the CLI's `system`/`init`
+        # message. Session-scoped, not turn-scoped: a re-spawned CLI emits a
+        # FRESH init, so both counters have to outlive the turn or the warning
+        # would repeat (and would fire on a session that has already
+        # researched). See mcp_health.should_warn_at_init.
+        self._mcp_calls = 0
+        self._mcp_warned = False
         if self._session_file.exists():
             try:
                 self._resume_id = self._session_file.read_text(encoding="utf-8").strip() or None
@@ -496,23 +534,85 @@ class RealAgent:
         await self._client.interrupt()
         return True
 
+    def _mcp_health_events(self, message) -> list[dict]:
+        """Zero or one warning that this session has no genealogy tools.
+
+        Reads the CLI's `system`/`init` payload. Silent on every arm except a
+        genealogy server that is listed unhealthy — or not listed at all — in a
+        session that has made no genealogy call yet. `pending` is the NORMAL
+        healthy reading at init (it settles ~14s later), so it must not warn;
+        that is what `classify_server_status`'s three-way split is for.
+
+        Defensive throughout: this reads another process's payload, and a
+        detector that raises would break the sessions it exists to protect.
+        """
+        if self._mcp_warned:
+            return []
+        data = getattr(message, "data", None)
+        if not isinstance(data, dict):
+            return []
+        entries = data.get("mcp_servers")
+        health = classify_server_status(entries)
+        if not should_warn_at_init(health, mcp_call_count=self._mcp_calls):
+            return []
+        self._mcp_warned = True
+        entry = find_server_entry(entries)
+        text = unavailable_message(entry)
+        log_operator("mcp_init", text, detail=f"health={health} entry={entry!r}")
+        return [_event("error", text=text)]
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
-            from claude_agent_sdk import ResultMessage
-        except ImportError:
-            yield _event("error", text="claude-agent-sdk not installed; use AGENT_MODE=mock")
+            from claude_agent_sdk import ResultMessage, SystemMessage
+        except ImportError as exc:
+            # Developer text ("use AGENT_MODE=mock") in front of a paying user
+            # is the same defect as the raw 401 — it reads as something they
+            # misconfigured. The detail stays on the operator log.
+            log_operator("import_sdk", UNEXPECTED, exc=exc)
+            yield _event("error", text=UNEXPECTED)
             return
         try:
             client = await self._ensure_client()
         except Exception as exc:
-            yield _event("error", text=f"Failed to start the agent: {exc}")
+            classification = classify(exc)
+            log_operator("ensure_client", classification, exc=exc)
+            yield _event("error", text=classification)
             return
         try:
             await client.query(text)
             async for message in client.receive_response():
                 for ev in map_message(message, self._tool_names, self._tasks):
+                    if ev.get("kind") == "tool_use" and str(
+                        ev.get("tool") or ""
+                    ).startswith(GENEALOGY_TOOL_PREFIX):
+                        self._mcp_calls += 1
                     yield ev
+                if isinstance(message, SystemMessage):
+                    # #941 ported from the e2e harness (issue #1126). The CLI's
+                    # init message lists every MCP server it tried to connect
+                    # (`mcp_servers: [{name, status}]`, a required field of its
+                    # own init schema). A hosted session whose genealogy server
+                    # never connected still RUNS — the model just has no
+                    # genealogy tools — so the user pays a full session for
+                    # research that could not have happened, with nothing to
+                    # distinguish it from a genuine dead end. The harness aborts
+                    # such a run; there is no run to abort here, so we warn once
+                    # and let the turn proceed.
+                    for ev in self._mcp_health_events(message):
+                        yield ev
                 if isinstance(message, ResultMessage):
+                    # #1126 — the silent path. `receive_response()` YIELDS the
+                    # ResultMessage and terminates; it does not raise on
+                    # `is_error`, and nothing in this package read that field,
+                    # so an in-turn API 401 produced no error event at all: the
+                    # turn ended with `usage` + `turn_done` and the user watched
+                    # ~90s of nothing, then silence. That retry latency is the
+                    # signature of this path, not of a fail-fast connect().
+                    if getattr(message, "is_error", False):
+                        status = getattr(message, "api_error_status", None)
+                        classification = classify(status=status)
+                        log_operator("result_message", classification, status=status)
+                        yield _event("error", text=classification)
                     self._remember_session(message)  # persist for resume on relaunch
                     # Per-turn cost/usage for the operator cost meter (alpha
                     # mode, web only). The SDK's ResultMessage carries
@@ -537,4 +637,6 @@ class RealAgent:
                     )
                     break  # turn complete; the runner emits turn_done
         except Exception as exc:
-            yield _event("error", text=f"Agent error: {exc}")
+            classification = classify(exc)
+            log_operator("receive_loop", classification, exc=exc)
+            yield _event("error", text=classification)
