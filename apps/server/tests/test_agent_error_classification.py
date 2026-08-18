@@ -440,3 +440,155 @@ def test_the_unavailable_message_tells_the_user_not_to_trust_the_answer():
     assert "nothing you did caused this" in text.lower()
     for word in ("sign in", "log in", "reconnect", "your api key", "your token"):
         assert word not in text.lower(), f"sends the user to fix something: {word!r}"
+
+
+# --- review of #1724: the wiring, not just the helpers --------------------
+
+
+def test_an_unhealthy_init_warns_through_the_turn_loop(tmp_path):
+    """The two lines that carry the warning to a user were unverified.
+
+    Every other MCP-health test calls `_mcp_health_events` directly, so the
+    `isinstance(message, SystemMessage)` branch in `handle_turn` could be
+    deleted outright — the feature dead, no hosted user ever warned — with the
+    whole suite still green. Demonstrated in review by mutating it to
+    `if False and isinstance(...)`.
+    """
+    sdk = pytest.importorskip("claude_agent_sdk")
+    from app.agent.real_agent import RealAgent
+
+    init = sdk.SystemMessage(
+        subtype="init",
+        data={"mcp_servers": [{"name": "claude.ai Slack", "status": "needs-auth"}]},
+    )
+    done = sdk.ResultMessage(
+        subtype="success", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=1, session_id="s1",
+    )
+    events = _turn_events(RealAgent(tmp_path), [init, done])
+
+    assert any(
+        e.get("kind") == "error" and "do not treat it as research" in e.get("text", "")
+        for e in events
+    ), "an unhealthy init never reached the user"
+
+
+def test_a_genealogy_call_this_turn_suppresses_a_later_init_warning(tmp_path):
+    """`_mcp_calls` is fed from the emitted `tool_use` events, so the prefix and
+    the increment both have to be right.
+
+    With the prefix wrong the counter never moves, and a re-spawned CLI mid-session
+    tells a user who HAS researched "please do not treat it as research" — the
+    exact false warning `should_warn_at_init` exists to prevent. Demonstrated in
+    review by pointing `GENEALOGY_TOOL_PREFIX` at a string nothing matches.
+    """
+    sdk = pytest.importorskip("claude_agent_sdk")
+    from app.agent.real_agent import RealAgent
+
+    call = sdk.AssistantMessage(
+        content=[sdk.ToolUseBlock(
+            id="t1", name="mcp__genealogy__record_search", input={"surname": "Flynn"},
+        )],
+        model="claude-opus-4-8",
+    )
+    dead_init = sdk.SystemMessage(
+        subtype="init",
+        data={"mcp_servers": [{"name": "genealogy", "status": "failed"}]},
+    )
+    done = sdk.ResultMessage(
+        subtype="success", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=1, session_id="s1",
+    )
+    events = _turn_events(RealAgent(tmp_path), [call, dead_init, done])
+
+    assert not [e for e in events if e.get("kind") == "error"], (
+        "a session that already made a genealogy call was told research was impossible"
+    )
+
+
+def test_pressing_stop_is_not_reported_as_something_going_wrong(tmp_path):
+    """Reading `is_error` catches the in-turn 401 — and also a turn the USER ended.
+
+    On Stop the CLI sets `is_error` with `terminal_reason` in
+    ("aborted_streaming", "aborted_tools") and no `api_error_status`, so the
+    default classification would tell the person who just cancelled that the
+    agent "stopped unexpectedly … report it if it keeps happening". The field was
+    read nowhere before this PR, so that would be a NEW false alarm asking the
+    user to report their own deliberate action. The SDK defines those two values
+    as cancellation (types.py:1249) and the bundled CLI skips its own error
+    render on the same test.
+    """
+    sdk = pytest.importorskip("claude_agent_sdk")
+    from app.agent.real_agent import RealAgent
+
+    stopped = sdk.ResultMessage(
+        subtype="error_during_execution", duration_ms=900, duration_api_ms=800,
+        is_error=True, num_turns=1, session_id="s1",
+        terminal_reason="aborted_streaming",
+    )
+    events = _turn_events(RealAgent(tmp_path), [stopped])
+
+    assert not [e for e in events if e.get("kind") == "error"], (
+        "pressing Stop told the user something went wrong"
+    )
+
+
+def test_one_turn_never_emits_two_contradicting_error_bubbles(tmp_path):
+    """`AssistantMessage.error` and `ResultMessage.is_error` are set independently,
+    from two separate CLI messages, so both can land in one turn.
+
+    Unguarded, the user reads MISCONFIGURED ("please report it") and then
+    UNEXPECTED ("please try again") for a single failure — this PR's own defect,
+    pointed at itself. The assistant path wins because it carries the real
+    `error_kind`.
+
+    This pins the behaviour either way: if the CLI never sends both, the test
+    documents that; if it can, the test catches the double bubble.
+    """
+    sdk = pytest.importorskip("claude_agent_sdk")
+    from app.agent.real_agent import RealAgent
+
+    errored = sdk.AssistantMessage(
+        content=[sdk.TextBlock(text="Failed to authenticate. API Error: 401 …")],
+        model="claude-opus-4-8",
+        error="authentication_failed",
+    )
+    result = sdk.ResultMessage(
+        subtype="success", duration_ms=1, duration_api_ms=1,
+        is_error=True, num_turns=1, session_id="s1",
+    )
+    events = _turn_events(RealAgent(tmp_path), [errored, result])
+
+    errors = [e for e in events if e.get("kind") == "error"]
+    assert len(errors) == 1, (
+        f"one failure produced {len(errors)} error bubbles: "
+        f"{[e.get('text') for e in errors]}"
+    )
+    assert errors[0]["text"] == MISCONFIGURED, (
+        "the weaker status-less signal won over the one carrying error_kind"
+    )
+
+
+def test_a_non_init_system_message_carrying_a_server_list_is_still_ignored(tmp_path):
+    """Pins the `subtype == "init"` gate, which nothing else can.
+
+    `test_a_non_init_system_message_is_ignored` passes with or without the gate,
+    because its payload has no `mcp_servers` key at all — so it proves the
+    `isinstance(data, dict)` check, not the subtype check. Removing the gate
+    entirely leaves the whole suite green (verified by mutation), which is what
+    "safe today only because no other subtype uses that key" means in practice.
+
+    This is the case that separates them: a non-init message that DOES carry a
+    server list. The harness gates on the subtype (`orchestrator.py`), and a port
+    whose docstring claims init-only should behave that way rather than rely on
+    the rest of the CLI's payloads never colliding.
+    """
+    from app.agent.real_agent import RealAgent
+
+    class _ConfigMessage:
+        subtype = "config"
+        data = {"mcp_servers": [{"name": "genealogy", "status": "failed"}]}
+
+    assert RealAgent(tmp_path)._mcp_health_events(_ConfigMessage()) == [], (
+        "a non-init system message was read as an init health payload"
+    )

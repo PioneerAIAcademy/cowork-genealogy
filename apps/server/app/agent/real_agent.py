@@ -444,6 +444,15 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
         # `kind: "error"` rather than `kind: "text"` is what tells the UI this
         # is not an answer: chatEvents.ts sets `last.error = true`, which
         # ChatPane renders with the `msgError` class.
+        #
+        # Dropping the blocks cannot swallow a real answer. Raised in review of
+        # #1724 for the retried-`rate_limit` case and anchored in the bundled
+        # CLI: every errored assistant message is built by one helper,
+        # `Gl({content, error})` -> `{content: [{type: "text", text: content}],
+        # isApiErrorMessage: true, error}`, where `content` IS the error text
+        # (e.g. "Usage credits required for 1M context ..."). So an errored
+        # AssistantMessage never carries a successful answer, and there is
+        # nothing to lose by replacing its text with the classified string.
         err_kind = getattr(message, "error", None)
         if err_kind:
             classification = classify(error_kind=err_kind)
@@ -618,6 +627,14 @@ class RealAgent:
         """
         if self._mcp_warned:
             return []
+        # Gate on the subtype the harness gates on (`orchestrator.py`'s
+        # `if message.subtype == "init"`). `SystemMessage` also carries config
+        # and hint subtypes; reading `mcp_servers` off any of them is safe only
+        # because none of the others happens to use that key today, which also
+        # made `test_a_non_init_system_message_is_ignored` pass for the wrong
+        # reason. Matching the source this is copied from removes both.
+        if getattr(message, "subtype", None) != "init":
+            return []
         data = getattr(message, "data", None)
         if not isinstance(data, dict):
             return []
@@ -650,12 +667,18 @@ class RealAgent:
             return
         try:
             await client.query(text)
+            # Whether an errored AssistantMessage has already told the user about
+            # this turn. Turn-scoped, not session-scoped: a later turn's failure
+            # is a new fact the user needs.
+            error_emitted = False
             async for message in client.receive_response():
                 for ev in map_message(message, self._tool_names, self._tasks):
                     if ev.get("kind") == "tool_use" and str(
                         ev.get("tool") or ""
                     ).startswith(GENEALOGY_TOOL_PREFIX):
                         self._mcp_calls += 1
+                    if ev.get("kind") == "error":
+                        error_emitted = True
                     yield ev
                 if isinstance(message, SystemMessage):
                     # #941 ported from the e2e harness (issue #1126). The CLI's
@@ -678,7 +701,36 @@ class RealAgent:
                     # turn ended with `usage` + `turn_done` and the user watched
                     # ~90s of nothing, then silence. That retry latency is the
                     # signature of this path, not of a fail-fast connect().
-                    if getattr(message, "is_error", False):
+                    # Two ways this must NOT fire, both found in review of #1724.
+                    #
+                    # 1. The user pressed Stop. The CLI sets `is_error` with
+                    #    `terminal_reason` in ("aborted_streaming",
+                    #    "aborted_tools") and NO `api_error_status`, so the
+                    #    default classification would tell the person who just
+                    #    cancelled that something went wrong and to report it —
+                    #    a new false alarm, since this field was read nowhere
+                    #    before. The SDK's own docstring defines those two
+                    #    values as "the turn was cancelled" (types.py:1249), and
+                    #    the bundled CLI skips its own error render on the same
+                    #    test.
+                    # 2. The assistant-message path already reported this turn.
+                    #    The SDK sets `AssistantMessage.error` and
+                    #    `ResultMessage.is_error` independently, from two CLI
+                    #    messages, so both can land in one turn — and an
+                    #    `is_error` with no status would then read
+                    #    "please report it" followed by "please try again" for
+                    #    one failure. That contradiction is this PR's own defect
+                    #    pointed at itself. The assistant path wins because it
+                    #    carries the real `error_kind`.
+                    #
+                    # The MCP-health warning is deliberately NOT counted here:
+                    # it reports a different fact (this session has no genealogy
+                    # tools), not a second opinion about this failure.
+                    aborted = getattr(message, "terminal_reason", None) in (
+                        "aborted_streaming",
+                        "aborted_tools",
+                    )
+                    if getattr(message, "is_error", False) and not aborted and not error_emitted:
                         status = getattr(message, "api_error_status", None)
                         classification = classify(status=status)
                         log_operator("result_message", classification, status=status)
