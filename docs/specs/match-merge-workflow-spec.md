@@ -235,7 +235,8 @@ folds a candidate document.
 Run `check-warnings` (final mode) on each affected anchor; verify
 `research.json` reference integrity. (`materialize_facts` and the `tree_edit`
 edge writes validate the would-be project before persisting and write nothing on
-error — `tree-materialization-spec.md` §4.1.)
+a call-introduced error (pre-existing drift rides as a warning) —
+`tree-materialization-spec.md` §4.1.)
 
 ---
 
@@ -249,14 +250,14 @@ decides when a persona is confidently enough linked to materialize onto a tree
 person.
 
 **Coherence gate** (new): the merge-mode warnings dry-run (§7).
-- `severity: "error"` → **blocks**. Errors are biological/temporal
+- `severity: "contradiction"` → **blocks**. Contradictions are biological/temporal
   impossibilities; a merge that introduces one signals either a wrong match or a
   bad record. Clearing requires explicit user confirmation **with the
   impossibility shown**, and the override is logged.
-- `severity: "warning"` → **advisory**. Improbable-but-possible; surfaced, never
+- `severity: "implausible"` → **advisory**. Improbable-but-possible; surfaced, never
   blocking.
 
-**Ordering:** identity → coherence → write. A coherence `error` is fed back as a
+**Ordering:** identity → coherence → write. A coherence `contradiction` is fed back as a
 reason to **revisit identity**, not merely dismissed — `hasSameCensus` in
 particular is strong evidence the pairing is wrong.
 
@@ -384,7 +385,7 @@ a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
   warningCount: number,
   warnings: [
     {
-      scoreType, issueType, severity: "error" | "warning",
+      scoreType, issueType, severity: "contradiction" | "implausible",
       personId, personName,         // who the warning is about (may be a relative or the survivor)
       message,
       factIds?, relatedPersonId?,
@@ -522,7 +523,8 @@ under Block — corrected to match.)
 - **Override logging.** An `error` cleared by the user records the override and
   the shown impossibility.
 - **Validation failure.** `materialize_facts` and the `tree_edit` writes validate
-  the would-be project and write nothing on failure
+  the would-be project and write nothing on a **call-introduced** failure; a
+  pre-existing error the call did not introduce rides as a warning
   (`tree-materialization-spec.md` §4.1).
 - **Missing data.** No collection title / no parseable dates → the affected
   check returns no warning silently; the gate never throws on absent data.

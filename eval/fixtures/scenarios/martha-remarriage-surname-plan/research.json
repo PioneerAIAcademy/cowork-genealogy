@@ -1,0 +1,306 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884, Hillsboro, Hill County, Texas; died 7 March 1938, Carlsbad, Eddy County, New Mexico)",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-30",
+    "updated": "2026-07-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was Jimmie Jewel Neal's mother?",
+      "rationale": "Primary decomposition of the project objective. No source on Jimmie's own records names her mother's maiden surname.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": ["q_002"],
+      "created": "2026-07-30",
+      "resolved": "2026-07-30",
+      "resolution_assertion_ids": ["a_001", "a_002", "a_003", "a_004"],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": ["log_001", "log_002"],
+        "stop_criteria": null
+      }
+    },
+    {
+      "id": "q_002",
+      "question": "Who are the parents of Martha J (mother of Jimmie Jewel Neal, born approximately 1859 in Georgia)?",
+      "rationale": "q_001 established Martha J as Jimmie's mother (probable) and that she is documented under at least three married surnames across her life: 'Landham' (a widow's styling at her 31 Jul 1879 marriage to James M Neal in Hill County, Texas — a_002; the marriage this styling refers to has not itself been found or dated), 'Neal' (from that 1879 marriage, Jimmie's father), and 'Hamby' (a later, 1888 marriage, after Neal). Two leads bear on her parentage: (a) a Smith County, Texas marriage record shows a bride named 'M J Wood' marrying 'W F Lanham' on 7 Jan 1869 — the earliest marriage record found for her so far, but nothing yet establishes this was her FIRST marriage; and (b) a pre-existing FamilySearch tree source (uncited, no attached record) places an 'M M Wood' household in the 1860 U.S. Census in Blount County, Alabama, matching Martha's birth year (~1859) and birthplace (Georgia). Neither lead has been corroborated by a record naming Martha's parents directly.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": ["q_001"],
+      "unblocks": [],
+      "created": "2026-07-30",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-07-30T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Neal",
+        "given": "James M",
+        "collection": "Hill County Texas Marriages",
+        "date_range": "1873-1937"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "notes": "Found the 31 Jul 1879 Hill County, TX marriage of James M Neal and 'Mattie Landham'. 'Landham' is a widow's styling — a prior marriage under that surname has not been found.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-07-30T11:30:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Lanham",
+        "given": "W F",
+        "collection": "Smith County Texas Marriages",
+        "date_range": "1865-1879"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "Found a 7 Jan 1869 Smith County, TX marriage of W F Lanham to a bride recorded as 'M J Wood'. Plausibly the same Martha, but this is the EARLIEST marriage record found for her — whether it was her first marriage is unconfirmed.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Texas, Hill County. Marriage record, James M Neal and Mattie Landham, 31 Jul 1879; digital image, FamilySearch.org, accessed 30 Jul 2026.",
+      "citation_detail": {
+        "who": "Hill County Clerk",
+        "what": "Marriage record",
+        "when_created": "1879",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch.org",
+        "where_within": "Hill County, Texas"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QV14-6CNS",
+      "url_archived": null,
+      "notes": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Texas, Smith County. Marriage record, W F Lanham and M J Wood, 7 Jan 1869; digital image, FamilySearch.org, accessed 30 Jul 2026.",
+      "citation_detail": {
+        "who": "Smith County Clerk",
+        "what": "Marriage record",
+        "when_created": "1869",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch.org",
+        "where_within": "Smith County, Texas"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVXX-0001",
+      "url_archived": null,
+      "notes": "Earliest marriage record found for Martha so far. Bride surname 'Wood' is NOT yet confirmed as her birth surname — whether this was her first marriage is unknown.",
+      "log_entry_id": "log_002"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Mattie Landham",
+      "structured_value": {
+        "given": "Mattie",
+        "surname": "Landham"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "the bride (Mattie Landham) or officiant",
+      "informant_proximity": "self",
+      "informant_bias_notes": "'Mattie' is a known nickname for Martha. 'Landham' is a widow's styling from a prior marriage that has not itself been found or dated.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:QV14-6CNS",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married James M Neal on 31 Jul 1879 at Hill County, Texas",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "1879-07-31",
+      "date_certainty": "exact",
+      "place": "Hill County, Texas",
+      "information_quality": "primary",
+      "informant": "county clerk / officiant",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:QVXX-0001",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "M J Wood",
+      "structured_value": {
+        "given": "M J",
+        "surname": "Wood"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "the bride (M J Wood) or officiant",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride surname on a marriage record is the birth surname only if this was her first marriage — not yet established for a woman later known under at least two further married surnames (Neal, Hamby).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_002"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:QVXX-0001",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married W F Lanham on 7 Jan 1869 at Smith County, Texas",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "1869-01-07",
+      "date_certainty": "exact",
+      "place": "Smith County, Texas",
+      "information_quality": "primary",
+      "informant": "county clerk / officiant",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_002"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Alabama, United States",
+      "for_place": "Blount County, Alabama",
+      "time_period": "1840-1880",
+      "jurisdictions": [
+        {
+          "name": "Blount County, Alabama, United States",
+          "date_range": "1818-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1915984",
+          "title": "Alabama, State Census, 1820-1866",
+          "date_range": "1820-1866"
+        }
+      ],
+      "quirks": [
+        "No civil birth or death records exist for Blount County before 1908 — Alabama statewide civil registration did not begin until then. Use church records, probate estate files, cemetery records, and census mortality schedules as substitutes.",
+        "The 1860 federal census for Blount County (volume 005154190, 99% name-indexed) is the priority search for the household a pre-existing tree source calls 'M M Wood', which is not yet confirmed to be Martha's birth family.",
+        "Probate (1845-1957), court (1838-1887), and land (1830-1901) records on FamilySearch are full-text searchable but NOT name-indexed (0-3%) — keyword-search required.",
+        "Marriage volumes 1820-1888 (FamilySearch volumes 007316661-007316663) are 80-100% name-indexed and full-text searchable."
+      ],
+      "guide_markdown": "# Locality Guide: Blount County, Alabama (circa 1840-1880)\n\nNo civil vital registration before 1908. Probate, court, and land records are full-text searchable but not name-indexed for this period. Marriage records 1820-1888 are well indexed.",
+      "pages_read": [
+        { "section": "home", "url": null, "found": false },
+        { "section": "getting_started", "url": null, "found": false },
+        { "section": "online_records", "url": null, "found": false },
+        { "section": "research_tips", "url": null, "found": false }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "loc_002",
+      "place": "Texas, United States",
+      "for_place": "Hill County and Smith County, Texas",
+      "time_period": "1855-1890",
+      "jurisdictions": [
+        {
+          "name": "Hill County, Texas, United States",
+          "date_range": "1853-present"
+        },
+        {
+          "name": "Smith County, Texas, United States",
+          "date_range": "1846-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1417683",
+          "title": "Texas, County Marriage Records, 1837-1965",
+          "date_range": "1837-1965"
+        },
+        {
+          "id": "2272001",
+          "title": "Texas, Probate Case Files, 1800-1990",
+          "date_range": "1800-1990"
+        }
+      ],
+      "quirks": [
+        "Smith County marriage volumes 1857-1876 and 1875-1889 (FamilySearch volumes 007255720, 007255721) are 100% name-indexed and full-text searchable — a further search for an EARLIER marriage of the same bride (under any surname) is straightforward.",
+        "Hill County probate case files 1853-1935 (volume 004820309) are full-text searchable but only ~3% name-indexed — keyword-search required for a father's estate naming Martha as an heir.",
+        "Texas did not require statewide civil registration of births/deaths until 1903; pre-1903 events rely on church, cemetery, marriage, and probate records."
+      ],
+      "guide_markdown": "# Locality Guide: Hill County and Smith County, Texas (circa 1855-1890)\n\nSmith County marriage volumes 1857-1889 are fully indexed and full-text searchable — well suited to searching for an earlier marriage under a different surname. Hill County probate is full-text searchable but not name-indexed. No civil vital registration before 1903.",
+      "pages_read": [
+        { "section": "home", "url": null, "found": false },
+        { "section": "getting_started", "url": null, "found": false },
+        { "section": "online_records", "url": null, "found": false },
+        { "section": "research_tips", "url": null, "found": false }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    }
+  ]
+}

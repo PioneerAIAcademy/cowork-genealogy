@@ -1,0 +1,59 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all — Feliciana Parish, Louisiana's split into East and West Feliciana Parish in 1824",
+  "args": {
+    "placeName": "~Feliciana"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1810/1824",
+        "latitude": 30.9,
+        "longitude": -91.3,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Feliciana&focusedId=8801",
+        "representations": [
+          {
+            "repId": "8801",
+            "partOf": "Louisiana, United States",
+            "dateRange": "+1810/1824",
+            "notes": "Split in 1824 into East Feliciana Parish and West Feliciana Parish"
+          }
+        ]
+      },
+      {
+        "standardPlace": "East Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1824/",
+        "latitude": 30.85,
+        "longitude": -91.05,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=East+Feliciana&focusedId=8802",
+        "representations": [
+          {
+            "repId": "8802",
+            "partOf": "Louisiana, United States",
+            "dateRange": "+1824/",
+            "notes": "Formed 1824 from the eastern portion of Feliciana Parish"
+          }
+        ]
+      },
+      {
+        "standardPlace": "West Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1824/",
+        "latitude": 30.9,
+        "longitude": -91.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=West+Feliciana&focusedId=8803",
+        "representations": [
+          {
+            "repId": "8803",
+            "partOf": "Louisiana, United States",
+            "dateRange": "+1824/",
+            "notes": "Formed 1824 from the western portion of Feliciana Parish"
+          }
+        ]
+      }
+    ]
+  }
+}

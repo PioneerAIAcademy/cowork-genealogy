@@ -731,8 +731,9 @@ when the item would still be hard *after* every open question is answered.
 
 `senior` items carry `developer` or `genealogist` exactly as the junior pools do,
 and the lane decides the reviewer as much as the doer — `.github/CODEOWNERS`
-routes `.ts`/`.py`/`.json` to `senior-developers` and the skill, agent, eval and
-docs trees to `senior-genealogists`.
+queues `.ts`/`.py`/`.json` to `senior-developers` and the skill, agent and eval
+trees to `senior-genealogists`. Either team's approval unblocks the merge; the
+lane is who the work is routed to, not who is permitted to sign it off.
 
 **A `genealogist`-lane senior item is not a lesser one.** Doctrine adjudication
 across drifted skill copies, deciding whether a compliance rate is acceptable,

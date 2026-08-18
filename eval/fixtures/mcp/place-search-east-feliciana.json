@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for East Feliciana Parish, Louisiana",
+  "args": {
+    "placeName": "~East Feliciana"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "East Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1824/",
+        "latitude": 30.85,
+        "longitude": -91.05,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=East+Feliciana&focusedId=8802"
+      }
+    ]
+  }
+}
