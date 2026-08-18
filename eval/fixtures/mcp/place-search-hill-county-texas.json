@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Hill County, Texas",
+  "args": {
+    "placeName": "~Hill County"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Hill, Texas, United States",
+        "type": "County",
+        "dateRange": "+1853/",
+        "latitude": 31.99,
+        "longitude": -97.13,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Hill%2C+Texas&focusedId=42"
+      }
+    ]
+  }
+}

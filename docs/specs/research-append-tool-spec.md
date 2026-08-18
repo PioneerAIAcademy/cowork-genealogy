@@ -527,7 +527,9 @@ Mirrors `research_log_append` minus the sidecar:
    would give, but *before* the write.
 5. **Validate once** with `validateParsed(research, tree, { projectPath })` — the
    joint validation covers both in-memory documents, including a §3.4 `S` entry.
-   If invalid → write nothing (the in-memory tree mutation is discarded too).
+   If the call introduces an error → write nothing (the in-memory tree mutation
+   is discarded too). A pre-existing error the call did not introduce is demoted
+   to a warning and does not block.
 6. Commit:
    - **No tree mutation** (every call without `sourceDescription`): write only
      `research.json` with `atomicWriteJson`. No `.bak` (this section, unlike the
@@ -700,7 +702,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
-| Resulting documents fail `validateParsed` | write nothing (neither file); `{ ok: false, errors, opsReceived? }` |
+| Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---
 

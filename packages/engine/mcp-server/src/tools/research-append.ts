@@ -20,7 +20,7 @@
 
 import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import {
@@ -1811,6 +1811,11 @@ export async function researchAppend(
     // research-only call still never writes the tree.
     const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
     const tree = sanitized.tree;
+    // Pre-mutation snapshot (applyOne and prepareOps mutate research and tree
+    // in place): block only on errors THIS call introduces, not pre-existing
+    // drift in a section it never touched (#1572).
+    const beforeResearch = structuredClone(research);
+    const beforeTree = structuredClone(tree);
 
     let ops: ResearchAppendOp[];
     if (isBatch) {
@@ -1899,7 +1904,7 @@ export async function researchAppend(
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
     if (anyMutation) {
-      const validation = await validateParsed(research, tree, { projectPath });
+      const validation = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
       if (!validation.valid) {
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.

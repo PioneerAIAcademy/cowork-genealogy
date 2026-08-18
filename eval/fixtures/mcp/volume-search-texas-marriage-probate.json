@@ -1,0 +1,38 @@
+{
+  "tool": "volume_search",
+  "description": "Digitized volumes for Hill/Smith County, Texas, marriage and probate",
+  "args": {
+    "standardPlace": "~Texas"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Texas, United States",
+      "startYear": 1855,
+      "endYear": 1890
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "007255720",
+        "title": "Smith County, Texas Marriage Records, 1857-1876",
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": true,
+        "imageCount": 640
+      },
+      {
+        "imageGroupNumber": "007255721",
+        "title": "Smith County, Texas Marriage Records, 1875-1889",
+        "recordSearchablePercent": 100,
+        "fulltextSearchable": true,
+        "imageCount": 712
+      },
+      {
+        "imageGroupNumber": "004820309",
+        "title": "Hill County, Texas Probate Case Files, 1853-1935",
+        "recordSearchablePercent": 3,
+        "fulltextSearchable": true,
+        "imageCount": 5210
+      }
+    ]
+  }
+}

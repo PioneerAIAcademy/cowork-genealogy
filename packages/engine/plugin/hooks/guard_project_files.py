@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """Deny raw Write/Edit/NotebookEdit on research.json and tree.gedcomx.json.
 
-Every write to those two files must go through the MCP writer tools
-(`research_append`, `research_log_append`, `tree_edit`, `tree_correct`), which
-validate before persisting. A direct file write never validates.
+Every write to those two files must go through the MCP writer tools, which
+validate before persisting. A direct file write never validates. `project_create`
+brings a project into being (both files, one validated call); `research_append`,
+`research_log_append`, `tree_edit` and `tree_correct` add to one that exists.
+
+**The deny message names `project_create` deliberately.** Naming only the
+add-to-an-existing-project tools is what produced the bypass this guard exists to
+prevent: in an empty folder every one of them refuses with "not found in
+projectPath", so an agent told to use them had nowhere to go and reached for the
+shell instead. A deny has to leave a working alternative, and in an empty folder
+`project_create` is the only one.
 `research/SKILL.md` has forbidden it in prose since the beginning and no
 skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
@@ -37,9 +45,10 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
-    "must go through the writer tools (research_append, research_log_append, "
-    "tree_edit, tree_correct), which validate before persisting. Direct file "
-    "writes never validate."
+    "must go through the writer tools. To CREATE a new project use project_create, "
+    "which writes both files together; to add to an existing one use "
+    "research_append, research_log_append, tree_edit or tree_correct. These "
+    "validate before persisting. Direct file writes never validate."
 )
 
 
