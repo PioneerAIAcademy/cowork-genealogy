@@ -8,7 +8,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "missingFactsAndRelatives",
-        "severity": "warning",
+        "severity": "implausible",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person has no recorded facts (other than GenderChange) and no relatives -- an empty stub record."

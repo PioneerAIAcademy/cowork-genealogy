@@ -8,8 +8,10 @@ name: senior-queue
 #   is:open is:pr label:ready-for-senior-genealogist
 #   is:open is:pr label:ready-for-senior-developer
 #
-# A PR whose files span both teams gets both labels; both approvals are
-# required, so both queues need to see it.
+# A PR whose files span both teams gets both labels, so each queue sees the
+# paths it owns. Every CODEOWNERS rule names both senior teams, so one approval
+# from either satisfies the merge gate — the labels say who is best placed to
+# read what, not how many approvals are outstanding.
 #
 # The senior review is the SECOND review, and it happens only after the first
 # round has been answered. That is what the changes-requested and unresolved-
@@ -232,10 +234,21 @@ jobs:
             }
 
             // Last matching rule wins, exactly as GitHub resolves CODEOWNERS.
+            // Returns every owner of the winning rule, in the order written.
             function ownersOf(file, rules) {
               let teams = [];
               for (const r of rules) if (r.test(file)) teams = r.teams;
               return teams;
+            }
+
+            // Every rule names BOTH senior teams, because a rule's owners are an
+            // OR and either team's approval must satisfy the merge gate. The
+            // QUEUE is a different question: it is the team listed FIRST, the one
+            // whose judgment the path normally wants. Queueing on the full owner
+            // list would put every senior-owned PR in both queues and make each
+            // queue useless as a filter.
+            function queueTeamOf(file, rules) {
+              return ownersOf(file, rules)[0] || null;
             }
 
             // ---- the two decision rules, kept pure and testable ---------------
@@ -412,10 +425,11 @@ jobs:
               const statuses = status.data.statuses || [];
               const statusFailed = statuses.filter(s => s.state === 'failure' || s.state === 'error');
 
-              // Which senior teams own anything in this diff.
+              // Which senior teams are the primary owner of anything in this diff.
               const owning = new Set();
-              for (const f of files) for (const t of ownersOf(f.filename, rules)) {
-                if (TEAMS[t]) owning.add(t);
+              for (const f of files) {
+                const t = queueTeamOf(f.filename, rules);
+                if (t && TEAMS[t]) owning.add(t);
               }
               const wanted = [...owning].map(t => TEAMS[t].label);
 
