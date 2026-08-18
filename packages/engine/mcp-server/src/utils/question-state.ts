@@ -102,10 +102,12 @@ export function questionStatus(research: any, question: any): QuestionStatus {
     nextStep = `gps-mentor (proof-critique) — ${uncritiqued.map((s) => s?.id).join(", ")}`;
   } else if (state === "critiqued" && !resolved) {
     // The last rung of the ladder is not the end of the work: the `resolved`
-    // write is still outstanding, and it is the transition no skill body claims.
-    // Reporting null here would tell the router nothing is left to do on the one
-    // step this design most needs routed.
-    nextStep = "question-selection — concluded and critiqued; mark the question resolved";
+    // write is still outstanding. proof-conclusion owns this transition
+    // (issue #1399) — question-selection no longer claims it
+    // (question-selection/SKILL.md). Routing here is only correct when
+    // proof-conclusion concluded the question THIS invocation, not on a
+    // stale ps_ from an earlier one (proof-conclusion/SKILL.md §7).
+    nextStep = "proof-conclusion — concluded and critiqued; mark the question resolved";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

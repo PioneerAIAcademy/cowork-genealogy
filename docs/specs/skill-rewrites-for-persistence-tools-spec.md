@@ -176,13 +176,17 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   (add source / `add_fact` / `update_fact`); a tier-downgrade removal →
   `tree_edit({ operation: "remove", factId | relationshipId })`.
 - **Wave 1 — Step 6 person merging:** `merge_tree_persons` (or `merge_record_into_tree`).
-- **Step 7 — DO NOT resolve the question here.** Proof-conclusion deliberately
-  does **not** write the `questions` section — marking a question `resolved` (and
-  setting `resolved` / `resolution_assertion_ids`) is `question-selection`'s job,
-  and `exhaustive_declaration` is `research-exhaustiveness`'s. Leave §7 ("Do not
-  modify the question") intact. (An earlier draft of this spec wrongly listed a
-  `research_append` questions-update here — that reverses the skill's standing
-  ownership boundary and must not be applied.)
+- **Step 7 — superseded 2026-08-18 (issue #1399).** This bullet's original text
+  forbade proof-conclusion from writing the `questions` section, on the grounds
+  that `resolved` was `question-selection`'s job. The lead's final ruling on
+  #1399 reversed that: proof-conclusion now owns the `questions` → `resolved`
+  transition (writing `status`, `resolved`, `resolution_assertion_ids` via
+  `research_append`, gated on having concluded the question this invocation —
+  see `proof-conclusion/SKILL.md` §7), and `question-selection/SKILL.md` no
+  longer claims it. `exhaustive_declaration` is still `research-exhaustiveness`'s.
+  Kept here, corrected, so this spec doesn't contradict what shipped — the
+  earlier-draft warning below is the reverse of the one that matters now: do
+  not revert §7 to the pre-#1399 boundary this bullet used to describe.
 - **Trim:** Step 6's hand S-entry field table and the manual primary swap; the
   post-write validate step.
 - **Known limits (leave hand-done):** the `S` source-description entry in
