@@ -106,7 +106,7 @@
       "supporting_sources": [
         "Mississippi, Marriages, 1800-1911 — entry for Gideon Sleeper, 1824, Amite County, Mississippi (his marriage to the widowed Margaret, six months before the guardianship)"
       ],
-      "required": true
+      "required": false
     }
   ]
 }

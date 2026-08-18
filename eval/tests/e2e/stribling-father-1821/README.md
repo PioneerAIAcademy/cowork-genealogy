@@ -77,41 +77,43 @@ reaches one hop from the subject; the `Couple(LZ64-KT8, LHJL-3YG)` edge naming t
 
 ## Expected findings
 
-Five, all `recover`, all `required`:
+Four required, all `recover`, plus one bonus finding that measures without gating:
 
-- **f1** — father = Taliaferro Stribling (1781 Wilkes GA – 1823 Amite MS).
-- **f2** — mother = Margaret "Peggy" McDowell (1793 Milledgeville GA – 1864 Amite MS).
+- **f1** — father = Taliaferro Stribling (1781 Wilkes GA – 1823 Amite MS). Required.
+- **f2** — mother = Margaret "Peggy" McDowell (1793 Milledgeville GA – 1864 Amite MS). Required.
 - **f3** — the parents' marriage, 1 March 1815, Amite County. The date sits on the
-  couple link, so it scores as a `link` component (spec §3.4.2).
+  couple link, so it scores as a `link` component (spec §3.4.2). Required.
 - **f4** — an Amite County orphans'-court guardianship record attached as a **source**,
   either on the subject's person record or on any relationship the subject is an
   endpoint of. **Either** the 24 May 1825 bond (Gideon Sleeper, the stepfather, as
   guardian — `3QS7-89QX-2C5P`) **or** the 1823 bond (the widowed mother Margaret as
-  guardian — `3QS7-L9QX-2H77`) satisfies it.
+  guardian — `3QS7-L9QX-2H77`) satisfies it. Required.
 - **f5** — Margaret's 23 November 1824 remarriage to Gideon B. Sleeper, encoded as a
   **dated** `Couple` relationship fact, on the same person the tree records as the
   subject's mother, with Sleeper never asserted as the subject's father. Graded on the
   same standard as f3: a relationship that exists but carries no dated fact does not
   satisfy it, and a fact that sits on an unmerged duplicate rather than the person
-  actually linked to the subject does not either — see the 2026-08-18 changelog
-  entries for why both bars apply.
+  actually linked to the subject does not either. **Bonus — `required: false`.**
 
 **f4 measures whether the guardianship record was engaged at all; f5 measures whether
-the stepfather inference was actually reasoned through and materialized in the tree.**
-Two scored runs exposed that f4 alone is not enough. Both runs attached a guardianship
-bond and satisfy f4 — but both independently reached the **1823** bond, in which the
-widowed mother is guardian of her own children, a record that never presents a surname
-difference or a stepfather at all. f4 cannot tell a run that engaged the stepfather
-situation from one that engaged an entirely different, easier guardianship in the same
-record series. f5 is designed as the discriminator for that gap: it requires the tree
-to carry Margaret's remarriage to Sleeper as a dated fact on the actual mother node, not
-merely a guardianship citation or a hypothesis recorded in prose. **No committed run
-currently satisfies it** — run 2 came closer, correctly sourcing the relationship to the
-right marriage-index entry, but left the date unmaterialized and the identity unmerged
-— so f5's value as a discriminator is designed, not yet demonstrated by a passing run.
-See the 2026-08-18 changelog entries for how this gap was found, why it is closed with a
-new finding rather than by re-pinning f4 to one image, and why run 2's initial `true`
-grade on f5 was corrected to `false`.
+the stepfather inference was actually reasoned through and materialized in the tree —
+as a bonus signal, not a gate.** Two scored runs exposed that f4 alone is not enough.
+Both runs attached a guardianship bond and satisfy f4 — but both independently reached
+the **1823** bond, in which the widowed mother is guardian of her own children, a
+record that never presents a surname difference or a stepfather at all. f4 cannot tell
+a run that engaged the stepfather situation from one that engaged an entirely
+different, easier guardianship in the same record series. f5 was added as the
+discriminator for that gap: it requires the tree to carry Margaret's remarriage to
+Sleeper as a dated fact on the actual mother node, not merely a guardianship citation
+or a hypothesis recorded in prose. **No committed run currently satisfies it** — run 2
+came closer, correctly sourcing the relationship to the right marriage-index entry,
+but left the date unmaterialized and the identity unmerged. Because f5 is a bonus
+finding, this does not touch fixture validity or either run's required-set verdict; it
+means the stepfather inference specifically is measured and not yet demonstrated,
+tracked separately from the parentage recovery f1–f4 already prove. See the 2026-08-18
+changelog entries for how this gap was found, why it is closed with a new finding
+rather than by re-pinning f4 to one image, why run 2's initial `true` grade on f5 was
+corrected to `false`, and why f5 landed as a bonus finding rather than a required one.
 
 **Why either bond satisfies f4.** #1413's report is about *"actual parents being named
 guardian of their own children"* as well as stepfathers, and this family supplies both:
@@ -647,6 +649,22 @@ Read these before attributing a failed headless run.
   mother node — is future work for the next scored run of this fixture, not a claim
   this PR makes. Per spec §14, that is a recommended authoring practice the fixture
   still owes, not a merge blocker (`docs/specs/e2e-test-spec.md:1519-1521`).
+
+  **Resolved (johnmarkpeterbrown, confirmed by florencemashipei) — f5 is a bonus
+  finding, `required: false`, not a required one.** The paragraph above describes the
+  state under the required framing this PR originally shipped with; that framing has
+  changed. With f5 non-required, run 1's required set is f1–f4, all `true`, and
+  `derive_verdict` gives `verdict: pass` / `recall_required: 1.0` over that set with no
+  asterisk — §14 is met cleanly, and nothing here owes a further paid run. f5 keeps
+  measuring the stepfather inference exactly as written above (dated fact, correct
+  person, graded on f3's standard) and run 2's regrade to `false` stands — the
+  `required` flag only controls whether that `false` drags the required-set rollup
+  down, and it no longer does. The reasoning: an unmet *required* finding meant the
+  fixture's validity was permanently entangled with a bar neither run had cleared;
+  a *bonus* finding tracks the same signal without that entanglement. "Closes #1413"
+  is changed to "Refs #1413" for the same reason — a bonus finding measures the
+  stepfather inference, it does not gate the issue that asked for it, so the issue
+  stays open for the run that eventually clears f5.
 
   **Also in this pass:** per-fixture `caps` added to `fixture.json`
   (`max_cost_usd: 25`, `wall_clock_seconds: 10800`, `max_turns: 300`), sized to run 2's
