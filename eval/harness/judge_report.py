@@ -83,6 +83,10 @@ MIN_DISAGREEMENTS_FOR_FLAG = 2
 FLAG_NON_DISCRIMINATING = "Non-discriminating dimension"
 FLAG_DIVERGENCE = "Systematic judge-vs-human divergence"
 
+#: `rubric-critic`'s flag 3. This computes its first half only — the "no test
+#: could ever fail on it" half needs the rubric as an input.
+FLAG_UNEXERCISED = "Unexercised dimension"
+
 
 @dataclass
 class DimensionStats:
@@ -162,8 +166,18 @@ class DimensionStats:
         tests in the same direction**. One correction is a single judgement call;
         borrowing the flag name for it would make the two instruments disagree
         while claiming to agree — and today it would make 100% of this flag's
-        output a false positive, since the corpus holds exactly two disagreements,
-        both on one test.
+        output a false positive.
+
+        **Deliberately no corpus count here.** This was written as a specific
+        number and reviewed against a different one, and both were stale inside a
+        day — in opposite directions — because a single landing run log moves it.
+        What holds without a snapshot: no dimension has yet reached two
+        same-direction corrections, so **this flag reports nothing on live data
+        today**, and the disagreements that do exist are lone judgement calls.
+        That is worth saying out loud in a report whose whole point is not
+        overclaiming — the judge-vs-human direction half is built and correct,
+        and currently silent. Measure it with `make judge-report`; do not trust a
+        number in this docstring.
 
         N/A-vs-numeric is excluded: it has no direction to be consistent in.
         """
@@ -283,7 +297,7 @@ def format_skill(report: SkillReport) -> str:
         lines.append("  (no .ann.json sibling — judge-vs-human columns are blank, not zero)")
     for d in report.dimensions:
         if d.always_na:
-            verdict = f"always-N/A ({d.na})"
+            verdict = f"{FLAG_UNEXERCISED}: always N/A ({d.na})"
         elif d.non_discriminating:
             verdict = f"{FLAG_NON_DISCRIMINATING}: always {d.distinct[0]}"
         elif d.graded < MIN_GRADED_INSTANCES:
@@ -340,7 +354,8 @@ def format_footer(reports: list[SkillReport]) -> str:
             f"{FLAG_NON_DISCRIMINATING}: {len(flagged)} of {len(dims)} dimension "
             f"keys across {len(reports)} suite(s) "
             f"(>={MIN_GRADED_INSTANCES} numeric gradings, one distinct score).",
-            f"{len(always_na)} are always-N/A — a different defect, never counted above."
+            f"{len(always_na)} meet {FLAG_UNEXERCISED.lower()} (always N/A) — a "
+            f"different defect, never counted above."
             + (f" {malformed} grading(s) had a MALFORMED score (neither int nor null)."
                if malformed else ""),
             f"judge-vs-human: {agreed} agreed, {disagreements} disagreed over "
@@ -407,12 +422,26 @@ def main(argv: list[str] | None = None) -> int:
         path = logs[-1]
         try:
             report = build_skill_report(skill, path)
-        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            TypeError,
+            AttributeError,
+        ) as e:
             # One unreadable run log must not take the other 24 suites with it.
             # An analysis tool that dies on a single truncated file is one nobody
             # can use to diagnose the corpus it is meant to describe. Named on
             # stderr and excluded from every count, the way `e2e/corpus_report.py`
             # handles the same case.
+            #
+            # `UnicodeDecodeError` is listed explicitly because it is a
+            # `ValueError`, NOT a `JSONDecodeError` — `_load` decodes before
+            # `json` ever sees the bytes, so without it the guard misses the one
+            # corruption this corpus actually produces. 19 files in the unit
+            # corpus carry multibyte UTF-8 and two of them are read here, so a
+            # write interrupted mid-character raises this rather than a JSON
+            # error. Caught in review on #1485.
             unreadable.append((skill, path.name, str(e)))
             continue
         d = run_date(path)

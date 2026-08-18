@@ -162,8 +162,10 @@ def test_the_annotation_join_actually_pairs_against_the_real_corpus():
     result, and all the synthetic tests stay green — because they hand
     `apply_annotation` a dict directly and never exercise the pairing.
 
-    Floors, not exact counts: the corpus grows as PRs land. Today it is 25 of 25
-    suites paired and 2263 reviewed entries.
+    Floors, not exact counts: the corpus grows as PRs land, and this number is a
+    snapshot that goes stale fast — measured 2026-08-18 at 25 of 25 suites paired
+    and 2074 reviewed entries. The assertions below are floors precisely so a
+    landing run log cannot red the suite.
     """
     skills = judge_report.all_skills()
     paired, reviewed = 0, 0
@@ -273,3 +275,53 @@ def test_a_windowed_out_skill_is_not_reported_as_having_no_run_log(capsys):
                 "it was dropped by the window, which is a different fact and is "
                 "already counted by the window line above"
             )
+
+
+def test_one_undecodable_run_log_does_not_take_the_whole_corpus_down(
+    tmp_path, monkeypatch, capsys
+):
+    """The guard's comment promises one bad log must not kill the other suites.
+
+    It did not hold for the corruption this corpus actually produces.
+    `_load` calls `read_text(encoding="utf-8")`, so invalid bytes raise
+    `UnicodeDecodeError` — a `ValueError`, and neither an `OSError` nor a
+    `json.JSONDecodeError`. Every entry in the original except tuple missed it,
+    so a single truncated write aborted the entire report with a traceback and
+    no suite was reported at all. A write interrupted mid-character produces
+    exactly this rather than a JSON error, and 19 files in the unit corpus carry
+    multibyte UTF-8.
+
+    Built in a tmpdir on purpose: the committed run logs are evidence, and
+    corrupting one to test a reader would edit the corpus under everyone else.
+    """
+    import skill_latency_report
+
+    root = tmp_path / "unit"
+    good = root / "good-skill"
+    bad = root / "bad-skill"
+    good.mkdir(parents=True)
+    bad.mkdir(parents=True)
+
+    (good / "v1_2026-08-01_10-00-00.json").write_text(
+        json.dumps(_runlog({"Flat": [3] * MIN_GRADED_INSTANCES})), encoding="utf-8"
+    )
+    # Valid JSON up to the point the bytes stop being UTF-8 — the shape a write
+    # interrupted mid-character leaves behind, not a syntactically broken file.
+    (bad / "v1_2026-08-01_10-00-00.json").write_bytes(
+        b'{"skill": "bad-skill", "tests": [], "note": "\xff\xfe"}'
+    )
+
+    monkeypatch.setattr(skill_latency_report, "UNIT_RUNLOGS", root)
+
+    rc = judge_report.main([])
+
+    assert rc == 0, "the report died instead of skipping the one unreadable log"
+    out = capsys.readouterr().out
+    assert "bad-skill" not in out.split("UNREADABLE")[0], (
+        "the unreadable suite was counted as if it had been read"
+    )
+    assert "UNREADABLE" in out, "the skipped log was never reported to the reader"
+    assert "good-skill" in out, (
+        "the readable suite was dropped along with the unreadable one — the exact "
+        "failure the guard exists to prevent"
+    )
