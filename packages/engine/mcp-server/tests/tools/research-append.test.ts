@@ -3532,3 +3532,82 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warn).not.toContain("research_append");
   });
 });
+
+// #1006: warn-only (the write still succeeds) when a `confident` person_evidence
+// link records no numeric match_score. Distinct from the epistemic gate above,
+// which REJECTS — this only adds an advisory to validation.warnings.
+describe("research_append — person_evidence match_score warning (#1006)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // Clean reading (no [?]) so the epistemic gate never fires — isolates the
+  // match_score warning from the rejection path.
+  async function writeProject(personEvidence: any[] = []) {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      { ...validAssertion("a_010"), record_id: "rec_A", fact_type: "name", value: "Father: Thomas Flynn" },
+    ] as any;
+    r.person_evidence = personEvidence as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+
+  const link = (overrides: any = {}) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_010",
+      person_id: "I1",
+      confidence: "confident",
+      rationale: "Names match the subject.",
+      match_score: null,
+      created: "2026-07-18",
+      superseded_by: null,
+      ...overrides,
+    },
+  });
+
+  it("warns, but still writes, when a confident link records no match_score", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true); // warn-only: the write is NOT blocked
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+    const saved = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(saved.person_evidence).toHaveLength(1);
+  });
+
+  it("does not warn when a confident link carries a numeric match_score", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ match_score: 0.92 }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+
+  it("still warns when match_score is a number outside 0–1 — validator.ts does not bound the range", async () => {
+    // The runtime validator carries match_score in its field allow-list but does
+    // not enforce the schema's 0–1 minimum/maximum, so an out-of-range number is
+    // accepted at the write and would otherwise silence the warning (review #1550).
+    await writeProject();
+    const r = await researchAppend(link({ match_score: 5 }));
+    expect(r.ok).toBe(true); // not rejected — the range is unenforced at runtime
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+  });
+
+  it("does not warn on a probable link with no match_score — the gate is confidence, not a downgrade route", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ confidence: "probable", match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+});
