@@ -43,10 +43,10 @@ export default function ConflictsSection(): React.JSX.Element {
             summary={summaryText}
             rawData={conflict}
             footer={
-              conflict.blocks_question_ids.length > 0 ? (
+              (conflict.blocks_question_ids ?? []).length > 0 ? (
                 <div className={styles.footer}>
                   <span className={styles.footerLabel}>Blocks:</span>
-                  {conflict.blocks_question_ids.map((qid) => (
+                  {(conflict.blocks_question_ids ?? []).map((qid) => (
                     <CrossLink key={qid} id={qid} />
                   ))}
                 </div>
@@ -54,11 +54,11 @@ export default function ConflictsSection(): React.JSX.Element {
             }
           >
             <div className={styles.body}>
-              {conflict.competing_assertion_ids.length > 0 && (
+              {(conflict.competing_assertion_ids ?? []).length > 0 && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Competing Assertions</div>
                   <ul className={styles.assertionList}>
-                    {conflict.competing_assertion_ids.map((aid) => {
+                    {(conflict.competing_assertion_ids ?? []).map((aid) => {
                       const entry = getById(aid)
                       const assertion = entry?.item as Assertion | undefined
                       const isPreferred = conflict.preferred_assertion_id === aid

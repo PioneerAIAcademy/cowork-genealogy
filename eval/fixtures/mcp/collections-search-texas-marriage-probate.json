@@ -1,0 +1,43 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Hill/Smith County, Texas (marriage, probate)",
+  "args": {
+    "standardPlace": "~Texas"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Texas, United States"
+    },
+    "scope": "Texas, United States",
+    "totalForPlace": 3,
+    "results": [
+      {
+        "id": "1417683",
+        "title": "Texas, County Marriage Records, 1837-1965",
+        "dateRange": "1837-1965",
+        "recordCount": 4820000,
+        "personCount": 9640000,
+        "imageCount": 1930000,
+        "url": "https://www.familysearch.org/search/collection/1417683"
+      },
+      {
+        "id": "2272001",
+        "title": "Texas, Probate Case Files, 1800-1990",
+        "dateRange": "1800-1990",
+        "recordCount": 612000,
+        "personCount": 612000,
+        "imageCount": 305000,
+        "url": "https://www.familysearch.org/search/collection/2272001"
+      },
+      {
+        "id": "1983324",
+        "title": "Texas Deaths, 1890-1977",
+        "dateRange": "1890-1977",
+        "recordCount": 1740000,
+        "personCount": 1740000,
+        "imageCount": 870000,
+        "url": "https://www.familysearch.org/search/collection/1983324"
+      }
+    ]
+  }
+}
