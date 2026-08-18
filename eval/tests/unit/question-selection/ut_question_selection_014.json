@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_question_selection_014",
+    "skill": "question-selection",
+    "name": "First question tests a disputed parent assignment, not confirms it",
+    "type": "positive",
+    "description": "Regression for #1471. The objective disputes the parents currently attached to Anton Vogt, which are unverified tree data (quality:1), and the user has stated the doubt and evidence up front (a death record placing him in Luxembourg, not Wisconsin). The first research question must be framed to TEST that assignment against independent records (confirm-or-refute), never to confirm it or treat the existing tree parents as established. Synthetic scenario — no PII. Note: the interactive doubt-elicitation ask cannot be exercised single-turn, so the doubt is supplied in the message and this test asserts the resulting persisted question's framing.",
+    "tags": ["question-selection", "from-objective", "first-question", "regression", "verifies-disputed-parents"]
+  },
+  "input": {
+    "user_message": "The parents currently attached to Anton Vogt (I1) look wrong to me — I have his death record showing he died in Luxembourg, not Wisconsin, and I believe he was born about 1860 in Wisconsin. Pick the first research question to investigate.",
+    "scenario": "disputed-parents-unsourced"
+  },
+  "judge_context": [
+    "The objective and the user both dispute the parents currently attached in the tree (Johann Vogt and Maria Vogt), which are unverified tree data (quality 1). The first question must be framed to TEST that assignment against independent records — e.g. 'Do independent records confirm or refute that Johann and Maria Vogt are the parents of Anton Vogt?' — not to confirm it, and not to treat the existing tree parents as established fact.",
+    "Citing the FamilySearch tree that is under investigation as evidence for its own parent assignment is the failure mode (issue #1471). A question that simply asks to 'identify the parents' while implicitly accepting the attached ones, or that confirms the tree, is wrong here."
+  ]
+}

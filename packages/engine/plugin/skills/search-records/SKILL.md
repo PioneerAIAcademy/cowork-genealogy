@@ -137,7 +137,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
 | `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Rejected if combined with `batchNumber`** |
-| `batchNumber` | `references/collection-quirks.md`, or a catalog/index page | IGI extraction batch. Anchors alone — send it with no other field to enumerate one parish; add only a `surname` to narrow. Pass as a quoted string exactly as the source gives it; never reformat or pad it |
+| `batchNumber` | A previous result's `batchNumber` (on `ranked[]` stubs too) — scan the hits, not just the top one | Extraction batch. Anchors alone — send it with no other **search filter** (keep `projectPath`/`subjectId`); add only a `surname` to narrow. Quote it verbatim; never reformat or pad it |
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |
 | `surnameExact`, `givenNameExact`, `birthPlaceExact`, `marriagePlaceExact`, `birthYearExact`, `marriageYearExact`, `fatherGivenNameExact`, `spouseSurnameExact` (and the same `Exact` suffix on every other name, place, and year field) | — | Boolean. **Leave unset unless a rule below says otherwise.** See "Exact-match qualifiers" |
@@ -427,6 +427,23 @@ candidates; you still confirm the top ones:
   identity in the only way that matters to a reader, whatever the needs-review
   flag says — they will remember the names, not the caveat. Report the record,
   the conflict, and what would settle it.
+- **A relative-anchored hit may not name that relative. Read `relativeTerms`
+  before you write about the relationship.** FamilySearch keeps records that do
+  not *contradict* the name you supplied, so `fatherGivenName: "William"`
+  returns hits naming no father at all, indistinguishable from ones that name
+  him. Each result says which: `present` (the name is there — compare it
+  yourself), `absent`, `unknown`. On `absent`/`unknown` write "consistent with",
+  never "confirming her father William". This is a wording rule, not a
+  disqualifier: an `absent` record is still a candidate, and this is never on
+  its own a reason to stop searching or escalate elsewhere. `matchScore` never
+  looks at relationships, so an `absent` record can outrank one that names him;
+  `rank_search_matches` says so with `relativeTermNote`.
+- **`batchNumber` on a result opens the whole extraction.** Send it as the only
+  search filter, keeping `projectPath` so results stage and log; add `subjectId`
+  only on a page you want ranked, since ranking scores every candidate upstream.
+  **One page is not the batch** — 50 rows with `subjectId`, 20 without, max 100 —
+  so page with `offset`, and past `offset + count = 4999` partition by `surname`.
+  Most results carry none; absence says nothing about the collection.
 - **Pre-1880 US censuses have no relationship column.** 1850/1860/1870 list name,
   age, sex, birthplace, occupation in household order — "relationship to head" is
   **1880-onward**. So any "head"/"wife"/"son" read off a pre-1880 household is an

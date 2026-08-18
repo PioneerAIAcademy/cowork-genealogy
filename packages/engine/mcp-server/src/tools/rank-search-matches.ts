@@ -177,6 +177,14 @@ export async function rankSearchMatches(
       `${DEGENERATE_FLOOR}. Treat that as a real negative for this query — ` +
       `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
   }
+
+  // Built from `out.matches`, not `matches` — the withheld branch above empties
+  // it, and a note about records that were not returned is the false
+  // confirmation this field exists to prevent. Built here, after that branch,
+  // so `returnedCount: 0` can never ship alongside "of the 2 matches returned".
+  const relativeTermNote = buildRelativeTermNote(out.matches);
+  if (relativeTermNote) out.relativeTermNote = relativeTermNote;
+
   return out;
 }
 
@@ -370,6 +378,44 @@ export async function buildSubjectDoc(
 
 // ─── Stub projection ─────────────────────────────────────────────────────────
 
+/**
+ * Say, in words, that some of these high-scoring matches do not carry the
+ * relative the search was anchored on.
+ *
+ * The score cannot say it. `matchScore` measures name/date/place agreement
+ * between the subject and the candidate; it never looks at whether the record
+ * names the father you searched for. So a record that is merely *consistent*
+ * with William — because FamilySearch keeps records that do not contradict him
+ * — can outrank one that actually names him, and arrive at the top of the list
+ * looking like the best-evidenced hit on the page. That is the exact confusion
+ * `relativeTerms` exists to remove, and it is worst here.
+ *
+ * Counts only `absent`, never `unknown`: "we could not tell" is not a finding
+ * to warn about, and warning on it would train the caller to ignore the note.
+ */
+function buildRelativeTermNote(matches: RankedMatch[]): string | undefined {
+  const absentByPrefix = new Map<string, number>();
+  for (const m of matches) {
+    for (const [prefix, finding] of Object.entries(m.relativeTerms ?? {})) {
+      if (finding.status === "absent") {
+        absentByPrefix.set(prefix, (absentByPrefix.get(prefix) ?? 0) + 1);
+      }
+    }
+  }
+  if (absentByPrefix.size === 0) return undefined;
+
+  const parts = [...absentByPrefix.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([prefix, n]) => `${n} name no ${prefix}`);
+  return (
+    `Of the ${matches.length} matches returned, ${parts.join(", ")} ` +
+    `(\`relativeTerms\`). The match score does not account for this — it ` +
+    `measures name, date and place agreement only. Those records are ` +
+    `CONSISTENT with the relative you searched for, not evidence of them, so ` +
+    `do not write them up as confirming the relationship.`
+  );
+}
+
 function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   const r = s.result;
   const stub: RankedMatch = {
@@ -387,6 +433,14 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   if (r.deathPlace) stub.deathPlace = r.deathPlace;
   if (r.collectionTitle) stub.collectionTitle = r.collectionTitle;
   if (r.recordArk) stub.recordArk = r.recordArk;
+  // Carried through, not recomputed: the staged row already holds the answer and
+  // the ranker has no business re-deriving it. Without this the top-ranked stub
+  // is exactly where a "father absent" hit looks most confirmed (#1324).
+  if (r.relativeTerms) stub.relativeTerms = r.relativeTerms;
+  // Same carry-through, same reason: the staged row holds it and the ranker has
+  // nothing to add. Unlike `relativeTerms` this gets no advisory note — a batch
+  // number is a lookup key for the next search, not a caveat on this score.
+  if (r.batchNumber) stub.batchNumber = r.batchNumber;
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different

@@ -14,7 +14,12 @@ from pathlib import Path
 import pytest
 
 from harness.fixtures import InvalidFixtureError
-from harness.mock_mcp import RANKING_SKIPPED_NOTE, create_mock_server
+from harness.mock_mcp import (
+    LIVE_TOOLS,
+    OK_FALSE_IS_FAILURE_LIVE,
+    RANKING_SKIPPED_NOTE,
+    create_mock_server,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -297,3 +302,83 @@ def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path)
     )
     body = _extract_response_dict(result)
     assert "ranked" not in body
+
+
+# --- Returned-failure visibility (mirrors src/tool-result.ts) ------------------
+#
+# The production dispatch marks a returned `{ok: false}` as `isError`; this
+# harness bypasses that dispatch entirely, so without the mirror a failed write
+# would read as an error in production and a SUCCESS in every unit eval run.
+#
+# Every case below builds the server with NO workspace, which makes each live
+# handler take its `_ws is None` short-circuit and return `{"ok": False, ...}`
+# with no node call and no build — fast, and needs no fixtures.
+
+# Derived from the gate set itself, never hand-copied: a ninth tool added to
+# OK_FALSE_IS_FAILURE_LIVE is exercised here automatically. A parallel list would
+# leave the new tool unasserted while the drift lint below still passed, since
+# that lint pins the set's membership rather than each tool's behaviour.
+@pytest.mark.parametrize("tool_name", sorted(OK_FALSE_IS_FAILURE_LIVE))
+def test_returned_failure_sets_is_error(tool_name):
+    """A tool that reports failure by RETURNING must not read as a success."""
+    server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR)
+    result = _invoke(tools_by_name, tool_name, {})
+    body = _extract_response_dict(result)
+    assert body.get("ok") is False, f"{tool_name} did not take its no-workspace path"
+    assert result.get("is_error") is True, (
+        f"{tool_name} returned ok:false but the envelope carries no is_error — "
+        "the model and the guardrail detectors would read it as a success"
+    )
+
+
+def test_merge_warnings_failure_does_not_set_is_error():
+    """The exclusion, and the only thing anywhere that checks it survived.
+
+    `merge_warnings` shares `_make_compiled_tool_handler` with six tools that ARE
+    marked, so a gate written on `response["ok"]` instead of the tool name would
+    silently flip it. Its `ok: false` is a dry-run verdict about a merge — the
+    tool working — so marking it would tell the agent a good preview had crashed.
+    """
+    server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR)
+    result = _invoke(tools_by_name, "merge_warnings", {})
+    assert _extract_response_dict(result).get("ok") is False
+    assert "is_error" not in result
+
+
+def test_successful_call_carries_no_is_error(tmp_path):
+    """`is_error` is set on failure only — a success keeps its original shape."""
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    (tmp_path / "research.json").write_text(
+        json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8"
+    )
+    result = _invoke(tools_by_name, "research_query", {"section": "questions"})
+    # Assert the call SUCCEEDED before asserting anything about a success. Guarding
+    # the assertion on `ok is not False` instead makes the test vacuous the moment
+    # the call starts failing — `section: "project"` is not a valid section, so this
+    # test passed without ever executing its assertion.
+    assert (
+        _extract_response_dict(result).get("ok") is True
+    ), "the call must succeed for this test to be asserting anything"
+    assert "is_error" not in result
+
+
+def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
+    """The Python gate set must equal OK_FALSE_IS_FAILURE ∩ LIVE_TOOLS.
+
+    An identity, not byte-equality: three of the TypeScript names have no live
+    handler here, so the Python side is necessarily a proper subset. Comparing
+    the intersection makes those fall out automatically instead of needing a
+    hand-maintained exemption list — and still fails if a twelfth tool is added
+    on the TypeScript side and never mirrored, which is the drift that would
+    otherwise be silent.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tool-result.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"OK_FALSE_IS_FAILURE = \[(.*?)\]", src, re.DOTALL)
+    assert decl, "OK_FALSE_IS_FAILURE is gone from tool-result.ts"
+    ts_names = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
+    assert ts_names, "parsed an empty list — the declaration's shape changed"
+    assert ts_names & LIVE_TOOLS == OK_FALSE_IS_FAILURE_LIVE

@@ -97,11 +97,65 @@ LIVE_TOOLS: set[str] = {
     # whole-file Reads; without it a skill following that instruction hits an
     # uncovered tool call and grades badly for doing the right thing.
     "research_query",
+    # The only route by which a project comes into existence. init-project's
+    # tests start from an EMPTY workspace, so a fixture cannot serve this: what
+    # is graded is whether both files end up on disk and valid, and only the
+    # real tool decides that. A canned success would grade the arguments while
+    # the workspace stayed empty and every file-existence check failed — and an
+    # uncovered call here aborts the test outright (Type 1), wasting the whole
+    # paid run.
+    "project_create",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
+
+# Tools whose returned `{"ok": false}` means the call could not do what was asked.
+#
+# The production dispatch (`src/index.ts`) marks these `isError` via
+# `writerToolResult`; this harness shells out to the compiled tools directly and
+# never goes through that dispatch, so without this mirror a failed write would
+# read as an error in production and a SUCCESS in every unit eval run.
+#
+# This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
+# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
+# `tree_forget`, `convert_calendar`) have no handler to mirror. The drift lint in
+# tests/unit/test_mock_mcp.py pins that intersection, so a twelfth tool added on
+# the TypeScript side fails here rather than silently going unmirrored.
+#
+# `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict
+# about a merge, not the tool failing. Marking it would tell the agent a working
+# preview had crashed.
+OK_FALSE_IS_FAILURE_LIVE: set[str] = {
+    "research_append",
+    "extraction_append",
+    "research_log_append",
+    "tree_edit",
+    "tree_correct",
+    "materialize_facts",
+    "project_context",
+    "research_query",
+    "project_create",
+}
+
+
+def _tool_envelope(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
+    """The MCP content envelope, with `is_error` set on a returned failure.
+
+    The SDK maps an `"is_error"` key to the `isError` the model sees. Gated on
+    BOTH the tool name and `ok is False`: gating on the name alone would flag
+    successes (every one of these returns `ok: true` when it works), and gating
+    on `ok` alone would flip `merge_warnings`, which shares the compiled-tool
+    builder and whose `ok: false` is a legitimate answer.
+    """
+    envelope: dict[str, Any] = {
+        "content": [{"type": "text", "text": json.dumps(response)}]
+    }
+    if tool_name in OK_FALSE_IS_FAILURE_LIVE and response.get("ok") is False:
+        envelope["is_error"] = True
+    return envelope
+
 
 # Last-resort input schema for a tool that is neither in the compiled build
 # nor given an explicit fixture-provided input_schema (e.g. an aspirational
@@ -476,6 +530,10 @@ def _make_live_handler(
         return _make_compiled_tool_handler(
             "research_query", "research-query.js", "researchQuery", workspace, call_log
         )
+    if tool_name == "project_create":
+        return _make_compiled_tool_handler(
+            "project_create", "project-create.js", "projectCreate", workspace, call_log
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -611,7 +669,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
             "response": response,
         }
         call_log.append(entry)
-        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+        return _tool_envelope("research_log_append", response)
 
     return handler
 
@@ -680,7 +738,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             "response": response,
         }
         call_log.append(entry)
-        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+        return _tool_envelope("research_append", response)
 
     return handler
 
@@ -757,7 +815,7 @@ def _make_compiled_tool_handler(
             "response": response,
         }
         call_log.append(entry)
-        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+        return _tool_envelope(tool_name, response)
 
     return handler
 
@@ -765,3 +823,4 @@ def _make_compiled_tool_handler(
 def expected_tool_names(call_log: list[dict[str, Any]]) -> list[str]:
     """Return tool names recorded in the call log, in invocation order."""
     return [c["tool"] for c in call_log]
+

@@ -282,6 +282,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "claude-agent-sdk" },
+    { name = "cryptography" },
     { name = "e2b" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -305,6 +306,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "claude-agent-sdk", specifier = ">=0.2.128" },
+    { name = "cryptography", specifier = ">=48.0.1" },
     { name = "e2b", specifier = ">=2.35.0" },
     { name = "fastapi", specifier = ">=0.140.13" },
     { name = "httpx", specifier = ">=0.27" },

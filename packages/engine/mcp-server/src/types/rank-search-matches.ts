@@ -4,6 +4,8 @@
 // a tree subject, returning compact gedcomx-free stubs. Spec:
 // docs/specs/rank-search-matches-tool-spec.md.
 
+import type { RelativeTerms } from "./relative-terms.js";
+
 export interface RankSearchMatchesInput {
   /** Absolute path to the active project directory. */
   projectPath: string;
@@ -58,6 +60,16 @@ export interface RankedMatch {
   /** Only set when `checkAttachments` and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
+  /** Carried verbatim from the staged row. The ranker neither computes nor
+   *  scores it — a scorer that cannot see "father absent" would keep rating
+   *  those hits as relative-confirmed, which is why it has to reach the stub
+   *  (#1324). */
+  relativeTerms?: RelativeTerms;
+  /** The extraction batch this record came out of, carried verbatim from the
+   *  staged row. Present only on records that trace to one. When a search names
+   *  a `subjectId` the caller reads `ranked`, not `results`, so without this the
+   *  batch is invisible on the most common call shape (#1592). */
+  batchNumber?: string;
 }
 
 export interface RankSearchMatchesResult {
@@ -89,5 +101,19 @@ export interface RankSearchMatchesResult {
    *  through `person_evidence`). Reported separately from facts because name
    *  variants alone measurably move the score. */
   subjectEnrichedNames?: number;
+  /**
+   * Present only when the search anchored on a relative AND at least one
+   * returned match does not carry that relative. Says so in words, because the
+   * match score cannot: it measures name/date/place agreement and is blind to
+   * whether the record names the father you searched for. A top-ranked hit with
+   * `father: absent` is where that blindness is most dangerous — it looks more
+   * confirmed than anything else on the page.
+   *
+   * Deliberately a note and not a score adjustment. `rank_search_matches` is
+   * specced as a re-ranker and review surface, not a classifier; making `absent`
+   * move `matchScore` is a scoring-policy change that needs calibration first
+   * and would shift every ranking in the eval corpus.
+   */
+  relativeTermNote?: string;
   matches: RankedMatch[];
 }
