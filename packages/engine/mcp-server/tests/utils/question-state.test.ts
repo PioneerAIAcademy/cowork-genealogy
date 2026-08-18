@@ -74,8 +74,10 @@ describe("questionStatus — the state ladder", () => {
     const s = questionStatus(d, question());
     expect(s.state).toBe("critiqued");
     // Critiqued is the last rung, not the end of the work: the `resolved` write
-    // is still outstanding, and it is the transition no skill body claims.
-    expect(s.nextStep).toMatch(/mark the question resolved/);
+    // is still outstanding, and proof-conclusion owns it (#1399).
+    // Anchored at the start deliberately — a tail-only match passes for any
+    // skill name, which is how the stale `question-selection` hint survived.
+    expect(s.nextStep).toMatch(/^proof-conclusion — .*mark the question resolved/);
   });
 
   it("critiqued AND resolved is the only state with nothing outstanding", () => {
