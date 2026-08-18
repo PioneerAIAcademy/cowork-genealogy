@@ -89,19 +89,29 @@ Five, all `recover`, all `required`:
   guardian — `3QS7-89QX-2C5P`) **or** the 1823 bond (the widowed mother Margaret as
   guardian — `3QS7-L9QX-2H77`) satisfies it.
 - **f5** — Margaret's 23 November 1824 remarriage to Gideon B. Sleeper, encoded as a
-  `Couple` relationship, with Sleeper never asserted as the subject's father.
+  **dated** `Couple` relationship fact, on the same person the tree records as the
+  subject's mother, with Sleeper never asserted as the subject's father. Graded on the
+  same standard as f3: a relationship that exists but carries no dated fact does not
+  satisfy it, and a fact that sits on an unmerged duplicate rather than the person
+  actually linked to the subject does not either — see the 2026-08-18 changelog
+  entries for why both bars apply.
 
 **f4 measures whether the guardianship record was engaged at all; f5 measures whether
-the stepfather inference was actually reasoned through.** Two scored runs exposed that
-these are not the same test. Both runs attached a guardianship bond and satisfy f4 —
-but both independently reached the **1823** bond, in which the widowed mother is
-guardian of her own children, a record that never presents a surname difference or a
-stepfather at all. f4 alone cannot tell a run that engaged the stepfather situation from
-one that engaged an entirely different, easier guardianship in the same record series.
-f5 is the added discriminator: it requires the tree to actually carry Margaret's
-remarriage to Sleeper, which is what shows the inference — not merely a guardianship
-citation — was made. See the 2026-08-18 changelog entry for how this gap was found and
-why it is closed with a new finding rather than by re-pinning f4 to one image.
+the stepfather inference was actually reasoned through and materialized in the tree.**
+Two scored runs exposed that f4 alone is not enough. Both runs attached a guardianship
+bond and satisfy f4 — but both independently reached the **1823** bond, in which the
+widowed mother is guardian of her own children, a record that never presents a surname
+difference or a stepfather at all. f4 cannot tell a run that engaged the stepfather
+situation from one that engaged an entirely different, easier guardianship in the same
+record series. f5 is designed as the discriminator for that gap: it requires the tree
+to carry Margaret's remarriage to Sleeper as a dated fact on the actual mother node, not
+merely a guardianship citation or a hypothesis recorded in prose. **No committed run
+currently satisfies it** — run 2 came closer, correctly sourcing the relationship to the
+right marriage-index entry, but left the date unmaterialized and the identity unmerged
+— so f5's value as a discriminator is designed, not yet demonstrated by a passing run.
+See the 2026-08-18 changelog entries for how this gap was found, why it is closed with a
+new finding rather than by re-pinning f4 to one image, and why run 2's initial `true`
+grade on f5 was corrected to `false`.
 
 **Why either bond satisfies f4.** #1413's report is about *"actual parents being named
 guardian of their own children"* as well as stepfathers, and this family supplies both:
@@ -595,15 +605,29 @@ Read these before attributing a failed headless run.
 
   **Both runs blind-graded against f5, no new run required.** Run 1 (`f5: false`): no
   person named Sleeper exists anywhere in its tree, and no `Couple` relationship records
-  the 1824 remarriage — it satisfied f4 via the 1823 bond and stopped there. Run 2
-  (`f5: true`): `R34` (Couple, I3+I4) records Margaret's remarriage to Sleeper, sourced,
-  and I4 carries no other relationship, so Sleeper is never asserted as the subject's
-  father. The remarriage sits on I3, the unmerged duplicate of the mother documented
-  under f2 above — but the agent's own hypothesis `h_002` names I2 and I3 as the same
-  person and recommends the exact merge, so the identification was reasoned through
-  correctly even though the merge was not executed in autonomous mode. f5 is the finding
-  the two runs actually split on, which is what makes it a discriminator rather than a
-  restatement of f4.
+  the 1824 remarriage — it satisfied f4 via the 1823 bond and stopped there. Run 2 was
+  initially graded `f5: true` on `R34` (Couple, I3+I4), sourced to S3, the 1824 marriage
+  index entry — see the correction immediately below, which regrades this to `false`.
+
+  **Regraded on further co-review (florencemashipei) — run 2's f5 is `false`, not
+  `true`.** Two independent gaps, caught because the same reviewer checked this grade
+  against f3's own standard on the same run rather than taking the note at face value.
+  First: `R34` carries no facts at all — no `Marriage` fact, no date — the identical
+  defect f3 was graded `false` on for `R33` two paragraphs above, and the standard has
+  to apply the same way to both findings on the same run; grading one `false` and the
+  other `true` for the same missing-fact shape was inconsistent and is not defensible
+  once named. Second, and independent of the first: `R34` sits on `I3`, the unmerged
+  duplicate of the mother documented under f2 above, not on `I2`, the person `R36`
+  actually names as the subject's parent — so the tree as delivered does not connect
+  the subject's mother to Sleeper at all, only a same-named, disconnected node.
+  Hypothesis `h_002` correctly reasons that `I2` and `I3` are the same person and
+  recommends the merge, but that reasoning lives in `research.json`, not in the tree,
+  and this fixture's own § Observed behaviour note above already states the governing
+  principle: a conclusion recorded in `research.json` and not in the tree is an agent
+  failure, not a judge miss. Neither gap depends on the other; either alone would be
+  enough to regrade. f5 is no longer "the finding the two runs actually split on" —
+  under this grade, neither committed run satisfies it, and that is stated plainly
+  rather than argued around.
 
   **What this changes and does not change about §14.** Nothing here touches either
   committed run log or the judge output either one carries — both were scored against
@@ -615,11 +639,14 @@ Read these before attributing a failed headless run.
   both; f5's grades above come from the blind human annotation only, the same route
   every finding in this fixture goes through first. Under the current five-finding
   definition, no committed run carries a judge-scored all-required-true verdict — run 1
-  is 4 of 5 (misses f5), run 2 is 3 of 5 (f3 and f5 mixed). That is reported plainly
-  rather than smoothed over: the genealogical case is unaffected and remains solvable
-  from live FamilySearch (§14's original standard, met on f1–f4), but a run log carrying
-  a judge-scored pass against all five findings, f5 included, is future work for the
-  next scored run of this fixture, not a claim this PR makes.
+  is 4 of 5 (misses f5), run 2 is 3 of 5 (misses f3 and f5, both on the same
+  missing-dated-fact shape). That is reported plainly rather than smoothed over: the
+  genealogical case is unaffected and remains solvable from live FamilySearch (§14's
+  original standard, met on f1–f4), but a run log carrying a judge-scored pass against
+  all five findings — f5 included, and encoded as a dated fact connected to the actual
+  mother node — is future work for the next scored run of this fixture, not a claim
+  this PR makes. Per spec §14, that is a recommended authoring practice the fixture
+  still owes, not a merge blocker (`docs/specs/e2e-test-spec.md:1519-1521`).
 
   **Also in this pass:** per-fixture `caps` added to `fixture.json`
   (`max_cost_usd: 25`, `wall_clock_seconds: 10800`, `max_turns: 300`), sized to run 2's

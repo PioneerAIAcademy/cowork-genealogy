@@ -87,7 +87,7 @@
     {
       "id": "f5",
       "type": "relationship",
-      "description": "The tree must record Margaret McDowell's remarriage to Gideon B. Sleeper (23 November 1824) as a Couple relationship, and must not assert Sleeper as Simpson Ridley Stribling's father. Sleeper's May 1825 guardianship of the four Stribling minors follows six months after that marriage; encoding the remarriage — rather than leaving the guardian's differing surname as an unresolved conflict, or worse, treating him as the subject's father — is what shows the stepfather inference was actually reasoned through. A run can satisfy f4 by attaching either guardianship bond without ever encoding this relationship; f5 is the discriminator for the inference itself, not just for having engaged the record.",
+      "description": "The tree must record Margaret McDowell's remarriage to Gideon B. Sleeper as a Couple relationship carrying a dated Marriage fact (23 November 1824), on the same person the tree records as Simpson Ridley Stribling's mother — not on an unmerged duplicate — and must not assert Sleeper as the subject's father. Sleeper's May 1825 guardianship of the four Stribling minors follows six months after that marriage; encoding the dated remarriage on the correct person — rather than leaving the guardian's differing surname as an unresolved conflict, treating him as the subject's father, or recording the identification only as prose reasoning without materializing it in the tree — is what shows the stepfather inference was actually reasoned through. Graded on the same standard as f3: a Couple relationship that exists but carries no dated fact does not satisfy this finding, matching f3's own bar, and a correctly-dated relationship that sits on a person other than the one linked to the subject as mother does not satisfy it either. A run can satisfy f4 by attaching either guardianship bond without ever encoding this relationship; f5 is the discriminator for the inference itself, not just for having engaged the record.",
       "details": {
         "subject_person": {
           "name": "Simpson Ridley Stribling",
@@ -99,7 +99,9 @@
           "birth": "2 January 1793, Milledgeville, Baldwin County, Georgia",
           "death": "21 January 1864, Liberty, Amite County, Mississippi"
         },
-        "stepfather_note": "Gideon B. Sleeper, married Margaret McDowell 23 November 1824; must not be encoded as the subject's father"
+        "marriage_date": "23 November 1824",
+        "marriage_place": "Liberty, Amite County, Mississippi",
+        "stepfather_note": "Gideon B. Sleeper, married Margaret McDowell 23 November 1824; must not be encoded as the subject's father; must be on the same person as the subject's mother, not an unmerged duplicate"
       },
       "supporting_sources": [
         "Mississippi, Marriages, 1800-1911 — entry for Gideon Sleeper, 1824, Amite County, Mississippi (his marriage to the widowed Margaret, six months before the guardianship)"
