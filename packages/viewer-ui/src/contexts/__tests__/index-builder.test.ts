@@ -111,6 +111,19 @@ describe('buildIndex', () => {
     expect(index.size).toBe(1)
   })
 
+  it('does not throw on a partial research.json missing whole sections', () => {
+    // buildIndex runs in the provider's useMemo, ABOVE the section error
+    // boundary, so a throw here blanks the entire viewer with nothing to catch
+    // it. An older/partial research.json missing sections must index cleanly
+    // (issue #1317).
+    const partial = { project: { id: 'rp_x' } } as unknown as Parameters<typeof buildIndex>[0]
+    let index: ReturnType<typeof buildIndex> | undefined
+    expect(() => {
+      index = buildIndex(partial, null)
+    }).not.toThrow()
+    expect(index?.get('rp_x')).toBeDefined()
+  })
+
   it('getById logs warning for missing references', () => {
     // This tests the context's getById behavior, but we can verify
     // the index lookup pattern here
@@ -122,5 +135,35 @@ describe('buildIndex', () => {
 
     // The actual warning happens in the context's getById, not in buildIndex
     warnSpy.mockRestore()
+  })
+
+  // A partial write is not only a MISSING section (covered above). It is also a
+  // half-written entry, or a section that is not an array yet. buildIndex runs
+  // above the ErrorBoundary, so any of these throwing blanks the whole viewer —
+  // the exact failure #1317 is about. Each shape below threw before the
+  // asArray/`?.id` guards.
+  it.each([
+    ['a null item in a section', { conflicts: [null] }],
+    ['a section that is not an array yet', { conflicts: {} }],
+    ['a null plan', { plans: [null] }],
+    ['plan.items not an array yet', { plans: [{ items: {} }] }],
+    ['a null item in another section', { questions: [null] }]
+  ])('does not throw on %s', (_label, research) => {
+    expect(() => buildIndex(research as never, null)).not.toThrow()
+  })
+
+  it.each([
+    ['gedcomx missing its persons array', {}],
+    ['a null gedcomx person', { persons: [null], relationships: [], sources: [] }]
+  ])('does not throw on %s', (_label, gedcomx) => {
+    expect(() => buildIndex({} as never, gedcomx as never)).not.toThrow()
+  })
+
+  it('still indexes the good entries alongside a malformed sibling', () => {
+    const index = buildIndex(
+      { conflicts: [null, { id: 'c_001' }], questions: {} } as never,
+      null
+    )
+    expect(index.get('c_001')).toEqual({ item: { id: 'c_001' }, section: 'conflicts' })
   })
 })

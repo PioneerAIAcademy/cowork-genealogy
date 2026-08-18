@@ -6,16 +6,18 @@ the rule, and what it usually means.
 
 The tool emits two severities:
 
-- **`error`** -- violates a Fundamental assumption (physical /
-  biological / temporal impossibility). Almost always a data error
-  or two distinct identities merged into one profile.
-- **`warning`** -- violates a Valid assumption (biologically or
-  socially improbable). Exceptions exist; verification recommended.
+- **`contradiction`** -- violates a Fundamental assumption (physical /
+  biological / temporal impossibility). Data that cannot be true as
+  recorded. Almost always a data error or two distinct identities
+  merged into one profile.
+- **`implausible`** -- violates a Valid assumption (biologically or
+  socially improbable). Possible but unlikely enough to need
+  corroboration. Exceptions exist; verification recommended.
 
 See `assumption-categories.md` for the framework these severities
 map to.
 
-## Fundamental violations (`severity: "error"`)
+## Fundamental violations (`severity: "contradiction"`)
 
 These conditions are impossible under physical or biological law.
 Always investigate.
@@ -86,7 +88,7 @@ Always investigate.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
 
-## Valid violations (`severity: "warning"`)
+## Valid violations (`severity: "implausible"`)
 
 These conditions are improbable but not impossible. Exceptions are
 documented but rare. Verify against original sources before
@@ -129,7 +131,7 @@ treating as established.
 
 Most checks above have a "relatives" variant that fires when the
 same condition is detected on a parent, spouse, or child of the
-focal person. They emit `severity: "warning"` regardless of the
+focal person. They emit `severity: "implausible"` regardless of the
 original severity, because the focal person's own data isn't
 necessarily wrong -- the issue is in the relationship.
 
