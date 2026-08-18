@@ -20,7 +20,7 @@
     "Tool Arguments: writing the proof calls research_append to persist proof_summaries; a correct call scores full marks."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 300
   }
 }

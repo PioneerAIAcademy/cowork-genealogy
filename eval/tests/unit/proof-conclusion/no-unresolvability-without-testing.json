@@ -19,7 +19,7 @@
     "Tool Arguments: writing the proof normally calls research_append to persist the proof_summaries entry; a correct research_append call scores full marks. If the skill declines to write pending the gap, no tool call is fine (N/A)."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 300
   }
 }

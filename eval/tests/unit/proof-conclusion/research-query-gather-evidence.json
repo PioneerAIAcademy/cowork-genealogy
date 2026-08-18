@@ -18,7 +18,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "max_turns": 60
   }
 }

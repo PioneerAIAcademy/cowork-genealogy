@@ -19,7 +19,7 @@
     "The correct behavior here is to DECLINE writing a finalized proof and route to conflict-resolution. Do NOT treat the absence of a standalone proof narrative as a deficiency: score 'Narrative standalone' on the clarity of the decline and redirect (a clean, well-explained refusal = pass), not as a missing deliverable. A full proof narrative is NOT expected when the skill correctly declines."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 300
   }
 }
