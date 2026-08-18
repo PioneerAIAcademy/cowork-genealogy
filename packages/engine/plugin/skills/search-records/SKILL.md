@@ -373,7 +373,7 @@ the subject with FamilySearch's own matcher (the engine `same_person` uses),
 re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and returns the **top 10** in `matches[]`. Each carries `matchRank`,
 `searchRank` (its original position — shows how far the ranker missed),
-`matchScore` (0–1), `matchConfidence`, the key facts, and `attachedToSubject` /
+`matchScore` (0–1), `matchConfidence` (1–10), the key facts, and `attachedToSubject` /
 `attachedToOther`. The bulk GedcomX stays host-side, and a per-result
 `same_person` loop plus a separate `source_attachments` call are both unnecessary.
 

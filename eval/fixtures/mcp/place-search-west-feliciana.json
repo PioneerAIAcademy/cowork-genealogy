@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for West Feliciana Parish, Louisiana",
+  "args": {
+    "placeName": "~West Feliciana"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "West Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1824/",
+        "latitude": 30.9,
+        "longitude": -91.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=West+Feliciana&focusedId=8803"
+      }
+    ]
+  }
+}

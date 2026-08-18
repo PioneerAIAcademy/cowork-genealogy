@@ -1,0 +1,52 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Blount County, Alabama",
+  "args": {
+    "standardPlace": "~Blount"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Blount, Alabama, United States"
+    },
+    "scope": "Blount, Alabama, United States",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "1598408",
+        "title": "Alabama, County Marriages, 1809-1950",
+        "dateRange": "1809-1950",
+        "recordCount": 612345,
+        "personCount": 1224690,
+        "imageCount": 306172,
+        "url": "https://www.familysearch.org/search/collection/1598408"
+      },
+      {
+        "id": "1537764",
+        "title": "Alabama, Probate Records, 1809-1985",
+        "dateRange": "1809-1985",
+        "recordCount": 438210,
+        "personCount": 438210,
+        "imageCount": 219105,
+        "url": "https://www.familysearch.org/search/collection/1537764"
+      },
+      {
+        "id": "1927240",
+        "title": "United States Census (Population Schedules), 1860",
+        "dateRange": "1860",
+        "recordCount": 23000000,
+        "personCount": 23000000,
+        "imageCount": 776000,
+        "url": "https://www.familysearch.org/search/collection/1927240"
+      },
+      {
+        "id": "1915984",
+        "title": "Alabama, State Census, 1820-1866",
+        "dateRange": "1820-1866",
+        "recordCount": 243781,
+        "personCount": 243781,
+        "imageCount": 1120,
+        "url": "https://www.familysearch.org/search/collection/1915984"
+      }
+    ]
+  }
+}
