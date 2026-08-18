@@ -21,24 +21,32 @@ const stages = [
   { name: 'proof_summary', label: 'Proof Summary', section: 'proof_summaries' }
 ] as const
 
+/** A stage counts as reached only when its section is a non-empty ARRAY.
+ *  ProgressPipeline renders above the section ErrorBoundary, so a partial or
+ *  half-written research.json reaching `.length` on an absent or not-yet-array
+ *  section would blank the whole viewer with nothing to catch it (#1317). */
+function has(value: unknown): boolean {
+  return Array.isArray(value) && value.length > 0
+}
+
 function isStageCompleted(name: string, data: ResearchData): boolean {
   switch (name) {
     case 'init':
       return data.project != null
     case 'question_selection':
-      return data.questions.length > 0
+      return has(data.questions)
     case 'research_plan':
-      return data.plans.length > 0
+      return has(data.plans)
     case 'search_records':
-      return data.log.length > 0
+      return has(data.log)
     case 'extraction':
-      return data.assertions.length > 0
+      return has(data.assertions)
     case 'analysis':
       return (
-        data.conflicts.length > 0 || data.hypotheses.length > 0 || data.person_evidence.length > 0
+        has(data.conflicts) || has(data.hypotheses) || has(data.person_evidence)
       )
     case 'proof_summary':
-      return data.proof_summaries.length > 0
+      return has(data.proof_summaries)
     default:
       return false
   }
