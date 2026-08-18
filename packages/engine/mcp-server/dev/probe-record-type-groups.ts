@@ -354,6 +354,11 @@ const GROUP_CLAIMS: [string, number[], number[]][] = [
   ["32 Religious", [123402, 124209], [130206, 126601]],
   ["42 Prison", [123478, 131448], [126780, 130086, 126416, 129538]],
   ["46 Government Pensions", [124227], [124225, 124226, 130136, 131421, 126869, 124383, 127027]],
+  // Not shipped as a group — its members are reachable via Military and Death.
+  // Kept so that decision stays reproducible from this probe.
+  ["14 Casualties (not shipped)", [123352], [124372, 124129, 124445]],
+  // 131602 sits beside Emigration under Migration, so Emigration carries it as a stray.
+  ["16 Emigration", [123632], [131602]],
 ];
 
 async function sectionAnchors() {
@@ -417,7 +422,7 @@ const VOCABULARY: VocabGroup[] = [
   { name: "Military Pensions", anchor: 127621, parent: "Military" },
   { name: "Draft", anchor: 104808, parent: "Military" },
   { name: "Migration", anchor: 127023, parent: null },
-  { name: "Emigration", anchor: 123632, parent: "Migration" },
+  { name: "Emigration", anchor: 123632, parent: "Migration", strays: [131602] },
   { name: "Naturalization", anchor: 124162, parent: "Migration" },
   { name: "Census", anchor: 123363, parent: null, strays: [104611] },
   { name: "Legal", anchor: 122797, parent: null },
@@ -446,7 +451,7 @@ const VOCABULARY: VocabGroup[] = [
   { name: "Photographs", anchor: 122956, parent: null },
   { name: "Miscellaneous", anchor: 124078, parent: null },
   { name: "Administrative", anchor: 135784, parent: null },
-  { name: "Newspapers", anchor: 119166, parent: null },
+  { name: "Newspapers", anchor: 124231, parent: null },
 ];
 
 /** Every id the shipped vocabulary would send: anchors plus strays. */

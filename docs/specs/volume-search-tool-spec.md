@@ -243,12 +243,18 @@ They are exported as `RECORD_TYPE_GROUP_NAMES` from
 `src/utils/record-type-groups.ts` and spread into the schema, so the list exists
 once. Sentence case with proper nouns capitalised; no kebab- or snake-casing.
 
-> **The vocabulary cannot be finalised until the [open questions](#open-questions-for-review)
-> are answered.** Questions 2 and 3 change its membership (whether Casualties
-> ships at all, whether Emigration is kept) and question 6 changes the Newspapers
-> anchor — which the [reach](#what-the-filter-excludes-and-what-it-does-not)
-> measurement shows is worth 3.5% of one jurisdiction. Implement the mechanism
-> against the table as it stands; expect the literals to move once.
+> **The vocabulary is settled** — 47 groups, membership and anchors decided in
+> review (see [Decisions taken in review](#decisions-taken-in-review)). One item
+> remains open and does not affect the literals: the wording of the annotation on
+> the Enslavement and Indigenous rows.
+
+> **"The source list"**, referred to throughout this section, is the proposed
+> record-type grouping circulated for genealogical review — 48 candidate groups,
+> each with an anchor concept id and the record types it was intended to absorb.
+> It is the editorial input to this vocabulary; the group table below is what
+> survived verification against the taxonomy. It is not a repository file, so its
+> group numbering ("group 14", "group 16") appears only in that document and in
+> the decisions recorded below.
 
 Each group maps to `{ anchors, strays }`:
 
@@ -292,7 +298,7 @@ volumes **plus every group nested beneath it**. Reproduce with section `tree`.
 | Guardianship | `123769` | Probate | |
 | Wills | `124457` | Legal | |
 | Land | `127026` | Legal | Enslavement |
-| Enslavement | `126864` | Land | |
+| Enslavement ᵃ | `126864` | Land | |
 | Notarial | `100599` | Legal | |
 | Government | `126517` | — | ID documents, Passports, Foreigner, Tax, Wartime, Poor Law, Prison, Government Pensions, Indigenous |
 | ID documents | `126546` | Government | Passports |
@@ -303,7 +309,7 @@ volumes **plus every group nested beneath it**. Reproduce with section `tree`.
 | Poor Law | `126768` | Government | |
 | Prison | `123478` | Government | |
 | Government Pensions | `124227` | Government | |
-| Indigenous | `130717` | Government | |
+| Indigenous ᵃ | `130717` | Government | |
 | Voting | `127015` | — | |
 | School | `124365` | — | |
 | Business | `126340` | — | |
@@ -312,13 +318,29 @@ volumes **plus every group nested beneath it**. Reproduce with section `tree`.
 | Photographs | `122956` | — | |
 | Miscellaneous | `124078` | — | |
 | Administrative | `135784` | — | |
-| Newspapers | `119166` | *(under `124231`, which is not itself a group)* | |
+| Newspapers | `124231` | — | |
 
 **Consumers must be told the nesting**, because it is not visible from a group
 name: asking for *Government* also returns tax, prison, poor-law, passport,
 foreigner, wartime, pension and indigenous volumes. Express the hierarchy as this
 table rather than an indented diagram: a nested `⊃` notation is ambiguous about
 whether a name following it is a sibling or a child; one parent per row is not.
+
+**ᵃ Placement is the taxonomy's, and needs a reader-facing annotation.**
+Enslavement nests under **Land & Property**, reflecting that enslaved people were
+recorded in law as property; Indigenous nests under **Government**. Both are what
+FamilySearch encodes, and the *Parent* column has to state it: selecting **Land**
+returns enslavement volumes whether or not this table admits it. Flattening either
+row would make the table misdescribe containment. The **wording** of the annotation
+these two rows carry is a genealogy-reviewer decision and is the one item still
+open in this spec.
+
+**Groups may overlap, and that is intended.** Because a stray can attach a type to
+a group outside its subtree, one volume can satisfy two group names — an obituary
+volume answers both **Death** (via the `122911` stray) and **Newspapers** (via
+containment). A duplicate across two groups is harmless; a death-record search that
+silently omits obituaries is a wrong answer. Consumers must not assume the groups
+partition the corpus.
 
 #### Strays
 
@@ -330,7 +352,8 @@ id's real ancestor chain.
 |---|---|---|
 | Baptism | `127575` religious birth records | Religious `123402` — a **sibling** of the Baptism anchor `103612`, not a descendant. 208,413 volumes globally |
 | Prison | `131448` police records | Government `126517` — a **sibling** of the Prison anchor `123478`. 50,432 volumes globally |
-| Death | `122911` obituaries | Newspapers `124231›119166` |
+| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it |
+| Death | `122911` obituaries | Newspapers `124231` |
 | Religious Death | `127739` religious burial | Religious `123402` |
 | Passports | `124432`, `124442`, `131572` travel permits, visas, residence permits | Migration `127023` |
 | ID documents | `129962`, `129964` driver records and licences | Government `126517` |
@@ -349,10 +372,14 @@ Two of these resolve a duplicate assignment in the source list: `127571` and
 them. (`131421` is also double-claimed but resolves *inside* Government Pensions
 `124227`, so containment already reaches it and it needs no stray row.)
 
-**Enumerate this table; do not describe it.** The source list gives Baptism and
-Prison a *second* anchor each, and both sit outside the first anchor's subtree.
-Carrying only the first anchor drops 208,413 and 50,432 volumes from those groups
-respectively, with no error and no empty result to notice.
+**Enumerate this table; do not describe it.** The source list gives four groups a
+*second* anchor. Two of those second anchors fall **outside** the first anchor's
+subtree, so containment cannot reach them and they appear above as strays —
+carrying only the first anchor would drop 208,413 volumes from Baptism and 50,432
+from Prison, with no error and no empty result to notice. The other two are
+**inside** their subtree and need no row: Probate's `126785` resolves to
+`[122797, 127010, 124277]`, and Religious's `124209` ("Parish") to `[123402]`.
+Nothing is lost by omitting them.
 
 ### Relationship to the other record-type filters — read before naming anything
 
@@ -392,12 +419,24 @@ equivalence, because a volume carrying one event type generally carries others:
 | `probate` | `Probate` |
 | `other` | no correspondence — do not map it |
 
-> **The name mismatch fails silently, and that is the reason to document it.** No
-> tool in this server sets `additionalProperties: false`, and `volume_search`'s
-> `validate()` inspects only known fields. So `recordType: "probate"` sent to
-> `volume_search` is **ignored, and the search runs unfiltered** — a full result
-> set with no error and no signal that the filter was dropped. See
-> [open question 7](#open-questions-for-review).
+> **The name mismatch fails silently, so `validate()` rejects it explicitly.**
+> Nothing in this server validates input against the advertised JSON Schema —
+> there is no `ajv` or `zod`, and `src/index.ts` casts `request.params.arguments`
+> straight to each handler — so a schema-level `additionalProperties: false`
+> would only produce an error if the *client* validated first, which is three
+> clients and untested in all three. (`rank_search_matches` and `research_append`
+> do set it; it constrains what those tools accept in practice only through the
+> same client-side path.) `volume_search` therefore rejects the wrong field
+> server-side, in `validate()`:
+>
+> ```ts
+> if ("recordType" in input) throw new Error(
+>   "volume_search filters by recordTypeGroups, not recordType. Valid groups: …"
+> );
+> ```
+>
+> Without it, `recordType: "probate"` is ignored and the search runs unfiltered —
+> a full result set with no error and no signal the filter was dropped.
 
 ### Names are not stable; concept ids are
 
@@ -438,27 +477,24 @@ coverages with no display name and **0 of 202** with no concept id; Ontario is
 144/200 and 0/200. A filter reaches both places in full.
 
 **Filter reach is high but not total.** Section `reach` OR-s **every id the
-vocabulary would send** — all 47 anchors plus all strays, 66 ids — against each
+vocabulary would send** — all 47 anchors plus all strays, 67 ids — against each
 place's unfiltered baseline:
 
 | Place | Reachable |
 |---|---|
-| Harjager · Edensor · Wayne · Jalisco · Tolna | **100%** |
-| Kent, England | 10593 / 10595 |
-| Ontario, Canada | 32609 / 32628 — 99.9% |
-| Bayern, Germany | 163884 / 164292 — 99.8% |
-| Oslo, Norway | 6192 / 6227 — 99.4% |
-| **New South Wales, Australia** | **3641 / 3775 — 96.5%** |
+| Harjager · Edensor · Wayne · Kent · Jalisco · Ontario · Oslo · Tolna · New South Wales | **100%** |
+| Bayern, Germany | 164288 / 164292 |
 
 **So the constraint is the completeness of our vocabulary, not the API's data** —
 every one of those shortfalls is a volume whose type sits outside the subtrees we
 name, not a volume without a type.
 
-**Most of the gap traces to one open question.** Newspapers is anchored on
-`119166`, the *child*; its root `124231` is not in the vocabulary. Adding
-`124231` alone takes New South Wales from 3641 to **3775 (100%)** and Oslo from
-6192 to **6227 (100%)**. So the choice in [open question 6](#open-questions-for-review)
-is not cosmetic — anchoring on the child costs 3.5% of New South Wales.
+**Anchor each group on its taxonomy root, not on a child, or reach suffers.**
+Newspapers is the worked case: anchored on the child `119166` rather than its root
+`124231`, New South Wales sat at 3641/3775 (96.5%), Oslo at 6192/6227 (99.4%),
+Ontario at 32609/32628 and Kent at 10593/10666. Re-anchoring on the root took all
+four to 100%. Bayern's four remaining volumes are the only evidence in this sample
+of a root outside the vocabulary.
 
 > **This measurement must be derived from the vocabulary, never hand-listed.** The
 > probe's `reach` section reads the same `VOCABULARY` constant its `tree` section
@@ -988,61 +1024,65 @@ npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, 
 
 ---
 
-## Open questions for review
+## Decisions taken in review
 
-These are the decisions this spec deliberately does **not** make. Each needs a
-judgement the API cannot supply; the measurement behind each is already done.
+Recorded so the implementation does not re-open them.
 
-**1. The strays — absorb or realign?**
-Fifteen rows in [Strays](#strays), carrying 19 ids, are assigned to a group
-editorially while the taxonomy files them elsewhere. Two options: keep them as `strays` on the group
-(the spec's current shape), or realign those groups to follow the taxonomy and
-drop the concept. The first honours the editorial intent; the second keeps
-`group → anchor` a clean one-to-one. Affects the vocabulary only, not the
-mechanics.
+**Strays are kept, and groups may overlap.** Adding a stray costs nothing — one
+more entry in the same `recordTypeConceptIds` array — while dropping one loses real
+volumes (208,413 for Baptism, 50,432 for Prison). The consequence is that a volume
+can appear under two groups: an obituary volume answers both **Death** and
+**Newspapers**. A duplicate is harmless; a missing death-record volume is a wrong
+answer.
 
-**2. Group 14 (Casualties, War, POW) has no anchor.**
-Its members split across two roots with no common ancestor — `123352` casualty
-records and `124372` POW files under Military `124133`; `124129` military death
-and `124445` war graves under Vital › Death `124443›104898`. It cannot be one
-anchor. Either it ships as a multi-id group, or it is dropped and its members
-reached through Military and Death.
+**Casualties/War/POW is not a group.** Its four members are already reachable:
+`123352` casualty records and `124372` POW files via **Military** `124133`;
+`124129` military death and `124445` war grave records via **Death**
+`124443›104898`. A Casualties group would add no reach and would be the only row
+breaking one-row-one-parent. Reproducible from the probe's `anchors` section, which
+carries the four ids for exactly this reason. Revisit only if researchers ask for
+"war casualties" as a category.
 
-**3. Group 16 (Emigration) sits inside group 15 (Migration).**
-`123632` resolves under `127023`, so selecting Migration already returns it. Keep
-it as a narrowing convenience, or drop it as redundant? Note `131602`
-(departure records), the group's other proposed id, has **zero records** across
-the whole corpus and cannot be verified.
+**Emigration stays.** Narrowing is the vocabulary's job — Probate sits inside Court
+inside Legal and is still worth naming. `131602` departure records is a **sibling**
+of the Emigration anchor under Migration, so Emigration carries it as a stray.
 
-**4. Enslavement and Indigenous placement.**
-The taxonomy puts Enslavement (`126864`) under **Land & Property** (`127026`),
-under Legal — reflecting how enslaved people were recorded in law, as property.
-Indigenous (`130717`) sits under **Government** (`126517`). Both are factually
-what FamilySearch encodes. Whether this tool surfaces them that way, flattens
-them to top level, or annotates them is a judgement for the genealogy reviewers,
-not an implementation detail to settle silently. A researcher looking for
-enslavement records will not think to open "Land & Property", and a reader
-browsing Land will meet them unannounced.
+**Enslavement and Indigenous keep the taxonomy's placement.** Flattening was
+considered and rejected: `recordTypeGroups` is a flat enum, so a caller selects
+`Enslavement` directly and never has to "open Land & Property" to reach it. The
+*Parent* column governs one thing only — what a **Land** search returns — and
+selecting Land returns enslavement volumes whether or not the table says so.
+Flattening would make the table misdescribe containment, which is the single thing
+it exists to state correctly. **Still open: the wording of the annotation** these
+two rows carry. That is a genealogy-reviewer call, not an engineering one, and it
+is the only question left in this spec.
 
-**5. Four groups proposed as anchorless actually have clean root anchors** —
-Voting `127015`, Medical `127076`, Photographs `122956`, Administrative
-`135784`. The source list marks all four "no large anchor (aggregate)". They
-need none of that treatment; confirm the correction.
+**Newspapers anchors on the root `124231`, not the child `119166`.** Measured
+before and after: anchoring on the child left New South Wales at 96.5%, Oslo at
+99.4%, Ontario and Kent short as well; the root takes all four to 100%. `124231`
+carries no upstream label (`concept-id:124231`), which is not an obstacle — six of
+the seventeen roots are unlabelled and this spec supplies the English names for all
+of them.
 
-**6. Newspapers' true root is `124231`, not `119166`.** `119166` resolves under
-`124231`, and `124231` is itself only ever labelled with the placeholder
-`concept-id:124231`. Should the group anchor on the root (wider, unlabelled) or
-the child (narrower, named)?
+**Voting `127015`, Medical `127076`, Photographs `122956` and Administrative
+`135784` are ordinary roots.** The source list marks them "no large anchor
+(aggregate)"; they need no special treatment.
 
-**7. Should `volume_search` reject unknown input properties?**
-Today no tool in this server sets `additionalProperties: false`, so
-`recordType: "probate"` — the field name three sibling tools use — is silently
-ignored here and the search runs unfiltered. That is a wrong answer with no
-signal, the same failure class as the two defects this filter work grew out of.
-Setting `additionalProperties: false` on `volume_search` alone would turn it into
-a clear error; applying it server-wide would be a **breaking contract change**
-across every tool and is not proposed here. Scoping it to one tool is also an
-inconsistency of its own. Needs a decision, not a default.
+**Unknown-field rejection happens in `validate()`, not the schema.** See the
+warning box under
+[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters-read-before-naming-anything).
+A schema-level `additionalProperties: false` is unenforced server-side, so it would
+read as a guard without being one.
+
+### A note on the volume counts in this spec
+
+**Counts are permission-dependent; the structure is not.** Figures here were
+measured with ordinary FamilySearch credentials. A caller with elevated permissions
+sees more: the same probes run against an elevated account returned `119166` at
+176,286 against 152,392 here, and `131602` at 3 volumes against 0. Every *ancestor
+chain*, containment relationship and reach *direction* reproduced identically across
+both. So treat the absolute numbers as a floor from one access level, and the
+structural claims as the durable part.
 
 ## Design notes
 
