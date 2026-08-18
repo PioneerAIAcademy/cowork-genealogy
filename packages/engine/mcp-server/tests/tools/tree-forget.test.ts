@@ -1500,6 +1500,103 @@ describe("tree_forget", () => {
     ]);
   });
 
+  it("rejects a single call packing a year-ladder into one selector kind", async () => {
+    // Found by review: resolveSelectors processes entries sequentially and
+    // throws on the first with zero matches, naming its own threshold -- so
+    // one dry run with facts-before at 1888/1886/1884/1883 for the same
+    // person reveals exactly where the ladder breaks, pinning a fact's date
+    // from ONE call. Reproduced directly before this guard existed: it
+    // pinned a Birth fact to its exact year. Rejected outright now, with no
+    // partial match/no-match information in the response at all.
+    await writeProject({
+      persons: [
+        {
+          id: "P1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "F1", type: "Birth", standard_date: "15 Jun 1883" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      dryRun: true,
+      forget: [
+        { selector: "facts-before", personId: "P1", year: 1888 },
+        { selector: "facts-before", personId: "P1", year: 1886 },
+        { selector: "facts-before", personId: "P1", year: 1884 },
+        { selector: "facts-before", personId: "P1", year: 1883 },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/multiple 'facts-before' selectors with different year thresholds/);
+  });
+
+  it("still allows the same threshold repeated across different selectors in one call", async () => {
+    // The guard is scoped to the THRESHOLD differing, not the kind repeating
+    // -- two facts-before entries at the SAME year for two different people
+    // is an ordinary multi-person sweep, not a probe, and must stay allowed.
+    await writeProject({
+      persons: [
+        {
+          id: "E1",
+          gender: "Male",
+          names: [{ id: "N1", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "PF1", type: "Residence", standard_date: "1800" }],
+        },
+        {
+          id: "E2",
+          gender: "Female",
+          names: [{ id: "N2", given: "C", surname: "D", preferred: true }],
+          facts: [{ id: "PF2", type: "Residence", standard_date: "1810" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "facts-before", personId: "E1", year: 1850 },
+        { selector: "facts-before", personId: "E2", year: 1850 },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 2 });
+  });
+
+  it("rejects a year-ladder packed into facts-between's fromYear/toYear pair", async () => {
+    // The facts-between arm of the same guard: different (fromYear, toYear)
+    // pairs for the same kind in one call must be rejected the same way.
+    await writeProject({
+      persons: [
+        {
+          id: "P2",
+          gender: "Male",
+          names: [{ id: "N2", given: "A", surname: "B", preferred: true }],
+          facts: [{ id: "F2", type: "Birth", standard_date: "15 Jun 1883" }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      dryRun: true,
+      forget: [
+        { selector: "facts-between", personId: "P2", fromYear: 1800, toYear: 1888 },
+        { selector: "facts-between", personId: "P2", fromYear: 1800, toYear: 1883 },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/multiple 'facts-between' selectors with different year thresholds/);
+  });
+
   it("does not warn twice when one tree-wide sweep independently removes two owners' copies of the same shared id", async () => {
     // Same "don't repeat the sentence" concern as above, triggered a
     // different way: ONE selector matching multiple owners in one pass,

@@ -188,11 +188,23 @@ reading dates and hand-picking fact ids; `facts-before`, `facts-after`, and
 caller passes is their own input, never a value read off the tree, so it is
 not subject to the redaction contract the way a fact's own date is. The
 result, however, carries a residual: a dry run is free and reports
-`factsByType`, so repeating one with different years narrows a fact's date to
-the exact year. §3.1 therefore holds per call, not across a series of them.
-`forget-and-rederive/SKILL.md` closes this by instruction — call each date
-selector once, with the researcher's own year — because the tool cannot close
-it without giving up the dry run's full-rehearsal property.
+`factsByType`, so a caller that can vary the year and read the response back
+narrows a fact's date toward the exact year.
+
+`resolveSelectors` closes the *in-call* form of this in code: a single
+`forget` call may not mix different year thresholds for the same date-range
+selector kind (`facts-before`'s `year`, `facts-after`'s `year`, or
+`facts-between`'s `fromYear`/`toYear` pair) — packing a year-ladder into one
+call's entries would otherwise reveal exactly which threshold failed first,
+pinning a fact's date from a single invocation. The same threshold repeated
+for different people in one call is unaffected (an ordinary multi-person
+sweep, not a probe). What code cannot close is the *across-calls* form — a
+caller free to make as many separate calls as it likes can still binary-search
+a threshold one call at a time, and closing that would mean dropping
+`factsByType` from every dry run, which breaks the "a dry run is a full
+rehearsal" guarantee this tool otherwise gives. `forget-and-rederive/SKILL.md`
+closes that residual by instruction: use the year (or year range) the
+researcher gave you, once, and stop.
 
 Each fact's comparable range comes from `getStandardDate` (prefers
 `standard_date`, falls back to parsing `date`) and then `earliestYear`/

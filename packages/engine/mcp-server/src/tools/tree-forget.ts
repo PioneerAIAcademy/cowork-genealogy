@@ -487,7 +487,49 @@ interface Targets {
   factSharingNotices: string[];
 }
 
+/**
+ * A `forget` call may not test different year thresholds for the same
+ * date-range selector kind in one call. `resolveSelectors` processes entries
+ * sequentially and throws on the first with zero matches, naming its own
+ * threshold — so a single dry run packing a year-ladder into one entry (e.g.
+ * facts-before at 1888, 1886, 1884, 1883 for the same person) reveals
+ * exactly which threshold failed first, pinning a fact's date from ONE call
+ * (found by review; reproduced: pins an exact year from one call, tighter
+ * than the repeated-separate-calls form forget-and-rederive/SKILL.md closes
+ * by instruction — that instruction cannot reach this in-call form, since it
+ * is one tool invocation, not a series).
+ *
+ * Scoped to the THRESHOLD, not the selector kind: two entries of the same
+ * kind sharing the identical year (or fromYear/toYear pair) are an ordinary
+ * multi-person sweep — e.g. `facts-before(E1, 1850)` and
+ * `facts-before(E2, 1850)` in one call — and stay allowed. Only a
+ * *difference* in threshold for the same kind is the probe shape.
+ */
+function rejectVaryingDateThresholds(forget: ForgetSelector[]): void {
+  const seenThreshold = new Map<string, string>();
+  for (const entry of forget) {
+    if (typeof entry !== "object" || entry === null) continue; // reported by the main loop below
+    const kind = entry.selector;
+    if (kind !== "facts-before" && kind !== "facts-after" && kind !== "facts-between") continue;
+    const threshold =
+      kind === "facts-between"
+        ? JSON.stringify([entry.fromYear, entry.toYear])
+        : JSON.stringify(entry.year);
+    const prior = seenThreshold.get(kind);
+    if (prior !== undefined && prior !== threshold) {
+      throw new TreeForgetError(
+        `forget: multiple '${kind}' selectors with different year thresholds in one call ` +
+          `are not allowed — the response would reveal which threshold a fact's date falls ` +
+          `between. Use one threshold per call.`,
+      );
+    }
+    seenThreshold.set(kind, threshold);
+  }
+}
+
 function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Targets {
+  rejectVaryingDateThresholds(forget);
+
   const t: Targets = {
     persons: new Set(),
     facts: new Set(),

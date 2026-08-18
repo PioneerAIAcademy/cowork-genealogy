@@ -77,9 +77,12 @@ resolve parents, children and spouses.
 
 **Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
 about to remove, and you are better off not having them in context. For the same
-reason, call each date selector once, with the year the researcher gave you. Do
-not vary the year across dry runs to see what the counts do — that reads a date
-off the tree as surely as opening the file.
+reason, use the year (or year range) the researcher gave you and stop. A single
+call packing more than one threshold onto the same date selector is rejected by
+the tool itself, but nothing stops you from making that same mistake across
+**separate** calls — do not repeat a date selector with a different year to see
+what the counts do. That reads a date off the tree as surely as opening the
+file.
 
 **The canonical setup is build-full-then-forget.** When a project is seeded
 specifically to test re-derivation, `init-project` builds the *complete* tree
