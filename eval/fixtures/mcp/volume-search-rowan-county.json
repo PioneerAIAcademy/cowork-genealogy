@@ -1,0 +1,24 @@
+{
+  "tool": "volume_search",
+  "description": "Digitized volumes for Rowan County, North Carolina probate records",
+  "args": {
+    "standardPlace": "~Rowan"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Rowan, North Carolina, United States",
+      "startYear": 1839,
+      "endYear": 1899
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "004900301",
+        "title": "Rowan County, North Carolina Probate Records, 1839-1899",
+        "recordSearchablePercent": 40,
+        "fulltextSearchable": true,
+        "imageCount": 4120
+      }
+    ]
+  }
+}
