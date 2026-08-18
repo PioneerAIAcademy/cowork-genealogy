@@ -552,7 +552,14 @@ def test_pre_1880_census_creates_no_relationship_assertions(
     relationship assertions — in any form, including `indirect` /
     `_inferred`.
 
-    Decided 2026-08-15 (issue #1626). The 1790–1870 censuses have no
+    The ruling this enforces is recorded on issue #1626 — quoted in full, with
+    its author and date, rather than asserted here. This docstring previously
+    read "Decided 2026-08-15 (issue #1626)" while that issue held no record of
+    any decision, which a reviewer correctly refused to accept as authorisation
+    for a reversal spanning the agent body, the reference doc, the rubric, eight
+    fixtures, this validator and the schema spec.
+
+    The 1790–1870 censuses have no
     relationship column, so the record states only that these people shared
     a dwelling. Extraction records each person's stated facts and the
     co-residence; deducing family links from household position is a
