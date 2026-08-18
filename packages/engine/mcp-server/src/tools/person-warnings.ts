@@ -283,8 +283,8 @@ export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
  * 2026-06-02 meeting, the spec's "conservative range" principle is overridden
  * by this earliest-to-earliest bound. Used at cutoff = 14 (male anchor) under
  * tag `earliestChildBirthToBirthMale14`, and at cutoff = 12 (any gender) under
- * tag `earliestChildBirthToBirth12` (the gender-neutral check is on the to-do
- * list — not implemented in this commit).
+ * tag `earliestChildBirthToBirth12` (gender-neutral — implemented at
+ * `earliestChildBirthToBirth` and registered in the check list below).
  */
 export function earliestChildBirthToBirth(mob: Mob, cutoff: number): boolean {
   const earliestChildBirth = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
@@ -1011,7 +1011,7 @@ function checkHasEventBeforeBirth(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_EVENT_BEFORE_BIRTH_365_2,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     // Trigger spans "any event" (earliest self fact) vs the latest birth-like
@@ -1041,7 +1041,7 @@ function checkEarliestChildBirthToBirthMale14(
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
@@ -1057,7 +1057,7 @@ function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_EVENT_AFTER_DEATH_1,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     // Trigger spans the latest death-like fact vs the latest self fact of any
@@ -1073,7 +1073,7 @@ function checkHasAgeRangeGreaterThan120(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_AGE_RANGE_GREATER_THAN_120,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES),
@@ -1087,7 +1087,7 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_BURIAL_AFTER_DEATH_31,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BURIAL, DEATH),
@@ -1103,7 +1103,7 @@ function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
@@ -1120,7 +1120,7 @@ function checkDeathRangeGreaterThan2(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: DEATH_RANGE_GREATER_THAN_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, DEATHLIKE_FACT_TYPES),
@@ -1134,7 +1134,7 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_LATE_MARRIAGE_90,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
@@ -1148,7 +1148,7 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_EARLY_MARRIAGE_14,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
@@ -1164,7 +1164,7 @@ function checkLatestChildBirthToBirth80(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_BIRTH_80,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
@@ -1181,7 +1181,7 @@ function checkTooManyChildren18(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: TOO_MANY_CHILDREN_18,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1194,7 +1194,7 @@ function checkTooManyFathers2(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: TOO_MANY_FATHERS_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1207,7 +1207,7 @@ function checkTooManyMothers2(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: TOO_MANY_MOTHERS_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1220,7 +1220,7 @@ function checkHasBlankName(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_BLANK_NAME,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1238,7 +1238,7 @@ function checkLatestChildBirthToBirthFemale55(
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
@@ -1257,7 +1257,7 @@ function checkHasDeathAfterChildBirth90(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_AFTER_CHILD_BIRTH_90,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
@@ -1278,7 +1278,7 @@ function checkHasChildDeathAfterParentBirth200(
   return {
     scoreType: COHERENCE,
     issueType: HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), parentC.factIds),
@@ -1295,7 +1295,7 @@ function checkMissingFactsAndRelatives(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: MISSING_FACTS_AND_RELATIVES,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1313,7 +1313,7 @@ function checkChildBirthRange40(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: CHILD_BIRTH_RANGE_40,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -1334,7 +1334,7 @@ function checkEarliestChildMarriageToBirth30(
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
@@ -1355,7 +1355,7 @@ function checkLatestChildBirthToMarriage35(
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -1396,7 +1396,7 @@ function checkHasYoungSpouse15(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_YOUNG_SPOUSE_15,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: spouseC.factIds,
@@ -1413,7 +1413,7 @@ function checkHasChristeningBeforeBirth(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_CHRISTENING_BEFORE_BIRTH,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, CHRISTENING, BIRTH),
@@ -1429,7 +1429,7 @@ function checkHasEventBeforeChristening365_3(
   return {
     scoreType: COHERENCE,
     issueType: HAS_EVENT_BEFORE_CHRISTENING_365_3,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     // Christening/Baptism (the late anchor) + every earlier event the check
@@ -1448,7 +1448,7 @@ function checkTooManyBirthDates2(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: TOO_MANY_BIRTH_DATES_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BIRTH),
@@ -1462,7 +1462,7 @@ function checkTooManyDeathDates2(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: TOO_MANY_DEATH_DATES_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, DEATH),
@@ -1476,7 +1476,7 @@ function checkHasBurialBeforeDeath(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_BURIAL_BEFORE_DEATH,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: selfFactIds(mob, BURIAL, DEATH),
@@ -1495,7 +1495,7 @@ function checkHasDeathBeforeChildBirth30_10(
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
@@ -1517,7 +1517,7 @@ function checkHasDeathBeforeChildBirth365_2(
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
@@ -1539,7 +1539,7 @@ function checkHasDeathBeforeChildBirthFemale2(
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_2,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
@@ -1561,7 +1561,7 @@ function checkHasDeathBeforeChildBirthFemale365(
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_365,
-    severity: "error",
+    severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
@@ -1582,7 +1582,7 @@ function checkChildMarriageToMarriage15(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: CHILD_MARRIAGE_TO_MARRIAGE_15,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -1604,7 +1604,7 @@ function checkHasDiffSurnameMale(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_DIFF_SURNAME_MALE,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1635,7 +1635,7 @@ function checkRelativesDeathRangeGreaterThan2(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_DEATH_RANGE_GREATER_THAN_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1656,7 +1656,7 @@ function checkRelativesEarliestChildBirthToBirth12(
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
-      severity: "warning",
+      severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
       factIds: unionFactIds(
@@ -1687,7 +1687,7 @@ function checkRelativesHasEventBeforeChristening365_3(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1709,7 +1709,7 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
   return {
     scoreType: COHERENCE,
     issueType: MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -1734,7 +1734,7 @@ function checkFemaleRelativesLatestChildBirthToBirth55(
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -1762,7 +1762,7 @@ function checkRelativesHasEventAfterDeath1(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_AFTER_DEATH_1,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1782,7 +1782,7 @@ function checkRelativesHasEventBeforeBirth365_2(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1806,7 +1806,7 @@ function checkRelativesHasEarlyMarriage14(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EARLY_MARRIAGE_14,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1830,7 +1830,7 @@ function checkRelativesHasLateMarriage90(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_LATE_MARRIAGE_90,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1850,7 +1850,7 @@ function checkRelativesHasBurialBeforeDeath(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_BURIAL_BEFORE_DEATH,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1870,7 +1870,7 @@ function checkRelativesHasBurialAfterDeath31(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_BURIAL_AFTER_DEATH_31,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1887,7 +1887,7 @@ function checkMissingSurnames(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: MISSING_SURNAMES,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1903,7 +1903,7 @@ function checkMissingGivenNamesWithoutExactBirthLikeDate(
   return {
     scoreType: COHERENCE,
     issueType: MISSING_GIVEN_NAMES_WITHOUT_EXACT_BIRTH_LIKE_DATE,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     message:
@@ -1923,7 +1923,7 @@ function checkRelativesTooManyBirthDates2(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_TOO_MANY_BIRTH_DATES_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1943,7 +1943,7 @@ function checkRelativesTooManyDeathDates2(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_TOO_MANY_DEATH_DATES_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1963,7 +1963,7 @@ function checkRelativesBirthLikeRangeGreaterThan8(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -1986,7 +1986,7 @@ function checkRelativesChildBirthRange40(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2270,7 +2270,7 @@ function checkSimilarChildren(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_CHILDREN,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2288,7 +2288,7 @@ function checkSimilarChildrenConflictingDates(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_CHILDREN_CONFLICTING_DATES,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2306,7 +2306,7 @@ function checkSimilarSpouses(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_SPOUSES,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2324,7 +2324,7 @@ function checkSimilarSpousesConflictingDates(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_SPOUSES_CONFLICTING_DATES,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2342,7 +2342,7 @@ function checkHasCloseChildBirthsIgnoreSimilarChildren(mob: Mob): PersonWarning 
   return {
     scoreType: COHERENCE,
     issueType: HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2360,7 +2360,7 @@ function checkHasCloseChildChristenings6_30(mob: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_CLOSE_CHILD_CHRISTENINGS_6_30,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2378,7 +2378,7 @@ function checkHasDissimilarSpousesWithSameMarriageYear(mob: Mob): PersonWarning 
   return {
     scoreType: COHERENCE,
     issueType: HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2402,7 +2402,7 @@ function checkRelativesHasDeathBeforeChildBirth365_2(
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
-      severity: "warning",
+      severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
       factIds: unionFactIds(
@@ -2430,7 +2430,7 @@ function checkRelativesHasDeathBeforeChildBirth30_10(
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
-      severity: "warning",
+      severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
       factIds: unionFactIds(
@@ -2458,7 +2458,7 @@ function checkRelativesEarliestChildMarriageToBirth30(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2483,7 +2483,7 @@ function checkFemaleRelativesHasDeathBeforeChildBirth365(
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2508,7 +2508,7 @@ function checkFemaleRelativesHasDeathBeforeChildBirth2(
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_2,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2532,7 +2532,7 @@ function checkRelativesLatestChildBirthToMarriage35(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2556,7 +2556,7 @@ function checkRelativesLatestChildBirthToBirth80(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_80,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2580,7 +2580,7 @@ function checkRelativesChildMarriageToMarriage15(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_CHILD_MARRIAGE_TO_MARRIAGE_15,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2606,7 +2606,7 @@ function checkRelativesHasDeathAfterChildBirth90(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_DEATH_AFTER_CHILD_BIRTH_90,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2629,7 +2629,7 @@ function checkRelativesHasAgeRangeGreaterThan120(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: c.factIds,
@@ -2652,7 +2652,7 @@ function checkRelativesHasChildDeathAfterParentBirth200(
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     factIds: unionFactIds(
@@ -2675,7 +2675,7 @@ function checkMaleRelativesHasDiffSurname(
   return {
     scoreType: COHERENCE,
     issueType: MALE_RELATIVES_HAS_DIFF_SURNAME,
-    severity: "warning",
+    severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
     // Name-conclusion warning (not an event fact) — no factIds; the relative
@@ -2919,7 +2919,7 @@ function checkHasSameCensus(target: Mob, candidate: Mob): PersonWarning | null {
   return {
     scoreType: COHERENCE,
     issueType: HAS_SAME_CENSUS,
-    severity: "error",
+    severity: "contradiction",
     personId: target.anchorId,
     personName: getPersonName(target.getPerson()),
     relatedPersonId: candidate.anchorId,
@@ -2938,7 +2938,7 @@ function checkHasEventsOutsideLifespanFar(
   return {
     scoreType: COHERENCE,
     issueType: HAS_EVENTS_OUTSIDE_LIFESPAN_FAR,
-    severity: "error",
+    severity: "contradiction",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
     message:
@@ -2955,7 +2955,7 @@ function checkHasEventsOutsideLifespanNear(
   return {
     scoreType: COHERENCE,
     issueType: HAS_EVENTS_OUTSIDE_LIFESPAN_NEAR,
-    severity: "warning",
+    severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
     message:
@@ -2980,7 +2980,7 @@ function checkBirthLikeRangeGreaterThan8(
   return {
     scoreType: COHERENCE,
     issueType: BIRTH_LIKE_RANGE_GREATER_THAN_8,
-    severity: "warning",
+    severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
     factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTHLIKE_FACT_TYPES),
@@ -3002,7 +3002,7 @@ function checkBirthRangeGreaterThan3(
   return {
     scoreType: COHERENCE,
     issueType: BIRTH_RANGE_GREATER_THAN_3,
-    severity: "warning",
+    severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
     factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTH),
@@ -3028,7 +3028,7 @@ function checkMissingFactsAndRelativesEither(
   return {
     scoreType: COHERENCE,
     issueType: MISSING_FACTS_AND_RELATIVES,
-    severity: "warning",
+    severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
     message:

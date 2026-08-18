@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasEventAfterDeath1",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
@@ -22,7 +22,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasAgeRangeGreaterThan120",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person's lifespan is greater than 120 years, which is implausible.",
@@ -34,7 +34,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "tooManyDeathDates2",
-        "severity": "warning",
+        "severity": "implausible",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.",
@@ -45,7 +45,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "relativesHasAgeRangeGreaterThan120",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "I2",
         "personName": "Thomas Flynn",
         "message": "This relative's lifespan is greater than 120 years, which is implausible.",
