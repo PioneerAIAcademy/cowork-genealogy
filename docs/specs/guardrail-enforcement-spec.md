@@ -711,7 +711,7 @@ Design points that were paid for and should not be re-derived:
   `find_person_evidence_missing_same_person`.
 
   `find_protected_writes_by_unnamed_delegate` (§11) deliberately does **not**
-  read `is_error` (issue #1569): its gate is caller identity, not skill
+  read `is_error`: its gate is caller identity, not skill
   completion, so there is no completion window for an errored call to open —
   a write attributed to neither the main thread nor a dedicated agent is
   already the violation regardless of whether the write itself succeeded.

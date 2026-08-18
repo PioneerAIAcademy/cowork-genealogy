@@ -599,7 +599,7 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.

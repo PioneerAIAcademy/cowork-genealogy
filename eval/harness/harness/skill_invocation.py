@@ -306,6 +306,21 @@ def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
     return _relationship_key(r) + (r.get("subtype"), fact_sig)
 
 
+def _fact_signatures(p: dict[str, Any]) -> Counter[tuple[Any, ...]]:
+    """Normalized `(type, standard_date, standard_place)` for EVERY fact on a
+    person, not filtered to `primary: true` -- the identity-based counterpart to
+    a raw count for the person-evidence arm's "did new content appear" check,
+    which cares about any new fact, not just a primary one (issue #1569 found
+    the same count-based blind spot here that the proof-conclusion arm had: a
+    fact REPLACED in place read as unchanged). A `Counter`, not a `set`, for the
+    same multiplicity reason as `_primary_fact_signatures` below."""
+    return Counter(
+        (f.get("type"), f.get("standard_date"), f.get("standard_place"))
+        for f in (p.get("facts") or [])
+        if isinstance(f, dict)
+    )
+
+
 def _primary_fact_signatures(p: dict[str, Any]) -> Counter[tuple[Any, ...]]:
     """Normalized `(type, standard_date, standard_place)` for every `primary: true`
     fact on a person, ignoring `id` and ordering — the identity-based counterpart to a
@@ -391,7 +406,11 @@ def find_effects_without_invocation(
     # arm.
     starting_persons = (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
     starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
-    starting_fact_counts = {p.get("id"): len(p.get("facts") or []) for p in starting_persons if isinstance(p, dict)}
+    starting_fact_signatures = {
+        p.get("id"): _fact_signatures(p)
+        for p in starting_persons
+        if isinstance(p, dict)
+    }
     starting_primary_signatures = {
         p.get("id"): _primary_fact_signatures(p)
         for p in starting_persons
@@ -441,13 +460,20 @@ def find_effects_without_invocation(
     def _has_content(p: dict[str, Any]) -> bool:
         return bool(p.get("facts") or p.get("names"))
 
+    # Identity-based, like the proof-conclusion arm's fact checks above, not
+    # count-based: a seeded person's fact REPLACED in place (count unchanged,
+    # content changed) is new content the same way an ADDED fact is (found by
+    # review; same defect class as the proof-conclusion arm's, in this same
+    # function). Names are not part of this comparison -- unchanged from
+    # before this fix, and not something the review raised.
     def _is_new_content_this_run(p: dict[str, Any]) -> bool:
         if starting_tree is None:
             return True  # no baseline available; best-effort per the docstring
         pid = p.get("id")
         if pid not in starting_ids:
             return True  # brand-new person this run
-        return len(p.get("facts") or []) > starting_fact_counts.get(pid, 0)
+        baseline = starting_fact_signatures.get(pid, Counter())
+        return bool(_fact_signatures(p) - baseline)
 
     unlinked = [
         p

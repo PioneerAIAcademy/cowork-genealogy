@@ -15,6 +15,7 @@ already-committed data.
 CLI (from eval/harness/):
   uv run python -m e2e.detector_before_after_report --detector lane-check
   uv run python -m e2e.detector_before_after_report --detector proof-conclusion-arm
+  uv run python -m e2e.detector_before_after_report --detector person-evidence-arm
   uv run python -m e2e.detector_before_after_report --detector lane-check --test bagley-father-1884
   uv run python -m e2e.detector_before_after_report --detector proof-conclusion-arm --since all
 """
@@ -89,11 +90,23 @@ def _lane_check_new(tool_calls: list[dict[str, Any]]) -> list[str]:
     return find_protected_writes_by_unnamed_delegate(tool_calls)
 
 
-def _replay_lane_check(paths: list[Path]) -> list[Divergence]:
+def _lane_check_eligible(tool_calls: list[dict[str, Any]]) -> bool:
+    """Whether this run COULD show the lane-check divergence at all: the fix only
+    changes behavior for an entry that carries both `is_error: true` and a non-None
+    `agent_id` (found by review — most of the corpus predates agent-id stamping, so
+    "no divergence" without this context reads as "the fix is a no-op," when it's
+    really "the corpus can't show it yet")."""
+    return any(e.get("is_error") is True and e.get("agent_id") is not None for e in tool_calls)
+
+
+def _replay_lane_check(paths: list[Path]) -> tuple[list[Divergence], int]:
     out: list[Divergence] = []
+    eligible = 0
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8"))
         tool_calls = data.get("tool_calls") or []
+        if _lane_check_eligible(tool_calls):
+            eligible += 1
         old = _lane_check_old(tool_calls)
         new = _lane_check_new(tool_calls)
         if len(old) != len(new):
@@ -106,7 +119,7 @@ def _replay_lane_check(paths: list[Path]) -> list[Divergence]:
                     note=f"{len(new) - len(old):+d} violation(s)",
                 )
             )
-    return out
+    return out, eligible
 
 
 # --- proof-conclusion-arm: find_effects_without_invocation's relationship/primary-
@@ -198,8 +211,87 @@ def _replay_proof_conclusion_arm(paths: list[Path]) -> tuple[list[Divergence], i
     return out, skipped
 
 
+# --- person-evidence-arm: find_effects_without_invocation's "did new content
+# --- appear" check (issue #1569 follow-on, found by review) ------------------
+
+
+def _person_evidence_arm_old(
+    tree: dict[str, Any], starting_tree: dict[str, Any] | None, research: dict[str, Any]
+) -> bool:
+    """Pre-fix replica: count-based `_is_new_content_this_run`."""
+    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
+    starting_persons = (
+        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
+    )
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    starting_fact_counts = {p.get("id"): len(p.get("facts") or []) for p in starting_persons if isinstance(p, dict)}
+    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    linked_person_ids = {pe.get("person_id") for pe in person_evidence if isinstance(pe, dict)}
+
+    def _has_content(p: dict[str, Any]) -> bool:
+        return bool(p.get("facts") or p.get("names"))
+
+    def _is_new_content_this_run(p: dict[str, Any]) -> bool:
+        if starting_tree is None:
+            return True
+        pid = p.get("id")
+        if pid not in starting_ids:
+            return True
+        return len(p.get("facts") or []) > starting_fact_counts.get(pid, 0)
+
+    return any(
+        isinstance(p, dict) and _has_content(p) and _is_new_content_this_run(p) and p.get("id") not in linked_person_ids
+        for p in persons
+    )
+
+
+def _person_evidence_arm_new(
+    tree: dict[str, Any], starting_tree: dict[str, Any] | None, research: dict[str, Any]
+) -> bool:
+    """Real, current detector — isolate the person-evidence disjunct with empty
+    tool_calls (so "person-evidence" is never in invoked) and a tree-only
+    research dict carrying just person_evidence, so no other arm can contribute
+    a violation string containing "person-evidence"."""
+    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    violations = find_effects_without_invocation(
+        [], {"person_evidence": person_evidence}, tree, starting_tree=starting_tree
+    )
+    return any("person-evidence" in v for v in violations)
+
+
+def _replay_person_evidence_arm(paths: list[Path]) -> tuple[list[Divergence], int]:
+    """Returns (divergences, n_skipped_no_fixture_starting_tree)."""
+    out: list[Divergence] = []
+    skipped = 0
+    for path in paths:
+        final_tree_path = path.with_name(path.name.replace(".json", ".final-tree.gedcomx.json"))
+        final_research_path = path.with_name(path.name.replace(".json", ".final-research.json"))
+        if not final_tree_path.is_file() or not final_research_path.is_file():
+            continue  # this run produced no final tree/research at all -- not this detector's input
+        starting_tree = _fixture_starting_tree(path.parent.name)
+        if starting_tree is None:
+            skipped += 1
+            continue
+        final_tree = json.loads(final_tree_path.read_text(encoding="utf-8"))
+        final_research = json.loads(final_research_path.read_text(encoding="utf-8"))
+        old = _person_evidence_arm_old(final_tree, starting_tree, final_research)
+        new = _person_evidence_arm_new(final_tree, starting_tree, final_research)
+        if old != new:
+            out.append(
+                Divergence(
+                    run_file=str(path.relative_to(REPO_ROOT)),
+                    fixture=path.parent.name,
+                    old_result=old,
+                    new_result=new,
+                    note="now fires" if new else "no longer fires",
+                )
+            )
+    return out, skipped
+
+
 DETECTORS: dict[str, Callable[[list[Path]], Any]] = {
     "lane-check": _replay_lane_check,
+    "person-evidence-arm": _replay_person_evidence_arm,
     "proof-conclusion-arm": _replay_proof_conclusion_arm,
 }
 
@@ -230,13 +322,15 @@ def main(argv: list[str] | None = None) -> int:
 
     print(describe_window(args.since, n_runs=len(paths), n_total=len(all_paths)))
 
-    if args.detector == "proof-conclusion-arm":
-        divergences, skipped = _replay_proof_conclusion_arm(paths)
+    if args.detector in ("proof-conclusion-arm", "person-evidence-arm"):
+        replay = _replay_proof_conclusion_arm if args.detector == "proof-conclusion-arm" else _replay_person_evidence_arm
+        divergences, skipped = replay(paths)
         if skipped:
             print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
         print(format_divergences(args.detector, divergences))
     else:
-        divergences = DETECTORS[args.detector](paths)
+        divergences, eligible = _replay_lane_check(paths)
+        print(f"{eligible} of {len(paths)} run(s) could express this divergence (an errored call carrying an agent_id).")
         print(format_divergences(args.detector, divergences))
     return 0
 

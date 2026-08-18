@@ -820,8 +820,8 @@ call among its "legitimate" cases, but only as an attribution class (a
 main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
 actually forbids the router's main-thread call. The delegate half counts the
 *attempt* itself — an unnamed delegate's call is a violation whether the write
-succeeded, was rejected by validation, or errored for any other reason (issue
-#1569); it does not key off `is_error` the way the main-thread half's denial
+succeeded, was rejected by validation, or errored for any other reason; it
+does not key off `is_error` the way the main-thread half's denial
 bookkeeping does.
 
 The two halves are not enforced alike, and the difference matters when reading a

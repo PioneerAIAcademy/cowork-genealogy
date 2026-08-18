@@ -351,6 +351,28 @@ def test_flags_a_second_primary_fact_with_content_identical_to_an_existing_one()
     assert any("proof-conclusion" in v for v in violations)
 
 
+def test_flags_a_second_relationship_fact_with_content_identical_to_an_existing_one():
+    """The relationship-side twin of
+    test_flags_a_second_primary_fact_with_content_identical_to_an_existing_one: a bare
+    frozenset of normalized fact signatures collapses two facts carrying the identical
+    (type, date, place) into one, hiding a genuinely-added duplicate. Counter-based
+    comparison preserves multiplicity. Without this test, dropping the Counter here
+    passes the whole suite (found by review)."""
+    dup = {"type": "Marriage", "standard_date": "21 Oct 1860", "standard_place": "Lezayre"}
+    starting_rel = {"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [dict(dup)]}
+    final_rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        "facts": [dict(dup), {**dup, "sources": [{"ref": "src-2"}]}],
+    }
+    starting = {"persons": [], "relationships": [starting_rel]}
+    tree = {"persons": [], "relationships": [final_rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
 def test_flags_a_placeholder_relationship_re_pointed_this_run():
     """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
@@ -468,6 +490,20 @@ def test_flags_a_seed_person_who_gained_new_facts_this_run():
     starting = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}]}
     grown = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}, {"type": "Death"}]}], "relationships": []}
     violations = find_effects_without_invocation([], {"person_evidence": []}, grown, starting_tree=starting)
+    assert any("person-evidence" in v for v in violations)
+
+
+def test_flags_a_seed_persons_fact_replaced_in_place():
+    """Found by review: the same count-based blind spot the proof-conclusion arm
+    had (issue #1569) was also present here -- a seeded person's fact REPLACED
+    (same count, different content) read as unchanged. Identity-based comparison
+    catches it: the seeded Birth fact carries no date, the final one does."""
+    starting = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}]}
+    changed = {
+        "persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth", "standard_date": "1850"}]}],
+        "relationships": [],
+    }
+    violations = find_effects_without_invocation([], {"person_evidence": []}, changed, starting_tree=starting)
     assert any("person-evidence" in v for v in violations)
 
 
