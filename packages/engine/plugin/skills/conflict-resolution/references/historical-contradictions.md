@@ -43,8 +43,7 @@ treated as approximate.
 
 ### Memory degradation over time
 
-The further removed a recording is from the event, the less reliable
-the stated date. A record created years after the event it states is less reliable for that date. A death certificate gives a birth date decades after the birth; the informant is reporting secondhand and may not have the correct date, or may not remember it.
+A record created years after the event it states is less reliable for that date. A death certificate gives a birth date decades after the birth; the informant is reporting secondhand and may not have the correct date, or may not remember it.
 
 ### Deliberate misstatement
 
