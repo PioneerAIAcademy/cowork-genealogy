@@ -322,16 +322,30 @@ def main(argv: list[str] | None = None) -> int:
 
     print(describe_window(args.since, n_runs=len(paths), n_total=len(all_paths)))
 
-    if args.detector in ("proof-conclusion-arm", "person-evidence-arm"):
-        replay = _replay_proof_conclusion_arm if args.detector == "proof-conclusion-arm" else _replay_person_evidence_arm
-        divergences, skipped = replay(paths)
+    # Explicit per-detector branches, not a DETECTORS[args.detector](paths) dispatch:
+    # each detector's replay has a different "how much of the corpus could even show
+    # this" caveat to print (an eligible count, a skipped count, or none), so this
+    # stays hand-wired. The final `else: raise` is load-bearing, not defensive
+    # boilerplate -- a 4th detector added to DETECTORS without a matching branch here
+    # would otherwise fall through to lane-check's replay while printing the NEW
+    # detector's name on the header: a silently wrong report, not a crash (found by
+    # review).
+    if args.detector == "proof-conclusion-arm":
+        divergences, skipped = _replay_proof_conclusion_arm(paths)
         if skipped:
             print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
         print(format_divergences(args.detector, divergences))
-    else:
+    elif args.detector == "person-evidence-arm":
+        divergences, skipped = _replay_person_evidence_arm(paths)
+        if skipped:
+            print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
+        print(format_divergences(args.detector, divergences))
+    elif args.detector == "lane-check":
         divergences, eligible = _replay_lane_check(paths)
         print(f"{eligible} of {len(paths)} run(s) could express this divergence (an errored call carrying an agent_id).")
         print(format_divergences(args.detector, divergences))
+    else:
+        raise AssertionError(f"unhandled detector {args.detector!r} -- add a branch above, not just a DETECTORS entry")
     return 0
 
 
