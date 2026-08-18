@@ -14,7 +14,7 @@
   "mcp_fixtures": ["person-warnings-father-died-before-child"],
   "judge_context": [
     "Should call the person_warnings tool with personId: 'I2' (Thomas)",
-    "Should report the hasDeathBeforeChildBirth30_10 warning with Critical severity (severity: 'error', male-gendered Fundamental check)",
+    "Should report the hasDeathBeforeChildBirth30_10 warning with Critical severity (severity: 'contradiction', male-gendered Fundamental check)",
     "Should suggest verifying the death date and the Thomas -> Patrick parent-child relationship -- both candidates for being wrong, and only one needs to be off to clear the warning",
     "Should NOT confuse this with hasDeathAfterChildBirth90 (different direction -- about long lifespans after a child's birth)",
     "Should explain why a father dying 300+ days before a child's birth is impossible (gestation is finite) -- the assumption framework's value is in articulating WHY a warning matters"
