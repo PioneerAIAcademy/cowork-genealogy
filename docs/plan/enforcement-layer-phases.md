@@ -7,7 +7,7 @@
 | 0 — ownership declaration | **landed** 2026-08-16. `docs/specs/schemas/ownership.json`, 19 rows, two lints |
 | 1 — creation path | **landed** 2026-08-17. `project_create`, and `init-project` rewritten onto it |
 | 1 — standalone (answer, don't error) | **not started**, and no longer a seed writer. Blocked on the `readProjectJson` consolidation |
-| 2 — device-bridge route closure | **landed** 2026-08-17. `device_commit_files` covered in all three lockdown copies; `device_bash` deliberately not |
+| 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **not started.** Premise re-measured 2026-08-17 and it holds: 52 of 142 runs that wrote a proof summary never launched the skill that owns it |
 | 4 — remaining pairs | **not started** |
 | 5 — detectors + positive controls | **not started.** Independent and free; can run at any time |

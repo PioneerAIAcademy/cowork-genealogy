@@ -259,11 +259,12 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
-# A path has no newline and is not long. Both bounds keep the payload walk below
-# off file CONTENT travelling alongside the paths.
-_MAX_PATH_LEN = 400
-
-
+# A path has no newline and is no longer than the platform allows. Both bounds
+# keep the payload walk below off file CONTENT travelling alongside the paths,
+# though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
+# was 400, which is under every real path limit and let a 401-char path to a
+# protected file through. Pinned by vectors in test_write_lockdown_parity.py.
+_MAX_PATH_LEN = 4096
 
 
 def _basename(value: str) -> str:
@@ -308,13 +309,16 @@ def _device_bridge_target(tool_name: str, tool_input) -> str | None:
             return name
     return None
 
-def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
-    """The protected filename a raw file-write call targets, or None.
 
-    Only the file-write tools are candidates — every other tool (including the
-    MCP writer tools) is a different code path. Matched on the `file_path`
-    argument's basename, so it doesn't matter whether the model passed an
-    absolute or relative path.
+def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
+    """The protected filename a write call targets, or None.
+
+    Two arms. A file-write tool names its destination in `file_path`; anything
+    else falls through to `_device_bridge_target`, which claims only the
+    device-bridge writers and returns None for every other tool — the MCP writer
+    tools included, since those are the sanctioned route. Matched on the
+    `file_path` argument's basename, so it doesn't matter whether the model
+    passed an absolute or relative path.
 
     Both path separators are handled. Splitting on "/" alone made this a no-op
     on Windows, where the workspace is a `C:\\Users\\...\\Temp\\e2e-<id>` path

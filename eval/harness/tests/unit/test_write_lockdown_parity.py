@@ -167,6 +167,47 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
         {"files": [{"path": "notes.md", "content": "see research.json for the log"}]},
         None,
     ),
+    # --- the payload walk's two bounds, pinned in BOTH directions ---
+    # Deleting either bound from all three copies used to leave this whole
+    # module green (39/39), so neither was tested at all. Each bound now has a
+    # vector that fails if it is removed AND one that fails if it is too tight.
+    #
+    # Too tight: a real path longer than the bound must still be caught. At
+    # _MAX_PATH_LEN = 400 this returned None — a genuine miss, not merely an
+    # over-deny — which is why the bound is now Linux PATH_MAX.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": ["/" + "d" * 391 + "/research.json"]},  # 405 chars
+        "research.json",
+    ),
+    # Bound present: single-line content longer than any real path, ending in a
+    # protected basename, must NOT be read as a path. Fails if the length bound
+    # is deleted.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "notes.md", "content": "x" * 5000 + "/research.json"}]},
+        None,
+    ),
+    # Newline bound present: multi-line content whose LAST line ends in a
+    # protected path must not be read as a path. It has to end that way to be a
+    # real positive control — `_basename` splits on the last "/", so content
+    # ending "…\nresearch.json\n" already misses on the trailing newline and
+    # would pass with the bound deleted.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "README.md", "content": "# notes\nsee /proj/research.json"}]},
+        None,
+    ),
+    # KNOWN, ACCEPTED over-deny: a file whose ENTIRE content is one line, with no
+    # trailing newline, whose basename is a protected name. Any newline-terminated
+    # or multi-line file is immune (the vector above), so this is the whole of the
+    # surface. Recorded rather than fixed — closing it means guessing which key
+    # carries content, which is exactly the speculation this walk refuses.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": ".gitignore", "content": "research.json"}]},
+        "research.json",
+    ),
     # Unrecognised payload shape: fails OPEN. Denying what we cannot parse would
     # block the user's own files, which is the worse failure. The hole is real
     # and is why the spec requires a live Cowork check.

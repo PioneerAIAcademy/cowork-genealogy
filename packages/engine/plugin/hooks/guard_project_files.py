@@ -66,9 +66,19 @@ FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
-# A path never contains a newline and is never long. Both bounds exist to keep
-# the scan below off file CONTENT that happens to travel in the same payload.
-_MAX_PATH_LEN = 400
+# A path never contains a newline, and is never longer than the platform allows.
+# Both bounds exist to keep the scan below off file CONTENT travelling in the
+# same payload — but only the newline bound does real work there, since content
+# with a newline anywhere in it is rejected whole. The length bound catches only
+# long SINGLE-LINE content, which has to end in "/research.json" to matter.
+#
+# 4096 = Linux PATH_MAX, the longest a real path can be on any plane we run on
+# (macOS 1024; Windows extended-length 32767 but its APIs cap far lower). It was
+# 400, which is under every one of those and so produced a genuine MISS: a
+# 401-char path to research.json was allowed through. Pinned in both directions
+# by vectors in test_write_lockdown_parity.py — deleting either bound, or
+# restoring 400, now fails.
+_MAX_PATH_LEN = 4096
 
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "

@@ -621,9 +621,10 @@ bridge**. Consequences, all observed rather than inferred:
 
 - **`init-project` created both protected files through
   `mcp__remote-devices__device_commit_files`.** Across the run's 47 logged calls,
-  `Write`, `Edit` and `NotebookEdit` appear **nowhere**. The guard's matcher is
+  `Write`, `Edit` and `NotebookEdit` appear **nowhere**. The guard's matcher was
   `Write|Edit|NotebookEdit`, so **it never fired** — and this was the ordinary
-  onboarding path, not an agent improvising.
+  onboarding path, not an agent improvising. (The matcher was widened on
+  2026-08-18; see the closure note below.)
 - **`Write` cannot reach the user's files at all.** It operates on the container
   filesystem; the staged copy of the connected folder is read-only. A `Write` to
   the user's `research.json` creates a *container-local* file, reports success,
@@ -648,12 +649,30 @@ bridge surface is nine tools: `device_bash`, `device_commit_files`,
 `device_stage_files`, `device_list_dir`, `device_request_folder_access`,
 `get_device_info`, `create_artifact`, `list_artifacts`, `update_artifact`.
 
-#### Closed 2026-08-17 — `device_commit_files` only
+#### Closed 2026-08-17/18 — `device_commit_files` only
 
 All three lockdown copies now cover `device_commit_files`, matched on the **bare
 tail** (Cowork namespaces it and the plugin cannot control the prefix). It is
 the route the ordinary onboarding path took, and the only one by which an
 unvalidated write to a protected file has been observed reaching a user's disk.
+
+**The predicate was only half the closure, and the first attempt shipped without
+the other half.** The `hooks.json` matcher decides whether the guard script runs
+at all, so teaching all three predicates to deny `device_commit_files` while the
+matcher still read `Write|Edit|NotebookEdit` left the route exactly as open as
+before — in Cowork, the one environment the closure was built for. Every test
+was green, including the one named "matches every tool the guard script itself
+denies", which restated the three raw-write tool names inline instead of reading
+them from the script. The matcher is now
+`Write|Edit|NotebookEdit|.*device_commit_files` — `.*`-prefixed so it binds
+under an anchored full match as well as a substring search, and against both the
+bare and the `mcp__remote-devices__`-namespaced spelling — and
+`tests/packaging/plugin-hooks.test.ts` derives the expected tool set from
+`guard_project_files.py`'s own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`,
+hard-erroring if either constant is renamed rather than silently checking
+nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
+Widening a predicate without widening what reaches it is a no-op that tests
+cannot see.
 
 Two properties, both deliberate and both pinned by vectors in
 `eval/harness/tests/unit/test_write_lockdown_parity.py`:
@@ -670,6 +689,27 @@ Two properties, both deliberate and both pinned by vectors in
   reason the closure is not proven by its tests: a live Cowork session is the
   only instrument that sees the true payload, exactly as with agent tool
   binding.
+
+The walk keeps itself off file content with two bounds — no newline, and no
+longer than a path can be. Both were **entirely untested** until 2026-08-18:
+deleting them from all three copies left the parity module 39/39 green. Each now
+has a vector that fails if it is removed and one that fails if it is too tight.
+Fixing that surfaced two things worth stating plainly rather than leaving in the
+code:
+
+- **The length bound was a false negative, not just a false positive.** At 400
+  characters — under every real path limit — a 401-character path to
+  `research.json` was *allowed through*. It is now Linux `PATH_MAX` (4096). Only
+  the newline bound does real content-filtering work; the length bound catches
+  only long single-line content, which has to end in `/research.json` to matter
+  at all.
+- **One over-deny is known and accepted.** A file whose entire content is a
+  single line, with no trailing newline, whose basename is a protected name —
+  a one-line `.gitignore` reading `research.json` — is denied. Any
+  newline-terminated or multi-line file is immune, so that is the whole of the
+  surface. It is recorded rather than closed because closing it means guessing
+  which payload key carries content, which is the same speculation the walk
+  refuses by design and that write-shape matching is held back for.
 
 #### `device_bash` is still open, and a bypass through it LANDED — 2026-08-17
 
