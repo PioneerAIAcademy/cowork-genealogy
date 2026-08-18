@@ -807,9 +807,11 @@ because this is a write denied by a different guard.
 
 This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
 Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
-binds even under `bypassPermissions`), but its matcher is `Write|Edit|NotebookEdit`
-— it never sees an MCP tool call. Porting the per-context policy there is
-pending; the harness comments carry the pointer.
+binds even under `bypassPermissions`), but its matcher covers the raw file-write
+tools and the device bridge's `device_commit_files` — it never sees an
+`extraction_append`-shaped MCP tool call. Porting the per-context policy there
+is pending, and would mean widening the matcher to the MCP tool names as well as
+adding the rule; the harness comments carry the pointer.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
