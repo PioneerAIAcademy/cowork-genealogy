@@ -7,210 +7,210 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_006",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "corrected_score": 3,
-      "comment": null
+      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     }
   ]
 }
