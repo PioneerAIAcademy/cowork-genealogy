@@ -31,16 +31,18 @@ Do NOT call any tool or read any file. Stop immediately.
 
 **Places:** Follow `references/places-guidance.md`. Facts from `person_read` already carry `standard_place`; for hand-entered places, resolve with `place_search`.
 
-## Researcher profile interview
+## Opening-turn questions
 
-Captures experience level and paid subscriptions in `researcher_profile`.
+Ask three things in the opening turn, alongside the person ID/name request: the research objective, experience level, and access (`researcher_profile` stores the latter two). **Never stop and wait for any of them. Complete the full initialization in a single pass:**
 
-**Never stop and wait for answers. Complete the full initialization in a single pass:**
+1. **If the user's message already states an answer** to one or more of the three — map and normalize it and keep going.
+2. **For anything left unanswered, ask it in this same opening-turn message, but do not wait for a reply before proceeding:**
+   - No stated objective → store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback, the same way a defaulted `narration_guidance` is stored verbatim, not paraphrased.
+   - No stated experience level → default to `intermediate`.
+   - No stated access → default to `["none"]`.
+   Write the files now with whatever mix of stated answers and defaults applies, and tell the user in the final summary exactly which fields were defaulted. Optionally repeat the questions *after* both files are written — never as a turn-ending prompt.
 
-1. **If the user's message already states answers** (experience level and/or subscriptions) — map and normalize them and keep going.
-2. **Otherwise, use defaults** (`intermediate`, `["none"]`), write files now, and tell the user in the final summary that defaults were assumed. Optionally include the questions *after* both files are written — never as a turn-ending prompt.
-
-Asking questions and stopping is a failure: the project never gets created.
+Asking a question and then stopping to wait is a failure: the project never gets created.
 
 ### Question 1 — Experience level
 
@@ -50,10 +52,12 @@ Asking questions and stopping is a failure: the project never gets created.
 > (c) experienced → `experienced`
 > (d) professional/certified → `professional`
 
-### Question 2 — Paid subscriptions
+### Question 2 — Access
 
-> Which paid genealogy subscriptions do you have? (or "none"):
-> Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, other.
+> What access do you have to genealogy sites? (or "none") — a paid subscription
+> (Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, other),
+> free access through a FamilySearch partnership, or access via a library or
+> family history centre.
 
 **Normalize before storing** (downstream skills do exact-equality lookups):
 - Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`.
@@ -136,11 +140,11 @@ never re-enters context. A partial hand-build has none of that — which is why 
 
 ### 1. Get the research objective
 
-**This step blocks — unlike the profile and holdings interviews below, do NOT proceed past it without an explicit objective.** Before calling `person_read`, building the tree, or doing any pedigree analysis, you need BOTH: (a) a FamilySearch person ID (preferred) or name + known facts for `person_search`, AND (b) the research objective in the user's own words.
+The objective was captured in the opening-turn questions above (stated by the user, or the generic default if they didn't answer) — this step just uses it. You need a FamilySearch person ID (preferred) or name + known facts for `person_search` alongside it.
 
-If the user gives a PID (or a name) with no stated objective, STOP and ask: "What would you like to research about this person?" **Do not call `person_read` first to learn the person's name for the question — asking about "this person" needs no lookup, and fetching anything before the objective is the exact failure this step blocks.** Do NOT invent, assume, or default an objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — a wrong assumption sends the whole project in a direction the user didn't ask for. This is the one interview question in this skill that is blocking; the researcher-profile and known-holdings questions below are not.
+Do NOT call `person_read` before the opening turn's questions are asked — asking about "this person" needs no lookup. Do NOT invent, assume, or default a *specific* objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — the generic default from the opening-turn rule above is the only fallback; a wrong specific assumption sends the whole project in a direction the user didn't ask for.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below) — but still confirm the objective before or alongside the name search, not after. If too vague (no named individual), ask for clarification.
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), ask for clarification — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
 
 ### Searching by name
 
@@ -179,16 +183,18 @@ Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `qualit
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, create a stub for that woman's father using only the surname. **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`.
 
-**Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's father.
+**Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
+
+**Correction path.** If evidence later identifies which parent it actually is, use `tree_correct`'s `remove` operation (`{ relationshipId }` — this never deletes the person) to drop the incorrect `ParentChild` relationship, then `tree_edit`'s `add_relationship` to link the correct parent. Do not use `merge_tree_persons` for this — that operation is for person-identity merges, not relationship reclassification.
 
 Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
 
 **DO create:**
 - **Sarah Hennessy** — named by the user.
 - **Mary Donovan** — named (full name stated).
-- **Mary Donovan's father** — surname `Donovan`, `given: ""`. Maiden name fixes father's surname.
+- **Mary Donovan's parent** — surname `Donovan`, `given: ""`, sex unspecified. Maiden name fixes the surname in her parental line, not which parent carries it.
 
 **Do NOT create:**
 - Sarah's father — never mentioned, surname not implied.
@@ -212,7 +218,7 @@ Then relay to the user that the project was created, naming the folder.
 
 Two `research_append` calls, after `project_create` — never before, and never bundled into it.
 
-**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and subscriptions first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default. If the user has answered neither question and you have not asked, write nothing here — an absent profile falls back to sane narration everywhere, a guessed one silently mis-narrates for the life of the project.
+**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and access first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default in their place. Since the opening-turn rule above always asks and always proceeds, this call always writes — with whichever mix of stated answers and defaults applies, matching what the final summary told the user was defaulted.
 
 **`known_holdings`** — one `research_append({ section: "known_holdings", op: "append", entry: {...} })` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
