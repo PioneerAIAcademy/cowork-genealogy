@@ -90,21 +90,34 @@ def _lane_check_new(tool_calls: list[dict[str, Any]]) -> list[str]:
     return find_protected_writes_by_unnamed_delegate(tool_calls)
 
 
+def _lane_check_stamped(tool_calls: list[dict[str, Any]]) -> bool:
+    """How much of the corpus can speak to this detector at all, independent of the
+    result: most committed runs predate agent-id stamping, so "no divergence" on its
+    own reads as "the fix is a no-op" when it is really "the corpus can't show it
+    yet"."""
+    return any(e.get("agent_id") is not None for e in tool_calls)
+
+
 def _lane_check_eligible(tool_calls: list[dict[str, Any]]) -> bool:
-    """Whether this run COULD show the lane-check divergence at all: the fix only
-    changes behavior for an entry that carries both `is_error: true` and a non-None
-    `agent_id` (found by review — most of the corpus predates agent-id stamping, so
-    "no divergence" without this context reads as "the fix is a no-op," when it's
-    really "the corpus can't show it yet")."""
-    return any(e.get("is_error") is True and e.get("agent_id") is not None for e in tool_calls)
+    """Whether this run COULD show the lane-check divergence at all: an entry that is
+    BOTH `is_error: true` and a write this detector flags. Carrying an `agent_id` is
+    necessary but not sufficient (an earlier version of this predicate stopped at
+    that alone) — a non-owned tool or a call from a dedicated agent exits on the
+    classification instead and can never diverge on `is_error`, so the looser test
+    overstated how much the corpus proved (found by review — the review's own
+    follow-up, self-correcting an earlier suggestion)."""
+    return any(e.get("is_error") is True and _lane_check_new([e]) for e in tool_calls)
 
 
-def _replay_lane_check(paths: list[Path]) -> tuple[list[Divergence], int]:
+def _replay_lane_check(paths: list[Path]) -> tuple[list[Divergence], int, int]:
     out: list[Divergence] = []
     eligible = 0
+    stamped = 0
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8"))
         tool_calls = data.get("tool_calls") or []
+        if _lane_check_stamped(tool_calls):
+            stamped += 1
         if _lane_check_eligible(tool_calls):
             eligible += 1
         old = _lane_check_old(tool_calls)
@@ -119,7 +132,7 @@ def _replay_lane_check(paths: list[Path]) -> tuple[list[Divergence], int]:
                     note=f"{len(new) - len(old):+d} violation(s)",
                 )
             )
-    return out, eligible
+    return out, eligible, stamped
 
 
 # --- proof-conclusion-arm: find_effects_without_invocation's relationship/primary-
@@ -341,8 +354,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
         print(format_divergences(args.detector, divergences))
     elif args.detector == "lane-check":
-        divergences, eligible = _replay_lane_check(paths)
-        print(f"{eligible} of {len(paths)} run(s) could express this divergence (an errored call carrying an agent_id).")
+        divergences, eligible, stamped = _replay_lane_check(paths)
+        print(
+            f"{stamped} of {len(paths)} run(s) carry agent-id stamping at all; {eligible} of those "
+            "could express this divergence (an errored call this detector flags)."
+        )
         print(format_divergences(args.detector, divergences))
     else:
         raise AssertionError(f"unhandled detector {args.detector!r} -- add a branch above, not just a DETECTORS entry")
