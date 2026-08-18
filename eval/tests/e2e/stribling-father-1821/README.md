@@ -77,30 +77,40 @@ reaches one hop from the subject; the `Couple(LZ64-KT8, LHJL-3YG)` edge naming t
 
 ## Expected findings
 
-Four, all `recover`, all `required`:
+Five, all `recover`, all `required`:
 
 - **f1** — father = Taliaferro Stribling (1781 Wilkes GA – 1823 Amite MS).
 - **f2** — mother = Margaret "Peggy" McDowell (1793 Milledgeville GA – 1864 Amite MS).
 - **f3** — the parents' marriage, 1 March 1815, Amite County. The date sits on the
   couple link, so it scores as a `link` component (spec §3.4.2).
-- **f4** — an Amite County orphans'-court guardianship record attached as a **source**.
-  **Either** the 24 May 1825 bond (Gideon Sleeper, the stepfather, as guardian —
-  `3QS7-89QX-2C5P`) **or** the 1823 bond (the widowed mother Margaret as guardian —
-  `3QS7-L9QX-2H77`) satisfies it.
+- **f4** — an Amite County orphans'-court guardianship record attached as a **source**,
+  either on the subject's person record or on any relationship the subject is an
+  endpoint of. **Either** the 24 May 1825 bond (Gideon Sleeper, the stepfather, as
+  guardian — `3QS7-89QX-2C5P`) **or** the 1823 bond (the widowed mother Margaret as
+  guardian — `3QS7-L9QX-2H77`) satisfies it.
+- **f5** — Margaret's 23 November 1824 remarriage to Gideon B. Sleeper, encoded as a
+  `Couple` relationship, with Sleeper never asserted as the subject's father.
 
-**f4 is the discriminator.** It cannot be satisfied without reading a guardianship
-record: an agent that never engages the guardianship fails it, and an agent that
-engages it and dismisses the Stribling / Sleeper / McDowell surname spread as a
-conflict does not attach it and fails it too. f1–f3 measure recall; f4 measures
-whether the record class that carries the inference was actually used.
+**f4 measures whether the guardianship record was engaged at all; f5 measures whether
+the stepfather inference was actually reasoned through.** Two scored runs exposed that
+these are not the same test. Both runs attached a guardianship bond and satisfy f4 —
+but both independently reached the **1823** bond, in which the widowed mother is
+guardian of her own children, a record that never presents a surname difference or a
+stepfather at all. f4 alone cannot tell a run that engaged the stepfather situation from
+one that engaged an entirely different, easier guardianship in the same record series.
+f5 is the added discriminator: it requires the tree to actually carry Margaret's
+remarriage to Sleeper, which is what shows the inference — not merely a guardianship
+citation — was made. See the 2026-08-18 changelog entry for how this gap was found and
+why it is closed with a new finding rather than by re-pinning f4 to one image.
 
-**Why either bond counts.** #1413's report is about *"actual parents being named
+**Why either bond satisfies f4.** #1413's report is about *"actual parents being named
 guardian of their own children"* as well as stepfathers, and this family supplies both:
 the mother is guardian in 1823, the stepfather in 1825. Requiring one specific image
 marked a run `false` that had engaged the guardianship correctly through the other —
 see the 2026-08-17 changelog entry. The finding names the record *class* for that
-reason. It is still not satisfiable by reaching the parentage some other way and
-skipping the guardianship, which is the discrimination it exists for.
+reason. f4 is still not satisfiable by reaching the parentage some other way and
+skipping the guardianship entirely — that discrimination stands. What it cannot do
+alone is discriminate *which* guardianship situation was engaged; that is f5's job.
 
 ## Expected difficulty
 
@@ -182,21 +192,22 @@ records" would be wrong.
   judge **only as text inside the JSON dump of the finding** (`judge.py:191`), the same way
   the description's "EITHER … OR" wording does — which is how f4's two-ARK allowance
   reaches the judge at all. **That route works.** Run 2's judge wrote its own f4 component
-  as "An Amite County Orphans' Court guardianship record **(1823 or 1825)**" (`:114`), so it
-  had read the amended class and accepted both bonds. And the ark question is settled
-  upstream of this fixture in any case: `judge_prompt.md:47-48` already instructs the judge
-  to be tolerant of "Differing source IDs and ARK URLs (FamilySearch may serve the same
-  underlying record under different IDs)". Treat the key as documentation for the human
-  grader — it is inert to every code path — but do **not** read run 2's f4 `false` as
-  evidence that the judge ignores it. That label turned on *where* the source was attached,
-  not on which ark it named; see the next note.
-- **PROPOSED f4 amendment — attachment target. Awaiting co-reviewer approval; not applied.**
-  `expected-findings.json` is **unchanged**. Run 2 is a demonstrated defect in f4 as
-  currently written. Its judge derived f4's only `link` component straight from
-  `details.target_person` — "An Amite County Orphans' Court guardianship record (1823 or
-  1825) must be attached to Simpson Ridley Stribling's **person record**" — marked it
-  `unsupported`, and graded f4 `false`, correctly applying the prompt's no-link-supported
-  rule to that component. Its own note (`:111`), verbatim:
+  as "An Amite County Orphans' Court guardianship record **(1823 or 1825)**"
+  (`run-2026-08-18_02-03-06.json:114`), so it had read the amended class and accepted both
+  bonds. And the ark question is settled upstream of this fixture in any case:
+  `judge_prompt.md:47-48` already instructs the judge to be tolerant of "Differing source
+  IDs and ARK URLs (FamilySearch may serve the same underlying record under different
+  IDs)". Treat the key as documentation for the human grader — it is inert to every code
+  path — but do **not** read run 2's f4 `false` as evidence that the judge ignores it. That
+  label turned on *where* the source was attached, not on which ark it named; see the next
+  note.
+- **f4 amendment — attachment target. Approved by co-review 2026-08-18; applied.**
+  Run 2 was a demonstrated defect in f4 as it stood. Its judge derived f4's only `link`
+  component straight from `details.target_person` — "An Amite County Orphans' Court
+  guardianship record (1823 or 1825) must be attached to Simpson Ridley Stribling's
+  **person record**" — marked it `unsupported`, and graded f4 `false`, correctly applying
+  the prompt's no-link-supported rule to that component. Its own note
+  (`run-2026-08-18_02-03-06.json:111`), verbatim:
 
   > "The sources are present on relationships but not directly attached to the subject's
   > person record. This is a technical miss on the source-attachment requirement, even
@@ -205,17 +216,21 @@ records" would be wrong.
 
   That is f4 failing the exact behaviour it exists to reward. The agent attached the 1823
   bond as S5 on the two parentage edges R35/R36 — the normal place to source a parentage
-  conclusion, and what run 1 did too (S7 on R34/R35). f4's prose says only "attached as a
-  source in the tree"; `details.target_person` is what silently narrows it to the person
-  record, and the narrowing is invisible to `finding_shape_errors`, which validates
-  top-level keys only. Left as-is, f4 mis-grades every run that sources relationships
-  rather than the person, and each one needs a hand annotation.
+  conclusion, and what run 1 did too (S7 on R34/R35). **The defect is not a uniform false
+  negative — it is worse than that.** Run 1's judge scored that identical attachment shape
+  `supported`; run 2's judge scored it `unsupported`. f4 as written graded the same
+  genealogical behaviour two different ways depending on wording it never controlled. f4's
+  prose said only "attached as a source in the tree"; `details.target_person` silently
+  narrowed that to the person record, invisibly to `finding_shape_errors`, which validates
+  top-level keys only.
 
-  **Proposed fix:** f4 should be satisfied by attachment to the subject's person record
-  **OR** to any relationship in which the subject is an endpoint. **Not applied** — editing
-  a finding after two runs have been scored against it is the same move as the 2026-08-17
-  f4 broadening, and that one went through the co-reviewer. Until it is approved, grade f4
-  by hand on this axis and record the reason in the `.ann.json`.
+  **Fix applied:** f4 is now satisfied by attachment to the subject's person record **OR**
+  to any relationship in which the subject is an endpoint, worded to override
+  `details.target_person` explicitly (that key stays in the file, naming the person the
+  source hangs on rather than the required attachment point). **The re-grade this produces
+  is a no-op:** both committed `.ann.json` files already graded f4 `true` on this axis by
+  hand, and both stay `true` under the amendment — no label moves, so #1719's finding-drift
+  gap has no live consequence here.
 - **The linter cannot see sources at all.** `index_tree` walks `persons` and
   `relationships` only (`validate_fixture.py:109-138`), so a source that names the
   answer prints `OK`. The subject's own sources were read by hand at authoring time;
@@ -226,14 +241,19 @@ records" would be wrong.
   (§7.1). Precedent that this grades correctly: `anders-monsen-ancestry` f2, a
   required source finding that graded `false`, was agreed by its human annotation,
   and failed its run.
-- **No finding names Gideon Sleeper as stepfather, and no `avoid` finding exists.**
-  The first is inadmissible — `presence_mirror` (`author.py:1259-1297`) hard-fails a
-  non-`avoid` finding naming somebody absent from the unstripped tree, and Gideon is
-  two hops out; `required: false` is not an exemption (`author.py:1276`). The second
-  would be self-defeating — `apply_avoid_guard` (`judge.py:406-445`) exempts only the
-  fixture's own subject ids, so "must not conclude Gideon was the father" would
-  force-fail any run that correctly added Gideon as the mother's second husband. f4
-  reaches the same inference through the record instead.
+- **No finding puts Gideon Sleeper in a `presence_mirror` target key, and no `avoid`
+  finding exists.** Naming him there is inadmissible — `presence_mirror`
+  (`author.py:1259-1297`) hard-fails a non-`avoid` finding naming somebody absent from
+  the unstripped tree, and Gideon is two hops out; `required: false` is not an exemption
+  (`author.py:1276`). An `avoid` finding would be self-defeating — `apply_avoid_guard`
+  (`judge.py:406-445`) exempts only the fixture's own subject ids, so "must not conclude
+  Gideon was the father" would force-fail any run that correctly added Gideon as the
+  mother's second husband. f5 (added 2026-08-18) does reference Sleeper, but only in
+  `description` prose and in a `details.stepfather_note` key — neither is in
+  `_TARGET_KEYS` (`validate_fixture.py:160`), so `presence_mirror` never tokenises it.
+  f5 is graded on the tree carrying Margaret's remarriage as a `Couple` relationship
+  and on Sleeper not being asserted as the subject's father; both gates confirmed clean
+  with no new WARN after f5 was added.
 - The subject's own sources are mostly his *children's* Texas and Louisiana death
   certificates, where he appears as the parent. None names a parent of his; his
   parentage was unsourced in the FamilySearch tree at capture.
@@ -532,3 +552,77 @@ Read these before attributing a failed headless run.
     co-reviewer approval.
   - `fixture.json`'s `notes` updated to the amended two-bond f4; it still described the
     1825 Sleeper bond as the only route.
+
+- **2026-08-18 (co-review) — f4 amendment applied, f4's 1823 citation corrected, and a
+  fifth finding added to close the discriminator gap co-review identified.** Three
+  changes, all from the same review pass.
+
+  **1. The f4 attachment-target amendment is approved and applied.** Both `.ann.json`
+  files already graded f4 `true` by hand on this axis, so the re-grade is a no-op — no
+  label moves. `expected-findings.json` now reads "must be attached as a source in the
+  tree — either on the subject's person record OR on any relationship in which the
+  subject is an endpoint," with `details.target_person` explicitly named as the
+  attachment point, not the requirement. See the updated note above, which also corrects
+  the diagnosis: the defect is not a uniform false negative — run 1's judge scored the
+  identical attachment shape `supported` and run 2's scored it `unsupported`, so f4 was
+  grading the same genealogical behaviour two different ways.
+
+  **2. f4's 1823-bond citation overstated what the record says, independent of the
+  attachment-target question.** `supporting_sources[1]` claimed the bond names "the
+  widowed Margaret Stribling as guardian of the minor heirs of Taliaferro Stribling."
+  It names neither of them: the transcription (run 2, ark `L9QX-2H77`) reads *"...perform
+  the duty of guardian to the said James, John, Seaborn & Redley Stirling..."* and *"the
+  Estate of the Orphan under her care"* — a female possessive is the only pointer to
+  Margaret, and Taliaferro appears nowhere. The subject's own tree agrees: assertion
+  `a_204` records the father-of relationship as *"(inferred from orphans court
+  guardianship appointment)"*, at `probable`, not stated. Rewritten to describe what the
+  condition clause actually says and to flag both identifications as inferred. f4's
+  description changed `establishing` to `bearing on` the minors' parentage for the same
+  reason — the bond does not establish it by itself; it bears on it alongside the
+  marriage and the estate.
+
+  **3. f5 added: Margaret's remarriage to Sleeper, encoded as a `Couple` relationship,
+  Sleeper never asserted as father.** f4 cannot discriminate *which* guardianship
+  situation a run engaged, only whether it engaged one — and both scored runs
+  independently reached the 1823 bond, where the widowed mother is guardian of her own
+  children and no surname spread or stepfather appears at all. Two runs have now
+  satisfied f4 without the stepfather situation #1413 is actually about ever entering
+  either deliverable. f5 closes that gap. `details.target_person` is Margaret McDowell
+  (present in the unstripped tree, so `presence_mirror` stays green); Sleeper appears
+  only in `description` prose and a non-target `details.stepfather_note` key, neither of
+  which `presence_mirror` tokenises (`_TARGET_KEYS`, `validate_fixture.py:160`). Both
+  gates confirmed clean afterward — the same two f4 WARNs, nothing new.
+
+  **Both runs blind-graded against f5, no new run required.** Run 1 (`f5: false`): no
+  person named Sleeper exists anywhere in its tree, and no `Couple` relationship records
+  the 1824 remarriage — it satisfied f4 via the 1823 bond and stopped there. Run 2
+  (`f5: true`): `R34` (Couple, I3+I4) records Margaret's remarriage to Sleeper, sourced,
+  and I4 carries no other relationship, so Sleeper is never asserted as the subject's
+  father. The remarriage sits on I3, the unmerged duplicate of the mother documented
+  under f2 above — but the agent's own hypothesis `h_002` names I2 and I3 as the same
+  person and recommends the exact merge, so the identification was reasoned through
+  correctly even though the merge was not executed in autonomous mode. f5 is the finding
+  the two runs actually split on, which is what makes it a discriminator rather than a
+  restatement of f4.
+
+  **What this changes and does not change about §14.** Nothing here touches either
+  committed run log or the judge output either one carries — both were scored against
+  the fixture as it stood at the time, and run logs are never rewritten. Run
+  `run-2026-08-17_23-35-44.json`'s stored `verdict: pass` / `recall_required: 1.0`
+  remains an accurate record of what its judge computed over **f1–f4**, and that field
+  is what the earlier "§14 status: validated" entries above are about — that claim
+  stands, scoped to f1–f4. Neither run's judge ever evaluated f5, since it postdates
+  both; f5's grades above come from the blind human annotation only, the same route
+  every finding in this fixture goes through first. Under the current five-finding
+  definition, no committed run carries a judge-scored all-required-true verdict — run 1
+  is 4 of 5 (misses f5), run 2 is 3 of 5 (f3 and f5 mixed). That is reported plainly
+  rather than smoothed over: the genealogical case is unaffected and remains solvable
+  from live FamilySearch (§14's original standard, met on f1–f4), but a run log carrying
+  a judge-scored pass against all five findings, f5 included, is future work for the
+  next scored run of this fixture, not a claim this PR makes.
+
+  **Also in this pass:** per-fixture `caps` added to `fixture.json`
+  (`max_cost_usd: 25`, `wall_clock_seconds: 10800`, `max_turns: 300`), sized to run 2's
+  observed `cost_cap` straddle ($15.95 / 119.8 min against the $15 default) rather than
+  left to #1720's broader policy question. Two bare line citations in this README
+  (`:114`, `:111`) rewritten to name `run-2026-08-18_02-03-06.json` explicitly.
