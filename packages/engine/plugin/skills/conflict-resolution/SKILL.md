@@ -1,4 +1,4 @@
-﻿---
+---
 name: conflict-resolution
 allowed-tools:
   - place_search
