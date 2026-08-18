@@ -1069,7 +1069,7 @@ describe("tree_forget", () => {
     const d1 = tree.persons.find((p: any) => p.id === "D1");
     expect(d1.facts.map((f: any) => f.id)).toEqual(["DF2", "DF3", "DF4", "DF6"]);
     expect(r.validation.warnings).toEqual([
-      expect.stringMatching(/1 fact\(s\).*no parseable date.*facts-before/),
+      expect.stringMatching(/1 fact\(s\).*no date this tool could compare.*facts-before/),
     ]);
   });
 
@@ -1205,6 +1205,49 @@ describe("tree_forget", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.removed.factsByType).toEqual({ Residence: 1 });
+  });
+
+  it("a non-GEDCOM-canonical standard_date (e.g. ISO) is skipped, and said so honestly", async () => {
+    // earliestYear/latestYear expect canonical GEDCOM form ("31 Dec 1883").
+    // A pre-populated standard_date that is already an ISO string like
+    // "1883-12-31" is non-conformant data (spec: standard_date is always
+    // GEDCOM-canonical) and returns null from both, so the fact is skipped
+    // rather than matched or over-swept -- the safe direction. But the old
+    // wording ("no parseable date") was misleading here: the fact HAS a
+    // precise date, this tool just can't compare it in this form (found by
+    // review; 23 such values exist in the committed eval corpus). PF5 gives
+    // the call a confident match so it succeeds rather than refusing with
+    // "matched nothing", which is the only way to reach the skip-count
+    // warning this test actually pins.
+    await writeProject({
+      persons: [
+        {
+          id: "P4",
+          gender: "Male",
+          names: [{ id: "N4", given: "G", surname: "H", preferred: true }],
+          facts: [
+            { id: "PF4", type: "Residence", standard_date: "1883-12-31" },
+            { id: "PF5", type: "Residence", standard_date: "1840" },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "facts-before", personId: "P4", year: 1900 }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Residence: 1 });
+    const tree = await readTree();
+    expect(
+      tree.persons.find((p: any) => p.id === "P4").facts.map((f: any) => f.id),
+    ).toEqual(["PF4"]);
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/1 fact\(s\) in scope had no date this tool could compare.*GEDCOM-canonical/),
+    ]);
   });
 
   it("facts-between rejects fromYear > toYear", async () => {

@@ -639,8 +639,9 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         if (skipped > 0) {
           t.factSharingNotices.push(
-            `${skipped} fact(s) in scope had no parseable date and were not ` +
-              `considered for '${kind}'.`,
+            `${skipped} fact(s) in scope had no date this tool could compare and were ` +
+              `not considered for '${kind}' — including any whose standard_date is not ` +
+              `GEDCOM-canonical form (e.g. '1883-12-31' rather than '31 Dec 1883').`,
           );
         }
         break;
