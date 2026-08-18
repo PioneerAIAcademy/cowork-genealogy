@@ -527,7 +527,9 @@ Mirrors `research_log_append` minus the sidecar:
    would give, but *before* the write.
 5. **Validate once** with `validateParsed(research, tree, { projectPath })` — the
    joint validation covers both in-memory documents, including a §3.4 `S` entry.
-   If invalid → write nothing (the in-memory tree mutation is discarded too).
+   If the call introduces an error → write nothing (the in-memory tree mutation
+   is discarded too). A pre-existing error the call did not introduce is demoted
+   to a warning and does not block.
 6. Commit:
    - **No tree mutation** (every call without `sourceDescription`): write only
      `research.json` with `atomicWriteJson`. No `.bak` (this section, unlike the
@@ -582,6 +584,26 @@ each question's `declared` flag **before** the batch is applied and rejects
 establish-and-consume in one call. Any future precondition of the form "X must
 already be true" needs the same treatment; other same-batch orderings have been
 flagged but not audited (`guardrail-enforcement-spec.md` §10).
+
+**Warn-only advisories (the write still succeeds).** Distinct from the reject
+table above, `research_append` also surfaces non-blocking advisories on the
+successful response's `validation.warnings`. One is the `person_evidence`
+**match_score** advisory (the other is §5.1's sources-without-assertions nudge,
+which shipped first): a link claiming `confidence: "confident"` that
+records no numeric `match_score` is warned, not rejected. `same_person` returns
+the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
+of historical `person_evidence` writes leave it unset — identity asserted, never
+scored. A hard reject on day one would break ~94% of runs and the hosted path at
+once, so this ships warn-only and is measured on live runs first; graduating it to
+a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduate
+discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
+"confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
+tell a brand-new person from a seeded one, but the confidence claim it *can* see)
+and the narrowest claim a stateless write can check. It is not an escape hatch:
+a link that genuinely cannot be scored keeps `match_score: null` and the confidence
+its correlation analysis supports (person-evidence/SKILL.md §3). Downgrading
+confidence to silence this warning also slips the link past the confident-gated
+epistemic reject above. `personEvidenceScoreWarnings` in `research-append.ts`.
 
 ### 5.1 Sources-without-assertions nudge (warning, not a precondition)
 
@@ -680,7 +702,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
-| Resulting documents fail `validateParsed` | write nothing (neither file); `{ ok: false, errors, opsReceived? }` |
+| Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---
 
@@ -891,8 +913,9 @@ why its message names no write tool.
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
 "record-sized" slice, and a local stub returns a degenerate near-zero score the
 skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the engine invariant on
-`personEvidenceInvariants` decided in issue #1006 (2026-08-01). That decision
+here; what can be is its **presence**, which is the warn-only advisory
+`personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
+issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
 not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than

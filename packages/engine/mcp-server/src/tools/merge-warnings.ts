@@ -20,7 +20,7 @@ import type {
 } from "../types/merge-warnings.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "./person-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -72,7 +72,10 @@ export async function mergeWarnings(
     //     would reject is surfaced here as { ok: false } rather than reported
     //     as clean. research.json is read but never written.
     const research = await readProjectJson(projectPath, "research.json");
-    const validation = await validateParsed(research, merged, { projectPath });
+    // Dry-run: the before-project is the on-disk (research, tree); the after is
+    // (research, merged). A drift-only failure the merge did not introduce thus
+    // resolves to { ok: true } with the drift as a warning (#1572).
+    const validation = await validateIntroduced({ research, tree }, { research, tree: merged }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
@@ -118,7 +121,7 @@ export async function mergeWarnings(
       // What sanitation did (candidate strips, legacy-tree heals) — surfaced
       // at the dry-run so the LLM learns about dropped data BEFORE deciding
       // to write, not after.
-      sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings],
+      sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings, ...formatIssues(validation.warnings)],
     };
   } catch (e) {
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
@@ -138,12 +141,13 @@ export const mergeWarningsSchema = {
     "cross-document merge core) and returns the warnings that merge would " +
     "introduce.\n" +
     "\n" +
-    "Use this as the coherence gate before merging: a `severity: \"error\"` " +
+    "Use this as the coherence gate before merging: a `severity: \"contradiction\"` " +
     "warning (e.g. `hasSameCensus` — two personas sharing a census collection " +
     "cannot be the same person; or an event outside the other record's " +
     "lifespan) is a biological/temporal impossibility that should block the " +
-    "merge and prompt you to revisit the match. A `severity: \"warning\"` is " +
-    "advisory. Returns `{ warningCount, warnings }` (each warning carries " +
+    "merge and prompt you to revisit the match. A `severity: \"implausible\"` is " +
+    "advisory — possible but unlikely enough to flag for review. Returns " +
+    "`{ warningCount, warnings }` (each warning carries " +
     "`issueType`, `severity`, `personId`, `message`, and an optional `mobRole`). " +
     "On a malformed merge (unknown/duplicate ids, stale survivor) it returns " +
     "`{ ok: false, errors }`. Writes nothing; research.json and " +
