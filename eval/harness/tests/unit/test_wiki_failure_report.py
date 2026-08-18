@@ -65,6 +65,12 @@ def test_place_not_found_survives_the_escaped_envelope():
     """The exact bug the first cut had: the wrapped shape escapes the quotes, so
     a quoted-key match misses it and it falls through to `unclassified`."""
     assert classify("place_population", _envelope(NO_POP_SERIES)) == "no_population_series"
+    # ...but that arm alone does NOT pin the matcher: the `place_population`
+    # fallback below the matcher table (`if "place" in rs`) returns the same
+    # bucket, so it stays green even with the matcher reverted to a quoted key.
+    # A wiki tool takes no such fallback, so this is the arm that actually fails
+    # when the matcher stops being a bare substring.
+    assert classify("wiki_place_page", _envelope(NO_POP_SERIES)) == "no_population_series"
     # And the second no-series shape — a resolved place with no population series
     # — is a data gap, not an unknown.
     assert classify("place_population", NO_POP_SERIES_2) == "no_population_series"

@@ -49,8 +49,13 @@ and is printed with one example, never silently absorbed.
    The upshot is that the report's real horizon is the 14-day capture window: it
    classifies fresh runs fully, and `SINCE=all` mainly shows how much older data
    has been stripped. The `legacy_markdown_dir` bucket, all pre-14-day, is now
-   stripped and unrecoverable — acceptable, since it was a dead code path the
-   issue itself said needs no investigation.
+   stripped from the WORKING TREE — not lost: the pre-strip captures are still in
+   git history (`git show <commit-before-b065b687>:<path>` recovers 111 of them
+   from a single anders-monsen run), so a whole-corpus pass stays possible for
+   anyone who wants it. This report reads the working tree only, which is a scope
+   choice rather than a data-availability limit. Acceptable for that bucket
+   either way, since the issue itself said the dead code path needs no
+   investigation.
 
 ## Attribution is by commit author, not by machine
 
