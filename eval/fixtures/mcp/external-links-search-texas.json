@@ -1,0 +1,27 @@
+{
+  "tool": "external_links_search",
+  "description": "FS-curated external links for Hill/Smith County, Texas",
+  "args": {
+    "standardPlace": "~Texas"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Texas, United States",
+      "startYear": 1855,
+      "endYear": 1890
+    },
+    "totalForPlace": 2,
+    "results": [
+      {
+        "linkText": "Hill County, Texas - Ancestry.com",
+        "url": "https://www.ancestry.com/search/locations/hill-county-texas",
+        "host": "ancestry.com"
+      },
+      {
+        "linkText": "Smith County, Texas - TXGenWeb",
+        "url": "https://www.txgenweb.org/smith",
+        "host": "txgenweb.org"
+      }
+    ]
+  }
+}

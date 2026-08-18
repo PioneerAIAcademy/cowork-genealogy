@@ -17,8 +17,7 @@
     "wall_clock_seconds": 3600,
     "inactivity_seconds": 600,
     "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
+    "max_turns": 100
   },
   "difficulty": "hard",
   "notes": "Indirect-evidence case study. Västra Karaby parish registers begin only in 1688, while Elena was born c. 1681, so her origin is established by correlating Swedish tax lists (Mantalslängder, from 1658) and catechism records (Katekismilängder) across five decades to place Asmund Torsson's household at Henckelstorp. Most of this evidence is browse-only and largely on SVAR/ArkivDigital, NOT name-indexed on FamilySearch — recoverability via FamilySearch record search is low. This is the deliberately hardest fixture of the batch."

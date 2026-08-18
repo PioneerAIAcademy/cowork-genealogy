@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Smith County, Texas",
+  "args": {
+    "placeName": "~Smith County"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Smith, Texas, United States",
+        "type": "County",
+        "dateRange": "+1846/",
+        "latitude": 32.35,
+        "longitude": -95.28,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Smith%2C+Texas&focusedId=43"
+      }
+    ]
+  }
+}

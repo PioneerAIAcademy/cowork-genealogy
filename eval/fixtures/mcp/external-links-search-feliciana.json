@@ -1,0 +1,27 @@
+{
+  "tool": "external_links_search",
+  "description": "FS-curated external links for East/West Feliciana Parish, Louisiana",
+  "args": {
+    "standardPlace": "~Louisiana"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Louisiana, United States",
+      "startYear": 1824,
+      "endYear": 1835
+    },
+    "totalForPlace": 2,
+    "results": [
+      {
+        "linkText": "East Feliciana Parish, Louisiana - Ancestry.com",
+        "url": "https://www.ancestry.com/search/locations/east-feliciana-parish-louisiana",
+        "host": "ancestry.com"
+      },
+      {
+        "linkText": "West Feliciana Parish, Louisiana - LaGenWeb",
+        "url": "https://www.lagenweb.org/westfeliciana",
+        "host": "lagenweb.org"
+      }
+    ]
+  }
+}
