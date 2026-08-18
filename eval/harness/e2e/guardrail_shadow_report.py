@@ -42,12 +42,15 @@ from e2e.runlog_selection import (
     is_result_json as _is_result_json,
     result_jsons_for,
 )
+from e2e.feedback_transcript_adapter import adapt_bundle_transcript
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
+    find_missing_mentor_verdicts,
     find_unguarded_protected_writes,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
+    skill_name_if_skill_call,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
 )
@@ -413,6 +416,121 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
     )
 
 
+# ── Hosted feedback bundles (issue #1558) ────────────────────────────────────
+# Run the two detectors valid over a feedback bundle — the transcript-only
+# `find_unguarded_protected_writes` and the research.json-only
+# `find_missing_mentor_verdicts`. The tree-reading §8 arms cannot run over a
+# bundle (redacted tree, no starting_tree baseline — see
+# docs/specs/guardrail-enforcement-spec.md § "Options set aside"), and
+# `check_guardrail_compliance` / `find_effects_without_invocation` are excluded
+# for the reasons in issue #1558. Counts only, never a rate: the detectors are
+# uncalibrated (docs/architecture.md §9.4 pt 3).
+#
+# Bundles live OUTSIDE the repo (make feedback-case → ~/feedback/<slug>/); no
+# bundle-derived content is ever committed.
+_FEEDBACK_WINDOW = 40  # == GUARDRAIL_SHADOW_WINDOW; count barely moves 10..150.
+
+
+def scan_feedback_bundle(
+    bundle_dir: Path, *, window: int = _FEEDBACK_WINDOW, platform: str | None = None
+) -> dict[str, Any]:
+    """Per-bundle facts + both detectors' raw findings for one unpacked bundle
+    directory. `platform` is supplied by the caller (from the feedback issue's
+    `Platform:` line — not knowable from the bundle alone)."""
+    bundle_dir = Path(bundle_dir)
+    transcript = bundle_dir / "session-log.jsonl"
+    research_path = bundle_dir / "research.json"
+    out: dict[str, Any] = {
+        "bundle": bundle_dir.name,
+        "platform": platform,
+        "has_transcript": transcript.exists(),
+        "truncated": False,
+        "tool_call_count": 0,
+        "skill_call_count": 0,
+        "session_ids": [],
+        "unguarded_writes": [],
+        "missing_mentor_verdicts": [],
+    }
+
+    if transcript.exists():
+        adapted = adapt_bundle_transcript(transcript)
+        tool_calls = adapted["tool_calls"]
+        out["truncated"] = adapted["truncated"]
+        out["session_ids"] = adapted["session_ids"]
+        out["tool_call_count"] = len(tool_calls)
+        out["skill_call_count"] = sum(
+            1
+            for e in tool_calls
+            if skill_name_if_skill_call(e.get("tool", ""), e.get("args")) is not None
+        )
+        # A truncated transcript reads as a bypass (a skill invoked before the
+        # cut is invisible), so its writes are unattributable — the caller
+        # buckets truncated bundles separately rather than counting them.
+        out["unguarded_writes"] = find_unguarded_protected_writes(tool_calls, window=window)
+
+    if research_path.exists():
+        try:
+            research = json.loads(research_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            research = None
+        out["missing_mentor_verdicts"] = find_missing_mentor_verdicts(research)
+
+    return out
+
+
+def scan_feedback_dir(root: Path, *, window: int = _FEEDBACK_WINDOW) -> list[dict[str, Any]]:
+    """Scan every unpacked bundle directory under `root` (each holding a
+    `research.json` and/or `session-log.jsonl`). Platform is left `None` — the
+    caller labels each from its feedback issue."""
+    root = Path(root)
+    results: list[dict[str, Any]] = []
+    for child in sorted(p for p in root.iterdir() if p.is_dir()):
+        if (child / "session-log.jsonl").exists() or (child / "research.json").exists():
+            results.append(scan_feedback_bundle(child, window=window))
+    return results
+
+
+def format_feedback_report(results: list[dict[str, Any]]) -> str:
+    """Counts, never a rate. Truncated transcripts get their own bucket (their
+    writes are unattributable). A transcript with protected-write violations and
+    zero Skill calls is flagged as a likely Skill-shape mismatch, not a bypass."""
+    lines = ["Hosted feedback bundle guardrail scan (issue #1558) — counts, not a rate."]
+    n = len(results)
+    with_transcript = [r for r in results if r["has_transcript"]]
+    truncated = [r for r in with_transcript if r["truncated"]]
+    lines.append(
+        f"\n{n} bundle(s): {len(with_transcript)} with a transcript "
+        f"({len(truncated)} truncated), {n - len(with_transcript)} without."
+    )
+    for r in results:
+        tag = " [truncated]" if r["truncated"] else ""
+        shape_warn = (
+            "  ⚠ protected writes with zero Skill calls — likely a Skill-shape "
+            "mismatch, investigate before trusting"
+            if (r["unguarded_writes"] and r["skill_call_count"] == 0 and r["has_transcript"])
+            else ""
+        )
+        lines.append(
+            f"\n  {r['bundle']} (platform={r['platform']}){tag}: "
+            f"{r['tool_call_count']} tool calls, {r['skill_call_count']} Skill calls, "
+            f"{len(r['unguarded_writes'])} unguarded-write finding(s), "
+            f"{len(r['missing_mentor_verdicts'])} missing-mentor-verdict finding(s)"
+            + (f", session_ids={r['session_ids']}" if len(r['session_ids']) > 1 else "")
+            + shape_warn
+        )
+    # Totals with their denominators — never a combined number across detectors.
+    unguarded_total = sum(len(r["unguarded_writes"]) for r in with_transcript if not r["truncated"])
+    mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in results)
+    lines.append(
+        f"\nTotals: unguarded-write findings {unguarded_total} across "
+        f"{len(with_transcript) - len(truncated)} attributable transcript(s); "
+        f"missing-mentor-verdict findings {mentor_total} across {n} bundle(s). "
+        f"Corpus is small and self-selected — a signal, not a rate. "
+        f"e2e baseline comparison pending issue #1484."
+    )
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
@@ -434,8 +552,25 @@ def main(argv: list[str] | None = None) -> int:
             "whole historical corpus (issue #1231)."
         ),
     )
+    ap.add_argument(
+        "--feedback-dir",
+        help=(
+            "scan unpacked hosted feedback bundles under this directory (issue #1558) "
+            "instead of the committed e2e corpus — each subdir a bundle with a "
+            "research.json and/or session-log.jsonl. Bundles live OUTSIDE the repo "
+            "(make feedback-case → ~/feedback/); nothing bundle-derived is committed."
+        ),
+    )
     add_since_arg(ap)
     args = ap.parse_args(argv)
+
+    if args.feedback_dir:
+        root = Path(args.feedback_dir)
+        if not root.is_dir():
+            print(f"No such directory: {root}", file=sys.stderr)
+            return 1
+        print(format_feedback_report(scan_feedback_dir(root)))
+        return 0
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})
     all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()

@@ -1009,6 +1009,18 @@ this section before reopening one.
   shipped provenance check flagged 63, with an empty set difference: it detects
   nothing the existing check misses, and is evadable via `moot` status or a
   `probable` tier.
+- **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
+  done, so the hosted feedback bundle corpus is measured with the transcript-only
+  and `research.json`-only detectors instead. A feedback bundle carries no
+  `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
+  leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
+  arms that diff the final tree against a seed — `find_effects_without_invocation`
+  and `check_guardrail_compliance` — would read every seeded relationship as a
+  violation (the same no-baseline defect that killed per-turn scoping, above).
+  Only `find_unguarded_protected_writes` (transcript-only) and
+  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
+  bundle; the adapter and report live in `eval/harness/e2e/`
+  (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
 
 ## 10. Residual risks
 
