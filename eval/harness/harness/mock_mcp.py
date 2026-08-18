@@ -200,6 +200,11 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
             ["node", "--input-type=module", "--eval", script],
             capture_output=True,
             text=True,
+            # Without this, text=True decodes with the platform default —
+            # cp1252 on Windows — and crashes on any non-ASCII byte Node
+            # writes to stdout. Same rule as every other file read in this
+            # repo (CLAUDE.md "Python file I/O").
+            encoding="utf-8",
             timeout=30,
         )
         out = proc.stdout.strip()
@@ -268,6 +273,7 @@ def _stage_search_results(
             input=json.dumps(input_obj),
             capture_output=True,
             text=True,
+            encoding="utf-8",  # Windows: force utf-8, not the cp1252 locale default.
             timeout=30,
         )
         out = proc.stdout.strip()
@@ -558,7 +564,9 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
             try:
                 proc = subprocess.run(
                     ["node", "--input-type=module", "--eval", script],
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True, text=True,
+                    encoding="utf-8",  # Windows: force utf-8, not the cp1252 locale default.
+                    timeout=30,
                 )
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
@@ -631,7 +639,9 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 proc = subprocess.run(
                     ["node", "--input-type=module", "--eval", script],
                     input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True, text=True,
+                    encoding="utf-8",  # Windows: force utf-8, not the cp1252 locale default.
+                    timeout=30,
                 )
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
@@ -700,7 +710,9 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 proc = subprocess.run(
                     ["node", "--input-type=module", "--eval", script],
                     input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True, text=True,
+                    encoding="utf-8",  # Windows: force utf-8, not the cp1252 locale default.
+                    timeout=30,
                 )
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
@@ -777,7 +789,9 @@ def _make_compiled_tool_handler(
                 proc = subprocess.run(
                     ["node", "--input-type=module", "--eval", script],
                     input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True, text=True,
+                    encoding="utf-8",  # Windows: force utf-8, not the cp1252 locale default.
+                    timeout=30,
                 )
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)

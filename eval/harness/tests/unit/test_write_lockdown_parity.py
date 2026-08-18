@@ -214,6 +214,7 @@ def test_no_unregistered_copy_of_the_lockdown_exists():
         cwd=REPO,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
     )
     files = {

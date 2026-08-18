@@ -114,6 +114,7 @@ def git_sha(repo_root: Path) -> str | None:
             cwd=str(repo_root),
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=10,
             check=False,
         )

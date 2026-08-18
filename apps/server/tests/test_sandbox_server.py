@@ -52,6 +52,7 @@ def ws_server(tmp_path, request):
     proc = subprocess.Popen(
         [sys.executable, "-m", "app.sandbox_server"], env=env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        encoding="utf-8",
     )
     deadline = time.time() + 20
     while time.time() < deadline:
