@@ -548,11 +548,29 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > which is exactly what happened below, so read the two classes above as the whole
 > test, not as a summary of a wider scan.
 >
-> Applied once, for the `\bco\.?\b` fix below, and the numbers are the criterion
-> run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
+> Applied twice. **First** for the `\bco\.?\b` fix below, and the numbers are the
+> criterion run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
 > `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
 > **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
 > Exempt.
+>
+> **Second**, 2026-08-18, for the three qualifier-stripping defects below — the
+> ASCII-only boundary, the internal qualifier that fused two locality levels into
+> one token, and `CO` the postal abbreviation: **class 1 — 1712 distinct tree-fact
+> places, 0 changed**; **class 2 — 60 distinct recorded search arguments, 0
+> changed**, across 260 tree files and 451 run logs. Exempt.
+>
+> Two things about that second run, because a criterion reporting `0` is worth
+> exactly as much as its ability to report non-zero. It **imported the exported
+> `placeParts`** rather than reimplementing the pipeline, so it cannot measure an
+> order the tokenizer no longer uses — the failure mode the first run's
+> hand-copied `after()` was one edit away from. And it was **self-checked against
+> synthetic `"Denver, CO"` and `"Boulder, CO, United States"`**, which it does
+> report as moved. The postal-abbreviation change moves nothing here because the
+> corpus holds 11 places with a two-letter uppercase trailing token — `UT`, `NY`,
+> `FL`, `MT`, `NJ`, `MD` — and no `CO`. Of the 7 places carrying a standalone
+> `co` token, all 7 are genuine county qualifiers and all 7 still strip, including
+> the leading-qualifier Irish forms `"Co Kilkenny"` and `"Co Down"`.
 >
 > Seven strings *did* change elsewhere in `eval/` — run-log outputs, one fixture
 > README line, and two `unstripped-tree.gedcomx.json` files. That is why the
@@ -589,12 +607,17 @@ need the string narrowed test `!== undefined` themselves; that explicit check is
 what makes `jurisdictionHints.searchedPlace` a sound required `string`.
 
 **The `Co.` qualifier, and why the first spelling of the regex was wrong.**
-`placeParts` drops `County`/`Co.` with `/\bcounty\b|\bco\b\.?/`. The abbreviation's
-dot is part of the qualifier and must be consumed with it. The original
-`\bco\.?\b` could not: after matching `co.` the trailing `\b` fails, so the engine
-backtracks and matches bare `co`, leaving a `"."` that survives the empty-string
-filter and counts as a locality. `\bco\b\.?` asserts the boundary first, then eats
-the dot.
+`placeParts` consumes `County`/`Co` **as a part separator** — not as a deletion —
+through `stripCountyQualifier`, which matches
+`/(?<![\p{L}\p{N}_-])(county|co)(?![\p{L}\p{N}_-])(\.?)/giu` and decides per match
+whether to replace it with `","`. The abbreviation's dot is part of the qualifier
+and must be consumed with it, so `\.?` sits **outside** the closing assertion. The
+original `\bco\.?\b` could not do that: after matching `co.` the trailing `\b`
+fails, so the engine backtracks to bare `co`, leaving a `"."` that survives the
+empty-string filter and counts as a locality. Asserting the boundary first and
+eating the dot after is the fix. Because a single `\.?` now follows one shared
+assertion covering both spellings, `"County."` strips clean as well — under
+`\bcounty\b` it left the same stray dot.
 
 That stray token had two effects, and the reported one was the smaller. It made
 `isSubCountryPlace("Co., USA")` return `true`, so a country-wide search read as
@@ -613,8 +636,62 @@ exemption at the top of this section. Pinned by two tests in
 exclusion case scoped `"Hill Co., Texas"` that pins the root cause rather than the
 symptom.
 
+**Why the boundary is a `[\p{L}\p{N}_-]` lookaround pair and not `\b`.** JavaScript's
+`\b` is defined over `[A-Za-z0-9_]`, so every non-ASCII letter — and the hyphen —
+reads as a word edge, and a leading `co` matches as a whole word *inside the place's
+own name*: `"Coïmbra, Portugal"` tokenized as `["ïmbra","portugal"]`, `"Coévrons,
+France"` as `["évrons","france"]`. `\p{L}` alone is **not** sufficient, and this is
+the part worth not re-deriving: `-` is not a letter either, so
+`"Co-operative Township, Ohio"` still lost its first two letters. Both alternatives
+carry the same class — leaving `county` ASCII-only would be an asymmetry the next
+reader has to work out. The mangling is *symmetric*, which is why it is invisible
+through `marriageJurisdictionCandidates`: `"Coïmbra"` reduced to `["ïmbra"]` whether
+it arrived as the searched place or as the candidate, so the exclusion still matched
+and no behavioural assertion could fail. `placeParts` is exported for that reason
+alone — the tokens are the only level at which this defect is observable.
+
+**Why the qualifier is a separator, not a deletion.** The qualifier marks a locality
+boundary whether or not a comma also marks one. Deleting it fused the levels into a
+single token — `"Hill Co. Texas"` became `["hill texas"]` — which no comma-separated
+spelling of the same jurisdiction can ever equal, so `samePlace` never matched
+`"Hill, Texas, United States"` and the exclusion failed. Replacing it with `","`
+makes `"Hill Co. Texas"`, `"Hill County Texas"` and `"Hill, Texas"` all reduce to
+`["hill","texas"]`. Note that collapsing whitespace *before* the strip was a
+second-order symptom of the same defect, not its cause: it left the two spaces that
+used to flank the qualifier, so fixing only the spacing yields `["hill texas"]` —
+tidier, still unmatched, no behaviour changed. Whitespace is therefore collapsed
+after the split.
+
+**`CO` the postal abbreviation, and the ruling that governs it (lead, 2026-08-13).**
+`CO` is also Colorado's postal abbreviation, and the model does write postal
+abbreviations. Eating it reduced `"Denver, CO"` to `["denver"]`, and since
+`samePlace` is a subset test, a Colorado-scoped search that came back empty
+**suppressed a tree place of `"Denver, Iowa"` from its own candidate list** —
+deleting precisely the alternative jurisdiction this hint exists to surface. The
+qualifier is therefore stripped when **any** of these holds, and kept otherwise:
+(1) it carries a dot; (2) another token follows it in the same comma part; or (3) it
+is spelled with a lowercase `o`. So it survives only as bare uppercase `CO` ending
+its comma part.
+
+Three options were considered and each fails alone: requiring the **dot** breaks
+`"Hill Co Texas"`; the **token-follows** test alone breaks `"Hill Co., Texas"`,
+because the dot ends that comma part; and a **postal-abbreviation set** is fifty
+entries to maintain against a signal already present in the string. Knowingly
+accepted: `"Denver, Co"`, Colorado written with a lowercase `o`, still strips and so
+still compares equal to `"Denver, Iowa"` — the price of catching `"Hill Co"`, which
+has no other tell. Do not "fix" that without reopening this ruling.
+
+Two consequences for anyone editing `stripCountyQualifier`. The strip must run
+**above** the `.toLowerCase()`, because that call destroys the case signal the rule
+rests on. And the `i` flag makes the match read as case-insensitive when the
+*decision* is case-sensitive: matching is deliberately case-blind so the callback
+can inspect the spelling it captured (`word !== "CO"`). A pattern that looks
+case-insensitive and is not is exactly the trap this note exists to flag.
+
 It is compared to each candidate on comma-separated tokens, lowercased, with
-`County`/`Co.` dropped and the country term dropped unless it is all that remains.
+`County`/`Co.` consumed as a further part separator — except bare uppercase `CO`
+ending its comma part, which is kept — and the country term dropped unless it is
+all that remains.
 The match is **one-directional**: a candidate is excluded only when it is equal to
 or **narrower** than what was searched. So `"Hill County, Texas"` excludes
 `"Hill, Texas, United States"`, and searching `"Texas, United States"` excludes

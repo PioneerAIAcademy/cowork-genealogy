@@ -85,24 +85,96 @@ interface TreeLike {
 const COUNTRY_TERMS = new Set(["united states", "usa", "us"]);
 
 /**
- * Comma-separated locality parts, lowercased, with `County`/`Co.` dropped.
+ * One comma part with any `County`/`Co` qualifier replaced by `","`, so the caller
+ * can split on it. Runs on the ORIGINAL case, because the rule below turns on a
+ * case signal that `.toLowerCase()` destroys.
  *
- * The abbreviation's dot is part of the qualifier and must go with it. `\bco\b\.?`
- * asserts the word boundary FIRST and then eats the dot; the earlier `\bco\.?\b`
- * could not, because after consuming `co.` the trailing `\b` fails and the engine
- * backtracks to bare `co` — leaving a `"."` that survives the empty-string filter
- * and counts as a locality. That stray token made `"Hill Co., Texas"` tokenize as
- * `["hill .", "texas"]`, so `samePlace` did not match the tree's
- * `"Hill, Texas, United States"` and the jurisdiction a search had just come back
- * empty on was offered back as an alternative — with its sub-places alongside it,
- * and counted twice, since `placeTokens(...).join("|")` is also the dedupe key.
+ * `CO` is also Colorado's postal abbreviation, and the model does write postal
+ * abbreviations. Eating it reduced `"Denver, CO"` to `["denver"]`, and `samePlace`
+ * is a subset test, so a Colorado-scoped search that came back empty suppressed a
+ * tree place of `"Denver, Iowa"` from its own candidate list — deleting the one
+ * alternative jurisdiction most worth trying.
+ *
+ * The qualifier is stripped when **any** of these holds, and kept otherwise:
+ *
+ *   1. it carries a dot — `Co.`, `co.`; or
+ *   2. another token follows it in the same comma part; or
+ *   3. it is spelled with a lowercase `o` — `Co` or `co`.
+ *
+ * So it survives only as bare uppercase `CO` ending its comma part. None of the
+ * three tests works alone: requiring the dot breaks `"Hill Co Texas"`, the
+ * token-follows test alone breaks `"Hill Co., Texas"` (the dot ends that comma
+ * part), and a postal-abbreviation set is fifty entries to maintain against a
+ * signal already present in the string.
+ *
+ * Knowingly accepted: `"Denver, Co"` — Colorado written with a lowercase `o` —
+ * still strips, so it still compares equal to `"Denver, Iowa"`. That is the price
+ * of catching `"Hill Co"`, which has no other tell. Do not "fix" it without
+ * reopening the ruling.
+ *
+ * The `i` flag is what makes this readable as case-insensitive when it is not:
+ * matching is deliberately case-blind so the callback can inspect the spelling it
+ * captured. `County`, at any casing, is never an abbreviation and always strips.
  */
-function placeParts(place: string): string[] {
+function stripCountyQualifier(part: string): string {
+  return part.replace(
+    /(?<![\p{L}\p{N}_-])(county|co)(?![\p{L}\p{N}_-])(\.?)/giu,
+    (match, word: string, dot: string, offset: number) => {
+      if (word.length > 2) return ","; // `County`, never an abbreviation
+      if (dot) return ","; // rule 1
+      if (word !== "CO") return ","; // rule 3
+      return part.slice(offset + match.length).trim() === "" ? match : ","; // rule 2
+    },
+  );
+}
+
+/**
+ * Comma-separated locality parts, lowercased, with `County`/`Co.` consumed as a
+ * part separator — except for the postal abbreviation `CO`, which
+ * `stripCountyQualifier` above keeps, and which is why the strip runs before the
+ * lowercasing rather than after it.
+ *
+ * A separator and not a deletion, because the qualifier marks a locality boundary
+ * whether or not a comma also does. Deleting it left the levels fused into one
+ * token: `"Hill Co. Texas"` became `["hill texas"]`, which no comma-separated
+ * spelling of the same jurisdiction can ever equal, so `samePlace` did not match
+ * `"Hill, Texas, United States"` and the exclusion failed. Replacing it with `","`
+ * makes all three spellings — `"Hill Co. Texas"`, `"Hill County Texas"` and
+ * `"Hill, Texas"` — reduce to `["hill","texas"]`. Whitespace is collapsed *after*
+ * the split for the same reason: collapsing first left the two spaces that used to
+ * flank an internal qualifier.
+ *
+ * The trailing dot is part of the qualifier and must go with it, so it sits
+ * OUTSIDE the closing boundary assertion — `(?!…)\.?`, never `\.?(?!…)`. Putting
+ * it inside cannot work: having consumed `co.`, the assertion fails against a
+ * following word character, the engine backtracks to bare `co`, and the assertion
+ * now passes against the `.` it just gave up — leaving a `"."` that survives the
+ * empty-string filter and counts as a locality. That stray token made
+ * `"Hill Co., Texas"` tokenize as `["hill .", "texas"]`, so `samePlace` did not
+ * match the tree's `"Hill, Texas, United States"` and the jurisdiction a search had
+ * just come back empty on was offered back as an alternative — with its sub-places
+ * alongside it, and counted twice, since `placeTokens(...).join("|")` is also the
+ * dedupe key. One `\.?` after the shared assertion covers both spellings, so
+ * `"County."` strips clean too.
+ *
+ * The boundary is a `[\p{L}\p{N}_-]` lookaround pair rather than `\b` because `\b`
+ * is defined over `[A-Za-z0-9_]` only, so every non-ASCII letter reads as a word
+ * edge and a leading `co` matches as a whole word inside it: `"Coïmbra"` tokenized
+ * as `"ïmbra"`. `\p{L}` alone is not enough — `-` is not a letter either, so
+ * `"Co-operative Township"` still lost its first two letters.
+ *
+ * Exported for the boundary tests, which cannot be written against
+ * `marriageJurisdictionCandidates`. The mangling is consistent on both sides of
+ * every comparison — `"Coïmbra"` reduced to `["ïmbra"]` whether it arrived as the
+ * searched place or as the candidate — so the exclusion still matched and every
+ * behavioural assertion passed with the defect present. The tokens are the only
+ * level at which it is observable.
+ */
+export function placeParts(place: string): string[] {
   return place
-    .toLowerCase()
     .split(",")
-    .map((part) => part.trim().replace(/\s+/g, " "))
-    .map((part) => part.replace(/\bcounty\b|\bco\b\.?/g, "").trim())
+    .flatMap((part) => stripCountyQualifier(part).split(","))
+    .map((part) => part.trim().toLowerCase().replace(/\s+/g, " "))
     .filter((part) => part !== "");
 }
 
