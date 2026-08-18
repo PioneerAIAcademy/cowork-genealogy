@@ -1524,7 +1524,7 @@ describe("calculateWarnings — orchestrator", () => {
     expect(tags).toContain("hasEventAfterDeath1");
     for (const w of warnings) {
       expect(w.personId).toBe("I1");
-      expect(w.severity).toBe("error");
+      expect(w.severity).toBe("contradiction");
     }
   });
 
@@ -1608,7 +1608,7 @@ describe("calculateWarnings — orchestrator", () => {
     const warnings = finalWarnings(new Mob(tree, "I1"));
     expect(warnings).toHaveLength(1);
     expect(warnings[0].issueType).toBe("hasEventAfterDeath1");
-    expect(warnings[0].severity).toBe("error");
+    expect(warnings[0].severity).toBe("contradiction");
     expect(warnings[0].personId).toBe("I1");
   });
 

@@ -163,7 +163,17 @@ measured rather than argued.
    researcher from finishing correct work with no way around it, while a wrong
    allow leaves us exactly where we already are. Check only what is mechanically
    checkable, scope it conservatively, and write down what it knowingly lets
-   through.
+   through. #1572 applied this to the write gate itself: validating the whole
+   project and refusing every writer tool on a pre-existing drifted section —
+   even a call that never touched it — was a false deny reaching the researcher,
+   so the gate now blocks only on errors the call introduces
+   (`validation/introduced-errors.ts`). What it knowingly leaves undone: the
+   tolerated fields still hold real evidence (`sources[].author`/`title` is
+   citation content, `assertions[].person_id` the assertion-to-person link,
+   `conflicts[].resolution_notes` the researcher's reasoning), so a legacy-shaped
+   document stays invalid for downstream readers (the viewer, `packages/schema`)
+   until an Option 2 healer rewrites it — a separate, lead-gated call, since the
+   per-key mapping is a genealogical judgment (validate-project-refactor-spec §11).
 2. **Satisfiability is a precondition, not a follow-up.** State which call shape
    satisfies the gate and how often agents actually produce it, *before*
    shipping the deny. ADR-0009's sixth `same_person` constraint disqualified a
@@ -175,8 +185,13 @@ measured rather than argued.
 3. **A deny binds even under `bypassPermissions`, but only by exact tool name.**
    That is what makes `disallowedTools:` the last line of defence for a
    delegated agent (see the plugin-agents section of `CLAUDE.md`) — and it is
-   also the limit: the hook's matcher names `Write|Edit|NotebookEdit`, so
-   `device_bash` was not matched, and the write landed (issue #1509).
+   also the limit: the matcher decides whether the hook runs at all, so a name
+   it omits is a hole the script behind it can never close. `device_bash` is
+   omitted deliberately and the write landed (issue #1509);
+   `device_commit_files` was omitted by accident, which left the route open
+   after all three predicate copies had been taught to deny it. The matcher is
+   now `Write|Edit|NotebookEdit|.*device_commit_files`, and a packaging test
+   derives the expected set from the guard script instead of restating it.
 4. **Coverage is per-boundary, never global.** A writer-tool check binds only
    for callers who use the writer tool; a hook binds only for the tool names it
    matches, and only where the hook loads. The plugin hook is the one that

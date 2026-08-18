@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Rowan County, North Carolina",
+  "args": {
+    "placeName": "~Rowan"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Rowan, North Carolina, United States",
+        "type": "County",
+        "dateRange": "+1753/",
+        "latitude": 35.67,
+        "longitude": -80.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Rowan%2C+North+Carolina&focusedId=51"
+      }
+    ]
+  }
+}

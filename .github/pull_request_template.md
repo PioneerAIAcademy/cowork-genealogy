@@ -50,14 +50,15 @@
 ## Test plan
 
 <!-- If this PR touches a code/infra file (.ts/.tsx/.js/.mjs/.cjs/.py/.json/
-     .yml/.yaml/.toml/.bat, Makefile, .gitattributes) outside
+     .yml/.yaml/.toml/.bat, Makefile, .gitattributes), or anything under
      packages/engine/plugin/skills/, packages/engine/plugin/agents/,
-     eval/fixtures/, eval/tests/, or eval/runlogs/, a senior-developers
-     approval is required by branch protection — see .github/CODEOWNERS for
-     the exact rule. Peer approval alone will not unblock merge. Note that
-     docs/ is no longer an exclusion: prose there needs no senior, but a
-     schema or other code file under it does. This is a convenience note;
-     GitHub's merge button is the actual enforcement. -->
+     eval/fixtures/, eval/tests/, eval/runlogs/ or eval/harness/judge/, one
+     of your two approvals must come from a senior — EITHER senior team
+     satisfies it. See .github/CODEOWNERS for the exact rule. Peer approval
+     alone will not unblock merge. Note that docs/ is no longer an exclusion:
+     prose there needs no senior, but a schema or other code file under it
+     does. This is a convenience note; GitHub's merge button is the actual
+     enforcement. -->
 
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- On Windows without Git Bash: `scripts\windows\test-all.bat` runs the

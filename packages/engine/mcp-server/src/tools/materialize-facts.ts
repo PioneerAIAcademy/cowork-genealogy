@@ -21,7 +21,7 @@
 // coexist silently. materialize_facts NEVER sets `primary`/`preferred` — only
 // proof-conclusion does — and never writes relationships or `conflicts` entries.
 //
-// The write tail (sanitizeTree → read research → apply → validateParsed →
+// The write tail (sanitizeTree → read research → apply → validateIntroduced →
 // backupIfExists → atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
 // SINGLE-FILE tree write (atomicWriteJson, never atomicWriteBoth).
 
@@ -41,7 +41,7 @@ import type {
   MaterializeFactsResult,
   ConflictSurfaced,
 } from "../types/materialize-facts.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
@@ -452,6 +452,10 @@ export async function materializeFacts(
     const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // Post-heal, pre-materialize snapshot (applyMaterializeOp mutates tree in
+    // place): block only on errors THIS call introduces, not pre-existing drift
+    // in a section it never touched (#1572).
+    const beforeTree = structuredClone(tree);
     const treePath = join(projectPath, "tree.gedcomx.json");
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
@@ -472,7 +476,7 @@ export async function materializeFacts(
         }
       }
 
-      const validation = await validateParsed(research, tree, { projectPath });
+      const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
@@ -496,7 +500,7 @@ export async function materializeFacts(
       recordRole: input.recordRole!,
     });
 
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
