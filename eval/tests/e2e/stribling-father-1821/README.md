@@ -171,9 +171,20 @@ records" would be wrong.
   attaches a *neighbouring image* of either bond — the Amite volume holds the bond,
   the inventory and the sureties' acknowledgements at images 725, 788, 789, 860 and
   861 of 891 — that is the same record and should be annotated `true` against a judge
-  `false`. This wording exists because the first scored run was marked `false` for
-  attaching the 1823 bond instead of the 1825 one, having engaged the guardianship
-  correctly.
+  `false`. This wording exists because the first scored run was marked `false` **in the
+  genealogist's blind grade** for attaching the 1823 bond instead of the 1825 one, having
+  engaged the guardianship correctly. (That run's *judge* said `partial` on f4, not
+  `false` — the two are different labels and only the human one drove the amendment.)
+- **`details.source_url_alternate` is read by no harness code.** Grep finds it in exactly
+  two places, both inside this fixture: `expected-findings.json:79` and this README. No
+  `.py` or `.ts` reads the key, `finding_shape_errors` validates top-level finding keys
+  only (`validate_fixture.py:341-343`), and nothing can flag it as inert. It reaches the
+  judge **only as text inside the JSON dump of the finding** (`judge.py:191`) — which is
+  in fact how f4's two-ARK allowance gets to the judge at all, the same way the
+  description's "EITHER … OR" wording does. Treat the key as documentation for the human
+  grader, not as a second match key the judge honours: run 2 attached the 1823 bond and
+  its judge still graded f4 `false`, and the acceptance happened in the `.ann.json` by
+  hand.
 - **The linter cannot see sources at all.** `index_tree` walks `persons` and
   `relationships` only (`validate_fixture.py:109-138`), so a source that names the
   answer prints `OK`. The subject's own sources were read by hand at authoring time;
@@ -419,13 +430,25 @@ Read these before attributing a failed headless run.
   image, it would have been measuring which page of one volume the agent opened, not
   whether it engaged the guardianship — the discrimination the finding exists for.
 
-  **§14 status: the fixture lands unvalidated, and that is not a merge blocker.** No
-  committed run log carries a judge `verdict: pass` for this slug. Run 1's judge ran
-  against the *pre-amendment* f4 and scored it `false`; run logs are never rewritten, so
-  that verdict stands on disk even though the human re-grade is now 4 of 4. Run 2 is
-  genealogically `partial` on f3. §14 is explicitly a **recommended authoring practice,
-  not a CI merge blocker**, so a fixture may land with its validity run outstanding — but
-  the claim "solvable end to end from live FamilySearch" is not yet carried by a committed
-  log, and the next run of this fixture is what would settle it. Everything needed is
-  demonstrably reachable: between the two runs, every one of the four findings has been
-  recovered by *some* run, just never all four by one.
+  **§14 status: the fixture reads as validated — provisionally.**
+  `run-2026-08-17_23-35-44.json` carries `"verdict": "pass"` with `recall_required: 1.0`
+  (`:4`, `:139`, `:141`), and `axes_from_runlog` passes that field through verbatim for any
+  log carrying `harness_schema_version` (`eval/harness/e2e/result.py:390-392`). So §14's
+  standard — at least one committed run log with `verdict: pass` — is met, and
+  `make e2e-corpus` reads this slug as genealogically `pass`.
+
+  **What is provisional, and why (filed as #1721).** That `pass` does not follow from the
+  log's own labels. f4 is recorded `"matched": "partial"` (`:104`), and §7.2's rollup
+  (`derive_verdict`, `eval/harness/e2e/judge.py:279-303`) turns one required `partial` into
+  `verdict: partial` with recall `0.875`. Nothing recomputes the stored rollup:
+  `apply_avoid_guard` is the only judge-time recompute path and fires only for `avoid`
+  findings, of which this fixture has none, and §3.4.2's component derivation is scoped to
+  `relationship` findings, so a `source` finding's `matched` is trusted as the judge wrote
+  it. The stored `pass` is therefore the judge model's own rollup, not a derived one.
+
+  **The genealogical claim holds either way.** The human blind grade independently reached
+  **4 of 4** against the amended f4 (`run-2026-08-17_23-35-44.ann.json`), so "the answer is
+  recoverable from live FamilySearch" rests on a genealogist's reading of the final tree,
+  not on the disputed field. What is provisional is only the *mechanical* pass — whether
+  the corpus number a reader sees is the one §7.2 prescribes. Treat the fixture as solvable;
+  treat its `verdict` as pending #1721.
